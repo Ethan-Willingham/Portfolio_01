@@ -1,6 +1,6 @@
 # Water machines
 
-Release: toy v5.49, shared water engine v28.179. The greedy cup, standalone
+Release: toy v5.50, shared water engine v28.179. The greedy cup, standalone
 siphon and Heron's fountain are in the public scene menu, with published behavior
 measurements. Full quantitative physical acceptance and steady 60 FPS remain unverified.
 
@@ -234,6 +234,18 @@ Evidence: continuation-progress-trial-2026-10-09.json and
 native-particle-continuation-trial-2026-10-09.json. A further private candidate
 continues Newton iterations past the candidate-only early stop; it must pass the
 same unchanged independent hardware gates before any acceptance claim.
+
+That separate private v4.7 candidate now passes all 36 per-step physical cases
+over 288 actual native GPU updates, plus all five unsupported-input controls.
+The single early-stop condition changes; the EOS, force, particle/material
+transfer, final rejection guard and independent arithmetic bounds stay unchanged.
+The solve continues until exact evaluated zero, no improving line-search step,
+or the existing 32-iteration limit. Some cases reach that limit and still pass
+the external accuracy gate. The prior sixteen failing EOS steps now pass. Five
+global sequence enclosures pass and 31 remain unresolved, so the complete matrix
+is still not accepted. No pressure prototype is released. Evidence:
+native-particle-newton-trial-2026-10-09.json preserves the full case summaries,
+source/raw/audit hashes and links to the preceding failed trial.
 
 Sixteen private queue-pacing runs use exact v5.46 sources, seed 17, 1512 by 760
 Retina rendering, four seconds warmup and eight seconds sampling. They verify
