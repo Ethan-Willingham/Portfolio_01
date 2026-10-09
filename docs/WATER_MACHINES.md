@@ -1,6 +1,6 @@
 # Water machines
 
-Release: toy v5.52, shared water engine v28.179. The greedy cup, standalone
+Release: toy v5.53, shared water engine v28.179. The greedy cup, standalone
 siphon and Heron's fountain are in the public scene menu, with published behavior
 measurements. Full quantitative physical acceptance and steady 60 FPS remain unverified.
 
@@ -602,3 +602,34 @@ the isolated checks, both CPU trials including raw primary call durations,
 source/report hashes, rejection decisions and recorder limits. Toy v5.52 changes
 only the runtime version label; shared native v28.179 and all rejected options
 remain unchanged. The quiet released air-pressure view remains available.
+
+
+The private cacheWaterWeights revision fails its exact original-output gate.
+Three grid/Jacobi fixtures complete nine matching steps. The quantization-edge
+fixture matches two more, then changes pressure and fine-grid velocity at
+its third step (dt 1/90). Both current-water cache tails still match the
+independent original-expression GPU probe word for word. Production and
+candidate-off remain byte-exact through all twelve attempted checkpoints.
+Standalone coefficient equality therefore does not establish unchanged consumer
+arithmetic or final outputs. The observed finite differences remain failures;
+no tolerance is relaxed.
+
+The recorder stops before the remaining twenty fixtures and all six deliberately
+skipped-refresh controls. RecordingComplete is false, no fixture GPU error is
+reported, and the exact owned browser exits. No timing, full physical suite or
+promotion is admitted. The public stencil-weight-cache-trial-2026-10-09.json
+artifact preserves all recorded raw buffers, hashes, the partial scope and
+rejection decision. Toy v5.53 changes the version label and progress evidence
+only; the shared native engine, released air solver and overlay are unchanged.
+
+
+A bounded independent saved-record review reproduces 44 checks, verifies all
+648 raw records and replays geometry and actual uniform uploads exactly. The
+pressure x difference is at most two ULPs, but it remains an exact-gate failure.
+A separate saved-auditor restriction assumes full 64-byte config writes and
+would reject the unchanged legal four-byte minimum-pressure update at offset
+32. Partial-write replay matches the actual captured uniforms. This recorder
+restriction is preserved explicitly; it neither causes nor removes the
+observed candidate pressure/velocity mismatch. The precise first divergent
+arithmetic instruction is unresolved without intermediate captures or compiler
+IR. A change in rounding context remains an inference, not a measured cause.
