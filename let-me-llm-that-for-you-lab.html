@@ -20,6 +20,9 @@
     :focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
     .row { max-width: 1500px; margin: 0 auto 36px; }
     h2 { font-size: 18px; margin: 0 0 12px; }
+    .row-head { display: flex; align-items: center; gap: 16px; margin-bottom: 12px; }
+    .row-head h2 { margin: 0; }
+    .row-head button { margin-left: auto; }
     .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 16px; }
     figure { margin: 0; min-width: 0; }
     figcaption { margin-bottom: 8px; }
@@ -32,7 +35,7 @@
 <body>
   <header>
     <h1>Let me LLM that for you: lab</h1>
-    <p>Each frame runs the real page. Previews stop before opening ChatGPT.</p>
+    <p>Scroll to a row, then press Replay row to compare its options. Each frame runs the real page.</p>
     <p class="note">Compare the look here. For timing, use the recordings or open the lab on a real device.</p>
     <div class="controls">
       <button id="replay" type="button">Replay all</button>
@@ -56,15 +59,26 @@
     let slow = false;
     for (const [title, variants] of rows) {
       const section = document.createElement('section'); section.className = 'row';
-      const heading = document.createElement('h2'); heading.textContent = title; section.append(heading);
+      const head = document.createElement('div'); head.className = 'row-head';
+      const heading = document.createElement('h2'); heading.textContent = title;
+      const replay = document.createElement('button'); replay.type = 'button'; replay.textContent = 'Replay row';
+      replay.setAttribute('aria-label', 'Replay ' + title.toLowerCase());
+      replay.addEventListener('click', () => {
+        for (const iframe of section.querySelectorAll('iframe')) iframe.contentWindow.LMLTFY_LAB?.replay();
+      });
+      head.append(heading, replay); section.append(head);
       const grid = document.createElement('div'); grid.className = 'grid'; section.append(grid);
       for (const [label, tune] of variants) {
         const figure = document.createElement('figure');
         const caption = document.createElement('figcaption'); caption.textContent = label;
+        const replayOne = document.createElement('button'); replayOne.type = 'button'; replayOne.textContent = 'Replay';
+        replayOne.setAttribute('aria-label', 'Replay ' + title.toLowerCase() + ': ' + label);
         const viewport = document.createElement('div'); viewport.className = 'viewport';
         const iframe = document.createElement('iframe'); iframe.title = title + ': ' + label;
         iframe.dataset.variant = JSON.stringify(tune); iframe.dataset.tune = JSON.stringify({ ...tune, theme: 'light' });
         iframe.src = 'let-me-llm-that-for-you.html';
+        replayOne.addEventListener('click', () => iframe.contentWindow.LMLTFY_LAB?.replay());
+        caption.append(' ', replayOne);
         viewport.append(iframe); figure.append(caption, viewport); grid.append(figure);
       }
       document.querySelector('#rows').append(section);

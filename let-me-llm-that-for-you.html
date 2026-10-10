@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-Gf8I6wKy0YTayhbzsbs1SfwcdIOMSOG/FS7dPvyXOSc=' 'sha256-sJkkfRE2ow4j9JsEJzhI/vNEuamw+Yzpz447e0mVbS0='; style-src 'sha256-roNMU8iMi0WBwd/3tqCAqWrKIX1u9Wbys+nRXIUhiR0='; img-src data:; base-uri 'none'; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-Gf8I6wKy0YTayhbzsbs1SfwcdIOMSOG/FS7dPvyXOSc=' 'sha256-Lre76c6AiquUVHt0G+bmLU6GiIk6xvqevwvlSOMni2Y='; style-src 'sha256-roNMU8iMi0WBwd/3tqCAqWrKIX1u9Wbys+nRXIUhiR0='; img-src data:; base-uri 'none'; form-action 'none'">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
@@ -11,7 +11,7 @@
   <meta name="description" content="Make a link that types their question, presses send, and opens ChatGPT.">
   <link rel="canonical" href="https://ethanwillingham.com/let-me-llm-that-for-you.html">
   <meta property="og:title" content="Let me LLM that for you">
-  <meta property="og:description" content="A link that asks their question for them. Opens ChatGPT.">
+  <meta property="og:description" content="Watch your question get typed, then continue in ChatGPT.">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/let-me-llm-that-for-you.html">
@@ -171,7 +171,7 @@
           <button id="copy" class="primary" type="button">Copy link</button>
           <button id="preview" class="quiet" type="button">Preview</button>
           <button id="share" class="quiet" type="button" hidden>Share</button>
-          <button id="edit" class="quiet" type="button">Edit</button>
+          <button id="edit" class="quiet" type="button">Edit question</button>
         </div>
         <p id="copy-status" class="hint"></p>
       </div>
@@ -585,7 +585,8 @@
         $('typed').textContent = text; $('row').scrollTop = $('row').scrollHeight;
       }
       $('placeholder').hidden = Boolean(count) && !sent;
-      $('caret').hidden = sent || t < times.click || (t > times.beat + 500 && Math.floor((t - times.beat - 500) / 500) % 2 === 1);
+      const idle = times.type + (paste ? 700 : sequence.typing);
+      $('caret').hidden = sent || t < times.click || (t > idle + 500 && Math.floor((t - idle - 500) / 500) % 2 === 1);
       $('ghost-send').classList.toggle('ready', Boolean(count) && !sent);
     }
 
@@ -598,7 +599,7 @@
       $('recipient').style.transform = '';
       const bottom = $('replica').getBoundingClientRect().bottom;
       const distance = Math.max(0, innerHeight - 88 - bottom);
-      $('recipient').style.transform = reduced ? '' : `translateY(${distance * minJerk(progress)}px)`;
+      $('recipient').style.transform = `translateY(${distance * (reduced ? Number(sent) : minJerk(progress))}px)`;
       for (const [index, bar] of [...document.querySelectorAll('.bars i')].entries()) {
         bar.style.transform = `scaleY(${reduced ? 1 : .5 + .5 * (1 + Math.sin(t / 170 - index)) / 2})`;
       }
@@ -631,6 +632,7 @@
       sequence.running = false;
       $('pointer').hidden = true;
       if (previewing) {
+        $('thinking').hidden = true;
         $('handoff').hidden = false; $('preview-note').hidden = false; $('return').hidden = false;
         say('Here, ChatGPT opens with their question.');
       } else if (USE_PASTE_STEP) {
