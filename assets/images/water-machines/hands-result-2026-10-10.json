@@ -1,0 +1,1048 @@
+{
+  "candidate": "a5c8270a",
+  "status": "Independent source, three-seed physical behavior and focused presentation grades pass. This publication enables the scoped native wall tools.",
+  "sourceRuns": [
+    "hands-native-initial-a4",
+    "hands-native-full-a2",
+    "hands-native-remaining-a1",
+    "hands-presentation-a1"
+  ],
+  "errors": [],
+  "method": "Current native GPU positions, affine, flags, aux, lifecycle slots and private previous state; no parcel writes or in-run reseed",
+  "nativeInput": {
+    "scenes": [
+      "thumb-straw",
+      "cup",
+      "siphon",
+      "heron",
+      "self-flushing-cup",
+      "tantalus"
+    ],
+    "desktopSeeds": [
+      17,
+      42,
+      913
+    ],
+    "phoneViewport": [
+      844,
+      390
+    ],
+    "twoTools": true,
+    "punchTargetCssPixels": 44,
+    "scope": "Dry pointer/cancel/Undo/Redo/keyboard, cap release, valve preservation and actual touch/camera"
+  },
+  "timing": [
+    {
+      "name": "thumb-straw-timing",
+      "method": "20-second rAF deltas, vsync off",
+      "samples": 2128,
+      "median": 16.69999999999709,
+      "p95": 17.799999999999272
+    },
+    {
+      "name": "cup-timing",
+      "method": "20-second rAF deltas, vsync off",
+      "samples": 1937,
+      "median": 16.699999999999818,
+      "p95": 17.799999999999272
+    },
+    {
+      "name": "siphon-timing",
+      "method": "20-second rAF deltas, vsync off",
+      "samples": 1641,
+      "median": 17.099999999999454,
+      "p95": 17.799999999999272
+    },
+    {
+      "name": "heron-timing",
+      "method": "20-second rAF deltas, vsync off",
+      "samples": 1582,
+      "median": 17.099999999998545,
+      "p95": 17.799999999999272
+    },
+    {
+      "name": "self-flushing-cup-timing",
+      "method": "20-second rAF deltas, vsync off",
+      "samples": 1897,
+      "median": 7.600000000002183,
+      "p95": 17.799999999999272
+    },
+    {
+      "name": "tantalus-timing",
+      "method": "20-second rAF deltas, vsync off",
+      "samples": 1830,
+      "median": 8.5,
+      "p95": 17.799999999999272
+    }
+  ],
+  "physicalStraw": [
+    {
+      "seed": 17,
+      "heldSecondsAtLeast": 60.16666666666453,
+      "heldPresent": 847,
+      "heldRetained": 825,
+      "heldFraction": 0.974025974025974,
+      "gasHoleAfterAtLeastSeconds": 30,
+      "gasHoleRetained": 0,
+      "sameWaterConserved": 847,
+      "samplesFiniteNoDeepWalls": true
+    },
+    {
+      "seed": 42,
+      "heldSecondsAtLeast": 60,
+      "heldPresent": 847,
+      "heldRetained": 825,
+      "heldFraction": 0.974025974025974,
+      "gasHoleAfterAtLeastSeconds": 30,
+      "gasHoleRetained": 0,
+      "sameWaterConserved": 847,
+      "samplesFiniteNoDeepWalls": true
+    },
+    {
+      "seed": 913,
+      "heldSecondsAtLeast": 60,
+      "heldPresent": 847,
+      "heldRetained": 825,
+      "heldFraction": 0.974025974025974,
+      "gasHoleAfterAtLeastSeconds": 30,
+      "gasHoleRetained": 0,
+      "sameWaterConserved": 847,
+      "samplesFiniteNoDeepWalls": true
+    }
+  ],
+  "wetRestoration": [
+    {
+      "seed": 17,
+      "actualEntry": {
+        "name": "wet-entry-17",
+        "r": {
+          "x": 88,
+          "y": 376,
+          "width": 8,
+          "height": 8
+        },
+        "index": 4241,
+        "state": {
+          "time": 183.86666666670513,
+          "present": 847,
+          "retained": 0,
+          "retainedFraction": 0,
+          "wet": 1,
+          "deep": [],
+          "edit": {
+            "pending": false
+          }
+        },
+        "caps": [],
+        "choice": {
+          "receiver": {
+            "x": 16,
+            "y": 288,
+            "width": 688,
+            "height": 96
+          },
+          "nearFloorParcels": 22,
+          "before": {
+            "time": 183.11666666670453,
+            "present": 847,
+            "retained": 0,
+            "retainedFraction": 0,
+            "wet": 0,
+            "deep": [],
+            "edit": {
+              "pending": false
+            }
+          },
+          "cell": {
+            "x": 88,
+            "y": 376,
+            "width": 8,
+            "height": 8
+          }
+        }
+      },
+      "capBlock": {
+        "name": "wet-cap-block-17",
+        "kind": "caps",
+        "error": "Wall restoration blocked by trapped water or a closed boundary.",
+        "bytesUnchanged": true,
+        "wallUnchanged": true,
+        "historyUnchanged": true,
+        "waterAndBodyClockGated": true,
+        "before": {
+          "time": 183.86666666670513,
+          "present": 847,
+          "retained": 0,
+          "retainedFraction": 0,
+          "wet": 1,
+          "deep": [],
+          "edit": {
+            "pending": false
+          }
+        },
+        "after": {
+          "time": 183.86666666670513,
+          "present": 847,
+          "retained": 0,
+          "retainedFraction": 0,
+          "wet": 1,
+          "deep": [],
+          "edit": {
+            "pending": false,
+            "displaced": 0,
+            "blocked": 1,
+            "workJoules": 0
+          }
+        },
+        "bodyBounds": [],
+        "cell": {
+          "x": 88,
+          "y": 376,
+          "width": 8,
+          "height": 8
+        }
+      },
+      "retry": {
+        "name": "wet-retry-17",
+        "displaced": 1,
+        "edit": {
+          "pending": false,
+          "displaced": 1,
+          "blocked": 0,
+          "workJoules": -4.870295100545263e-08
+        },
+        "before": {
+          "time": 183.86666666670513,
+          "present": 847,
+          "retained": 0,
+          "retainedFraction": 0,
+          "wet": 1,
+          "deep": [],
+          "edit": {
+            "pending": false,
+            "displaced": 0,
+            "blocked": 1,
+            "workJoules": 0
+          }
+        },
+        "after": {
+          "time": 184.966666666706,
+          "present": 847,
+          "retained": 0,
+          "retainedFraction": 0,
+          "wet": 0,
+          "deep": [],
+          "edit": {
+            "pending": false,
+            "displaced": 1,
+            "blocked": 0,
+            "workJoules": -4.870295100545263e-08
+          }
+        },
+        "slotIdentity": true,
+        "recoveryState": true,
+        "unaffectedParcels": true,
+        "clockGated": true,
+        "manualPause": true,
+        "followSeconds": 1.1000000000008754
+      },
+      "bodyBlock": {
+        "name": "wet-body-block-17",
+        "kind": "body",
+        "error": "Wall restoration blocked by trapped water or a closed boundary.",
+        "bytesUnchanged": true,
+        "wallUnchanged": true,
+        "historyUnchanged": true,
+        "waterAndBodyClockGated": true,
+        "before": {
+          "time": 188.73333333337567,
+          "present": 847,
+          "retained": 0,
+          "retainedFraction": 0,
+          "wet": 1,
+          "deep": [],
+          "edit": {
+            "pending": false
+          }
+        },
+        "after": {
+          "time": 188.73333333337567,
+          "present": 847,
+          "retained": 0,
+          "retainedFraction": 0,
+          "wet": 1,
+          "deep": [],
+          "edit": {
+            "pending": false,
+            "displaced": 0,
+            "blocked": 1,
+            "workJoules": 0
+          }
+        },
+        "bodyBounds": [
+          [
+            70.74913154077736,
+            341.6661880941269,
+            112.67264052927675,
+            383.02618809412684
+          ]
+        ],
+        "cell": {
+          "x": 88,
+          "y": 376,
+          "width": 8,
+          "height": 8
+        }
+      }
+    },
+    {
+      "seed": 42,
+      "actualEntry": {
+        "name": "wet-entry-42",
+        "r": {
+          "x": 584,
+          "y": 376,
+          "width": 8,
+          "height": 8
+        },
+        "index": 4303,
+        "state": {
+          "time": 191.83333333337814,
+          "present": 847,
+          "retained": 0,
+          "retainedFraction": 0,
+          "wet": 3,
+          "deep": [],
+          "edit": {
+            "pending": false
+          }
+        },
+        "caps": [],
+        "choice": {
+          "receiver": {
+            "x": 16,
+            "y": 288,
+            "width": 688,
+            "height": 96
+          },
+          "nearFloorParcels": 23,
+          "before": {
+            "time": 191.75000000004474,
+            "present": 847,
+            "retained": 0,
+            "retainedFraction": 0,
+            "wet": 0,
+            "deep": [],
+            "edit": {
+              "pending": false
+            }
+          },
+          "cell": {
+            "x": 584,
+            "y": 376,
+            "width": 8,
+            "height": 8
+          }
+        }
+      },
+      "capBlock": {
+        "name": "wet-cap-block-42",
+        "kind": "caps",
+        "error": "Wall restoration blocked by trapped water or a closed boundary.",
+        "bytesUnchanged": true,
+        "wallUnchanged": true,
+        "historyUnchanged": true,
+        "waterAndBodyClockGated": true,
+        "before": {
+          "time": 191.83333333337814,
+          "present": 847,
+          "retained": 0,
+          "retainedFraction": 0,
+          "wet": 3,
+          "deep": [],
+          "edit": {
+            "pending": false
+          }
+        },
+        "after": {
+          "time": 191.83333333337814,
+          "present": 847,
+          "retained": 0,
+          "retainedFraction": 0,
+          "wet": 3,
+          "deep": [],
+          "edit": {
+            "pending": false,
+            "displaced": 0,
+            "blocked": 3,
+            "workJoules": 0
+          }
+        },
+        "bodyBounds": [],
+        "cell": {
+          "x": 584,
+          "y": 376,
+          "width": 8,
+          "height": 8
+        }
+      },
+      "retry": {
+        "name": "wet-retry-42",
+        "displaced": 3,
+        "edit": {
+          "pending": false,
+          "displaced": 3,
+          "blocked": 0,
+          "workJoules": -2.629973891998816e-07
+        },
+        "before": {
+          "time": 191.83333333337814,
+          "present": 847,
+          "retained": 0,
+          "retainedFraction": 0,
+          "wet": 3,
+          "deep": [],
+          "edit": {
+            "pending": false,
+            "displaced": 0,
+            "blocked": 3,
+            "workJoules": 0
+          }
+        },
+        "after": {
+          "time": 192.933333333379,
+          "present": 847,
+          "retained": 0,
+          "retainedFraction": 0,
+          "wet": 0,
+          "deep": [],
+          "edit": {
+            "pending": false,
+            "displaced": 3,
+            "blocked": 0,
+            "workJoules": -2.629973891998816e-07
+          }
+        },
+        "slotIdentity": true,
+        "recoveryState": true,
+        "unaffectedParcels": true,
+        "clockGated": true,
+        "manualPause": true,
+        "followSeconds": 1.1000000000008754
+      },
+      "bodyBlock": {
+        "name": "wet-body-block-42",
+        "kind": "body",
+        "error": "Wall restoration blocked by trapped water or a closed boundary.",
+        "bytesUnchanged": true,
+        "wallUnchanged": true,
+        "historyUnchanged": true,
+        "waterAndBodyClockGated": true,
+        "before": {
+          "time": 196.03333333338148,
+          "present": 847,
+          "retained": 0,
+          "retainedFraction": 0,
+          "wet": 3,
+          "deep": [],
+          "edit": {
+            "pending": false
+          }
+        },
+        "after": {
+          "time": 196.03333333338148,
+          "present": 847,
+          "retained": 0,
+          "retainedFraction": 0,
+          "wet": 3,
+          "deep": [],
+          "edit": {
+            "pending": false,
+            "displaced": 0,
+            "blocked": 3,
+            "workJoules": 0
+          }
+        },
+        "bodyBounds": [
+          [
+            567.880506465345,
+            341.45084534875133,
+            609.3564211344219,
+            383.03766547947794
+          ]
+        ],
+        "cell": {
+          "x": 584,
+          "y": 376,
+          "width": 8,
+          "height": 8
+        }
+      }
+    },
+    {
+      "seed": 913,
+      "actualEntry": {
+        "name": "wet-entry-913",
+        "r": {
+          "x": 584,
+          "y": 376,
+          "width": 8,
+          "height": 8
+        },
+        "index": 4303,
+        "state": {
+          "time": 199.15000000005062,
+          "present": 847,
+          "retained": 0,
+          "retainedFraction": 0,
+          "wet": 3,
+          "deep": [],
+          "edit": {
+            "pending": false
+          }
+        },
+        "caps": [],
+        "choice": {
+          "receiver": {
+            "x": 16,
+            "y": 288,
+            "width": 688,
+            "height": 96
+          },
+          "nearFloorParcels": 24,
+          "before": {
+            "time": 199.05000000005055,
+            "present": 847,
+            "retained": 0,
+            "retainedFraction": 0,
+            "wet": 0,
+            "deep": [],
+            "edit": {
+              "pending": false
+            }
+          },
+          "cell": {
+            "x": 584,
+            "y": 376,
+            "width": 8,
+            "height": 8
+          }
+        }
+      },
+      "capBlock": {
+        "name": "wet-cap-block-913",
+        "kind": "caps",
+        "error": "Wall restoration blocked by trapped water or a closed boundary.",
+        "bytesUnchanged": true,
+        "wallUnchanged": true,
+        "historyUnchanged": true,
+        "waterAndBodyClockGated": true,
+        "before": {
+          "time": 199.15000000005062,
+          "present": 847,
+          "retained": 0,
+          "retainedFraction": 0,
+          "wet": 3,
+          "deep": [],
+          "edit": {
+            "pending": false
+          }
+        },
+        "after": {
+          "time": 199.15000000005062,
+          "present": 847,
+          "retained": 0,
+          "retainedFraction": 0,
+          "wet": 3,
+          "deep": [],
+          "edit": {
+            "pending": false,
+            "displaced": 0,
+            "blocked": 3,
+            "workJoules": 0
+          }
+        },
+        "bodyBounds": [],
+        "cell": {
+          "x": 584,
+          "y": 376,
+          "width": 8,
+          "height": 8
+        }
+      },
+      "retry": {
+        "name": "wet-retry-913",
+        "displaced": 3,
+        "edit": {
+          "pending": false,
+          "displaced": 3,
+          "blocked": 0,
+          "workJoules": -2.2142549482850882e-07
+        },
+        "before": {
+          "time": 199.15000000005062,
+          "present": 847,
+          "retained": 0,
+          "retainedFraction": 0,
+          "wet": 3,
+          "deep": [],
+          "edit": {
+            "pending": false,
+            "displaced": 0,
+            "blocked": 3,
+            "workJoules": 0
+          }
+        },
+        "after": {
+          "time": 200.2500000000515,
+          "present": 847,
+          "retained": 0,
+          "retainedFraction": 0,
+          "wet": 0,
+          "deep": [],
+          "edit": {
+            "pending": false,
+            "displaced": 3,
+            "blocked": 0,
+            "workJoules": -2.2142549482850882e-07
+          }
+        },
+        "slotIdentity": true,
+        "recoveryState": true,
+        "unaffectedParcels": true,
+        "clockGated": true,
+        "manualPause": true,
+        "followSeconds": 1.1000000000008754
+      },
+      "bodyBlock": {
+        "name": "wet-body-block-913",
+        "kind": "body",
+        "error": "Wall restoration blocked by trapped water or a closed boundary.",
+        "bytesUnchanged": true,
+        "wallUnchanged": true,
+        "historyUnchanged": true,
+        "waterAndBodyClockGated": true,
+        "before": {
+          "time": 203.36666666672065,
+          "present": 847,
+          "retained": 0,
+          "retainedFraction": 0,
+          "wet": 3,
+          "deep": [],
+          "edit": {
+            "pending": false
+          }
+        },
+        "after": {
+          "time": 203.36666666672065,
+          "present": 847,
+          "retained": 0,
+          "retainedFraction": 0,
+          "wet": 3,
+          "deep": [],
+          "edit": {
+            "pending": false,
+            "displaced": 0,
+            "blocked": 3,
+            "workJoules": 0
+          }
+        },
+        "bodyBounds": [
+          [
+            566.3950079226365,
+            341.2656000399779,
+            608.4514822138584,
+            382.62560003997794
+          ]
+        ],
+        "cell": {
+          "x": 584,
+          "y": 376,
+          "width": 8,
+          "height": 8
+        }
+      }
+    }
+  ],
+  "nominalPhone": {
+    "name": "phone-nominal-composition",
+    "viewport": {
+      "width": 844,
+      "height": 390
+    },
+    "camera": {
+      "zoom": 1,
+      "panX": 0,
+      "panY": 0,
+      "scale": 0.6682692307692307,
+      "baseScale": 0.6682692307692307,
+      "width": 844,
+      "height": 390,
+      "maxPanX": 0,
+      "maxPanY": 0
+    },
+    "toy": {
+      "hidden": false,
+      "display": "block",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 844,
+        "height": 390,
+        "top": 0,
+        "right": 844,
+        "bottom": 390,
+        "left": 0
+      }
+    },
+    "stage": {
+      "hidden": false,
+      "display": "block",
+      "rect": {
+        "x": 181.421875,
+        "y": 8.875,
+        "width": 481.15380859375,
+        "height": 267.30767822265625,
+        "top": 8.875,
+        "right": 662.57568359375,
+        "bottom": 276.18267822265625,
+        "left": 181.421875
+      }
+    },
+    "primary": {
+      "hidden": false,
+      "display": "flex",
+      "disabled": false,
+      "rect": {
+        "x": 10,
+        "y": 339.25,
+        "width": 120,
+        "height": 44,
+        "top": 339.25,
+        "right": 130,
+        "bottom": 383.25,
+        "left": 10
+      }
+    },
+    "punch": {
+      "hidden": false,
+      "display": "flex",
+      "disabled": false,
+      "rect": {
+        "x": 413,
+        "y": 128,
+        "width": 398,
+        "height": 44,
+        "top": 128,
+        "right": 811,
+        "bottom": 172,
+        "left": 413
+      }
+    },
+    "undo": {
+      "hidden": false,
+      "display": "flex",
+      "disabled": false,
+      "rect": {
+        "x": 413,
+        "y": 268,
+        "width": 55.140625,
+        "height": 44,
+        "top": 268,
+        "right": 468.140625,
+        "bottom": 312,
+        "left": 413
+      }
+    },
+    "status": "Historical failed frame:267.308pixels, superseded by the focused presentation runs below."
+  },
+  "media": {
+    "file": "hands-stage-2026-10-10.webp",
+    "layout": "Four columns, first eight frames held, next eight after real gas-side punch",
+    "cropSourcePixels": [
+      1400,
+      112,
+      1810,
+      740
+    ],
+    "framePixels": [
+      180,
+      276
+    ],
+    "frames": [
+      {
+        "index": 0,
+        "source": "hands-cycle-0.webp",
+        "simulationSeconds": 7.566666666666645,
+        "retained": 825,
+        "present": 847
+      },
+      {
+        "index": 1,
+        "source": "hands-cycle-1.webp",
+        "simulationSeconds": 15.066666666666995,
+        "retained": 825,
+        "present": 847
+      },
+      {
+        "index": 2,
+        "source": "hands-cycle-2.webp",
+        "simulationSeconds": 22.583333333333332,
+        "retained": 825,
+        "present": 847
+      },
+      {
+        "index": 3,
+        "source": "hands-cycle-3.webp",
+        "simulationSeconds": 30.09999999999957,
+        "retained": 825,
+        "present": 847
+      },
+      {
+        "index": 4,
+        "source": "hands-cycle-4.webp",
+        "simulationSeconds": 37.616666666665814,
+        "retained": 825,
+        "present": 847
+      },
+      {
+        "index": 5,
+        "source": "hands-cycle-5.webp",
+        "simulationSeconds": 45.133333333332054,
+        "retained": 825,
+        "present": 847
+      },
+      {
+        "index": 6,
+        "source": "hands-cycle-6.webp",
+        "simulationSeconds": 52.64999999999829,
+        "retained": 825,
+        "present": 847
+      },
+      {
+        "index": 7,
+        "source": "hands-cycle-7.webp",
+        "simulationSeconds": 60.16666666666453,
+        "retained": 825,
+        "present": 847
+      },
+      {
+        "index": 8,
+        "source": "hands-event-0.webp",
+        "simulationSeconds": 60.28333333333119,
+        "retained": 818,
+        "present": 847
+      },
+      {
+        "index": 9,
+        "source": "hands-event-1.webp",
+        "simulationSeconds": 60.39999999999785,
+        "retained": 785,
+        "present": 847
+      },
+      {
+        "index": 10,
+        "source": "hands-event-2.webp",
+        "simulationSeconds": 60.51666666666451,
+        "retained": 704,
+        "present": 847
+      },
+      {
+        "index": 11,
+        "source": "hands-event-3.webp",
+        "simulationSeconds": 60.63333333333117,
+        "retained": 600,
+        "present": 847
+      },
+      {
+        "index": 12,
+        "source": "hands-event-4.webp",
+        "simulationSeconds": 60.74999999999783,
+        "retained": 462,
+        "present": 847
+      },
+      {
+        "index": 13,
+        "source": "hands-event-5.webp",
+        "simulationSeconds": 60.86666666666449,
+        "retained": 308,
+        "present": 847
+      },
+      {
+        "index": 14,
+        "source": "hands-event-6.webp",
+        "simulationSeconds": 60.98333333333115,
+        "retained": 121,
+        "present": 847
+      },
+      {
+        "index": 15,
+        "source": "hands-event-7.webp",
+        "simulationSeconds": 61.09999999999781,
+        "retained": 0,
+        "present": 847
+      }
+    ],
+    "limits": "The strip uses only a visible stage excerpt from raw captures, with no HUD. Raw renderless-step captures retain stale held100% and flow0 footer readings; those readings are not evidence. Event sample spacing is approximately 0.1167 submitted solver seconds, not separately retained native float32 timestamps or exact video intervals."
+  },
+  "limits": [
+    "The accepted cup and straw enable the editor by default. Original cup, siphon and Heron require hands=1; unaccepted Tantalus requires lab=1 and hands=1.",
+    "Restoration supports only one pressure cell and adjacent exits, not arbitrary builder history.",
+    "Mismatched pressure grids, capped terrain or invalid/more than16 body bounds reject.",
+    "Existing valves can open; larger valve closing seats are unsupported.",
+    "Signed edit work covers parcel kinetic and potential energy, excluding gas and affine energy.",
+    "Raw retry after.time is the later formatting clock after the 1.1-second wall follow-up; its native buffers were captured immediately after restoration, without an independent saved snapshot timestamp."
+  ],
+  "physicsCandidate": "4226d32b54a05858d48c470eff49f68c2180b6d3",
+  "presentation": {
+    "captureCandidate": "63666c70",
+    "finalSourceCandidate": "a5c8270a",
+    "minorSourceOnlyCorrection": "An explicit empty scene parameter uses Original routing rather than the no-query native default.",
+    "method": "Nominal zoom1/pan0, actual phone emulation844x390, paused complete apparatus; a closed panel and Build panel captured for each native route.",
+    "phones": [
+      {
+        "route": "default-phone",
+        "scene": "self-flushing-cup",
+        "stage": {
+          "x": 122,
+          "y": 22,
+          "width": 600,
+          "height": 333.33331298828125,
+          "top": 22,
+          "right": 722,
+          "bottom": 355.33331298828125,
+          "left": 122
+        },
+        "primary": {
+          "height": 44,
+          "bottom": 388
+        },
+        "tools": [
+          {
+            "tool": "poke",
+            "height": 52,
+            "width": 48
+          },
+          {
+            "tool": "build",
+            "height": 52,
+            "width": 48
+          }
+        ]
+      },
+      {
+        "route": "self-flushing-cup-phone",
+        "scene": "self-flushing-cup",
+        "stage": {
+          "x": 122,
+          "y": 22,
+          "width": 600,
+          "height": 333.33331298828125,
+          "top": 22,
+          "right": 722,
+          "bottom": 355.33331298828125,
+          "left": 122
+        },
+        "primary": {
+          "height": 44,
+          "bottom": 388
+        },
+        "tools": [
+          {
+            "tool": "poke",
+            "height": 52,
+            "width": 48
+          },
+          {
+            "tool": "build",
+            "height": 52,
+            "width": 48
+          }
+        ]
+      },
+      {
+        "route": "thumb-straw-phone",
+        "scene": "thumb-straw",
+        "stage": {
+          "x": 110.28125,
+          "y": 0,
+          "width": 623.4375,
+          "height": 346.35418701171875,
+          "top": 0,
+          "right": 733.71875,
+          "bottom": 346.35418701171875,
+          "left": 110.28125
+        },
+        "primary": {
+          "height": 44,
+          "bottom": 383.25
+        },
+        "tools": [
+          {
+            "tool": "poke",
+            "height": 52,
+            "width": 48
+          },
+          {
+            "tool": "build",
+            "height": 52,
+            "width": 48
+          }
+        ]
+      }
+    ],
+    "publicRoutes": [
+      {
+        "route": "default-phone",
+        "scene": "self-flushing-cup",
+        "editor": true
+      },
+      {
+        "route": "self-flushing-cup-phone",
+        "scene": "self-flushing-cup",
+        "editor": true
+      },
+      {
+        "route": "thumb-straw-phone",
+        "scene": "thumb-straw",
+        "editor": true
+      },
+      {
+        "route": "cup-desktop",
+        "scene": "cup",
+        "editor": false
+      },
+      {
+        "route": "cup-hands-desktop",
+        "scene": "cup",
+        "editor": true
+      },
+      {
+        "route": "siphon-desktop",
+        "scene": "siphon",
+        "editor": false
+      },
+      {
+        "route": "siphon-hands-desktop",
+        "scene": "siphon",
+        "editor": true
+      },
+      {
+        "route": "heron-desktop",
+        "scene": "heron",
+        "editor": false
+      },
+      {
+        "route": "heron-hands-desktop",
+        "scene": "heron",
+        "editor": true
+      },
+      {
+        "route": "tantalus-desktop",
+        "scene": "tantalus",
+        "editor": false
+      }
+    ]
+  },
+  "toyVersion": "v5.65"
+}
