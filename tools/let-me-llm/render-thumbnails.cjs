@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Render the wordless artwork with this process's own Chrome for Testing.
+// Render the artwork with this process's own Chrome for Testing.
 // Run: node tools/let-me-llm/render-thumbnails.cjs [evidence-directory] [--homepage-only]
 const assert = require('node:assert/strict');
 const crypto = require('node:crypto');
@@ -45,7 +45,8 @@ async function render(width, height, suffix, source) {
       return { text: document.body.innerText.trim(), composerRadius: getComputedStyle(composer).borderRadius, sendRadius: getComputedStyle(send).borderRadius, background: getComputedStyle(document.body).backgroundColor, pointerOnSend: p.left + 3 >= s.left && p.left + 3 <= s.right && p.top + 2 >= s.top && p.top + 2 <= s.bottom };
     });
     const homepage = source === homeSource;
-    assert.deepEqual(state, { text: '', composerRadius: '26px', sendRadius: '12px', background: homepage ? 'rgb(23, 23, 23)' : 'rgb(255, 255, 255)', pointerOnSend: true });
+    const text = homepage ? 'Let me LLM\nthat for you\n\nStep 2: Press send\n\nHow many ounces\nare in a cup?' : '';
+    assert.deepEqual(state, { text, composerRadius: '26px', sendRadius: '12px', background: homepage ? 'rgb(23, 23, 23)' : 'rgb(255, 255, 255)', pointerOnSend: true });
     const basename = `let-me-llm-that-for-you${suffix}`;
     const jpg = path.join(assets, basename + '.jpg');
     await page.screenshot({ path: jpg, type: 'jpeg', quality: 92 });
@@ -56,7 +57,7 @@ async function render(width, height, suffix, source) {
       execFileSync('cwebp', ['-quiet', '-q', '90', jpg, '-o', webp]);
       recordImage(webp, width, height);
     }
-    report.checks.push(`${width}x${height}: wordless ${homepage ? 'dark chat with question bubble and thinking bars' : 'light composer'}, 26px composer radius, 12px send radius, pointer on send`);
+    report.checks.push(`${width}x${height}: ${homepage ? 'dark tool with title, step caption and sample question' : 'wordless light composer'}, 26px composer radius, 12px send radius, pointer on send`);
   } finally { await context.close(); }
 }
 
@@ -65,11 +66,11 @@ async function render(width, height, suffix, source) {
   fs.mkdirSync(evidence, { recursive: true });
   try {
     browser = await playwright.chromium.launch({ headless: true, executablePath: report.browser });
-    await render(600, 400, '-tool', homeSource);
+    await render(600, 400, '-text', homeSource);
     if (!process.argv.includes('--homepage-only')) await render(1200, 630, '-og', shareSource);
     assert.deepEqual(report.errors, []);
     report.passed = true;
-    console.log('Rendered wordless homepage JPG/WebP' + (process.argv.includes('--homepage-only') ? '.' : ' and OG JPG.'));
+    console.log('Rendered homepage JPG/WebP' + (process.argv.includes('--homepage-only') ? '.' : ' and OG JPG.'));
   } catch (error) {
     report.passed = false;
     report.failure = error.stack || String(error);

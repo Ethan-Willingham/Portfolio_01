@@ -6,70 +6,42 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Let me LLM homepage thumbnail source</title>
   <style>
-    /* The tool's dark sent state, cropped for a wordless homepage picture. */
+    /* The tool just before send, with type and spacing adjusted for a thumbnail. */
     * { box-sizing: border-box; }
     html, body { margin: 0; width: 100%; height: 100%; background: #171717; }
-    body { display: grid; place-items: center; }
-    .chat { position: relative; width: 512px; height: 312px; }
-    .bubble {
-      position: absolute; top: 0; right: 0; width: 348px; padding: 26px 28px;
-      border: 1px solid #2c2c2c; border-radius: 20px; background: #262626;
+    body {
+      display: grid; place-items: center; color: #ececec;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     }
-    .line { display: flex; align-items: center; gap: 9px; height: 10px; }
-    .line + .line { margin-top: 17px; }
-    .word { display: block; height: 8px; border-radius: 2px; background: #ececec; }
-    .question .word:nth-child(1) { width: 52px; }
-    .question .word:nth-child(2) { width: 38px; }
-    .question .word:nth-child(3) { width: 76px; }
-    .question .word:nth-child(4) { width: 55px; }
-    .question-end .word:nth-child(1) { width: 88px; }
-    .question-end .word:nth-child(2) { width: 62px; }
-    .question-end .word:nth-child(3) { width: 35px; }
-    .thinking {
-      position: absolute; top: 137px; left: 4px;
-      display: flex; align-items: center; gap: 15px; height: 34px; color: #a3a3a3;
+    .chat { position: relative; width: 512px; height: 286px; }
+    h1 {
+      margin: 0; font-size: 44px; font-weight: 600; line-height: 1.15;
+      letter-spacing: -.015em; text-align: center;
     }
-    .bars { display: flex; align-items: center; gap: 5px; height: 34px; }
-    .bars i { display: block; width: 5px; border-radius: 2px; background: currentColor; }
-    .bars i:nth-child(1) { height: 19px; }
-    .bars i:nth-child(2) { height: 31px; }
-    .bars i:nth-child(3) { height: 24px; }
-    .thinking .word { height: 7px; background: currentColor; }
-    .thinking .word:first-child { width: 72px; }
-    .thinking .word:last-child { width: 60px; }
+    .caption { margin: 32px 0 23px; color: #a3a3a3; font-size: 22px; line-height: 28px; text-align: center; }
     .composer {
-      position: absolute; bottom: 0; left: 0; width: 100%; height: 80px;
+      position: relative; width: 100%; height: 102px;
       border: 1px solid #3a3a3a; border-radius: 26px; background: #171717;
       box-shadow: 0 5px 20px rgb(0 0 0 / 4%);
     }
-    .placeholder { position: absolute; left: 24px; top: 35px; }
-    .placeholder .word { height: 7px; background: #858585; }
-    .placeholder .word:nth-child(1) { width: 40px; }
-    .placeholder .word:nth-child(2) { width: 78px; }
-    .placeholder .word:nth-child(3) { width: 48px; }
+    .question { margin: 14px 80px 14px 24px; font-size: 28px; line-height: 36px; }
     .send {
       position: absolute; right: 14px; bottom: 14px; display: grid; place-items: center;
       width: 44px; height: 44px; border-radius: 12px; background: #ececec; color: #171717;
     }
     .send svg { width: 23px; height: 23px; }
     .pointer {
-      position: absolute; left: calc(100% - 42px); top: 45px; width: 44px; height: 55px;
+      position: absolute; left: calc(100% - 42px); bottom: -20px; width: 44px; height: 55px;
       filter: drop-shadow(0 2px 2px rgb(0 0 0 / 20%));
     }
   </style>
 </head>
 <body>
   <div class="chat" aria-hidden="true">
-    <div class="bubble">
-      <div class="line question"><i class="word"></i><i class="word"></i><i class="word"></i><i class="word"></i></div>
-      <div class="line question-end"><i class="word"></i><i class="word"></i><i class="word"></i></div>
-    </div>
-    <div class="thinking">
-      <div class="bars"><i></i><i></i><i></i></div>
-      <div class="line"><i class="word"></i><i class="word"></i></div>
-    </div>
+    <h1>Let me LLM<br>that for you</h1>
+    <p class="caption">Step 2: Press send</p>
     <div class="composer">
-      <div class="line placeholder"><i class="word"></i><i class="word"></i><i class="word"></i></div>
+      <p class="question">How many ounces<br>are in a cup?</p>
       <div class="send"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h12m-5-5 5 5-5 5"/></svg></div>
       <svg class="pointer" viewBox="0 0 24 30" fill="#1c1c1c" stroke="#ffffff" stroke-width="1.5" stroke-linejoin="round"><path d="M3 2v20l6-5 5 10 4-2-5-10h9z"/></svg>
     </div>

@@ -123,7 +123,9 @@ It has no site chrome, external assets, analytics, cookies or storage. A questio
 link plays two steps, then hands off to ChatGPT only by owner choice. Claude's
 general web prompt link was reported broken, and Gemini has no verified equivalent.
 Grok remains excluded by owner choice. Do not add a picker or another destination.
-The wordless thumbnail sources and renderer live in `tools/let-me-llm/`.
+The thumbnail sources and renderer live in `tools/let-me-llm/`. The owner
+requested real page text in the homepage thumbnail on 2026-10-09; its type and
+spacing are adjusted for the card. The share image remains wordless.
 The owner passed Gate 3 on 2026-10-09. The homepage card and search entry are
 published; regenerate them from `tools/homepage-posts.json` when changing the card.
 
