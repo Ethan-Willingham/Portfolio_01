@@ -13137,6 +13137,7 @@
   function clearWorldAll(preserveThumbInput) {
     if(toySound)toySound.setActive(false);
     if(toyBoundary){toyBoundary.destroy();toyBoundary=null;}
+    handsController=null;handsSelection=null;handsThumbRelease=false;
     if(pointerDown && !(preserveThumbInput && pointerThumb))releasePointer({pointerId:pointerId},true);
     cancelBuildGesture();machineBuilder=null;valveSeats=null;manualValves.clear();
     machineState=null;instrumentSample=null;
@@ -13203,6 +13204,11 @@
     if(machineState)machineState.energyModified=true;
     render();liquidWGPU.draw();
   }
+  function handsReadyNow(){
+    return !!(handsRequested && handsController && machineState && machineState.ready && fixedMachineScene(currentScene) &&
+      toyBoundary && toyBoundary.ready && !toyBoundary.error && liquidWGPU && !liquidWGPU.materialStateError &&
+      liquidWGPU.toyNativeExtension===toyBoundary);
+  }
   function enableHandsHistory(){
     if(!handsRequested || !toyBoundary || !toyBoundary.ready || !airModel || airModel.cellSize!==TILE)
       throw new Error('Hole punch needs a native machine with matching wall and pressure cells.');
@@ -13214,6 +13220,10 @@
         syncRunning();
       },
       settled:function(){return liquidWGPU.queue.onSubmittedWorkDone();},
+      certify:function(){
+        if(!handsReadyNow())throw new Error(toyBoundary && toyBoundary.error || liquidWGPU.materialStateError || 'The native wall editor was retired.');
+        toyBoundary.validateHost();
+      },
       restore:function(cell){
         var bodies=jelloBodies.map(function(b){
           var left=Infinity,top=Infinity,right=-Infinity,bottom=-Infinity;
@@ -13236,7 +13246,7 @@
   function setBuildTool(kind,options){
     if(handsRequested){
       if(kind!=='punch')throw new Error('This lab supports Hole punch and its Undo only.');
-      if(!handsController || !machineState || !machineState.ready)throw new Error('Hole punch needs a ready cup, siphon, fountain or native machine.');
+      if(!handsReadyNow())throw new Error('Hole punch needs a ready cup, siphon, fountain or native machine.');
       cancelBuildGesture();buildKind=kind;setTool('build');return {kind:kind,options:{}};
     }
     if(nativeMachineScene(currentScene))throw new Error('Choose an original scene to build.');
@@ -13255,7 +13265,7 @@
   }
   function beginBuildGesture(x,y){
     if(handsRequested){
-      if(!handsController || handsPending)return;
+      if(!handsReadyNow() || handsPending)return;
       handsSelection=window.WSSHands.pickWall({x:x,y:y},walls,gridW,gridH,TILE,fitScale,valveSeats);
       buildGesture={kind:'punch',start:{x:x,y:y},end:{x:x,y:y},points:[]};return;
     }
@@ -13275,12 +13285,12 @@
     var gesture=buildGesture;buildGesture=null;
     if(handsRequested){
       try{
-        if(!handsController || handsPending || !handsSelection)throw new Error('Choose a solid wall cell.');
+        if(!handsReadyNow() || handsPending || !handsSelection)throw new Error('Choose a solid wall cell.');
         var cell=handsSelection;
         if(!walls[cell.index] || valveSeats && valveSeats[cell.index])throw new Error('That wall cell is no longer available.');
         machineBuilder.begin('Hole punch');machineBuilder.vent({x:cell.x,y:cell.y,width:TILE,height:TILE},true);machineBuilder.commit();
         publishHandsWalls();buildError=null;
-      }catch(error){buildError=error.message;}
+      }catch(error){if(machineBuilder && machineBuilder._pending)machineBuilder.cancel();buildError=error.message;}
       return;
     }
     try{
@@ -13303,7 +13313,7 @@
   }
   function buildUndo(redo){
     if(handsRequested){
-      if(!handsController || handsPending)return Promise.reject(new Error('Wait for the native wall setup.'));
+      if(!handsReadyNow() || handsPending)return Promise.reject(new Error('Wait for the native wall setup.'));
       cancelBuildGesture();return (redo ? machineBuilder.redo() : machineBuilder.undo()).then(function(result){buildError=null;return result;}).catch(function(error){buildError=error.message;throw error;});
     }
     if(nativeMachineScene(currentScene))return false;
@@ -13768,7 +13778,9 @@
   function scene(name) {
     if(handsPending){buildError='Wait for the wall restoration to finish.';return;}
     var size=machineSize(name);
-    if(toyBootReady && ((fixedMachineScene(name) && (worldW!==size.w || worldH!==size.h)) || nativeMachineScene(name)!==!!bootMachine || (bootMachine && name!==bootMachine.id))){
+    if(toyBootReady && ((handsRequested && toyBoundary && !fixedMachineScene(name)) ||
+        (fixedMachineScene(name) && (worldW!==size.w || worldH!==size.h)) || nativeMachineScene(name)!==!!bootMachine || (bootMachine && name!==bootMachine.id))){
+      handsController=null;handsSelection=null;handsThumbRelease=false;
       thumbWanted=false;if(toySound)toySound.setActive(false);
       // Engine domains are fixed at boot. Scene selection already replaces
       // the current apparatus; open its canonical domain before construction.
@@ -14454,7 +14466,7 @@
       builder: function () { return machineBuilder; },
       buildTool:setBuildTool,
       buildState:function(){return {kind:buildKind,options:Object.assign({},buildOptions),error:buildError,sharing:!!sharedBuildData,
-        handsLab:handsRequested,handsReady:!!handsController,pending:handsPending,wallEdit:toyBoundary ? toyBoundary.wallEditStats() : null};},
+        handsLab:handsRequested,handsReady:handsReadyNow(),pending:handsPending,wallEdit:toyBoundary ? toyBoundary.wallEditStats() : null};},
       undo:function(){return buildUndo(false);},redo:function(){return buildUndo(true);},
       shareBuild:shareBuild,loadBuild:loadBuild,
       valve:setManualValve,

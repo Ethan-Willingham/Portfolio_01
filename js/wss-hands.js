@@ -40,6 +40,7 @@
           var cell=global.WSSBoundaries.restorationCell(builder.walls,target.walls,builder.width,builder.height,builder.tile);
           await hooks.restore(cell);
         }else await hooks.settled();
+        hooks.certify();
         // History and the solid grid remain untouched until native projection finishes.
         var parts=target.parts.map(function(part){
           // Hole history cannot re-close a larger existing valve seat.

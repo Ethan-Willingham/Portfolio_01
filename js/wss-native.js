@@ -236,6 +236,7 @@ fn editPathClear(a:vec2<f32>,b:vec2<f32>)->bool{
 @compute @workgroup_size(256)
 fn stageWall(@builtin(global_invocation_id) id:vec3<u32>){
  let i=id.x;if(i>=cfg.counts.x){return;}wallCandidates[i]=vec4<f32>(0.0);
+ if(atomicLoad(&ledger[13])!=0u){atomicAdd(&wallStatus[0],1u);return;}
  if(slots[i].x==0u){return;}let p=pos[i];
  if(!finite(p)){atomicAdd(&wallStatus[0],1u);return;}
  let r=wallEdit.rect;if(p.x<r.x||p.y<r.y||p.x>=r.x+r.z||p.y>=r.y+r.w){return;}
@@ -265,9 +266,10 @@ fn applyWall(@builtin(global_invocation_id) id:vec3<u32>){
 }
 @compute @workgroup_size(1)
 fn finishWall(){
- if(atomicLoad(&wallStatus[0])!=0u){return;}var work=0.0;
+ if(atomicLoad(&wallStatus[0])!=0u){atomicStore(&wallStatus[3],wallEdit.meta.z);return;}var work=0.0;
  for(var i=0u;i<cfg.counts.x;i=i+1u){work=work+wallCandidates[i].w;}
  atomicStore(&wallStatus[2],bitcast<u32>(work));put(18u,value(18u)+work);
+ atomicStore(&wallStatus[3],wallEdit.meta.z);
 }
 `;
 
@@ -363,7 +365,7 @@ fn finishWall(){
     var bindings={initialize:[0,1,2,3,4,5,6,9],beginFrame:[0,6],drainChunks:[0,1,2,3,4,5,6,9,10,13],prefixChunks:[0,6,13],scatterFree:[0,5,7,13],
       clearAtlas:[0,8],splatAtlas:[0,1,5,8],admit:[0,1,2,3,4,5,6,7,8,9,11,12],saveStep:[0,1,5,9],
       constrain:[0,1,2,5,6,9,10],saveCollision:[0,1,3,5,6,9,11,12],impacts:[0,1,3,5,6,9,10,11,12]};
-    if(options.hands)Object.assign(bindings,{stageWall:[0,1,5,11,12,14,15,16],applyWall:[0,1,2,3,4,5,9,15,16],finishWall:[0,6,15,16]});
+    if(options.hands)Object.assign(bindings,{stageWall:[0,1,5,6,11,12,14,15,16],applyWall:[0,1,2,3,4,5,9,15,16],finishWall:[0,6,15,16]});
     var module=device.createShaderModule({label:'toy.native.boundaries',code:SOURCE}), pipes={}, groups={};
     Object.keys(bindings).forEach(function(name){
       if(bindings[name].filter(function(b){return b!==0 && b!==12 && b!==14;}).length>10)throw new Error('Native stage exceeds ten storage bindings.');
@@ -423,7 +425,11 @@ fn finishWall(){
         }
       }).catch(function(e){row.busy=false;if(!destroyed){extension.error=String(e.message||e);extension.ready=false;instance.materialStateError=extension.error;}});
     });}
-    var restoring=false,lastEdit=null,wallResult=options.hands ? readBuffer('toy.native.wallResult',16) : null;
+    var restoring=false,lastEdit=null,restoreId=0,wallResult=options.hands ? readBuffer('toy.native.wallResult',16) : null;
+    function healthyWallEdit(){
+      if(destroyed || !extension.ready || extension.error || instance.materialStateError)
+        throw new Error(extension.error || instance.materialStateError || 'The native wall editor is not ready.');
+    }
     function syncTerrain(){
       var t=instance.terrain,hook=instance.liquid.fillTerrainSolid;
       if(!t || t.capped || typeof hook!=='function')throw new Error('Wall editing needs the full native terrain region.');
@@ -495,21 +501,33 @@ fn finishWall(){
         bodies=bodies || [];
         if(bodies.length>16 || bodies.some(function(r){return !Array.isArray(r)||r.length!==4||!r.every(Number.isFinite)||r[0]>r[2]||r[1]>r[3];}))
           throw new Error('The live slime bounds cannot be guarded for this wall edit.');
-        restoring=true;
+        restoring=true;var scope=false,certified=false;
         try{
-          await queue.onSubmittedWorkDone();if(destroyed)throw new Error('Wall edit was retired.');extension.validateHost();syncTerrain();
+          await queue.onSubmittedWorkDone();healthyWallEdit();extension.validateHost();
+          device.pushErrorScope('validation');scope=true;syncTerrain();
           var editBytes=new ArrayBuffer(288),ef=new Float32Array(editBytes),eu=new Uint32Array(editBytes);
-          ef.set([cell.x,cell.y,cell.width,cell.height]);eu[4]=cell.neighbors;eu[5]=bodies.length;
+          restoreId=(restoreId+1)>>>0 || 1;
+          ef.set([cell.x,cell.y,cell.width,cell.height]);eu[4]=cell.neighbors;eu[5]=bodies.length;eu[6]=restoreId;
           bodies.forEach(function(r,i){ef.set(r,8+i*4);});queue.writeBuffer(editConfig,0,editBytes);
           var result=wallResult,encoder=device.createCommandEncoder({label:'toy.native.restoreWall'});
           encoder.clearBuffer(editStatus);encode(encoder,'stageWall',count);encode(encoder,'applyWall',count);serial(encoder,'finishWall');
           encoder.copyBufferToBuffer(editStatus,0,result.buffer,0,16);queue.submit([encoder.finish()]);
+          await queue.onSubmittedWorkDone();var validation=await device.popErrorScope();scope=false;
+          if(validation)throw new Error('Native wall restoration GPU validation: '+validation.message);
+          healthyWallEdit();
           await result.buffer.mapAsync(GPUMapMode.READ);var data=result.buffer.getMappedRange().slice(0);result.buffer.unmap();
-          if(destroyed)throw new Error('Wall edit was retired.');var u=new Uint32Array(data),f=new Float32Array(data);
+          healthyWallEdit();var u=new Uint32Array(data),f=new Float32Array(data);
+          if(u[3]!==restoreId)throw new Error('Native wall restoration did not complete its transaction.');
+          certified=true;
           lastEdit={displaced:u[1],blocked:u[0],workJoules:f[2]};
           if(u[0])throw new Error('Wall restoration blocked by trapped water or a closed boundary.');
           return Object.assign({},lastEdit);
-        }finally{restoring=false;}
+        }catch(error){
+          if(!certified || extension.error || instance.materialStateError || !extension.ready){
+            extension.error=String(error.message || error);extension.ready=false;instance.materialStateError=extension.error;
+          }
+          throw error;
+        }finally{try{if(scope)await device.popErrorScope();}finally{restoring=false;}}
       },
       wallEditStats:function(){return Object.assign({pending:restoring},lastEdit);},
       setEventConsumer:function(fn){consumer=typeof fn==='function'?fn:null;},
