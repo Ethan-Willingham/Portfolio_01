@@ -558,7 +558,10 @@ try{
     seedScript=(await send('Page.addScriptToEvaluateOnNewDocument',{source:`(()=>{let state=${seed>>>0};Math.random=()=>{state=(Math.imul(state,1664525)+1013904223)>>>0;return state/4294967296;};})()`})).identifier;
     const declaredToken=c.world?declaredWorldToken(c.world):null;
     const priorOrigin=await evaluate('performance.timeOrigin');
-    await send('Page.navigate',{url:base+'/archive/water-smoke-slime/water-smoke-slime.html?ownedCapture='+id+(declaredToken?'&build='+encodeURIComponent(declaredToken):'')});
+    // Boot the actual apparatus while paused. Starting every case in Falls
+    // first adds an unrelated water self-test and a different initial world.
+    const startup=declaredToken?'&build='+encodeURIComponent(declaredToken):'&scene='+c.machine+'&paused=1';
+    await send('Page.navigate',{url:base+'/archive/water-smoke-slime/water-smoke-slime.html?ownedCapture='+id+startup});
     let ready=false;for(let n=0;n<600;n++){try{ready=await evaluate(`performance.timeOrigin!==${priorOrigin} && document.readyState==='complete' && !!window.__toy && __toy.stats().waterState==='on'`);}catch{}if(ready)break;await sleep(100);}assert(ready,'Fresh document and hardware water boot');
     await evaluate('__toy.pause(true)');
     if(c.nativeParams)await evaluate(`Object.entries(${JSON.stringify(c.nativeParams)}).forEach(([key,value])=>__toy.liquid().setSimParam(key,value))`);

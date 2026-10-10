@@ -1,6 +1,6 @@
 # Water machines
 
-Release: toy v5.56, shared water engine v28.179. The greedy cup, standalone
+Release: toy v5.57, shared water engine v28.179. The greedy cup, standalone
 siphon and Heron's fountain are in the public scene menu, with published behavior
 measurements. Full quantitative physical acceptance and steady 60 FPS remain unverified.
 
@@ -773,3 +773,24 @@ The actual browser air-view regression boots and plays all three machines and
 checks both synchronized overlay controls without errors. Its short frame samples
 do not establish sustained 60 FPS or phone performance. Evidence:
 assets/images/water-machines/native-baffle-and-startup-progress-2026-10-09.json.
+
+
+## Native material carrier and air-cell walls (October 9, 2026)
+
+Toy v5.57 publishes the AIR closed-wall reconstruction and its consistent affine derivative, retaining moving closed-face speed. Shared native v28.179, gravity 250, time scale 1.55, gas ownership, pressure settings and MAC remain unchanged. The progress section keeps the current findings visible and folds earlier records behind an existing details component.
+
+The original cup recorder first boots Falls, producing a failed native collision self-test and an 1118 by 663 world. Its complete nine-run delivery audit is limited evidence, and original full qualification remains failed. Machine startup is now explicit and paused, yielding the actual 1120 by 664 apparatus. A clean static-wall suite delivers 101.25105, 101.06017, 94.66792 percent. Seed 913 misses 95 percent, so that version is rejected. No errors or wrong-size recordings are discarded or relabeled as passes.
+
+The moving-wall candidate preserves actual closed-face normal speed, including different speeds on opposing faces and their spatial derivative. Its shader test covers 1,152 configurations, all 16 face masks, three wall-speed patterns, water/air/unsupported cell labels, solid cells and reconstruction disabled. 531 unaffected before/after pairs match exactly; 45 closed-wall combinations repair the old bypass and pass independent affine finite differences. The fresh nine-run cup suite delivers 101.8%, 98.4%, 98.8%; its delivery target result is True. Counts, finite resident fields, containment, pre-drop hold and lower-fill/raised-bend controls pass. These inventories do not certify pressure, gas volume, work or performance.
+
+A new closed 96 by 88 baffle contains 1,680 native water parcels with rest volume 1.5625, no room anchors and ordinary released gravity and timing. This differs from the earlier 2,048-parcel fixture. Private native callbacks carry J from the determinant of the actual quadratic and midpoint displacement map. Sampled density and APIC moments are not material J. Rejected contact, declump/recovery, world-bound and nonpositive events keep old J and an unsupported flag. Baseline parcel 1679 crosses the bottom at native step 20 because AIR cell 118 skips its closed mask 10, then collision rolls it back. The private static-wall carrier records 49 actual steps, 0.408333 native seconds, with all 1,680 supported and no contact/recovery/bounds/nonpositive events. Independent errors are at most 1.66903e-7 in F, 3.85106e-6 world pixels in position and 1.82208e-7 in determinant. Actual released gas ownership still drops at step 32.
+
+The existing sharp contour and overlap ledger reconstruct one connected gas region from accepted native material and positions. A pure noncondensable isothermal adapter uses the released atmosphere setting (3796635.5), without the earlier vapor-background oracle. At six saved checkpoints, water plus gas closes the 5568-pixel domain to about 1e-11, and amountRT stays 11,173,498,276.5. This remains offline and does not resolve general topology or contacts.
+
+An actual-native control adjoint includes the midpoint chain, determinant and spatial/control mixed derivatives. Three directions match freshly reconstructed intrinsic water plus gas energy derivatives within 6.61e-6; omitting material work fails. A bounded nonlinear correction pairs native fine-grid velocity with its measured P2G nodal mass. Its 38 CPU iterations reduce potential plus correction inertia from 3345.15996 to 341.77300, with residual 0.22251 below 0.23948. It holds projected/provisional faces fixed and starts after the released pressure update, so it is not a replacement coupled pressure solve. Its 52.6-second CPU cost is not real-time performance.
+
+One guarded native update applies that correction to 512 grid nodes after all 54,116 input words match the saved solve. All 1,680 materials remain supported. Actual Float32 positions and material J agree with the CPU result within 3.82e-6 and 1.38e-7, respectively. Independently reconstructed potential is 128.63862, compared with the CPU estimate 128.63625. Gas amount stays fixed and water plus gas closes to 1.82e-12. Geometry and energy are still measured offline, and the experiment does not replace runtime gas ownership or handle general contact and topology changes.
+
+Evidence preserves the source freezes, complete candidate 49-step raw traces, selected full baseline contact sections, force and inertia source/results, the failed older recorder and static qualification, and all initial/held/final position bytes needed by the unchanged cup inventory checker. Detailed cup pressure trajectories and other cup native buffers remain private and are not certified. Lossless gzip/base64 blobs are verified by size and SHA256 after reassembly. Runtime gas ownership/force replacement, calibrated flow/energy, natural bubbles, sustained laptop/real-phone performance and final polish/audit remain unfinished.
+
+Evidence: assets/images/water-machines/native-water-volume-and-wall-progress-2026-10-09.json.

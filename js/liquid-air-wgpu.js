@@ -722,6 +722,10 @@ fn publishTransport(@builtin(global_invocation_id) id:vec3<u32>){
   if(cells[c].kind==1u){
     faces=vec4<f32>(projectedFace(c,neighbor(c,0u),0u),projectedFace(c,neighbor(c,1u),1u),
       projectedFace(c,neighbor(c,2u),2u),projectedFace(c,neighbor(c,3u),3u));
+  }else if(cells[c].kind==2u){
+    // Air-classified cells can still contain native water beside a body.
+    // Retain the normal speed of each closed moving face for reconstruction.
+    for(var d=0u;d<4u;d=d+1u){let n=neighbor(c,d);if(faceOpen(c,n,d)==0.0){faces[d]=wallFaceVelocity(c,n,d);}}
   }
   outputP[c*3u]=faces;
   var closed=0u;
@@ -812,8 +816,26 @@ fn boundaryShape(f:f32,closed:u32,axis:u32)->vec2<f32> {
   if(hi){return vec2<f32>(1.0-f,-1.0/tc.dx);}
   return vec2<f32>(1.0,0.0);
 }
+// A single closed face supplies a constant wall reference. Two closed
+// faces supply a linear reference, with its spatial derivative retained.
+fn airWallReference(f:vec2<f32>,faces:vec4<f32>,closed:u32)->vec4<f32> {
+  var x=0.0;var y=0.0;var gx=0.0;var gy=0.0;
+  if((closed&3u)==3u){x=mix(faces.x,faces.y,f.x);gx=(faces.y-faces.x)/tc.dx;}
+  else if((closed&1u)!=0u){x=faces.x;}else if((closed&2u)!=0u){x=faces.y;}
+  if((closed&12u)==12u){y=mix(faces.z,faces.w,f.y);gy=(faces.w-faces.z)/tc.dx;}
+  else if((closed&4u)!=0u){y=faces.z;}else if((closed&8u)!=0u){y=faces.w;}
+  return vec4<f32>(x,y,gx,gy);
+}
 fn transportVelocity(p:vec2<f32>,fallback:vec2<f32>)->vec2<f32> {
-  let c=transportCell(p);if(c==0xffffffffu || (flow[c*3u+1u].x!=1.0 || flow[c*3u+1u].y>0.0)){return fallback;}
+  let c=transportCell(p);if(c==0xffffffffu || flow[c*3u+1u].y>0.0){return fallback;}
+  if(flow[c*3u+1u].x!=1.0){
+    if(flow[c*3u+1u].x!=2.0 || !BOUNDARY_RECONSTRUCTION){return fallback;}
+    let f=fract(p/tc.dx);let closed=u32(flow[c*3u+1u].z);
+    let shape=vec2<f32>(boundaryShape(f.x,closed,0u).x,boundaryShape(f.y,closed,2u).x);
+    let wall=airWallReference(f,flow[c*3u],closed);
+    if(all(wall==vec4<f32>(0.0))){return shape*fallback;}
+    return wall.xy+shape*(fallback-wall.xy);
+  }
   let f=fract(p/tc.dx);let v=flow[c*3u];let provisional=flow[c*3u+2u];
   if(!BOUNDARY_RECONSTRUCTION){return fallback+vec2<f32>(mix(v.x-provisional.x,v.y-provisional.y,f.x),mix(v.z-provisional.z,v.w-provisional.w,f.y));}
   let closed=u32(flow[c*3u+1u].z);
@@ -823,7 +845,17 @@ fn transportVelocity(p:vec2<f32>,fallback:vec2<f32>)->vec2<f32> {
   return projected+shape*(fallback-prior);
 }
 fn transportAffine(p:vec2<f32>,fallback:vec2<f32>,native:vec4<f32>,dt:f32)->vec4<f32> {
-  let c=transportCell(p);if(c==0xffffffffu || flow[c*3u+1u].x!=1.0 || flow[c*3u+1u].y>0.0){return native;}
+  let c=transportCell(p);if(c==0xffffffffu || flow[c*3u+1u].y>0.0){return native;}
+  if(flow[c*3u+1u].x!=1.0){
+    if(flow[c*3u+1u].x!=2.0 || !BOUNDARY_RECONSTRUCTION){return native;}
+    let f=fract(p/tc.dx);let closed=u32(flow[c*3u+1u].z);
+    let sx=boundaryShape(f.x,closed,0u);let sy=boundaryShape(f.y,closed,2u);
+    let wall=airWallReference(f,flow[c*3u],closed);
+    if(all(wall==vec4<f32>(0.0))){return vec4<f32>(sx.x*native.x+sx.y*fallback.x*dt,sx.x*native.y,
+      sy.x*native.z,sy.x*native.w+sy.y*fallback.y*dt);}
+    return vec4<f32>(sx.x*native.x+((1.0-sx.x)*wall.z+sx.y*(fallback.x-wall.x))*dt,sx.x*native.y,
+      sy.x*native.z,sy.x*native.w+((1.0-sy.x)*wall.w+sy.y*(fallback.y-wall.y))*dt);
+  }
   let f=fract(p/tc.dx);let v=flow[c*3u];let prior=flow[c*3u+2u];
   let projectedGradient=vec2<f32>(v.y-v.x,v.w-v.z)/tc.dx;
   let priorGradient=vec2<f32>(prior.y-prior.x,prior.w-prior.z)/tc.dx;
