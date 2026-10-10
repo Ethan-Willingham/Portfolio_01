@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-Gf8I6wKy0YTayhbzsbs1SfwcdIOMSOG/FS7dPvyXOSc=' 'sha256-Lre76c6AiquUVHt0G+bmLU6GiIk6xvqevwvlSOMni2Y='; style-src 'sha256-roNMU8iMi0WBwd/3tqCAqWrKIX1u9Wbys+nRXIUhiR0='; img-src data:; base-uri 'none'; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-2qyvMjTT6kz2LqMwml+AcRJ/sz2saRzpr7PffB/wHC8=' 'sha256-/CrS3C5o81HXEuUvulVKjvsCLHAjxXvdvHMdHBolanI='; style-src 'sha256-Pqla+AvksYcc/Ln5fa5/BxrJtRLN+99pouD2/3d5dRE='; img-src data:; base-uri 'none'; form-action 'none'">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#171717" media="(prefers-color-scheme: dark)">
   <title>Let me LLM that for you</title>
-  <meta name="description" content="Make a link that types their question, presses send, and opens ChatGPT.">
+  <meta name="description" content="Make a link that types a question, presses send, then opens ChatGPT.">
   <link rel="canonical" href="https://ethanwillingham.com/let-me-llm-that-for-you.html">
   <meta property="og:title" content="Let me LLM that for you">
   <meta property="og:description" content="Watch your question get typed, then continue in ChatGPT.">
@@ -18,7 +18,7 @@
   <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/let-me-llm-that-for-you-og.jpg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="A cursor resting on the send button of an empty chat box.">
+  <meta property="og:image:alt" content="An empty chat box with a pointer on the send button.">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/let-me-llm-that-for-you-og.jpg">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='12' fill='%231c1c1c'/%3E%3Cpath d='M11 20h18m-7-7 7 7-7 7' fill='none' stroke='%23fff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
@@ -98,7 +98,6 @@
     .send[aria-disabled="true"] .send-icon, .send:not(.ready) .send-icon { background: var(--inactive); }
     .send svg { width: 18px; height: 18px; }
     .hint { min-height: 22px; margin: 10px 0 0; font-size: 13px; text-align: center; color: var(--secondary); }
-    .example { display: block; margin: 12px auto 0; }
     .quiet { padding: 10px 12px; border: 0; background: transparent; color: var(--secondary); font-size: 14px; }
     .quiet:hover, footer a:hover { color: var(--ink); }
     .skip { position: fixed; z-index: 20; left: 12px; top: 12px; padding: 12px; background: var(--bg); transform: translateY(-200%); }
@@ -132,8 +131,6 @@
     .thinking { display: flex; align-items: center; gap: 10px; color: var(--secondary); margin-top: 24px; font-size: 14px; }
     .bars { display: flex; align-items: center; gap: 3px; height: 20px; }
     .bars i { display: block; width: 3px; height: 12px; border-radius: 2px; background: currentColor; }
-    .bars.ring { width: 16px; height: 16px; border: 2px solid var(--hairline); border-top-color: var(--secondary); border-radius: 50%; }
-    .bars.ring i { display: none; }
     .handoff { margin-top: 16px; font-size: 14px; color: var(--secondary); }
     .handoff p { margin: 0 0 8px; }
     .handoff a { display: inline-block; padding: 10px 0; }
@@ -162,11 +159,10 @@
           </button>
         </div>
         <p id="hint" class="hint"></p>
-        <button id="example" class="quiet example" type="button">Watch an example</button>
       </div>
       <div id="link-card" class="link-card" hidden>
         <input id="link" class="link-field" aria-label="Your link" readonly spellcheck="false">
-        <p class="link-note">Send this to whoever asked. It ends in ChatGPT.</p>
+        <p class="link-note">Send them this link. It opens ChatGPT with their question.</p>
         <div class="actions">
           <button id="copy" class="primary" type="button">Copy link</button>
           <button id="preview" class="quiet" type="button">Preview</button>
@@ -187,13 +183,13 @@
         <div id="row" class="row" dir="auto"><span id="typed"></span><span id="caret" class="caret" hidden></span><span id="placeholder" class="placeholder">Your question goes here</span></div>
         <span id="ghost-send" class="send"><span class="send-icon"><svg viewBox="0 0 18 18" aria-hidden="true"><path d="M3 9h12m-5-5 5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></span>
       </div>
-      <button id="finished-send" class="send ready" type="button" aria-label="Send question to ChatGPT" hidden><span class="send-icon"><svg viewBox="0 0 18 18" aria-hidden="true"><path d="M3 9h12m-5-5 5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button>
+      <button id="finished-send" class="send ready" type="button" aria-label="Open ChatGPT with your question" hidden><span class="send-icon"><svg viewBox="0 0 18 18" aria-hidden="true"><path d="M3 9h12m-5-5 5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button>
     </section>
     <div id="thread" class="thread" hidden>
       <div id="bubble" class="bubble" dir="auto"></div>
       <div id="thinking" class="thinking"><span class="bars" aria-hidden="true"><i></i><i></i><i></i></span><span id="thinking-label">Opening ChatGPT</span></div>
       <div id="handoff" class="handoff" hidden>
-        <p id="preview-note" hidden>Here, ChatGPT opens with their question.</p>
+        <p id="preview-note" hidden>The preview stops here. The shared link continues to ChatGPT.</p>
         <button id="return" class="quiet" type="button" hidden>Back to your link</button>
         <p id="paste-caption" hidden>Step 3: Paste it into ChatGPT</p>
         <button id="paste-open" class="primary" type="button" hidden>Copy question and open ChatGPT</button>
@@ -343,13 +339,11 @@
     };
   }
 
-  function schedule(typing, motion, pace, count) {
+  function schedule(typing, motion, count) {
     const beats = { settle: 600, reach: motion.reach, click: 290, type: typing,
       beat: 350, send: motion.send, sent: 350, think: 700 };
-    const paces = { relaxed: 1.15, natural: 1, brisk: 0.85 };
-    const requested = typeof pace === 'number' ? pace : paces[pace] || 1;
     const pauses = Object.values(beats).reduce((sum, duration) => sum + duration, 0) - typing;
-    const proposed = typing + pauses * clamp(requested, 0.1, 4);
+    const proposed = typing + pauses;
     const total = count === 30 ? clamp(proposed, 5200, 7700) : Math.min(proposed, 9500);
     const scale = (total - typing) / pauses;
     const times = {};
@@ -370,7 +364,7 @@
     const typing = clamp(700 + 55 * parts.length, 1200, 4200);
     const motion = movementBeats(random, options);
     const waits = typingWaits(parts, random, typing);
-    const timeline = schedule(typing, motion, options.pace, parts.length);
+    const timeline = schedule(typing, motion, parts.length);
     return { graphemes: parts, waits, typing, paste: parts.length > 110,
       ...timeline, arc: motion.arc, startOffset: motion.startOffset };
   }
@@ -393,10 +387,7 @@
     if (tune?.theme) document.documentElement.dataset.theme = tune.theme;
     const reduced = tune?.reduced ?? matchMedia('(prefers-reduced-motion: reduce)').matches;
     const coarse = tune?.pointer ? tune.pointer === 'coarse' : touch;
-    if (tune?.sprite === 'compact') $('arrow').style.width = '13px';
-    if (tune?.thinking === 'ring') document.querySelector('.bars').classList.add('ring');
-    if (tune?.example === false) $('example').hidden = true;
-    let question = '', previewing = false, example = false, sequence = null, frame = 0, fallback = 0;
+    let question = '', previewing = false, sequence = null, frame = 0, fallback = 0;
     const say = text => { $('live').textContent = text; };
 
     function sizeInput() {
@@ -454,15 +445,10 @@
       $('thread').hidden = true;
       $('pointer').hidden = true;
       $('skip').hidden = true;
-      if (example) {
-        $('link-card').hidden = true; $('input-card').hidden = false;
-        $('question').value = ''; sizeInput();
-      }
       previewing = false;
       $('return').textContent = 'Back to your link';
-      if (example || !$('input-card').hidden) $('question').focus();
+      if (!$('input-card').hidden) $('question').focus();
       else $('preview').focus();
-      example = false;
     }
 
     $('question').addEventListener('input', sizeInput);
@@ -483,7 +469,6 @@
       });
     });
     $('preview').addEventListener('click', () => start(question, true));
-    $('example').addEventListener('click', () => { example = true; start(SAMPLE, true); });
     $('return').addEventListener('click', maker);
 
     // Recipient: a clock with visibility pauses and a reproducible seek.
@@ -497,7 +482,7 @@
       stopClock(); $('thinking').hidden = false; $('bubble').hidden = false;
       question = sanitize(text); previewing = preview || Boolean(tune);
       const timeline = plan(question, { pointer: coarse ? 'coarse' : 'fine', reduced,
-        width: innerWidth, height: innerHeight, pace: tune?.pace || 'natural' });
+        width: innerWidth, height: innerHeight });
       sequence = { ...timeline, text: question, time: 0, last: null, running: true, step: 0 };
       $('maker').hidden = true; $('recipient').hidden = false;
       $('handoff').hidden = true; $('finished-send').hidden = true;
@@ -506,8 +491,7 @@
       $('skip').href = destination(question); $('open').href = destination(question);
       $('skip').hidden = previewing || USE_PASTE_STEP;
       $('bubble').textContent = question; $('typed').textContent = '';
-      $('return').textContent = example ? 'Back to the composer' : 'Back to your link';
-      $('example').hidden = tune?.example === false;
+      $('return').textContent = 'Back to your link';
       document.activeElement?.blur();
       say('Step 1: Type your question: ' + question);
       render(0); frame = requestAnimationFrame(tick);
@@ -616,15 +600,7 @@
       }
       const nearStep = t - times.send;
       $('caption').style.opacity = nearStep < 0 ? Math.min(1, -nearStep / 120) : Math.min(1, nearStep / 120);
-      $('caption').classList.toggle('sr-only', tune?.caption === 'tooltip');
       paintTyping(t, sent); paintSent(t, sent); paintPointer(t, sent);
-      if (tune?.caption === 'tooltip') {
-        const point = pointAt(t);
-        $('caption').classList.remove('sr-only');
-        $('caption').style.position = 'fixed';
-        $('caption').style.left = Math.min(innerWidth - 200, Math.max(8, point.x + 20)) + 'px';
-        $('caption').style.top = Math.min(innerHeight - 30, Math.max(8, point.y - 32)) + 'px';
-      }
     }
 
     // Finished states: preview, manual send, paste switch and blocked navigation.
@@ -634,7 +610,7 @@
       if (previewing) {
         $('thinking').hidden = true;
         $('handoff').hidden = false; $('preview-note').hidden = false; $('return').hidden = false;
-        say('Here, ChatGPT opens with their question.');
+        say('The preview stops here. The shared link continues to ChatGPT.');
       } else if (USE_PASTE_STEP) {
         $('handoff').hidden = false; $('paste-caption').hidden = false; $('paste-open').hidden = false;
         say('Step 3: Paste it into ChatGPT. Copy question and open ChatGPT.');

@@ -11,6 +11,11 @@ stops at the handoff. A broken fragment returns to the maker with an explanation
 The page has no site shell; its only portfolio link is `@ethanwillingham` at the
 bottom. Keep the lab `noindex` and unlinked.
 
+Gate 1 approved natural pace, captions above the composer, the standard pointer
+and bars on 2026-10-09. The owner cut the Watch an example link. The lab shows
+only the shipped settings, with replay controls, slow motion, viewport, theme
+and input-mode controls for verification.
+
 ## Link format
 
 Generated addresses use the extensionless path and a base64url fragment:
@@ -58,8 +63,9 @@ the sequence without navigating and leaves a real send button and fallback link.
 On 2026-10-09, logged-out in-app browser checks found that `?q=` and `?prompt=`
 filled the question, including Unicode, URL symbols and a 600-byte UTF-8 example.
 The `?q=` flow attempted to send, but verification failed. Completion of a real
-answer remains UNVERIFIED. Logged-in behavior and phone app handoff require the
-owner's checks. Detailed results and screenshot paths are in
+answer remains UNVERIFIED. On the same date, the owner confirmed that the raw
+logged-in q link filled the question. Automatic submission, answer completion
+and phone app handoff still require the owner's checks. Detailed results and screenshot paths are in
 `research/let-me-llm/DEEPLINKS.md` in the main checkout. Do not bypass a login or
 human-verification wall.
 

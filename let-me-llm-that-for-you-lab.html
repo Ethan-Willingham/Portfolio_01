@@ -35,7 +35,7 @@
 <body>
   <header>
     <h1>Let me LLM that for you: lab</h1>
-    <p>Scroll to a row, then press Replay row to compare its options. Each frame runs the real page.</p>
+    <p>Approved settings: natural pace, captions above the composer, standard pointer, bars, and no example link. Each frame runs the real page.</p>
     <p class="note">Compare the look here. For timing, use the recordings or open the lab on a real device.</p>
     <div class="controls">
       <button id="replay" type="button">Replay all</button>
@@ -50,11 +50,8 @@
   {
     'use strict';
     const rows = [
-      ['Overall pace', [['Relaxed', { pace: 'relaxed' }], ['Natural (pick)', { pace: 'natural' }], ['Brisk', { pace: 'brisk' }]]],
-      ['Caption position', [['Above the composer (pick)', {}], ['By the pointer', { caption: 'tooltip' }]]],
-      ['Pointer sprite', [['Standard (pick)', {}], ['Compact', { sprite: 'compact' }]]],
-      ['Thinking indicator', [['Bars (pick)', {}], ['Ring', { thinking: 'ring' }]]],
-      ['Watch an example', [['On (pick)', { mode: 'maker', example: true }], ['Off', { mode: 'maker', example: false }]]]
+      ['Recipient sequence', [['Approved settings', {}]]],
+      ['Maker', [['Example link off', { mode: 'maker' }]]]
     ];
     let slow = false;
     for (const [title, variants] of rows) {
