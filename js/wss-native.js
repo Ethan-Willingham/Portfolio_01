@@ -25,7 +25,7 @@ struct Grid {count:u32,w:u32,h:u32,ox:u32,oy:u32,cells:u32,dt:f32,inv:f32,
 @group(0) @binding(12) var<uniform> grid:Grid;
 struct Chunk {counts:vec4<u32>,energy:vec4<f32>};
 @group(0) @binding(13) var<storage,read_write> chunks:array<Chunk>;
-struct WallEdit {rect:vec4<f32>,meta:vec4<u32>,bodies:array<vec4<f32>,16>};
+struct WallEdit {rect:vec4<f32>,controls:vec4<u32>,bodies:array<vec4<f32>,16>};
 @group(0) @binding(14) var<uniform> wallEdit:WallEdit;
 @group(0) @binding(15) var<storage,read_write> wallCandidates:array<vec4<f32>>;
 @group(0) @binding(16) var<storage,read_write> wallStatus:array<atomic<u32>>;
@@ -227,7 +227,7 @@ fn editPathClear(a:vec2<f32>,b:vec2<f32>)->bool{
   if(t>=0.0&&t<=1.0&&along>=cut.z-0.00001&&along<=cut.w+0.00001){return false;}
  }
  // Axis-aligned evacuation cannot cross a live body's conservative bounds.
- for(var k=0u;k<wallEdit.meta.y;k=k+1u){
+ for(var k=0u;k<wallEdit.controls.y;k=k+1u){
   let body=wallEdit.bodies[k];let lo=min(a,b);let hi=max(a,b);
   if(hi.x>=body.x&&lo.x<=body.z&&hi.y>=body.y&&lo.y<=body.w){return false;}
  }
@@ -242,7 +242,7 @@ fn stageWall(@builtin(global_invocation_id) id:vec3<u32>){
  let r=wallEdit.rect;if(p.x<r.x||p.y<r.y||p.x>=r.x+r.z||p.y>=r.y+r.w){return;}
  var found=false;var distance=1e20;var chosen=vec2<f32>(0.0);var axis=0.0;
  for(var side=0u;side<4u;side=side+1u){
-  if((wallEdit.meta.x&(1u<<side))==0u){continue;}
+  if((wallEdit.controls.x&(1u<<side))==0u){continue;}
   var q=p.xy;var normal=1.0;
   if(side==0u){q.y=r.y-0.0625;normal=2.0;}
   if(side==1u){q.x=r.x-0.0625;}
@@ -266,10 +266,10 @@ fn applyWall(@builtin(global_invocation_id) id:vec3<u32>){
 }
 @compute @workgroup_size(1)
 fn finishWall(){
- if(atomicLoad(&wallStatus[0])!=0u){atomicStore(&wallStatus[3],wallEdit.meta.z);return;}var work=0.0;
+ if(atomicLoad(&wallStatus[0])!=0u){atomicStore(&wallStatus[3],wallEdit.controls.z);return;}var work=0.0;
  for(var i=0u;i<cfg.counts.x;i=i+1u){work=work+wallCandidates[i].w;}
  atomicStore(&wallStatus[2],bitcast<u32>(work));put(18u,value(18u)+work);
- atomicStore(&wallStatus[3],wallEdit.meta.z);
+ atomicStore(&wallStatus[3],wallEdit.controls.z);
 }
 `;
 
