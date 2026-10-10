@@ -635,7 +635,7 @@
     }
     fullButton.addEventListener('click', toggleFullscreen);
     var initialParameters=new URLSearchParams(location.search),phoneScene=initialParameters.get('scene');
-    if(!phoneScene && !initialParameters.has('smoke') && !initialParameters.has('build') && navigator.gpu)phoneScene='self-flushing-cup';
+    if(!initialParameters.has('scene') && !initialParameters.has('smoke') && !initialParameters.has('build') && navigator.gpu)phoneScene='self-flushing-cup';
     if(nativeScenes[phoneScene] && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)){
       shell.classList.add('is-expanded');syncFullscreen();
     }
