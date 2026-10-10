@@ -365,7 +365,7 @@ fn finishWall(){
     var bindings={initialize:[0,1,2,3,4,5,6,9],beginFrame:[0,6],drainChunks:[0,1,2,3,4,5,6,9,10,13],prefixChunks:[0,6,13],scatterFree:[0,5,7,13],
       clearAtlas:[0,8],splatAtlas:[0,1,5,8],admit:[0,1,2,3,4,5,6,7,8,9,11,12],saveStep:[0,1,5,9],
       constrain:[0,1,2,5,6,9,10],saveCollision:[0,1,3,5,6,9,11,12],impacts:[0,1,3,5,6,9,10,11,12]};
-    if(options.hands)Object.assign(bindings,{stageWall:[0,1,5,6,11,12,14,15,16],applyWall:[0,1,2,3,4,5,9,15,16],finishWall:[0,6,15,16]});
+    if(options.hands)Object.assign(bindings,{stageWall:[0,1,5,6,11,12,14,15,16],applyWall:[0,1,2,3,4,5,9,15,16],finishWall:[0,6,14,15,16]});
     var module=device.createShaderModule({label:'toy.native.boundaries',code:SOURCE}), pipes={}, groups={};
     Object.keys(bindings).forEach(function(name){
       if(bindings[name].filter(function(b){return b!==0 && b!==12 && b!==14;}).length>10)throw new Error('Native stage exceeds ten storage bindings.');
