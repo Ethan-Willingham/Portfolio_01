@@ -79,6 +79,7 @@ const HUBS = [
       live('william-james.html', 'William James', 'william-james.jpg', '1902', 1902, "James collects accounts of conversion and mystical experience, then asks what they do in a life. Follow his judgments alongside the limits of his cases and his own belief in a spiritual reality."),
       live('perennial-philosophy.html', 'The Perennial Philosophy', 'perennial-philosophy.jpg', '1945', 1945, "Huxley assembles a shared spiritual philosophy from selected mystics. Read five passages in context, where Buddhist accounts of self and Christian accounts of union complicate his claim of agreement."),
       live('modern-teachers.html', 'The Modern Teachers', 'modern-teachers.jpg', '20th c.', 1965, "Watts, Ram Dass, Krishnamurti, Gurdjieff, and Tolle give different accounts of self and practice. Compare what each asks you to accept, and what a teacher's conduct can tell you about their authority."),
+      live('same-chance.html', 'The Same Chance', 'same-chance.jpg', '2026', 2026, "Everyone gets exactly the same chance at contentment, even people who die young, and pain is usually what turns people around. A housing lottery is the strongest evidence against it."),
     ],
   },
   {
@@ -180,7 +181,7 @@ ${ordered(h.members).map(memberCard).join('\n')}
       <div class="site-footer-inner"><a href="/">&copy; 2026 Ethan Willingham</a><span class="ftr-links"><a class="ftr-lucky" href="lucky.html">Feeling lucky? <span class="arr">&#8599;</span></a></span></div>
     </footer>
   </div>
-  <script src="js/search.js?v=20261003il"></script>
+  <script src="js/search.js?v=20261009-gentle-ripple"></script>
   <script>
   (function () { var root = document.querySelector('.home-search'); var input = root && root.querySelector('.hs-input'); if (!input) return; input.addEventListener('focus', function () { root.classList.add('is-open'); }); input.addEventListener('blur', function () { setTimeout(function () { if (!input.value && !root.contains(document.activeElement)) root.classList.remove('is-open'); }, 160); }); })();
   </script>
