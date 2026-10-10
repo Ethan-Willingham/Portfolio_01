@@ -24,7 +24,7 @@
   <link rel="preload" href="/assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/assets/fonts/commit_mono_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/style.css">
-  <link rel="stylesheet" href="/water-smoke-slime.css?v=v5.57">
+  <link rel="stylesheet" href="/water-smoke-slime.css?v=v5.58">
 </head>
 <body class="physics-page">
   <div class="site-wrapper toy-page">
@@ -54,6 +54,7 @@
             </div>
           </details>
           <div class="toy-playback" role="group" aria-label="Playback">
+            <button class="toy-chip toy-sound" id="toy-sound" aria-pressed="false" hidden>Sound off</button>
             <button class="toy-instruments-button" id="toy-instruments-open" data-panel="instruments" aria-expanded="false" aria-controls="toy-panel-instruments" hidden>Instruments</button>
             <button class="toy-icon" id="toy-pause" aria-label="Pause" title="Pause (Space)" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg></button>
             <button class="toy-icon" id="toy-restart" aria-label="Restart scene" title="Restart scene"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10a8 8 0 1 1 1.6 7M4 4v6h6"/></svg></button>
@@ -89,7 +90,7 @@
             <button class="toy-primary" id="toy-machine-primary" type="button" disabled>Open valve</button>
             <p id="toy-machine-caption"></p>
           </div>
-          <div class="toy-machine-metrics" id="toy-machine-metrics" hidden><span>Head <b id="toy-compact-head">Waiting</b></span><span>Flow <b id="toy-compact-flow">Waiting</b></span><button class="toy-chip" id="toy-air-pressure-compact" aria-pressed="true">Air pressure</button><button class="toy-chip" id="toy-machine-view" data-panel="build" aria-expanded="false" aria-controls="toy-panel-build">Zoom and pan</button></div>
+          <div class="toy-machine-metrics" id="toy-machine-metrics" hidden><span><span id="toy-compact-head-label">Head</span> <b id="toy-compact-head">Waiting</b></span><span>Flow <b id="toy-compact-flow">Waiting</b></span><span id="toy-native-reading" hidden></span><button class="toy-chip" id="toy-air-pressure-compact" aria-pressed="true">Air pressure</button><button class="toy-chip" id="toy-machine-view" data-panel="build" aria-expanded="false" aria-controls="toy-panel-build">Zoom and pan</button></div>
           <p class="toy-machine-diagnostics" id="toy-machine-diagnostics" hidden></p>
           <p class="toy-pressure-legend" id="toy-pressure-legend" hidden></p>
           <div class="toy-foot-row"><span id="toy-hint">Drop a slime into the falling water.</span><span class="toy-foot-stats"><span id="toy-fps" title="Rendered frames per second">0 FPS</span><span id="toy-status" role="status">Starting</span></span></div>
@@ -130,6 +131,7 @@
           </section>
           <section class="toy-panel" id="toy-panel-instruments" aria-labelledby="toy-heading-instruments" hidden>
             <div class="toy-panel-head"><h2 id="toy-heading-instruments">Instruments</h2><button class="toy-icon" data-close aria-label="Close instruments"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
+            <div class="toy-native-options" id="toy-native-options" hidden><label for="toy-native-setup">Compare a setup<select id="toy-native-setup"></select></label><p>Choosing a setup restarts it with the same initial water. Hold starts a freshly filled straw; releasing opens its top.</p><p id="toy-native-boundaries"></p><p id="toy-native-ledger"></p></div>
             <p class="toy-panel-note" id="toy-machine-scale"></p>
             <div class="toy-build-options" id="toy-siphon-options" hidden>
               <label>Siphon setup<select id="toy-siphon-setup"><option value="filled">Filled tube</option><option value="empty">Empty tube</option><option value="raised">Raised outlet</option></select></label>
@@ -204,6 +206,12 @@
     <main class="post-body toy-prose" id="how-it-works">
       <section id="water-machines-progress" aria-labelledby="water-machines-progress-title">
         <h2 id="water-machines-progress-title">Water machines: progress</h2>
+        <p><time datetime="2026-10-10">Updated October 10, 2026.</time> The straw has two open ends. Hold its top and the air above the water drops below room pressure. Across three starting seeds, the held straw keeps 97.4% of its water for sixty simulation seconds. Releasing the top or opening a second upper hole drains it completely. <a href="?scene=thumb-straw#toy">Try the straw</a> or read the <a href="/assets/images/water-machines/slice-workshop-progress-2026-10-10.json">measurements and remaining work.</a> Landscape phone layout and frame times were checked in browser emulation.</p>
+        <figure class="u-figure">
+          <picture><source type="image/webp" srcset="/assets/images/water-machines/straw-release-2026-10-10.webp"><img class="u-figure-img" src="/assets/images/water-machines/straw-release-2026-10-10.png" width="1440" height="680" loading="lazy" alt="Two rows of actual straw frames. Water stays in the held straw, then falls through its open lower end after the top is released."></picture>
+          <figcaption class="u-figure-cap">Actual water after releasing the top. The first row advances in steps of one thirtieth of a simulation second. The second follows a separate release through thirty simulation seconds.</figcaption>
+        </figure>
+        <p>A continuously filled cup and Tantalus are still in the <a href="?scene=self-flushing-cup&amp;lab=1#toy">workshop.</a> The first cup emptied too slowly to repeat reliably; wider tubes kept a trickle going. A lower crest is being tested. Its return is powered: it lifts collected water back to the tap. Instruments shows the stored water, refused tap requests and external work.</p>
         <p><time datetime="2026-10-09">Updated October 9, 2026.</time> The water solver now checks closed walls even where its pressure grid calls a partly filled cell air. The missed check let water cross a floor before collision pushed it back. Moving walls keep their own normal speed. Three cup runs deliver 101.8%, 98.4%, 98.8% of the initially estimated drainable water; all six hold controls pass and every particle is conserved. Some water below that estimate also drains.</p>
         <p>A private tank test now tracks the volume carried by each moving water particle through 49 steps, without collision rollback. A separate air-volume calculation keeps the tank's gas amount fixed. The new pressure force has also been applied in one actual particle step. That gas repair is still experimental. The published model can still lose small pockets, and sustained 60 FPS and phone performance remain unproved. <a href="https://github.com/Ethan-Willingham/Portfolio_01/releases/download/water-machines-evidence-2026-10-09/native-water-volume-and-wall-recordings-2026-10-09.zip">Native recordings</a>, <a href="/assets/images/water-machines/native-water-volume-and-wall-progress-2026-10-09.json">cup tests and remaining limits.</a></p>
         <p>In that closed tank, a simpler pressure calculation reaches the same result without rebuilding the water outline at every iteration. Its recorded CPU time falls from 52.6 seconds to 14.8 seconds, still too slow for live use. This applies to one connected air pocket; the general bubble repair remains unfinished. <a href="/assets/images/water-machines/one-pocket-pressure-reduction-2026-10-09.json">Equivalent results and independent checks.</a></p>
@@ -299,18 +307,19 @@
     <footer class="site-footer"><div class="site-footer-inner"><a href="/">&copy; 2026 Ethan Willingham</a></div></footer>
   </div>
   <!-- Shared water engine; the stamp follows GAME_VERSION. -->
-  <script src="/js/liquid-wgpu.js?v=v28.179"></script>
+  <script src="/js/liquid-wgpu.js?v=v28.180"></script>
   <script src="/js/smoke-presets.js?v=4"></script>
   <script src="/js/water-rainbow.js?v=1"></script>
   <script src="/js/liquid-air-model.js?v=v5.57"></script>
   <script src="/js/liquid-air-mac-wgpu.js?v=v5.37"></script>
-  <script src="/js/liquid-air-wgpu.js?v=v5.57"></script>
+  <script src="/js/liquid-air-wgpu.js?v=v5.58"></script>
   <script src="/js/water-machines-builder.js?v=v5.37"></script>
   <script src="/js/water-machines-scenes.js?v=v5.41"></script>
   <script src="/js/water-machines-instruments.js?v=v5.41"></script>
   <script src="/js/water-machines-pressure-view.js?v=v5.57"></script>
-  <script src="/js/water-smoke-slime.js?v=v5.57"></script>
-  <script src="/js/water-smoke-slime-ui.js?v=v5.57"></script>
+  <script src="/js/wss-machine-registry.js?v=v5.58"></script>
+  <script src="/js/water-smoke-slime.js?v=v5.58"></script>
+  <script src="/js/water-smoke-slime-ui.js?v=v5.58"></script>
   <script src="/js/smoke-presets-ui.js?v=4"></script>
 </body>
 </html>

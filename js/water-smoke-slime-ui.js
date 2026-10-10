@@ -49,7 +49,10 @@
       blank: 'Choose a material to add, or draw your own container.',
       siphon: 'Open the valve, then watch the two water levels.',
       cup: 'Drop the slime in, then watch the fill line.',
-      heron: 'Open the valve to start. Compare the jars in Instruments.'
+      heron: 'Open the valve to start. Compare the jars in Instruments.',
+      'self-flushing-cup':'Watch the fill line. Instruments has the tap-off and vented comparisons.',
+      tantalus:'Watch the fixed mouth line while the cup fills and drains.',
+      'thumb-straw':'Hold the button to seal a freshly filled straw. Release to open its top.'
     };
     var hints = {
       poke: 'Grab near a slime’s edge to stretch it. Drag empty space to stir.',
@@ -70,7 +73,9 @@
       flap: 'Drag across a pipe for a flap valve. Use Grab to tap it open or closed.',
       nozzle: 'Drag across an outlet to narrow it. Pipe bore sets the nozzle opening.'
     };
-    var sceneNames = { falls: 'Cascade', zerog: 'Drift', chimney: 'Plumes', rig: 'Rig exhaust', spa: 'Spring', blank: 'Empty', siphon: 'Siphon', cup: 'Greedy cup', heron: "Heron's fountain" };
+    var nativeScenes={'self-flushing-cup':true,tantalus:true,'thumb-straw':true};
+    var nativeSetupScene=null,thumbPointer=null,thumbKeyboard=false;
+    var sceneNames = { 'self-flushing-cup':'Self-flushing cup',tantalus:'Tantalus','thumb-straw':'The straw and the thumb', falls: 'Cascade', zerog: 'Drift', chimney: 'Plumes', rig: 'Rig exhaust', spa: 'Spring', blank: 'Empty', siphon: 'Siphon', cup: 'Greedy cup', heron: "Heron's fountain" };
 
     function text(id, value) {
       var element = document.getElementById(id);
@@ -247,9 +252,47 @@
       if(shared)document.getElementById('toy-share-wrap').scrollIntoView({block:'nearest',inline:'nearest',behavior:'instant'});
     });
     document.getElementById('toy-machine-primary').addEventListener('click', function () {
+      if(toy.stats().scene==='thumb-straw')return;
       try { toy.machinePrimary(); }
       catch (error) { notice = error.message; }
       updateMeasurements();
+    });
+    var primaryButton=document.getElementById('toy-machine-primary');
+    function releaseThumb(){
+      var holding=thumbKeyboard || thumbPointer!==null;
+      thumbKeyboard=false;thumbPointer=null;
+      if(holding && toy.machineThumb)toy.machineThumb(false);
+      primaryButton.setAttribute('aria-pressed','false');
+    }
+    function holdThumb(){
+      primaryButton.setAttribute('aria-pressed','true');
+      toy.machineThumb(true).catch(function(error){notice=error.message;releaseThumb();});
+    }
+    primaryButton.addEventListener('pointerdown',function(event){
+      if(toy.stats().scene!=='thumb-straw' || primaryButton.disabled || event.button!==0)return;
+      event.preventDefault();thumbPointer=event.pointerId;
+      primaryButton.setPointerCapture(event.pointerId);holdThumb();
+    });
+    primaryButton.addEventListener('pointerup',releaseThumb);
+    primaryButton.addEventListener('pointercancel',releaseThumb);
+    primaryButton.addEventListener('lostpointercapture',releaseThumb);
+    primaryButton.addEventListener('keydown',function(event){
+      if(toy.stats().scene!=='thumb-straw' || ![' ','Enter'].includes(event.key))return;
+      event.preventDefault();if(!event.repeat && !thumbKeyboard){thumbKeyboard=true;holdThumb();}
+    });
+    primaryButton.addEventListener('keyup',function(event){if([' ','Enter'].includes(event.key))releaseThumb();});
+    primaryButton.addEventListener('blur',releaseThumb);
+    window.addEventListener('blur',releaseThumb);
+    document.addEventListener('visibilitychange',function(){if(document.hidden)releaseThumb();});
+    document.getElementById('toy-native-setup').addEventListener('change',async function(){
+      var scene=toy.stats().scene,value=this.value;this.disabled=true;releaseThumb();
+      try{await toy.machine(scene,{vented:value==='vented',tapEnabled:value!=='tap-off',secondHole:value==='second-hole'});}
+      catch(error){notice=error.message;}
+      finally{this.disabled=false;updateMeasurements();}
+    });
+    document.getElementById('toy-sound').addEventListener('click',function(){
+      var enabled=toy.soundStats().enabled;
+      toy.sound(!enabled).catch(function(error){notice=error.message;});
     });
     document.getElementById('toy-siphon-setup').addEventListener('change', async function () {
       var setup=this.value;
@@ -317,7 +360,7 @@
       fitPanel();
     }
     function updateMeasurements() {
-      var state = toy.stats(), machine = /^(siphon|cup|heron)$/.test(state.scene);
+      var state = toy.stats(), native=!!nativeScenes[state.scene],machine = /^(siphon|cup|heron)$/.test(state.scene) || native;
       text('toy-fps', state.fps + ' FPS');
       var sample = toy.instruments ? toy.instruments() : { ready: false };
       var liveMachine = toy.machineState ? toy.machineState() : null;
@@ -356,9 +399,33 @@
         text('toy-machine-caption', sample.caption || (liveMachine && liveMachine.definition.caption) || 'The apparatus is being assembled. Measurements will appear when it is ready.');
         text('toy-machine-primary', (liveMachine && liveMachine.definition.action) || sample.action || 'Starting');
         var ready = liveMachine ? liveMachine.ready : sample.ready;
-        document.getElementById('toy-machine-primary').disabled = !ready || !!fatal || (state.scene === 'cup' && liveMachine && liveMachine.primaryUsed);
+        var holdingThumb=state.scene==='thumb-straw' && (thumbPointer!==null || thumbKeyboard);
+        document.getElementById('toy-machine-primary').disabled = (!ready && !holdingThumb) || !!fatal || (state.scene === 'cup' && liveMachine && liveMachine.primaryUsed);
       }
-      text('toy-compact-head', number(sample.headInches, 'in'));
+      text('toy-compact-head-label',state.scene==='thumb-straw' ? 'Air' : 'Head');
+      text('toy-compact-head', number(state.scene==='thumb-straw' ? sample.gasPressurePsi : sample.headInches, state.scene==='thumb-straw' ? 'psi' : 'in'));
+      document.getElementById('toy-native-reading').hidden=!native;
+      text('toy-native-reading',state.scene==='thumb-straw' ? 'Water held '+(100*(sample.retainedFraction || 0)).toFixed(0)+'%' : 'Powered return');
+      document.getElementById('toy-native-options').hidden=!native;
+      document.getElementById('toy-machine-view').hidden=native;
+      var setup=document.getElementById('toy-native-setup');
+      if(native && nativeSetupScene!==state.scene){
+        nativeSetupScene=state.scene;setup.replaceChildren();
+        (state.scene==='thumb-straw' ? [['released','Intact straw'],['second-hole','Second hole']] : [['tap-on','Tap running'],['tap-off','Tap off'],['vented','Vented crest']]).forEach(function(pair){
+          var option=document.createElement('option');option.value=pair[0];option.textContent=pair[1];setup.appendChild(option);
+        });
+      }
+      if(native && liveMachine && !setup.disabled){setup.value=liveMachine.definition.setup==='held' ? 'released' : liveMachine.definition.setup;}
+      if(native && liveMachine){
+        var b=liveMachine.definition.boundaries;
+        text('toy-native-boundaries',b.pool ? 'Drained water feeds the tap. The powered return adds energy to lift it. The tap requests '+b.tap.rate+' parcels per simulation second at '+b.tap.vy+' pixels per second downward; each parcel represents 1.5625 square pixels. All '+state.allocation+' allocated slots are either present water or stored reserve.' : 'Only the upper opening is held. The lower end stays open. The side-hole comparison connects the upper air space to the room.');
+        var ledger=sample.boundary;
+        text('toy-native-ledger',b.pool && ledger ? 'Present '+ledger.present+'; reserve '+ledger.parked+'. Requested '+ledger.requested+'; admitted '+ledger.admitted+'; collected '+ledger.drained+'; refused '+ledger.shortfall+'. Return work '+number(ledger.externalWork,'J')+'.' : '');
+      }
+      var soundButton=document.getElementById('toy-sound'),sound=toy.soundStats ? toy.soundStats() : {enabled:false};
+      soundButton.hidden=!native;pressed(soundButton,!!sound.enabled);soundButton.textContent=sound.enabled ? 'Sound on' : 'Sound off';
+      soundButton.title='Synthesized water impacts. Enable sound with this button.';
+      if(state.scene==='thumb-straw'){primaryButton.setAttribute('aria-pressed',String(thumbPointer!==null || thumbKeyboard || !!(liveMachine && liveMachine.thumbHeld)));}else primaryButton.removeAttribute('aria-pressed');
       text('toy-compact-flow', number(sample.flowCubicInchesPerSecond, 'in³/s'));
       document.getElementById('toy-machine-metrics').classList.toggle('is-stale', stale);
       document.getElementById('toy-machine-metrics').title = stale ? 'The measurement sample is more than a quarter second old.' : '';
@@ -410,6 +477,7 @@
     function sync() {
       syncCamera();
       var state = toy.stats();
+      var native=!!nativeScenes[state.scene];shell.classList.toggle('is-native-machine',native);
       var building = /^(build|draw|erase)$/.test(state.tool);
       shell.dataset.activeTool = state.tool;
       shell.classList.toggle('is-paused', state.paused);
@@ -475,7 +543,10 @@
       try {
         if(toy.stats().scene==='siphon')await toy.machine('siphon',{setup:document.getElementById('toy-siphon-setup').value});
         else if(toy.stats().scene==='heron')await toy.machine('heron',{setup:document.getElementById('toy-heron-setup').value});
-        else await toy.scene(toy.stats().scene);
+        else if(nativeScenes[toy.stats().scene]){
+          releaseThumb();var setup=document.getElementById('toy-native-setup').value;
+          await toy.machine(toy.stats().scene,{vented:setup==='vented',tapEnabled:setup!=='tap-off',secondHole:setup==='second-hole'});
+        }else await toy.scene(toy.stats().scene);
         pause(false);
       } catch(error){notice=error.message;}
       finally{this.disabled=false;sync();}
@@ -533,6 +604,9 @@
       syncFullscreen();
     }
     fullButton.addEventListener('click', toggleFullscreen);
+    if(nativeScenes[new URLSearchParams(location.search).get('scene')] && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)){
+      shell.classList.add('is-expanded');syncFullscreen();
+    }
     document.addEventListener('fullscreenchange', syncFullscreen);
     window.addEventListener('keydown', function (event) {
       if(event.defaultPrevented)return;
@@ -565,7 +639,10 @@
     window.addEventListener('resize', fitPanel);
     window.addEventListener('scroll', fitPanel, { passive: true });
     // Reading the existing sample never requests another GPU snapshot.
-    window.setInterval(function () { if (!document.hidden) updateMeasurements(); }, 200);
+    window.setInterval(function () {
+      if(document.hidden)return;
+      if(shell.classList.contains('is-paused')!==toy.stats().paused)sync();else updateMeasurements();
+    }, 200);
     sync();
     toy.resize();
   }

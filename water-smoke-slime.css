@@ -300,3 +300,28 @@ body.toy-expanded { overflow: hidden; }
 .toy-build-camera p { margin: 0 0 8px; color: var(--text-faint); font: 11px var(--font-mono); }
 .toy-camera-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 .toy-camera-actions .toy-chip { min-width: 70px; min-height: 44px; flex: 1 1 70px; padding: 8px; border-color: var(--rule); }
+
+/* Fixed machine setups keep the primary action and measurement disclosure close. */
+.toy-shell.is-native-machine .toy-dock { display: none; }
+.toy-shell.is-native-machine .toy-machine-summary { gap: 10px; }
+.toy-native-options { display: grid; gap: 8px; margin-bottom: 18px; }
+.toy-native-options label { display: grid; gap: 6px; color: var(--text); }
+.toy-native-options select { min-height: 44px; padding: 8px; background: var(--bg-raised); border: 1px solid var(--rule); border-radius: 6px; }
+.toy-native-options p { margin: 0; color: var(--text-dim); font: 12px/1.5 var(--font-body); }
+.toy-shell .toy-sound { min-height: 44px; padding: 8px 12px; border-color: var(--rule); }
+.toy-shell.is-native-machine #toy-machine-primary { touch-action: none; }
+.toy-shell.is-native-machine #toy-native-reading { color: var(--text-dim); }
+.toy-shell.is-native-machine.is-expanded .toy-viewport,
+.toy-shell.is-native-machine:fullscreen .toy-viewport { position: absolute; inset: 0; }
+.toy-shell.is-native-machine.is-expanded .toy-top,
+.toy-shell.is-native-machine.is-expanded .toy-foot,
+.toy-shell.is-native-machine:fullscreen .toy-top,
+.toy-shell.is-native-machine:fullscreen .toy-foot { position: relative; z-index: 10; background: var(--bg-raised); }
+.toy-shell.is-native-machine.is-expanded .toy-foot,
+.toy-shell.is-native-machine:fullscreen .toy-foot { margin-top: auto; }
+@media (max-height: 480px) and (orientation: landscape) {
+  .toy-shell.is-native-machine .toy-foot { padding: 4px 10px; gap: 2px; }
+  .toy-shell.is-native-machine .toy-machine-summary p { font-size: 11px; line-height: 1.3; }
+  .toy-shell.is-native-machine .toy-machine-diagnostics { display: none; }
+  .toy-shell.is-native-machine .toy-machine-metrics { gap: 4px 14px; }
+}

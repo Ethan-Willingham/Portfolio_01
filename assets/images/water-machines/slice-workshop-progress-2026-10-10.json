@@ -1,0 +1,405 @@
+{
+  "date": "2026-10-10",
+  "status": "Three-seed straw behavior passed independent review. Cup and Tantalus remain workshop experiments.",
+  "method": "Native parcel positions and outlet crossings on three seeds. Times are submitted solver seconds, not wall time or the Earth-gravity-scaled display clock. Gas capture is a separate final snapshot. These are behavior checks, not calibrated physical accuracy.",
+  "roomPressurePsi": 14.7,
+  "straw": [
+    {
+      "seed": 17,
+      "setup": "held",
+      "submittedSeconds": 60.358333333331984,
+      "initialWater": 847,
+      "retained": 825,
+      "retainedFraction": 0.974025974025974,
+      "firstEmptySample": null,
+      "outletPassages": 22,
+      "escapedTop": 0,
+      "nativeBadFinite": 0,
+      "nativeBadFlag": 0,
+      "trappedAir": {
+        "amount": 528.5859375,
+        "volume": 534.275390625,
+        "gaugePressurePsi": -0.156540394108608,
+        "absolutePressurePsi": 14.54345960589139
+      },
+      "gasBalanceError": 0
+    },
+    {
+      "seed": 17,
+      "setup": "released",
+      "submittedSeconds": 32.400000000000254,
+      "initialWater": 847,
+      "retained": 0,
+      "retainedFraction": 0,
+      "firstEmptySample": 1.216666666666667,
+      "outletPassages": 847,
+      "escapedTop": 0,
+      "nativeBadFinite": 0,
+      "nativeBadFlag": 0
+    },
+    {
+      "seed": 17,
+      "setup": "hole",
+      "submittedSeconds": 32.38333333333357,
+      "initialWater": 847,
+      "retained": 0,
+      "retainedFraction": 0,
+      "firstEmptySample": 1.25,
+      "outletPassages": 847,
+      "escapedTop": 0,
+      "nativeBadFinite": 0,
+      "nativeBadFlag": 0
+    },
+    {
+      "seed": 42,
+      "setup": "held",
+      "submittedSeconds": 60.099999999998694,
+      "initialWater": 847,
+      "retained": 825,
+      "retainedFraction": 0.974025974025974,
+      "firstEmptySample": null,
+      "outletPassages": 22,
+      "escapedTop": 0,
+      "nativeBadFinite": 0,
+      "nativeBadFlag": 0,
+      "trappedAir": {
+        "amount": 528.505859375,
+        "volume": 534.1953125,
+        "gaugePressurePsi": -0.15656195053516636,
+        "absolutePressurePsi": 14.543438049464832
+      },
+      "gasBalanceError": 0
+    },
+    {
+      "seed": 42,
+      "setup": "released",
+      "submittedSeconds": 32.33333333333356,
+      "initialWater": 847,
+      "retained": 0,
+      "retainedFraction": 0,
+      "firstEmptySample": 1.2500000000000002,
+      "outletPassages": 847,
+      "escapedTop": 0,
+      "nativeBadFinite": 0,
+      "nativeBadFlag": 0
+    },
+    {
+      "seed": 42,
+      "setup": "hole",
+      "submittedSeconds": 32.525000000000254,
+      "initialWater": 847,
+      "retained": 0,
+      "retainedFraction": 0,
+      "firstEmptySample": 1.2416666666666671,
+      "outletPassages": 847,
+      "escapedTop": 0,
+      "nativeBadFinite": 0,
+      "nativeBadFlag": 0
+    },
+    {
+      "seed": 913,
+      "setup": "held",
+      "submittedSeconds": 60.258333333332,
+      "initialWater": 847,
+      "retained": 825,
+      "retainedFraction": 0.974025974025974,
+      "firstEmptySample": null,
+      "outletPassages": 22,
+      "escapedTop": 0,
+      "nativeBadFinite": 0,
+      "nativeBadFlag": 0,
+      "trappedAir": {
+        "amount": 528.6015625,
+        "volume": 534.29296875,
+        "gaugePressurePsi": -0.15658144892863812,
+        "absolutePressurePsi": 14.543418551071362
+      },
+      "gasBalanceError": 0
+    },
+    {
+      "seed": 913,
+      "setup": "released",
+      "submittedSeconds": 32.37500000000024,
+      "initialWater": 847,
+      "retained": 0,
+      "retainedFraction": 0,
+      "firstEmptySample": 1.2083333333333335,
+      "outletPassages": 847,
+      "escapedTop": 0,
+      "nativeBadFinite": 0,
+      "nativeBadFlag": 0
+    },
+    {
+      "seed": 913,
+      "setup": "hole",
+      "submittedSeconds": 32.533333333333566,
+      "initialWater": 847,
+      "retained": 0,
+      "retainedFraction": 0,
+      "firstEmptySample": 1.2333333333333338,
+      "outletPassages": 847,
+      "escapedTop": 0,
+      "nativeBadFinite": 0,
+      "nativeBadFlag": 0
+    }
+  ],
+  "frameTimes": {
+    "method": "One 20-second requestAnimationFrame-delta run per tier with vsync off. Phone is browser emulation, not a physical phone.",
+    "desktop": {
+      "viewport": {
+        "width": 1512,
+        "height": 820,
+        "dpr": 2,
+        "phoneEmulation": false
+      },
+      "durationMs": 20010.8,
+      "medianMs": 16.69999999999891,
+      "p95Ms": 18.799999999999272
+    },
+    "phone": {
+      "viewport": {
+        "width": 844,
+        "height": 390,
+        "dpr": 2,
+        "phoneEmulation": true
+      },
+      "durationMs": 20007.100000000002,
+      "medianMs": 4.300000000000182,
+      "p95Ms": 18.800000000000182
+    }
+  },
+  "controls": {
+    "quickReleaseDuringLoading": true,
+    "manualPauseDuringLoading": true,
+    "canvasHeld": true,
+    "canvasReleased": true,
+    "phoneCanvasHeight": 390,
+    "primaryTouchTargetHeight": 44
+  },
+  "sound": {
+    "enabledByRealGesture": true,
+    "nativeImpactsVoiced": 12,
+    "maxHandlerMs": 0.20000004768371582,
+    "offlineNativeLogReplay": {
+      "events": 13,
+      "frames": 96000,
+      "sampleRate": 48000,
+      "peakDbFS": -25.205371896965815,
+      "rmsDbFS": -52.006521867175515
+    },
+    "source": "Real native collision losses and kinetic energy absorbed when water enters the visible collector. This check used the workshop cup with a declared 960-parcel-per-second inlet at 150 pixels per second downward.",
+    "limits": "Optional impact sonification. It is not calibrated glass or bubble resonance. A boundary with no measured energy loss produces no sound."
+  },
+  "remaining": "Cup requires three full fill/discharge/air-break cycles on every seed. Its first geometry was too slow, the wider pipe kept a trickle, and a lower physical crest is now being tested. Tantalus uses the same unfinished plumbing.",
+  "return": "Collected water is stored in fixed native reserve. A powered return lifts it to the visible tap; external work and refused requests are shown in Instruments.",
+  "releaseEvidence": {
+    "image": "/assets/images/water-machines/straw-release-2026-10-10.webp",
+    "imageBytes": 30382,
+    "method": "Actual native renderless stepping followed by actual rendered screenshots. Playback multiplier set to one for exact 1/30 solver-second image intervals. No positions or velocities replaced. Native position samples keep their own timestamp and lag the images.",
+    "samples": [
+      {
+        "clock": 1.05,
+        "nativeTime": 0.8583328723907471,
+        "ageMs": 69.5,
+        "held": true,
+        "retained": 825,
+        "inside": 0,
+        "outside": 0,
+        "badFinite": 0,
+        "maxDepth": 0,
+        "label": "Held"
+      },
+      {
+        "clock": 1.0833333333333335,
+        "nativeTime": 0.8583328723907471,
+        "ageMs": 105.5,
+        "held": false,
+        "retained": 825,
+        "inside": 0,
+        "outside": 0,
+        "badFinite": 0,
+        "maxDepth": 0,
+        "label": "Released 0.033 s"
+      },
+      {
+        "clock": 1.116666666666667,
+        "nativeTime": 0.8583328723907471,
+        "ageMs": 136.90000009536743,
+        "held": false,
+        "retained": 825,
+        "inside": 0,
+        "outside": 0,
+        "badFinite": 0,
+        "maxDepth": 0,
+        "label": "Released 0.067 s"
+      },
+      {
+        "clock": 1.1500000000000004,
+        "nativeTime": 1.1249992847442627,
+        "ageMs": 15.200000047683716,
+        "held": false,
+        "retained": 821,
+        "inside": 0,
+        "outside": 0,
+        "badFinite": 0,
+        "maxDepth": 0,
+        "label": "Released 0.100 s"
+      },
+      {
+        "clock": 1.1833333333333338,
+        "nativeTime": 1.1249992847442627,
+        "ageMs": 45,
+        "held": false,
+        "retained": 821,
+        "inside": 0,
+        "outside": 0,
+        "badFinite": 0,
+        "maxDepth": 0,
+        "label": "Released 0.133 s"
+      },
+      {
+        "clock": 1.2166666666666672,
+        "nativeTime": 1.1249992847442627,
+        "ageMs": 93.70000004768372,
+        "held": false,
+        "retained": 821,
+        "inside": 0,
+        "outside": 0,
+        "badFinite": 0,
+        "maxDepth": 0,
+        "label": "Released 0.167 s"
+      },
+      {
+        "clock": 1.2500000000000007,
+        "nativeTime": 1.1249992847442627,
+        "ageMs": 127.40000009536743,
+        "held": false,
+        "retained": 821,
+        "inside": 0,
+        "outside": 0,
+        "badFinite": 0,
+        "maxDepth": 0,
+        "label": "Released 0.200 s"
+      },
+      {
+        "clock": 1.283333333333334,
+        "nativeTime": 1.2583324909210205,
+        "ageMs": 17.899999856948853,
+        "held": false,
+        "retained": 785,
+        "inside": 0,
+        "outside": 0,
+        "badFinite": 0,
+        "maxDepth": 0,
+        "label": "Released 0.233 s"
+      },
+      {
+        "clock": 3.283333333333332,
+        "nativeTime": 3.0583457946777344,
+        "ageMs": 78.5,
+        "held": false,
+        "retained": 0,
+        "inside": 0,
+        "outside": 0,
+        "badFinite": 0,
+        "maxDepth": 0
+      },
+      {
+        "clock": 4.308333333333328,
+        "nativeTime": 0.9583327770233154,
+        "ageMs": 33,
+        "held": true,
+        "retained": 825,
+        "inside": 0,
+        "outside": 0,
+        "badFinite": 0,
+        "maxDepth": 0,
+        "label": "Held"
+      },
+      {
+        "clock": 4.8083333333333265,
+        "nativeTime": 1.3916656970977783,
+        "ageMs": 53.5,
+        "held": false,
+        "retained": 692,
+        "inside": 0,
+        "outside": 0,
+        "badFinite": 0,
+        "maxDepth": 0,
+        "label": "Released 0.5 s"
+      },
+      {
+        "clock": 5.308333333333325,
+        "nativeTime": 1.658332109451294,
+        "ageMs": 145.79999995231628,
+        "held": false,
+        "retained": 396,
+        "inside": 0,
+        "outside": 0,
+        "badFinite": 0,
+        "maxDepth": 0,
+        "label": "Released 1 s"
+      },
+      {
+        "clock": 6.308333333333321,
+        "nativeTime": 3.0250120162963867,
+        "ageMs": 10.700000047683716,
+        "held": false,
+        "retained": 0,
+        "inside": 0,
+        "outside": 0,
+        "badFinite": 0,
+        "maxDepth": 0,
+        "label": "Released 2 s"
+      },
+      {
+        "clock": 8.308333333333314,
+        "nativeTime": 4.8916778564453125,
+        "ageMs": 51.90000009536743,
+        "held": false,
+        "retained": 0,
+        "inside": 0,
+        "outside": 0,
+        "badFinite": 0,
+        "maxDepth": 0,
+        "label": "Released 4 s"
+      },
+      {
+        "clock": 12.3083333333333,
+        "nativeTime": 8.858283996582031,
+        "ageMs": 60.09999990463257,
+        "held": false,
+        "retained": 0,
+        "inside": 0,
+        "outside": 0,
+        "badFinite": 0,
+        "maxDepth": 0,
+        "label": "Released 8 s"
+      },
+      {
+        "clock": 19.30833333333345,
+        "nativeTime": 15.624847412109375,
+        "ageMs": 111.59999990463257,
+        "held": false,
+        "retained": 0,
+        "inside": 0,
+        "outside": 0,
+        "badFinite": 0,
+        "maxDepth": 0,
+        "label": "Released 15 s"
+      },
+      {
+        "clock": 34.30833333333395,
+        "nativeTime": 30.72461700439453,
+        "ageMs": 84.09999990463257,
+        "held": false,
+        "retained": 0,
+        "inside": 0,
+        "outside": 0,
+        "badFinite": 0,
+        "maxDepth": 0,
+        "label": "Released 30 s"
+      }
+    ]
+  }
+}

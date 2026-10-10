@@ -954,7 +954,8 @@
     // whole-world +/-1e9 region (boot self-tests) the continue never fires.
     var rMinX = instance.regionMinX, rMinY = instance.regionMinY;
     var rMaxX = instance.regionMaxX, rMaxY = instance.regionMaxY;
-    for (var i = 0; i < count; i++) {
+    var boundsCount = instance.toyNativeExtension ? 0 : count;
+    for (var i = 0; i < boundsCount; i++) {
       var px = a.x[i], py = a.y[i];
       if (px < rMinX || px > rMaxX || py < rMinY || py > rMaxY) continue;
       var cx = Math.floor(px * inv);
@@ -989,7 +990,7 @@
     // A machine declares a fixed simulation domain. GPU particles can travel
     // beyond a delayed CPU mirror before its next readback arrives.
     var pressureDomain = instance.pressureModel && instance.pressureModel.enabled
-      ? instance.pressureModel.nativeDomain : null;
+      ? instance.pressureModel.nativeDomain : instance.toyNativeDomain || null;
     if (pressureDomain) {
       minX = Math.min(minX, Math.floor(pressureDomain.minX * inv));
       minY = Math.min(minY, Math.floor(pressureDomain.minY * inv));
@@ -1083,7 +1084,8 @@
     var a = instance.liquid.arrays;
     var invTile = 1 / instance.worldTile;
     var minC = Infinity, minR = Infinity, maxC = -Infinity, maxR = -Infinity;
-    for (var i = 0; i < count; i++) {
+    var boundsCount = instance.toyNativeExtension ? 0 : count;
+    for (var i = 0; i < boundsCount; i++) {
       var tc = Math.floor(a.x[i] * invTile);
       var tr = Math.floor(a.y[i] * invTile);
       if (tc < minC) minC = tc;
@@ -1094,7 +1096,7 @@
     if (!isFinite(minC)) { minC = 0; maxC = 0; minR = 0; maxR = 0; }
     // Keep all declared machine walls present between CPU mirror updates.
     var pressureDomain = instance.pressureModel && instance.pressureModel.enabled
-      ? instance.pressureModel.nativeDomain : null;
+      ? instance.pressureModel.nativeDomain : instance.toyNativeDomain || null;
     if (pressureDomain) {
       minC = Math.min(minC, Math.floor(pressureDomain.minX * invTile));
       minR = Math.min(minR, Math.floor(pressureDomain.minY * invTile));
@@ -1607,6 +1609,7 @@ fn main(@builtin(local_invocation_id) lid:vec3u,@builtin(workgroup_id) wid:vec3u
     var count = instance.uploadedCount | 0;
     var dev = instance.device;
     var P = instance.pipe;
+    var toyGrid = instance.toyNativeExtension && instance.toyNativeExtension.ready ? instance.toyNativeExtension.grid : null;
 
     /* ---- v15.0 SPARSE build ------------------------------------------
      * Two compute passes + one 16-byte copy, zero full-grid dispatches:
@@ -1672,8 +1675,8 @@ fn main(@builtin(local_invocation_id) lid:vec3u,@builtin(workgroup_id) wid:vec3u
       cpA.dispatchWorkgroups(1);
       }
       if (count > 0) {
-        cpA.setPipeline(snowOnly ? P.countSnowMark : P.countCellsMark);
-        cpA.setBindGroup(0, snowOnly ? instance.bg.snowCount : instance.bg.grid);
+        cpA.setPipeline(snowOnly ? P.countSnowMark : toyGrid ? toyGrid.mark.pipeline : P.countCellsMark);
+        cpA.setBindGroup(0, snowOnly ? instance.bg.snowCount : toyGrid ? toyGrid.mark.group : instance.bg.grid);
         cpA.dispatchWorkgroups(partGroupsS);
         cpA.setBindGroup(0, instance.bg.grid);
       }
@@ -1695,7 +1698,8 @@ fn main(@builtin(local_invocation_id) lid:vec3u,@builtin(workgroup_id) wid:vec3u
       cpS.setPipeline(P.scanAddSparse);
       cpS.dispatchWorkgroupsIndirect(instance.buf.blockDispatch, 0);
       if (count > 0) {
-        cpS.setPipeline(snowOnly ? P.scatterSnow : P.scatter);
+        cpS.setPipeline(snowOnly ? P.scatterSnow : toyGrid ? toyGrid.scatter.pipeline : P.scatter);
+        if (!snowOnly && toyGrid) cpS.setBindGroup(0, toyGrid.scatter.group);
         cpS.dispatchWorkgroups(partGroupsS);
       }
       cpS.end();
@@ -1725,8 +1729,8 @@ fn main(@builtin(local_invocation_id) lid:vec3u,@builtin(workgroup_id) wid:vec3u
 
     if (count > 0) {
       // 2. countCells — per particle: cellOf + atomicAdd(cellCount).
-      cp.setPipeline(snowOnly ? P.countSnow : P.countCells);
-      cp.setBindGroup(0, snowOnly ? instance.bg.snowCount : instance.bg.grid);
+      cp.setPipeline(snowOnly ? P.countSnow : toyGrid ? toyGrid.count.pipeline : P.countCells);
+      cp.setBindGroup(0, snowOnly ? instance.bg.snowCount : toyGrid ? toyGrid.count.group : instance.bg.grid);
       cp.dispatchWorkgroups(partGroups);
     }
 
@@ -1759,8 +1763,8 @@ fn main(@builtin(local_invocation_id) lid:vec3u,@builtin(workgroup_id) wid:vec3u
       // 4b. scatter — per particle: slot = atomicAdd(cellCursor[cell]);
       //     sortedIdx[slot] = i.
       var cp2 = enc.beginComputePass({ label: 'liquid.scatter' });
-      cp2.setPipeline(snowOnly ? P.scatterSnow : P.scatter);
-      cp2.setBindGroup(0, instance.bg.grid);
+      cp2.setPipeline(snowOnly ? P.scatterSnow : toyGrid ? toyGrid.scatter.pipeline : P.scatter);
+      cp2.setBindGroup(0, !snowOnly && toyGrid ? toyGrid.scatter.group : instance.bg.grid);
       cp2.dispatchWorkgroups(partGroups);
       cp2.end();
     }
@@ -8714,6 +8718,11 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
    * touches cellCursor/cellOf/sortedIdx — declaring them all in one
    * layout keeps a single bind group for the whole buildGrid encoder.
    * -------------------------------------------------------------------- */
+  function toyNativeShader(instance, source) {
+    var factory = instance.toyNativeFactory;
+    return factory && typeof factory.shaderVariant === 'function' ? factory.shaderVariant(source) : source;
+  }
+
   function buildGridPipelines(instance) {
     var dev = instance.device;
     // v15.0 — the sparse kernels put 10 storage buffers on the grid layout
@@ -8830,6 +8839,26 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
     snowBinds.push({binding:11,resource:{buffer:instance.buf.flag}},
       {binding:12,resource:{buffer:instance.buf.snowGrainDispatch}});
     instance.bg.snowCount = dev.createBindGroup({label:'snow.countBG',layout:snowBGL,entries:snowBinds});
+    instance.createToyLifecycleGrid = function (slots) {
+      function variant(label, body, selected, sparse) {
+        var declaration = '@group(0) @binding(11) var<storage, read> toySlots : array<vec4<u32>>;\n';
+        if (body.split('  if (i >= gp.count) { return; }').length !== 2) throw new Error('Native lifecycle count/scatter marker differs.');
+        var code = WGSL_GRID_COMMON + declaration + body.replace('  if (i >= gp.count) { return; }',
+          '  if (i >= gp.count) { return; }\n  if (toySlots[i].x == 0u) { cellOf[i] = 0xffffffffu; return; }');
+        var selectedEntries = entries.filter(function (e) { return selected.indexOf(e.binding) >= 0; });
+        selectedEntries.push({binding:11,visibility:GPUShaderStage.COMPUTE,buffer:{type:'read-only-storage'}});
+        var selectedBGL = dev.createBindGroupLayout({label:label+'.layout',entries:selectedEntries});
+        var module = dev.createShaderModule({label:label,code:code});
+        var binds = bgEntries.filter(function (e) {return selected.indexOf(e.binding)>=0;});
+        binds.push({binding:11,resource:{buffer:slots}});
+        return {module:module,pipeline:dev.createComputePipeline({label:label,
+          layout:dev.createPipelineLayout({bindGroupLayouts:[selectedBGL]}),compute:{module:module,entryPoint:'main'}}),
+          group:dev.createBindGroup({layout:selectedBGL,entries:binds})};
+      }
+      return {count:variant('toy.lifecycleCount',WGSL_COUNT,[0,1,2,6]),
+        mark:variant('toy.lifecycleMark',WGSL_COUNT_MARK,[0,1,2,6,8]),
+        scatter:variant('toy.lifecycleScatter',WGSL_SCATTER,[0,1,4,6,7])};
+    };
     instance.gridReady = true;
   }
 
@@ -8881,7 +8910,7 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
         label: label,
         layout: layout,
         compute: {
-          module: dev.createShaderModule({ code: WGSL_P2G_COMMON + body }),
+          module: dev.createShaderModule({ code: toyNativeShader(instance, WGSL_P2G_COMMON + body) }),
           entryPoint: 'main'
         }
       });
@@ -8980,8 +9009,8 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
           // v14.26 — the SimParams struct + its binding (8) appended after
           // the pressure buffer header so gridPressure can read `sp`.
           module: dev.createShaderModule({
-            code: WGSL_GRID2_PRELUDE + WGSL_PRESSURE_BUFS +
-                  WGSL_SIM_PARAMS + simBind(8) + body
+            code: toyNativeShader(instance, WGSL_GRID2_PRELUDE + WGSL_PRESSURE_BUFS +
+                  WGSL_SIM_PARAMS + simBind(8) + body)
           }),
           entryPoint: 'main'
         }
@@ -9580,8 +9609,8 @@ struct P2GParams {
           // v14.26 — the SimParams struct + its binding (7) so the gather
           // reads the live motion-scale / damping / aeration constants.
           module: dev.createShaderModule({
-            code: WGSL_G2P_PRELUDE + WGSL_SIM_PARAMS + simBind(7) +
-                  WGSL_G2P_GATHER
+            code: toyNativeShader(instance, WGSL_G2P_PRELUDE + WGSL_SIM_PARAMS + simBind(7) +
+                  WGSL_G2P_GATHER)
           }),
           entryPoint: 'main'
         }
@@ -9685,7 +9714,7 @@ struct P2GParams {
         customSource = customSource.replace(affineEnd, afterAffine + '\n' + affineEnd);
       }
       var module = dev.createShaderModule({label:'liquid.machineGather',
-        code:WGSL_G2P_PRELUDE + WGSL_SIM_PARAMS + simBind(7) + (options.declarations || '') + '\n' + customSource});
+        code:toyNativeShader(instance, WGSL_G2P_PRELUDE + WGSL_SIM_PARAMS + simBind(7) + (options.declarations || '') + '\n' + customSource)});
       var bound = [instance.paramsBuf, instance.buf.pos, instance.buf.affine, instance.buf.aux,
         instance.buf.flag, instance.buf.cellVelX, instance.buf.cellVelY, instance.simParamsBuf,
         instance.buf.cellHeat, instance.buf.calmCell];
@@ -9732,12 +9761,19 @@ struct P2GParams {
     var layout = dev.createPipelineLayout({ bindGroupLayouts: [bgl] });
     var liquidCacheEntry={binding:13,visibility:GPUShaderStage.COMPUTE,buffer:{type:'storage'}};
     var liquidEntries = bglEntries.concat([{binding:9,visibility:GPUShaderStage.COMPUTE,buffer:{type:'storage'}},liquidCacheEntry]);
-    var liquidFallbackBGL=dev.createBindGroupLayout({label:'liquid.cachedFallbackBGL',entries:bglEntries.concat([liquidCacheEntry])});
+    var liquidFallbackEntries=bglEntries.concat([liquidCacheEntry]);
+    var toyContactSlots=instance.toyNativeFactory && typeof instance.toyNativeFactory.createCollisionSlots==='function'
+      ? instance.toyNativeFactory.createCollisionSlots(instance) : null;
+    if (toyContactSlots) {
+      var toyContactEntry={binding:14,visibility:GPUShaderStage.COMPUTE,buffer:{type:'storage'}};
+      liquidEntries.push(toyContactEntry);liquidFallbackEntries.push(toyContactEntry);
+    }
+    var liquidFallbackBGL=dev.createBindGroupLayout({label:'liquid.cachedFallbackBGL',entries:liquidFallbackEntries});
     var liquidFallbackLayout=dev.createPipelineLayout({bindGroupLayouts:[liquidFallbackBGL]});
     var liquidBGL = dev.createBindGroupLayout({label:'liquid.primaryBGL',entries:liquidEntries});
     var liquidLayout = dev.createPipelineLayout({bindGroupLayouts:[liquidBGL]});
-    var liquidModule = dev.createShaderModule({code:WGSL_GAME_PARAMS+WGSL_COLLIDE_PRELUDE+
-      WGSL_GUEST_GEOMETRY+WGSL_SIM_PARAMS+simBind(6)+WGSL_LIQUID_COLLIDE});
+    var liquidModule = dev.createShaderModule({code:toyNativeShader(instance, WGSL_GAME_PARAMS+WGSL_COLLIDE_PRELUDE+
+      WGSL_GUEST_GEOMETRY+WGSL_SIM_PARAMS+simBind(6)+WGSL_LIQUID_COLLIDE)});
     instance.collidePipe = {
       collide: dev.createComputePipeline({
         label: 'liquid.collideMove',
@@ -9860,8 +9896,8 @@ fn machinePointExitClear(a:vec2<f32>,b:vec2<f32>,r:f32)->bool {
         if (source.split(condition).length !== 3) throw new Error('Native primary and fallback guest skin markers differ.');
         source = source.replaceAll(condition, 'if (gdep > select(' + tolerance.toFixed(6) + ', 0.0, guestSoft)) {');
       }
-      var module = dev.createShaderModule({label:'liquid.machineTerrain',code:WGSL_GAME_PARAMS+
-        WGSL_COLLIDE_PRELUDE+WGSL_GUEST_GEOMETRY+WGSL_SIM_PARAMS+simBind(6)+source});
+      var module = dev.createShaderModule({label:'liquid.machineTerrain',code:toyNativeShader(instance, WGSL_GAME_PARAMS+
+        WGSL_COLLIDE_PRELUDE+WGSL_GUEST_GEOMETRY+WGSL_SIM_PARAMS+simBind(6)+source)});
       return {module:module,pipeline:dev.createComputePipeline({label:'liquid.machineCollide',
         layout:liquidLayout,compute:{module:module,entryPoint:'main'}}),
         fallbackPipeline:customGuestSkin || pointWater ? dev.createComputePipeline({label:'liquid.machineFallback',
@@ -9910,7 +9946,7 @@ fn machinePointExitClear(a:vec2<f32>,b:vec2<f32>,r:f32)->bool {
       }));
     }
     instance.liquidPrimaryBGs = instance.collideBGs.map(function(bg,slot){
-      return dev.createBindGroup({label:'liquid.primaryBG.'+slot,layout:liquidBGL,entries:[
+      var entries=[
         {binding:0,resource:{buffer:instance.paramsBuf}},
         {binding:1,resource:{buffer:instance.buf.pos}},
         {binding:2,resource:{buffer:instance.buf.aux}},
@@ -9922,12 +9958,15 @@ fn machinePointExitClear(a:vec2<f32>,b:vec2<f32>,r:f32)->bool {
         {binding:8,resource:{buffer:instance.buf.snowFallbackIndices}},
         {binding:9,resource:{buffer:instance.buf.snowFallbackDispatch}},
         {binding:13,resource:{buffer:instance.buf.snowFallbackPrimary}}
-      ]});
+      ];
+      if (toyContactSlots) entries.push({binding:14,resource:{buffer:toyContactSlots}});
+      return dev.createBindGroup({label:'liquid.primaryBG.'+slot,layout:liquidBGL,entries:entries});
     });
     instance.liquidFallbackBGs=instance.collideBGs.map(function(bg,slot){
       var buffers=[instance.paramsBuf,instance.buf.pos,instance.buf.aux,instance.buf.flag,instance.buf.terrainMask,instance.gameParamsBufs[slot],instance.simParamsBuf,instance.buf.snowFallbackCount,instance.buf.snowFallbackIndices];
       var entries=buffers.map(function(buffer,binding){return {binding:binding,resource:{buffer:buffer}};});
       entries.push({binding:13,resource:{buffer:instance.buf.snowFallbackPrimary}});
+      if (toyContactSlots) entries.push({binding:14,resource:{buffer:toyContactSlots}});
       return dev.createBindGroup({label:'liquid.cachedFallbackBG.'+slot,layout:liquidFallbackBGL,entries:entries});
     });
     instance.snowPrimaryBGs = instance.collideBGs.map(function(bg,slot){
@@ -9996,7 +10035,7 @@ fn machinePointExitClear(a:vec2<f32>,b:vec2<f32>,r:f32)->bool {
       instance.declumpPipe = dev.createComputePipeline({
         label: 'liquid.declump',
         layout: dev.createPipelineLayout({ bindGroupLayouts: [dclBGL] }),
-        compute: { module: dev.createShaderModule({ code: WGSL_DECLUMP }), entryPoint: 'main' }
+        compute: { module: dev.createShaderModule({ code: toyNativeShader(instance, WGSL_DECLUMP) }), entryPoint: 'main' }
       });
       instance.declumpBG = dev.createBindGroup({
         label: 'liquid.declumpBG',
@@ -10368,7 +10407,7 @@ fn machinePointExitClear(a:vec2<f32>,b:vec2<f32>,r:f32)->bool {
     instance.terrainRenderBuf = dev.createBuffer({ size: 16, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
     instance.terrainRenderHost = new Float32Array(4);
     instance.terrainRenderSampler = dev.createSampler({ minFilter: 'linear', magFilter: 'linear' });
-    var mod = dev.createShaderModule({ code: WGSL_TERRAIN_RENDER + WGSL_RENDER });
+    var mod = dev.createShaderModule({ code: toyNativeShader(instance, WGSL_TERRAIN_RENDER + WGSL_RENDER) });
     instance.renderPipeline = dev.createRenderPipeline({
       label: 'liquid.renderPipeline',
       layout: dev.createPipelineLayout({ bindGroupLayouts: [bgl, instance.terrainRenderBGL] }),
@@ -10410,7 +10449,7 @@ fn machinePointExitClear(a:vec2<f32>,b:vec2<f32>,r:f32)->bool {
     // Reuses the render bind group layout (bgl) + swapchain format (fmt).
     // Wrapped so a build failure never takes down the live renderer.
     try {
-      var dotMod = dev.createShaderModule({ code: WGSL_DBG_DOTS });
+      var dotMod = dev.createShaderModule({ code: toyNativeShader(instance, WGSL_DBG_DOTS) });
       instance.dbgDotsPipeline = dev.createRenderPipeline({
         label: 'liquid.dbgDots',
         layout: dev.createPipelineLayout({ bindGroupLayouts: [bgl] }),
@@ -10437,7 +10476,7 @@ fn machinePointExitClear(a:vec2<f32>,b:vec2<f32>,r:f32)->bool {
     // Optional: any failure here leaves surfReady=false and the legacy
     // disc renderer keeps drawing; it must never take down Stage 7.
     try {
-      var fieldMod = dev.createShaderModule({ code: WGSL_SURFACE_COMMON + WGSL_SURFACE_FIELD });
+      var fieldMod = dev.createShaderModule({ code: toyNativeShader(instance, WGSL_SURFACE_COMMON + WGSL_SURFACE_FIELD) });
       instance.surfFieldPipeline = dev.createRenderPipeline({
         label: 'liquid.surfField',
         layout: dev.createPipelineLayout({ bindGroupLayouts: [bgl] }),
@@ -10517,7 +10556,7 @@ fn machinePointExitClear(a:vec2<f32>,b:vec2<f32>,r:f32)->bool {
           { binding: 7, visibility: GPUShaderStage.VERTEX, texture: { sampleType: 'unfilterable-float' } }
         ]
       });
-      var dropMod = dev.createShaderModule({ code: WGSL_TERRAIN_RENDER + WGSL_SURFACE_COMMON + WGSL_SURFACE_DROPLETS });
+      var dropMod = dev.createShaderModule({ code: toyNativeShader(instance, WGSL_TERRAIN_RENDER + WGSL_SURFACE_COMMON + WGSL_SURFACE_DROPLETS) });
       instance.surfDropletPipeline = dev.createRenderPipeline({
         label: 'liquid.surfDroplets',
         layout: dev.createPipelineLayout({ bindGroupLayouts: [instance.surfDropletBGL, instance.terrainRenderBGL] }),
@@ -11974,6 +12013,12 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
   }
 
   function runFrame(instance, dt) {
+    var toyExtension = instance.toyNativeExtension;
+    if (toyExtension) {
+      if (!toyExtension.ready) { if (toyExtension.error) throw new Error(toyExtension.error); return; }
+      toyExtension.validateHost();
+      if (toyExtension.inFlight) return;
+    }
     // 1. Fold last frame's GPU result into the CPU mirror. Always runs
     // (even on a bad-dt frame) so the buffers free up for the next kick.
     applyReadback(instance);
@@ -11994,6 +12039,8 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
     // fall speed is unchanged (ΔV/frame = GRAVITY·dt is invariant of N) so
     // splashes feel identical. The uniform carries stepDt = dt/N.
     var subSteps;
+    var frameSubstepCap = toyExtension && toyExtension.ready && toyExtension.maxSubsteps
+      ? Math.min(LIQUID_MAX_SUBSTEPS, toyExtension.maxSubsteps) : LIQUID_MAX_SUBSTEPS;
     if (LIQUID_FIXED_STEP) {
       // v24.124 — fixed-quantum substepping (mirrors updateLiquids): exact
       // LIQUID_SUBSTEP_DT chunks, remainder banked, excess shed past a
@@ -12003,7 +12050,7 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
       // cap scaled with it so the bank still holds ~one 60 Hz frame.
       liquidStepAcc += dt * LIQUID_TIMESCALE;
       subSteps = Math.floor(liquidStepAcc / LIQUID_SUBSTEP_DT);
-      if (subSteps > LIQUID_MAX_SUBSTEPS) subSteps = LIQUID_MAX_SUBSTEPS;
+      if (subSteps > frameSubstepCap) subSteps = frameSubstepCap;
       liquidStepAcc -= subSteps * LIQUID_SUBSTEP_DT;
       var remainderCap=LIQUID_SUBSTEP_DT * 2 * LIQUID_TIMESCALE;
       if(instance.retainSubquantumRemainder)remainderCap=Math.max(remainderCap,LIQUID_SUBSTEP_DT);
@@ -12013,7 +12060,7 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
     } else {
       subSteps = Math.ceil(dt * LIQUID_TIMESCALE / LIQUID_SUBSTEP_DT);
       if (subSteps < 1) subSteps = 1;
-      if (subSteps > LIQUID_MAX_SUBSTEPS) {if(timingAudit)timingAudit.variableSubstepCapCalls++;subSteps = LIQUID_MAX_SUBSTEPS;}
+      if (subSteps > frameSubstepCap) {if(timingAudit)timingAudit.variableSubstepCapCalls++;subSteps = frameSubstepCap;}
       instance.stepDt = dt * LIQUID_TIMESCALE / subSteps;   // computeGridBounds pushes this into the uniform
     }
 
@@ -12122,14 +12169,23 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
     var diagnosticsSample = instance.diagnosticsActive ? beginLiquidDiagnostics(instance) : null;
     try {
       if (hasSnow) runSnowBoundary(instance);
+      if (toyExtension && toyExtension.ready) toyExtension.beginFrame(frameEncoder);
 
       for (var ss = 0; ss < subSteps; ss++) {
+        if (toyExtension && toyExtension.ready) toyExtension.beforeSubstep(frameEncoder,
+          {h:instance.stepDt,substep:ss,count:count});
         buildGrid(instance, ss > 0);
         runDeclump(instance);
+        if (toyExtension && toyExtension.ready) toyExtension.constrain(frameEncoder);
         runP2G(instance);
         runGrid2(instance, ss, true);
         runG2P(instance);
+        if (toyExtension && toyExtension.ready) {
+          toyExtension.constrain(frameEncoder);
+          toyExtension.beforeCollision(frameEncoder);
+        }
         runCollide(instance, ss);
+        if (toyExtension && toyExtension.ready) toyExtension.afterSubstep(frameEncoder);
         if (hasSnow) for (var grainStep = 0; grainStep < grainSteps; grainStep++) {
           // Terrain, rig and bowl stay on every pass; resident skins are
           // projected once, after the tick's final contact.
@@ -12148,8 +12204,11 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
       }
       // Clear the last substep's active blocks before its grid mapping moves.
       runSparseEndClear(instance);
+      if (toyExtension && toyExtension.ready) toyExtension.captureFrame(frameEncoder,
+        instance.simulationClock + instance.stepDt * subSteps);
       instance.queue.submit([frameEncoder.finish()]);
       instance.simulationClock += instance.stepDt * subSteps;
+      if (toyExtension && toyExtension.ready) toyExtension.afterSubmit();
       if (diagnosticsSample) finishLiquidDiagnostics(instance, diagnosticsSample);
     } finally {
       // A failed encode must not leave subsequent standalone calls holding
@@ -12323,6 +12382,11 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
         // Surface asynchronous shader/bind validation instead of leaving a
         // boot self-test waiting forever on an invalid command buffer.
         device.addEventListener('uncapturederror', function (ev) {
+          if (instance.toyNativeExtension) {
+            instance.materialStateError = (ev && ev.error && ev.error.message) || 'Native boundary GPU validation failed.';
+            instance.toyNativeExtension.error = instance.materialStateError;
+            instance.toyNativeExtension.ready = false;
+          }
           try {
             console.error('LiquidWGPU WebGPU validation: ' +
               ((ev && ev.error && ev.error.message) || 'unknown error'));
@@ -12333,6 +12397,11 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
         // A lost device permanently drops the GPU path; the game falls
         // back to the CPU solver from the next frame.
         device.lost.then(function (info) {
+          if (instance.toyNativeExtension) {
+            instance.materialStateError = 'Native boundary GPU device lost: ' + ((info && info.message) || 'unknown reason');
+            instance.toyNativeExtension.error = instance.materialStateError;
+            instance.toyNativeExtension.ready = false;
+          }
           instance.diagnosticsActive = false;
           stopLiquidDiagnostics(instance);
           instance.available = false;
@@ -12588,6 +12657,7 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
       surfTex: null,            // v24.113 — offscreen rgba16float density field
       surfTexView: null,        // v24.113 — its view
       surfTexW: 0, surfTexH: 0, // v24.113 — current field texture size
+      toyNativeFactory: opts.toyNativeExtension || null,
       uploadedCount: 0,
       lastUploadSeq: -1,     // v14.2 — liquidMutationSeq at the last upload
       residentSeeded: false, // v14.2 — GPU buffers hold a live particle set
@@ -12685,6 +12755,28 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
         instance.pressureModel = model || null;
         instance.materialStateError = null;
       },
+      configureToyNative: function (options) {
+        if (typeof opts.toyNativeExtension !== 'function') {
+          return Promise.reject(new Error('Toy native extension was not registered at creation.'));
+        }
+        return instance.readyPromise.then(function () {
+          if (!instance.simActive) throw new Error('The native liquid engine is unavailable.');
+          if (instance.toyNativeExtension) instance.toyNativeExtension.destroy();
+          var extension = opts.toyNativeExtension(instance, options || {});
+          var retired = false;
+          var destroy = extension.destroy;
+          extension.destroy = function () {
+            retired = true;
+            return destroy.apply(extension, arguments);
+          };
+          instance.toyNativeExtension = extension;
+          instance.toyNativeDomain = {minX:0,minY:0,maxX:options.width,maxY:options.height};
+          return extension.readyPromise.then(function () {
+            if (retired || instance.toyNativeExtension !== extension) throw new Error('Toy native configuration was retired.');
+            return extension;
+          });
+        });
+      },
       prepareMaterialState: function (options) {
         // Activation may follow a newly constructed apparatus or existing
         // resident water. Apply authored deltas before resetting its EOS.
@@ -12713,6 +12805,12 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
         try {
           runFrame(instance, dt);
         } catch (e) {
+          if (instance.toyNativeExtension) {
+            instance.materialStateError = (e && e.message) || String(e);
+            instance.toyNativeExtension.error = instance.materialStateError;
+            instance.toyNativeExtension.ready = false;
+            return;
+          }
           if (instance.pressureModel && instance.pressureModel.enabled && instance.pressureModel.preserveMaterialState) {
             instance.materialStateError = (e && e.message) || String(e);
             instance.pressureModel.error = instance.materialStateError;
@@ -13059,6 +13157,10 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
         return n;
       },
       dispose: function () {
+        if (instance.toyNativeExtension) {
+          instance.toyNativeExtension.destroy();
+          instance.toyNativeExtension = null;
+        }
         instance.sparseGridFusionRequest=null;instance.sparseClearFusion=null;instance.snowIndexResetFusion=null;
         instance.snowBoundaryFusedRequest=null;instance.snowBoundaryFused=null;
         if (instance.pressureModel && typeof instance.pressureModel.destroy === 'function') {

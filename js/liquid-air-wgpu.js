@@ -1111,6 +1111,7 @@ fn transportAffine(p:vec2<f32>,fallback:vec2<f32>,native:vec4<f32>,dt:f32)->vec4
       bindings:[{type:'read-only-storage',buffer:transport},{type:'uniform',buffer:config}]
     }) : null;
     var geometryHost = new Float32Array(count * 8);
+    var uncappedGeometry = null;
     var enabled = false, steps = 0, pending = false, snapshot = null, destroyed = false;
     var model = {
       width:width,height:height,cellSize:dx,iterations:iterations,geometryStride:8,redBlack:redBlack,
@@ -1160,6 +1161,12 @@ fn transportAffine(p:vec2<f32>,fallback:vec2<f32>,native:vec4<f32>,dt:f32)->vec4
         if(value && mac && !materialInitialized)throw new Error('Initialize MAC material references before enabling.');
         enabled=!!value;model.enabled=enabled;
       },
+      refreshToyCaps:function () {
+        if (!uncappedGeometry || !instance.toyNativeExtension) return;
+        geometryHost.set(uncappedGeometry);
+        instance.toyNativeExtension.applyPressureCaps(geometryHost,width,height,dx);
+        instance.queue.writeBuffer(geometry,0,geometryHost);
+      },
       geometry:function (solid, room, velocityX, velocityY, faceOpen) {
         if (solid.length !== count || faceOpen && faceOpen.length !== count*4) throw new Error('Air geometry dimensions differ.');
         partialGeometryCells=0;dynamicBasisCells=0;
@@ -1178,6 +1185,11 @@ fn transportAffine(p:vec2<f32>,fallback:vec2<f32>,native:vec4<f32>,dt:f32)->vec4
             if(!(open>=0 && open<=1))throw new Error('Air face opening must be in [0, 1].');
             geometryHost[c*8+4+d]=open;
           }
+        }
+        if (instance.toyNativeExtension) {
+          if (!uncappedGeometry) uncappedGeometry = new Float32Array(geometryHost.length);
+          uncappedGeometry.set(geometryHost);
+          instance.toyNativeExtension.applyPressureCaps(geometryHost,width,height,dx);
         }
         instance.queue.writeBuffer(geometry,0,geometryHost);
       },
