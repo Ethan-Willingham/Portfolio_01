@@ -80,6 +80,7 @@ const HUBS = [
       live('perennial-philosophy.html', 'The Perennial Philosophy', 'perennial-philosophy.jpg', '1945', 1945, "Huxley assembles a shared spiritual philosophy from selected mystics. Read five passages in context, where Buddhist accounts of self and Christian accounts of union complicate his claim of agreement."),
       live('modern-teachers.html', 'The Modern Teachers', 'modern-teachers.jpg', '20th c.', 1965, "Watts, Ram Dass, Krishnamurti, Gurdjieff, and Tolle give different accounts of self and practice. Compare what each asks you to accept, and what a teacher's conduct can tell you about their authority."),
       live('same-chance.html', 'The Same Chance', 'same-chance.jpg', '2026', 2026, "Everyone gets exactly the same chance at contentment, even people who die young, and pain is usually what turns people around. A housing lottery is the strongest evidence against it."),
+      live('what-you-get-used-to.html', 'What You Get Used To', 'what-you-get-used-to.jpg', '2026', 2026, "Do we get used to everything? No. Some feelings fade, some get stronger, and feeling something less doesn't mean it's doing less to you."),
     ],
   },
   {
