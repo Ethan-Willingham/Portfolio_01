@@ -566,9 +566,9 @@
       });
     });
     bar.addEventListener('click', function (event) {
-      if (event.target.closest('[data-scene], #toy-clear')) {
+      if (event.target.closest('button[data-scene], #toy-clear')) {
         picker.open = false; closePanel(false);
-        var sceneButton=event.target.closest('[data-scene]');
+        var sceneButton=event.target.closest('button[data-scene]');
         // Machine construction preserves its original pause state, including
         // a rejected request that leaves the current scene untouched.
         if(!sceneButton || !/^(siphon|cup|heron)$/.test(sceneButton.dataset.scene))pause(false);

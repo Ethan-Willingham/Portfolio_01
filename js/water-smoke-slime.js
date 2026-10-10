@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.63'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.64'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -113,8 +113,17 @@
   // camera, so a short browser cannot silently shrink the apparatus.
   var machineWorld = {w:1120,h:664};
   var machineRegistry=window.WSSMachineRegistry;
-  var bootScene=new URL(window.location.href).searchParams.get('scene');
+  var bootParams=new URL(window.location.href).searchParams;
+  var defaultMachineRequested=!bootParams.has('scene') && !bootParams.has('smoke') && !bootParams.has('build') && !!navigator.gpu;
+  var bootScene=defaultMachineRequested ? 'self-flushing-cup' : bootParams.get('scene');
   var bootMachine=machineRegistry && machineRegistry.lookup(bootScene);
+  function defaultMachineFallback(){
+    if(!defaultMachineRequested)return false;
+    defaultMachineRequested=false;startupMachine=null;
+    var fallbackURL=new URL(window.location.href);fallbackURL.searchParams.set('scene','falls');
+    fallbackURL.searchParams.delete('build');fallbackURL.hash='';
+    window.location.assign(fallbackURL.href);return true;
+  }
   function nativeMachineScene(name){return !!(machineRegistry && machineRegistry.lookup(name));}
   function fixedMachineScene(name){return name==='cup' || name==='siphon' || name==='heron' || nativeMachineScene(name);}
   function machineSize(name){var entry=machineRegistry && machineRegistry.lookup(name);return entry ? entry.world : machineWorld;}
@@ -14159,12 +14168,13 @@
       pbtn.classList.toggle('is-dead', waterState === 'off');
     }
     if (flowInput) flowInput.disabled = waterState === 'off';
+    if(toyBootReady && waterState==='off' && defaultMachineFallback())return;
     if(toyBootReady && waterState!=='booting' && sharedBuildData && !sharedBuildApplied){
       sharedBuildApplied=true;
       loadBuild(buildToken).catch(function(error){buildError=error.message;});
     }else if(toyBootReady && waterState==='on' && startupMachine){
       var name=startupMachine;startupMachine=null;
-      constructMachine(name,{}).catch(function(error){buildError=error.message;});
+      constructMachine(name,{}).catch(function(error){if(!defaultMachineFallback())buildError=error.message;});
     }
     updateReadout();
   }
@@ -14175,14 +14185,14 @@
     wireUI();
     if(bootMachine){
       try{await machineRegistry.load(bootMachine.id);}
-      catch(error){document.getElementById('toy-fallback').hidden=false;buildError=error.message;return;}
+      catch(error){if(defaultMachineFallback())return;document.getElementById('toy-fallback').hidden=false;buildError=error.message;return;}
     }
     addBorder();
     bootLiquid();
     bootSmoke();
     var smokeQuery = new URLSearchParams(location.search);
     var smokeName = smokeQuery.get('smoke');
-    var initialScene = smokeQuery.get('scene');
+    var initialScene = bootScene;
     if(fixedMachineScene(initialScene))startupMachine=initialScene;
     var knownScenes = ['falls', 'zerog', 'chimney', 'spa', 'rig', 'blank'];
     scene(sharedBuildData || startupMachine ? 'blank' : knownScenes.indexOf(initialScene) >= 0 ? initialScene : window.SmokePresets.byId[smokeName] ? 'rig' : 'falls');
