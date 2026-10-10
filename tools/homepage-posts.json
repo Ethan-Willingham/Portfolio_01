@@ -1,5 +1,17 @@
 [
   {
+    "href": "let-me-llm-that-for-you.html",
+    "thumb": "let-me-llm-that-for-you.jpg",
+    "date": "2026-10-09",
+    "dateDisplay": "9 Oct 2026",
+    "createdCommit": "797bd9f70221c486d12c9d6e7a81fb3a7c9d1bba",
+    "createdAt": "2026-10-09T19:42:47-05:00",
+    "title": "Let me LLM that for you",
+    "alt": "An empty chat box with a pointer on the send button.",
+    "keywords": "let me llm that for you chatgpt question link chat animation send cursor",
+    "desc": "A link types their question, presses send, then opens ChatGPT."
+  },
+  {
     "href": "slop.html",
     "date": "2026-10-06",
     "dateDisplay": "6 Oct 2026",

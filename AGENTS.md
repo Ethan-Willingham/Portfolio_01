@@ -124,8 +124,8 @@ link plays two steps, then hands off to ChatGPT only by owner choice. Claude's
 general web prompt link was reported broken, and Gemini has no verified equivalent.
 Grok remains excluded by owner choice. Do not add a picker or another destination.
 The wordless thumbnail sources and renderer live in `tools/let-me-llm/`.
-The homepage card is held on `lmltfy-card` until the owner's third gate passes;
-never include that held card in an earlier push.
+The owner passed Gate 3 on 2026-10-09. The homepage card and search entry are
+published; regenerate them from `tools/homepage-posts.json` when changing the card.
 
 The portfolio pages and their assets (~50 live posts now; this lists the structure,
 not every page):
