@@ -120,8 +120,9 @@ self-contained HTML file with inline CSS and JavaScript. Read `docs/LET_ME_LLM.m
 before changing it. By owner instruction, it uses its own neutral light/dark
 palette and the system font stack, an exception to the site's three-font rule.
 It has no site chrome, external assets, analytics, cookies or storage. A question
-link plays two steps, then hands off to ChatGPT only. Other providers have no
-verified equivalent web link, so do not add a picker or another destination.
+link plays two steps, then hands off to ChatGPT only by owner choice. Claude's
+general web prompt link was removed, and Gemini has no verified equivalent.
+Grok remains excluded by owner choice. Do not add a picker or another destination.
 The wordless thumbnail sources and renderer live in `tools/let-me-llm/`.
 The homepage card is held on `lmltfy-card` until the owner's third gate passes;
 never include that held card in an earlier push.
