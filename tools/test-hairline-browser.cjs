@@ -70,9 +70,9 @@ const report = { engine: process.env.HAIRLINE_ENGINE || 'chromium', shell: 'work
     const check = (name, values) => { report.checks.push({ name, ...values }); console.log(name, values || 'passed'); };
 
     let p = await origin(); await page.mouse.click(p.x, p.y);
-    const tap = await peak(top, 350); assert(tap.max > 18, JSON.stringify(tap));
-    const echo = await peak(top, 1000); assert(echo.max > 6 && echo.min < -4, JSON.stringify(echo));
-    check('click swells into a broad wave with lingering reflections', { tap, echo });
+    const tap = await peak(top, 350); assert(tap.max > 2 && tap.max < 7, JSON.stringify(tap));
+    const echo = await peak(top, 1000); assert(echo.max > 0.5 && echo.max < 4 && echo.min < -0.2, JSON.stringify(echo));
+    check('click swells gently with small reflections', { tap, echo });
     await reset(); p = await grab();
     await page.mouse.move(p.x, p.y + 100, { steps: 18 });
     const held = await shape(); assert(held.max > 65 && held.max < 100); assert.equal(held.first[1], 0); assert.equal(held.last[1], 0);
@@ -142,6 +142,10 @@ const report = { engine: process.env.HAIRLINE_ENGINE || 'chromium', shell: 'work
     await page.goto(base + '/index.html'); await page.waitForTimeout(1500);
     await page.evaluate(() => scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' })); await page.waitForTimeout(120);
     const height = await page.evaluate(() => document.documentElement.scrollHeight);
+    p = await origin(bottom); await page.mouse.click(p.x, p.y);
+    const footerTap = await peak(bottom, 350); assert(footerTap.max > 2 && footerTap.max < 7, JSON.stringify(footerTap));
+    check('footer click makes the same small ripple', footerTap);
+    await reset();
     p = await grab(bottom); await page.mouse.move(p.x, p.y - 95, { steps: 12 });
     assert((await shape(bottom)).min < -60); await page.mouse.up(); assert((await peak(bottom)).max > 25);
     assert.equal(await page.evaluate(() => document.documentElement.scrollHeight), height);

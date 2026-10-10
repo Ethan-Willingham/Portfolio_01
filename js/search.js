@@ -300,7 +300,7 @@
     waves.push(wave);
 
     function feel(soft) {
-      tension = Math.pow((count - 1) * (soft ? 0.9 : 3.2), 2);
+      tension = Math.pow((count - 1) * (soft ? 0.45 : 3.2), 2);
       // Touch screens get a smaller, quieter ripple that settles sooner.
       damping = Math.exp(-(touch.matches ? 5.5 : soft ? 1.65 : 4.2) * dt);
       warmthFade = touch.matches ? 1.3 : soft ? 0.4 : 0.65;
@@ -406,8 +406,9 @@
         // ends. Feed mostly velocity so it swells into view instead of jumping.
         var pulse = (1 - 2 * distance * distance) * Math.exp(-distance * distance);
         pulse *= Math.min(1, i / 4, (count - 1 - i) / 4);
-        u[i] = clamp(u[i] + 4 * strength * pulse, -65, 65);
-        velocity[i] = clamp(velocity[i] + 1000 * strength * pulse, -1400, 1400);
+        // A click makes a small swell; the slower string needs little impulse.
+        u[i] = clamp(u[i] + strength * pulse, -65, 65);
+        velocity[i] = clamp(velocity[i] + 70 * strength * pulse, -1400, 1400);
       }
       warmth = 1; run();
     }
