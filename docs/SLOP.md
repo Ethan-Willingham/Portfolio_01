@@ -16,6 +16,25 @@ at the owner's request. Dragging, scroll and pinch zoom, keyboard navigation
 and recentering through the title button remain available. Control instructions
 live in About and the accessible description.
 
+## Published asset cleanup, October 9, 2026
+
+The owner requested removal of retired images, old experiments and duplicates
+to reduce the GitHub Pages site size. Only the 34 active works' WebP and JPEG
+pairs remain in `assets/slop/`. Share previews use work 001's existing JPEG.
+The cleanup removes 511 files totaling 303,378,976 bytes, including every
+retired image, attempt copy, demonstration source and assembled source PNG.
+
+All 112 work records and 194 lifetime generation calls remain in the catalogue.
+Deleted assets have null paths, a deletion timestamp and the owner's reason.
+Prompts, original hashes, reviews, decisions, dimensions and retirement records
+remain unchanged. Selected attempts for active works use the existing gallery
+files instead of duplicate copies. The Ledger counts recorded generation calls
+even when their image files have been removed.
+
+This owner request supersedes the asset-retention instructions in the production
+history below. Future production can retain working sources locally; the live
+site only needs the images selected for the gallery and its share previews.
+
 ## The catalogue
 
 [`js/slop-data.js`](../js/slop-data.js) contains the phrase bank, art directions,

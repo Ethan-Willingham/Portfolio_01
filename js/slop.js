@@ -618,7 +618,7 @@
   }
 
   function buildLedger() {
-    const generated = allWorks.filter((work) => work.image && knownNumber(work.generation?.attempts) && work.generation.attempts > 0);
+    const generated = allWorks.filter((work) => knownNumber(work.generation?.attempts) && work.generation.attempts > 0);
     const retired = allWorks.filter((work) => work.generation?.status === 'retired');
     const attemptsKnown = allWorks.length > 0 && allWorks.every((work) => knownNumber(work.generation?.attempts));
     const attempts = attemptsKnown ? allWorks.reduce((total, work) => total + work.generation.attempts, 0) : null;
@@ -631,7 +631,7 @@
       stat(count(phrases.length), 'Phrases in the library')
     );
     const defaultNote = 'Planning and code tokens exclude image inference. The image tool did not report image token usage or cost. Unknown values are not zero.';
-    const retirementNote = retired.length ? `${count(works.length)} works on view. ${count(retired.length)} retired ${retired.length === 1 ? 'work remains' : 'works remain'} in this production record. Totals include their images and attempts. ` : '';
+    const retirementNote = retired.length ? `${count(works.length)} works on view. ${count(retired.length)} retired ${retired.length === 1 ? 'work remains' : 'works remain'} in this production record. Totals include their generation calls. Retired image files have been removed. ` : '';
     $('slop-usage-note').textContent = retirementNote + (production.usageNote || defaultNote);
     $('slop-model-note').hidden = !production.imageModelCredit?.model;
     $('slop-model-note').textContent = production.imageModelCredit?.model

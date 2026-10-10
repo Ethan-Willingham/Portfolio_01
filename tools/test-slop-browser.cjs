@@ -382,8 +382,8 @@ async function dialogChecks(page, label, works) {
   const imageStat = page.locator('.slop-stat').filter({ has: page.locator('.slop-stat-label', { hasText: 'Image inference tokens' }) });
   assert.equal(await imageStat.locator('.slop-stat-value').textContent(), 'Not reported');
   const generatedStat = page.locator('.slop-stat').filter({ has: page.locator('.slop-stat-label', { hasText: 'Unique generated works' }) });
-  const generatedCount = allWorks.filter(work => work.image && Number.isFinite(work.generation?.attempts) && work.generation.attempts > 0).length;
-  assert.equal(await generatedStat.locator('.slop-stat-value').textContent(), new Intl.NumberFormat('en-US').format(generatedCount), 'The production total lost retired images.');
+  const generatedCount = allWorks.filter(work => Number.isFinite(work.generation?.attempts) && work.generation.attempts > 0).length;
+  assert.equal(await generatedStat.locator('.slop-stat-value').textContent(), new Intl.NumberFormat('en-US').format(generatedCount), 'The production total lost retired works.');
   const attemptsStat = page.locator('.slop-stat').filter({ has: page.locator('.slop-stat-label', { hasText: 'Lifetime image attempts' }) });
   const attemptsKnown = allWorks.every(work => typeof work.generation?.attempts === 'number' && Number.isFinite(work.generation.attempts) && work.generation.attempts >= 0);
   const expectedAttempts = attemptsKnown ? new Intl.NumberFormat('en-US').format(allWorks.reduce((sum, work) => sum + work.generation.attempts, 0)) : 'Not reported';
@@ -401,7 +401,7 @@ async function dialogChecks(page, label, works) {
   }
   if (retired.length) {
     const note = await page.locator('#slop-usage-note').textContent();
-    assert.ok(note.includes(`${works.length} works on view.`) && note.includes(`${retired.length} retired `) && note.includes('Totals include their images and attempts.'), 'The Ledger does not explain retired production totals.');
+    assert.ok(note.includes(`${works.length} works on view.`) && note.includes(`${retired.length} retired `) && note.includes('Totals include their generation calls.') && note.includes('Retired image files have been removed.'), 'The Ledger does not explain retired production totals.');
   }
   const imageUsageCells = await page.locator('#slop-ledger-rows tr td:nth-child(4)').allTextContents();
   assert.ok(imageUsageCells.length === allWorks.length && imageUsageCells.every(value => value === 'Not reported'), 'Unknown per-image tokens were changed to zero.');

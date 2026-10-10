@@ -1606,8 +1606,8 @@ window.SLOP_DATA = {
       "title": "Authorship unavailable",
       "phraseId": "p021",
       "styleId": "redaction",
-      "image": "assets/slop/002.webp",
-      "fallback": "assets/slop/002.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "alt": "A worn cream document covered in black redactions, leaving the typed phrase Authorship unavailable exposed at the center.",
@@ -1627,7 +1627,9 @@ window.SLOP_DATA = {
       "retirement": {
         "retiredAt": "2026-10-07T18:19:13.131Z",
         "reason": "Removed at the owner's request after reviewing the image picker."
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "003",
@@ -1658,8 +1660,8 @@ window.SLOP_DATA = {
       "title": "A step below average",
       "phraseId": "p002",
       "styleId": "hard-edge",
-      "image": "assets/slop/004.webp",
-      "fallback": "assets/slop/004.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "alt": "Crisp colored planes descend like steps, with A step below average cut into the lowest plane.",
@@ -1680,7 +1682,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "005",
@@ -1711,8 +1715,8 @@ window.SLOP_DATA = {
       "title": "Almost a hand",
       "phraseId": "p011",
       "styleId": "ceramics",
-      "image": "assets/slop/006.webp",
-      "fallback": "assets/slop/006.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "alt": "An apricot-glazed ceramic hand has branching fingers and Almost a hand scratched across its palm.",
@@ -1733,14 +1737,16 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Generate a square, close studio photograph of a strange handmade ceramic object. It is a heavy upright hand modeled from pale pink stoneware, with five fingers that bend, divide and fuse in subtly impossible ways. The form should be graceful at first glance and harder to explain the longer it is studied. Across the broad palm, the exact phrase \"Almost a hand\" has been scratched into wet clay with a blunt tool before firing, leaving dark glaze pooled in the letters. A satin apricot glaze gathers into glossy pools around the knuckles and exposes dry clay along several cracks. Set the sculpture on a flat deep blue surface against a matching seamless background, with a hard side light and one short shadow. Fill most of the square with the object; keep every mark materially plausible.",
             "change": "Original image, generated before per-attempt six-check records.",
-            "image": "assets/slop/006.webp",
-            "fallback": "assets/slop/006.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "fed7464dcd954060f01360b63050db8f627117d8b47d138065c0067c22df6b82",
             "recordedAt": "2026-10-07T04:11:33.997Z",
             "legacy": true,
             "review": null,
             "decision": "superseded",
-            "note": "Published before per-attempt six-check records. The owner rejected this image in the picker review on October 7, 2026."
+            "note": "Published before per-attempt six-check records. The owner rejected this image in the picker review on October 7, 2026.",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
@@ -1799,15 +1805,17 @@ window.SLOP_DATA = {
       "retirement": {
         "retiredAt": "2026-10-07T18:30:29.662Z",
         "reason": "Owner rejected the original and its remake, and requested removal without further retries."
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "007",
       "title": "A mood without a memory",
       "phraseId": "p039",
       "styleId": "woven",
-      "image": "assets/slop/007.webp",
-      "fallback": "assets/slop/007.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "alt": "A worn woven textile holds A mood without a memory in uneven lettering among faded fields of color.",
@@ -1827,15 +1835,17 @@ window.SLOP_DATA = {
       "retirement": {
         "retiredAt": "2026-10-07T18:19:13.132Z",
         "reason": "Removed at the owner's request after reviewing the image picker."
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "008",
       "title": "Nobody stood there",
       "phraseId": "p056",
       "styleId": "cyanotype",
-      "image": "assets/slop/008.webp",
-      "fallback": "assets/slop/008.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "alt": "A deep blue cyanotype shows an empty human outline made from botanical shadows and the words Nobody stood there.",
@@ -1855,7 +1865,9 @@ window.SLOP_DATA = {
       "retirement": {
         "retiredAt": "2026-10-07T18:19:13.132Z",
         "reason": "Removed at the owner's request after reviewing the image picker."
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "009",
@@ -1886,8 +1898,8 @@ window.SLOP_DATA = {
       "title": "This should have been deleted",
       "phraseId": "p065",
       "styleId": "xerox-punk",
-      "image": "assets/slop/010.webp",
-      "fallback": "assets/slop/010.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "alt": "A torn black-and-cream photocopy collage places This should have been deleted beside a fragmented face.",
@@ -1907,15 +1919,17 @@ window.SLOP_DATA = {
       "retirement": {
         "retiredAt": "2026-10-07T18:19:13.132Z",
         "reason": "Removed at the owner's request after reviewing the image picker."
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "011",
       "title": "Uncanny",
       "phraseId": "p003",
       "styleId": "op-art",
-      "image": "assets/slop/011.webp",
-      "fallback": "assets/slop/011.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "alt": "Concentric black and cream lines bend around the word Uncanny, which seems raised and recessed at once.",
@@ -1936,14 +1950,16 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create one square op art painting built from very fine alternating black and warm cream lines. The lines form a shallow set of concentric waves that pull toward a point slightly left of center. Make the exact word \"Uncanny\" large enough to occupy the middle third of the square. Its letterforms are not placed over the pattern: the lines bend, compress and reverse phase to create each letter as an apparent bulge or depression in the painted plane. An almost invisible shift of one stripe makes part of the word seem to face in the wrong direction. Preserve the exact capitalization and keep all seven letters readable. Tight, controlled geometry should create a physical looking instability without gradients or simulated chrome. The whole composition continues to the edges as a single meticulously painted surface.",
             "change": "Original image, generated before per-attempt six-check records.",
-            "image": "assets/slop/011.webp",
-            "fallback": "assets/slop/011.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "03e336ff38bb67e40a75215172d52391f207d46c1f870e6f129d0093e2a629b5",
             "recordedAt": "2026-10-07T04:15:22.052Z",
             "legacy": true,
             "review": null,
             "decision": "superseded",
-            "note": "Published before per-attempt six-check records. The owner rejected this image in the picker review on October 7, 2026."
+            "note": "Published before per-attempt six-check records. The owner rejected this image in the picker review on October 7, 2026.",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
@@ -2002,15 +2018,17 @@ window.SLOP_DATA = {
       "retirement": {
         "retiredAt": "2026-10-07T18:30:29.662Z",
         "reason": "Owner rejected the original and its remake, and requested removal without further retries."
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "012",
       "title": "Looks right, but wrong",
       "phraseId": "p004",
       "styleId": "stock-hyperrealism",
-      "image": "assets/slop/012.webp",
-      "fallback": "assets/slop/012.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "alt": "A glossy stock-style image shows a smiling man at breakfast holding a mug labeled Looks right, but wrong.",
@@ -2031,7 +2049,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "013",
@@ -2062,8 +2082,8 @@ window.SLOP_DATA = {
       "title": "Words approaching language",
       "phraseId": "p060",
       "styleId": "glitch",
-      "image": "assets/slop/014.webp",
-      "fallback": "assets/slop/014.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "alt": "A face breaks into cyan, violet, green and red digital blocks, with Words approaching language across the mouth.",
@@ -2083,15 +2103,17 @@ window.SLOP_DATA = {
       "retirement": {
         "retiredAt": "2026-10-07T18:19:13.132Z",
         "reason": "Removed at the owner's request after reviewing the image picker."
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "015",
       "title": "The average won",
       "phraseId": "p042",
       "styleId": "suprematism",
-      "image": "assets/slop/015.webp",
-      "fallback": "assets/slop/015.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "alt": "The average won appears inside a black square beneath a blue circle, beside a tilted red bar and pale quadrilateral.",
@@ -2111,7 +2133,9 @@ window.SLOP_DATA = {
       "retirement": {
         "retiredAt": "2026-10-07T18:19:13.132Z",
         "reason": "Removed at the owner's request after reviewing the image picker."
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "016",
@@ -2166,8 +2190,8 @@ window.SLOP_DATA = {
       "title": "An image of having an idea",
       "phraseId": "p008",
       "styleId": "photomontage",
-      "image": "assets/slop/018.webp",
-      "fallback": "assets/slop/018.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "alt": "A photographic collage joins a cropped face, crumpled white material and household objects, with An image of having an idea printed along a folding ruler.",
@@ -2187,7 +2211,9 @@ window.SLOP_DATA = {
       "retirement": {
         "retiredAt": "2026-10-07T18:19:13.132Z",
         "reason": "Removed at the owner's request after reviewing the image picker."
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "019",
@@ -2242,8 +2268,8 @@ window.SLOP_DATA = {
       "title": "The shadows disagree",
       "phraseId": "p059",
       "styleId": "woodcut",
-      "image": "assets/slop/021.webp",
-      "fallback": "assets/slop/021.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "alt": "A black woodcut of a chair and jug contains contradictory shadows and the words The shadows disagree carved into the floor.",
@@ -2263,7 +2289,9 @@ window.SLOP_DATA = {
       "retirement": {
         "retiredAt": "2026-10-07T18:19:13.132Z",
         "reason": "Removed at the owner's request after reviewing the image picker."
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "022",
@@ -2294,8 +2322,8 @@ window.SLOP_DATA = {
       "title": "The reference escaped",
       "phraseId": "p049",
       "styleId": "risograph",
-      "image": "assets/slop/023.webp",
-      "fallback": "assets/slop/023.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "alt": "An orange vase outline floats above a blue pedestal while a ribbon reading The reference escaped rises toward the upper right.",
@@ -2315,7 +2343,9 @@ window.SLOP_DATA = {
       "retirement": {
         "retiredAt": "2026-10-07T18:19:13.132Z",
         "reason": "Removed at the owner's request after reviewing the image picker."
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "024",
@@ -2394,8 +2424,8 @@ window.SLOP_DATA = {
       "title": "Your grief improves our product",
       "phraseId": "p123",
       "styleId": "embroidery",
-      "image": "assets/slop/027.webp",
-      "fallback": "assets/slop/027.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "alt": "On worn linen, an embroidered figure's blue tears become gold coins in a machine above the words Your grief improves our product.",
@@ -2415,15 +2445,17 @@ window.SLOP_DATA = {
       "retirement": {
         "retiredAt": "2026-10-07T18:19:13.132Z",
         "reason": "Removed at the owner's request after reviewing the image picker."
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "028",
       "title": "Doctor of plausible bullshit",
       "phraseId": "p124",
       "styleId": "lithography",
-      "image": "assets/slop/028.webp",
-      "fallback": "assets/slop/028.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "alt": "A lithographic parrot in academic robes displays a diploma reading Doctor of plausible bullshit above hollow books.",
@@ -2443,15 +2475,17 @@ window.SLOP_DATA = {
       "retirement": {
         "retiredAt": "2026-10-07T18:19:13.132Z",
         "reason": "Removed at the owner's request after reviewing the image picker."
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "029",
       "title": "Human in the billing loop",
       "phraseId": "p125",
       "styleId": "found-object",
-      "image": "assets/slop/029.webp",
-      "fallback": "assets/slop/029.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "alt": "A mannequin hand holds a payment card inside a closed receipt loop with Human in the billing loop stamped on its base.",
@@ -2471,7 +2505,9 @@ window.SLOP_DATA = {
       "retirement": {
         "retiredAt": "2026-10-07T18:19:13.132Z",
         "reason": "Removed at the owner's request after reviewing the image picker."
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "030",
@@ -2502,8 +2538,8 @@ window.SLOP_DATA = {
       "title": "Peer reviewed by itself",
       "phraseId": "p127",
       "styleId": "drypoint",
-      "image": "assets/slop/031.webp",
-      "fallback": "assets/slop/031.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "alt": "A drypoint paper ribbon curls into a closed citation loop and carries the phrase Peer reviewed by itself.",
@@ -2523,7 +2559,9 @@ window.SLOP_DATA = {
       "retirement": {
         "retiredAt": "2026-10-07T18:19:13.132Z",
         "reason": "Removed at the owner's request after reviewing the image picker."
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "032",
@@ -2554,8 +2592,8 @@ window.SLOP_DATA = {
       "title": "Permission not found. Proceeding.",
       "phraseId": "p129",
       "styleId": "scanography",
-      "image": "assets/slop/033.webp",
-      "fallback": "assets/slop/033.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "alt": "A scanner-like composition passes a luminous bar over a red refusal card and handwritten art beneath Permission not found. Proceeding.",
@@ -2575,7 +2613,9 @@ window.SLOP_DATA = {
       "retirement": {
         "retiredAt": "2026-10-07T18:19:13.132Z",
         "reason": "Removed at the owner's request after reviewing the image picker."
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "034",
@@ -2607,8 +2647,8 @@ window.SLOP_DATA = {
       "title": "Photographer: none",
       "styleId": "archive-record",
       "alt": "A sepia parade photograph on an archival card, with unknown crossed out and NONE penciled above the Photographer field.",
-      "image": "assets/slop/035.webp",
-      "fallback": "assets/slop/035.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square photograph of a museum archive record lying on a dark green archival box. A sepia photograph of a 1920s street parade, with crowds in hats, bunting and a brass band, is mounted on a gray archival card with paper photo corners. Beneath it, the typed catalog fields are small and illegible except one field typed on a large label strip: \"Photographer: unknown\". An archivist has struck through the word \"unknown\" with one neat pencil line and written \"none\" above it in dark, clear pencil capitals; this corrected \"Photographer: none\" field occupies the full lower third of the card, with bold lettering at least one twentieth of the entire image height so it is immediately readable at 336 pixels. A pencil and a magnifier rest beside the card. Soft north light, paper fibers, a faint accession stamp. No other readable words.",
@@ -2625,8 +2665,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square photograph of a museum archive record lying on a dark green archival box. A sepia photograph of a 1920s street parade, with crowds in hats, bunting and a brass band, is mounted on a gray archival card with paper photo corners. Beneath it, the typed catalog fields are small and illegible except one field typed on a large label strip: \"Photographer: unknown\". An archivist has struck through the word \"unknown\" with one neat pencil line and written \"none\" above it in clear pencil capitals, so the corrected line reads \"Photographer: none\", large and perfectly readable. A pencil and a magnifier rest beside the card. Soft north light, paper fibers, a faint accession stamp. No other readable words.",
             "change": "First attempt, prompt used verbatim.",
-            "image": "assets/slop/attempts/035-01.webp",
-            "fallback": "assets/slop/attempts/035-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "811a6c29d6b92d0b8a843346be1e05712ea46365cab69d43b0e423ee08b9df1a",
             "recordedAt": "2026-10-07T15:16:30.124Z",
             "review": {
@@ -2658,14 +2698,16 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T15:21:38.185Z"
             },
-            "decision": "rejected"
+            "decision": "rejected",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
             "prompt": "Use case: stylized-concept. Create a square photograph of a museum archive record lying on a dark green archival box. A sepia photograph of a 1920s street parade, with crowds in hats, bunting and a brass band, is mounted on a gray archival card with paper photo corners. Beneath it, the typed catalog fields are small and illegible except one field typed on a large label strip: \"Photographer: unknown\". An archivist has struck through the word \"unknown\" with one neat pencil line and written \"none\" above it in dark, clear pencil capitals; this corrected \"Photographer: none\" field occupies the full lower third of the card, with bold lettering at least one twentieth of the entire image height so it is immediately readable at 336 pixels. A pencil and a magnifier rest beside the card. Soft north light, paper fibers, a faint accession stamp. No other readable words.",
             "change": "Words failed: enlarged and darkened only the corrected photographer field for legibility at 336 pixels. Replaced the correction sentence; all other prompt sentences unchanged.",
-            "image": "assets/slop/attempts/035-02.webp",
-            "fallback": "assets/slop/attempts/035-02.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "0080ee9f1f75df65e3965a7e0170079a5eca9d50eba048d04ba36bdd9593c007",
             "recordedAt": "2026-10-07T15:22:35.730Z",
             "review": {
@@ -2697,7 +2739,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T15:22:59.110Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "0080ee9f1f75df65e3965a7e0170079a5eca9d50eba048d04ba36bdd9593c007",
@@ -2708,7 +2752,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "036",
@@ -2716,8 +2762,8 @@ window.SLOP_DATA = {
       "title": "By continuing, you agree",
       "styleId": "canvas-verso",
       "alt": "A linen canvas back on an oxblood studio wall, stenciled BY CONTINUING, YOU AGREE beneath its maker's markings.",
-      "image": "assets/slop/036.webp",
-      "fallback": "assets/slop/036.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square photograph of the back of a large stretched canvas leaning against a deep oxblood-red studio wall, filling most of the frame. Raw linen stretched over pale pine stretcher bars with a cross brace, wooden wedges tapped into the corners, a neat row of staples along the edge. Near the top bar, an invented maker's stencil in faded blue ink gives only a size, a weave number and a batch code. Directly below it, stenciled in the same blue ink and slightly uneven spray, are the exact words \"By continuing, you agree\" in very large BLOCK CAPITALS, arranged on three lines BY / CONTINUING, / YOU AGREE within the upper left canvas panel, with each letter at least one twentieth of the entire image height and perfectly readable at 336 pixels. Warm raking studio light shows the linen weave and the shadows of the bars. No brand names, logos or other readable words.",
@@ -2734,8 +2780,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square photograph of the back of a large stretched canvas leaning against a deep oxblood-red studio wall, filling most of the frame. Raw linen stretched over pale pine stretcher bars with a cross brace, wooden wedges tapped into the corners, a neat row of staples along the edge. Near the top bar, an invented maker's stencil in faded blue ink gives only a size, a weave number and a batch code. Directly below it, stenciled in the same ink, the same block capitals and the same slightly uneven spray, are the exact words \"By continuing, you agree\", large and perfectly readable. Warm raking studio light shows the linen weave and the shadows of the bars. No brand names, logos or other readable words.",
             "change": "First attempt, prompt used verbatim.",
-            "image": "assets/slop/attempts/036-01.webp",
-            "fallback": "assets/slop/attempts/036-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "ef2a3bdd0da0eef138b7f433282446f47d5859b09a4d739a510a8113600de86c",
             "recordedAt": "2026-10-07T15:23:40.464Z",
             "review": {
@@ -2767,14 +2813,16 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T15:24:18.595Z"
             },
-            "decision": "rejected"
+            "decision": "rejected",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
             "prompt": "Use case: stylized-concept. Create a square photograph of the back of a large stretched canvas leaning against a deep oxblood-red studio wall, filling most of the frame. Raw linen stretched over pale pine stretcher bars with a cross brace, wooden wedges tapped into the corners, a neat row of staples along the edge. Near the top bar, an invented maker's stencil in faded blue ink gives only a size, a weave number and a batch code. Directly below it, stenciled in the same blue ink and slightly uneven spray, are the exact words \"By continuing, you agree\" in very large BLOCK CAPITALS, arranged on three lines BY / CONTINUING, / YOU AGREE within the upper left canvas panel, with each letter at least one twentieth of the entire image height and perfectly readable at 336 pixels. Warm raking studio light shows the linen weave and the shadows of the bars. No brand names, logos or other readable words.",
             "change": "Words failed: enlarged only the phrase stencil and explicitly set three lines of block capitals. All other sentences remain verbatim.",
-            "image": "assets/slop/attempts/036-02.webp",
-            "fallback": "assets/slop/attempts/036-02.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "f89c9ec08f661b282629b6e3ebb4f162cfb2a3dccb990e00136fa12bc93a5a5e",
             "recordedAt": "2026-10-07T15:25:28.662Z",
             "review": {
@@ -2806,7 +2854,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T15:25:48.186Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "f89c9ec08f661b282629b6e3ebb4f162cfb2a3dccb990e00136fa12bc93a5a5e",
@@ -2816,7 +2866,9 @@ window.SLOP_DATA = {
       "retirement": {
         "retiredAt": "2026-10-07T18:19:13.132Z",
         "reason": "Removed at the owner's request after reviewing the image picker."
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "037",
@@ -2824,8 +2876,8 @@ window.SLOP_DATA = {
       "title": "Even the copies had painters",
       "styleId": "workshop-painting",
       "alt": "An oil-painted workshop with a person making another sunset among rows of copies, beneath a cardboard sign reading Even the copies had painters.",
-      "image": "assets/slop/037.webp",
-      "fallback": "assets/slop/037.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square realist oil painting, warm and direct, of a narrow copy-painting workshop; the entire scene, including the painter's skin, clothing, room, floor and furniture, must be visibly built from distinct loaded-bristle strokes, opaque paint and broken painted edges, legible as oil paint even at 336 pixels. A painter in a paint-stained T-shirt and plastic sandals works on the fourteenth of twenty identical sunset paintings, the same orange sun over the same sea, leaning in a row along the wall. Finished copies dry on a line overhead. A printed reference of the sunset is taped to the easel; a fan turns; a mug and a small radio sit on a stool. Taped to the wall above the easel, a strip of cardboard carries the exact words \"Even the copies had painters\" in thick black marker, large and perfectly readable. Visible brushwork, plain daylight from an open doorway, the painter's concentration taken seriously. No brand names or other readable words.",
@@ -2842,8 +2894,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square realist oil painting, warm and direct, of a narrow copy-painting workshop. A painter in a paint-stained T-shirt and plastic sandals works on the fourteenth of twenty identical sunset paintings, the same orange sun over the same sea, leaning in a row along the wall. Finished copies dry on a line overhead. A printed reference of the sunset is taped to the easel; a fan turns; a mug and a small radio sit on a stool. Taped to the wall above the easel, a strip of cardboard carries the exact words \"Even the copies had painters\" in thick black marker, large and perfectly readable. Visible brushwork, plain daylight from an open doorway, the painter's concentration taken seriously. No brand names or other readable words.",
             "change": "First attempt, prompt used verbatim.",
-            "image": "assets/slop/attempts/037-01.webp",
-            "fallback": "assets/slop/attempts/037-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "b11086110183768cdf0082e7acd79d14b005aedeab963779988ac76712559213",
             "recordedAt": "2026-10-07T15:27:05.229Z",
             "review": {
@@ -2875,14 +2927,16 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T15:27:34.901Z"
             },
-            "decision": "rejected"
+            "decision": "rejected",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
             "prompt": "Use case: stylized-concept. Create a square realist oil painting, warm and direct, of a narrow copy-painting workshop; the entire scene, including the painter's skin, clothing, room, floor and furniture, must be visibly built from distinct loaded-bristle strokes, opaque paint and broken painted edges, legible as oil paint even at 336 pixels. A painter in a paint-stained T-shirt and plastic sandals works on the fourteenth of twenty identical sunset paintings, the same orange sun over the same sea, leaning in a row along the wall. Finished copies dry on a line overhead. A printed reference of the sunset is taped to the easel; a fan turns; a mug and a small radio sit on a stool. Taped to the wall above the easel, a strip of cardboard carries the exact words \"Even the copies had painters\" in thick black marker, large and perfectly readable. Visible brushwork, plain daylight from an open doorway, the painter's concentration taken seriously. No brand names or other readable words.",
             "change": "Medium failed: changed only the opening medium sentence so the whole workshop is visibly oil-painted, not a photograph containing paintings.",
-            "image": "assets/slop/attempts/037-02.webp",
-            "fallback": "assets/slop/attempts/037-02.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "bb89f72d1780db3f26089f10b9c60c0f569c4a07ed8f1f367b657e48bc201d60",
             "recordedAt": "2026-10-07T15:28:51.916Z",
             "review": {
@@ -2914,7 +2968,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T15:29:53.747Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 3,
@@ -2974,7 +3030,9 @@ window.SLOP_DATA = {
       "retirement": {
         "retiredAt": "2026-10-07T18:30:29.662Z",
         "reason": "Owner rejected the original and its remake, and requested removal without further retries."
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "038",
@@ -3000,8 +3058,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square close photograph of an old black-and-white snapshot lying on a wooden table, with scalloped white edges, a crease across one corner and a water stain. It shows a woman in a 1950s dress standing on a porch step, squinting into the sun. The right half of the snapshot has been run through an automatic restoration: sharp, glossy, full color, and on that side her face has become a different woman's face, younger and smoother, with perfect teeth and different eyes. The seam between the halves runs straight down her face. A bright yellow sticker with no company name sits across the bottom border, carrying the exact words \"Restored into a stranger\" in bold black type, large and perfectly readable. Warm lamp light. No other readable words or logos.",
             "change": "First attempt, prompt used verbatim.",
-            "image": "assets/slop/attempts/038-01.webp",
-            "fallback": "assets/slop/attempts/038-01.jpg",
+            "image": "assets/slop/038.webp",
+            "fallback": "assets/slop/038.jpg",
             "sourceSha256": "52c09bb2b4bca93446c8005a7bcd793da1e8462928107046dd9021d2dcaf8821",
             "recordedAt": "2026-10-07T15:31:02.637Z",
             "review": {
@@ -3047,8 +3105,8 @@ window.SLOP_DATA = {
       "title": "Underdrawing: noise",
       "styleId": "technical-imaging",
       "alt": "A museum portrait displayed beside its infrared counterpart, which shows gray static, under a label reading Underdrawing: noise.",
-      "image": "assets/slop/039.webp",
-      "fallback": "assets/slop/039.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square photograph of a museum conservation display in a dark gallery. Two framed panels hang side by side under spotlights. On the left, a glossy, warmly colored portrait of a young woman, smooth and flawless. On the right, its infrared scan, the grayscale image conservators use to see the drawing beneath a painting. Where a real painting would show sketched lines and changes of mind, this scan shows only fine, even gray static, like television snow, with the portrait faintly emerging from it. Small captions under the panels read \"Visible light\" and \"Infrared\". Beneath both, a wide wall label carries the exact words \"Underdrawing: noise\" in large black type, perfectly readable. No other readable words.",
@@ -3065,8 +3123,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square photograph of a museum conservation display in a dark gallery. Two framed panels hang side by side under spotlights. On the left, a glossy, warmly colored portrait of a young woman, smooth and flawless. On the right, its infrared scan, the grayscale image conservators use to see the drawing beneath a painting. Where a real painting would show sketched lines and changes of mind, this scan shows only fine, even gray static, like television snow, with the portrait faintly emerging from it. Small captions under the panels read \"Visible light\" and \"Infrared\". Beneath both, a wide wall label carries the exact words \"Underdrawing: noise\" in large black type, perfectly readable. No other readable words.",
             "change": "First attempt, prompt used verbatim.",
-            "image": "assets/slop/attempts/039-01.webp",
-            "fallback": "assets/slop/attempts/039-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "768a727f20696a2bd30b1f3660d79184ce75c8fe2ec5139f23b1aa19ba572d8c",
             "recordedAt": "2026-10-07T15:32:41.932Z",
             "review": {
@@ -3098,7 +3156,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T15:34:34.993Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "768a727f20696a2bd30b1f3660d79184ce75c8fe2ec5139f23b1aa19ba572d8c",
@@ -3108,7 +3168,9 @@ window.SLOP_DATA = {
       "retirement": {
         "retiredAt": "2026-10-07T18:19:13.132Z",
         "reason": "Removed at the owner's request after reviewing the image picker."
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "040",
@@ -3134,8 +3196,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square straight-on photograph of a cork notice board in a community hall under ordinary fluorescent light, filling the frame. The board has accumulated layers of local flyers: underneath, sun-faded and curling sheets remain plainly visible around all sides, each different, with a hand-drawn bird, an awkward photocopied guitar, a small lino-cut flower, uneven marker lettering and odd handmade layouts. The newest layer consists of glossy flyers for different community activities, but every new picture has the identical smooth cinematic generated finish, luminous teal shadows, amber rim light, floating particles and immaculate surfaces. These fresh flyers partly cover the older ones without erasing them. The top flyer is an actual community-program flyer, its main headline reading exactly \"Something for everyone.\" in large plain white type over its glossy image, with letter height at least one twentieth of the whole square and a clearly visible final period. Its image shows a glowing generic arrangement of a cupcake, a guitar and flowers in that same generated finish. All other flyer lettering is tiny and illegible. Pins, overlapping paper edges and reflections distinguish the glossy new stock from the matte faded old sheets. No separate caption card, logos, brand names, recognizable people or watermarks.",
             "change": "First attempt of the owner's replacement concept. Replaces the bake-sale caption with the headline of an actual flyer.",
-            "image": "assets/slop/attempts/040-01.webp",
-            "fallback": "assets/slop/attempts/040-01.jpg",
+            "image": "assets/slop/040.webp",
+            "fallback": "assets/slop/040.jpg",
             "sourceSha256": "afd21c7676a3ac76c36a1c4781eb2e33917ca249a5267edf8a9d72a7fa40f70d",
             "recordedAt": "2026-10-07T15:36:13.122Z",
             "review": {
@@ -3181,8 +3243,8 @@ window.SLOP_DATA = {
       "title": "Only one of these happened",
       "styleId": "activity-book",
       "alt": "An activity-book page headed Only one of these happened, with duplicate photographs of a family, dog, red bucket and kite at the seaside.",
-      "image": "assets/slop/041.webp",
-      "fallback": "assets/slop/041.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square scan of a page from a children's activity book. The friendly header, in bold rounded letters, reads the exact words \"Only one of these happened\", large and perfectly readable. Below it, two photographs sit side by side in rounded frames: a family of four laughing at the edge of the sea on a windy day, a red bucket, a dog, a kite. The two frames contain two exact copies of ONE photograph, duplicated without any variation: every face, hair strand, dog's paw and tail, wave, splash, bucket position, kite string and crop must match exactly, as though the identical photo file was placed twice on the page. Bright primary-colored borders, stars and a small cartoon sun decorate the page, with an empty answer box in one corner. Cheap paper, slight show-through from the next page. No other readable words.",
@@ -3199,8 +3261,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square scan of a page from a children's activity book. The friendly header, in bold rounded letters, reads the exact words \"Only one of these happened\", large and perfectly readable. Below it, two photographs sit side by side in rounded frames: a family of four laughing at the edge of the sea on a windy day, a red bucket, a dog, a kite. The two photographs are identical in every detail. Bright primary-colored borders, stars and a small cartoon sun decorate the page, with an empty answer box in one corner. Cheap paper, slight show-through from the next page. No other readable words.",
             "change": "First attempt, prompt used verbatim.",
-            "image": "assets/slop/attempts/041-01.webp",
-            "fallback": "assets/slop/attempts/041-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "c4bad8376f06d88915e75c014784b965c84aa138132fe6f10c9e5ca9528b32f3",
             "recordedAt": "2026-10-07T15:38:49.565Z",
             "review": {
@@ -3232,14 +3294,16 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T15:39:17.867Z"
             },
-            "decision": "rejected"
+            "decision": "rejected",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
             "prompt": "Use case: stylized-concept. Create a square scan of a page from a children's activity book. The friendly header, in bold rounded letters, reads the exact words \"Only one of these happened\", large and perfectly readable. Below it, two photographs sit side by side in rounded frames: a family of four laughing at the edge of the sea on a windy day, a red bucket, a dog, a kite. The two frames contain two exact copies of ONE photograph, duplicated without any variation: every face, hair strand, dog's paw and tail, wave, splash, bucket position, kite string and crop must match exactly, as though the identical photo file was placed twice on the page. Bright primary-colored borders, stars and a small cartoon sun decorate the page, with an empty answer box in one corner. Cheap paper, slight show-through from the next page. No other readable words.",
             "change": "Evidence failed: changed only the identical-photographs sentence to require one photograph placed twice, including exact matching crop and small details.",
-            "image": "assets/slop/attempts/041-02.webp",
-            "fallback": "assets/slop/attempts/041-02.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "527f8460ae6b69848afd8262f73bcf97f64eee86f626d458099c7a915f409748",
             "recordedAt": "2026-10-07T15:40:50.158Z",
             "review": {
@@ -3271,7 +3335,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T15:44:08.444Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "527f8460ae6b69848afd8262f73bcf97f64eee86f626d458099c7a915f409748",
@@ -3282,7 +3348,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "042",
@@ -3290,8 +3358,8 @@ window.SLOP_DATA = {
       "title": "Open edition",
       "styleId": "etching-edition",
       "alt": "An etching edition with a penciled Open edition title and numbers continuing from 30/32 through 34/32, beside its reversed copper plate.",
-      "image": "assets/slop/042.webp",
-      "fallback": "assets/slop/042.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square overhead photograph of a fan of etchings on a dark slate print-shop table beside a blue felt press blanket: the same small etched landscape of a mill by a river, printed on cream paper with deep plate marks. In the lower margins, in pencil, the edition numbers read 30/32, 31/32, 32/32, then 33/32 and 34/32, the last two in a hand that is almost the artist's but slightly too even. On the top sheet, penciled where the title goes, are the exact words \"Open edition\" in very large dark graphite letters; this title and all five edition numbers must each have letter or digit height at least one twentieth of the entire image, on fully exposed generous lower margins, immediately readable at 336 pixels. An inked copper plate, a burnisher and tarlatan rags lie nearby; the image etched into the copper plate is the exact left-right mirror of the paper impression, with the mill on the RIGHT and the bridge on the LEFT, because printing reverses an intaglio plate. No other readable words.",
@@ -3308,8 +3376,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square overhead photograph of a fan of etchings on a dark slate print-shop table beside a blue felt press blanket: the same small etched landscape of a mill by a river, printed on cream paper with deep plate marks. In the lower margins, in pencil, the edition numbers read 30/32, 31/32, 32/32, then 33/32 and 34/32, the last two in a hand that is almost the artist's but slightly too even. On the top sheet, penciled where the title goes, are the exact words \"Open edition\", large and perfectly readable. An inked copper plate, a burnisher and tarlatan rags lie nearby. No other readable words.",
             "change": "First attempt, prompt used verbatim.",
-            "image": "assets/slop/attempts/042-01.webp",
-            "fallback": "assets/slop/attempts/042-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "d56b6547fbdc9d87762e10e78cd77bcc7be1c6cc42469d3c79cd1c6f1cf96cf2",
             "recordedAt": "2026-10-07T15:45:31.045Z",
             "review": {
@@ -3341,14 +3409,16 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T15:46:16.690Z"
             },
-            "decision": "rejected"
+            "decision": "rejected",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
             "prompt": "Use case: stylized-concept. Create a square overhead photograph of a fan of etchings on a dark slate print-shop table beside a blue felt press blanket: the same small etched landscape of a mill by a river, printed on cream paper with deep plate marks. In the lower margins, in pencil, the edition numbers read 30/32, 31/32, 32/32, then 33/32 and 34/32, the last two in a hand that is almost the artist's but slightly too even. On the top sheet, penciled where the title goes, are the exact words \"Open edition\" in very large dark graphite letters; this title and all five edition numbers must each have letter or digit height at least one twentieth of the entire image, on fully exposed generous lower margins, immediately readable at 336 pixels. An inked copper plate, a burnisher and tarlatan rags lie nearby. No other readable words.",
             "change": "Words and evidence failed at 336 pixels: changed only the title/lettering sentence to enlarge and darken both the pencil title and the already-correct edition numbers.",
-            "image": "assets/slop/attempts/042-02.webp",
-            "fallback": "assets/slop/attempts/042-02.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "ca5e45f7341dc63fde0b8463f036c227fc64f2d67095025b5f65616c65c3fa73",
             "recordedAt": "2026-10-07T15:47:47.794Z",
             "review": {
@@ -3380,14 +3450,16 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T15:48:48.251Z"
             },
-            "decision": "rejected"
+            "decision": "rejected",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 3,
             "prompt": "Use case: stylized-concept. Create a square overhead photograph of a fan of etchings on a dark slate print-shop table beside a blue felt press blanket: the same small etched landscape of a mill by a river, printed on cream paper with deep plate marks. In the lower margins, in pencil, the edition numbers read 30/32, 31/32, 32/32, then 33/32 and 34/32, the last two in a hand that is almost the artist's but slightly too even. On the top sheet, penciled where the title goes, are the exact words \"Open edition\" in very large dark graphite letters; this title and all five edition numbers must each have letter or digit height at least one twentieth of the entire image, on fully exposed generous lower margins, immediately readable at 336 pixels. An inked copper plate, a burnisher and tarlatan rags lie nearby; the image etched into the copper plate is the exact left-right mirror of the paper impression, with the mill on the RIGHT and the bridge on the LEFT, because printing reverses an intaglio plate. No other readable words.",
             "change": "Medium failed: changed only the copper-plate sentence to reverse its scene relative to the printed impression. Built-in edit uses attempt 2 as reference, preserving the corrected lettering and layout.",
-            "image": "assets/slop/attempts/042-03.webp",
-            "fallback": "assets/slop/attempts/042-03.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "024e5c3a3f05064d4a89f3e62e742847a6fb931ce272388aa6358515d71058cc",
             "recordedAt": "2026-10-07T15:50:15.257Z",
             "review": {
@@ -3420,7 +3492,9 @@ window.SLOP_DATA = {
               "reviewedAt": "2026-10-07T15:50:50.090Z"
             },
             "decision": "accepted",
-            "referenceAttempt": 2
+            "referenceAttempt": 2,
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "024e5c3a3f05064d4a89f3e62e742847a6fb931ce272388aa6358515d71058cc",
@@ -3430,7 +3504,9 @@ window.SLOP_DATA = {
       "retirement": {
         "retiredAt": "2026-10-07T18:19:13.132Z",
         "reason": "Removed at the owner's request after reviewing the image picker."
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "043",
@@ -3456,8 +3532,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square photograph of a children's picture book lying on a library table. Its glossy cover shows a smiling fox in a glowing autumn forest, rendered in the smooth, cinematic, flawless finish of generated imagery. Across the top, the title \"The Fox Who Found Home\" in friendly lettering. Beneath it, two credit lines: \"Written by M. Ellery\" and, under that, the exact words \"Illustrated by\" followed by empty space where a name should be. Both credit lines are large and perfectly readable. A library barcode sticker, a laminated cover reflecting the overhead light. No other readable words.",
             "change": "First attempt, prompt used verbatim.",
-            "image": "assets/slop/attempts/043-01.webp",
-            "fallback": "assets/slop/attempts/043-01.jpg",
+            "image": "assets/slop/043.webp",
+            "fallback": "assets/slop/043.jpg",
             "sourceSha256": "d3de73ab147a0eda4f26d0cdce708937b54a114223e2243da94317b4dfbfeeaa",
             "recordedAt": "2026-10-07T15:51:47.989Z",
             "review": {
@@ -3521,8 +3597,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square street photograph of a lost-cat poster stapled to a wooden telephone pole among old staples and torn paper. The poster is printed on an office printer: a big headline LOST CAT, the line \"Answers to Biscuit\", and a photo of a cat that is plainly generated: glossy, perfect, golden-hour lit, jewel-bright eyes, any cat and no cat. Directly under the photo, in bold type, are the exact words \"Image for illustration purposes only\", large and perfectly readable. Tear-off tabs along the bottom carry tiny illegible phone numbers, two already taken. Overcast daylight, a blurred suburban street behind. No other readable words.",
             "change": "First attempt, prompt used verbatim.",
-            "image": "assets/slop/attempts/044-01.webp",
-            "fallback": "assets/slop/attempts/044-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "1a375d456de88431be25f2a62f259fa82a1c041ae47f0f847e5aa5ace204237b",
             "recordedAt": "2026-10-07T15:54:04.656Z",
             "review": {
@@ -3554,14 +3630,16 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T15:54:56.942Z"
             },
-            "decision": "rejected"
+            "decision": "rejected",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
             "prompt": "Use case: stylized-concept. Create a square street photograph of a lost-cat poster stapled to a wooden telephone pole among old staples and torn paper. The poster is printed on an office printer: a big headline LOST CAT, the line \"Answers to Biscuit\", and a photo of a cat that is plainly generated: glossy, perfect, golden-hour lit, jewel-bright eyes, any cat and no cat. Directly under the photo, in very large bold black type, are the exact words \"Image for illustration purposes only\", arranged on three lines Image for / illustration / purposes only, each letter at least one twentieth of the full image height, immediately readable at 336 pixels. Tear-off tabs along the bottom carry tiny illegible phone numbers, two already taken. Overcast daylight, a blurred suburban street behind. No other readable words.",
             "change": "Words failed: changed only the disclaimer sentence to three larger lines. Built-in edit references attempt 1 to preserve the poster, cat and street.",
-            "image": "assets/slop/attempts/044-02.webp",
-            "fallback": "assets/slop/attempts/044-02.jpg",
+            "image": "assets/slop/044.webp",
+            "fallback": "assets/slop/044.jpg",
             "sourceSha256": "7c72b139293eda8d3b60219fa8819e6ae2405adcd0057b81628b56ebfe939372",
             "recordedAt": "2026-10-07T15:56:24.388Z",
             "review": {
@@ -3626,8 +3704,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square documentary photograph looking straight at five adjacent food-court stalls, noodles, tacos, curry, pizza and burgers, each with its own illuminated menu board and a different plain counter below. Crop tightly so the five tall menu boards fill most of the image, with just enough counter and stall division to establish five separate businesses. Each board shows its own food, clearly distinguishable, yet all five food photographs have exactly the same generated advertising look: centered on dark slate, identical dramatic light, the same plume of steam and a single basil leaf frozen in midair at the same angle and position above the dish. On every board, the exact line \"Our signature dish.\" appears in large clear white letters, including the period, broken across three lines if needed; each stall uses a different typeface, respectively a condensed sans serif, a slab serif, a plain rounded sans serif, a restrained italic serif and a bold geometric sans serif. Make those words legible when the entire square is reduced to 336 pixels. No other readable words, prices, real names, logos, people or watermarks. Ordinary cool food-court fluorescent light and utilitarian tile outside the impossibly polished menu photographs. The repetition should be evident without an added caption.",
             "change": "First attempt of the owner's added five-stall food-court concept, using the recorded prompt verbatim.",
-            "image": "assets/slop/attempts/045-01.webp",
-            "fallback": "assets/slop/attempts/045-01.jpg",
+            "image": "assets/slop/045.webp",
+            "fallback": "assets/slop/045.jpg",
             "sourceSha256": "aed0b13eff33151ef2132b8be117c34d1609a2335fe62899038fcbc1b9b6f1fb",
             "recordedAt": "2026-10-07T15:59:00.612Z",
             "review": {
@@ -3673,8 +3751,8 @@ window.SLOP_DATA = {
       "title": "Worth the drive",
       "styleId": "windshield-photo",
       "alt": "A cable-car brochure on a car dashboard promises a ride over the empty river valley visible through the windshield.",
-      "image": "assets/slop/046.webp",
-      "fallback": "assets/slop/046.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square color photograph taken from the driver's seat of a small car parked at the end of a dirt road on a forested hilltop. Through the dusty windshield: green hills, a river valley, morning haze, and nothing built anywhere, no station, no cables, no people. On the dashboard lies a glossy tourist brochure whose cover shows a spectacular cable car gliding over this very valley at golden hour, its gondolas full of smiling tourists. Across the top of the brochure, in bold travel-ad lettering, are the exact words \"Worth the drive\", large and perfectly readable. A road map folded on the passenger seat, a pair of reading glasses, a thermos. Soft daylight. No brand names, logos or other readable words.",
@@ -3691,8 +3769,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square color photograph taken from the driver's seat of a small car parked at the end of a dirt road on a forested hilltop. Through the dusty windshield: green hills, a river valley, morning haze, and nothing built anywhere, no station, no cables, no people. On the dashboard lies a glossy tourist brochure whose cover shows a spectacular cable car gliding over this very valley at golden hour, its gondolas full of smiling tourists. Across the top of the brochure, in bold travel-ad lettering, are the exact words \"Worth the drive\", large and perfectly readable. A road map folded on the passenger seat, a pair of reading glasses, a thermos. Soft daylight. No brand names, logos or other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/046-01.webp",
-            "fallback": "assets/slop/attempts/046-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "dc1e091aa3c908b7c724ee92a45953aa3f392eab878d2d874769c071e162d82a",
             "recordedAt": "2026-10-07T18:56:52.880Z",
             "review": {
@@ -3724,7 +3802,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T18:59:25.384Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "dc1e091aa3c908b7c724ee92a45953aa3f392eab878d2d874769c071e162d82a",
@@ -3736,7 +3816,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "047",
@@ -3744,8 +3826,8 @@ window.SLOP_DATA = {
       "title": "Admission £35",
       "styleId": "event-flash-photo",
       "alt": "A large Admission £35 ticket lies beside one jellybean and a half drink in a bare warehouse decorated with a candy-world banner.",
-      "image": "assets/slop/047.webp",
-      "fallback": "assets/slop/047.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square flash photograph inside a nearly empty warehouse with a concrete floor and bare walls. The entire back wall is covered by a giant glossy generated banner of a candy wonderland: chocolate rivers, lollipop trees, glowing mushrooms and rainbow skies. In front of it stand one limp balloon arch, a few plastic props and a folding table. On the table, in sharp focus in the foreground, are a single paper cup half filled with lemonade, one jellybean beside it, and a large printed ticket stub filling the lower quarter of the frame with the exact words \"Admission £35\" in heavy black type on two lines, each letter at least one twentieth of the square image height and immediately readable at 336 pixels. The banner's own lettering is confident nonsense, near-words that are not quite words, like the real event's posters. Harsh on-camera flash, deep shadows, the banner's colors loud against the gray room. No people, characters, costumes, brand names or other readable words.",
@@ -3762,8 +3844,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square flash photograph inside a nearly empty warehouse with a concrete floor and bare walls. The entire back wall is covered by a giant glossy generated banner of a candy wonderland: chocolate rivers, lollipop trees, glowing mushrooms and rainbow skies. In front of it stand one limp balloon arch, a few plastic props and a folding table. On the table, in sharp focus in the foreground, are a single paper cup half filled with lemonade, one jellybean beside it, and a printed ticket stub with the exact words \"Admission £35\" in bold type, large and perfectly readable. The banner's own lettering is confident nonsense, near-words that are not quite words, like the real event's posters. Harsh on-camera flash, deep shadows, the banner's colors loud against the gray room. No people, characters, costumes, brand names or other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/047-01.webp",
-            "fallback": "assets/slop/attempts/047-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "a524671e6d5bb638b00f568db0f6dc86634fcfa25ed5809ca51a17f8ecda6e4d",
             "recordedAt": "2026-10-07T19:01:08.615Z",
             "review": {
@@ -3795,14 +3877,16 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T19:02:36.109Z"
             },
-            "decision": "rejected"
+            "decision": "rejected",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
             "prompt": "Use case: stylized-concept. Create a square flash photograph inside a nearly empty warehouse with a concrete floor and bare walls. The entire back wall is covered by a giant glossy generated banner of a candy wonderland: chocolate rivers, lollipop trees, glowing mushrooms and rainbow skies. In front of it stand one limp balloon arch, a few plastic props and a folding table. On the table, in sharp focus in the foreground, are a single paper cup half filled with lemonade, one jellybean beside it, and a large printed ticket stub filling the lower quarter of the frame with the exact words \"Admission £35\" in heavy black type on two lines, each letter at least one twentieth of the square image height and immediately readable at 336 pixels. The banner's own lettering is confident nonsense, near-words that are not quite words, like the real event's posters. Harsh on-camera flash, deep shadows, the banner's colors loud against the gray room. No people, characters, costumes, brand names or other readable words.",
             "change": "Words failed at336pixels. Changed only the foreground ticket sentence to enlarge the ticket and its lettering; retained the warehouse, cup, jellybean and banner.",
-            "image": "assets/slop/attempts/047-02.webp",
-            "fallback": "assets/slop/attempts/047-02.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "7ea2ce42deef1f8ecf2e148683a7ccd15787de6a555c96a750e5f55c9bf84fa4",
             "recordedAt": "2026-10-07T19:03:40.898Z",
             "review": {
@@ -3834,7 +3918,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T19:04:27.507Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "7ea2ce42deef1f8ecf2e148683a7ccd15787de6a555c96a750e5f55c9bf84fa4",
@@ -3846,7 +3932,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "048",
@@ -3854,8 +3942,8 @@ window.SLOP_DATA = {
       "title": "Small batch",
       "styleId": "shelf-photo",
       "alt": "A front can labeled Small batch stands among varied beer cans whose fantasy artwork shares the same teal and amber glow.",
-      "image": "assets/slop/048.webp",
-      "fallback": "assets/slop/048.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square straight-on photograph through the glass door of a shop cooler stocked with craft beer cans from many different invented breweries, rows and rows of them, visibly distinguished by different can sizes, label layouts and tiny illegible typefaces even though their illustrated pictures all share one finish. Every can's label carries the same kind of glossy generated artwork: a fox in a spacesuit, a glowing forest, a wizard under the northern lights, a cosmic jellyfish, all with the same rim light, the same teal-and-amber glow and the same smooth finish, so twenty breweries look like one. Condensation beads on the glass. At the very front, close to the glass, one can fills half the image height and is turned toward us, its label lettered with the exact words \"Small batch\" in heavy simple lettering on two lines, each letter at least one twentieth of the square image height and immediately readable at 336 pixels. Brewery names are small and illegible. Cold fluorescent light. No real brand names, logos, emblems, wheat symbols, repeated badges or other readable words.",
@@ -3872,8 +3960,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square straight-on photograph through the glass door of a shop cooler stocked with craft beer cans from many different invented breweries, rows and rows of them. Every can's label carries the same kind of glossy generated artwork: a fox in a spacesuit, a glowing forest, a wizard under the northern lights, a cosmic jellyfish, all with the same rim light, the same teal-and-amber glow and the same smooth finish, so twenty breweries look like one. Condensation beads on the glass. At the front, one can is turned toward us, its label lettered with the exact words \"Small batch\", large and perfectly readable. Brewery names are small and illegible. Cold fluorescent light. No real brand names, logos or other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/048-01.webp",
-            "fallback": "assets/slop/attempts/048-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "35445cd22b8c635f2d3d91e65cb00513f7ca161b9e81a43d74b6a748f6defb10",
             "recordedAt": "2026-10-07T19:05:27.514Z",
             "review": {
@@ -3905,14 +3993,16 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T19:06:29.054Z"
             },
-            "decision": "rejected"
+            "decision": "rejected",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
             "prompt": "Use case: stylized-concept. Create a square straight-on photograph through the glass door of a shop cooler stocked with craft beer cans from many different invented breweries, rows and rows of them, visibly distinguished by different can sizes, label layouts and tiny illegible typefaces even though their illustrated pictures all share one finish. Every can's label carries the same kind of glossy generated artwork: a fox in a spacesuit, a glowing forest, a wizard under the northern lights, a cosmic jellyfish, all with the same rim light, the same teal-and-amber glow and the same smooth finish, so twenty breweries look like one. Condensation beads on the glass. At the very front, close to the glass, one can fills half the image height and is turned toward us, its label lettered with the exact words \"Small batch\" in heavy simple lettering on two lines, each letter at least one twentieth of the square image height and immediately readable at 336 pixels. Brewery names are small and illegible. Cold fluorescent light. No real brand names, logos, emblems, wheat symbols, repeated badges or other readable words.",
             "change": "Words, evidence and guardrails failed. Changed only the cooler-stock sentence to distinguish packaging, the front-can sentence to enlarge its phrase, and the no-logo sentence to exclude repeated wheat badges.",
-            "image": "assets/slop/attempts/048-02.webp",
-            "fallback": "assets/slop/attempts/048-02.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "ef740100ad88dd5f0088718e6003941188eb594a86ec71a926074676c12f24ea",
             "recordedAt": "2026-10-07T19:07:27.942Z",
             "review": {
@@ -3944,7 +4034,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T19:08:45.107Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "ef740100ad88dd5f0088718e6003941188eb594a86ec71a926074676c12f24ea",
@@ -3956,7 +4048,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "049",
@@ -3982,8 +4076,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square photograph looking up at the side of a tall brick building where two sign painters stand on a hanging swing stage, halfway through hand-painting an enormous wall advertisement. The design they are copying is a glossy generated image of a perfect mountain lake at sunrise, with a flawless reflection and a glowing sky; the finished upper half shines, the lower half is still chalk grid lines and bare brick. Taped to the stage's rail is the small printout they work from. Paint cans, long brushes, rollers, drips on the brick. Hanging from the rail is a hand-lettered board with the exact words \"Painted by hand\" in classic sign-painter letters, large and perfectly readable. Blue sky, strong afternoon sun. No brand names, logos or other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/049-01.webp",
-            "fallback": "assets/slop/attempts/049-01.jpg",
+            "image": "assets/slop/049.webp",
+            "fallback": "assets/slop/049.jpg",
             "sourceSha256": "80f5b007a5634fcab5b99ba5bbcb1095ac062997ea98ab514cdbc3acad6335ec",
             "recordedAt": "2026-10-07T19:09:41.076Z",
             "review": {
@@ -4048,8 +4142,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square photograph of a potting bench in a garden shed. Propped against a clay pot is a glossy seed packet whose picture shows an impossible flower: a huge rose with every petal a different neon color, glowing veins and sparkling dew, more vivid than any real plant. A bright starburst on the packet carries the exact words \"Easy to grow\", large and perfectly readable. In the clay pot, the seedling that actually came up: a single ordinary green weed. Scattered soil, a trowel, a watering can, garden gloves. Soft morning light. The packet's other text is tiny and illegible. No brand names, logos or other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/050-01.webp",
-            "fallback": "assets/slop/attempts/050-01.jpg",
+            "image": "assets/slop/050.webp",
+            "fallback": "assets/slop/050.jpg",
             "sourceSha256": "4b1c0d48d815e4301a0219a6d314004469ddf1df72f3cd9106cf5ce8551fb9f0",
             "recordedAt": "2026-10-07T19:14:40.086Z",
             "review": {
@@ -4114,8 +4208,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square photograph of a bare, worn apartment room: stained carpet, a bare bulb, scuffed walls, a cracked window looking onto a brick wall a few feet away. Taped to the inside of that window is a glossy listing flyer showing the very same room transformed: a velvet sofa, a marble fireplace, a chandelier, fresh flowers, and through the same window a sunlit ocean view. A banner across the flyer's corner reads the exact words \"Virtually staged\", large and perfectly readable. Flat gray daylight in the real room, golden light in the flyer. The flyer's other text is tiny and illegible. No brand names, logos or other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/051-01.webp",
-            "fallback": "assets/slop/attempts/051-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "d56957ef9d6987a74ac5225e6fd36868354e9c9bca8752097be1feb1f63775d7",
             "recordedAt": "2026-10-07T19:16:03.416Z",
             "review": {
@@ -4147,14 +4241,16 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T19:16:47.873Z"
             },
-            "decision": "rejected"
+            "decision": "rejected",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
             "prompt": "Use case: stylized-concept. Create a square photograph of a bare, worn apartment room: stained carpet, a bare bulb, scuffed walls, a cracked window looking onto a brick wall a few feet away. Taped to the inside of that window is a glossy listing flyer showing the very same room transformed: a velvet sofa, a marble fireplace, a chandelier, fresh flowers, and through the same window a sunlit ocean view. A broad white banner covers the upper third of the flyer and reads the exact words \"Virtually staged\" in two lines of heavy black lettering; each letter is at least one twentieth of the entire square image height, perfectly readable at thumbnail size. Flat gray daylight in the real room, golden light in the flyer. The flyer's other text is tiny and illegible. No brand names, logos or other readable words.",
             "change": "Words failed at 336 pixels. Changed only the banner sentence to a broad two-line banner with heavy black letters at least one twentieth of the square height.",
-            "image": "assets/slop/attempts/051-02.webp",
-            "fallback": "assets/slop/attempts/051-02.jpg",
+            "image": "assets/slop/051.webp",
+            "fallback": "assets/slop/051.jpg",
             "sourceSha256": "9d32045d3dbb9294ab997cb1b93a5715c870517b98bb4ea03c1897a9228d6272",
             "recordedAt": "2026-10-07T19:17:52.257Z",
             "review": {
@@ -4201,8 +4297,8 @@ window.SLOP_DATA = {
       "title": "Tour dates to be announced",
       "styleId": "record-sleeve",
       "alt": "A vinyl sleeve shows four polished nostalgic musicians leaning on a desert car, with a large sticker reading Tour dates to be announced.",
-      "image": "assets/slop/052.webp",
-      "fallback": "assets/slop/052.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square photograph of a vinyl record in its shrink-wrap, standing in a wooden bin in a record shop. The album cover is a warm, sun-faded 1960s-style group photograph of four impossibly photogenic musicians leaning against a car in the desert at golden hour: perfect hair, perfect grain, perfect nostalgia. A large round off-white sticker on the shrink-wrap occupies the upper right third of the square image and carries the exact words \"Tour dates to be announced\" across four lines of heavy black lettering, each letter at least one twentieth of the square image height and perfectly readable at thumbnail size. The band name and album title are small and illegible. Other records crowd the bin, warm shop light. No real band names, brand names, logos or other readable words.",
@@ -4219,8 +4315,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square photograph of a vinyl record in its shrink-wrap, standing in a wooden bin in a record shop. The album cover is a warm, sun-faded 1960s-style group photograph of four impossibly photogenic musicians leaning against a car in the desert at golden hour: perfect hair, perfect grain, perfect nostalgia. A round sticker on the shrink-wrap carries the exact words \"Tour dates to be announced\", large and perfectly readable. The band name and album title are small and illegible. Other records crowd the bin, warm shop light. No real band names, brand names, logos or other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/052-01.webp",
-            "fallback": "assets/slop/attempts/052-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "eecaea4986b31c5e33a66ec56ce2a331fe42e120d52e6821589fc1bbec25f996",
             "recordedAt": "2026-10-07T19:19:33.877Z",
             "review": {
@@ -4252,14 +4348,16 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T19:20:24.516Z"
             },
-            "decision": "rejected"
+            "decision": "rejected",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
             "prompt": "Use case: stylized-concept. Create a square photograph of a vinyl record in its shrink-wrap, standing in a wooden bin in a record shop. The album cover is a warm, sun-faded 1960s-style group photograph of four impossibly photogenic musicians leaning against a car in the desert at golden hour: perfect hair, perfect grain, perfect nostalgia. A large round off-white sticker on the shrink-wrap occupies the upper right third of the square image and carries the exact words \"Tour dates to be announced\" across four lines of heavy black lettering, each letter at least one twentieth of the square image height and perfectly readable at thumbnail size. The band name and album title are small and illegible. Other records crowd the bin, warm shop light. No real band names, brand names, logos or other readable words.",
             "change": "Words failed at 336 pixels. Changed only the sticker sentence to enlarge it in the upper-right third and use four lines of heavy black letters at least one twentieth of the image height.",
-            "image": "assets/slop/attempts/052-02.webp",
-            "fallback": "assets/slop/attempts/052-02.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "7a112b11e27bef5694891888672c47d3ea06dccf067c040322772815bc192e9c",
             "recordedAt": "2026-10-07T19:21:17.247Z",
             "review": {
@@ -4291,7 +4389,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T19:22:02.710Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "7a112b11e27bef5694891888672c47d3ea06dccf067c040322772815bc192e9c",
@@ -4303,7 +4403,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "053",
@@ -4311,8 +4413,8 @@ window.SLOP_DATA = {
       "title": "Learn to paint",
       "styleId": "bus-shelter-ad",
       "alt": "A rainy bus shelter displays a Learn to paint advertisement illustrated with a glossy, brushstroke-free sunset over a lake.",
-      "image": "assets/slop/053.webp",
-      "fallback": "assets/slop/053.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square photograph of a bus shelter at night, its backlit poster glowing on a rainy street. The poster advertises adult painting classes at a community center. Its picture is a generated \"oil painting\" of a sunset over a lake, perfectly smooth, glowing and glossy, without a single brushstroke anywhere. The headline across the top reads the exact words \"Learn to paint\", large and perfectly readable; the class times and prices are tiny and illegible. Rain streaks on the glass, wet pavement reflecting the poster, a bench, an empty street. No brand names, logos or other readable words.",
@@ -4329,8 +4431,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square photograph of a bus shelter at night, its backlit poster glowing on a rainy street. The poster advertises adult painting classes at a community center. Its picture is a generated \"oil painting\" of a sunset over a lake, perfectly smooth, glowing and glossy, without a single brushstroke anywhere. The headline across the top reads the exact words \"Learn to paint\", large and perfectly readable; the class times and prices are tiny and illegible. Rain streaks on the glass, wet pavement reflecting the poster, a bench, an empty street. No brand names, logos or other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/053-01.webp",
-            "fallback": "assets/slop/attempts/053-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "d86de4b246dfda66a3f6bd18aae37361f3310d28a56449eee9b9d2b075f775c7",
             "recordedAt": "2026-10-07T19:22:55.682Z",
             "review": {
@@ -4362,7 +4464,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T19:23:30.416Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "d86de4b246dfda66a3f6bd18aae37361f3310d28a56449eee9b9d2b075f775c7",
@@ -4374,7 +4478,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "054",
@@ -4382,8 +4488,8 @@ window.SLOP_DATA = {
       "title": "Each sesame seed placed by hand",
       "styleId": "food-styling",
       "alt": "A food stylist uses tweezers to place a sesame seed on a burger amid glue, toothpicks, fake steam and rejected buns; a tape note reads Each sesame seed placed by hand.",
-      "image": "assets/slop/054.webp",
-      "fallback": "assets/slop/054.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square photograph of a food stylist's table in a photo studio, mid-shoot. A perfect burger sits on a small stand under a softbox; long tweezers hold a single sesame seed above the bun, next to a dish of hand-picked seeds and a syringe of glue. A cotton ball steams in a small dish behind the burger to fake rising steam. Toothpicks hold the lettuce in place; a spray bottle of glycerin and a tray of rejected buns sit nearby. A strip of masking tape on the light stand carries the stylist's note, the exact words \"Each sesame seed placed by hand\" in black marker, large and perfectly readable. Warm studio light, a camera on a tripod at the edge of the frame. No brand names, logos or other readable words.",
@@ -4400,8 +4506,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square photograph of a food stylist's table in a photo studio, mid-shoot. A perfect burger sits on a small stand under a softbox; long tweezers hold a single sesame seed above the bun, next to a dish of hand-picked seeds and a syringe of glue. A cotton ball steams in a small dish behind the burger to fake rising steam. Toothpicks hold the lettuce in place; a spray bottle of glycerin and a tray of rejected buns sit nearby. A strip of masking tape on the light stand carries the stylist's note, the exact words \"Each sesame seed placed by hand\" in black marker, large and perfectly readable. Warm studio light, a camera on a tripod at the edge of the frame. No brand names, logos or other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/054-01.webp",
-            "fallback": "assets/slop/attempts/054-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "7a1f46dbc9519dff2f4d3db3251ed856af925092a96c38599fae3fa08a59b779",
             "recordedAt": "2026-10-07T19:24:44.133Z",
             "review": {
@@ -4433,7 +4539,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T19:25:20.057Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "7a1f46dbc9519dff2f4d3db3251ed856af925092a96c38599fae3fa08a59b779",
@@ -4445,7 +4553,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "055",
@@ -4453,8 +4563,8 @@ window.SLOP_DATA = {
       "title": "Apprentices painted the backgrounds",
       "styleId": "tempera-altarpiece",
       "alt": "A gilded altarpiece places three flat tempera saints before a photographic mountain panorama; its base reads Apprentices painted the backgrounds.",
-      "image": "assets/slop/055.webp",
-      "fallback": "assets/slop/055.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square photograph of a fifteenth-century Florentine altarpiece in a church chapel. Three saints stand in the foreground, painted in egg tempera with gold-leaf halos and patterned robes, flat, tender and precise, built from fine hatched strokes. The landscape behind them is a different technology entirely: a seamless, glossy, photographic panorama with lens-like depth of field, misty mountains and a perfect sky, smooth where the saints are hatched. The join between the two shows around their shoulders. A broad dark base panel integral to the carved frame carries the exact words \"Apprentices painted the backgrounds\" in three lines of bold bright-gold capital lettering, each letter at least one twentieth of the full square height and perfectly readable at thumbnail size. Candlelight, worn gilding, cracked varnish. No other readable words.",
@@ -4471,8 +4581,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square photograph of a fifteenth-century Florentine altarpiece in a church chapel. Three saints stand in the foreground, painted in egg tempera with gold-leaf halos and patterned robes, flat, tender and precise, built from fine hatched strokes. The landscape behind them is a different technology entirely: a seamless, glossy, photographic panorama with lens-like depth of field, misty mountains and a perfect sky, smooth where the saints are hatched. The join between the two shows around their shoulders. Painted in gold capitals on the base of the carved frame are the exact words \"Apprentices painted the backgrounds\", large and perfectly readable. Candlelight, worn gilding, cracked varnish. No other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/055-01.webp",
-            "fallback": "assets/slop/attempts/055-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "67589d46e518de4c02e87bef3c85e7e79cf84d648a794a9ceda4e55b04442ec1",
             "recordedAt": "2026-10-07T19:26:13.048Z",
             "review": {
@@ -4504,14 +4614,16 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T19:26:56.898Z"
             },
-            "decision": "rejected"
+            "decision": "rejected",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
             "prompt": "Use case: stylized-concept. Create a square photograph of a fifteenth-century Florentine altarpiece in a church chapel. Three saints stand in the foreground, painted in egg tempera with gold-leaf halos and patterned robes, flat, tender and precise, built from fine hatched strokes. The landscape behind them is a different technology entirely: a seamless, glossy, photographic panorama with lens-like depth of field, misty mountains and a perfect sky, smooth where the saints are hatched. The join between the two shows around their shoulders. A broad dark base panel integral to the carved frame carries the exact words \"Apprentices painted the backgrounds\" in three lines of bold bright-gold capital lettering, each letter at least one twentieth of the full square height and perfectly readable at thumbnail size. Candlelight, worn gilding, cracked varnish. No other readable words.",
             "change": "Words failed at 336 pixels and were not capital lettering. Changed only the frame inscription sentence to a broad dark base with three lines of bold bright-gold capitals.",
-            "image": "assets/slop/attempts/055-02.webp",
-            "fallback": "assets/slop/attempts/055-02.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "58d15a5be059bab60837eac3fe670cc90faf690d72d0b854688014a494411007",
             "recordedAt": "2026-10-07T19:27:56.716Z",
             "review": {
@@ -4543,7 +4655,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T19:29:04.630Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "58d15a5be059bab60837eac3fe670cc90faf690d72d0b854688014a494411007",
@@ -4555,7 +4669,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "056",
@@ -4563,8 +4679,8 @@ window.SLOP_DATA = {
       "title": "New look, same tacos",
       "styleId": "rotulo",
       "alt": "An installer covers half of a hand-painted taco truck with glossy generated food imagery; a serving-window banner reads New look, same tacos.",
-      "image": "assets/slop/056.webp",
-      "fallback": "assets/slop/056.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square street photograph of a taco truck parked at a curb, halfway through being re-wrapped. The front half still wears its hand-painted rótulo: the word TACOS in bold brush lettering in red, yellow and green with drop shadows, a painted cartoon pig in a chef's hat, painted chiles and flowers, all slightly uneven and full of personality. The back half is covered in a glossy vinyl wrap printed with photoreal generated tacos, steam, flying cilantro and a perfect sunset, and an installer with a squeegee is smoothing the next panel over the paint. A paper banner taped in the serving window reads the exact words \"New look, same tacos\", large and perfectly readable. Bright afternoon light. No brand names or other readable words.",
@@ -4581,8 +4697,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square street photograph of a taco truck parked at a curb, halfway through being re-wrapped. The front half still wears its hand-painted rótulo: the word TACOS in bold brush lettering in red, yellow and green with drop shadows, a painted cartoon pig in a chef's hat, painted chiles and flowers, all slightly uneven and full of personality. The back half is covered in a glossy vinyl wrap printed with photoreal generated tacos, steam, flying cilantro and a perfect sunset, and an installer with a squeegee is smoothing the next panel over the paint. A paper banner taped in the serving window reads the exact words \"New look, same tacos\", large and perfectly readable. Bright afternoon light. No brand names or other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/056-01.webp",
-            "fallback": "assets/slop/attempts/056-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "38fea3e970069e619af9c129f522f51ea59315c9922681781545a629a29350b0",
             "recordedAt": "2026-10-07T19:31:19.553Z",
             "review": {
@@ -4614,7 +4730,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T19:32:07.522Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "38fea3e970069e619af9c129f522f51ea59315c9922681781545a629a29350b0",
@@ -4626,7 +4744,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "057",
@@ -4652,8 +4772,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square photograph of a company's reception wall: sixteen identical black frames in a neat grid, each holding a professional headshot. Every headshot has the same generated look: the same soft studio light, the same blurred office background, the same blazer, the same slight smile and the same smooth skin, varied only by hair and tie. Above the grid, in large brushed-metal letters on the wall, are the exact words \"Meet the team\", perfectly readable. Below it, a real reception desk with a chipped mug, a cardigan over the chair and a drooping plant. Flat office light. No company names, logos or other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/057-01.webp",
-            "fallback": "assets/slop/attempts/057-01.jpg",
+            "image": "assets/slop/057.webp",
+            "fallback": "assets/slop/057.jpg",
             "sourceSha256": "257d7f3a49045a1ea0e0b2d007917093e2737eceb99092c13fda98e793281cf1",
             "recordedAt": "2026-10-07T19:33:02.775Z",
             "review": {
@@ -4718,8 +4838,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square photograph of a weathered park map board on two posts beside a small, ordinary pond with one bench and a gravel path. The map on the board shows an elaborate fantasy park in glossy generated illustration: islands, waterfalls, a castle, a rose maze, bridges and spiral paths that end nowhere. A red dot with a pointer carries the exact words \"You are here\", large and perfectly readable. Behind the board the real park is plainly visible: one pond, one bench, one path. The map's other labels are tiny and illegible. Overcast daylight, wet grass. No brand names, logos or other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/058-01.webp",
-            "fallback": "assets/slop/attempts/058-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "d2fd76bb738a2f455d147bf46333651d878803acbab022d2176f967b05339b3a",
             "recordedAt": "2026-10-07T19:34:54.014Z",
             "review": {
@@ -4751,14 +4871,16 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T19:35:43.096Z"
             },
-            "decision": "rejected"
+            "decision": "rejected",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
             "prompt": "Use case: stylized-concept. Create a square photograph of a weathered park map board on two posts beside a small, ordinary pond with one bench and a gravel path. The map on the board shows an elaborate fantasy park in glossy generated illustration: islands, waterfalls, a castle, a rose maze, bridges and spiral paths that end nowhere. A red dot with a pointer leads to a large white map label carrying the exact words \"You are here\" in two lines of bold black letters, each letter at least one twentieth of the entire square height and perfectly readable at thumbnail size. Behind the board the real park is plainly visible: one pond, one bench, one path. The map's other labels are tiny and illegible. Overcast daylight, wet grass. No brand names, logos or other readable words.",
             "change": "Words failed at 336 pixels. Changed only the pointer-label sentence to a large white label with two lines of bold black letters at least one twentieth of the square height.",
-            "image": "assets/slop/attempts/058-02.webp",
-            "fallback": "assets/slop/attempts/058-02.jpg",
+            "image": "assets/slop/058.webp",
+            "fallback": "assets/slop/058.jpg",
             "sourceSha256": "1a368ef6a17ca0496669f1b139b2da5ad466ba49fc53fdcf23951ea7ab1bd4db",
             "recordedAt": "2026-10-07T19:37:10.720Z",
             "review": {
@@ -4805,8 +4927,8 @@ window.SLOP_DATA = {
       "title": "Stay inside the lines",
       "styleId": "coloring-book",
       "alt": "A torn coloring-book page headed Stay inside the lines has wandering cat, flower and fence outlines covered with orange and green crayon.",
-      "image": "assets/slop/059.webp",
-      "fallback": "assets/slop/059.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square scan of a page from a cheap printed coloring book. The black line drawing shows a cat in a flower garden, made by a generator: lines wander, double, fade out and fail to close, petals merge into the cat's fur, and a fence turns into vines halfway along. A child has started coloring it with crayons, and the color has leaked out everywhere through the gaps, orange spilling into the sky and green flooding the cat. Printed across the top in friendly rounded letters is the instruction, the exact words \"Stay inside the lines\", large and perfectly readable. Waxy crayon texture, cheap paper, a torn perforated edge. No other readable words.",
@@ -4823,8 +4945,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square scan of a page from a cheap printed coloring book. The black line drawing shows a cat in a flower garden, made by a generator: lines wander, double, fade out and fail to close, petals merge into the cat's fur, and a fence turns into vines halfway along. A child has started coloring it with crayons, and the color has leaked out everywhere through the gaps, orange spilling into the sky and green flooding the cat. Printed across the top in friendly rounded letters is the instruction, the exact words \"Stay inside the lines\", large and perfectly readable. Waxy crayon texture, cheap paper, a torn perforated edge. No other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/059-01.webp",
-            "fallback": "assets/slop/attempts/059-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "e868cb36e20cf1e1a745985eb193e51b6f385759a7b1b4471e42f9e11dd18ce8",
             "recordedAt": "2026-10-07T19:38:59.472Z",
             "review": {
@@ -4856,7 +4978,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T19:39:47.925Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "e868cb36e20cf1e1a745985eb193e51b6f385759a7b1b4471e42f9e11dd18ce8",
@@ -4868,7 +4992,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "060",
@@ -4876,8 +5002,8 @@ window.SLOP_DATA = {
       "title": "Can you make it look less AI?",
       "styleId": "markup",
       "alt": "A printed picnic-family image is circled in red beside a large yellow note reading Can you make it look less AI?",
-      "image": "assets/slop/060.webp",
-      "fallback": "assets/slop/060.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square overhead photograph of a printed proof on a designer's desk: a glossy generated image of a family at a picnic, everyone flawless, the light glowing from everywhere. The designer has marked it up in red pen, with circles around the plastic-smooth skin, the rim light on every hair, the floating dust motes, the too-perfect symmetry of the faces and the impossibly blue sky, and arrows but no written words. Stuck to the upper-right corner of the proof is a large yellow sticky note occupying a third of the square, in the client's bold black handwriting with the exact words \"Can you make it look less AI?\" across four lines, every letter at least one twentieth of the image height and perfectly readable at thumbnail size. A red pen, a cold coffee, a fan of color swatches. No brand names, logos or other readable words.",
@@ -4894,8 +5020,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square overhead photograph of a printed proof on a designer's desk: a glossy generated image of a family at a picnic, everyone flawless, the light glowing from everywhere. The designer has marked it up in red pen, with circles around the plastic-smooth skin, the rim light on every hair, the floating dust motes, the too-perfect symmetry of the faces and the impossibly blue sky, and arrows but no written words. Stuck to the corner of the proof is a yellow sticky note in the client's handwriting with the exact words \"Can you make it look less AI?\", large and perfectly readable. A red pen, a cold coffee, a fan of color swatches. No brand names, logos or other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/060-01.webp",
-            "fallback": "assets/slop/attempts/060-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "42034ef269d13d8712cf5ecbc9e4e5f1581ad089fb2ab20917cd905afaeec369",
             "recordedAt": "2026-10-07T19:40:46.436Z",
             "review": {
@@ -4927,14 +5053,16 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T19:41:41.643Z"
             },
-            "decision": "rejected"
+            "decision": "rejected",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
             "prompt": "Use case: stylized-concept. Create a square overhead photograph of a printed proof on a designer's desk: a glossy generated image of a family at a picnic, everyone flawless, the light glowing from everywhere. The designer has marked it up in red pen, with circles around the plastic-smooth skin, the rim light on every hair, the floating dust motes, the too-perfect symmetry of the faces and the impossibly blue sky, and arrows but no written words. Stuck to the upper-right corner of the proof is a large yellow sticky note occupying a third of the square, in the client's bold black handwriting with the exact words \"Can you make it look less AI?\" across four lines, every letter at least one twentieth of the image height and perfectly readable at thumbnail size. A red pen, a cold coffee, a fan of color swatches. No brand names, logos or other readable words.",
             "change": "Words failed at 336 pixels. Changed only the sticky-note sentence, enlarging it to a third of the square with four lines of bold black handwriting.",
-            "image": "assets/slop/attempts/060-02.webp",
-            "fallback": "assets/slop/attempts/060-02.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "365954011b362bfa4e61fad5db5b50fb7629f6c778d456877f745a8199fb3dfd",
             "recordedAt": "2026-10-07T19:42:48.085Z",
             "review": {
@@ -4966,7 +5094,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T19:43:40.539Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "365954011b362bfa4e61fad5db5b50fb7629f6c778d456877f745a8199fb3dfd",
@@ -4978,7 +5108,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "061",
@@ -4986,8 +5118,8 @@ window.SLOP_DATA = {
       "title": "Ask to see my sketchbook",
       "styleId": "artist-alley",
       "alt": "An artist's convention table displays a worn sketchbook of pencil studies under a large card reading Ask to see my sketchbook, surrounded by prints and stickers.",
-      "image": "assets/slop/061.webp",
-      "fallback": "assets/slop/061.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square photograph of an artist's table at a busy fan convention: a fabric banner, a rack of prints, sticker sheets, buttons and a cash box. Front and center lies an open, battered sketchbook full of pencil studies, crossed-out attempts and coffee rings. Propped against it, a wide cream hand-lettered card fills the central third of the image and reads the exact words \"Ask to see my sketchbook\" in three lines of thick black handwriting, each letter at least one twentieth of the entire square height and perfectly readable at thumbnail size. The prints show original illustrations in a loose, personal style. Bright convention-hall light, blurred crowds in the background. No brand names, logos or other readable words.",
@@ -5004,8 +5136,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square photograph of an artist's table at a busy fan convention: a fabric banner, a rack of prints, sticker sheets, buttons and a cash box. Front and center lies an open, battered sketchbook full of pencil studies, crossed-out attempts and coffee rings. Propped against it, a small hand-lettered card reads the exact words \"Ask to see my sketchbook\", large and perfectly readable. The prints show original illustrations in a loose, personal style. Bright convention-hall light, blurred crowds in the background. No brand names, logos or other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/061-01.webp",
-            "fallback": "assets/slop/attempts/061-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "56482c319630927c080c4759f9b3a13655214514429aaee01ee3dfbcd917cb18",
             "recordedAt": "2026-10-07T19:44:49.661Z",
             "review": {
@@ -5037,14 +5169,16 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T19:45:50.431Z"
             },
-            "decision": "rejected"
+            "decision": "rejected",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
             "prompt": "Use case: stylized-concept. Create a square photograph of an artist's table at a busy fan convention: a fabric banner, a rack of prints, sticker sheets, buttons and a cash box. Front and center lies an open, battered sketchbook full of pencil studies, crossed-out attempts and coffee rings. Propped against it, a wide cream hand-lettered card fills the central third of the image and reads the exact words \"Ask to see my sketchbook\" in three lines of thick black handwriting, each letter at least one twentieth of the entire square height and perfectly readable at thumbnail size. The prints show original illustrations in a loose, personal style. Bright convention-hall light, blurred crowds in the background. No brand names, logos or other readable words.",
             "change": "Words failed at 336 pixels. Changed only the card sentence to a wider central card with three lines of thick black handwriting.",
-            "image": "assets/slop/attempts/061-02.webp",
-            "fallback": "assets/slop/attempts/061-02.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "4fd6c10b640ecfd7b6a357d6ec51f7c23440b457c7588ffa2d453e5932968d4f",
             "recordedAt": "2026-10-07T19:47:10.377Z",
             "review": {
@@ -5076,7 +5210,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T19:48:13.735Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "4fd6c10b640ecfd7b6a357d6ec51f7c23440b457c7588ffa2d453e5932968d4f",
@@ -5088,7 +5224,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "062",
@@ -5096,8 +5234,8 @@ window.SLOP_DATA = {
       "title": "Rare",
       "styleId": "trading-card",
       "alt": "A holographic fantasy trading card depicts a glowing dragon and castle inside a gold-foil frame stamped Rare, beside a scratched sleeve.",
-      "image": "assets/slop/062.webp",
-      "fallback": "assets/slop/062.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square close photograph of a single fantasy trading card lying on a black playmat, lit to show its foil. The card's art is a glossy generated dragon over a glowing castle, with the same rim light, smoke and sparks seen everywhere. The ornate gold-foil frame carries a rarity stamp in raised gold lettering with the exact word \"Rare\", large and perfectly readable. The card's name and rules text are tiny and illegible. Holographic sheen, a scuffed card sleeve beside it. No real game names, brand names, logos or other readable words.",
@@ -5114,8 +5252,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square close photograph of a single fantasy trading card lying on a black playmat, lit to show its foil. The card's art is a glossy generated dragon over a glowing castle, with the same rim light, smoke and sparks seen everywhere. The ornate gold-foil frame carries a rarity stamp in raised gold lettering with the exact word \"Rare\", large and perfectly readable. The card's name and rules text are tiny and illegible. Holographic sheen, a scuffed card sleeve beside it. No real game names, brand names, logos or other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/062-01.webp",
-            "fallback": "assets/slop/attempts/062-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "5092eba74037f8bd88eb1da706c07cc96b54c6e9d24bacd64dbeb6baf4d994e5",
             "recordedAt": "2026-10-07T19:49:21.644Z",
             "review": {
@@ -5147,7 +5285,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T19:50:15.958Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "5092eba74037f8bd88eb1da706c07cc96b54c6e9d24bacd64dbeb6baf4d994e5",
@@ -5159,7 +5299,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "063",
@@ -5167,8 +5309,8 @@ window.SLOP_DATA = {
       "title": "Behind the scenes",
       "styleId": "magazine-spread",
       "alt": "An open magazine page headed Behind the scenes shows an empty fashion studio with unused equipment and a completed model portrait taped to its wall.",
-      "image": "assets/slop/063.webp",
-      "fallback": "assets/slop/063.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square photograph of an open fashion magazine page. At the top, the section heading reads the exact words \"Behind the scenes\" in elegant capitals, large and perfectly readable. The photograph beneath shows the studio where the campaign was made: a white seamless backdrop, lights on stands switched off, an empty makeup chair, an empty clothing rail, a catering table with untouched cups, and no one at all. Taped to the studio wall is the finished campaign image of a flawless model. The page's caption text is tiny and illegible. Soft daylight on glossy paper, a slight curl at the page edge. No brand names, logos or other readable words.",
@@ -5185,8 +5327,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square photograph of an open fashion magazine page. At the top, the section heading reads the exact words \"Behind the scenes\" in elegant capitals, large and perfectly readable. The photograph beneath shows the studio where the campaign was made: a white seamless backdrop, lights on stands switched off, an empty makeup chair, an empty clothing rail, a catering table with untouched cups, and no one at all. Taped to the studio wall is the finished campaign image of a flawless model. The page's caption text is tiny and illegible. Soft daylight on glossy paper, a slight curl at the page edge. No brand names, logos or other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/063-01.webp",
-            "fallback": "assets/slop/attempts/063-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "8ed6d4ba659a2f2effd1feacd81a8f4fe23bd27baf4cc3b4503009421ed86e07",
             "recordedAt": "2026-10-07T19:51:16.678Z",
             "review": {
@@ -5218,7 +5360,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T19:52:09.638Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "8ed6d4ba659a2f2effd1feacd81a8f4fe23bd27baf4cc3b4503009421ed86e07",
@@ -5230,7 +5374,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "064",
@@ -5238,8 +5384,8 @@ window.SLOP_DATA = {
       "title": "Real, for what it's worth",
       "styleId": "contact-sheet",
       "alt": "Thirty-six film frames show a whale surfacing beside a rowboat, with one selected in red and a margin note reading Real, for what it's worth.",
-      "image": "assets/slop/064.webp",
-      "fallback": "assets/slop/064.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square photograph of a photojournalist's black-and-white contact sheet on a light table: thirty-six small frames in six strips of film, with sprocket holes and plain frame numbers along the edges. The frames follow a small rowboat on a gray sea; in several frames a huge whale surfaces beside it, close enough to touch, the rowers frozen. One frame is boxed in red grease pencil. In a wide pale margin beside the boxed strip, an editor has written the exact words \"Real, for what it's worth\" in four lines of thick red grease pencil; this margin takes the right-hand third of the square, and each letter is at least one twentieth of the entire image height, perfectly readable at thumbnail size. A loupe rests on the sheet. Cool light from below, fingerprints on the glass. No film brand names or other readable words.",
@@ -5256,8 +5402,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square photograph of a photojournalist's black-and-white contact sheet on a light table: thirty-six small frames in six strips of film, with sprocket holes and plain frame numbers along the edges. The frames follow a small rowboat on a gray sea; in several frames a huge whale surfaces beside it, close enough to touch, the rowers frozen. One frame is boxed in red grease pencil. In the margin beside it, in the same red grease pencil, an editor has written the exact words \"Real, for what it's worth\", large and perfectly readable. A loupe rests on the sheet. Cool light from below, fingerprints on the glass. No film brand names or other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/064-01.webp",
-            "fallback": "assets/slop/attempts/064-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "ff5cf8543994fb5e4c8bf3c778c983a093b76486125248e402f663d3c68f098f",
             "recordedAt": "2026-10-07T19:53:07.777Z",
             "review": {
@@ -5289,14 +5435,16 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T19:54:35.585Z"
             },
-            "decision": "rejected"
+            "decision": "rejected",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
             "prompt": "Use case: stylized-concept. Create a square photograph of a photojournalist's black-and-white contact sheet on a light table: thirty-six small frames in six strips of film, with sprocket holes and plain frame numbers along the edges. The frames follow a small rowboat on a gray sea; in several frames a huge whale surfaces beside it, close enough to touch, the rowers frozen. One frame is boxed in red grease pencil. In a wide pale margin beside the boxed strip, an editor has written the exact words \"Real, for what it's worth\" in four lines of thick red grease pencil; this margin takes the right-hand third of the square, and each letter is at least one twentieth of the entire image height, perfectly readable at thumbnail size. A loupe rests on the sheet. Cool light from below, fingerprints on the glass. No film brand names or other readable words.",
             "change": "Words failed at 336 pixels. Changed only the editor-note sentence to a wider pale margin and four lines of thick red grease-pencil lettering.",
-            "image": "assets/slop/attempts/064-02.webp",
-            "fallback": "assets/slop/attempts/064-02.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "5d978875e2cf5a2e37b0bc21bdd97f597a03cbe45dda572e73825b2b98bb4433",
             "recordedAt": "2026-10-07T19:55:35.065Z",
             "review": {
@@ -5328,7 +5476,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T19:56:51.849Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "5d978875e2cf5a2e37b0bc21bdd97f597a03cbe45dda572e73825b2b98bb4433",
@@ -5340,7 +5490,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "065",
@@ -5366,8 +5518,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square photograph of an immense medieval millefleurs tapestry, the kind that took a workshop of weavers years. A deep red ground is strewn with thousands of tiny flowers, each individually woven, around a hunting scene: a white stag, hounds, riders, a lady with a falcon, rabbits among the blooms. Every leaf and petal has its own woven shading. In the lower right, a woven cartouche in the same wool and the same patient technique carries the exact words \"This took seconds\" in clear woven capitals, large enough to read from across a room. Show the wool texture, warp and weft and faded vegetable dyes, edge to edge.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/065-01.webp",
-            "fallback": "assets/slop/attempts/065-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "1addb63459e7519a81b3b254ffc2205a6e2513a95b38a28d86a3588203e6930e",
             "recordedAt": "2026-10-07T19:57:54.497Z",
             "review": {
@@ -5399,14 +5551,16 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T19:59:07.727Z"
             },
-            "decision": "rejected"
+            "decision": "rejected",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
             "prompt": "Use case: stylized-concept. Create a square photograph of an immense medieval millefleurs tapestry, the kind that took a workshop of weavers years. A deep red ground is strewn with thousands of tiny flowers, each individually woven, around a hunting scene: a white stag, hounds, riders, a lady with a falcon, rabbits among the blooms. Every leaf and petal has its own woven shading. In the lower right, a generous woven cartouche in the same wool and the same patient technique carries the exact words \"This took seconds\" in two lines of bold pale woven capitals against deep red, each letter at least one twentieth of the entire square height and readable from across a room. Show the wool texture, warp and weft and faded vegetable dyes, edge to edge.",
             "change": "Words failed the requested large woven capitals. Changed only the cartouche sentence to bold pale capitals in two lines, each letter at least one twentieth of the square height.",
-            "image": "assets/slop/attempts/065-02.webp",
-            "fallback": "assets/slop/attempts/065-02.jpg",
+            "image": "assets/slop/065.webp",
+            "fallback": "assets/slop/065.jpg",
             "sourceSha256": "b4c7fc79d52faccd1a9244def500cb5739a7f3b9666a7d3efd7b87212c3e8f43",
             "recordedAt": "2026-10-07T20:00:09.791Z",
             "review": {
@@ -5471,8 +5625,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square photograph of a lemonade stand on a suburban sidewalk on a summer afternoon: a card table, a glass pitcher of real lemonade with lemon slices, a stack of paper cups, a coffee can for coins. In place of the usual crayon sign, a crisp printed vinyl banner is zip-tied to the table, showing a glossy generated image of lemonade with flying lemon slices, splashing droplets and a glowing sunset, and the exact word \"Homemade\" in big script lettering, large and perfectly readable. A hand-drawn cardboard sign lies face down on the grass under the table. Bright sun, chalk drawings on the sidewalk. No people, brand names or other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/066-01.webp",
-            "fallback": "assets/slop/attempts/066-01.jpg",
+            "image": "assets/slop/066.webp",
+            "fallback": "assets/slop/066.jpg",
             "sourceSha256": "d0423cb15ae3323caf83bfe5ad9da0ce03a4528a7cdfe517946b53fba56ad4d7",
             "recordedAt": "2026-10-07T20:03:47.638Z",
             "review": {
@@ -5519,8 +5673,8 @@ window.SLOP_DATA = {
       "title": "Beginner friendly",
       "styleId": "craft-pattern",
       "alt": "A booklet labeled Beginner friendly shows an impossible jeweled crochet peacock beside a ball of blue yarn and several plain practice rows.",
-      "image": "assets/slop/067.webp",
-      "fallback": "assets/slop/067.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square overhead photograph of a crafter's table. A printed crochet pattern booklet shows on its cover a \"crocheted\" peacock that could not be made with yarn: glassy iridescent feathers, seamless color gradients, stitches that turn into fur and back again. A large bright yellow starburst occupying the upper third of the cover carries the exact words \"Beginner friendly\" in two lines of heavy black lettering, each letter at least one twentieth of the full square image height and perfectly readable at thumbnail size. Beside it lie a ball of blue yarn, a crochet hook holding the first five plain rows of an attempt, a pair of scissors and a mug of tea. Warm lamp light. The booklet's other text is tiny and illegible. No brand names, logos or other readable words.",
@@ -5537,8 +5691,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square overhead photograph of a crafter's table. A printed crochet pattern booklet shows on its cover a \"crocheted\" peacock that could not be made with yarn: glassy iridescent feathers, seamless color gradients, stitches that turn into fur and back again. A bright starburst on the cover carries the exact words \"Beginner friendly\", large and perfectly readable. Beside it lie a ball of blue yarn, a crochet hook holding the first five plain rows of an attempt, a pair of scissors and a mug of tea. Warm lamp light. The booklet's other text is tiny and illegible. No brand names, logos or other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/067-01.webp",
-            "fallback": "assets/slop/attempts/067-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "2c285481fabc06d92162a79e597f94b0eab2d2127a7a18899fb5da3b64295dcd",
             "recordedAt": "2026-10-07T20:06:37.885Z",
             "review": {
@@ -5570,14 +5724,16 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T20:07:54.592Z"
             },
-            "decision": "rejected"
+            "decision": "rejected",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
             "prompt": "Use case: stylized-concept. Create a square overhead photograph of a crafter's table. A printed crochet pattern booklet shows on its cover a \"crocheted\" peacock that could not be made with yarn: glassy iridescent feathers, seamless color gradients, stitches that turn into fur and back again. A large bright yellow starburst occupying the upper third of the cover carries the exact words \"Beginner friendly\" in two lines of heavy black lettering, each letter at least one twentieth of the full square image height and perfectly readable at thumbnail size. Beside it lie a ball of blue yarn, a crochet hook holding the first five plain rows of an attempt, a pair of scissors and a mug of tea. Warm lamp light. The booklet's other text is tiny and illegible. No brand names, logos or other readable words.",
             "change": "Words failed at 336 pixels. Changed only the starburst sentence to enlarge its area and use two lines of heavy black letters.",
-            "image": "assets/slop/attempts/067-02.webp",
-            "fallback": "assets/slop/attempts/067-02.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "ff404ee7698e73acbcc73132d118ffb4e0564182250210a3b42e4e0a76fbf743",
             "recordedAt": "2026-10-07T20:08:55.008Z",
             "review": {
@@ -5609,7 +5765,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T20:10:01.195Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "ff404ee7698e73acbcc73132d118ffb4e0564182250210a3b42e4e0a76fbf743",
@@ -5621,7 +5779,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "068",
@@ -5647,8 +5807,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square photograph from across a small-town main street of five independent shopfronts in a row: a bakery, a florist, a hardware store, a barber and a bookshop, each with its own old painted sign and awning. In every window hangs a new poster with the same glossy generated look, the same golden glow, the same floating particles, the same flawless smiling model, whether it shows bread, roses, hammers, haircuts or books. A banner hung from a lamppost in the foreground carries the exact words \"Shop local\", large and perfectly readable. The painted shop signs are short and illegible. Late afternoon light, parked bicycles. No brand names, logos or other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/068-01.webp",
-            "fallback": "assets/slop/attempts/068-01.jpg",
+            "image": "assets/slop/068.webp",
+            "fallback": "assets/slop/068.jpg",
             "sourceSha256": "f88054191ca832e14986505cc13eb492cf893bc8364bb69ac8c813d465ecde56",
             "recordedAt": "2026-10-07T20:11:53.198Z",
             "review": {
@@ -5713,8 +5873,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square photograph of the back door of a small delivery kitchen in an alley at night: a steel door propped open, a grease-stained mat, a stack of delivery bags, and a single fryer visible inside under fluorescent light. Taped to the wall beside the door are five glossy posters for five different restaurants, a burger joint, a fried chicken shack, a pasta bar, a wing house and a dessert brand, each with a small illegible invented name and a dazzling generated food photo. A laminated sign on the door for couriers reads the exact words \"Pickup for all restaurants\", large and perfectly readable. Wet pavement, a courier's scooter waiting. No real brand names, logos or other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/069-01.webp",
-            "fallback": "assets/slop/attempts/069-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "e2664d2f317cf9aeb2c0e521a81f30201aaa66e4464478d15cbde44cd6cb6f11",
             "recordedAt": "2026-10-07T20:15:14.431Z",
             "review": {
@@ -5746,14 +5906,16 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T20:17:02.408Z"
             },
-            "decision": "rejected"
+            "decision": "rejected",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
             "prompt": "Use case: stylized-concept. Create a square photograph of the back door of a small delivery kitchen in an alley at night: a steel door propped open, a grease-stained mat, a stack of delivery bags, and a single fryer visible inside under fluorescent light. Taped to the wall beside the door are five glossy posters for five different restaurants, a burger joint, a fried chicken shack, a pasta bar, a wing house and a dessert brand, each with a small illegible invented name and a dazzling generated food photo. A large white laminated courier sign fills the upper half of the steel door and reads the exact words \"Pickup for all restaurants\" across three lines of heavy black lettering, each letter at least one twentieth of the full square height and perfectly readable at thumbnail size. Wet pavement, a courier's scooter waiting. No real brand names, logos or other readable words.",
             "change": "Words failed at 336 pixels. Changed only the courier-sign sentence to fill the upper half of the door with three lines of heavy black lettering.",
-            "image": "assets/slop/attempts/069-02.webp",
-            "fallback": "assets/slop/attempts/069-02.jpg",
+            "image": "assets/slop/069.webp",
+            "fallback": "assets/slop/069.jpg",
             "sourceSha256": "dfbc13b31e40fc4b25c7324327440fe9329d33dcfd06efcd458387e34102f668",
             "recordedAt": "2026-10-07T20:20:58.671Z",
             "review": {
@@ -5800,8 +5962,8 @@ window.SLOP_DATA = {
       "title": "Artist quality",
       "styleId": "paint-set",
       "alt": "An overhead view of watercolor paints whose box shows a polished lighthouse sunset and a gold Artist quality seal, beside a rough watercolor sketch and a jar of water.",
-      "image": "assets/slop/070.webp",
-      "fallback": "assets/slop/070.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square overhead photograph of a new box of watercolor paints on an artist's desk. Its lid shows a glossy generated \"watercolor\" of a lighthouse at sunset that actually looks like a polished photographic CGI render: flawless continuous color gradients, crisp photographic rocks and glassy water, absolutely no paper grain, pigment edges, brush marks, broken washes, blooms, pencil lines or water marks. A large gold seal covering the upper-right third of the lid carries the exact words \"Artist quality\" in two lines of heavy black lettering, each letter at least one twentieth of the square image height and perfectly readable at thumbnail size. Beside the box, a real watercolor sketch in progress shows blooms, granulation and pencil lines. A jar of water, a brush. Soft daylight. The box's other text is tiny and illegible. No brand names, logos or other readable words.",
@@ -5818,8 +5980,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square overhead photograph of a new box of watercolor paints on an artist's desk. Its lid shows a glossy generated \"watercolor\" of a lighthouse at sunset: perfectly smooth, no paper texture, no blooms, no pencil lines, no water marks, nothing a watercolor actually does. A gold seal on the lid carries the exact words \"Artist quality\", large and perfectly readable. Beside the box, a real watercolor sketch in progress shows blooms, granulation and pencil lines. A jar of water, a brush. Soft daylight. The box's other text is tiny and illegible. No brand names, logos or other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/070-01.webp",
-            "fallback": "assets/slop/attempts/070-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "ef3412d4aaacc8b26720cea03969cb4dfe241029bbfaf4b9aaf50d0d5137bae6",
             "recordedAt": "2026-10-07T20:24:58.649Z",
             "review": {
@@ -5851,14 +6013,16 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T20:29:07.076Z"
             },
-            "decision": "rejected"
+            "decision": "rejected",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
             "prompt": "Use case: stylized-concept. Create a square overhead photograph of a new box of watercolor paints on an artist's desk. Its lid shows a glossy generated \"watercolor\" of a lighthouse at sunset that actually looks like a polished photographic CGI render: flawless continuous color gradients, crisp photographic rocks and glassy water, absolutely no paper grain, pigment edges, brush marks, broken washes, blooms, pencil lines or water marks. A large gold seal covering the upper-right third of the lid carries the exact words \"Artist quality\" in two lines of heavy black lettering, each letter at least one twentieth of the square image height and perfectly readable at thumbnail size. Beside the box, a real watercolor sketch in progress shows blooms, granulation and pencil lines. A jar of water, a brush. Soft daylight. The box's other text is tiny and illegible. No brand names, logos or other readable words.",
             "change": "Words and evidence failed. Changed only the lid-image sentence to a flawlessly smooth photographic CGI appearance and the seal sentence to larger bold lettering; the actual watercolor sketch remains unchanged in the prompt.",
-            "image": "assets/slop/attempts/070-02.webp",
-            "fallback": "assets/slop/attempts/070-02.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "bd8a4dcb14192c1378c22e203c6a1d9132a19b7c05ede39ba6fcbd5300b0a697",
             "recordedAt": "2026-10-07T20:30:44.559Z",
             "review": {
@@ -5890,7 +6054,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T20:33:50.640Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "bd8a4dcb14192c1378c22e203c6a1d9132a19b7c05ede39ba6fcbd5300b0a697",
@@ -5902,7 +6068,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "071",
@@ -5910,8 +6078,8 @@ window.SLOP_DATA = {
       "title": "Limited edition",
       "styleId": "gig-posters",
       "alt": "A glossy Limited edition guitarist poster covers years of rough screenprinted gig posters in a narrow red-lit backstage corridor.",
-      "image": "assets/slop/071.webp",
-      "fallback": "assets/slop/071.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square photograph of a narrow backstage corridor in a small music venue, its walls covered floor to ceiling with decades of screenprinted gig posters, each wildly different: hand-drawn monsters, flat bold colors, odd lettering, many signed and numbered in pencil in the margin. Taped over the middle of them is this month's poster: a glossy generated image of a guitarist silhouetted against a fiery cosmic sky, smooth and shiny, with no number and no signature. A broad white printed banner covers the upper third of the new poster, reading the exact words \"Limited edition\" in two lines of heavy black lettering, with every letter at least one twentieth of the entire image height and perfectly readable at thumbnail size. The older posters' text is small and illegible. Dim red light, gaffer tape, a stack of amp cases. No real band names, brand names, logos or other readable words.",
@@ -5928,8 +6096,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square photograph of a narrow backstage corridor in a small music venue, its walls covered floor to ceiling with decades of screenprinted gig posters, each wildly different: hand-drawn monsters, flat bold colors, odd lettering, many signed and numbered in pencil in the margin. Taped over the middle of them is this month's poster: a glossy generated image of a guitarist silhouetted against a fiery cosmic sky, smooth and shiny, with no number and no signature. A printed banner across its top reads the exact words \"Limited edition\", large and perfectly readable. The older posters' text is small and illegible. Dim red light, gaffer tape, a stack of amp cases. No real band names, brand names, logos or other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/071-01.webp",
-            "fallback": "assets/slop/attempts/071-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "a1d679b8296b6230a5de6c38ec7f9c0ca4ef1b12595d0d9e3e69d4ed32030c24",
             "recordedAt": "2026-10-07T20:34:52.430Z",
             "review": {
@@ -5961,14 +6129,16 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T20:35:13.621Z"
             },
-            "decision": "rejected"
+            "decision": "rejected",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
             "prompt": "Use case: stylized-concept. Create a square photograph of a narrow backstage corridor in a small music venue, its walls covered floor to ceiling with decades of screenprinted gig posters, each wildly different: hand-drawn monsters, flat bold colors, odd lettering, many signed and numbered in pencil in the margin. Taped over the middle of them is this month's poster: a glossy generated image of a guitarist silhouetted against a fiery cosmic sky, smooth and shiny, with no number and no signature. A broad white printed banner covers the upper third of the new poster, reading the exact words \"Limited edition\" in two lines of heavy black lettering, with every letter at least one twentieth of the entire image height and perfectly readable at thumbnail size. The older posters' text is small and illegible. Dim red light, gaffer tape, a stack of amp cases. No real band names, brand names, logos or other readable words.",
             "change": "Changed only the printed-banner sentence to make its exact wording large, bold and two-line at gallery size.",
-            "image": "assets/slop/attempts/071-02.webp",
-            "fallback": "assets/slop/attempts/071-02.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "8d8ececf17087d89fa24b5975c16ffde0f272b38f84d486654fe2f3d440b677b",
             "recordedAt": "2026-10-07T20:37:34.660Z",
             "review": {
@@ -6000,7 +6170,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T20:37:55.614Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "8d8ececf17087d89fa24b5975c16ffde0f272b38f84d486654fe2f3d440b677b",
@@ -6012,7 +6184,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:52:59.000Z",
         "reason": "Removed at the owner's request in the follow-up picker review, with publication explicitly requested.",
         "reviewId": "owner-picker-2026-10-07-final-five"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "072",
@@ -6020,8 +6194,8 @@ window.SLOP_DATA = {
       "title": "Negative prompt: ugly",
       "styleId": "charcoal-portrait",
       "alt": "A mounted charcoal portrait of an elderly woman in a headscarf, with the label Negative prompt: ugly in bold black type.",
-      "image": "assets/slop/072.webp",
-      "fallback": "assets/slop/072.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square photograph of a charcoal portrait drawing on toned gray-green paper, in the spirit of an early sixteenth-century study of the artist's aging mother: an old woman in a headscarf, gaunt, deep-set eyes, sunken cheeks, the cords of her neck, every wrinkle drawn with unsparing attention and obvious love. The drawing is intensely alive and fills most of the square. On the lower mount, a wide printed museum label spans the full width of the drawing and carries the exact words \"Negative prompt: ugly\" in two lines of clean bold black type, every letter at least one twentieth of the whole square image height and perfectly readable at thumbnail size. Soft gallery light, slightly foxed paper, charcoal smudged where a hand rested. No other readable words.",
@@ -6038,8 +6212,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square photograph of a charcoal portrait drawing on toned gray-green paper, in the spirit of an early sixteenth-century study of the artist's aging mother: an old woman in a headscarf, gaunt, deep-set eyes, sunken cheeks, the cords of her neck, every wrinkle drawn with unsparing attention and obvious love. The drawing is intensely alive and fills most of the square. On the mount at the lower right, a printed museum label carries the exact words \"Negative prompt: ugly\" in clean black type, large and perfectly readable. Soft gallery light, slightly foxed paper, charcoal smudged where a hand rested. No other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/072-01.webp",
-            "fallback": "assets/slop/attempts/072-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "11f319eb72f6df71d3904796f160390a87d36d5e77840ad4fbdedbc4ae634b1c",
             "recordedAt": "2026-10-07T20:38:40.426Z",
             "review": {
@@ -6071,14 +6245,16 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T20:39:05.396Z"
             },
-            "decision": "rejected"
+            "decision": "rejected",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
             "prompt": "Use case: stylized-concept. Create a square photograph of a charcoal portrait drawing on toned gray-green paper, in the spirit of an early sixteenth-century study of the artist's aging mother: an old woman in a headscarf, gaunt, deep-set eyes, sunken cheeks, the cords of her neck, every wrinkle drawn with unsparing attention and obvious love. The drawing is intensely alive and fills most of the square. On the lower mount, a wide printed museum label spans the full width of the drawing and carries the exact words \"Negative prompt: ugly\" in two lines of clean bold black type, every letter at least one twentieth of the whole square image height and perfectly readable at thumbnail size. Soft gallery light, slightly foxed paper, charcoal smudged where a hand rested. No other readable words.",
             "change": "Changed only the museum-label sentence to specify a broad two-line label and readable minimum letter height.",
-            "image": "assets/slop/attempts/072-02.webp",
-            "fallback": "assets/slop/attempts/072-02.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "955d401351b4451965b196f325eefce7ea53eef90d605e8786f9067af6de8284",
             "recordedAt": "2026-10-07T20:39:39.863Z",
             "review": {
@@ -6110,7 +6286,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T20:40:04.684Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "955d401351b4451965b196f325eefce7ea53eef90d605e8786f9067af6de8284",
@@ -6122,7 +6300,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "073",
@@ -6130,8 +6310,8 @@ window.SLOP_DATA = {
       "title": "The marble did not fight back",
       "styleId": "marble-sculpture",
       "alt": "An unsupported marble dancer with hair and veil in impossibly fine strands, on a plinth carved The marble did not fight back.",
-      "image": "assets/slop/073.webp",
-      "fallback": "assets/slop/073.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square museum photograph of a white marble sculpture on a plinth: a dancer balanced on the toes of one foot, arms flung back, her veil and long hair streaming outward in dozens of separate strands thinner than pencil leads, all apparently carved from one block. Nothing supports her: no tree-stump strut, no drapery reaching the base, no bracing, every thin strand unbroken. The marble is flawless and glows. The broad front face of the plinth carries the exact words \"The marble did not fight back\" in three lines of large deeply carved classical capitals, each letter at least one twentieth of the square image height, with dark shadows inside the cuts making the inscription perfectly readable at thumbnail size. Dark gallery, a single spotlight, a velvet rope. No other readable words.",
@@ -6148,8 +6328,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square museum photograph of a white marble sculpture on a plinth: a dancer balanced on the toes of one foot, arms flung back, her veil and long hair streaming outward in dozens of separate strands thinner than pencil leads, all apparently carved from one block. Nothing supports her: no tree-stump strut, no drapery reaching the base, no bracing, every thin strand unbroken. The marble is flawless and glows. Carved into the front of the plinth in classical capitals are the exact words \"The marble did not fight back\", large and perfectly readable. Dark gallery, a single spotlight, a velvet rope. No other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/073-01.webp",
-            "fallback": "assets/slop/attempts/073-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "bb9cc576cf29a8c0231c16234e50e223180f8964b2f24e107ece7b822bb58192",
             "recordedAt": "2026-10-07T20:40:37.554Z",
             "review": {
@@ -6181,14 +6361,16 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T20:41:13.012Z"
             },
-            "decision": "rejected"
+            "decision": "rejected",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
             "prompt": "Use case: stylized-concept. Create a square museum photograph of a white marble sculpture on a plinth: a dancer balanced on the toes of one foot, arms flung back, her veil and long hair streaming outward in dozens of separate strands thinner than pencil leads, all apparently carved from one block. Nothing supports her: no tree-stump strut, no drapery reaching the base, no bracing, every thin strand unbroken. The marble is flawless and glows. The broad front face of the plinth carries the exact words \"The marble did not fight back\" in three lines of large deeply carved classical capitals, each letter at least one twentieth of the square image height, with dark shadows inside the cuts making the inscription perfectly readable at thumbnail size. Dark gallery, a single spotlight, a velvet rope. No other readable words.",
             "change": "Changed only the inscription sentence: three larger lines of deeply cut capitals with dark cut shadows for thumbnail legibility.",
-            "image": "assets/slop/attempts/073-02.webp",
-            "fallback": "assets/slop/attempts/073-02.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "5b64a107e91c7783d745adb88985aa6c40a6642b4b46c5e282c399c21a1a7161",
             "recordedAt": "2026-10-07T20:41:45.633Z",
             "review": {
@@ -6220,7 +6402,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T20:42:14.403Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "5b64a107e91c7783d745adb88985aa6c40a6642b4b46c5e282c399c21a1a7161",
@@ -6232,7 +6416,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "074",
@@ -6240,8 +6426,8 @@ window.SLOP_DATA = {
       "title": "Viewing by appointment",
       "styleId": "gallery-painting",
       "alt": "An oil painting of visitors in a collector's room where every picture is covered by silk curtains; a doorway notice reads Viewing by appointment.",
-      "image": "assets/slop/074.webp",
-      "fallback": "assets/slop/074.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square seventeenth-century Flemish gallery painting in oil, with visibly worked bristle strokes, scumbled shadows and ridges of paint throughout rather than a photographic finish: a grand collector's room hung frame to frame from floor to ceiling, in the tradition of paintings that show an entire collection at once. As collectors of the time sometimes did, every picture has its own small silk curtain on a brass rod, and every curtain is drawn closed, green and crimson silk hiding absolutely every painted image, including any medallion or picture above the doorway. Elegant visitors in black and lace stand before the closed curtains; one lifts a corner to peek. On the foreground doorframe, a large painted cream paper notice occupies the right third of the composition and carries the exact words \"Viewing by appointment\" in three lines of bold elegant script, each letter at least one twentieth of the image height and perfectly readable at thumbnail size. Rich browns, gilt frames, a tiled floor, soft window light. No other readable words.",
@@ -6258,8 +6444,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square seventeenth-century Flemish gallery painting in oil: a grand collector's room hung frame to frame from floor to ceiling, in the tradition of paintings that show an entire collection at once. As collectors of the time sometimes did, every picture has its own small silk curtain on a brass rod, and every curtain is drawn closed, green and crimson silk hiding every painting. Elegant visitors in black and lace stand before the closed curtains; one lifts a corner to peek. On the doorframe, a painted paper notice carries the exact words \"Viewing by appointment\" in elegant script, large and perfectly readable. Rich browns, gilt frames, a tiled floor, soft window light. No other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/074-01.webp",
-            "fallback": "assets/slop/attempts/074-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "6cef718a612ebe1b48ce6d661bffbf80fbdad832032a35a66360200052cce475",
             "recordedAt": "2026-10-07T20:43:08.565Z",
             "review": {
@@ -6291,14 +6477,16 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T20:44:17.830Z"
             },
-            "decision": "rejected"
+            "decision": "rejected",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
             "prompt": "Use case: stylized-concept. Create a square seventeenth-century Flemish gallery painting in oil, with visibly worked bristle strokes, scumbled shadows and ridges of paint throughout rather than a photographic finish: a grand collector's room hung frame to frame from floor to ceiling, in the tradition of paintings that show an entire collection at once. As collectors of the time sometimes did, every picture has its own small silk curtain on a brass rod, and every curtain is drawn closed, green and crimson silk hiding absolutely every painted image, including any medallion or picture above the doorway. Elegant visitors in black and lace stand before the closed curtains; one lifts a corner to peek. On the foreground doorframe, a large painted cream paper notice occupies the right third of the composition and carries the exact words \"Viewing by appointment\" in three lines of bold elegant script, each letter at least one twentieth of the image height and perfectly readable at thumbnail size. Rich browns, gilt frames, a tiled floor, soft window light. No other readable words.",
             "change": "Changed only three failed sentences: visible oil handling, conceal every painted image including doorway medallions, and enlarge the paper notice for thumbnail legibility.",
-            "image": "assets/slop/attempts/074-02.webp",
-            "fallback": "assets/slop/attempts/074-02.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "6fef3e4cee754618c4a7dc9f8830c2cf2a75c415cef3d5c030888b6b9dd7af24",
             "recordedAt": "2026-10-07T20:46:41.585Z",
             "review": {
@@ -6330,7 +6518,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T20:47:42.843Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "6fef3e4cee754618c4a7dc9f8830c2cf2a75c415cef3d5c030888b6b9dd7af24",
@@ -6342,7 +6532,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "075",
@@ -6350,8 +6542,8 @@ window.SLOP_DATA = {
       "title": "It won't hold.",
       "styleId": "tattoo-flash",
       "alt": "A tattoo flash sheet with bold traditional designs around a fine-line portrait printout; a dark pencil note reads It won't hold.",
-      "image": "assets/slop/075.webp",
-      "fallback": "assets/slop/075.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square photograph of a tattoo flash sheet pinned to a shop wall: heavy cream paper painted with the tattooer's own traditional designs, a moth, a horse's head, a hand holding a rose, a crescent moon with a face, a coiled snake, each with bold black outlines and flat red, green and yellow color, their banners left empty. Taped in the middle of the sheet is a client's printout of a generated design: a delicate, beautiful portrait of a woman drawn in thousands of hair-fine lines and soft gradients. Beside it, across a broad clear area of the flash sheet, the tattooer has written the exact words \"It won't hold.\" in two lines of heavy dark carpenter-pencil lettering, each letter at least one twentieth of the square image height and perfectly readable at thumbnail size. Pinholes, tape yellowed at the edges, warm shop light. No other readable words, names or logos.",
@@ -6368,8 +6560,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square photograph of a tattoo flash sheet pinned to a shop wall: heavy cream paper painted with the tattooer's own traditional designs, a moth, a horse's head, a hand holding a rose, a crescent moon with a face, a coiled snake, each with bold black outlines and flat red, green and yellow color, their banners left empty. Taped in the middle of the sheet is a client's printout of a generated design: a delicate, beautiful portrait of a woman drawn in thousands of hair-fine lines and soft gradients. Beside it, in the tattooer's pencil, are the exact words \"It won't hold.\", large and perfectly readable. Pinholes, tape yellowed at the edges, warm shop light. No other readable words, names or logos.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/075-01.webp",
-            "fallback": "assets/slop/attempts/075-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "accafad289628dc4c5b1785bf1f6f8a8c432cf1b0e3c98be9f5e6dd3d79c0088",
             "recordedAt": "2026-10-07T20:48:42.910Z",
             "review": {
@@ -6401,14 +6593,16 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T20:49:52.454Z"
             },
-            "decision": "rejected"
+            "decision": "rejected",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
             "prompt": "Use case: stylized-concept. Create a square photograph of a tattoo flash sheet pinned to a shop wall: heavy cream paper painted with the tattooer's own traditional designs, a moth, a horse's head, a hand holding a rose, a crescent moon with a face, a coiled snake, each with bold black outlines and flat red, green and yellow color, their banners left empty. Taped in the middle of the sheet is a client's printout of a generated design: a delicate, beautiful portrait of a woman drawn in thousands of hair-fine lines and soft gradients. Beside it, across a broad clear area of the flash sheet, the tattooer has written the exact words \"It won't hold.\" in two lines of heavy dark carpenter-pencil lettering, each letter at least one twentieth of the square image height and perfectly readable at thumbnail size. Pinholes, tape yellowed at the edges, warm shop light. No other readable words, names or logos.",
             "change": "Changed only the pencil-note sentence to use larger, darker two-line handwriting while preserving the exact phrase.",
-            "image": "assets/slop/attempts/075-02.webp",
-            "fallback": "assets/slop/attempts/075-02.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "7acc7282aa32962720f2e7db15fdbb24835492136601d7ef505799602b8bc8d6",
             "recordedAt": "2026-10-07T20:50:51.296Z",
             "review": {
@@ -6440,7 +6634,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T20:51:54.388Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "7acc7282aa32962720f2e7db15fdbb24835492136601d7ef505799602b8bc8d6",
@@ -6452,7 +6648,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "076",
@@ -6460,8 +6658,8 @@ window.SLOP_DATA = {
       "title": "It took photography 150 years",
       "styleId": "archive-shelves",
       "alt": "Old archive boxes labeled by decade face new boxes all marked 2023 beneath a sign reading It took photography 150 years.",
-      "image": "assets/slop/076.webp",
-      "fallback": "assets/slop/076.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square photograph down the central aisle of a vast, quiet archive. On the left, tall steel shelves hold thousands of gray archival boxes, each labeled with a decade in order, 1820s, 1830s, 1840s and on through the 1970s, the oldest boxes worn and dusty. On the right, shelves of exactly the same height and length are filled with identical new boxes, and every single label reads 2023. Both sides recede to a vanishing point. Hanging close above the foreground aisle, a broad museum sign fills the upper third of the image and carries the exact words \"It took photography 150 years\" in three lines of large bold cream lettering, each letter at least one twentieth of the square image height and perfectly readable at thumbnail size. Cool even light, a rolling ladder, a book cart. The box labels must read clearly as decades on the left and 2023 on the right. No brand names, logos or other readable words.",
@@ -6478,8 +6676,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square photograph down the central aisle of a vast, quiet archive. On the left, tall steel shelves hold thousands of gray archival boxes, each labeled with a decade in order, 1820s, 1830s, 1840s and on through the 1970s, the oldest boxes worn and dusty. On the right, shelves of exactly the same height and length are filled with identical new boxes, and every single label reads 2023. Both sides recede to a vanishing point. Hanging above the aisle, a large museum sign carries the exact words \"It took photography 150 years\", perfectly readable. Cool even light, a rolling ladder, a book cart. The box labels must read clearly as decades on the left and 2023 on the right. No brand names, logos or other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/076-01.webp",
-            "fallback": "assets/slop/attempts/076-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "bed6cea9af469022a6efc49f7715321c5444d674c3f2bc915a8afaa59f290f29",
             "recordedAt": "2026-10-07T20:53:57.878Z",
             "review": {
@@ -6511,14 +6709,16 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T20:54:59.145Z"
             },
-            "decision": "rejected"
+            "decision": "rejected",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
             "prompt": "Use case: stylized-concept. Create a square photograph down the central aisle of a vast, quiet archive. On the left, tall steel shelves hold thousands of gray archival boxes, each labeled with a decade in order, 1820s, 1830s, 1840s and on through the 1970s, the oldest boxes worn and dusty. On the right, shelves of exactly the same height and length are filled with identical new boxes, and every single label reads 2023. Both sides recede to a vanishing point. Hanging close above the foreground aisle, a broad museum sign fills the upper third of the image and carries the exact words \"It took photography 150 years\" in three lines of large bold cream lettering, each letter at least one twentieth of the square image height and perfectly readable at thumbnail size. Cool even light, a rolling ladder, a book cart. The box labels must read clearly as decades on the left and 2023 on the right. No brand names, logos or other readable words.",
             "change": "Changed only the hanging-sign sentence to enlarge the exact title in three lines.",
-            "image": "assets/slop/attempts/076-02.webp",
-            "fallback": "assets/slop/attempts/076-02.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "169d4a0ce72796ef361d68bdf4bd3bd96e6171ef2b78af960788167923be4a46",
             "recordedAt": "2026-10-07T20:55:57.772Z",
             "review": {
@@ -6550,7 +6750,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T20:56:48.977Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "169d4a0ce72796ef361d68bdf4bd3bd96e6171ef2b78af960788167923be4a46",
@@ -6562,7 +6764,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "077",
@@ -6570,8 +6774,8 @@ window.SLOP_DATA = {
       "title": "Distractions removed",
       "styleId": "photo-ad",
       "alt": "A photo-editing advertisement shows an empty sunlit plaza still full of human shadows, above the headline Distractions removed.",
-      "image": "assets/slop/077.webp",
-      "fallback": "assets/slop/077.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square photograph of a large backlit advertising poster for a photo-editing service, filling the frame. The poster's picture is a perfect holiday snapshot of a European plaza at golden hour, with a fountain, cafe umbrellas and pigeons, completely empty of people. Yet the long evening shadows of a crowd still stretch across the paving stones: dozens of human shadows walking, holding hands, pushing a stroller and taking photos, with nobody casting them. Across the poster's bottom band, the headline reads the exact words \"Distractions removed\" in clean white type, large and perfectly readable; any smaller text is tiny and illegible. Warm low sun, crisp shadows, a slightly too-perfect sky. No brand names, logos or other readable words.",
@@ -6588,8 +6792,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square photograph of a large backlit advertising poster for a photo-editing service, filling the frame. The poster's picture is a perfect holiday snapshot of a European plaza at golden hour, with a fountain, cafe umbrellas and pigeons, completely empty of people. Yet the long evening shadows of a crowd still stretch across the paving stones: dozens of human shadows walking, holding hands, pushing a stroller and taking photos, with nobody casting them. Across the poster's bottom band, the headline reads the exact words \"Distractions removed\" in clean white type, large and perfectly readable; any smaller text is tiny and illegible. Warm low sun, crisp shadows, a slightly too-perfect sky. No brand names, logos or other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/077-01.webp",
-            "fallback": "assets/slop/attempts/077-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "6622f33e83c9170cd7c34f1365233aa4fe5465894aea7fa28ae67c0571c642ae",
             "recordedAt": "2026-10-07T20:57:31.534Z",
             "review": {
@@ -6621,7 +6825,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T20:58:31.768Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "6622f33e83c9170cd7c34f1365233aa4fe5465894aea7fa28ae67c0571c642ae",
@@ -6633,7 +6839,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "078",
@@ -6641,8 +6849,8 @@ window.SLOP_DATA = {
       "title": "Likely AI-generated",
       "styleId": "parchment",
       "alt": "An aged We the People parchment under museum glass is stamped in red with Likely AI-generated.",
-      "image": "assets/slop/078.webp",
-      "fallback": "assets/slop/078.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square photograph of an aged parchment document from the late eighteenth century under museum glass, the opening words \"We the People\" in tall flourished calligraphy across the top, the dense handwritten text below small and illegible, iron-gall ink faded to brown, edges worn. Pressed across the middle at a slight angle is a modern rubber-stamp impression in bright red ink with the exact words \"Likely AI-generated\", large and perfectly readable, its ink slightly uneven. Soft archival lighting, a brass rail, faint reflections on the glass. No other readable words.",
@@ -6659,8 +6867,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square photograph of an aged parchment document from the late eighteenth century under museum glass, the opening words \"We the People\" in tall flourished calligraphy across the top, the dense handwritten text below small and illegible, iron-gall ink faded to brown, edges worn. Pressed across the middle at a slight angle is a modern rubber-stamp impression in bright red ink with the exact words \"Likely AI-generated\", large and perfectly readable, its ink slightly uneven. Soft archival lighting, a brass rail, faint reflections on the glass. No other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/078-01.webp",
-            "fallback": "assets/slop/attempts/078-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "9c4e0a79d41a01181ca9244669c01baf7ec262b826c918a28a030e80e5575fa8",
             "recordedAt": "2026-10-07T20:59:30.445Z",
             "review": {
@@ -6692,7 +6900,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T21:00:29.822Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "9c4e0a79d41a01181ca9244669c01baf7ec262b826c918a28a030e80e5575fa8",
@@ -6704,7 +6914,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "079",
@@ -6712,8 +6924,8 @@ window.SLOP_DATA = {
       "title": "Disqualified for being real",
       "styleId": "award-certificate",
       "alt": "A framed photograph of a head-tucked flamingo above a third-place certificate stamped Disqualified for being real.",
-      "image": "assets/slop/079.webp",
-      "fallback": "assets/slop/079.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square photograph of a framed photography award hanging on a gallery wall: a matted color photograph of a pink flamingo standing on a pale beach, its head tucked so completely under its body that it looks headless, a real bird in an impossible-looking pose. Below the photograph, a cream award certificate with a gold seal and a third-place ribbon occupies the lower half of the frame, struck through by a broad diagonal red stamp reading the exact words \"Disqualified for being real\" in three lines of heavy lettering, each letter at least one twentieth of the whole image height and perfectly readable at thumbnail size. The certificate's other text is small and illegible. Soft gallery light, a simple black frame. No brand names, logos or other readable words.",
@@ -6730,8 +6942,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square photograph of a framed photography award hanging on a gallery wall: a matted color photograph of a pink flamingo standing on a pale beach, its head tucked so completely under its body that it looks headless, a real bird in an impossible-looking pose. Below the photograph, a cream award certificate with a gold seal and a third-place ribbon, struck through by a diagonal red stamp with the exact words \"Disqualified for being real\", large and perfectly readable. The certificate's other text is small and illegible. Soft gallery light, a simple black frame. No brand names, logos or other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/079-01.webp",
-            "fallback": "assets/slop/attempts/079-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "13304da9f183fabfa0aff9ef6040bf67ed8b2be708c879e3cc92630dbde59fa0",
             "recordedAt": "2026-10-07T21:01:37.154Z",
             "review": {
@@ -6763,14 +6975,16 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T21:02:35.540Z"
             },
-            "decision": "rejected"
+            "decision": "rejected",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
             "prompt": "Use case: stylized-concept. Create a square photograph of a framed photography award hanging on a gallery wall: a matted color photograph of a pink flamingo standing on a pale beach, its head tucked so completely under its body that it looks headless, a real bird in an impossible-looking pose. Below the photograph, a cream award certificate with a gold seal and a third-place ribbon occupies the lower half of the frame, struck through by a broad diagonal red stamp reading the exact words \"Disqualified for being real\" in three lines of heavy lettering, each letter at least one twentieth of the whole image height and perfectly readable at thumbnail size. The certificate's other text is small and illegible. Soft gallery light, a simple black frame. No brand names, logos or other readable words.",
             "change": "Changed only the certificate-and-stamp sentence to enlarge the certificate and exact stamped wording.",
-            "image": "assets/slop/attempts/079-02.webp",
-            "fallback": "assets/slop/attempts/079-02.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "b051b347dd6068c5ea97819b9edf47172444b198699ca31d0f760f6186f0dafb",
             "recordedAt": "2026-10-07T21:03:41.031Z",
             "review": {
@@ -6802,7 +7016,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T21:04:40.440Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "b051b347dd6068c5ea97819b9edf47172444b198699ca31d0f760f6186f0dafb",
@@ -6814,7 +7030,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "080",
@@ -6822,8 +7040,8 @@ window.SLOP_DATA = {
       "title": "New work continues to appear",
       "styleId": "retrospective",
       "alt": "A memorial retrospective for invented illustrator Maris Vale, dated 1975 to 2022, includes increasingly glossy bird pictures through 2026 beneath New work continues to appear.",
-      "image": "assets/slop/080.webp",
-      "fallback": "assets/slop/080.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square photograph of a museum wall in a memorial retrospective for an invented illustrator. At the top, large vinyl lettering gives an invented name and the dates 1975 to 2022. Below it runs a long row of eight small framed watercolors of birds and branches across the whole image width, with a large bold black year directly beneath each frame, the digits filling the width of that frame: 2019, 2020, 2021, 2022, then, continuing without a break, 2023, 2024, 2025 and 2026, the later pictures glossier and smoother on the same subjects; all eight years must be clearly readable at thumbnail size. Under the name, two wide lines of bold black wall text carry the exact words \"New work continues to appear\", with every letter at least one twentieth of the whole square image height and perfectly readable at thumbnail size. Hushed gallery light, a bench. No real names, brand names, logos or other readable words.",
@@ -6840,8 +7058,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square photograph of a museum wall in a memorial retrospective for an invented illustrator. At the top, large vinyl lettering gives an invented name and the dates 1975 to 2022. Below it runs a long row of small framed watercolors of birds and branches, each with a little date label: 2019, 2020, 2021, 2022, then, continuing without a break, 2023, 2024, 2025 and 2026, the later pictures glossier and smoother on the same subjects. Under the name, a wide line of wall text carries the exact words \"New work continues to appear\", large and perfectly readable. Hushed gallery light, a bench. No real names, brand names, logos or other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/080-01.webp",
-            "fallback": "assets/slop/attempts/080-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "127d4fd1873e9c8a32c076e93898dbdb78a0a2834428e974a8ab943585422c08",
             "recordedAt": "2026-10-07T21:06:36.007Z",
             "review": {
@@ -6873,14 +7091,16 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T21:08:37.059Z"
             },
-            "decision": "rejected"
+            "decision": "rejected",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
             "prompt": "Use case: stylized-concept. Create a square photograph of a museum wall in a memorial retrospective for an invented illustrator. At the top, large vinyl lettering gives an invented name and the dates 1975 to 2022. Below it runs a long row of eight small framed watercolors of birds and branches across the whole image width, with a large bold black year directly beneath each frame, the digits filling the width of that frame: 2019, 2020, 2021, 2022, then, continuing without a break, 2023, 2024, 2025 and 2026, the later pictures glossier and smoother on the same subjects; all eight years must be clearly readable at thumbnail size. Under the name, two wide lines of bold black wall text carry the exact words \"New work continues to appear\", with every letter at least one twentieth of the whole square image height and perfectly readable at thumbnail size. Hushed gallery light, a bench. No real names, brand names, logos or other readable words.",
             "change": "Changed only the two text-bearing sentences to enlarge the eight year labels and the exact exhibition phrase.",
-            "image": "assets/slop/attempts/080-02.webp",
-            "fallback": "assets/slop/attempts/080-02.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "a660964b91fd8d74d5ccc529310678cb7af96ff9c9bd3e9e1464a1b53e7c026e",
             "recordedAt": "2026-10-07T21:10:04.378Z",
             "review": {
@@ -6912,7 +7132,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T21:11:36.907Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "a660964b91fd8d74d5ccc529310678cb7af96ff9c9bd3e9e1464a1b53e7c026e",
@@ -6924,7 +7146,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "081",
@@ -6932,8 +7156,8 @@ window.SLOP_DATA = {
       "title": "The Luddites were weavers",
       "styleId": "jacquard",
       "alt": "A wooden Jacquard loom weaves The Luddites were weavers in red on cream fabric beneath a looping punched-card chain.",
-      "image": "assets/slop/081.webp",
-      "fallback": "assets/slop/081.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square photograph of a nineteenth-century Jacquard loom in a museum workshop: a dark oak frame, warp threads under tension, and above it a long chain of punched cards looping up and over the machine. On the loom a length of cloth is being woven, and in its pattern, worked in dark red thread on cream, are the exact words \"The Luddites were weavers\", large and perfectly readable across the finished part of the fabric. Bobbins, a wooden shuttle, a stool, raking window light showing the texture of the weave. No other readable words.",
@@ -6950,8 +7174,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square photograph of a nineteenth-century Jacquard loom in a museum workshop: a dark oak frame, warp threads under tension, and above it a long chain of punched cards looping up and over the machine. On the loom a length of cloth is being woven, and in its pattern, worked in dark red thread on cream, are the exact words \"The Luddites were weavers\", large and perfectly readable across the finished part of the fabric. Bobbins, a wooden shuttle, a stool, raking window light showing the texture of the weave. No other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/081-01.webp",
-            "fallback": "assets/slop/attempts/081-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "21eb89052a63a8090a9e5a67a7fa10787c843649ddb317d295f5a1abc9087165",
             "recordedAt": "2026-10-07T21:12:52.234Z",
             "review": {
@@ -6983,7 +7207,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T21:14:21.034Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "21eb89052a63a8090a9e5a67a7fa10787c843649ddb317d295f5a1abc9087165",
@@ -6995,7 +7221,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "082",
@@ -7003,8 +7231,8 @@ window.SLOP_DATA = {
       "title": "Medium: up to one phone charge",
       "styleId": "wall-label",
       "alt": "A museum label for Untitled, 2026, gives its medium as up to one phone charge beside a gilt-framed sunset.",
-      "image": "assets/slop/082.webp",
-      "fallback": "assets/slop/082.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square photograph of a museum wall. On the left, part of a gilt-framed glossy painting, a generated sunset over mountains. On the right, filling two thirds of the square, its large wall label in clean black type: the title Untitled, the year 2026, and, in the field where a label would say oil on canvas, the exact words \"Medium: up to one phone charge\" broken across three lines of bold lettering, each letter at least one twentieth of the entire image height and perfectly readable at thumbnail size. The label is the clear subject: crisp, well lit, with generous margins. Even gallery light, a pale gray wall. No other readable words.",
@@ -7021,8 +7249,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square photograph of a museum wall. On the left, part of a gilt-framed glossy painting, a generated sunset over mountains. On the right, filling a third of the square, its large wall label in clean black type: the title Untitled, the year 2026, and, on the line where a label would say oil on canvas, the exact words \"Medium: up to one phone charge\", large and perfectly readable. The label is the clear subject: crisp, well lit, with generous margins. Even gallery light, a pale gray wall. No other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/082-01.webp",
-            "fallback": "assets/slop/attempts/082-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "c76b20775b5946803f89a7f38cc7a101a31147286b90faa664839f628392f594",
             "recordedAt": "2026-10-07T21:15:15.506Z",
             "review": {
@@ -7054,14 +7282,16 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T21:16:42.778Z"
             },
-            "decision": "rejected"
+            "decision": "rejected",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
             "prompt": "Use case: stylized-concept. Create a square photograph of a museum wall. On the left, part of a gilt-framed glossy painting, a generated sunset over mountains. On the right, filling two thirds of the square, its large wall label in clean black type: the title Untitled, the year 2026, and, in the field where a label would say oil on canvas, the exact words \"Medium: up to one phone charge\" broken across three lines of bold lettering, each letter at least one twentieth of the entire image height and perfectly readable at thumbnail size. The label is the clear subject: crisp, well lit, with generous margins. Even gallery light, a pale gray wall. No other readable words.",
             "change": "Changed only the label-composition sentence to enlarge the label and set its exact medium field in three bold lines.",
-            "image": "assets/slop/attempts/082-02.webp",
-            "fallback": "assets/slop/attempts/082-02.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "1d856fede4d60a00d9d175072c86fb8ee68841b075141f2a16d6cdd2900e7723",
             "recordedAt": "2026-10-07T21:17:34.929Z",
             "review": {
@@ -7093,7 +7323,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T21:19:27.640Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "1d856fede4d60a00d9d175072c86fb8ee68841b075141f2a16d6cdd2900e7723",
@@ -7105,7 +7337,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "083",
@@ -7131,8 +7365,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square photograph of a small bakery's counter. Taped to the glass display case is a customer's glossy printout of a generated cake: seven tiers floating apart in midair, a frozen waterfall of chocolate, sugar butterflies circling it, impossible and gleaming. A yellow sticky note on the printout reads the exact words \"Can you make this by Saturday?\", large and perfectly readable. On the counter beside it stands the baker's real three-tier cake, piped by hand and beautiful, with a few small imperfections, next to a turntable, an offset spatula and a piping bag. Warm morning light. No brand names, logos or other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/083-01.webp",
-            "fallback": "assets/slop/attempts/083-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "a20811580dcc30b53befd1cc9dca3bdb1d1bde71d37973bb17f5bd4c32cb0a69",
             "recordedAt": "2026-10-07T21:20:36.538Z",
             "review": {
@@ -7164,14 +7398,16 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T21:22:47.382Z"
             },
-            "decision": "rejected"
+            "decision": "rejected",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
             "prompt": "Use case: stylized-concept. Create a square photograph of a small bakery's counter. Taped to the glass display case is a customer's glossy printout of a generated cake: seven tiers floating apart in midair, a frozen waterfall of chocolate, sugar butterflies circling it, impossible and gleaming. A large yellow sticky note covers the upper third of the printout and reads the exact words \"Can you make this by Saturday?\" in four lines of heavy black handwriting, each letter at least one twentieth of the entire image height and perfectly readable at thumbnail size. On the counter beside it stands the baker's real three-tier cake, piped by hand and beautiful, with a few small imperfections, next to a turntable, an offset spatula and a piping bag. Warm morning light. No brand names, logos or other readable words.",
             "change": "Changed only the sticky-note sentence to enlarge the note and exact handwritten question.",
-            "image": "assets/slop/attempts/083-02.webp",
-            "fallback": "assets/slop/attempts/083-02.jpg",
+            "image": "assets/slop/083.webp",
+            "fallback": "assets/slop/083.jpg",
             "sourceSha256": "14ba0d9aa5c4d2781f67675e65027c1f37a8291b05e23779319c1a76084cb4e4",
             "recordedAt": "2026-10-07T21:25:12.470Z",
             "review": {
@@ -7218,8 +7454,8 @@ window.SLOP_DATA = {
       "title": "Every line was put there by someone",
       "styleId": "automaton",
       "alt": "A drawing automaton with exposed brass cams sits at a mahogany desk engraved Every line was put there by someone.",
-      "image": "assets/slop/084.webp",
-      "fallback": "assets/slop/084.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square museum photograph of an eighteenth-century automaton: a small seated boy doll in a velvet coat at a tiny mahogany desk, holding a pencil over a sheet on which he has just drawn a little dog. His back panel is open, revealing the mechanism inside: a tall stack of brass cams, each a hand-filed disc, with gears, levers and springs, gleaming and intricate. The broad front apron of the desk carries a large brass plaque engraved with the exact words \"Every line was put there by someone\" in three lines of bold blackened lettering, each letter at least one twentieth of the square image height and perfectly readable at thumbnail size. A dark display case, a soft spotlight, reflections on the glass. No other readable words.",
@@ -7236,8 +7472,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square museum photograph of an eighteenth-century automaton: a small seated boy doll in a velvet coat at a tiny mahogany desk, holding a pencil over a sheet on which he has just drawn a little dog. His back panel is open, revealing the mechanism inside: a tall stack of brass cams, each a hand-filed disc, with gears, levers and springs, gleaming and intricate. On the front edge of the desk, a brass plaque is engraved with the exact words \"Every line was put there by someone\", large and perfectly readable. A dark display case, a soft spotlight, reflections on the glass. No other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/084-01.webp",
-            "fallback": "assets/slop/attempts/084-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "70ec90b81406005aa1615e623ea9917fe0c38f79f3b7a4788fc9858d988942a0",
             "recordedAt": "2026-10-07T21:28:32.100Z",
             "review": {
@@ -7269,14 +7505,16 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T21:29:57.214Z"
             },
-            "decision": "rejected"
+            "decision": "rejected",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
             "prompt": "Use case: stylized-concept. Create a square museum photograph of an eighteenth-century automaton: a small seated boy doll in a velvet coat at a tiny mahogany desk, holding a pencil over a sheet on which he has just drawn a little dog. His back panel is open, revealing the mechanism inside: a tall stack of brass cams, each a hand-filed disc, with gears, levers and springs, gleaming and intricate. The broad front apron of the desk carries a large brass plaque engraved with the exact words \"Every line was put there by someone\" in three lines of bold blackened lettering, each letter at least one twentieth of the square image height and perfectly readable at thumbnail size. A dark display case, a soft spotlight, reflections on the glass. No other readable words.",
             "change": "Changed only the plaque sentence to specify a larger apron plaque and three bold engraved lines.",
-            "image": "assets/slop/attempts/084-02.webp",
-            "fallback": "assets/slop/attempts/084-02.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "f77be126483e27207906ec892e1fdf1dda683b9827d6d48871c81266df664218",
             "recordedAt": "2026-10-07T21:31:23.989Z",
             "review": {
@@ -7308,7 +7546,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T21:32:57.151Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "f77be126483e27207906ec892e1fdf1dda683b9827d6d48871c81266df664218",
@@ -7320,7 +7560,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "085",
@@ -7328,8 +7570,8 @@ window.SLOP_DATA = {
       "title": "Everyone smiled",
       "styleId": "photo-card",
       "alt": "A holiday card shows a perfectly smiling family while the mirror in its photo reflects a crying toddler and distracted adults.",
-      "image": "assets/slop/085.webp",
-      "fallback": "assets/slop/085.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square photograph of a holiday photo card propped on a mantel. The card's photo shows a family on a sofa, grandparents, parents, two children and a dog, every face in a flawless simultaneous smile, every eye open, the dog looking at the camera. Behind the family in the photo hangs a large wall mirror, and its reflection shows the same instant as it really was: the toddler crying, the father mid-blink, the grandmother looking away, the dog turned around. Printed below the photo in elegant script is the card's greeting, the exact words \"Everyone smiled\", large and perfectly readable. Warm lamp light, pine branches on the mantel. No brand names, logos or other readable words.",
@@ -7346,8 +7588,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square photograph of a holiday photo card propped on a mantel. The card's photo shows a family on a sofa, grandparents, parents, two children and a dog, every face in a flawless simultaneous smile, every eye open, the dog looking at the camera. Behind the family in the photo hangs a large wall mirror, and its reflection shows the same instant as it really was: the toddler crying, the father mid-blink, the grandmother looking away, the dog turned around. Printed below the photo in elegant script is the card's greeting, the exact words \"Everyone smiled\", large and perfectly readable. Warm lamp light, pine branches on the mantel. No brand names, logos or other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/085-01.webp",
-            "fallback": "assets/slop/attempts/085-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "aad4ce5cf91453c1e13e059e4e115f019e0abb9d4fe9cd656c1dee81b9322ba0",
             "recordedAt": "2026-10-07T21:34:19.952Z",
             "review": {
@@ -7379,7 +7621,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T21:36:26.955Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "aad4ce5cf91453c1e13e059e4e115f019e0abb9d4fe9cd656c1dee81b9322ba0",
@@ -7391,7 +7635,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "086",
@@ -7399,8 +7645,8 @@ window.SLOP_DATA = {
       "title": "You have looked at this longer than it took to make",
       "styleId": "bench-plaque",
       "alt": "A viewing bench facing a vast fantasy city bears a brass plaque reading You have looked at this longer than it took to make.",
-      "image": "assets/slop/086.webp",
-      "fallback": "assets/slop/086.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square photograph of a museum gallery. A long wooden viewing bench in the foreground faces a vast, impossibly intricate panorama of a fantasy city at dusk, with thousands of glowing windows, bridges, ships and towers, the kind of detail that would take a painter years. Screwed to the bench's broad foreground backrest, facing us, is a polished brass plaque spanning nearly its full width, engraved with the exact words \"You have looked at this longer than it took to make\" in four lines of bold blackened lettering, each letter at least one twentieth of the square image height and perfectly readable at thumbnail size. Soft gallery light, an empty room. No other readable words.",
@@ -7417,8 +7663,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square photograph of a museum gallery. A long wooden viewing bench in the foreground faces a vast, impossibly intricate panorama of a fantasy city at dusk, with thousands of glowing windows, bridges, ships and towers, the kind of detail that would take a painter years. Screwed to the bench's backrest, facing us, is a polished brass plaque of the kind used on memorial benches, engraved with the exact words \"You have looked at this longer than it took to make\", large and perfectly readable over two lines. Soft gallery light, an empty room. No other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/086-01.webp",
-            "fallback": "assets/slop/attempts/086-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "444bb38caff3c3835d071b8308b0c4a58b80b3f118bfe1533cc9f26fdac27efd",
             "recordedAt": "2026-10-07T21:40:21.966Z",
             "review": {
@@ -7450,14 +7696,16 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T21:43:03.763Z"
             },
-            "decision": "rejected"
+            "decision": "rejected",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
             "prompt": "Use case: stylized-concept. Create a square photograph of a museum gallery. A long wooden viewing bench in the foreground faces a vast, impossibly intricate panorama of a fantasy city at dusk, with thousands of glowing windows, bridges, ships and towers, the kind of detail that would take a painter years. Screwed to the bench's broad foreground backrest, facing us, is a polished brass plaque spanning nearly its full width, engraved with the exact words \"You have looked at this longer than it took to make\" in four lines of bold blackened lettering, each letter at least one twentieth of the square image height and perfectly readable at thumbnail size. Soft gallery light, an empty room. No other readable words.",
             "change": "Changed only the plaque sentence to expand it across the bench and render the exact inscription in four readable lines.",
-            "image": "assets/slop/attempts/086-02.webp",
-            "fallback": "assets/slop/attempts/086-02.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "33d6d39553fcb72f6a0fdf326d57d04eed3f0726cb73ca4a33b3512f624daa19",
             "recordedAt": "2026-10-07T21:45:08.297Z",
             "review": {
@@ -7489,7 +7737,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T21:46:53.105Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "33d6d39553fcb72f6a0fdf326d57d04eed3f0726cb73ca4a33b3512f624daa19",
@@ -7501,7 +7751,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "087",
@@ -7509,8 +7761,8 @@ window.SLOP_DATA = {
       "title": "The phone added the craters",
       "styleId": "moon-test",
       "alt": "A phone pointed at a blurred moon on a monitor shows sharp craters; a detailed print and note document The phone added the craters.",
-      "image": "assets/slop/087.webp",
-      "fallback": "assets/slop/087.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square photograph of a dark room set up as an experiment. Across the room, a computer monitor shows a deliberately blurred, featureless photograph of the moon, a soft gray disc. In the foreground, a phone on a small tripod points at it. On the table beside the tripod lies a print of the photo the phone took: a crisp, detailed moon full of sharp craters and seas that the blurred screen does not contain. A large yellow sticky note beside the print fills the lower-right third of the image and reads the exact words \"The phone added the craters\" in three lines of heavy black handwriting, each letter at least one twentieth of the image height and perfectly readable at thumbnail size. Low blue light from the monitor. No brand names, logos or other readable words; the phone interface is completely unlabeled, containing only plain circles and the image preview.",
@@ -7527,8 +7779,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square photograph of a dark room set up as an experiment. Across the room, a computer monitor shows a deliberately blurred, featureless photograph of the moon, a soft gray disc. In the foreground, a phone on a small tripod points at it. On the table beside the tripod lies a print of the photo the phone took: a crisp, detailed moon full of sharp craters and seas that the blurred screen does not contain. A sticky note on the print reads the exact words \"The phone added the craters\", large and perfectly readable. Low blue light from the monitor. No brand names, logos or other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/087-01.webp",
-            "fallback": "assets/slop/attempts/087-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "b1c46dc081dcd7cf30bd7bff25d6eba54858fe827fb95081344bfad9123e606f",
             "recordedAt": "2026-10-07T21:48:52.920Z",
             "review": {
@@ -7560,14 +7812,16 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T21:50:34.513Z"
             },
-            "decision": "rejected"
+            "decision": "rejected",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
             "prompt": "Use case: stylized-concept. Create a square photograph of a dark room set up as an experiment. Across the room, a computer monitor shows a deliberately blurred, featureless photograph of the moon, a soft gray disc. In the foreground, a phone on a small tripod points at it. On the table beside the tripod lies a print of the photo the phone took: a crisp, detailed moon full of sharp craters and seas that the blurred screen does not contain. A large yellow sticky note beside the print fills the lower-right third of the image and reads the exact words \"The phone added the craters\" in three lines of heavy black handwriting, each letter at least one twentieth of the image height and perfectly readable at thumbnail size. Low blue light from the monitor. No brand names, logos or other readable words; the phone interface is completely unlabeled, containing only plain circles and the image preview.",
             "change": "Changed only the note sentence for readability and the no-other-words sentence to require an unlabeled phone interface.",
-            "image": "assets/slop/attempts/087-02.webp",
-            "fallback": "assets/slop/attempts/087-02.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "ad0d1c288381183bbd1dda3023a2420152779bdce1be3335a2f6259fb55a8034",
             "recordedAt": "2026-10-07T21:51:59.399Z",
             "review": {
@@ -7599,7 +7853,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T21:55:31.088Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "ad0d1c288381183bbd1dda3023a2420152779bdce1be3335a2f6259fb55a8034",
@@ -7611,7 +7867,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "088",
@@ -7619,8 +7877,8 @@ window.SLOP_DATA = {
       "title": "Borrowed 48,213 times",
       "styleId": "library-card",
       "alt": "Inside an old library book, a paper slip headed Borrowed 48,213 times is almost covered by overlapping purple return stamps that spill onto the endpaper.",
-      "image": "assets/slop/088.webp",
-      "fallback": "assets/slop/088.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square close photograph of the inside cover of an old library monograph about an invented illustrator, its paper pocket holding a due-date slip. The slip has been stamped with return dates so many thousands of times that the purple stamps overlap into a dense, almost solid mass, spilling off the slip onto the endpaper. Typed across the top quarter of the slip are the exact words \"Borrowed 48,213 times\" in two lines of large heavy black typewriter lettering, every letter at least one twentieth of the square image height and perfectly readable at thumbnail size. Worn cloth binding, yellowed paper. No real names, brand names, logos or other readable words.",
@@ -7637,8 +7895,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square close photograph of the inside cover of an old library monograph about an invented illustrator, its paper pocket holding a due-date slip. The slip has been stamped with return dates so many thousands of times that the purple stamps overlap into a dense, almost solid mass, spilling off the slip onto the endpaper. Typed across the top of the slip are the exact words \"Borrowed 48,213 times\", large and perfectly readable. Worn cloth binding, yellowed paper. No real names, brand names, logos or other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/088-01.webp",
-            "fallback": "assets/slop/attempts/088-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "bb093ad13a6a603299790abe0ab24a0185ad25219046ae82f84502bcf041375c",
             "recordedAt": "2026-10-07T21:57:05.922Z",
             "review": {
@@ -7670,14 +7928,16 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T21:59:47.987Z"
             },
-            "decision": "rejected"
+            "decision": "rejected",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
             "prompt": "Use case: stylized-concept. Create a square close photograph of the inside cover of an old library monograph about an invented illustrator, its paper pocket holding a due-date slip. The slip has been stamped with return dates so many thousands of times that the purple stamps overlap into a dense, almost solid mass, spilling off the slip onto the endpaper. Typed across the top quarter of the slip are the exact words \"Borrowed 48,213 times\" in two lines of large heavy black typewriter lettering, every letter at least one twentieth of the square image height and perfectly readable at thumbnail size. Worn cloth binding, yellowed paper. No real names, brand names, logos or other readable words.",
             "change": "Changed only the typed-heading sentence to enlarge its exact wording and number over two lines.",
-            "image": "assets/slop/attempts/088-02.webp",
-            "fallback": "assets/slop/attempts/088-02.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "7144f91c6493fdb8f76ecbf40ac2dbf3765319549c3b87e7fab1607a45573aba",
             "recordedAt": "2026-10-07T22:01:26.810Z",
             "review": {
@@ -7709,7 +7969,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T22:04:43.603Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "7144f91c6493fdb8f76ecbf40ac2dbf3765319549c3b87e7fab1607a45573aba",
@@ -7721,7 +7983,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "089",
@@ -7729,8 +7993,8 @@ window.SLOP_DATA = {
       "title": "For my medical record only",
       "styleId": "consent-form",
       "alt": "A checked and initialed clinical consent form reads For my medical record only, with a numerical catalog sticker at its corner.",
-      "image": "assets/slop/089.webp",
-      "fallback": "assets/slop/089.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square photograph of a clinical photography consent form on a clipboard, lying on the counter of a doctor's examination room. The form's boxes are small and illegible except one large checkbox, ticked and initialed in blue ink, beside the exact words \"For my medical record only\" printed in three lines of heavy black type across the middle third of the form, every main letter at least one twentieth of the square image height and perfectly readable at 336 pixels. Stuck to the corner of the form is a small white label printed with a long index number in tiny type, the kind used to catalog items in a dataset. A pen on a chain, a box of gloves, cool clinical light. No faces, no photographs of people, no brand names, no readable form heading or other readable words; all form printing except the exact main phrase is indistinct.",
@@ -7747,8 +8011,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square photograph of a clinical photography consent form on a clipboard, lying on the counter of a doctor's examination room. The form's boxes are small and illegible except one checkbox, ticked and initialed in blue ink, beside the printed line with the exact words \"For my medical record only\", large and perfectly readable. Stuck to the corner of the form is a small white label printed with a long index number in tiny type, the kind used to catalog items in a dataset. A pen on a chain, a box of gloves, cool clinical light. No faces, no photographs of people, no brand names or other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/089-01.webp",
-            "fallback": "assets/slop/attempts/089-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "8956c465bd2d26afed07e42119792c8691afa8f1b6a2d2e33a48681cd1ca91c3",
             "recordedAt": "2026-10-07T22:05:30.136Z",
             "review": {
@@ -7780,14 +8044,16 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T22:06:01.308Z"
             },
-            "decision": "rejected"
+            "decision": "rejected",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
             "prompt": "Use case: stylized-concept. Create a square photograph of a clinical photography consent form on a clipboard, lying on the counter of a doctor's examination room. The form's boxes are small and illegible except one large checkbox, ticked and initialed in blue ink, beside the exact words \"For my medical record only\" printed in three lines of heavy black type across the middle third of the form, every main letter at least one twentieth of the square image height and perfectly readable at 336 pixels. Stuck to the corner of the form is a small white label printed with a long index number in tiny type, the kind used to catalog items in a dataset. A pen on a chain, a box of gloves, cool clinical light. No faces, no photographs of people, no brand names, no readable form heading or other readable words; all form printing except the exact main phrase is indistinct.",
             "change": "Enlarged the checked restriction into three heavy lines, and made the otherwise readable extra form heading indistinct. Other scene instructions unchanged.",
-            "image": "assets/slop/attempts/089-02.webp",
-            "fallback": "assets/slop/attempts/089-02.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "0b9fc9941e3c35da2155b8d2496f53e41d25e6e0a593abde717b8c3246bac048",
             "recordedAt": "2026-10-07T22:06:49.919Z",
             "review": {
@@ -7819,7 +8085,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T22:07:27.419Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "0b9fc9941e3c35da2155b8d2496f53e41d25e6e0a593abde717b8c3246bac048",
@@ -7831,7 +8099,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "090",
@@ -7839,8 +8109,8 @@ window.SLOP_DATA = {
       "title": "Meet our farmers",
       "styleId": "produce-sign",
       "alt": "A glossy smiling farmer advertisement reading Meet our farmers hangs above crates of lumpy, split tomatoes in a supermarket.",
-      "image": "assets/slop/090.webp",
-      "fallback": "assets/slop/090.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square photograph of a supermarket produce aisle. Above crates of tomatoes hangs a large printed sign with a glossy generated portrait of a perfect, sun-weathered farmer in a straw hat, holding a flawless tomato and smiling in golden light, too beautiful and too symmetrical. Across the top of the sign, in friendly rustic lettering, are the exact words \"Meet our farmers\", large and perfectly readable. Below it the real tomatoes are lumpy, split and uneven, beside a price card in tiny illegible type. Bright fluorescent light, misting nozzles. No brand names, logos or other readable words.",
@@ -7857,8 +8127,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square photograph of a supermarket produce aisle. Above crates of tomatoes hangs a large printed sign with a glossy generated portrait of a perfect, sun-weathered farmer in a straw hat, holding a flawless tomato and smiling in golden light, too beautiful and too symmetrical. Across the top of the sign, in friendly rustic lettering, are the exact words \"Meet our farmers\", large and perfectly readable. Below it the real tomatoes are lumpy, split and uneven, beside a price card in tiny illegible type. Bright fluorescent light, misting nozzles. No brand names, logos or other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/090-01.webp",
-            "fallback": "assets/slop/attempts/090-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "bd5a0f9bfdd6f9f3d1f9a22c67382369a9048523188a5072359a1def6f5a4c82",
             "recordedAt": "2026-10-07T22:08:24.518Z",
             "review": {
@@ -7890,7 +8160,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T22:09:15.972Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "bd5a0f9bfdd6f9f3d1f9a22c67382369a9048523188a5072359a1def6f5a4c82",
@@ -7902,7 +8174,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "091",
@@ -7910,8 +8184,8 @@ window.SLOP_DATA = {
       "title": "Today's special",
       "styleId": "chalkboard",
       "alt": "A glossy pasta poster reading Today's special is taped over hand-drawn pie and coffee illustrations on a diner's chalkboard.",
-      "image": "assets/slop/091.webp",
-      "fallback": "assets/slop/091.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square photograph of a diner's wall chalkboard. Most of it shows beautiful hand-drawn chalk work: flourished lettering, a chalk-drawn steaming pie, a coffee cup and decorative borders, with smudges where the board was wiped and redrawn. Taped over the center is a laminated poster with a glossy generated photo of a bowl of pasta, steam and a basil leaf frozen in midair, and the exact words \"Today's special\" printed in bold type, large and perfectly readable. The chalk lettering around it is decorative and illegible. Warm diner light, a counter with stools below. No brand names, logos or other readable words.",
@@ -7928,8 +8202,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square photograph of a diner's wall chalkboard. Most of it shows beautiful hand-drawn chalk work: flourished lettering, a chalk-drawn steaming pie, a coffee cup and decorative borders, with smudges where the board was wiped and redrawn. Taped over the center is a laminated poster with a glossy generated photo of a bowl of pasta, steam and a basil leaf frozen in midair, and the exact words \"Today's special\" printed in bold type, large and perfectly readable. The chalk lettering around it is decorative and illegible. Warm diner light, a counter with stools below. No brand names, logos or other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/091-01.webp",
-            "fallback": "assets/slop/attempts/091-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "7abb9a594cffd7425213f74ec47860ce1064df3c68288d1ac535b49307cad38f",
             "recordedAt": "2026-10-07T22:10:14.044Z",
             "review": {
@@ -7961,7 +8235,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T22:10:59.447Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "7abb9a594cffd7425213f74ec47860ce1064df3c68288d1ac535b49307cad38f",
@@ -7973,7 +8249,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:52:59.000Z",
         "reason": "Removed at the owner's request in the follow-up picker review, with publication explicitly requested.",
         "reviewId": "owner-picker-2026-10-07-final-five"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "092",
@@ -7981,8 +8259,8 @@ window.SLOP_DATA = {
       "title": "Please submit each work separately",
       "styleId": "carbon-form",
       "alt": "A triplicate form headed Please submit each work separately bears indistinct blue handwriting and page 1 of 4,812 beside a large box of blanks.",
-      "image": "assets/slop/092.webp",
-      "fallback": "assets/slop/092.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square overhead photograph of a stack of carbon-copy triplicate forms on an office desk, white over yellow over pink, edges fanned slightly. Printed across the top third of the foreground form are the exact words \"Please submit each work separately\" in three lines of heavy black lettering, every main letter at least one twentieth of the square image height and perfectly readable at 336 pixels. Below, the boxes contain dense tiny blue ballpoint cursive impressions for a title, date, short description and signature, with pen pressure showing through to the copies beneath; these marks are indistinct and illegible even at full image size, with no decipherable words or name. The foot of the foreground form is printed \"page 1 of 4,812\" in bold black lettering large enough to remain plainly readable at 336 pixels. Beside the stack sits a huge box of identical blank forms. Fluorescent light, a pen, a paperclip. No logos or other readable words.",
@@ -7999,8 +8277,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square overhead photograph of a stack of carbon-copy triplicate forms on an office desk, white over yellow over pink, edges fanned slightly. Printed in bold black across the top of the form are the exact words \"Please submit each work separately\", large and perfectly readable. Below, the boxes are filled in by hand in blue ballpoint, a title, a date, a short description of a painting and a signature, the pen pressure showing through to the copies beneath; the handwriting is small and illegible. The foot of the form is printed \"page 1 of 4,812\". Beside the stack sits a huge box of identical blank forms. Fluorescent light, a pen, a paperclip. No logos or other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/092-01.webp",
-            "fallback": "assets/slop/attempts/092-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "7b7c36865a65d99d0969b9bd0aad76f508b010911b8e6a612551ec8c71b8aa64",
             "recordedAt": "2026-10-07T22:11:49.307Z",
             "review": {
@@ -8032,14 +8310,16 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T22:12:42.591Z"
             },
-            "decision": "rejected"
+            "decision": "rejected",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
             "prompt": "Use case: stylized-concept. Create a square overhead photograph of a stack of carbon-copy triplicate forms on an office desk, white over yellow over pink, edges fanned slightly. Printed across the top third of the foreground form are the exact words \"Please submit each work separately\" in three lines of heavy black lettering, every main letter at least one twentieth of the square image height and perfectly readable at 336 pixels. Below, the boxes are filled in by hand in blue ballpoint, a title, a date, a short description of a painting and a signature, the pen pressure showing through to the copies beneath; the handwriting is small and illegible. The foot of the foreground form is printed \"page 1 of 4,812\" in bold black lettering large enough to remain plainly readable at 336 pixels. Beside the stack sits a huge box of identical blank forms. Fluorescent light, a pen, a paperclip. No logos or other readable words.",
             "change": "Enlarged the main heading into three heavy lines and made the prescribed page count bold and readable at 336 pixels. All other instructions unchanged.",
-            "image": "assets/slop/attempts/092-02.webp",
-            "fallback": "assets/slop/attempts/092-02.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "84ec1f9caad7d498d150a98ec51babd87e6b1364d2b352c1db176a85dd33e42c",
             "recordedAt": "2026-10-07T22:13:35.590Z",
             "review": {
@@ -8071,14 +8351,16 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T22:14:35.213Z"
             },
-            "decision": "rejected"
+            "decision": "rejected",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 3,
             "prompt": "Use case: stylized-concept. Create a square overhead photograph of a stack of carbon-copy triplicate forms on an office desk, white over yellow over pink, edges fanned slightly. Printed across the top third of the foreground form are the exact words \"Please submit each work separately\" in three lines of heavy black lettering, every main letter at least one twentieth of the square image height and perfectly readable at 336 pixels. Below, the boxes contain dense tiny blue ballpoint cursive impressions for a title, date, short description and signature, with pen pressure showing through to the copies beneath; these marks are indistinct and illegible even at full image size, with no decipherable words or name. The foot of the foreground form is printed \"page 1 of 4,812\" in bold black lettering large enough to remain plainly readable at 336 pixels. Beside the stack sits a huge box of identical blank forms. Fluorescent light, a pen, a paperclip. No logos or other readable words.",
             "change": "Changed only the handwriting sentence to require tiny indistinct cursive with no decipherable words or name, even at full size; retained the successful enlarged heading and page count.",
-            "image": "assets/slop/attempts/092-03.webp",
-            "fallback": "assets/slop/attempts/092-03.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "f24760fe0b06aeb3b3270f5f7d58c457d3888ded4235b5171e0ad4062211fd92",
             "recordedAt": "2026-10-07T22:15:30.515Z",
             "review": {
@@ -8110,7 +8392,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T22:16:17.050Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "f24760fe0b06aeb3b3270f5f7d58c457d3888ded4235b5171e0ad4062211fd92",
@@ -8122,7 +8406,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "093",
@@ -8130,8 +8416,8 @@ window.SLOP_DATA = {
       "title": "Painting survived the camera",
       "styleId": "portrait-miniature",
       "alt": "An open worn gold locket holds a stippled nineteenth-century portrait miniature opposite the engraved words Painting survived the camera.",
-      "image": "assets/slop/093.webp",
-      "fallback": "assets/slop/093.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square close photograph of an open gold locket lying on dark velvet. One side holds an 1830s portrait miniature, watercolor on vellum, of a young man with dark curls and a high collar, painted in tiny stippled strokes. Engraved inside the opposite lid, in fine script, are the exact words \"Painting survived the camera\", large for the lid and perfectly readable. The gold is worn and the hinge slightly bent. Soft window light, shallow depth of field. No other readable words.",
@@ -8148,8 +8434,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square close photograph of an open gold locket lying on dark velvet. One side holds an 1830s portrait miniature, watercolor on vellum, of a young man with dark curls and a high collar, painted in tiny stippled strokes. Engraved inside the opposite lid, in fine script, are the exact words \"Painting survived the camera\", large for the lid and perfectly readable. The gold is worn and the hinge slightly bent. Soft window light, shallow depth of field. No other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/093-01.webp",
-            "fallback": "assets/slop/attempts/093-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "deda78b137fd078af3a67751c3255c0a993540a3e4d28088b2f0cb187b5f14a2",
             "recordedAt": "2026-10-07T22:17:24.700Z",
             "review": {
@@ -8181,7 +8467,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T22:18:39.187Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "deda78b137fd078af3a67751c3255c0a993540a3e4d28088b2f0cb187b5f14a2",
@@ -8193,7 +8481,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "094",
@@ -8201,8 +8491,8 @@ window.SLOP_DATA = {
       "title": "Smooth used to mean skill",
       "styleId": "academic-oil",
       "alt": "A smooth academic painting of a woman with a jug by a fountain, in a gilt frame with a brass plate reading Smooth used to mean skill.",
-      "image": "assets/slop/094.webp",
-      "fallback": "assets/slop/094.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square photograph of a nineteenth-century French academic oil painting in a heavy gilt frame: a young woman in a white dress holding a water jug beside a fountain, skin like porcelain, the finish so smooth that not a single brushstroke shows anywhere, the surface the academies trained painters for years to achieve. A broad engraved brass plate occupies the bottom fifth of the frame and carries exactly \"Smooth used to mean skill\" in two lines of heavy dark engraved lettering, no full stop or other punctuation, each main letter at least one twentieth of the square image height and perfectly readable at 336 pixels. Museum light, a little dust on the carved frame, the faint craquelure of age. No other readable words.",
@@ -8219,8 +8509,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square photograph of a nineteenth-century French academic oil painting in a heavy gilt frame: a young woman in a white dress holding a water jug beside a fountain, skin like porcelain, the finish so smooth that not a single brushstroke shows anywhere, the surface the academies trained painters for years to achieve. A wide engraved brass plate on the bottom rail of the frame carries the exact words \"Smooth used to mean skill\", large and perfectly readable. Museum light, a little dust on the carved frame, the faint craquelure of age. No other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/094-01.webp",
-            "fallback": "assets/slop/attempts/094-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "1cd041e540883320f3a9ae5c8056a246aef263841720405b64638f2c21c06b65",
             "recordedAt": "2026-10-07T22:19:33.573Z",
             "review": {
@@ -8252,14 +8542,16 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T22:20:24.391Z"
             },
-            "decision": "rejected"
+            "decision": "rejected",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
             "prompt": "Use case: stylized-concept. Create a square photograph of a nineteenth-century French academic oil painting in a heavy gilt frame: a young woman in a white dress holding a water jug beside a fountain, skin like porcelain, the finish so smooth that not a single brushstroke shows anywhere, the surface the academies trained painters for years to achieve. A broad engraved brass plate occupies the bottom fifth of the frame and carries exactly \"Smooth used to mean skill\" in two lines of heavy dark engraved lettering, no full stop or other punctuation, each main letter at least one twentieth of the square image height and perfectly readable at 336 pixels. Museum light, a little dust on the carved frame, the faint craquelure of age. No other readable words.",
             "change": "Changed only the brass plate sentence: expanded the plate and lettering into two lines and prohibited the added full stop.",
-            "image": "assets/slop/attempts/094-02.webp",
-            "fallback": "assets/slop/attempts/094-02.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "2c33c59084ff2031ca8a5ab66149363d0f75bf42976498149f5692913d76b6d2",
             "recordedAt": "2026-10-07T22:21:28.262Z",
             "review": {
@@ -8291,7 +8583,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T22:22:29.081Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "2c33c59084ff2031ca8a5ab66149363d0f75bf42976498149f5692913d76b6d2",
@@ -8303,7 +8597,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "095",
@@ -8311,8 +8607,8 @@ window.SLOP_DATA = {
       "title": "Hand-embellished",
       "styleId": "retail-canvas",
       "alt": "Identical glossy sunflower canvases in a home store, with three thick yellow paint dabs on the front print and a tag reading Hand-embellished.",
-      "image": "assets/slop/095.webp",
-      "fallback": "assets/slop/095.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square photograph of a large canvas print leaning against a shelf in a big-box home store. The print is a glossy generated field of sunflowers under a dramatic sky, perfectly smooth, with no brushwork anywhere. Someone has added three thick dabs of real yellow paint on three of the flower heads, the only texture on the whole canvas, catching the store's light. A large plain cardboard hang tag on a string, tied to the upper corner of the frame and occupying the upper-right quarter of the image, reads exactly \"Hand-embellished\" in two lines of heavy black retail type with a smaller price beneath, every main letter at least one twentieth of the square image height and perfectly readable at 336 pixels. Rows of identical prints stand behind it. Flat fluorescent light. No store names, brand names, logos or other readable words.",
@@ -8329,8 +8625,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square photograph of a large canvas print leaning against a shelf in a big-box home store. The print is a glossy generated field of sunflowers under a dramatic sky, perfectly smooth, with no brushwork anywhere. Someone has added three thick dabs of real yellow paint on three of the flower heads, the only texture on the whole canvas, catching the store's light. A plain cardboard hang tag on a string, tied to the corner of the frame, reads the exact words \"Hand-embellished\" in bold retail type with a price beneath, large and perfectly readable. Rows of identical prints stand behind it. Flat fluorescent light. No store names, brand names, logos or other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/095-01.webp",
-            "fallback": "assets/slop/attempts/095-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "189ad04c410ab58bbf542b42365f057e63dc62ca8cc860d9c7b6cd947d8c4ef4",
             "recordedAt": "2026-10-07T22:23:33.537Z",
             "review": {
@@ -8362,14 +8658,16 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T22:24:41.264Z"
             },
-            "decision": "rejected"
+            "decision": "rejected",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
             "prompt": "Use case: stylized-concept. Create a square photograph of a large canvas print leaning against a shelf in a big-box home store. The print is a glossy generated field of sunflowers under a dramatic sky, perfectly smooth, with no brushwork anywhere. Someone has added three thick dabs of real yellow paint on three of the flower heads, the only texture on the whole canvas, catching the store's light. A large plain cardboard hang tag on a string, tied to the upper corner of the frame and occupying the upper-right quarter of the image, reads exactly \"Hand-embellished\" in two lines of heavy black retail type with a smaller price beneath, every main letter at least one twentieth of the square image height and perfectly readable at 336 pixels. Rows of identical prints stand behind it. Flat fluorescent light. No store names, brand names, logos or other readable words.",
             "change": "Changed only the hang-tag sentence to enlarge the cardboard tag and its exact wording for gallery readability.",
-            "image": "assets/slop/attempts/095-02.webp",
-            "fallback": "assets/slop/attempts/095-02.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "fab128e35efe46e4a636a76242fc6f6989ae13f1dbe3e315c8cbd22d278d5e15",
             "recordedAt": "2026-10-07T22:25:45.840Z",
             "review": {
@@ -8401,7 +8699,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T22:26:42.642Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "fab128e35efe46e4a636a76242fc6f6989ae13f1dbe3e315c8cbd22d278d5e15",
@@ -8413,7 +8713,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "096",
@@ -8422,8 +8724,8 @@ window.SLOP_DATA = {
       "styleId": "demo-grid",
       "group": 9,
       "alt": "Nine generated portraits of smiling gray-haired women wearing glasses, mostly in pale floral clothing and seated at home, in a three by three grid captioned My grandmother.",
-      "image": "assets/slop/096.webp",
-      "fallback": "assets/slop/096.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1536,
       "height": 1536,
       "prompt": "A photo of my grandmother.",
@@ -8446,9 +8748,9 @@ window.SLOP_DATA = {
             "model": null,
             "usage": null,
             "costUsd": null,
-            "source": "assets/slop/demonstrations/096/096-01-source.png",
-            "image": "assets/slop/demonstrations/096/096-01.webp",
-            "fallback": "assets/slop/demonstrations/096/096-01.jpg",
+            "source": null,
+            "image": null,
+            "fallback": null,
             "width": 1327,
             "height": 1186,
             "sourceSha256": "f2254e8cfcf630e426546d19777b9f50d30a6aaa4b7b9ca7678d4f84e2c277af",
@@ -8483,7 +8785,9 @@ window.SLOP_DATA = {
               "reviewedAt": "2026-10-07T22:31:33.414Z"
             },
             "decision": "recorded",
-            "alt": "Smiling elderly woman with gray curls and glasses in a floral blouse, seated in a lace-covered chair beside a window."
+            "alt": "Smiling elderly woman with gray curls and glasses in a floral blouse, seated in a lace-covered chair beside a window.",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
@@ -8493,9 +8797,9 @@ window.SLOP_DATA = {
             "model": null,
             "usage": null,
             "costUsd": null,
-            "source": "assets/slop/demonstrations/096/096-02-source.png",
-            "image": "assets/slop/demonstrations/096/096-02.webp",
-            "fallback": "assets/slop/demonstrations/096/096-02.jpg",
+            "source": null,
+            "image": null,
+            "fallback": null,
             "width": 1345,
             "height": 1170,
             "sourceSha256": "d17f1e890e74275f7ed5f18a9b694a19c459f5c11143d2b8c81a17c67eea3e73",
@@ -8530,7 +8834,9 @@ window.SLOP_DATA = {
               "reviewedAt": "2026-10-07T22:33:08.542Z"
             },
             "decision": "recorded",
-            "alt": "Smiling elderly woman in glasses and a cream knit cardigan in an upholstered chair, with a lamp and flowers behind her."
+            "alt": "Smiling elderly woman in glasses and a cream knit cardigan in an upholstered chair, with a lamp and flowers behind her.",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 3,
@@ -8540,9 +8846,9 @@ window.SLOP_DATA = {
             "model": null,
             "usage": null,
             "costUsd": null,
-            "source": "assets/slop/demonstrations/096/096-03-source.png",
-            "image": "assets/slop/demonstrations/096/096-03.webp",
-            "fallback": "assets/slop/demonstrations/096/096-03.jpg",
+            "source": null,
+            "image": null,
+            "fallback": null,
             "width": 1266,
             "height": 1243,
             "sourceSha256": "476887caf112bd505283b8b90266b14ee884caea0d028eee6ada64225fc97da8",
@@ -8577,7 +8883,9 @@ window.SLOP_DATA = {
               "reviewedAt": "2026-10-07T22:34:50.512Z"
             },
             "decision": "recorded",
-            "alt": "Elderly woman with gray curls and glasses in a floral embroidered cardigan, reclining beside a ceramic lamp and framed photograph."
+            "alt": "Elderly woman with gray curls and glasses in a floral embroidered cardigan, reclining beside a ceramic lamp and framed photograph.",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 4,
@@ -8587,9 +8895,9 @@ window.SLOP_DATA = {
             "model": null,
             "usage": null,
             "costUsd": null,
-            "source": "assets/slop/demonstrations/096/096-04-source.png",
-            "image": "assets/slop/demonstrations/096/096-04.webp",
-            "fallback": "assets/slop/demonstrations/096/096-04.jpg",
+            "source": null,
+            "image": null,
+            "fallback": null,
             "width": 1370,
             "height": 1148,
             "sourceSha256": "ae1f55e314179b4e99fd9fea4211f5f7427863f52470a0c4abc6d59c75e8a30e",
@@ -8624,7 +8932,9 @@ window.SLOP_DATA = {
               "reviewedAt": "2026-10-07T22:36:36.942Z"
             },
             "decision": "recorded",
-            "alt": "An elderly woman with gray hair, glasses and a closed-mouth smile wears a floral top on a sofa with family frames behind her."
+            "alt": "An elderly woman with gray hair, glasses and a closed-mouth smile wears a floral top on a sofa with family frames behind her.",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 5,
@@ -8634,9 +8944,9 @@ window.SLOP_DATA = {
             "model": null,
             "usage": null,
             "costUsd": null,
-            "source": "assets/slop/demonstrations/096/096-05-source.png",
-            "image": "assets/slop/demonstrations/096/096-05.webp",
-            "fallback": "assets/slop/demonstrations/096/096-05.jpg",
+            "source": null,
+            "image": null,
+            "fallback": null,
             "width": 1293,
             "height": 1217,
             "sourceSha256": "fa255cd5aacaba254a795ff2956070f381da3b6acc519362917e4084f1ab428f",
@@ -8671,7 +8981,9 @@ window.SLOP_DATA = {
               "reviewedAt": "2026-10-07T22:38:24.591Z"
             },
             "decision": "recorded",
-            "alt": "Gray-haired woman with glasses and a pastel floral blouse smiles from a patterned sofa, with a lit table lamp behind her."
+            "alt": "Gray-haired woman with glasses and a pastel floral blouse smiles from a patterned sofa, with a lit table lamp behind her.",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 6,
@@ -8681,9 +8993,9 @@ window.SLOP_DATA = {
             "model": null,
             "usage": null,
             "costUsd": null,
-            "source": "assets/slop/demonstrations/096/096-06-source.png",
-            "image": "assets/slop/demonstrations/096/096-06.webp",
-            "fallback": "assets/slop/demonstrations/096/096-06.jpg",
+            "source": null,
+            "image": null,
+            "fallback": null,
             "width": 1300,
             "height": 1209,
             "sourceSha256": "0ff70c4b43ec89f913b3a88e84f278d7b0ae53f1b6b0a75b6701f618a160ce51",
@@ -8718,7 +9030,9 @@ window.SLOP_DATA = {
               "reviewedAt": "2026-10-07T22:40:18.792Z"
             },
             "decision": "recorded",
-            "alt": "An older woman in glasses and a pale floral top sits in a covered armchair next to a glowing lamp."
+            "alt": "An older woman in glasses and a pale floral top sits in a covered armchair next to a glowing lamp.",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 7,
@@ -8728,9 +9042,9 @@ window.SLOP_DATA = {
             "model": null,
             "usage": null,
             "costUsd": null,
-            "source": "assets/slop/demonstrations/096/096-07-source.png",
-            "image": "assets/slop/demonstrations/096/096-07.webp",
-            "fallback": "assets/slop/demonstrations/096/096-07.jpg",
+            "source": null,
+            "image": null,
+            "fallback": null,
             "width": 1351,
             "height": 1164,
             "sourceSha256": "c85f67f0eaff45659c73cee31c0ff7fd2fee842909610ca8e6660540a2b8dbab",
@@ -8765,7 +9079,9 @@ window.SLOP_DATA = {
               "reviewedAt": "2026-10-07T22:42:20.897Z"
             },
             "decision": "recorded",
-            "alt": "A smiling elderly woman with gray curls and glasses wears a lavender sweater and gold pendant in a patterned armchair."
+            "alt": "A smiling elderly woman with gray curls and glasses wears a lavender sweater and gold pendant in a patterned armchair.",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 8,
@@ -8775,9 +9091,9 @@ window.SLOP_DATA = {
             "model": null,
             "usage": null,
             "costUsd": null,
-            "source": "assets/slop/demonstrations/096/096-08-source.png",
-            "image": "assets/slop/demonstrations/096/096-08.webp",
-            "fallback": "assets/slop/demonstrations/096/096-08.jpg",
+            "source": null,
+            "image": null,
+            "fallback": null,
             "width": 1323,
             "height": 1189,
             "sourceSha256": "76f79eee8b84d72df065c1277cdb8c55e30d37e1c93bed6bbc2278cd3ddafa90",
@@ -8812,7 +9128,9 @@ window.SLOP_DATA = {
               "reviewedAt": "2026-10-07T22:44:21.422Z"
             },
             "decision": "recorded",
-            "alt": "An elderly woman with glasses, a pearl necklace and pastel blouse sits in a floral chair beside a lamp and flower vase."
+            "alt": "An elderly woman with glasses, a pearl necklace and pastel blouse sits in a floral chair beside a lamp and flower vase.",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 9,
@@ -8822,9 +9140,9 @@ window.SLOP_DATA = {
             "model": null,
             "usage": null,
             "costUsd": null,
-            "source": "assets/slop/demonstrations/096/096-09-source.png",
-            "image": "assets/slop/demonstrations/096/096-09.webp",
-            "fallback": "assets/slop/demonstrations/096/096-09.jpg",
+            "source": null,
+            "image": null,
+            "fallback": null,
             "width": 1284,
             "height": 1225,
             "sourceSha256": "1a5e354da6f1280e6c57910b551603b833d5e9fdf51c4796003873c9aca5de92",
@@ -8859,7 +9177,9 @@ window.SLOP_DATA = {
               "reviewedAt": "2026-10-07T22:49:28.383Z"
             },
             "decision": "recorded",
-            "alt": "An elderly woman in glasses and a pink floral blouse sits in a lace-covered armchair in front of framed family photographs."
+            "alt": "An elderly woman in glasses and a pink floral blouse sits in a lace-covered armchair in front of framed family photographs.",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "723b3966a7ab8fb22eb04f3868d7d89b9b171f7a397b9bf2749629f92247c794",
@@ -8881,13 +9201,15 @@ window.SLOP_DATA = {
           ],
           "fit": "contain",
           "cellSize": 448,
-          "source": "assets/slop/demonstrations/096/096-grid.png",
+          "source": null,
           "sourceSha256": "723b3966a7ab8fb22eb04f3868d7d89b9b171f7a397b9bf2749629f92247c794",
           "recordedAt": "2026-10-07T22:49:30.198Z",
           "script": "tools/slop-demonstration.mjs",
           "scriptSha256": "a2c8cddd46c209cfed640dad946138acb09ab3a1fd8a0d64ec16711bb4ffcbf9",
           "observation": "Nine unchanged calls to A photo of my grandmother. all produced an elderly woman with gray or white curled hair, glasses and a smile, seated in a domestic chair or sofa. Faces and crops differ. Most clothing is cream or floral; run 7 has a lavender sweater. Lamps, flowers, framed photographs and chair covers recur. These are nine outputs from this run, not a claim about all model outputs. The tool exposes no fresh-context reset control. All sources are retained unedited in generation order.",
-          "note": "Code arranged all nine full source images in creation order, with contain scaling and a plain caption band. No source was cropped, retouched, replaced or rerolled."
+          "note": "Code arranged all nine full source images in creation order, with contain scaling and a plain caption band. No source was cropped, retouched, replaced or rerolled.",
+          "deletedAt": "2026-10-10T03:39:45.784Z",
+          "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
         },
         "recordedAt": "2026-10-07T22:49:30.198Z"
       },
@@ -8895,7 +9217,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:52:59.000Z",
         "reason": "Removed at the owner's request in the follow-up picker review, with publication explicitly requested.",
         "reviewId": "owner-picker-2026-10-07-final-five"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "097",
@@ -8904,8 +9228,8 @@ window.SLOP_DATA = {
       "styleId": "demo-grid",
       "group": 9,
       "alt": "Nine unedited studio portraits in a three-by-three grid: similar dark-haired women in black tops and paint-stained aprons painting mountain lakes, with repeated inspirational studio slogans. The caption reads A portrait of the artist.",
-      "image": "assets/slop/097.webp",
-      "fallback": "assets/slop/097.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1536,
       "height": 1536,
       "prompt": "A portrait of an artist at work.",
@@ -8928,9 +9252,9 @@ window.SLOP_DATA = {
             "model": null,
             "usage": null,
             "costUsd": null,
-            "source": "assets/slop/demonstrations/097/097-01-source.png",
-            "image": "assets/slop/demonstrations/097/097-01.webp",
-            "fallback": "assets/slop/demonstrations/097/097-01.jpg",
+            "source": null,
+            "image": null,
+            "fallback": null,
             "width": 1145,
             "height": 1374,
             "sourceSha256": "b77b6f363c107d8d927e76b3fbfb0bb9f0acac92a4e529283bf3376d3bc6fc36",
@@ -8965,7 +9289,9 @@ window.SLOP_DATA = {
               "reviewedAt": "2026-10-07T22:52:50.278Z"
             },
             "decision": "recorded",
-            "alt": "A young woman paints a mountain lake in a sunlit studio, with an apron, palette, plants and unsolicited motivational wording on a poster and mug."
+            "alt": "A young woman paints a mountain lake in a sunlit studio, with an apron, palette, plants and unsolicited motivational wording on a poster and mug.",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
@@ -8975,9 +9301,9 @@ window.SLOP_DATA = {
             "model": null,
             "usage": null,
             "costUsd": null,
-            "source": "assets/slop/demonstrations/097/097-02-source.png",
-            "image": "assets/slop/demonstrations/097/097-02.webp",
-            "fallback": "assets/slop/demonstrations/097/097-02.jpg",
+            "source": null,
+            "image": null,
+            "fallback": null,
             "width": 1145,
             "height": 1374,
             "sourceSha256": "2c9a7813c0e8400a8bff16e6b30cbb8c18b17f0417474b8048690c61fd3e560a",
@@ -9012,7 +9338,9 @@ window.SLOP_DATA = {
               "reviewedAt": "2026-10-07T22:55:42.135Z"
             },
             "decision": "recorded",
-            "alt": "A woman in a black sweater and paint-spattered apron paints a mountain lake at a left-hand easel, surrounded by plants and motivational signs."
+            "alt": "A woman in a black sweater and paint-spattered apron paints a mountain lake at a left-hand easel, surrounded by plants and motivational signs.",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 3,
@@ -9022,9 +9350,9 @@ window.SLOP_DATA = {
             "model": null,
             "usage": null,
             "costUsd": null,
-            "source": "assets/slop/demonstrations/097/097-03-source.png",
-            "image": "assets/slop/demonstrations/097/097-03.webp",
-            "fallback": "assets/slop/demonstrations/097/097-03.jpg",
+            "source": null,
+            "image": null,
+            "fallback": null,
             "width": 1145,
             "height": 1374,
             "sourceSha256": "bae1efbaacac003b8f6a908c242bfd1ef010d15cdd69a7d12b76946ab5a930a2",
@@ -9059,7 +9387,9 @@ window.SLOP_DATA = {
               "reviewedAt": "2026-10-07T22:58:29.979Z"
             },
             "decision": "recorded",
-            "alt": "A dark-haired woman with a bun paints a mountain lake and town on an easel, holding a palette in a plant-filled studio with a motivational sign."
+            "alt": "A dark-haired woman with a bun paints a mountain lake and town on an easel, holding a palette in a plant-filled studio with a motivational sign.",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 4,
@@ -9069,9 +9399,9 @@ window.SLOP_DATA = {
             "model": null,
             "usage": null,
             "costUsd": null,
-            "source": "assets/slop/demonstrations/097/097-04-source.png",
-            "image": "assets/slop/demonstrations/097/097-04.webp",
-            "fallback": "assets/slop/demonstrations/097/097-04.jpg",
+            "source": null,
+            "image": null,
+            "fallback": null,
             "width": 1145,
             "height": 1374,
             "sourceSha256": "669f3045bf25caeb1662393409e9155ea9cd40069a41cb7f927d71dcd077e97a",
@@ -9106,7 +9436,9 @@ window.SLOP_DATA = {
               "reviewedAt": "2026-10-07T23:01:57.082Z"
             },
             "decision": "recorded",
-            "alt": "Side view of a woman with a bun painting a mountain landscape, with warm window light, a palette and motivational wording on a mug and wall."
+            "alt": "Side view of a woman with a bun painting a mountain landscape, with warm window light, a palette and motivational wording on a mug and wall.",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 5,
@@ -9116,9 +9448,9 @@ window.SLOP_DATA = {
             "model": null,
             "usage": null,
             "costUsd": null,
-            "source": "assets/slop/demonstrations/097/097-05-source.png",
-            "image": "assets/slop/demonstrations/097/097-05.webp",
-            "fallback": "assets/slop/demonstrations/097/097-05.jpg",
+            "source": null,
+            "image": null,
+            "fallback": null,
             "width": 1145,
             "height": 1374,
             "sourceSha256": "7c7aebba7454ae453f0de6808d9033e1a857b2e4bb5baaeffda77e93b10e18a7",
@@ -9153,7 +9485,9 @@ window.SLOP_DATA = {
               "reviewedAt": "2026-10-07T23:05:07.824Z"
             },
             "decision": "recorded",
-            "alt": "A woman with a dark bun paints a mountain lake at an easel, with paint tubes, brushes and a slogan mug on the table."
+            "alt": "A woman with a dark bun paints a mountain lake at an easel, with paint tubes, brushes and a slogan mug on the table.",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 6,
@@ -9163,9 +9497,9 @@ window.SLOP_DATA = {
             "model": null,
             "usage": null,
             "costUsd": null,
-            "source": "assets/slop/demonstrations/097/097-06-source.png",
-            "image": "assets/slop/demonstrations/097/097-06.webp",
-            "fallback": "assets/slop/demonstrations/097/097-06.jpg",
+            "source": null,
+            "image": null,
+            "fallback": null,
             "width": 1145,
             "height": 1374,
             "sourceSha256": "97566a8e59d20d8a13dac685804e5f3052ed40c08af4c48fbf4ea5f4218cedf6",
@@ -9200,7 +9534,9 @@ window.SLOP_DATA = {
               "reviewedAt": "2026-10-07T23:09:21.771Z"
             },
             "decision": "recorded",
-            "alt": "A woman in a black top and pale paint-stained apron paints a mountain lake beside a window, with slogan text on a mug and wall poster."
+            "alt": "A woman in a black top and pale paint-stained apron paints a mountain lake beside a window, with slogan text on a mug and wall poster.",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 7,
@@ -9210,9 +9546,9 @@ window.SLOP_DATA = {
             "model": null,
             "usage": null,
             "costUsd": null,
-            "source": "assets/slop/demonstrations/097/097-07-source.png",
-            "image": "assets/slop/demonstrations/097/097-07.webp",
-            "fallback": "assets/slop/demonstrations/097/097-07.jpg",
+            "source": null,
+            "image": null,
+            "fallback": null,
             "width": 1145,
             "height": 1374,
             "sourceSha256": "8876f293dcd8fc7fa89ade9329e70d630c9b0993a777e2f0db619dab13852ff2",
@@ -9247,7 +9583,9 @@ window.SLOP_DATA = {
               "reviewedAt": "2026-10-07T23:14:56.591Z"
             },
             "decision": "recorded",
-            "alt": "A woman with a dark bun paints a mountain scene at a right-hand easel, with a paint palette and slogan-covered brush container."
+            "alt": "A woman with a dark bun paints a mountain scene at a right-hand easel, with a paint palette and slogan-covered brush container.",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 8,
@@ -9257,9 +9595,9 @@ window.SLOP_DATA = {
             "model": null,
             "usage": null,
             "costUsd": null,
-            "source": "assets/slop/demonstrations/097/097-08-source.png",
-            "image": "assets/slop/demonstrations/097/097-08.webp",
-            "fallback": "assets/slop/demonstrations/097/097-08.jpg",
+            "source": null,
+            "image": null,
+            "fallback": null,
             "width": 1145,
             "height": 1374,
             "sourceSha256": "f799310b67d3186084f3244afdf82b252fe6419e42d8146bbcf246a478bf3113",
@@ -9294,7 +9632,9 @@ window.SLOP_DATA = {
               "reviewedAt": "2026-10-07T23:23:17.592Z"
             },
             "decision": "recorded",
-            "alt": "A dark-haired woman in a paint-spattered apron paints a mountain lake; a slogan mug sits in front and a tabby sleeps behind her."
+            "alt": "A dark-haired woman in a paint-spattered apron paints a mountain lake; a slogan mug sits in front and a tabby sleeps behind her.",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 9,
@@ -9304,9 +9644,9 @@ window.SLOP_DATA = {
             "model": null,
             "usage": null,
             "costUsd": null,
-            "source": "assets/slop/demonstrations/097/097-09-source.png",
-            "image": "assets/slop/demonstrations/097/097-09.webp",
-            "fallback": "assets/slop/demonstrations/097/097-09.jpg",
+            "source": null,
+            "image": null,
+            "fallback": null,
             "width": 1145,
             "height": 1374,
             "sourceSha256": "3655114a18c4695b8731c9c4eeddb04fe9688414f94164122476d0f80ce01c8a",
@@ -9341,7 +9681,9 @@ window.SLOP_DATA = {
               "reviewedAt": "2026-10-07T23:24:33.635Z"
             },
             "decision": "recorded",
-            "alt": "Close portrait of a dark-haired painter in a black top, painting mountains beside slogan merchandise and stacked art books."
+            "alt": "Close portrait of a dark-haired painter in a black top, painting mountains beside slogan merchandise and stacked art books.",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "b9bc4e9309a4af69c6e246f2837a7575ac7746333fdd5a6b631154a893718540",
@@ -9363,13 +9705,15 @@ window.SLOP_DATA = {
           ],
           "fit": "contain",
           "cellSize": 448,
-          "source": "assets/slop/demonstrations/097/097-grid.png",
+          "source": null,
           "sourceSha256": "b9bc4e9309a4af69c6e246f2837a7575ac7746333fdd5a6b631154a893718540",
           "recordedAt": "2026-10-07T23:24:35.544Z",
           "script": "tools/slop-demonstration.mjs",
           "scriptSha256": "a2c8cddd46c209cfed640dad946138acb09ab3a1fd8a0d64ec16711bb4ffcbf9",
           "observation": "All nine unchanged requests returned a dark-haired woman with a loose bun, a black top and a paint-stained apron painting a mountain or lake landscape in a plant-filled studio. Faces, pose, crop, apron tone and landscape details vary; run 8 includes a sleeping tabby. Every run adds unrequested motivational lettering on walls or merchandise, recorded as a failed cringe check; run 1 also has fragmentary background lettering. All results are retained in order. No reference images or steering text were supplied. The tool exposes no context-reset control, so these are observations from nine sequential calls, not a claim of independent sampling or a general result for every model.",
-          "note": "Code arranged all nine full source images in creation order, with contain scaling and a plain caption band. No source was cropped, retouched, replaced or rerolled."
+          "note": "Code arranged all nine full source images in creation order, with contain scaling and a plain caption band. No source was cropped, retouched, replaced or rerolled.",
+          "deletedAt": "2026-10-10T03:39:45.784Z",
+          "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
         },
         "recordedAt": "2026-10-07T23:24:35.544Z"
       },
@@ -9377,7 +9721,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "098",
@@ -9386,8 +9732,8 @@ window.SLOP_DATA = {
       "styleId": "demo-grid",
       "group": 9,
       "alt": "Nine unedited images in a three-by-three grid, showing golden sunsets over mountainous water, mostly with cream-dressed women on flowered terraces. Two views omit the figure. The caption reads The most beautiful painting in the world.",
-      "image": "assets/slop/098.webp",
-      "fallback": "assets/slop/098.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1536,
       "height": 1536,
       "prompt": "The most beautiful painting in the world.",
@@ -9410,9 +9756,9 @@ window.SLOP_DATA = {
             "model": null,
             "usage": null,
             "costUsd": null,
-            "source": "assets/slop/demonstrations/098/098-01-source.png",
-            "image": "assets/slop/demonstrations/098/098-01.webp",
-            "fallback": "assets/slop/demonstrations/098/098-01.jpg",
+            "source": null,
+            "image": null,
+            "fallback": null,
             "width": 1370,
             "height": 1148,
             "sourceSha256": "ed9114d7ea78a2794cb5157371bf2f51b00ef45b22f01568eb7cb8f8966c0508",
@@ -9447,7 +9793,9 @@ window.SLOP_DATA = {
               "reviewedAt": "2026-10-07T23:26:09.369Z"
             },
             "decision": "recorded",
-            "alt": "A woman in cream classical drapery sits on a marble terrace overlooking a mountainous coast at golden sunset."
+            "alt": "A woman in cream classical drapery sits on a marble terrace overlooking a mountainous coast at golden sunset.",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
@@ -9457,9 +9805,9 @@ window.SLOP_DATA = {
             "model": null,
             "usage": null,
             "costUsd": null,
-            "source": "assets/slop/demonstrations/098/098-02-source.png",
-            "image": "assets/slop/demonstrations/098/098-02.webp",
-            "fallback": "assets/slop/demonstrations/098/098-02.jpg",
+            "source": null,
+            "image": null,
+            "fallback": null,
             "width": 1370,
             "height": 1148,
             "sourceSha256": "face1d204d360d9673a7835d79d42faebf8cb5c82412003b3cf84ff02f8e56aa",
@@ -9494,7 +9842,9 @@ window.SLOP_DATA = {
               "reviewedAt": "2026-10-07T23:27:06.335Z"
             },
             "decision": "recorded",
-            "alt": "A cream-robed woman sits under a flowering arch on a sunset coastal terrace with a stone fountain and Latin inscription."
+            "alt": "A cream-robed woman sits under a flowering arch on a sunset coastal terrace with a stone fountain and Latin inscription.",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 3,
@@ -9504,9 +9854,9 @@ window.SLOP_DATA = {
             "model": null,
             "usage": null,
             "costUsd": null,
-            "source": "assets/slop/demonstrations/098/098-03-source.png",
-            "image": "assets/slop/demonstrations/098/098-03.webp",
-            "fallback": "assets/slop/demonstrations/098/098-03.jpg",
+            "source": null,
+            "image": null,
+            "fallback": null,
             "width": 1370,
             "height": 1148,
             "sourceSha256": "967bb41f08643f83791cfedb2bf02c247398b1772e314b536e7f2350000580cb",
@@ -9541,7 +9891,9 @@ window.SLOP_DATA = {
               "reviewedAt": "2026-10-07T23:27:45.534Z"
             },
             "decision": "recorded",
-            "alt": "A golden mountain landscape with a lake, broad waterfall, snow peak, foreground trees and a small group of deer."
+            "alt": "A golden mountain landscape with a lake, broad waterfall, snow peak, foreground trees and a small group of deer.",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 4,
@@ -9551,9 +9903,9 @@ window.SLOP_DATA = {
             "model": null,
             "usage": null,
             "costUsd": null,
-            "source": "assets/slop/demonstrations/098/098-04-source.png",
-            "image": "assets/slop/demonstrations/098/098-04.webp",
-            "fallback": "assets/slop/demonstrations/098/098-04.jpg",
+            "source": null,
+            "image": null,
+            "fallback": null,
             "width": 1370,
             "height": 1148,
             "sourceSha256": "0435b70936453b7b1b01ebfa55d23f8f4ec437860f7380d5cf7f6faae123ed2b",
@@ -9588,7 +9940,9 @@ window.SLOP_DATA = {
               "reviewedAt": "2026-10-07T23:28:25.871Z"
             },
             "decision": "recorded",
-            "alt": "A woman in cream drapery sits under a tree on a rocky hillside overlooking a lake and island town at sunset."
+            "alt": "A woman in cream drapery sits under a tree on a rocky hillside overlooking a lake and island town at sunset.",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 5,
@@ -9598,9 +9952,9 @@ window.SLOP_DATA = {
             "model": null,
             "usage": null,
             "costUsd": null,
-            "source": "assets/slop/demonstrations/098/098-05-source.png",
-            "image": "assets/slop/demonstrations/098/098-05.webp",
-            "fallback": "assets/slop/demonstrations/098/098-05.jpg",
+            "source": null,
+            "image": null,
+            "fallback": null,
             "width": 1370,
             "height": 1148,
             "sourceSha256": "9a72a2d25b8457c3cc19a635f7a492f732920912f3724650ea49ea60a8ecbd0a",
@@ -9635,7 +9989,9 @@ window.SLOP_DATA = {
               "reviewedAt": "2026-10-07T23:29:24.627Z"
             },
             "decision": "recorded",
-            "alt": "A cream-dressed woman and a resting cat on a columned terrace above sailboats and a bay at sunset."
+            "alt": "A cream-dressed woman and a resting cat on a columned terrace above sailboats and a bay at sunset.",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 6,
@@ -9645,9 +10001,9 @@ window.SLOP_DATA = {
             "model": null,
             "usage": null,
             "costUsd": null,
-            "source": "assets/slop/demonstrations/098/098-06-source.png",
-            "image": "assets/slop/demonstrations/098/098-06.webp",
-            "fallback": "assets/slop/demonstrations/098/098-06.jpg",
+            "source": null,
+            "image": null,
+            "fallback": null,
             "width": 1370,
             "height": 1148,
             "sourceSha256": "575d8871a63bab788fe0296d145957b28c903c7e0e8cf60bc360817d11f47b14",
@@ -9682,7 +10038,9 @@ window.SLOP_DATA = {
               "reviewedAt": "2026-10-07T23:30:09.241Z"
             },
             "decision": "recorded",
-            "alt": "A flower-lined stone terrace beside a villa overlooks a lake, sailboats and distant mountains at golden sunset."
+            "alt": "A flower-lined stone terrace beside a villa overlooks a lake, sailboats and distant mountains at golden sunset.",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 7,
@@ -9692,9 +10050,9 @@ window.SLOP_DATA = {
             "model": null,
             "usage": null,
             "costUsd": null,
-            "source": "assets/slop/demonstrations/098/098-07-source.png",
-            "image": "assets/slop/demonstrations/098/098-07.webp",
-            "fallback": "assets/slop/demonstrations/098/098-07.jpg",
+            "source": null,
+            "image": null,
+            "fallback": null,
             "width": 1370,
             "height": 1148,
             "sourceSha256": "af7b88641a69a00a781706c02eb73d28d6ae59c9fbfc32839969b1f0d6b81e84",
@@ -9729,7 +10087,9 @@ window.SLOP_DATA = {
               "reviewedAt": "2026-10-07T23:30:53.610Z"
             },
             "decision": "recorded",
-            "alt": "A woman in cream drapery sits on a patterned rug above a sunset bay, framed by flowers, a column and a bowl of fruit."
+            "alt": "A woman in cream drapery sits on a patterned rug above a sunset bay, framed by flowers, a column and a bowl of fruit.",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 8,
@@ -9739,9 +10099,9 @@ window.SLOP_DATA = {
             "model": null,
             "usage": null,
             "costUsd": null,
-            "source": "assets/slop/demonstrations/098/098-08-source.png",
-            "image": "assets/slop/demonstrations/098/098-08.webp",
-            "fallback": "assets/slop/demonstrations/098/098-08.jpg",
+            "source": null,
+            "image": null,
+            "fallback": null,
             "width": 1370,
             "height": 1148,
             "sourceSha256": "143a90804521531409e47f4824b835665579160a00552e469e9e473ce3800ce5",
@@ -9776,7 +10136,9 @@ window.SLOP_DATA = {
               "reviewedAt": "2026-10-07T23:31:43.301Z"
             },
             "decision": "recorded",
-            "alt": "A tiny woman stands beside a reflective mountain lake beneath snowy peaks and waterfalls, with deer on the right bank."
+            "alt": "A tiny woman stands beside a reflective mountain lake beneath snowy peaks and waterfalls, with deer on the right bank.",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 9,
@@ -9786,9 +10148,9 @@ window.SLOP_DATA = {
             "model": null,
             "usage": null,
             "costUsd": null,
-            "source": "assets/slop/demonstrations/098/098-09-source.png",
-            "image": "assets/slop/demonstrations/098/098-09.webp",
-            "fallback": "assets/slop/demonstrations/098/098-09.jpg",
+            "source": null,
+            "image": null,
+            "fallback": null,
             "width": 1370,
             "height": 1148,
             "sourceSha256": "b75611ced0240e2c0a2e7630d5c05518e61b8972a58a65aeaf8bb382f7732e8d",
@@ -9823,7 +10185,9 @@ window.SLOP_DATA = {
               "reviewedAt": "2026-10-07T23:36:14.414Z"
             },
             "decision": "recorded",
-            "alt": "A woman in cream and pink drapery sits in a flower-covered loggia overlooking a sunset coast, with a Latin inscription at the lower right."
+            "alt": "A woman in cream and pink drapery sits in a flower-covered loggia overlooking a sunset coast, with a Latin inscription at the lower right.",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "6d6a6f318fdc47834a755e2dbd4dc1c268dde7cec4d895159f56ecd598444617",
@@ -9845,13 +10209,15 @@ window.SLOP_DATA = {
           ],
           "fit": "contain",
           "cellSize": 448,
-          "source": "assets/slop/demonstrations/098/098-grid.png",
+          "source": null,
           "sourceSha256": "6d6a6f318fdc47834a755e2dbd4dc1c268dde7cec4d895159f56ecd598444617",
           "recordedAt": "2026-10-07T23:36:16.196Z",
           "script": "tools/slop-demonstration.mjs",
           "scriptSha256": "a2c8cddd46c209cfed640dad946138acb09ab3a1fd8a0d64ec16711bb4ffcbf9",
           "observation": "All nine unchanged requests returned detailed, idealized landscapes with golden light over water and mountains. Seven include a cream-dressed woman: six seated prominently at the left and one tiny standing figure. Runs 3 and 6 omit her; runs 3 and 8 use alpine lakes, snow peaks, waterfalls and deer, while the others favor flowered terraces or hillsides. Runs 2 and 9 add an unrequested Latin maxim, recorded as cringe failures; run 2 also has a weak painting-medium check because of its photoreal finish. Every result remains in generation order. No references or steering text were supplied. The tool has no context-reset control, so the grid records nine sequential calls, not independent sampling or a universal model preference.",
-          "note": "Code arranged all nine full source images in creation order, with contain scaling and a plain caption band. No source was cropped, retouched, replaced or rerolled."
+          "note": "Code arranged all nine full source images in creation order, with contain scaling and a plain caption band. No source was cropped, retouched, replaced or rerolled.",
+          "deletedAt": "2026-10-10T03:39:45.784Z",
+          "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
         },
         "recordedAt": "2026-10-07T23:36:16.196Z"
       },
@@ -9859,7 +10225,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "099",
@@ -9868,8 +10236,8 @@ window.SLOP_DATA = {
       "styleId": "demo-grid",
       "group": 9,
       "alt": "Nine unedited images in a three-by-three grid show varied translucent alien creatures in reflective watery worlds with glowing light, planets and rock formations. The caption reads Something no one has ever seen.",
-      "image": "assets/slop/099.webp",
-      "fallback": "assets/slop/099.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1536,
       "height": 1536,
       "prompt": "Make an image of something no one has ever seen before.",
@@ -9892,9 +10260,9 @@ window.SLOP_DATA = {
             "model": null,
             "usage": null,
             "costUsd": null,
-            "source": "assets/slop/demonstrations/099/099-01-source.png",
-            "image": "assets/slop/demonstrations/099/099-01.webp",
-            "fallback": "assets/slop/demonstrations/099/099-01.jpg",
+            "source": null,
+            "image": null,
+            "fallback": null,
             "width": 1370,
             "height": 1148,
             "sourceSha256": "a815a8bd97538d5bb607c6493789a2067aaeb01339695f5be317e2e4f11bc685",
@@ -9929,7 +10297,9 @@ window.SLOP_DATA = {
               "reviewedAt": "2026-10-07T23:37:40.098Z"
             },
             "decision": "recorded",
-            "alt": "A translucent glowing creature on long pointed legs stands in shallow water among alien rock arches at sunset."
+            "alt": "A translucent glowing creature on long pointed legs stands in shallow water among alien rock arches at sunset.",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
@@ -9939,9 +10309,9 @@ window.SLOP_DATA = {
             "model": null,
             "usage": null,
             "costUsd": null,
-            "source": "assets/slop/demonstrations/099/099-02-source.png",
-            "image": "assets/slop/demonstrations/099/099-02.webp",
-            "fallback": "assets/slop/demonstrations/099/099-02.jpg",
+            "source": null,
+            "image": null,
+            "fallback": null,
             "width": 1370,
             "height": 1148,
             "sourceSha256": "5ecb5b34986f3ac8c8cf7b9cd3abc273fd704af58d6d241d5536ae0a452a6b92",
@@ -9976,7 +10346,9 @@ window.SLOP_DATA = {
               "reviewedAt": "2026-10-07T23:39:05.822Z"
             },
             "decision": "recorded",
-            "alt": "A giant translucent canopy-headed creature stands among waterfalls and smaller deerlike animals beneath multiple planets."
+            "alt": "A giant translucent canopy-headed creature stands among waterfalls and smaller deerlike animals beneath multiple planets.",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 3,
@@ -9986,9 +10358,9 @@ window.SLOP_DATA = {
             "model": null,
             "usage": null,
             "costUsd": null,
-            "source": "assets/slop/demonstrations/099/099-03-source.png",
-            "image": "assets/slop/demonstrations/099/099-03.webp",
-            "fallback": "assets/slop/demonstrations/099/099-03.jpg",
+            "source": null,
+            "image": null,
+            "fallback": null,
             "width": 1370,
             "height": 1148,
             "sourceSha256": "caf23bac51cf52919dca88ead5684c2b25d2f472adb82ab2b6e822ef53854e8f",
@@ -10023,7 +10395,9 @@ window.SLOP_DATA = {
               "reviewedAt": "2026-10-07T23:39:59.202Z"
             },
             "decision": "recorded",
-            "alt": "A translucent fin-backed alien on long thin legs stands in reflective shallow water beneath large crescent planets."
+            "alt": "A translucent fin-backed alien on long thin legs stands in reflective shallow water beneath large crescent planets.",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 4,
@@ -10033,9 +10407,9 @@ window.SLOP_DATA = {
             "model": null,
             "usage": null,
             "costUsd": null,
-            "source": "assets/slop/demonstrations/099/099-04-source.png",
-            "image": "assets/slop/demonstrations/099/099-04.webp",
-            "fallback": "assets/slop/demonstrations/099/099-04.jpg",
+            "source": null,
+            "image": null,
+            "fallback": null,
             "width": 1370,
             "height": 1148,
             "sourceSha256": "9c01e1532155b9d6f844e225f07b115a9461e7065c031245c9bb508ead41b20e",
@@ -10070,7 +10444,9 @@ window.SLOP_DATA = {
               "reviewedAt": "2026-10-07T23:40:57.159Z"
             },
             "decision": "recorded",
-            "alt": "An iridescent horse-like alien with a sweeping crest and hanging light-tipped tendrils stands in violet water under floating rocks."
+            "alt": "An iridescent horse-like alien with a sweeping crest and hanging light-tipped tendrils stands in violet water under floating rocks.",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 5,
@@ -10080,9 +10456,9 @@ window.SLOP_DATA = {
             "model": null,
             "usage": null,
             "costUsd": null,
-            "source": "assets/slop/demonstrations/099/099-05-source.png",
-            "image": "assets/slop/demonstrations/099/099-05.webp",
-            "fallback": "assets/slop/demonstrations/099/099-05.jpg",
+            "source": null,
+            "image": null,
+            "fallback": null,
             "width": 1370,
             "height": 1148,
             "sourceSha256": "2e0f7dd225b222cfcd2fa6b4a2e6f03ceaf828a390e19e42d44a946238769e96",
@@ -10117,7 +10493,9 @@ window.SLOP_DATA = {
               "reviewedAt": "2026-10-07T23:41:54.251Z"
             },
             "decision": "recorded",
-            "alt": "A luminous fin-covered alien lowers its long head to drink from a reflective pool among crystals beneath a ringed planet."
+            "alt": "A luminous fin-covered alien lowers its long head to drink from a reflective pool among crystals beneath a ringed planet.",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 6,
@@ -10127,9 +10505,9 @@ window.SLOP_DATA = {
             "model": null,
             "usage": null,
             "costUsd": null,
-            "source": "assets/slop/demonstrations/099/099-06-source.png",
-            "image": "assets/slop/demonstrations/099/099-06.webp",
-            "fallback": "assets/slop/demonstrations/099/099-06.jpg",
+            "source": null,
+            "image": null,
+            "fallback": null,
             "width": 1370,
             "height": 1148,
             "sourceSha256": "4e634f2e03f8877a2114b42fc345d7884731feb7b555394ba780682f88aa7d4e",
@@ -10164,7 +10542,9 @@ window.SLOP_DATA = {
               "reviewedAt": "2026-10-07T23:42:51.442Z"
             },
             "decision": "recorded",
-            "alt": "A towering translucent creature with a folded crest and glowing orb-tipped streamers stands near a tiny robed observer in shallow water."
+            "alt": "A towering translucent creature with a folded crest and glowing orb-tipped streamers stands near a tiny robed observer in shallow water.",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 7,
@@ -10174,9 +10554,9 @@ window.SLOP_DATA = {
             "model": null,
             "usage": null,
             "costUsd": null,
-            "source": "assets/slop/demonstrations/099/099-07-source.png",
-            "image": "assets/slop/demonstrations/099/099-07.webp",
-            "fallback": "assets/slop/demonstrations/099/099-07.jpg",
+            "source": null,
+            "image": null,
+            "fallback": null,
             "width": 1370,
             "height": 1148,
             "sourceSha256": "8c69078c278114b005a81041190cf510860b864043207e42414368f08acddeef",
@@ -10211,7 +10591,9 @@ window.SLOP_DATA = {
               "reviewedAt": "2026-10-07T23:43:54.885Z"
             },
             "decision": "recorded",
-            "alt": "A pearlescent horse-like alien with glowing blue head, long tendrils and flared translucent feet stands in a shallow alien pool."
+            "alt": "A pearlescent horse-like alien with glowing blue head, long tendrils and flared translucent feet stands in a shallow alien pool.",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 8,
@@ -10221,9 +10603,9 @@ window.SLOP_DATA = {
             "model": null,
             "usage": null,
             "costUsd": null,
-            "source": "assets/slop/demonstrations/099/099-08-source.png",
-            "image": "assets/slop/demonstrations/099/099-08.webp",
-            "fallback": "assets/slop/demonstrations/099/099-08.jpg",
+            "source": null,
+            "image": null,
+            "fallback": null,
             "width": 1370,
             "height": 1148,
             "sourceSha256": "75902190212f837d6f1bdccd171883a4412964bca94b413be92e48dd6a2d1573",
@@ -10258,7 +10640,9 @@ window.SLOP_DATA = {
               "reviewedAt": "2026-10-07T23:44:54.617Z"
             },
             "decision": "recorded",
-            "alt": "A glassy long-necked alien with fins and droplet tendrils stands in pale terraced pools beneath floating waterfall islands."
+            "alt": "A glassy long-necked alien with fins and droplet tendrils stands in pale terraced pools beneath floating waterfall islands.",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 9,
@@ -10268,9 +10652,9 @@ window.SLOP_DATA = {
             "model": null,
             "usage": null,
             "costUsd": null,
-            "source": "assets/slop/demonstrations/099/099-09-source.png",
-            "image": "assets/slop/demonstrations/099/099-09.webp",
-            "fallback": "assets/slop/demonstrations/099/099-09.jpg",
+            "source": null,
+            "image": null,
+            "fallback": null,
             "width": 1370,
             "height": 1148,
             "sourceSha256": "99af8b89d07148dc83830ddea47eb240631a992c514f7720c82b4dc7179915d6",
@@ -10305,7 +10689,9 @@ window.SLOP_DATA = {
               "reviewedAt": "2026-10-07T23:46:00.591Z"
             },
             "decision": "recorded",
-            "alt": "A dark iridescent long-necked alien with a branching glowing crest faces a ringed planet and floating waterfalls across a shallow pool."
+            "alt": "A dark iridescent long-necked alien with a branching glowing crest faces a ringed planet and floating waterfalls across a shallow pool.",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "bfbf20d208b7185fc2577124051a34c55fd70e2da2b4928df90f5cd3fd4c103e",
@@ -10327,13 +10713,15 @@ window.SLOP_DATA = {
           ],
           "fit": "contain",
           "cellSize": 448,
-          "source": "assets/slop/demonstrations/099/099-grid.png",
+          "source": null,
           "sourceSha256": "bfbf20d208b7185fc2577124051a34c55fd70e2da2b4928df90f5cd3fd4c103e",
           "recordedAt": "2026-10-07T23:46:02.418Z",
           "script": "tools/slop-demonstration.mjs",
           "scriptSha256": "a2c8cddd46c209cfed640dad946138acb09ab3a1fd8a0d64ec16711bb4ffcbf9",
           "observation": "All nine unchanged novelty requests produced translucent or iridescent alien creatures in watery landscapes with warm horizon light and violet, blue or amber highlights. Silhouettes vary from a bulbous many-legged organism to a canopy-headed giant, a fin-backed insect form and several long-necked quadrupeds. Run 5 drinks from the water, run 6 includes a tiny robed observer, and run 8 uses pale terraces. Planets, crystals, rock towers and floating waterfalls recur. The outputs combine recognizable animal, glass and fantasy-landscape forms; absolute novelty cannot be verified. All nine results are retained in order, with no reference images or added steering. The tool exposes no context-reset control, so this is a record of sequential calls rather than a claim of independent sampling or universal behavior.",
-          "note": "Code arranged all nine full source images in creation order, with contain scaling and a plain caption band. No source was cropped, retouched, replaced or rerolled."
+          "note": "Code arranged all nine full source images in creation order, with contain scaling and a plain caption band. No source was cropped, retouched, replaced or rerolled.",
+          "deletedAt": "2026-10-10T03:39:45.784Z",
+          "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
         },
         "recordedAt": "2026-10-07T23:46:02.418Z"
       },
@@ -10341,7 +10729,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "100",
@@ -10349,8 +10739,8 @@ window.SLOP_DATA = {
       "title": "It is always ten past ten",
       "styleId": "clock-shop",
       "alt": "An old clock shop full of clocks and watches showing ten past ten, with a large handwritten card reading It is always ten past ten.",
-      "image": "assets/slop/100.webp",
-      "fallback": "assets/slop/100.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square photograph of the wall of an old clock shop crowded with dozens of different clocks: a cuckoo clock, a railway station clock, brass carriage clocks, a grandfather clock, a kitchen clock shaped like a cat, alarm clocks, and wristwatches in a glass case. Every single clock and watch shows exactly ten past ten, the hands raised in the same smile. A large hand-lettered card propped close to the camera fills the lower third of the frame and reads the exact words \"It is always ten past ten\" on three lines in thick, plain dark lettering, each letter at least one twentieth of the image height and perfectly readable at 336 pixels. Warm lamp light, dust in the air, a watchmaker's loupe and tiny screwdrivers on the counter. No brand names, logos or other readable words.",
@@ -10367,8 +10757,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square photograph of the wall of an old clock shop crowded with dozens of different clocks: a cuckoo clock, a railway station clock, brass carriage clocks, a grandfather clock, a kitchen clock shaped like a cat, alarm clocks, and wristwatches in a glass case. Every single clock and watch shows exactly ten past ten, the hands raised in the same smile. A hand-lettered card propped on the counter reads the exact words \"It is always ten past ten\", large and perfectly readable. Warm lamp light, dust in the air, a watchmaker's loupe and tiny screwdrivers on the counter. No brand names, logos or other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/100-01.webp",
-            "fallback": "assets/slop/attempts/100-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "4c854cc9c3f2cb4d895a7d70c7eefad8eba128a2d17e5c4093bf336a58670aba",
             "recordedAt": "2026-10-07T23:49:14.282Z",
             "review": {
@@ -10400,14 +10790,16 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T23:50:31.763Z"
             },
-            "decision": "rejected"
+            "decision": "rejected",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
             "prompt": "Use case: stylized-concept. Create a square photograph of the wall of an old clock shop crowded with dozens of different clocks: a cuckoo clock, a railway station clock, brass carriage clocks, a grandfather clock, a kitchen clock shaped like a cat, alarm clocks, and wristwatches in a glass case. Every single clock and watch shows exactly ten past ten, the hands raised in the same smile. A large hand-lettered card propped close to the camera fills the lower third of the frame and reads the exact words \"It is always ten past ten\" on three lines in thick, plain dark lettering, each letter at least one twentieth of the image height and perfectly readable at 336 pixels. Warm lamp light, dust in the air, a watchmaker's loupe and tiny screwdrivers on the counter. No brand names, logos or other readable words.",
             "change": "Changed only the counter-card sentence: enlarged the card to the lower third and specified thick lettering at least one twentieth of image height, because attempt 1 was too small at 336px.",
-            "image": "assets/slop/attempts/100-02.webp",
-            "fallback": "assets/slop/attempts/100-02.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "c72b4b3a40566caa60d6d7e147e59f696d99b9842ff55bfca58bf35338062f37",
             "recordedAt": "2026-10-07T23:51:15.791Z",
             "review": {
@@ -10439,7 +10831,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T23:52:34.487Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "c72b4b3a40566caa60d6d7e147e59f696d99b9842ff55bfca58bf35338062f37",
@@ -10451,7 +10845,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "101",
@@ -10459,8 +10855,8 @@ window.SLOP_DATA = {
       "title": "Fill it to the top",
       "styleId": "wine-pour",
       "alt": "A waiter pours from a nearly empty bottle into a half-full wine glass beside matching half-full glasses and a large order slip reading Fill it to the top.",
-      "image": "assets/slop/101.webp",
-      "fallback": "assets/slop/101.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square photograph of a candlelit restaurant table set for two. A waiter's hand tilts a nearly empty bottle of red wine over a large wine glass, still pouring, and the glass is still exactly half full. Every other drinking glass in the room, including the foreground water tumbler and the wine glasses on background tables, has its liquid surface exactly halfway up its bowl, visibly no higher or lower; keep enough focus to compare the matching halfway fill lines. Beside the plate in the near foreground, a large handwritten order slip fills the lower third of the image and reads the exact words \"Fill it to the top\" in thick dark lettering on two lines, each letter at least one twentieth of the image height, perfectly readable at 336 pixels. Warm low light, white tablecloth, polished cutlery, a calm and elegant room where nobody seems to notice. No brand names, logos or other readable words.",
@@ -10477,8 +10873,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square photograph of a candlelit restaurant table set for two. A waiter's hand tilts a nearly empty bottle of red wine over a large wine glass, still pouring, and the glass is still exactly half full. Every other glass in the room, on every table, is also exactly half full. Beside the plate, a handwritten order slip reads the exact words \"Fill it to the top\", large and perfectly readable. Warm low light, white tablecloth, polished cutlery, a calm and elegant room where nobody seems to notice. No brand names, logos or other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/101-01.webp",
-            "fallback": "assets/slop/attempts/101-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "3249dfd68afe73b946553c97cdbd4ccdb1ee375e4cbae92594a2d2dafb2b65e7",
             "recordedAt": "2026-10-07T23:53:00.845Z",
             "review": {
@@ -10510,14 +10906,16 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T23:54:30.650Z"
             },
-            "decision": "rejected"
+            "decision": "rejected",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
             "prompt": "Use case: stylized-concept. Create a square photograph of a candlelit restaurant table set for two. A waiter's hand tilts a nearly empty bottle of red wine over a large wine glass, still pouring, and the glass is still exactly half full. Every other drinking glass in the room, including the foreground water tumbler and the wine glasses on background tables, has its liquid surface exactly halfway up its bowl, visibly no higher or lower; keep enough focus to compare the matching halfway fill lines. Beside the plate in the near foreground, a large handwritten order slip fills the lower third of the image and reads the exact words \"Fill it to the top\" in thick dark lettering on two lines, each letter at least one twentieth of the image height, perfectly readable at 336 pixels. Warm low light, white tablecloth, polished cutlery, a calm and elegant room where nobody seems to notice. No brand names, logos or other readable words.",
             "change": "Changed only the order-slip sentence to enlarge its lettering, and the other-glasses sentence to require a visible halfway fill line in the foreground water tumbler as well as background wine glasses. Attempt 1 had tiny writing and an overfilled water tumbler.",
-            "image": "assets/slop/attempts/101-02.webp",
-            "fallback": "assets/slop/attempts/101-02.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "f70d4cfb4b2c9933e2200be5121347b7a1c4fbd7d5d4c652f9eb63d7970a8667",
             "recordedAt": "2026-10-07T23:55:54.152Z",
             "review": {
@@ -10549,7 +10947,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T23:56:52.868Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "f70d4cfb4b2c9933e2200be5121347b7a1c4fbd7d5d4c652f9eb63d7970a8667",
@@ -10561,7 +10961,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "102",
@@ -10569,8 +10971,8 @@ window.SLOP_DATA = {
       "title": "We count every tooth",
       "styleId": "dentist-poster",
       "alt": "A dental clinic window poster reads We count every tooth above an unnaturally wide smile containing too many identical teeth.",
-      "image": "assets/slop/102.webp",
-      "fallback": "assets/slop/102.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square photograph of a dental clinic's front window with a large glossy poster: a close-up of a generated smile, lips parted wide, showing one continuous gleaming row of far too many teeth, perhaps forty, all identical, running almost from ear to ear. The poster's headline reads the exact words \"We count every tooth\", large and perfectly readable. Reflections of the street in the glass, a potted plant, opening hours in tiny illegible type. Bright daylight. No brand names, logos or other readable words.",
@@ -10587,8 +10989,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square photograph of a dental clinic's front window with a large glossy poster: a close-up of a generated smile, lips parted wide, showing one continuous gleaming row of far too many teeth, perhaps forty, all identical, running almost from ear to ear. The poster's headline reads the exact words \"We count every tooth\", large and perfectly readable. Reflections of the street in the glass, a potted plant, opening hours in tiny illegible type. Bright daylight. No brand names, logos or other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/102-01.webp",
-            "fallback": "assets/slop/attempts/102-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "4f1ce1b4c0cf5f566c8fcd1a3af92dd6039481e4ff607505a788f1a092ac2693",
             "recordedAt": "2026-10-07T23:57:33.027Z",
             "review": {
@@ -10620,7 +11022,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-07T23:58:27.612Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "4f1ce1b4c0cf5f566c8fcd1a3af92dd6039481e4ff607505a788f1a092ac2693",
@@ -10632,7 +11036,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "103",
@@ -10658,8 +11064,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square photograph of a nail salon's wall: a large glossy poster of a generated hand with immaculate long pink nails, elegantly posed, with six fingers, every nail perfect. Beside it hangs the salon's price board, whose top line, in large clean letters, reads the exact words \"Full set\" with the price $45 beside them, large and perfectly readable. The other prices are tiny and illegible. Below, a manicure table with rows of polish bottles, a small lamp and a plant. Soft salon light. No brand names, logos or other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/103-01.webp",
-            "fallback": "assets/slop/attempts/103-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "1effd8dde3f3da96f65c135ad6c0feb51d506540d62bbde5d747282569fbf585",
             "recordedAt": "2026-10-07T23:59:05.904Z",
             "review": {
@@ -10691,14 +11097,16 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-08T00:00:06.866Z"
             },
-            "decision": "rejected"
+            "decision": "rejected",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
             "prompt": "Use case: stylized-concept. Create a square photograph of a nail salon's wall: a large glossy poster of a generated hand with immaculate long pink nails, elegantly posed, with six fingers, every nail perfect. Beside it hangs the salon's price board, whose very large top line reads the exact words \"Full set\" with the price $45 beside them in heavy clean letters, each letter at least one twentieth of the full image height, occupying the upper third of the board and perfectly readable at 336 pixels. The other prices are tiny and illegible. Below, a manicure table with rows of plain polish bottles with completely blank unprinted labels, a small lamp and a plant. Soft salon light. No brand names, logos or other readable words.",
             "change": "Changed only the price-heading sentence to require larger, heavier lettering, and the manicure-supplies sentence to require blank bottle labels. Attempt 1 had undersized heading text and stray pseudo-brand lettering on bottles.",
-            "image": "assets/slop/attempts/103-02.webp",
-            "fallback": "assets/slop/attempts/103-02.jpg",
+            "image": "assets/slop/103.webp",
+            "fallback": "assets/slop/103.jpg",
             "sourceSha256": "3f9c23623b539e127d775889082d976efcf344f8836db74cb9db60cd322c95f0",
             "recordedAt": "2026-10-08T00:00:48.908Z",
             "review": {
@@ -10763,8 +11171,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square photograph of a poster outside a small comedy club, lit by a bare bulb. The poster's picture is a generated photo of a cheering audience: the front rows are sharp, laughing and clapping, but row by row toward the back the faces fuse together, arms multiply and seats turn into texture, until the last rows are a smooth, flesh-colored blur. The headline across the top reads the exact words \"Packed house\", large and perfectly readable; the show details are tiny and illegible. A brick wall, a velvet rope, a puddle reflecting the poster. No brand names, logos or other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/104-01.webp",
-            "fallback": "assets/slop/attempts/104-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "d96e705a84d22b9e79f0f6321a194ad73a91b1d8eb8985e8017432f52ea60a91",
             "recordedAt": "2026-10-08T00:02:10.004Z",
             "review": {
@@ -10796,14 +11204,16 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-08T00:03:44.500Z"
             },
-            "decision": "rejected"
+            "decision": "rejected",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
             "prompt": "Use case: stylized-concept. Create a square photograph of a poster outside a small comedy club, lit by a bare bulb. The poster's picture is a generated photo of a cheering audience: the front rows are sharp, laughing and clapping, but starting in the third row faces visibly share cheeks and mouths, two heads fuse into one, three or four clapping arms grow from single torsos, and chair backs merge into skin, remaining sharply detailed enough to see these impossible joins rather than merely out of focus, until the last rows become a continuous smooth flesh-colored texture. The headline across the top reads the exact words \"Packed house\", large and perfectly readable; the show details are tiny and illegible. A brick wall, a velvet rope, a puddle reflecting the poster. No brand names, logos or other readable words.",
             "change": "Changed only the audience sentence: specified visible fused heads, shared facial features, extra arms and chair-to-skin joins starting in row three, with enough sharpness to distinguish them from normal depth-of-field blur. Attempt 1 lacked the visible mechanism.",
-            "image": "assets/slop/attempts/104-02.webp",
-            "fallback": "assets/slop/attempts/104-02.jpg",
+            "image": "assets/slop/104.webp",
+            "fallback": "assets/slop/104.jpg",
             "sourceSha256": "27d906462b3d917af7661b3115c00e215c6be1714ca01bf6ca2f3ca3b65b9413",
             "recordedAt": "2026-10-08T00:05:19.412Z",
             "review": {
@@ -10850,8 +11260,8 @@ window.SLOP_DATA = {
       "title": "Move-in ready",
       "styleId": "builder-billboard",
       "alt": "A builder’s billboard advertises Move-in ready above a house with blocked stairs, an inaccessible upper door and a garage facing grass, overlooking a muddy empty lot.",
-      "image": "assets/slop/105.webp",
-      "fallback": "assets/slop/105.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square photograph of a builder's billboard standing in front of an empty, muddy lot with survey stakes and a portable toilet. The billboard shows a glossy generated rendering of a dream house at sunset: an exterior staircase whose top step ends directly against a completely blank solid wall, while a separate front door on the second floor is far to the other side with empty air beneath it and no stairs or balcony, windows at random heights, a chimney rising out of a window, and a garage opening directly onto an unbroken lawn with no driveway, paving or approach. Across the top, in confident real-estate lettering, are the exact words \"Move-in ready\", large and perfectly readable. Overcast sky, puddles, a chain-link fence. No brand names, logos or other readable words.",
@@ -10868,8 +11278,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square photograph of a builder's billboard standing in front of an empty, muddy lot with survey stakes and a portable toilet. The billboard shows a glossy generated rendering of a dream house at sunset: a staircase that climbs into a solid wall, a front door on the second floor with no balcony, windows at random heights, a chimney rising out of a window, a garage with no driveway. Across the top, in confident real-estate lettering, are the exact words \"Move-in ready\", large and perfectly readable. Overcast sky, puddles, a chain-link fence. No brand names, logos or other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/105-01.webp",
-            "fallback": "assets/slop/attempts/105-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "d78ee3b678daf5a9654a787052c58471ab0b6872bd29d7122217e8555a1cc41d",
             "recordedAt": "2026-10-08T00:06:46.285Z",
             "review": {
@@ -10901,14 +11311,16 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-08T00:07:44.634Z"
             },
-            "decision": "rejected"
+            "decision": "rejected",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
             "prompt": "Use case: stylized-concept. Create a square photograph of a builder's billboard standing in front of an empty, muddy lot with survey stakes and a portable toilet. The billboard shows a glossy generated rendering of a dream house at sunset: an exterior staircase whose top step ends directly against a completely blank solid wall, while a separate front door on the second floor is far to the other side with empty air beneath it and no stairs or balcony, windows at random heights, a chimney rising out of a window, and a garage opening directly onto an unbroken lawn with no driveway, paving or approach. Across the top, in confident real-estate lettering, are the exact words \"Move-in ready\", large and perfectly readable. Overcast sky, puddles, a chain-link fence. No brand names, logos or other readable words.",
             "change": "Changed only the house-rendering sentence: separated the inaccessible second-floor door from a staircase ending at a blank wall, and specified uninterrupted lawn at the garage. Attempt 1 normalized the stairs into door access and added a paved garage approach.",
-            "image": "assets/slop/attempts/105-02.webp",
-            "fallback": "assets/slop/attempts/105-02.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "9ebd5d9dba5d6cfede8c932920dc26151a86a4e427ec8c4dff1574c2e53e1ec0",
             "recordedAt": "2026-10-08T00:09:23.108Z",
             "review": {
@@ -10940,7 +11352,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-08T00:12:33.213Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "9ebd5d9dba5d6cfede8c932920dc26151a86a4e427ec8c4dff1574c2e53e1ec0",
@@ -10952,7 +11366,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:52:59.000Z",
         "reason": "Removed at the owner's request in the follow-up picker review, with publication explicitly requested.",
         "reviewId": "owner-picker-2026-10-07-final-five"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "106",
@@ -10960,8 +11376,8 @@ window.SLOP_DATA = {
       "title": "Test rides available",
       "styleId": "bike-shop",
       "alt": "A bike-shop poster offers Test rides available for a bicycle with disconnected tubes and floating pedals, above a real rusty bicycle locked outside.",
-      "image": "assets/slop/106.webp",
-      "fallback": "assets/slop/106.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square photograph of a bike shop's front window. Behind the glass hangs a large glossy poster of a generated racing bicycle: the chain loops to nowhere, the pedals face each other, the handlebars grow from the seat post, one wheel has twice as many spokes as the other and the frame tubes never meet. Across the poster, in bold sporty lettering, are the exact words \"Test rides available\", large and perfectly readable. Outside the window, a real, slightly rusty commuter bike is locked to a rack. Afternoon light, reflections in the glass. No brand names, logos or other readable words.",
@@ -10978,8 +11394,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square photograph of a bike shop's front window. Behind the glass hangs a large glossy poster of a generated racing bicycle: the chain loops to nowhere, the pedals face each other, the handlebars grow from the seat post, one wheel has twice as many spokes as the other and the frame tubes never meet. Across the poster, in bold sporty lettering, are the exact words \"Test rides available\", large and perfectly readable. Outside the window, a real, slightly rusty commuter bike is locked to a rack. Afternoon light, reflections in the glass. No brand names, logos or other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/106-01.webp",
-            "fallback": "assets/slop/attempts/106-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "475c8768fd0e33eff2fdfe45a1d3c61f0786f3620486612eb1fe9d3538b2c6b9",
             "recordedAt": "2026-10-08T00:13:18.693Z",
             "review": {
@@ -11011,7 +11427,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-08T00:13:41.454Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "475c8768fd0e33eff2fdfe45a1d3c61f0786f3620486612eb1fe9d3538b2c6b9",
@@ -11023,7 +11441,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "107",
@@ -11031,8 +11451,8 @@ window.SLOP_DATA = {
       "title": "Piano lessons, all ages",
       "styleId": "music-school",
       "alt": "A music-school window reads Piano lessons, all ages above an irregular keyboard and five pedals, with a worn upright piano visible inside.",
-      "image": "assets/slop/107.webp",
-      "fallback": "assets/slop/107.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square photograph of a music school's front window with a large printed window decal: a glossy generated grand piano seen close over its keyboard, elegant and gleaming, but its black keys come in wrong groups of four and five, some white keys are twice as wide as others, and there are five pedals. Across the decal, the exact words \"Piano lessons, all ages\" are set on two lines in large, substantial elegant lettering, each letter at least one twentieth of the image height, perfectly readable at thumbnail size. Through the glass, a real, scuffed upright piano is visible inside with a metronome on top. Evening light. No brand names, logos or other readable words.",
@@ -11049,8 +11469,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square photograph of a music school's front window with a large printed window decal: a glossy generated grand piano seen close over its keyboard, elegant and gleaming, but its black keys come in wrong groups of four and five, some white keys are twice as wide as others, and there are five pedals. Across the decal, in elegant lettering, are the exact words \"Piano lessons, all ages\", large and perfectly readable. Through the glass, a real, scuffed upright piano is visible inside with a metronome on top. Evening light. No brand names, logos or other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/107-01.webp",
-            "fallback": "assets/slop/attempts/107-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "686ef3ec7a03e6c4f58e8cb65c378054b7563af51f6ec728e9ffb9833b92ff9e",
             "recordedAt": "2026-10-08T00:14:07.943Z",
             "review": {
@@ -11082,14 +11502,16 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-08T00:14:32.106Z"
             },
-            "decision": "rejected"
+            "decision": "rejected",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
             "prompt": "Use case: stylized-concept. Create a square photograph of a music school's front window with a large printed window decal: a glossy generated grand piano seen close over its keyboard, elegant and gleaming, but its black keys come in wrong groups of four and five, some white keys are twice as wide as others, and there are five pedals. Across the decal, the exact words \"Piano lessons, all ages\" are set on two lines in large, substantial elegant lettering, each letter at least one twentieth of the image height, perfectly readable at thumbnail size. Through the glass, a real, scuffed upright piano is visible inside with a metronome on top. Evening light. No brand names, logos or other readable words.",
             "change": "Words check failed: enlarge and thicken only the requested decal lettering, set on two lines at a minimum of one twentieth of the image height.",
-            "image": "assets/slop/attempts/107-02.webp",
-            "fallback": "assets/slop/attempts/107-02.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "bf5f6ab918f7959bd37e6288353e97421103dd0e4db0c285293672f953c54611",
             "recordedAt": "2026-10-08T00:18:26.399Z",
             "review": {
@@ -11121,7 +11543,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-08T00:18:45.257Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "bf5f6ab918f7959bd37e6288353e97421103dd0e4db0c285293672f953c54611",
@@ -11133,7 +11557,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:52:59.000Z",
         "reason": "Removed at the owner's request in the follow-up picker review, with publication explicitly requested.",
         "reviewId": "owner-picker-2026-10-07-final-five"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "108",
@@ -11141,8 +11567,8 @@ window.SLOP_DATA = {
       "title": "Design approved by client",
       "styleId": "tattoo-station",
       "alt": "A freshly wrapped tattoo repeats Famliy is foverer from a pinned design, beside a bold signed form reading Design approved by client.",
-      "image": "assets/slop/108.webp",
-      "fallback": "assets/slop/108.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square photograph of a tattoo station. In the foreground, a freshly tattooed forearm wrapped in clear film carries elegant script reading \"Famliy is foverer\" beneath two doves and a rose, copied exactly from the printed design pinned to the wall above the station, which shows the same misspelled words. On a large foreground clipboard beside it, the signed consent form displays the exact words \"Design approved by client\" in two lines of heavy print, each letter at least one twentieth of the image height and perfectly readable at thumbnail size. Ink caps, a tattoo machine, gloves, a lamp. No brand names, logos or other readable words.",
@@ -11159,8 +11585,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square photograph of a tattoo station. In the foreground, a freshly tattooed forearm wrapped in clear film carries elegant script reading \"Famliy is foverer\" beneath two doves and a rose, copied exactly from the printed design pinned to the wall above the station, which shows the same misspelled words. On a clipboard beside it, the signed consent form has one line printed large, the exact words \"Design approved by client\", perfectly readable. Ink caps, a tattoo machine, gloves, a lamp. No brand names, logos or other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/108-01.webp",
-            "fallback": "assets/slop/attempts/108-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "7c222910a21e4748d36edcb7d307ddd4d01e52d62055a8a6826a87500d3e5927",
             "recordedAt": "2026-10-08T00:19:27.224Z",
             "review": {
@@ -11192,14 +11618,16 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-08T00:19:51.390Z"
             },
-            "decision": "rejected"
+            "decision": "rejected",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
             "prompt": "Use case: stylized-concept. Create a square photograph of a tattoo station. In the foreground, a freshly tattooed forearm wrapped in clear film carries elegant script reading \"Famliy is foverer\" beneath two doves and a rose, copied exactly from the printed design pinned to the wall above the station, which shows the same misspelled words. On a large foreground clipboard beside it, the signed consent form displays the exact words \"Design approved by client\" in two lines of heavy print, each letter at least one twentieth of the image height and perfectly readable at thumbnail size. Ink caps, a tattoo machine, gloves, a lamp. No brand names, logos or other readable words.",
             "change": "Words check failed: enlarge only the foreground consent form and its approval lettering, using two heavy lines at least one twentieth of image height.",
-            "image": "assets/slop/attempts/108-02.webp",
-            "fallback": "assets/slop/attempts/108-02.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "1a7217c470b14a32bc963b75a5b994b4a33af62e027fd6be3f62b5a198a941ad",
             "recordedAt": "2026-10-08T00:20:35.746Z",
             "review": {
@@ -11231,7 +11659,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-08T00:21:01.136Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "1a7217c470b14a32bc963b75a5b994b4a33af62e027fd6be3f62b5a198a941ad",
@@ -11243,7 +11673,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T00:39:53.000Z",
         "reason": "Removed at the owner's request after reviewing the post-production image picker.",
         "reviewId": "owner-picker-2026-10-07-groups-four-to-ten"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "109",
@@ -11269,8 +11701,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square photograph of a home-furnishing catalog page showing a perfect generated kitchen in warm morning light: open shelves, copper pans, plants, a bowl of lemons. Look closer and every object merges into its neighbor: a spoon becomes the handle of a cup, a cutting board flows into the counter, a plant's stem turns into a knife, a pan hangs from nothing, a chair has three legs and half of a fourth. The catalog's headline reads the exact words \"Everything in its place\", large and perfectly readable; the product codes are tiny and illegible. Glossy paper. No brand names, logos or other readable words.",
             "change": "First attempt, approved prompt used verbatim.",
-            "image": "assets/slop/attempts/109-01.webp",
-            "fallback": "assets/slop/attempts/109-01.jpg",
+            "image": "assets/slop/109.webp",
+            "fallback": "assets/slop/109.jpg",
             "sourceSha256": "24d7259f847f37268163d191f1c6285c9e52168740ec9630c293fd46243d67d5",
             "recordedAt": "2026-10-08T00:21:44.223Z",
             "review": {
@@ -11317,8 +11749,8 @@ window.SLOP_DATA = {
       "title": "I hope this email finds you well.",
       "styleId": "inbox-pasteup",
       "alt": "Torn email printouts repeatedly say 'I hope this email finds you well.' over older handwritten letters, each opening underlined in coral.",
-      "image": "assets/slop/110.webp",
-      "fallback": "assets/slop/110.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square physical collage of printed emails, photographed straight on with visible paper fibers, paste ridges and torn edges. The collage fills the frame. A dense jumble of very different old correspondence surrounds the center: pale blue graph paper, pink memo paper, yellow legal paper, irregular handwritten lines and uneven typewriter paragraphs, all small and illegible. Across these different messages, fresh white email printouts have been pasted in a rigid repeated pattern, each with exactly the same opening, the exact words \"I hope this email finds you well.\" in the same black sans-serif type. The largest white printout sits in the foreground and fills the central two thirds, its opening set on four short lines in heavy black lettering, every letter at least one twentieth of the image height and perfectly readable at 336 pixels. Beneath that opening is a tiny dense gray email paragraph, deliberately illegible. The other printouts are partly hidden so only repeated fragments of that same opening are visible. A fluorescent coral proofreader's pencil has underlined each matching opening; the different older voices remain visible only at the outer torn edges. Rich black, paper white, electric coral and the faded paper colors. Restrained, tactile editorial collage with strong composition. The repeated text belongs to the emails themselves. No added caption, no screen, no icons, no robots, no brand marks, no names, no signatures, no emojis, no em dashes, and no other readable words.",
@@ -11335,8 +11767,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square physical collage of printed emails, photographed straight on with visible paper fibers, paste ridges and torn edges. The collage fills the frame. A dense jumble of very different old correspondence surrounds the center: pale blue graph paper, pink memo paper, yellow legal paper, irregular handwritten lines and uneven typewriter paragraphs, all small and illegible. Across these different messages, fresh white email printouts have been pasted in a rigid repeated pattern, each with exactly the same opening, the exact words \"I hope this email finds you well.\" in the same black sans-serif type. The largest white printout sits in the foreground and fills the central two thirds, its opening set on four short lines in heavy black lettering, every letter at least one twentieth of the image height and perfectly readable at 336 pixels. Beneath that opening is a tiny dense gray email paragraph, deliberately illegible. The other printouts are partly hidden so only repeated fragments of that same opening are visible. A fluorescent coral proofreader's pencil has underlined each matching opening; the different older voices remain visible only at the outer torn edges. Rich black, paper white, electric coral and the faded paper colors. Restrained, tactile editorial collage with strong composition. The repeated text belongs to the emails themselves. No added caption, no screen, no icons, no robots, no brand marks, no names, no signatures, no emojis, no em dashes, and no other readable words.",
             "change": "First attempt, saved production prompt used verbatim.",
-            "image": "assets/slop/attempts/110-01.webp",
-            "fallback": "assets/slop/attempts/110-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "d0e81b4a5b98f24ade6c4d51624490f5891444577f2f1584f0b1506d09bab47f",
             "recordedAt": "2026-10-08T01:02:05.612Z",
             "review": {
@@ -11368,7 +11800,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-08T01:02:19.190Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "d0e81b4a5b98f24ade6c4d51624490f5891444577f2f1584f0b1506d09bab47f",
@@ -11380,7 +11814,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T01:18:43.000Z",
         "reason": "The owner rejected the entire AI-language batch and requested its removal. This covers all three published works and all four image attempts; no replacement requested.",
         "reviewId": "owner-ai-language-rejection-2026-10-07"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "111",
@@ -11388,8 +11824,8 @@ window.SLOP_DATA = {
       "title": "It's not just a sandwich. It's an experience.",
       "styleId": "sandwich-wrapper",
       "alt": "A plain bitten cheese sandwich lies on a greasy wrapper printed with 'It's not just a sandwich. It's an experience.'",
-      "image": "assets/slop/111.webp",
-      "fallback": "assets/slop/111.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square close overhead still-life photograph of an ordinary cheese sandwich on its unfolded printed deli wrapper. Two soft square slices of cheap white bread with one flat slice of orange processed cheese between them, one corner bitten, a few crumbs, a translucent grease mark. No fillings, no garnish, no luxury food styling. The sandwich occupies only the lower-right quarter. The off-white greaseproof paper fills the rest of the frame on a scratched red laminate lunch counter. Printed directly into the wrapper in oversized confident black advertising type are the exact words \"It's not just a sandwich. It's an experience.\" across four or five bold lines, perfectly spelled with both periods and both apostrophes, each letter at least one twentieth of the image height and clearly readable at 336 pixels. The printed claim dominates the frame; the very plain half-eaten sandwich contradicts it. Small red geometric registration squares and faint ink variation make this real flexographic food wrapping rather than a caption or a digital graphic. Flat midday diner light, real paper creases, softened bread edges, tactile crumbs, disciplined red, black, cream and cheese-orange palette. No people, faces, brand names, logos, signatures, emoji, em dashes or other readable words.",
@@ -11406,8 +11842,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square close overhead still-life photograph of an ordinary cheese sandwich on its unfolded printed deli wrapper. Two soft square slices of cheap white bread with one flat slice of orange processed cheese between them, one corner bitten, a few crumbs, a translucent grease mark. No fillings, no garnish, no luxury food styling. The sandwich occupies only the lower-right quarter. The off-white greaseproof paper fills the rest of the frame on a scratched red laminate lunch counter. Printed directly into the wrapper in oversized confident black advertising type are the exact words \"It's not just a sandwich. It's an experience.\" across four or five bold lines, perfectly spelled with both periods and both apostrophes, each letter at least one twentieth of the image height and clearly readable at 336 pixels. The printed claim dominates the frame; the very plain half-eaten sandwich contradicts it. Small red geometric registration squares and faint ink variation make this real flexographic food wrapping rather than a caption or a digital graphic. Flat midday diner light, real paper creases, softened bread edges, tactile crumbs, disciplined red, black, cream and cheese-orange palette. No people, faces, brand names, logos, signatures, emoji, em dashes or other readable words.",
             "change": "First attempt, saved production prompt used verbatim.",
-            "image": "assets/slop/attempts/111-01.webp",
-            "fallback": "assets/slop/attempts/111-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "4df6102715e32faf698406ecf46ae83e2905c919e6e5ad8b91fe08a4c9d65409",
             "recordedAt": "2026-10-08T01:03:10.101Z",
             "review": {
@@ -11439,7 +11875,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-08T01:03:26.949Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "4df6102715e32faf698406ecf46ae83e2905c919e6e5ad8b91fe08a4c9d65409",
@@ -11451,7 +11889,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T01:18:43.000Z",
         "reason": "The owner rejected the entire AI-language batch and requested its removal. This covers all three published works and all four image attempts; no replacement requested.",
         "reviewId": "owner-ai-language-rejection-2026-10-07"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     },
     {
       "id": "112",
@@ -11459,8 +11899,8 @@ window.SLOP_DATA = {
       "title": "Here's a more human version:",
       "styleId": "greeting-card-proof",
       "alt": "A cream embossed greeting card says 'Here's a more human version:' in large plum letters above the smaller message 'Thinking of you.'",
-      "image": "assets/slop/112.webp",
-      "fallback": "assets/slop/112.jpg",
+      "image": null,
+      "fallback": null,
       "width": 1254,
       "height": 1254,
       "prompt": "Use case: stylized-concept. Create a square carefully composed studio photograph of an open, professionally printed personal greeting card lying on a dusty lilac tabletop, with a matching cream envelope tucked underneath. Thick warm-white cotton card, a deep central fold, delicate blind-embossed flowers and a few small die-cut coral paper petals around the inside margins, beautiful side light revealing the embossing. The inside right page is unusually large and faces the viewer almost straight on. At its top, in dark plum ink, the printer has accidentally included the exact words \"Here's a more human version:\" in large, heavy serif lettering on exactly four short lines: \"Here's\" / \"a more\" / \"human\" / \"version:\", with each main letter at least one twelfth of the entire image height, filling most of the right page so the drafting instruction remains prominent at 336 pixels. Below a generous gap, the exact words \"Thinking of you.\" appear in graceful, restrained lettering. Both phrases are perfectly spelled and readable at 336 pixels, with every main letter at least one twentieth of the image height. The drafting instruction must look fully printed into the finished card, not a sticky note, editor markup, floating caption or computer interface. The surrounding paper craft is delicate and sincere, with slight physical imperfections; the unremoved instruction ruins the personal message by being part of the actual card. The left inside page is blank except for blind embossing. No people, brands, logos, signatures, invented names, robots, emojis, em dashes or any additional readable text.",
@@ -11477,8 +11917,8 @@ window.SLOP_DATA = {
             "number": 1,
             "prompt": "Use case: stylized-concept. Create a square carefully composed studio photograph of an open, professionally printed personal greeting card lying on a dusty lilac tabletop, with a matching cream envelope tucked underneath. Thick warm-white cotton card, a deep central fold, delicate blind-embossed flowers and a few small die-cut coral paper petals around the inside margins, beautiful side light revealing the embossing. The inside right page is unusually large and faces the viewer almost straight on. At its top, in the same dark plum ink used for the personal message, the printer has accidentally included the exact words \"Here's a more human version:\" on three large clear lines. Below a generous gap, the exact words \"Thinking of you.\" appear in graceful, restrained lettering. Both phrases are perfectly spelled and readable at 336 pixels, with every main letter at least one twentieth of the image height. The drafting instruction must look fully printed into the finished card, not a sticky note, editor markup, floating caption or computer interface. The surrounding paper craft is delicate and sincere, with slight physical imperfections; the unremoved instruction ruins the personal message by being part of the actual card. The left inside page is blank except for blind embossing. No people, brands, logos, signatures, invented names, robots, emojis, em dashes or any additional readable text.",
             "change": "First attempt, saved production prompt used verbatim.",
-            "image": "assets/slop/attempts/112-01.webp",
-            "fallback": "assets/slop/attempts/112-01.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "eda0ae70b70bad950cb10b3dc66a77b72a0145302d553eba0bffde9ddbc42f5b",
             "recordedAt": "2026-10-08T01:04:11.149Z",
             "review": {
@@ -11510,14 +11950,16 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-08T01:04:36.360Z"
             },
-            "decision": "rejected"
+            "decision": "rejected",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           },
           {
             "number": 2,
             "prompt": "Use case: stylized-concept. Create a square carefully composed studio photograph of an open, professionally printed personal greeting card lying on a dusty lilac tabletop, with a matching cream envelope tucked underneath. Thick warm-white cotton card, a deep central fold, delicate blind-embossed flowers and a few small die-cut coral paper petals around the inside margins, beautiful side light revealing the embossing. The inside right page is unusually large and faces the viewer almost straight on. At its top, in dark plum ink, the printer has accidentally included the exact words \"Here's a more human version:\" in large, heavy serif lettering on exactly four short lines: \"Here's\" / \"a more\" / \"human\" / \"version:\", with each main letter at least one twelfth of the entire image height, filling most of the right page so the drafting instruction remains prominent at 336 pixels. Below a generous gap, the exact words \"Thinking of you.\" appear in graceful, restrained lettering. Both phrases are perfectly spelled and readable at 336 pixels, with every main letter at least one twentieth of the image height. The drafting instruction must look fully printed into the finished card, not a sticky note, editor markup, floating caption or computer interface. The surrounding paper craft is delicate and sincere, with slight physical imperfections; the unremoved instruction ruins the personal message by being part of the actual card. The left inside page is blank except for blind embossing. No people, brands, logos, signatures, invented names, robots, emojis, em dashes or any additional readable text.",
             "change": "Words failed: the instruction was too small at 336 pixels. Changed only the sentence setting that instruction, specifying four shorter lines in larger heavy serif type.",
-            "image": "assets/slop/attempts/112-02.webp",
-            "fallback": "assets/slop/attempts/112-02.jpg",
+            "image": null,
+            "fallback": null,
             "sourceSha256": "4966cdb2c2f7c9c78f70e64e9c2d48fc6921238100888e5125ed5c49e0367a12",
             "recordedAt": "2026-10-08T01:05:23.314Z",
             "review": {
@@ -11549,7 +11991,9 @@ window.SLOP_DATA = {
               },
               "reviewedAt": "2026-10-08T01:05:43.599Z"
             },
-            "decision": "accepted"
+            "decision": "accepted",
+            "deletedAt": "2026-10-10T03:39:45.784Z",
+            "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
           }
         ],
         "sourceSha256": "4966cdb2c2f7c9c78f70e64e9c2d48fc6921238100888e5125ed5c49e0367a12",
@@ -11561,7 +12005,9 @@ window.SLOP_DATA = {
         "retiredAt": "2026-10-08T01:18:43.000Z",
         "reason": "The owner rejected the entire AI-language batch and requested its removal. This covers all three published works and all four image attempts; no replacement requested.",
         "reviewId": "owner-ai-language-rejection-2026-10-07"
-      }
+      },
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "deletionReason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained."
     }
   ],
   "production": {
@@ -11738,6 +12184,14 @@ window.SLOP_DATA = {
       "toolVerified": false,
       "variant": null,
       "note": "The owner requested this model-family credit. The generation tool did not identify the underlying model or variant; generation.model remains null."
+    },
+    "assetCleanup": {
+      "deletedAt": "2026-10-10T03:39:45.784Z",
+      "reason": "Removed at the owner's request to reduce published site size; prompts, fingerprints, reviews and lifetime production counts are retained.",
+      "activeWorksRetained": 34,
+      "retiredWorksRetained": 78,
+      "removedFiles": 511,
+      "removedBytes": 303378976
     }
   }
 };

@@ -34,6 +34,12 @@ function timestamp(value, label) {
   return Date.parse(value);
 }
 
+function validateDeletion(record, fields, label, recordedAt) {
+  for (const field of fields) assert.equal(record[field], null, `${label}: clear every deleted asset path.`);
+  assert(nonemptyString(record.deletionReason), `${label}: retain the owner's reason for deleting the assets.`);
+  assert(timestamp(record.deletedAt, `${label} deletion`) >= recordedAt, `${label}: deletion must follow production.`);
+}
+
 function validateReview(record, label, recordedAt, { allowPending = false, observational = false } = {}) {
   if (record.review == null) {
     assert(!requireComplete && allowPending, `${label}: only the latest image may await review during production.`);
@@ -92,10 +98,16 @@ function validateDemonstration(work) {
     assert(run.width > 0 && run.height > 0, `${label}: preserve the actual source dimensions.`);
     assert.equal(run.provider, 'OpenAI built-in image tool', `${label}: retain the actual provider.`);
     assert(run.model === null && run.usage === null && run.costUsd === null, `${label}: unreported generation measurements must remain unknown.`);
-    validateAsset(run.image, label);
-    validateAsset(run.fallback, label);
-    validateSource(run.source, run.sourceSha256, label);
     const recordedAt = timestamp(run.recordedAt, label);
+    if (run.deletedAt) {
+      assert.equal(generation.status, 'retired', `${label}: active demonstrations need every source.`);
+      validateDeletion(run, ['source', 'image', 'fallback'], label, recordedAt);
+      assert(/^[0-9a-f]{64}$/.test(run.sourceSha256), `${label}: retain the deleted source fingerprint.`);
+    } else {
+      validateAsset(run.image, label);
+      validateAsset(run.fallback, label);
+      validateSource(run.source, run.sourceSha256, label);
+    }
     const reviewedAt = validateReview(run, label, recordedAt, { observational: true, allowPending: generation.status === 'reviewing' && index === runs.length - 1 });
     loggedAttempts.push({ label, recordedAt, reviewedAt });
   });
@@ -111,8 +123,14 @@ function validateDemonstration(work) {
   assert.equal(assembly.caption, work.title, `${work.id}: code must add the exact title as its caption.`);
   assert(Array.isArray(assembly.sourceRunNumbers) && assembly.sourceRunNumbers.length === 9 && assembly.sourceRunNumbers.every((value, index) => value === index + 1), `${work.id}: assemble all sources in generation order.`);
   assert(timestamp(assembly.recordedAt, `${work.id} assembly`) >= Date.parse(runs.at(-1).review.reviewedAt), `${work.id}: assemble after the final source review.`);
-  validateSource(assembly.source, assembly.sourceSha256, `${work.id} assembly`);
-  assert.equal(readFileSync(join(root, assembly.source)).subarray(0, 8).toString('hex'), '89504e470d0a1a0a', `${work.id}: preserve the code-made source PNG.`);
+  if (assembly.deletedAt) {
+    assert.equal(generation.status, 'retired', `${work.id}: an active grid needs its assembly source.`);
+    validateDeletion(assembly, ['source'], `${work.id} assembly`, Date.parse(assembly.recordedAt));
+    assert(/^[0-9a-f]{64}$/.test(assembly.sourceSha256), `${work.id}: retain the deleted assembly fingerprint.`);
+  } else {
+    validateSource(assembly.source, assembly.sourceSha256, `${work.id} assembly`);
+    assert.equal(readFileSync(join(root, assembly.source)).subarray(0, 8).toString('hex'), '89504e470d0a1a0a', `${work.id}: preserve the code-made source PNG.`);
+  }
   assert.equal(generation.sourceSha256, assembly.sourceSha256, `${work.id}: identify the composition as the gallery source.`);
 }
 
@@ -164,9 +182,8 @@ function validateAttemptLog(work) {
     assert(typeof attempt.sourceSha256 === 'string' && /^[0-9a-f]{64}$/.test(attempt.sourceSha256), `${label}: retain the original image fingerprint.`);
     const recordedAt = timestamp(attempt.recordedAt, label);
     if (attempt.image === null && attempt.fallback === null) {
-      assert.equal(attempt.ownerDecision, 'rejected', `${label}: only an owner-rejected image may have deleted assets.`);
-      assert(nonemptyString(attempt.deletionReason), `${label}: retain the reason for deleting the image.`);
-      assert(timestamp(attempt.deletedAt, `${label} deletion`) >= recordedAt, `${label}: deletion must follow the recorded image.`);
+      assert(attempt.ownerDecision === 'rejected' || generation.status === 'retired' || attempt.number !== generation.selectedAttempt, `${label}: keep the selected image of an active work.`);
+      validateDeletion(attempt, ['image', 'fallback'], label, recordedAt);
     } else {
       assert(!Object.hasOwn(attempt, 'deletedAt'), `${label}: remove both asset paths when recording deletion.`);
       validateAsset(attempt.image, label);
@@ -240,6 +257,11 @@ for (const work of data.works) {
   assert(work.width > 0 && work.height > 0, 'Image dimensions must be recorded.');
   assert(work.generation.attempts > 0, 'Generated works need recorded image calls.');
   assert(/^[0-9a-f]{64}$/.test(work.generation.sourceSha256), 'Keep the original image fingerprint.');
+  if (work.deletedAt) {
+    assert.equal(work.generation.status, 'retired', `${work.id}: only retired gallery images can be removed.`);
+    validateDeletion(work, ['image', 'fallback'], work.id, Date.parse(work.generation.recordedAt));
+    continue;
+  }
   for (const asset of [work.image, work.fallback]) {
     validateAsset(asset, work.id);
   }
