@@ -13694,8 +13694,10 @@
       toyBoundary.setTapEnabled(enabled);definition.action=enabled ? 'Close tap' : 'Open tap';
       machineOverlayCache=null;return true;
     }else if(primary.kind==='cap'){
-      primary.closed=!primary.closed;definition.boundaries.caps=primary.closed ? [primary.opening] : [];
-      toyBoundary.setCaps(definition.boundaries.caps);definition.action=primary.closed ? primary.closedLabel : primary.openLabel;
+      var closed=!primary.closed,caps=closed ? [primary.opening] : [];
+      toyBoundary.setCaps(caps);
+      primary.closed=closed;definition.boundaries.caps=caps;
+      definition.action=closed ? primary.closedLabel : primary.openLabel;
       machineOverlayCache=null;return true;
     }else if(primary.kind==='thumb'){return false;
     }else if(primary.kind==='slime'){
