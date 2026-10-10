@@ -1,6 +1,6 @@
 # Water machines
 
-Release: toy v5.55, shared water engine v28.179. The greedy cup, standalone
+Release: toy v5.56, shared water engine v28.179. The greedy cup, standalone
 siphon and Heron's fountain are in the public scene menu, with published behavior
 measurements. Full quantitative physical acceptance and steady 60 FPS remain unverified.
 
@@ -727,3 +727,49 @@ and the version label only. The quiet air overlay and released native/AIR solver
 remain unchanged. General retention, matched pressure/volume coupling, physical
 machine calibration, sustained laptop/phone performance and final polish/audit
 remain unfinished.
+
+
+## Startup pause and smaller native test (October 9, 2026)
+
+Toy v5.56 replaces the unconditional boot startLoop call with syncRunning.
+It honors the existing pause, visibility and intersection state before requesting
+a simulation frame. Native/AIR/MAC sources and all numerical settings are unchanged.
+
+A private 96 by 88 baffle test uploads 2,048 actual native water parcels once.
+The first attempt fails before fixture initialization because Empty ignores the
+machine-only paused query. A boot-only private pause seam reveals a second issue:
+the released unconditional boot loop advances 0.0916667 native seconds while the
+pause flag is true. That incomplete attempt remains failed. A manual pause API
+workaround captures the native defect at pressure step 1,532; the released startup
+fix passes the unchanged zero-clock boot assertion without that workaround.
+Its separate natural trajectory captures loss at step 843. The original overlap
+pass is nondeterministic, so these runs are not an exact trajectory comparison.
+
+Both completed tests make 1,024 controlled update calls and record 1,587 real
+pressure encodes, totaling 13.225 native seconds. The original sampler's local
+45% AIR-to-WATER transition drops positive gas ownership in the smaller apparatus.
+In the first completed run, root82 loses 36009/1024 ambient-normalized area units,
+while its prior three-cell footprint still estimates 42.8665733 square pixels
+of void. All native active fields are finite, observer POST copies match, exact
+loaded sources are verified and both owned Testing children exit0. All failed
+attempts, frozen sources and complete raw snapshots remain in the public evidence.
+
+The outer border is solid, but the released host still places18 room-reference
+seeds in the top band. This is an ownership-loss diagnostic, not a physically
+sealed gas-conservation test. It is controlled stepping with observer overhead,
+not default-cadence playback, performance or machine physical acceptance.
+
+An offline motion-map derivative follows the native quadratic weight derivative,
+the pressure field's midpoint chain rule, radial speed limit and world clamp.
+It retains the native CELL constant separately from rounded invCell. On 2,046
+smooth saved samples, coordinate perturbations agree within 1.02e-10 in Double.
+Two branch-crossing samples remain excluded. Six controls cover known translation
+and affine motion, clipping and a deliberately omitted midpoint chain term.
+This is not a Float32 bound, intrinsic material J or a pressure-force repair.
+Collision, declump and the geometric volume derivative/transpose force remain
+unfinished. No new formal initial-condition requirement is imposed.
+
+The actual browser air-view regression boots and plays all three machines and
+checks both synchronized overlay controls without errors. Its short frame samples
+do not establish sustained 60 FPS or phone performance. Evidence:
+assets/images/water-machines/native-baffle-and-startup-progress-2026-10-09.json.

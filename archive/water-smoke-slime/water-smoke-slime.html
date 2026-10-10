@@ -24,7 +24,7 @@
   <link rel="preload" href="/assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/assets/fonts/commit_mono_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/style.css">
-  <link rel="stylesheet" href="/water-smoke-slime.css?v=v5.55">
+  <link rel="stylesheet" href="/water-smoke-slime.css?v=v5.56">
 </head>
 <body class="physics-page">
   <div class="site-wrapper toy-page">
@@ -205,6 +205,7 @@
       <section id="water-machines-progress" aria-labelledby="water-machines-progress-title">
         <h2 id="water-machines-progress-title">Water machines: progress</h2>
         <p><time datetime="2026-10-09">Updated October 9, 2026.</time> Air pressure now appears inside the sealed pockets. Gold means pressure above the room, rose means below; the small labels show the difference in psi. Room air and water stay clear. Use Air pressure beside the flow readout to hide or restore it. Water pressure remains available in Instruments.</p>
+        <p>Paused startup now keeps the animation loop stopped while the engines load. A smaller tank test reproduces the same disappearing-air fault with 2,048 particles, giving the repair a simpler case to work against. The particle-motion calculation now passes a separate derivative check; keeping air volume and pressure forces consistent through collisions is still unfinished. <a href="/assets/images/water-machines/native-baffle-and-startup-progress-2026-10-09.json">Smaller tank recording and startup checks.</a></p>
         <p>A recording catches a small pocket losing its stored gas inside the fountain’s nozzle. Its cell changes from air to water at the 45% water threshold, while still estimating 54.5% air. That change erases the pocket’s gas history. Keeping gas ownership and pressure coupled to the moving water remains unfinished. <a href="/assets/images/water-machines/native-air-ownership-loss-2026-10-09.json">Native recording, raw buffers and limits.</a></p>
         <p>Slow motion now keeps the water moving. At low speeds, the engine was discarding the partial steps it needed to advance. The fix restores movement in all three machines and turns off when you return to an ordinary scene. Normal-speed particle and render comparisons match exactly across three speeds and three seeds; smoke also matches. <a href="/assets/images/water-machines/slow-motion-and-drag-trial-2026-10-09.json">Slow-motion checks and comparison records.</a></p>
         <p>The performance revision remains private. It shortens the GPU queue and keeps the simulation advancing while you drag a slime, but a full cup run drains 94.47% of its estimated drainable water, below the existing 95% target. It averages about 56 updates per second in that run. Better responsiveness alone does not pass the cup test, and steady 60 FPS and phone performance remain unproved.</p>
@@ -296,15 +297,15 @@
   <script src="/js/liquid-wgpu.js?v=v28.179"></script>
   <script src="/js/smoke-presets.js?v=4"></script>
   <script src="/js/water-rainbow.js?v=1"></script>
-  <script src="/js/liquid-air-model.js?v=v5.55"></script>
+  <script src="/js/liquid-air-model.js?v=v5.56"></script>
   <script src="/js/liquid-air-mac-wgpu.js?v=v5.37"></script>
-  <script src="/js/liquid-air-wgpu.js?v=v5.55"></script>
+  <script src="/js/liquid-air-wgpu.js?v=v5.56"></script>
   <script src="/js/water-machines-builder.js?v=v5.37"></script>
   <script src="/js/water-machines-scenes.js?v=v5.41"></script>
   <script src="/js/water-machines-instruments.js?v=v5.41"></script>
-  <script src="/js/water-machines-pressure-view.js?v=v5.55"></script>
-  <script src="/js/water-smoke-slime.js?v=v5.55"></script>
-  <script src="/js/water-smoke-slime-ui.js?v=v5.55"></script>
+  <script src="/js/water-machines-pressure-view.js?v=v5.56"></script>
+  <script src="/js/water-smoke-slime.js?v=v5.56"></script>
+  <script src="/js/water-smoke-slime-ui.js?v=v5.56"></script>
   <script src="/js/smoke-presets-ui.js?v=4"></script>
 </body>
 </html>

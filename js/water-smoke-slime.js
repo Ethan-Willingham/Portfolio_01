@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.55'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.56'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -14044,7 +14044,7 @@
     fitStage();
     bakeWalls();
     updateReadout();
-    startLoop();
+    syncRunning();
     try {
       console.log('water-smoke-slime ' + TOY_VERSION +
         ' — MLS-MPM water (WebGPU) + XPBD slimes (CPU) + fluid smoke (WebGL), ' +
