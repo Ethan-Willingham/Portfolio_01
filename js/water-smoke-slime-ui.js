@@ -82,7 +82,9 @@
       nozzle: 'Drag across an outlet to narrow it. Pipe bore sets the nozzle opening.',
       punch:'Tap a wall to open one cell. Undo moves current water clear before restoring it.'
     };
-    var nativeScenes={'self-flushing-cup':true,tantalus:true,'thumb-straw':true};
+    function nativeScene(name) {
+      return !!(window.WSSMachineRegistry && window.WSSMachineRegistry.lookup(name));
+    }
     var nativeSetupScene=null,thumbPointer=null,thumbKeyboard=false;
     var sceneNames = { 'self-flushing-cup':'Self-flushing cup',tantalus:'Tantalus','thumb-straw':'The straw and the thumb', falls: 'Cascade', zerog: 'Drift', chimney: 'Plumes', rig: 'Rig exhaust', spa: 'Spring', blank: 'Empty', siphon: 'Siphon', cup: 'Greedy cup', heron: "Heron's fountain" };
 
@@ -374,7 +376,7 @@
       fitPanel();
     }
     function updateMeasurements() {
-      var state = toy.stats(), native=!!nativeScenes[state.scene],machine = /^(siphon|cup|heron)$/.test(state.scene) || native;
+      var state = toy.stats(), native=nativeScene(state.scene),machine = /^(siphon|cup|heron)$/.test(state.scene) || native;
       text('toy-fps', state.fps + ' FPS');
       var sample = toy.instruments ? toy.instruments() : { ready: false };
       var liveMachine = toy.machineState ? toy.machineState() : null;
@@ -492,7 +494,7 @@
     function sync() {
       syncCamera();
       var state = toy.stats();
-      var native=!!nativeScenes[state.scene];shell.classList.toggle('is-native-machine',native);
+      var native=nativeScene(state.scene);shell.classList.toggle('is-native-machine',native);
       shell.dataset.scene=state.scene;
       var building = /^(build|draw|erase)$/.test(state.tool);
       shell.dataset.activeTool = state.tool;
@@ -573,7 +575,7 @@
       try {
         if(toy.stats().scene==='siphon')await toy.machine('siphon',{setup:document.getElementById('toy-siphon-setup').value});
         else if(toy.stats().scene==='heron')await toy.machine('heron',{setup:document.getElementById('toy-heron-setup').value});
-        else if(nativeScenes[toy.stats().scene]){
+        else if(nativeScene(toy.stats().scene)){
           releaseThumb();var setup=document.getElementById('toy-native-setup').value;
           await toy.machine(toy.stats().scene,{vented:setup==='vented',tapEnabled:setup!=='tap-off',secondHole:setup==='second-hole'});
         }else await toy.scene(toy.stats().scene);
@@ -636,7 +638,7 @@
     fullButton.addEventListener('click', toggleFullscreen);
     var initialParameters=new URLSearchParams(location.search),phoneScene=initialParameters.get('scene');
     if(!initialParameters.has('scene') && !initialParameters.has('smoke') && !initialParameters.has('build') && navigator.gpu)phoneScene='self-flushing-cup';
-    if(nativeScenes[phoneScene] && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)){
+    if(nativeScene(phoneScene) && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)){
       shell.classList.add('is-expanded');syncFullscreen();
     }
     document.addEventListener('fullscreenchange', syncFullscreen);
