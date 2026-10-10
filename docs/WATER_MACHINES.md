@@ -1,6 +1,6 @@
 # Water machines
 
-Release: toy v5.54, shared water engine v28.179. The greedy cup, standalone
+Release: toy v5.55, shared water engine v28.179. The greedy cup, standalone
 siphon and Heron's fountain are in the public scene menu, with published behavior
 measurements. Full quantitative physical acceptance and steady 60 FPS remain unverified.
 
@@ -670,3 +670,60 @@ original byte lengths and SHA256. Toy v5.54 changes only progress evidence and
 the version label; the released air solver, overlay and shared native v28.179
 remain unchanged. Gas retention, quantitative flow and energy, sustained laptop
 and phone playback, and final polish and audit remain unfinished.
+
+## Actual native air-ownership loss (October 9, 2026)
+
+A bounded read-only recording captures one loss in the released Heron nozzle
+with seed 17, original host scheduling and native resident particles. The air core
+at pressure cell 2858 crosses from water fraction 0.427658439 to 0.455084264, past
+the actual threshold 0.449999988. The three cells previously assigned to that
+pocket all become LIQUID with no current air owner. Gas destination is NONE;
+its entire prior amount 16422 at volumeScale 256 becomes unassigned. At this step
+there is no captured or vented amount, and current inventory decreases by exactly
+16422. It is an ownership loss, not a vent of this pocket.
+
+The former core still estimates 54.4916 percent void, and the old footprint still
+estimates 63.6762 square world pixels of void. These are the existing sampled
+localAirArea diagnostics, not a sharp geometric gas volume. Twenty-five native
+particle centers occupy the core cell. This transient sampled cavity proves
+modeled inventory loss; it does not prove a stable physical bubble or a matched
+interface force, work or material-volume change. A neighboring cell has another
+air owner, so spatial proximity alone cannot justify moving the lost inventory
+there. Retaining a counter alone would not repair pressure coupling.
+
+The first observed loss is encode 496 after initialization, absolute model
+encode 499. The observer retains 511 encodes because polling allows already
+submitted work before pause. Actual initialization modelSteps 3 and nativeClock
+.025 remain explicit. Uniforms and geometry are unchanged across the captured
+seam. All 92603 resident particle inputs are finite. The post-observer copies
+exactly match post-pressure bytes, and all retained observer mutation counts are
+zero. The witness records actual pre-pressure, post-pressure, post-observer and
+previous encode input buffers, including history, labels, geometry, both pressure
+buffers, transport, all resident allocations and fixed active native grid
+prefixes. PRE history is the preceding pressure state; current PRE particles
+already traversed the prior gather and collision. POST is before current gather
+and collision. These timestamps do not establish an uninstrumented trajectory or
+performance.
+
+The first recorder attempt verifies source bytes but fails before installation
+because its CDP expression uses await without an async context. Its exact owned
+Testing child exits 0. A fresh derivative wraps only installation/cleanup in async
+IIFEs. That run completes 512 observed encodes without a loss, and is inconclusive;
+18 additional final encodes are outside observation. A further derivative extends
+only the observation ceiling to 8192, with the same 180-second wall cap, and finds
+the above event before 511. All prior results remain intact. Different short-run
+outcomes reflect host-scheduling trajectory variability; the witness does not
+promise deterministic first onset. Original shader physics, settings, iterations,
+particles and scheduling remain unchanged. All exact owned browsers exit.
+
+The native-air-ownership-loss-2026-10-09.json public artifact retains the three raw
+reports, source freezes, observer/decoder sources and both valid ledger captures.
+It reproduces all 40,446,528 bytes of the four-section witness snapshot, using
+lossless gzip/base64 blobs shared by identical allocations. Raw sizes and SHA256
+are checked after decompression and reassembly. Root independently audits the
+saved buffers; a second read-only review reproduces all 76 section/allocation
+hashes, each current owner and the exact inventory drop. Toy v5.55 updates progress
+and the version label only. The quiet air overlay and released native/AIR solver
+remain unchanged. General retention, matched pressure/volume coupling, physical
+machine calibration, sustained laptop/phone performance and final polish/audit
+remain unfinished.
