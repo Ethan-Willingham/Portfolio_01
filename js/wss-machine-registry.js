@@ -4,6 +4,7 @@
   var entries = [
     {id:'self-flushing-cup',title:'Self-flushing cup',cue:'Open or close the tap.',preview:'cup',accepted:true,world:{w:720,h:400},pool:true},
     {id:'tantalus',title:'Tantalus',cue:'Watch the fixed mouth line.',preview:'tantalus',accepted:true,world:{w:720,h:400},pool:true},
+    {id:'roman-inverted-siphon',title:'Roman inverted siphon',cue:'Close or open the intake.',preview:'inverted-siphon',accepted:false,world:{w:720,h:400},pool:false},
     {id:'thumb-straw',title:'The straw and the thumb',cue:'Hold the top, then release.',preview:'straw',accepted:true,world:{w:720,h:400},pool:false}
   ];
   var lab = new URLSearchParams(location.search).get('lab') === '1';
@@ -48,7 +49,11 @@
     }
     path('M3 43v6h66v-6','toy-preview-glass');
     path('M4 45h64v3H4Z','toy-preview-water');
-    if(kind==='straw'){
+    if(kind==='inverted-siphon'){
+      path('M5 8v20h16V8M53 21v21h15V21M15 25h12v19h19V33h13','toy-preview-glass');
+      path('M6 12h14v15H6ZM54 33h13v8H54Z','toy-preview-water');
+      path('M16 25h11v19h19V33h14','toy-preview-stream');
+    }else if(kind==='straw'){
       path('M31 9v24M42 9v24','toy-preview-glass');
       path('M33 15h7v17h-7Z','toy-preview-water');
       path('M36 35v5','toy-preview-stream');

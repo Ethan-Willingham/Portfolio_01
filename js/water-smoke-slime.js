@@ -13508,7 +13508,7 @@
     var receiver=I.vessel(particles,m.receiver,{tile:TILE,floor:worldH});
     var flow=I.particleSection(particles,definition.meters[0],{thickness:snapshot.cellSize});
     var grid=I.section(snapshot,definition.meters[0]),boundary=toyBoundary.stats();
-    var predicted=I.prediction(definition.name==='thumb-straw' ? 'thumb-straw' : 'cup',{source:source.level,receiver:receiver.level},definition,250);
+    var predicted=I.prediction(definition.predictionKind || (definition.name==='thumb-straw' ? 'thumb-straw' : 'cup'),{source:source.level,receiver:receiver.level},definition,250);
     var retained=0,mouthWet=0,mouthDistance=Infinity,nativeSample=toyBoundary.snapshot();
     for(var i=0;i<(nativeSample ? nativeSample.count : 0);i++){
       if(!nativeSample.slots[i*4])continue;
@@ -13539,7 +13539,7 @@
       roomAbsolutePressurePsi:units.psi(airModel.settings.atmospherePressure),
       minimumGaugePressurePsi:units.psi(airModel.settings.minimumPressure),soundSpeedInchesPerSecond:units.speed(airModel.settings.soundSpeed),
       inputWaterWorkFootPounds:(boundary.energyIn || 0)/1.3558179483314,
-      energyBudgetStatus:definition.boundaries.pool ? 'Drained water feeds the tap through the powered return. It adds energy to lift the water. The native ledger records this external work and all admitted, collected and refused parcels.' : 'The thumb closes the upper opening. Room air and the trapped gas provide the pressure boundary.',
+      energyBudgetStatus:definition.energyBudgetStatus || (definition.boundaries.pool ? 'Drained water feeds the tap through the powered return. It adds energy to lift the water. The native ledger records this external work and all admitted, collected and refused parcels.' : 'The thumb closes the upper opening. Room air and the trapped gas provide the pressure boundary.'),
       scaleText:'The box is 30 inches wide and 1 inch deep. Seconds use Earth gravity.'+(isMobile ? ' This phone runs at most two solver steps per frame; its simulation clock may advance more slowly.' : ''),
       ledger:snapshot.ledger,phaseLedger:snapshot.phaseLedger,convergence:snapshot.convergence,
       numericalStatus:I.numericalStatus(snapshot),error:boundary.error || buildError || airState.error};
@@ -13692,6 +13692,10 @@
     if(primary.kind==='tap'){
       var enabled=definition.action==='Open tap';
       toyBoundary.setTapEnabled(enabled);definition.action=enabled ? 'Close tap' : 'Open tap';
+      machineOverlayCache=null;return true;
+    }else if(primary.kind==='cap'){
+      primary.closed=!primary.closed;definition.boundaries.caps=primary.closed ? [primary.opening] : [];
+      toyBoundary.setCaps(definition.boundaries.caps);definition.action=primary.closed ? primary.closedLabel : primary.openLabel;
       machineOverlayCache=null;return true;
     }else if(primary.kind==='thumb'){return false;
     }else if(primary.kind==='slime'){
@@ -14057,10 +14061,15 @@
           var o=definition.primary.opening;c.lineWidth=machineState.thumbHeld ? 4 : 1;c.beginPath();c.moveTo(o.start,o.at);c.lineTo(o.end,o.at);c.stroke();c.lineWidth=1;
           c.fillText(machineState.thumbHeld ? 'Top held' : 'Top open',o.end+14,o.at+4);
         }
+        if(definition.primary.kind==='cap'){
+          var cap=definition.primary,o=cap.opening;c.lineWidth=cap.closed ? 4 : 1;c.beginPath();
+          if(o.axis==='x'){c.moveTo(o.at,o.start);c.lineTo(o.at,o.end);}else{c.moveTo(o.start,o.at);c.lineTo(o.end,o.at);}c.stroke();c.lineWidth=1;
+          c.fillText(cap.label+(cap.closed ? ' closed' : ' open'),o.axis==='x' ? o.at+14 : o.end+14,o.axis==='x' ? o.start-8 : o.at+4);
+        }
         if(definition.measure.mouth){var mouth=definition.measure.mouth;c.strokeRect(mouth.x,mouth.y,mouth.width,mouth.height);}
       }
       definition.vessels.forEach(function(v){
-        var label=v.id==='middle' ? 'Source water' : v.id==='bottom' ? 'Receiving water' : v.id==='source' ? 'Higher tank' : v.id==='receiver' ? 'Lower tank' : v.id==='basin' ? 'Basin' : 'Cup';
+        var label=v.label || (v.id==='middle' ? 'Source water' : v.id==='bottom' ? 'Receiving water' : v.id==='source' ? 'Higher tank' : v.id==='receiver' ? 'Lower tank' : v.id==='basin' ? 'Basin' : 'Cup');
         c.fillText(label,v.rect.x+8,v.rect.y-8);
       });
     }
