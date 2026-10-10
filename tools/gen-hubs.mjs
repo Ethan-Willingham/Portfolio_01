@@ -202,18 +202,20 @@ function updateHomepage() {
     'boring-stuff.html', 'career.html',
   ]);
   const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  const cards = (html.match(/<li class="article-list-item[\s\S]*?<\/li>/g) || [])
-    .filter((li) => !removed.has((li.match(/href="([^"]+)"/) || [])[1]));
+  const currentCards = html.match(/<li class="article-list-item[\s\S]*?<\/li>/g) || [];
+  const cards = currentCards.filter((li) => !removed.has((li.match(/href="([^"]+)"/) || [])[1]));
   for (const p of STANDALONE_POSTS) {
     const image = p.image || `assets/thumbs/${p.thumb}`;
     const candidates = p.imageSrcset || image;
     const sizes = p.imageSizes ? ` sizes="${esc(p.imageSizes)}"` : '';
     const responsive = p.imageSrcset ? ` srcset="${esc(p.imageSrcset)}"${sizes}` : '';
+    const previous = currentCards.find((li) => (li.match(/href="([^"]+)"/) || [])[1] === p.href);
+    const priority = (previous?.match(/ fetchpriority="[^"]+"/) || [''])[0];
     const provenance = p.createdCommit ? `<!-- First published in GitHub commit ${p.createdCommit}, ${p.createdAt}. -->\n              ` : '';
     cards.push(`        <li class="article-list-item fade-in" data-keywords="${esc(p.keywords)}">
           <a class="article-item" href="${p.href}">
             <span class="article-item-thumb">
-              ${provenance}${p.credit ? `<!-- thumbnail: ${esc(p.credit)} -->\n              ` : ''}<picture><source type="image/webp" srcset="${candidates.replace(/\.jpg\b/g, '.webp')}"${sizes}><img src="${image}"${responsive} width="${p.width || 600}" height="${p.height || 400}" loading="lazy" decoding="async" alt="${esc(p.alt)}"></picture>
+              ${provenance}${p.credit ? `<!-- thumbnail: ${esc(p.credit)} -->\n              ` : ''}<picture><source type="image/webp" srcset="${candidates.replace(/\.jpg\b/g, '.webp')}"${sizes}><img src="${image}"${responsive} width="${p.width || 600}" height="${p.height || 400}" loading="lazy"${priority} decoding="async" alt="${esc(p.alt)}"></picture>
             </span>
             <time class="article-item-date" datetime="${p.date}">${p.dateDisplay}</time>
             <h2 class="article-item-title">${esc(p.title)}</h2>
@@ -224,8 +226,9 @@ function updateHomepage() {
   const date = (li) => (li.match(/datetime="([^"]+)"/) || [, ''])[1];
   cards.sort((a, b) => date(b).localeCompare(date(a)));
   const list = cards.map((li, i) => {
-    let card = li.replace(/ fetchpriority="high"/g, '').replace(/loading="(?:lazy|eager)"/g, `loading="${i === 0 ? 'eager' : 'lazy'}"`);
-    return i === 0 ? card.replace('<img ', '<img fetchpriority="high" ') : card;
+    const card = li.replace(/loading="(?:lazy|eager)"/g, `loading="${i === 0 ? 'eager' : 'lazy'}"`);
+    return i === 0 && !card.includes(' fetchpriority=')
+      ? card.replace('loading="eager"', 'loading="eager" fetchpriority="high"') : card;
   }).join('\n');
   html = html.replace(/<ul class="article-list">[\s\S]*?<\/ul>/, `<ul class="article-list">\n${list}\n      </ul>`);
   writeFileSync(join(ROOT, 'index.html'), html);
