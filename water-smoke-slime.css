@@ -212,9 +212,21 @@ body.toy-expanded { overflow: hidden; }
 .toy-scene-picker > summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; padding: 7px 12px; border: 1px solid var(--rule); border-radius: 6px; cursor: pointer; list-style: none; font: 12px var(--font-body); color: var(--text); }
 .toy-scene-picker > summary::-webkit-details-marker { display: none; }
 .toy-scene-picker[open] > summary { border-color: var(--accent); }
-.toy-scene-picker .toy-scene-list { position: absolute; z-index: 15; top: calc(100% + 6px); left: 0; display: flex; flex-direction: column; align-items: stretch; gap: 2px; width: max(100%,220px); max-height: min(480px,calc(100dvh - 140px)); overflow-y: auto; overscroll-behavior: contain; padding: 8px; background: var(--bg-raised); border: 1px solid var(--rule-strong); border-radius: 8px; }
+.toy-scene-picker .toy-scene-list { position: absolute; z-index: 15; top: calc(100% + 6px); left: 0; display: flex; flex-direction: column; align-items: stretch; gap: 2px; width: min(340px,calc(100vw - 32px)); max-height: min(480px,calc(100dvh - 140px)); overflow-y: auto; overscroll-behavior: contain; padding: 8px; background: var(--bg-raised); border: 1px solid var(--rule-strong); border-radius: 8px; }
 .toy-scene-list p { margin: 8px 8px 3px; color: var(--text-faint); font: 10px var(--font-mono); }
 .toy-scene-picker .toy-scene-list .toy-chip { justify-content: flex-start; min-width: 44px; min-height: 44px; width: 100%; padding: 8px 10px; }
+.toy-scene-picker .toy-scene-list .toy-machine-choice { gap: 12px; padding: 6px 8px; text-align: left; }
+.toy-scene-preview { --preview-water: #8fb3c7; --preview-slime: #9ec79a; }
+.toy-shell .toy-scene-preview { width: 72px; height: 52px; color: var(--line-mid); stroke-width: 1.25; }
+.toy-scene-preview .toy-preview-water { fill: var(--preview-water); fill-opacity: .5; stroke: none; }
+.toy-scene-preview .toy-preview-stream { stroke: var(--preview-water); }
+.toy-scene-preview .toy-preview-slime { fill: var(--preview-slime); fill-opacity: .4; stroke: var(--preview-slime); }
+.toy-scene-preview .toy-preview-hand, .toy-scene-preview .toy-preview-mouth { stroke: var(--accent); }
+.toy-scene-preview .toy-preview-mouth { stroke-dasharray: 2 2; }
+.toy-scene-copy { display: grid; gap: 4px; min-width: 0; }
+.toy-scene-name { color: var(--text); font: 12px/1.3 var(--font-body); }
+.toy-scene-cue { color: var(--text-dim); font: 11px/1.3 var(--font-body); }
+.toy-scene-picker .toy-machine-choice:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 .toy-dock { gap: 8px; flex-wrap: wrap; }
 .toy-tools { flex: 1; gap: 5px; justify-content: flex-start; }
 .toy-tools .tb { min-width: 48px; min-height: 52px; flex: 0 1 64px; }
