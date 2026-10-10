@@ -15,7 +15,7 @@
     if (loaded[url]) return loaded[url];
     loaded[url] = new Promise(function(resolve,reject){
       var element=document.createElement('script');
-      element.src=url+'?v=v5.58';
+      element.src=url+'?v='+encodeURIComponent(window.__toy.version);
       element.onload=resolve;
       element.onerror=function(){reject(new Error('Could not load this machine.'));};
       document.head.appendChild(element);

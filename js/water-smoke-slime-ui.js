@@ -402,10 +402,10 @@
         var holdingThumb=state.scene==='thumb-straw' && (thumbPointer!==null || thumbKeyboard);
         document.getElementById('toy-machine-primary').disabled = (!ready && !holdingThumb) || !!fatal || (state.scene === 'cup' && liveMachine && liveMachine.primaryUsed);
       }
-      text('toy-compact-head-label',state.scene==='thumb-straw' ? 'Air' : 'Head');
-      text('toy-compact-head', number(state.scene==='thumb-straw' ? sample.gasPressurePsi : sample.headInches, state.scene==='thumb-straw' ? 'psi' : 'in'));
+      text('toy-compact-head-label',state.scene==='thumb-straw' ? 'Air' : state.scene==='tantalus' ? 'Water to mouth' : 'Head');
+      text('toy-compact-head', number(state.scene==='thumb-straw' ? sample.gasPressurePsi : state.scene==='tantalus' ? sample.mouthDistanceInches : sample.headInches, state.scene==='thumb-straw' ? 'psi' : 'in'));
       document.getElementById('toy-native-reading').hidden=!native;
-      text('toy-native-reading',state.scene==='thumb-straw' ? 'Water held '+(100*(sample.retainedFraction || 0)).toFixed(0)+'%' : 'Powered return');
+      text('toy-native-reading',state.scene==='thumb-straw' ? Number.isFinite(sample.retainedFraction) ? 'Water held '+(100*sample.retainedFraction).toFixed(0)+'%' : 'Waiting for water sample' : 'Powered return');
       document.getElementById('toy-native-options').hidden=!native;
       document.getElementById('toy-machine-view').hidden=native;
       var setup=document.getElementById('toy-native-setup');

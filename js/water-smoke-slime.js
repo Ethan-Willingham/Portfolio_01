@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.59'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.60'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -13403,18 +13403,25 @@
     var flow=I.particleSection(particles,definition.meters[0],{thickness:snapshot.cellSize});
     var grid=I.section(snapshot,definition.meters[0]),boundary=toyBoundary.stats();
     var predicted=I.prediction(definition.name==='thumb-straw' ? 'thumb-straw' : 'cup',{source:source.level,receiver:receiver.level},definition,250);
-    var retained=0,mouthWet=0;
-    for(var i=0;i<liquidCount;i++){
-      var x=liquidX[i],y=liquidY[i],r=m.straw;
+    var retained=0,mouthWet=0,mouthDistance=Infinity,nativeSample=toyBoundary.snapshot();
+    for(var i=0;i<(nativeSample ? nativeSample.count : 0);i++){
+      if(!nativeSample.slots[i*4])continue;
+      var x=nativeSample.pos[i*4],y=nativeSample.pos[i*4+1],r=m.straw;
       if(r && x>=r.x && x<r.x+r.width && y>=r.y && y<r.y+r.height)retained++;
-      r=m.mouth;if(r && x>=r.x && x<r.x+r.width && y>=r.y && y<r.y+r.height)mouthWet++;
+      r=m.mouth;if(r){
+        if(x>=r.x && x<r.x+r.width && y>=r.y && y<r.y+r.height)mouthWet++;
+        mouthDistance=Math.min(mouthDistance,Math.hypot(Math.max(r.x-x,0,x-r.x-r.width),Math.max(r.y-y,0,y-r.y-r.height)));
+      }
     }
     var gas=m.gasProbe ? I.cell(snapshot,m.gasProbe.x,m.gasProbe.y) : null;
     var age=Math.max(liquidWGPU.getReadbackAge(),Math.max(0,liquidWGPU.simulationClock-snapshot.simulationTime));
-    state.readings={ready:true,caption:definition.caption,action:definition.action,
+    if(nativeSample)age=Math.max(age,Math.max(0,liquidWGPU.simulationClock-nativeSample.simulationTime));
+    state.readings={ready:!!nativeSample,caption:definition.caption,action:definition.action,
       levels:{source:source.level,receiver:receiver.level},water:{source:source,receiver:receiver},
       particleCount:boundary.present,initialParticles:state.initialParticles,boundary:boundary,
-      retainedFraction:state.initialParticles ? retained/state.initialParticles : 0,mouthWet:mouthWet,thumbHeld:state.thumbHeld,
+      retainedFraction:nativeSample && state.initialParticles ? retained/state.initialParticles : null,
+      mouthWet:nativeSample ? mouthWet : null,thumbHeld:state.thumbHeld,
+      mouthDistanceInches:Number.isFinite(mouthDistance) ? units.inches(mouthDistance) : null,
       gasPressurePsi:gas && gas.pressure!==null ? units.psi(gas.pressure) : null,
       pressurePsi:grid && grid.pressure!==null ? units.psi(grid.pressure) : null,
       flowCubicInchesPerSecond:units.flow(flow.areaPerSecond),speedInchesPerSecond:units.speed(flow.speed),
@@ -13498,7 +13505,7 @@
       requested++;
       if(addLiquidParticle('water',px,py,0,0,0)>=0)added++;
     }
-    if(added!==requested)throw new Error('Apparatus exceeds the particle capacity: '+requested+' requested, '+added+' added.');
+    if(definition.boundaries && added!==requested)throw new Error('Apparatus exceeds the particle capacity: '+requested+' requested, '+added+' added.');
     definition.slimes.forEach(function(s){if(!s.held)spawnSlimeAt(s.x,s.y,s.radius);});
     var state=machineState={definition:definition,seed:options.seed || 17,initialParticles:added,ready:false,
       primaryUsed:false,startedAt:null,wallClockStartedAt:null,energyInput:0,inputParticles:0,energyModified:false};
