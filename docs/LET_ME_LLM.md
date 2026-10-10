@@ -153,16 +153,26 @@ unavailable environment UNVERIFIED with its reason.
 
 ## Thumbnails and site integration
 
-The wordless thumbnail source is `tools/let-me-llm/thumbnail-lab.html`. It renders an
-empty composer on white, with a 26px radius, a dark rounded-square send button
-with a 12px radius, a horizontal right arrow and a pointer on the button.
+The homepage thumbnail is a crop of Johannes Vermeer's *The Love Letter*,
+c. 1669-1670, from the Rijksmuseum. The owner requested richer artwork after
+finding the blank composer thumbnail too plain on 2026-10-09. The sourced
+painting stays wordless and keeps its original colors. Attribution, rights,
+source and crop coordinates are in `tools/let-me-llm/ARTWORK.md`.
+
+```sh
+node tools/let-me-llm/build-art-thumbnail.cjs
+```
+
+This rebuilds the 600x400 homepage JPG/WebP pair. The maker's OG artwork still
+uses the original empty composer and pointer. Its source is
+`tools/let-me-llm/thumbnail-lab.html`, with the original renderer:
 
 ```sh
 node tools/let-me-llm/render-thumbnails.cjs
 ```
 
-This owns Chrome for Testing and writes a 600x400 JPG/WebP pair and a 1200x630
-OG JPG under `assets/thumbs/`. Its report and PNG evidence go to
+This owns Chrome for Testing and writes the legacy 600x400 UI pair and the
+1200x630 OG JPG under `assets/thumbs/`. Its report and PNG evidence go to
 `research/let-me-llm/evidence/integration/`. The page never requests these
 images. On 2026-10-09 the render passed, with no visible text, matching dimensions,
 the specified radii, no requests and no console errors.
