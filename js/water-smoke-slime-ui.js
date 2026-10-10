@@ -88,7 +88,10 @@
     function controlsHeight() {
       var height = Math.ceil(shell.querySelector('.toy-dock').getBoundingClientRect().height + shell.querySelector('.toy-foot').getBoundingClientRect().height);
       var value = height + 'px';
-      if (shell.style.getPropertyValue('--toy-controls-height') !== value) shell.style.setProperty('--toy-controls-height', value);
+      if (shell.style.getPropertyValue('--toy-controls-height') !== value) {
+        shell.style.setProperty('--toy-controls-height', value);
+        toy.resize();
+      }
     }
     function fitPanel() {
       if (!openPanel) return;
@@ -478,6 +481,7 @@
       syncCamera();
       var state = toy.stats();
       var native=!!nativeScenes[state.scene];shell.classList.toggle('is-native-machine',native);
+      shell.dataset.scene=state.scene;
       var building = /^(build|draw|erase)$/.test(state.tool);
       shell.dataset.activeTool = state.tool;
       shell.classList.toggle('is-paused', state.paused);

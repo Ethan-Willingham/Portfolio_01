@@ -33,6 +33,7 @@
     definition.parts = [];
     definition.name = 'self-flushing-cup';
     definition.title = 'Self-flushing cup';
+    definition.viewBounds = {x:16, y:42, width:688, height:342};
     definition.setup = options.vented ? 'vented' : options.tapEnabled === false ? 'tap-off' : 'tap-on';
     definition.action = options.tapEnabled === false ? 'Open tap' : 'Close tap';
     definition.caption = options.vented

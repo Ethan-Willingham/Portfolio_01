@@ -20,6 +20,7 @@
     var vent = {x:360, y:88, width:8, height:8};
     return {
       name:'thumb-straw', title:'The straw and the thumb',
+      viewBounds:{x:16, y:72, width:688, height:312},
       action:'Hold the top', actionNote:'Hold starts a filled straw.',
       caption:secondHole
         ? 'The upper side hole connects the air above the water to the room. Hold the top and compare this opening with the intact straw.'
