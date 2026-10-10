@@ -380,7 +380,7 @@
       var pressureLabel=fatal ? 'Pressure stopped' : !sample.ready || !convergence ? 'Waiting for pressure' : diagnostic ? 'Diagnostic' : stale ? 'Stale sample' : null;
       var pressureMessage=fatal ? 'The pressure calculation stopped. Restart or choose another scene.' : !sample.ready || !convergence ? 'Waiting for a pressure sample.' :
         diagnostic ? 'Pressure readings are diagnostic. Open Instruments for the calculation status.' : stale ? 'The pressure sample is old. Open Instruments for its age.' :
-        'The pressure sample is current. Machine behavior is still under test.';
+        'The pressure sample is current. Open Instruments for the calculation status.';
       document.getElementById('toy-machine-diagnostics').hidden=!contextual;
       text('toy-machine-diagnostics',contextual ? pressureMessage : '');
       if(contextual)text('toy-status',pressureLabel || (state.paused ? 'Paused' : 'Live'));

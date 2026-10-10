@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   var entries = [
-    {id:'self-flushing-cup',title:'Self-flushing cup',accepted:false,world:{w:720,h:400},pool:true},
+    {id:'self-flushing-cup',title:'Self-flushing cup',accepted:true,world:{w:720,h:400},pool:true},
     {id:'tantalus',title:'Tantalus',accepted:false,world:{w:720,h:400},pool:true},
     {id:'thumb-straw',title:'The straw and the thumb',accepted:true,world:{w:720,h:400},pool:false}
   ];
