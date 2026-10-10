@@ -194,7 +194,10 @@
 
   function paintActive() {
     var opts = panel.querySelectorAll('.hs-res');
-    for (var i = 0; i < opts.length; i++) opts[i].classList.toggle('is-active', i === active);
+    for (var i = 0; i < opts.length; i++) {
+      opts[i].classList.toggle('is-active', i === active);
+      opts[i].setAttribute('aria-selected', i === active ? 'true' : 'false');
+    }
     input.setAttribute('aria-activedescendant', active >= 0 && results.length ? 'hs-opt-' + active : '');
     if (active >= 0 && opts[active]) opts[active].scrollIntoView({ block: 'nearest' });
   }

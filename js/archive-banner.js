@@ -15,6 +15,7 @@
 (function () {
   "use strict";
   if (document.querySelector(".arc-banner")) return; // never double-insert
+  var compact = document.currentScript && document.currentScript.hasAttribute('data-compact');
 
   // Recounted 2026-10-04 from search-index.json: 24 archived posts
   // and 43 in-progress posts, out of 80 indexed posts in all.
@@ -40,6 +41,9 @@
     ".arc-banner a{color:#e6c074;text-decoration:underline;text-underline-offset:2px;" +
     "text-decoration-thickness:1px;white-space:nowrap}" +
     ".arc-banner a:hover{color:#ede0c0}" +
+    ".arc-banner--compact .arc-banner__lead{margin-bottom:0}" +
+    ".arc-banner__details summary{font-size:.95rem;line-height:1.6;min-height:44px;" +
+    "padding:10px 0;cursor:pointer;color:var(--accent,#d4c4a0);width:fit-content}" +
     "@media(max-width:600px){.arc-banner{padding:15px 18px}.arc-banner .arc-banner__in{gap:12px}" +
     ".arc-banner .arc-banner__mark{font-size:1.25rem}.arc-banner .arc-banner__lead{font-size:1rem}" +
     ".arc-banner a{white-space:normal}}" +
@@ -51,8 +55,7 @@
   document.head.appendChild(style);
 
   var banner = document.createElement("aside");
-  banner.className = "arc-banner";
-  banner.setAttribute("role", "note");
+  banner.className = "arc-banner" + (compact ? " arc-banner--compact" : "");
   banner.setAttribute("aria-label", "In-progress post notice");
   banner.innerHTML =
     '<div class="arc-banner__in">' +
@@ -60,6 +63,7 @@
     '<div class="arc-banner__body">' +
     '<p class="arc-banner__kicker">In Progress</p>' +
     '<p class="arc-banner__lead">You’re reading something that isn’t ready yet.</p>' +
+    (compact ? '<details class="arc-banner__details"><summary>About this draft</summary>' : '') +
     "<p>Nothing I make shows up finished. Every post starts rough and goes through " +
     "a lot of versions; the ones in here just aren’t there yet, still being worked " +
     "on, on hold, or not how I want them. About " + PCT + "% of what I start is " +
@@ -68,6 +72,7 @@
     "half-built, and parts read exactly like what they are, a draft an AI and I " +
     "haven’t come back to polish yet. It is here for the idea, not the finish. " +
     '<a href="/">See what’s ready &rarr;</a></p>' +
+    (compact ? '</details>' : '') +
     "</div></div>";
 
   function place() {

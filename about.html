@@ -30,7 +30,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="collection.css">
+  <link rel="stylesheet" href="collection.css?v=20261009-audit1">
   <style>
   /* ============================================================
      ABOUT, the site's meta page. Folds the former Colophon and
@@ -64,6 +64,7 @@
   .about-body .about-section-note { margin: -0.4rem 0 1rem; font-size: 0.96rem; line-height: 1.5; color: var(--text-dim); }
   .about-notes { display: grid; gap: 1rem; font-size: 1rem; line-height: 1.65; }
   .about-body .about-notes p { margin: 0; }
+  .about-notes a { text-decoration: underline; text-underline-offset: 0.15em; }
 
   /* ---- top utility row: Home (left) + GitHub mark (right) ---- */
   .lab-top { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
@@ -161,7 +162,7 @@
     color: var(--text-dim); text-shadow: 0 1px 4px rgba(0,0,0,0.7);
   }
   .gh-readout b { color: var(--text-bright); font-weight: 600; }
-  .gh-readout .gh-r-sub { color: #8d9387; }
+  .gh-readout .gh-r-sub { color: var(--text-dim); }
   .gh-hint {
     position: absolute; left: 50%; bottom: 2.25rem; transform: translateX(-50%);
     z-index: 3; pointer-events: none;
@@ -215,21 +216,24 @@
     --ma-flip: cubic-bezier(0.22, 0.9, 0.24, 1.04); /* the reorder glide: smooth, a whisper of overshoot */
   }
   #ma-root { margin: 0; }
+  .gh-loading { position: absolute; inset: 0; display: grid; align-content: center; justify-content: center; gap: 0.5rem; padding: 1rem; color: var(--text-dim); font-size: 0.96rem; }
+  .gh-loading[hidden] { display: none; }
   .ma-minds { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.6rem; }
   .ma-mind { display: inline-flex; align-items: baseline; gap: 0.5rem; padding: 0.5rem 0.85rem; background: var(--ma-card); border: 1px solid var(--ma-hair); border-radius: 999px; box-shadow: var(--ma-shadow); }
-  .ma-mind.is-minor { opacity: 0.5; }
+  .ma-mind.is-minor { background: transparent; border-style: dashed; box-shadow: none; }
+  .ma-mind.is-minor .ma-mind-dot { opacity: 0.5; }
   .ma-mind-dot { width: 9px; height: 9px; border-radius: 50%; align-self: center; box-shadow: inset 0 1px 1px rgba(255,255,255,0.35); }
   .ma-mind-name { font-family: var(--font-heading); font-size: 1.02rem; color: var(--text-bright); font-weight: 700; letter-spacing: -0.01em; }
   .ma-mind-fuel { font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-dim); letter-spacing: 0.01em; }
-  .ma-mind-posts { font-family: var(--font-body); font-size: 0.72rem; color: #8d9387; }
+  .ma-mind-posts { font-family: var(--font-body); font-size: 0.72rem; color: var(--text-dim); }
   /* the model chips double as a single-select filter for the tile grid below */
   button.ma-mind { font: inherit; cursor: pointer; -webkit-appearance: none; appearance: none; -webkit-tap-highlight-color: transparent; transition: transform 0.22s var(--ma-spring), background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, opacity 0.25s ease; }
   @media (hover: hover) { button.ma-mind:hover { transform: translateY(-2px); background: var(--ma-card-hi); border-color: var(--ma-hair-2); } }
   button.ma-mind:active { transform: translateY(0); }
   button.ma-mind:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--mc, var(--accent)); }
   .ma-mind.is-active { background: var(--ma-card-hi); border-color: var(--mc); box-shadow: inset 0 0 0 1px var(--mc), 0 0 20px -5px var(--mc); }
-  .ma-minds.is-filtering button.ma-mind:not(.is-active) { opacity: 0.4; }
-  @media (hover: hover) { .ma-minds.is-filtering button.ma-mind:not(.is-active):hover { opacity: 0.78; } }
+  .ma-minds.is-filtering button.ma-mind:not(.is-active) { box-shadow: none; }
+  .ma-minds.is-filtering button.ma-mind:not(.is-active) .ma-mind-dot { opacity: 0.5; }
   .ma-filter-hint { display: flex; align-items: center; flex-wrap: wrap; gap: 0.4rem 0.8rem; margin: -0.5rem 0 1.45rem; min-height: 1.25em; font-family: var(--font-body); font-size: 0.82rem; color: var(--text-dim); }
   .ma-filter-hint b { font-weight: 700; }
   .ma-filter-clear { font: inherit; font-size: 0.8rem; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; border-bottom: 1px solid transparent; transition: color 0.2s, border-color 0.2s; }
@@ -253,10 +257,10 @@
   .cv-val small { display: block; margin-top: 0.25rem; font: 0.62rem var(--font-body); color: var(--text-dim); text-align: right; letter-spacing: 0; }
   .cv-title { font-family: var(--font-heading); font-size: 0.9rem; font-weight: 700; color: var(--text-bright); line-height: 1.18; }
   .cv.is-arch .cv-title { color: var(--text); }
-  .cv-arch { margin-left: 0.4em; font-family: var(--font-body); font-size: 0.7rem; font-weight: 600; color: #8d9387; white-space: nowrap; letter-spacing: 0.02em; vertical-align: 0.08em; }
+  .cv-arch { margin-left: 0.4em; font-family: var(--font-body); font-size: 0.7rem; font-weight: 600; color: var(--text-dim); white-space: nowrap; letter-spacing: 0.02em; vertical-align: 0.08em; }
   .cv-bar { height: 5px; border-radius: 999px; overflow: hidden; background: #1c211d; display: flex; margin-top: auto; }
   .cv-bar i { height: 100%; width: 0; transition: width 0.6s var(--ma-spring); }
-  .cv-date { font-family: var(--font-mono); font-size: 0.62rem; color: #8d9387; }
+  .cv-date { font-family: var(--font-mono); font-size: 0.62rem; color: var(--text-dim); }
   /* ---- the tile grid clamps to a few rows; a frosted veil hints at the rest ---- */
   .cv-collapse { position: relative; transition: max-height 0.62s cubic-bezier(0.22, 1, 0.36, 1); }
   .cv-collapse[data-collapsed="true"] { overflow: hidden; }
@@ -317,7 +321,7 @@
   .ma-donut-lg .ma-donut-hole { inset: 11px; background: var(--ma-tray); }
   .ma-donut-lg .ma-donut-val { font-size: 1.2rem; }
   .ma-tray-id { min-width: 0; }
-  .ma-tray-kind { font-family: var(--font-body); font-size: 0.64rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #8d9387; }
+  .ma-tray-kind { font-family: var(--font-body); font-size: 0.64rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-dim); }
   .ma-tray-kind.is-arch { color: #b39b6a; }
   .ma-tray-title { font-family: var(--font-heading); font-size: 1.5rem; font-weight: 700; color: var(--text-bright); margin: 0.15rem 0 0.2rem; line-height: 1.1; letter-spacing: -0.015em; }
   .ma-tray-when { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-dim); }
@@ -344,12 +348,12 @@
   .ma-spark-wrap { margin-top: 1.1rem; }
   .ma-spark { display: block; width: 100%; height: 22px; }
   .ma-spark rect { fill: currentColor; }
-  .ma-spark-lbl { display: block; margin-top: 0.4rem; font-family: var(--font-mono); font-size: 0.62rem; color: #8d9387; letter-spacing: 0.02em; }
-  .ma-extra-note { margin: 0.85rem 0 0; font-family: var(--font-mono); font-size: 0.66rem; color: #8d9387; line-height: 1.4; }
+  .ma-spark-lbl { display: block; margin-top: 0.4rem; font-family: var(--font-mono); font-size: 0.62rem; color: var(--text-dim); letter-spacing: 0.02em; }
+  .ma-extra-note { margin: 0.85rem 0 0; font-family: var(--font-mono); font-size: 0.66rem; color: var(--text-dim); line-height: 1.4; }
   /* the per-post prompt archive: the human prompts that built this post, copyable + scrollable */
   .ma-prompts { margin-top: 1.4rem; padding-top: 1.2rem; border-top: 1px solid var(--ma-hair); }
   .ma-prompts-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; margin-bottom: 0.85rem; }
-  .ma-prompts-kicker { display: block; font-family: var(--font-body); font-size: 0.64rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #8d9387; }
+  .ma-prompts-kicker { display: block; font-family: var(--font-body); font-size: 0.64rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-dim); }
   .ma-prompts-sub { display: block; margin-top: 0.16rem; font-family: var(--font-heading); font-size: 1.02rem; font-weight: 700; color: var(--text-bright); letter-spacing: -0.01em; }
   .ma-copybtn { flex: none; font-family: var(--font-body); font-size: 0.76rem; font-weight: 600; color: var(--text); background: rgba(255,255,255,0.05); border: 1px solid var(--ma-hair-2); border-radius: 999px; padding: 0.34rem 0.72rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.34rem; white-space: nowrap; transition: color 0.2s, background 0.2s, border-color 0.2s; }
   .ma-copybtn:hover { color: var(--text-bright); background: rgba(255,255,255,0.09); border-color: var(--accent); }
@@ -361,14 +365,14 @@
   .ma-prompt { background: #2b322c; border: 1px solid var(--ma-hair); border-radius: 12px; padding: 0.6rem 0.75rem 0.72rem; }
   .ma-prompt-top { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.42rem; }
   .ma-prompt-n { font-family: var(--font-mono); font-size: 0.66rem; font-weight: 700; color: var(--accent); letter-spacing: 0.02em; }
-  .ma-prompt-when { font-family: var(--font-mono); font-size: 0.62rem; color: #8d9387; }
+  .ma-prompt-when { font-family: var(--font-mono); font-size: 0.62rem; color: var(--text-dim); }
   .ma-prompt-copy { margin-left: auto; font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-dim); background: none; border: 0; padding: 0.1rem 0.2rem; cursor: pointer; letter-spacing: 0.06em; text-transform: uppercase; transition: color 0.18s; }
   .ma-prompt-copy:hover, .ma-prompt-copy.is-copied { color: var(--accent); }
   .ma-prompt-text { font-family: var(--font-body); font-size: 0.86rem; line-height: 1.5; color: var(--text); white-space: pre-wrap; overflow-wrap: break-word; }
   .ma-prompt-text.is-clamped { max-height: 7.4em; overflow: hidden; -webkit-mask-image: linear-gradient(180deg, #000 66%, transparent); mask-image: linear-gradient(180deg, #000 66%, transparent); }
   .ma-prompt-more { margin-top: 0.32rem; font-family: var(--font-body); font-size: 0.74rem; font-weight: 600; color: var(--accent); background: none; border: 0; padding: 0.1rem 0; cursor: pointer; }
   .ma-prompt-more:hover { color: var(--accent-hover); text-decoration: underline; }
-  .ma-prompts-note { margin: 0.75rem 0 0; font-family: var(--font-mono); font-size: 0.64rem; color: #8d9387; line-height: 1.45; }
+  .ma-prompts-note { margin: 0.75rem 0 0; font-family: var(--font-mono); font-size: 0.64rem; color: var(--text-dim); line-height: 1.45; }
   @media (max-width: 560px) { .ma-donut { width: 58px; height: 58px; } .ma-prompts-scroll { max-height: 50vh; } }
 
   @media print { .reading-progress, .site-footer, .post-back, .btt-fab { display: none !important; } }
@@ -378,9 +382,9 @@
   <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
   <div class="site-wrapper">
 
-    <div class="lab-top">
+    <nav class="lab-top" aria-label="Site">
       <a href="/" class="post-back"><span class="pb-label">Home</span></a>
-    </div>
+    </nav>
 
     <header class="about-head fade-in">
       <h1 class="about-title">About</h1>
@@ -396,14 +400,15 @@
             <h2 class="about-section-title" id="history-title">Build history</h2>
 
             <div class="gh-wrap">
-              <div class="gh-stage" id="gh-stage" tabindex="0" aria-label="Interactive timeline of every commit to this website">
+              <div class="gh-stage" id="gh-stage" tabindex="0" aria-label="Interactive timeline of every commit to this website" data-history-data="js/git-history-data.js?v=1791395323" data-history-script="js/git-history.js?v=1791395323">
                 <canvas id="gh-canvas"></canvas>
+                <div class="gh-loading" data-history-status role="status" hidden>Loading build history...</div>
                 <div class="gh-readout" id="gh-readout"></div>
                 <div class="gh-topright">
-                  <button class="gh-btn" id="gh-reset" title="Reset view" aria-label="Reset view">
+                  <button class="gh-btn" id="gh-reset" title="Reset view" aria-label="Reset view" disabled>
                     <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><circle cx="8" cy="8" r="5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="1.5" fill="currentColor"/></svg>
                   </button>
-                  <button class="gh-btn" id="gh-fs" title="Fullscreen" aria-label="Toggle fullscreen">
+                  <button class="gh-btn" id="gh-fs" title="Fullscreen" aria-label="Toggle fullscreen" disabled>
                     <svg class="gh-ic gh-ic-expand" viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M2.5 6 V2.5 H6 M10 2.5 H13.5 V6 M13.5 10 V13.5 H10 M6 13.5 H2.5 V10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     <svg class="gh-ic gh-ic-compress" viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6 2.5 V6 H2.5 M13.5 6 H10 V2.5 M10 13.5 V10 H13.5 M2.5 10 H6 V13.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
                   </button>
@@ -434,7 +439,10 @@
           <section class="about-section" aria-labelledby="attribution-title">
             <h2 class="about-section-title" id="attribution-title">Which AI built which page</h2>
 
-            <div id="ma-root"></div>
+            <div id="ma-root" data-attribution-data="js/git-attribution-data.js?v=1791395323" data-attribution-script="js/git-attribution.js?v=20261009-audit1" data-prompts-src="js/post-prompts-data.js">
+              <p class="about-section-note" data-attribution-status role="status" hidden>Loading page credits...</p>
+              <noscript><p class="about-section-note">Enable JavaScript to explore the page credits.</p></noscript>
+            </div>
           </section>
 
           <!-- ===== WHAT IT'S MADE OF (from Colophon) ===== -->
@@ -499,13 +507,9 @@
     </footer>
   </div>
 
-  <script src="js/main.js"></script>
-  <script src="js/git-history-data.js?v=1791395323"></script>
-  <script src="js/git-history.js?v=1791395323"></script>
-  <script src="js/git-attribution-data.js?v=1791395323"></script>
-  <script src="js/post-prompts-data.js"></script>
-  <script src="js/git-attribution.js?v=1791395323"></script>
-  <script src="js/backtotop.js"></script>
+  <script src="js/main.js" defer></script>
+  <script src="js/about.js?v=20261009-audit1" defer></script>
+  <script src="js/backtotop.js" defer></script>
   <script>
   /* Palette: a copyable color popover with hover-intent (you can travel onto it),
      keyboard and touch support. Shows hex, rgb, and oklch for each swatch. */

@@ -152,9 +152,7 @@
     if (interactive) {
       chip.type = 'button';
       chip.setAttribute('aria-pressed', 'false');
-      chip.setAttribute('aria-label', built
-        ? 'Show only the ' + builtCount + ' posts ' + m.label + ' helped build'
-        : m.label + ' helped across the site; its work is not broken out page by page');
+      chip.setAttribute('aria-describedby', 'ma-filter-instructions');
       chip.addEventListener('click', function () { setFilter(activeModel === m.id ? null : m.id); });
       chipById[m.id] = chip;
     }
@@ -165,6 +163,7 @@
   var hint = document.createElement('div');
   hint.className = 'ma-filter-hint';
   var hintText = document.createElement('span');
+  hintText.id = 'ma-filter-instructions';
   var clearBtn = document.createElement('button');
   clearBtn.type = 'button';
   clearBtn.className = 'ma-filter-clear';
@@ -218,11 +217,11 @@
     if (activeModel) {
       var m = MID[activeModel];
       if (m.posts === 0 && m.note) {
-        hintText.innerHTML = '<b style="color:' + m.color + '">' + m.label +
+        hintText.innerHTML = '<b>' + m.label +
           '</b> worked across the site in July. Its share is not broken out page by page, so it has no individual tiles here.';
       } else {
         hintText.innerHTML = 'Showing the <b>' + shown + '</b> ' + (shown === 1 ? 'post' : 'posts') +
-          ' <b style="color:' + m.color + '">' + m.label + '</b> helped build.';
+          ' <b>' + m.label + '</b> helped build.';
       }
       clearBtn.style.display = '';
     } else {
@@ -295,7 +294,7 @@
     '<div class="ma-tray-rows"></div>' +
     '<div class="ma-extra"></div>' +
     '<div class="ma-prompts"></div>' +
-    '<a class="ma-tray-link" target="_self">Open the post<svg viewBox="0 0 16 16" width="11" height="11" aria-hidden="true"><path d="M5 3h8v8M13 3 4 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>';
+    '<div class="ma-tray-navigation"></div>';
 
   var openPost = null;
   function openTray(post, anchorEl) {
@@ -307,9 +306,15 @@
     tray.querySelector('.ma-tray-kind').className = 'ma-tray-kind' + (post.kind === 'archived' ? ' is-arch' : '');
     tray.querySelector('.ma-tray-title').textContent = post.label;
     tray.querySelector('.ma-tray-when').textContent = 'Built ' + postDates(post);
-    var link = tray.querySelector('.ma-tray-link');
-    if (post.href && post.kind !== 'removed') { link.href = post.href.indexOf('/') === 0 ? post.href : '/' + post.href; link.style.display = ''; }
-    else { link.removeAttribute('href'); link.style.display = 'none'; }
+    var navigation = tray.querySelector('.ma-tray-navigation');
+    navigation.replaceChildren();
+    if (post.href && post.kind !== 'removed') {
+      var link = document.createElement('a');
+      link.className = 'ma-tray-link';
+      link.href = post.href.indexOf('/') === 0 ? post.href : '/' + post.href;
+      link.innerHTML = 'Open the post<svg viewBox="0 0 16 16" width="11" height="11" aria-hidden="true"><path d="M5 3h8v8M13 3 4 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      navigation.appendChild(link);
+    }
     tray.querySelector('.ma-detail-note').textContent = post.edits
       ? (post.kind === 'removed' ? 'This post was removed. Its recorded work stays in the totals below.' : 'Recorded file changes, split by model.')
       : 'No surviving edit log. The available commit history is shown below.';
@@ -332,7 +337,39 @@
   function unlockScroll() { document.body.style.paddingRight = ''; document.body.classList.remove('ma-locked'); }
 
   // ---------- the per-post prompt archive ----------
-  var PROMPTS = window.POST_PROMPTS || {};
+  var promptsPending = null;
+  function loadPrompts(post) {
+    if (window.POST_PROMPTS) { renderPrompts(post); return; }
+    var host = tray.querySelector('.ma-prompts');
+    host.style.display = '';
+    host.textContent = 'Loading prompts...';
+    host.setAttribute('aria-busy', 'true');
+    if (!promptsPending) {
+      promptsPending = new Promise(function (resolve, reject) {
+        var script = document.createElement('script');
+        script.src = root.dataset.promptsSrc || 'js/post-prompts-data.js';
+        script.onload = function () {
+          if (window.POST_PROMPTS) resolve();
+          else { script.remove(); reject(new Error('Prompts unavailable')); }
+        };
+        script.onerror = function () { script.remove(); reject(new Error('Prompts unavailable')); };
+        document.head.appendChild(script);
+      }).finally(function () { promptsPending = null; });
+    }
+    promptsPending.then(function () {
+      if (openPost === post) renderPrompts(post);
+    }, function () {
+      if (openPost !== post) return;
+      host.removeAttribute('aria-busy');
+      host.textContent = 'Prompts couldn’t load. ';
+      var retry = document.createElement('button');
+      retry.type = 'button';
+      retry.className = 'ma-copybtn';
+      retry.textContent = 'Try again';
+      retry.addEventListener('click', function () { loadPrompts(post); });
+      host.appendChild(retry);
+    });
+  }
   var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   function fmtWhen(s) { // "2026-07-02T00:07" -> "Jul 2, 12:07 AM"
     var m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(s || ''); if (!m) return '';
@@ -363,7 +400,8 @@
     '<path d="M7 4.6V3.7a1 1 0 0 1 1-1h2.4" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>';
   function renderPrompts(post) {
     var host = tray.querySelector('.ma-prompts'); if (!host) return;
-    var data = PROMPTS[post.key];
+    var data = (window.POST_PROMPTS || {})[post.key];
+    host.removeAttribute('aria-busy');
     host.innerHTML = '';
     if (!data || !data.prompts || !data.prompts.length) { host.style.display = 'none'; return; }
     host.style.display = '';
@@ -456,7 +494,7 @@
         sparkHTML(eff.spark, lead) +
         '<p class="ma-extra-note">+' + eff.add.toLocaleString('en-US') + ' / -' + eff.del.toLocaleString('en-US') + ' lines, biggest single change +' + eff.biggest.toLocaleString('en-US') + '</p>';
     } else if (ex) { ex.innerHTML = ''; }
-    renderPrompts(post);
+    loadPrompts(post);
   }
   function closeTray() {
     var anchor = openPost && openPost._el;
@@ -469,7 +507,18 @@
     tray.setAttribute('inert', '');
     document.removeEventListener('keydown', onKey);
   }
-  function onKey(e) { if (e.key === 'Escape') closeTray(); }
+  function onKey(e) {
+    if (e.key === 'Escape') { e.preventDefault(); closeTray(); return; }
+    if (e.key !== 'Tab') return;
+    var controls = Array.from(tray.querySelectorAll('a[href], button, [tabindex="0"]'))
+      .filter(function (el) { return !el.disabled && el.getClientRects().length; });
+    var first = controls[0], last = controls[controls.length - 1];
+    if (!first) return;
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if ((!e.shiftKey && document.activeElement === last) || !tray.contains(document.activeElement)) {
+      e.preventDefault(); first.focus();
+    }
+  }
 
   grid.addEventListener('click', function (e) {
     var t = e.target.closest('.cv'); if (!t) return;
@@ -480,6 +529,7 @@
   tray.querySelector('.ma-tray-x').addEventListener('click', closeTray);
 
   // ---------- mount ----------
+  root.replaceChildren();
   root.appendChild(legend);
   root.appendChild(hint);
   // wrap the grid so it can clamp to a few rows behind a frosted veil (see collapse controller below)

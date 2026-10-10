@@ -75,9 +75,9 @@
 .hs-res-top { display: flex; align-items: baseline; justify-content: space-between; gap: 0.7rem; }
 .hs-res-title { font-family: var(--font-heading); font-size: 1.06rem; color: var(--text-bright); line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .hs-res-count { flex: none; font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.02em; color: var(--accent); white-space: nowrap; }
-.hs-res-snip { display: block; font-size: 0.84rem; line-height: 1.4; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 0.12rem; }
+.hs-res-snip { display: block; font-size: 0.84rem; line-height: 1.4; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 0.12rem; }
 .hs-empty { padding: 1.1rem 1rem; font-style: italic; color: var(--text-dim); font-size: 0.96rem; }
-.hs-foot { display: flex; align-items: center; gap: 1.1rem; padding: 0.55rem 0.85rem 0.4rem; margin-top: 4px; border-top: 1px solid var(--s-divide, rgba(245,241,234,0.06)); font-family: var(--font-mono); font-size: 0.66rem; color: var(--text-faint); }
+.hs-foot { display: flex; align-items: center; gap: 1.1rem; padding: 0.55rem 0.85rem 0.4rem; margin-top: 4px; border-top: 1px solid var(--s-divide, rgba(245,241,234,0.06)); font-family: var(--font-mono); font-size: 0.66rem; color: var(--text-dim); }
 .hs-foot-count { margin-left: auto; }
 mark.hs-hi { background: rgba(212, 196, 160, 0.22); color: var(--text-bright); border-radius: 2px; padding: 0 0.05em; }
 @media (prefers-reduced-motion: reduce) { .hs-panel { transition: opacity .12s ease, visibility .12s; transform: none; } .hs-panel.is-open { transform: none; } }
