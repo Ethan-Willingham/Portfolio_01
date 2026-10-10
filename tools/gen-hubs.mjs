@@ -203,11 +203,12 @@ function updateHomepage() {
   const cards = (html.match(/<li class="article-list-item[\s\S]*?<\/li>/g) || [])
     .filter((li) => !removed.has((li.match(/href="([^"]+)"/) || [])[1]));
   for (const p of STANDALONE_POSTS) {
+    const image = p.image || `assets/thumbs/${p.thumb}`;
+    const provenance = p.createdCommit ? `<!-- First published in GitHub commit ${p.createdCommit}, ${p.createdAt}. -->\n              ` : '';
     cards.push(`        <li class="article-list-item fade-in" data-keywords="${esc(p.keywords)}">
           <a class="article-item" href="${p.href}">
             <span class="article-item-thumb">
-              <!-- First published in GitHub commit ${p.createdCommit}, ${p.createdAt}. -->
-              ${p.credit ? `<!-- thumbnail: ${esc(p.credit)} -->\n              ` : ''}<picture><source type="image/webp" srcset="assets/thumbs/${p.thumb.replace(/\.jpg$/, '.webp')}"><img src="assets/thumbs/${p.thumb}" width="600" height="400" loading="lazy" decoding="async" alt="${esc(p.alt)}"></picture>
+              ${provenance}${p.credit ? `<!-- thumbnail: ${esc(p.credit)} -->\n              ` : ''}<picture><source type="image/webp" srcset="${image.replace(/\.jpg$/, '.webp')}"><img src="${image}" width="${p.width || 600}" height="${p.height || 400}" loading="lazy" decoding="async" alt="${esc(p.alt)}"></picture>
             </span>
             <time class="article-item-date" datetime="${p.date}">${p.dateDisplay}</time>
             <h2 class="article-item-title">${esc(p.title)}</h2>

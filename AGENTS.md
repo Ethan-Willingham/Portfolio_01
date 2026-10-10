@@ -115,6 +115,17 @@ post beside All Four Wheels on `archive.html` (In Progress). It has no Unity
 runtime, Sluice dependencies, or bundle step. Bump its CSS and script `?v=`
 values when changing them.
 
+**Let me LLM that for you** lives in `let-me-llm-that-for-you.html` as one
+self-contained HTML file with inline CSS and JavaScript. Read `docs/LET_ME_LLM.md`
+before changing it. By owner instruction, it uses its own neutral light/dark
+palette and the system font stack, an exception to the site's three-font rule.
+It has no site chrome, external assets, analytics, cookies or storage. A question
+link plays two steps, then hands off to ChatGPT only. Other providers have no
+verified equivalent web link, so do not add a picker or another destination.
+The wordless thumbnail sources and renderer live in `tools/let-me-llm/`.
+The homepage card is held on `lmltfy-card` until the owner's third gate passes;
+never include that held card in an earlier push.
+
 The portfolio pages and their assets (~50 live posts now; this lists the structure,
 not every page):
 

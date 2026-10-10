@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="color-scheme" content="light dark">
+  <meta name="referrer" content="no-referrer">
+  <title>Let me LLM that for you: lab</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M5 16h22m-8-8 8 8-8 8' fill='none' stroke='%23737373' stroke-width='3'/%3E%3C/svg%3E">
+  <style>
+    :root { color-scheme: light dark; }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 24px; background: light-dark(#f4f4f4, #171717); color: light-dark(#1c1c1c, #ececec); font: 14px/1.5 system-ui, sans-serif; }
+    header { margin: 0 auto 24px; max-width: 1500px; }
+    h1 { margin: 0; font-size: 24px; }
+    p { margin: 8px 0; }
+    .controls { display: flex; gap: 8px 16px; flex-wrap: wrap; margin-top: 16px; align-items: center; }
+    button, select { font: inherit; min-height: 44px; padding: 8px 12px; border: 1px solid #858585; border-radius: 8px; background: light-dark(#fff, #262626); color: inherit; }
+    :focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+    .row { max-width: 1500px; margin: 0 auto 36px; }
+    h2 { font-size: 18px; margin: 0 0 12px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 16px; }
+    figure { margin: 0; min-width: 0; }
+    figcaption { margin-bottom: 8px; }
+    .viewport { position: relative; width: 100%; overflow: hidden; border: 1px solid #858585; border-radius: 12px; }
+    iframe { position: absolute; top: 0; left: 0; border: 0; transform-origin: top left; }
+    .note { color: light-dark(#5f5f5f, #a3a3a3); }
+    @media (max-width: 500px) { body { padding: 16px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Let me LLM that for you: lab</h1>
+    <p>Each frame runs the real page. Previews stop before opening ChatGPT.</p>
+    <p class="note">Compare the look here. For timing, use the recordings or open the lab on a real device.</p>
+    <div class="controls">
+      <button id="replay" type="button">Replay all</button>
+      <button id="slow" type="button" aria-pressed="false">Slow motion: off</button>
+      <label>Viewport <select id="viewport"><option value="desktop">Desktop</option><option value="phone">Phone</option><option value="landscape">Phone landscape</option></select></label>
+      <label>Theme <select id="theme"><option value="light">Light</option><option value="dark">Dark</option></select></label>
+      <label>Pointer <select id="pointer"><option value="fine">Mouse</option><option value="coarse">Touch</option><option value="reduced">Reduced motion</option></select></label>
+    </div>
+  </header>
+  <main id="rows"></main>
+  <script>
+  {
+    'use strict';
+    const rows = [
+      ['Overall pace', [['Relaxed', { pace: 'relaxed' }], ['Natural (pick)', { pace: 'natural' }], ['Brisk', { pace: 'brisk' }]]],
+      ['Caption position', [['Above the composer (pick)', {}], ['By the pointer', { caption: 'tooltip' }]]],
+      ['Pointer sprite', [['Standard (pick)', {}], ['Compact', { sprite: 'compact' }]]],
+      ['Thinking indicator', [['Bars (pick)', {}], ['Ring', { thinking: 'ring' }]]],
+      ['Watch an example', [['On (pick)', { mode: 'maker', example: true }], ['Off', { mode: 'maker', example: false }]]]
+    ];
+    let slow = false;
+    for (const [title, variants] of rows) {
+      const section = document.createElement('section'); section.className = 'row';
+      const heading = document.createElement('h2'); heading.textContent = title; section.append(heading);
+      const grid = document.createElement('div'); grid.className = 'grid'; section.append(grid);
+      for (const [label, tune] of variants) {
+        const figure = document.createElement('figure');
+        const caption = document.createElement('figcaption'); caption.textContent = label;
+        const viewport = document.createElement('div'); viewport.className = 'viewport';
+        const iframe = document.createElement('iframe'); iframe.title = title + ': ' + label;
+        iframe.dataset.variant = JSON.stringify(tune); iframe.dataset.tune = JSON.stringify({ ...tune, theme: 'light' });
+        iframe.src = 'let-me-llm-that-for-you.html';
+        viewport.append(iframe); figure.append(caption, viewport); grid.append(figure);
+      }
+      document.querySelector('#rows').append(section);
+    }
+
+    function resizeFrames() {
+      const mode = document.querySelector('#viewport').value;
+      const [width, height] = mode === 'phone' ? [320, 568] : mode === 'landscape' ? [740, 360] : [1000, 650];
+      for (const iframe of document.querySelectorAll('iframe')) {
+        const scale = iframe.parentElement.clientWidth / width;
+        iframe.width = width; iframe.height = height;
+        iframe.style.transform = `scale(${scale})`;
+        iframe.parentElement.style.height = height * scale + 'px';
+      }
+    }
+
+    function reloadFrames() {
+      const theme = document.querySelector('#theme').value;
+      const pointer = document.querySelector('#pointer').value;
+      for (const iframe of document.querySelectorAll('iframe')) {
+        const variant = JSON.parse(iframe.dataset.variant);
+        iframe.dataset.tune = JSON.stringify({ ...variant, theme,
+          pointer: pointer === 'coarse' ? 'coarse' : 'fine', reduced: pointer === 'reduced', speed: slow ? .25 : 1 });
+        iframe.src = 'let-me-llm-that-for-you.html';
+      }
+      resizeFrames();
+    }
+
+    document.querySelector('#replay').addEventListener('click', () => {
+      for (const iframe of document.querySelectorAll('iframe')) iframe.contentWindow.LMLTFY_LAB?.replay();
+    });
+    document.querySelector('#slow').addEventListener('click', event => {
+      slow = !slow; event.currentTarget.textContent = 'Slow motion: ' + (slow ? 'on' : 'off');
+      event.currentTarget.setAttribute('aria-pressed', String(slow));
+      for (const iframe of document.querySelectorAll('iframe')) iframe.contentWindow.LMLTFY_LAB?.speed(slow ? .25 : 1);
+    });
+    for (const id of ['viewport', 'theme', 'pointer']) document.getElementById(id).addEventListener('change', reloadFrames);
+    new ResizeObserver(resizeFrames).observe(document.querySelector('#rows'));
+    resizeFrames();
+  }
+  </script>
+</body>
+</html>

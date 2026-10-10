@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Let me LLM thumbnail source</title>
+  <style>
+    /* Wordless artwork, independent of the page and the portfolio shell. */
+    * { box-sizing: border-box; }
+    html, body { margin: 0; width: 100%; height: 100%; background: #ffffff; }
+    body { display: grid; place-items: center; }
+    .composer {
+      position: relative;
+      width: min(80vw, 680px);
+      height: 100px;
+      border: 1px solid #d0d0d0;
+      border-radius: 26px;
+      background: #ffffff;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.04);
+    }
+    .send {
+      position: absolute;
+      right: 16px;
+      bottom: 16px;
+      display: grid;
+      place-items: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      background: #1c1c1c;
+      color: #ffffff;
+    }
+    .send svg { width: 22px; height: 22px; }
+    .pointer {
+      position: absolute;
+      left: calc(100% - 37px);
+      top: 64px;
+      width: 24px;
+      height: 30px;
+      filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.18));
+    }
+  </style>
+</head>
+<body>
+  <div class="composer" aria-hidden="true">
+    <div class="send">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    </div>
+    <svg class="pointer" viewBox="0 0 24 30" fill="#1c1c1c" stroke="#ffffff" stroke-width="1.5" stroke-linejoin="round"><path d="M3 2v20l6-5 5 10 4-2-5-10h9z"/></svg>
+  </div>
+</body>
+</html>
