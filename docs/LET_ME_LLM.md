@@ -145,7 +145,7 @@ unavailable environment UNVERIFIED with its reason.
 
 ## Thumbnails and site integration
 
-The wordless thumbnail source is `tools/let-me-llm/thumbnail.html`. It renders an
+The wordless thumbnail source is `tools/let-me-llm/thumbnail-lab.html`. It renders an
 empty composer on white, with a 26px radius, a dark rounded-square send button
 with a 12px radius, a horizontal right arrow and a pointer on the button.
 

@@ -16,7 +16,7 @@ catch (error) {
 }
 
 const root = path.resolve(__dirname, '../..');
-const source = path.join(__dirname, 'thumbnail.html');
+const source = path.join(__dirname, 'thumbnail-lab.html');
 const assets = path.join(root, 'assets/thumbs');
 const evidence = path.resolve(process.argv[2] || '/Users/ethan/Portfolio_01/research/let-me-llm/evidence/integration');
 const report = { source: path.relative(root, source), browser: '/Users/ethan/.local/bin/agent-chrome-for-testing', checks: [], errors: [], images: [] };
