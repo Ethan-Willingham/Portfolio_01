@@ -32,6 +32,14 @@
     var slowMotion = false;
     var valveSignature = null;
     var phoneLayout = window.matchMedia('(max-width: 520px)');
+    var handsNote=null;
+    if(toy.buildState && toy.buildState().handsLab){
+      var punch=document.createElement('button');punch.className='toy-chip';punch.dataset.buildTool='punch';
+      punch.setAttribute('aria-pressed','false');punch.textContent='Hole punch';
+      document.querySelector('#toy-panel-build .toy-build-tools').appendChild(punch);
+      handsNote=document.createElement('p');handsNote.className='toy-hands-note';
+      document.querySelector('#toy-panel-build .toy-build-tools').after(handsNote);
+    }
     var playback = shell.querySelector('.toy-playback');
     function placePlayback() {
       shell.querySelector(phoneLayout.matches ? '.toy-foot' : '.toy-top').appendChild(playback);
@@ -71,7 +79,8 @@
       seal: 'Drag across an opening to add a wall.',
       check: 'Drag across a pipe for a check valve. Direction sets which way it can open.',
       flap: 'Drag across a pipe for a flap valve. Use Grab to tap it open or closed.',
-      nozzle: 'Drag across an outlet to narrow it. Pipe bore sets the nozzle opening.'
+      nozzle: 'Drag across an outlet to narrow it. Pipe bore sets the nozzle opening.',
+      punch:'Tap a wall to open one cell. Undo moves current water clear before restoring it.'
     };
     var nativeScenes={'self-flushing-cup':true,tantalus:true,'thumb-straw':true};
     var nativeSetupScene=null,thumbPointer=null,thumbKeyboard=false;
@@ -209,8 +218,8 @@
       });
     });
     ['undo', 'redo'].forEach(function (name) {
-      document.getElementById('toy-build-' + name).addEventListener('click', function () {
-        try { notice = toy[name]() ? '' : 'There is nothing to ' + name + '.'; }
+      document.getElementById('toy-build-' + name).addEventListener('click', async function () {
+        try { notice = await Promise.resolve(toy[name]()) ? '' : 'There is nothing to ' + name + '.'; }
         catch (error) { notice = error.message; }
         sync();
       });
@@ -460,6 +469,7 @@
       }
       var builderState = toy.buildState ? toy.buildState() : {};
       var message = builderState.error || sample.error || notice;
+      if(builderState.pending)message='Restoring the wall. Water and the clock are paused until the edit finishes.';
       if(dismissedLinkError && message===dismissedLinkError)message=notice;
       // Preserve exact API diagnostics for tests while explaining a bad link
       // in the disclosure with ordinary words.
@@ -516,6 +526,20 @@
       });
       pressed(bar.querySelector('.toy-tools [data-tool="build"]'), building);
       var builderState = toy.buildState ? toy.buildState() : null;
+      var hands=!!(builderState && builderState.handsLab);
+      shell.classList.toggle('is-hands-lab',hands);
+      if(hands){
+        bar.querySelectorAll('.toy-tools [data-tool]').forEach(function(button){button.hidden=!/^(poke|build)$/.test(button.dataset.tool);});
+        presetsButton.hidden=true;
+        document.querySelectorAll('#toy-panel-build [data-build-tool]').forEach(function(button){button.hidden=button.dataset.buildTool!=='punch';button.disabled=!builderState.handsReady || builderState.pending;});
+        document.querySelector('#toy-panel-build .toy-build-options').hidden=true;
+        document.getElementById('toy-build-share').hidden=true;
+        ['undo','redo'].forEach(function(name){document.getElementById('toy-build-'+name).disabled=!builderState.handsReady || builderState.pending;});
+        var edit=builderState.wallEdit,world=toy.world(),width=30*8/world.w;
+        handsNote.textContent='Lab wall edits open one '+width.toFixed(2)+'-inch cell. Undo needs a clear adjacent exit; old walls, held caps and slime bounds block the move. '+
+          (edit && Number.isFinite(edit.workJoules) ? 'Last edit: '+edit.displaced+' parcels, '+(edit.workJoules/1.3558179483314).toFixed(5)+' ft lb of signed parcel work.' : 'Signed parcel work appears here after Undo.')+
+          (!builderState.handsReady ? ' Choose a cup, siphon, fountain or native machine.' : ' Existing valves can open here; closing them and other wall drawing use the original scene.');
+      }
       if (builderState) buildKind = state.tool === 'draw' || state.tool === 'erase' ? state.tool : builderState.kind;
       bar.querySelectorAll('[data-build-tool]').forEach(function (button) { pressed(button, button.dataset.buildTool === buildKind); });
       bar.querySelectorAll('[data-panel="water"], [data-tool="water"]').forEach(function (button) {

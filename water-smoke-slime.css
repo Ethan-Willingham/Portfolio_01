@@ -315,6 +315,8 @@ body.toy-expanded { overflow: hidden; }
 
 /* Fixed machine setups keep the primary action and measurement disclosure close. */
 .toy-shell.is-native-machine .toy-dock { display: none; }
+.toy-shell.is-native-machine.is-hands-lab .toy-dock { display: flex; }
+.toy-hands-note { margin: 12px 0; color: var(--text-dim); font: 12px/1.5 var(--font-body); }
 .toy-shell.is-native-machine .toy-machine-summary { gap: 10px; }
 .toy-native-options { display: grid; gap: 8px; margin-bottom: 18px; }
 .toy-native-options label { display: grid; gap: 6px; color: var(--text); }

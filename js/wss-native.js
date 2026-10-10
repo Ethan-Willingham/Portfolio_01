@@ -25,6 +25,10 @@ struct Grid {count:u32,w:u32,h:u32,ox:u32,oy:u32,cells:u32,dt:f32,inv:f32,
 @group(0) @binding(12) var<uniform> grid:Grid;
 struct Chunk {counts:vec4<u32>,energy:vec4<f32>};
 @group(0) @binding(13) var<storage,read_write> chunks:array<Chunk>;
+struct WallEdit {rect:vec4<f32>,meta:vec4<u32>,bodies:array<vec4<f32>,16>};
+@group(0) @binding(14) var<uniform> wallEdit:WallEdit;
+@group(0) @binding(15) var<storage,read_write> wallCandidates:array<vec4<f32>>;
+@group(0) @binding(16) var<storage,read_write> wallStatus:array<atomic<u32>>;
 const SCALE:f32=65536.0;
 fn value(i:u32)->f32{return bitcast<f32>(atomicLoad(&ledger[i]));}
 fn put(i:u32,v:f32){atomicStore(&ledger[i],bitcast<u32>(v));}
@@ -213,6 +217,58 @@ fn impacts(@builtin(global_invocation_id) id:vec3<u32>){
  let lost=cfg.units.w*0.5*bitcast<f32>(slots[i].z);
  emit(p.xy,lost);
 }
+fn editPathClear(a:vec2<f32>,b:vec2<f32>)->bool{
+ if(solid(a)||solid(b)||b.x<=0.0||b.y<=0.0||b.x>=cfg.world.x||b.y>=cfg.world.y){return false;}
+ for(var k=0u;k<cfg.counts.w;k=k+1u){
+  let cut=cfg.caps[k];let vertical=cut.x<0.5;
+  let old=select(a.y,a.x,vertical);let next=select(b.y,b.x,vertical);
+  if(old==next||(old-cut.y)*(next-cut.y)>0.0){continue;}
+  let t=(cut.y-old)/(next-old);let along=select(mix(a.x,b.x,t),mix(a.y,b.y,t),vertical);
+  if(t>=0.0&&t<=1.0&&along>=cut.z-0.00001&&along<=cut.w+0.00001){return false;}
+ }
+ // Axis-aligned evacuation cannot cross a live body's conservative bounds.
+ for(var k=0u;k<wallEdit.meta.y;k=k+1u){
+  let body=wallEdit.bodies[k];let lo=min(a,b);let hi=max(a,b);
+  if(hi.x>=body.x&&lo.x<=body.z&&hi.y>=body.y&&lo.y<=body.w){return false;}
+ }
+ return true;
+}
+@compute @workgroup_size(256)
+fn stageWall(@builtin(global_invocation_id) id:vec3<u32>){
+ let i=id.x;if(i>=cfg.counts.x){return;}wallCandidates[i]=vec4<f32>(0.0);
+ if(slots[i].x==0u){return;}let p=pos[i];
+ if(!finite(p)){atomicAdd(&wallStatus[0],1u);return;}
+ let r=wallEdit.rect;if(p.x<r.x||p.y<r.y||p.x>=r.x+r.z||p.y>=r.y+r.w){return;}
+ var found=false;var distance=1e20;var chosen=vec2<f32>(0.0);var axis=0.0;
+ for(var side=0u;side<4u;side=side+1u){
+  if((wallEdit.meta.x&(1u<<side))==0u){continue;}
+  var q=p.xy;var normal=1.0;
+  if(side==0u){q.y=r.y-0.0625;normal=2.0;}
+  if(side==1u){q.x=r.x-0.0625;}
+  if(side==2u){q.x=r.x+r.z+0.0625;}
+  if(side==3u){q.y=r.y+r.w+0.0625;normal=2.0;}
+  let d=length(q-p.xy);
+  if(d<distance&&editPathClear(p.xy,q)){found=true;distance=d;chosen=q;axis=normal;}
+ }
+ if(!found){atomicAdd(&wallStatus[0],1u);return;}
+ var after=vec4<f32>(chosen,p.zw);if(axis==1.0){after.z=0.0;}else{after.w=0.0;}
+ wallCandidates[i]=vec4<f32>(chosen,axis,energy(after)-energy(p));atomicAdd(&wallStatus[1],1u);
+}
+@compute @workgroup_size(256)
+fn applyWall(@builtin(global_invocation_id) id:vec3<u32>){
+ let i=id.x;if(i>=cfg.counts.x||atomicLoad(&wallStatus[0])!=0u||slots[i].x==0u){return;}
+ let candidate=wallCandidates[i];if(candidate.z==0.0){return;}
+ var p=pos[i];p.x=candidate.x;p.y=candidate.y;
+ if(candidate.z==1.0){p.z=0.0;}else{p.w=0.0;}
+ pos[i]=p;affine[i]=vec4<f32>(0.0);aux[i]=vec4<f32>(aux[i].xy,p.xy);flags[i]=flags[i]&0xff00006fu;
+ previous[i*2u]=p;previous[i*2u+1u]=vec4<f32>(aux[i].y,0.0,p.xy);slots[i].z=0u;
+}
+@compute @workgroup_size(1)
+fn finishWall(){
+ if(atomicLoad(&wallStatus[0])!=0u){return;}var work=0.0;
+ for(var i=0u;i<cfg.counts.x;i=i+1u){work=work+wallCandidates[i].w;}
+ atomicStore(&wallStatus[2],bitcast<u32>(work));put(18u,value(18u)+work);
+}
 `;
 
   // Bit 7 is a toy-only published lifecycle certificate. Native frozen bit 5
@@ -285,6 +341,11 @@ fn impacts(@builtin(global_invocation_id) id:vec3<u32>){
     var ax=tap ? Math.floor((tap.x-tw*.5)/cell)-2 : 0, ay=tap ? Math.floor((tap.y-th*.5)/cell)-2 : 0;
     var aw=tap ? Math.ceil(tw/cell)+6 : 4, ah=tap ? Math.ceil(th/cell)+6 : 4;
     var atlas=storage('atlas',aw*ah*4);
+    var editCandidates=null,editStatus=null,editConfig=null;
+    if(options.hands){
+      editCandidates=storage('wallCandidates',count*16);editStatus=storage('wallStatus',16);
+      editConfig=device.createBuffer({label:'toy.native.wallEdit',size:288,usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST});buffers.push(editConfig);
+    }
     var config=device.createBuffer({label:'toy.native.config',size:384,usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST});buffers.push(config);
     var bytes=new ArrayBuffer(384), ints=new Uint32Array(bytes), floats=new Float32Array(bytes);
     ints.set([count,initial,tap && tap.enabled !== false ? 1 : 0,caps.length]);
@@ -292,21 +353,22 @@ fn impacts(@builtin(global_invocation_id) id:vec3<u32>){
     floats.set([tap && tap.vx || 0,tap && tap.vy || 0,tap && tap.rate || 0,1/120],8);
     floats.set([width,height,floor,options.gravity || 250],12);
     floats.set(drain ? [drain.x,drain.y,drain.width,drain.height] : [0,0,0,0],16);
-    // 30 inches in 720 world pixels, one-inch extrusion, water 1000 kg/m3.
-    var mpp=.0254/24, parcelMass=1.5625*mpp*mpp*.0254*1000;
-    var physicalTimeScale=Math.sqrt((30/720)*(options.gravity || 250)/386.0886);
+    // Thirty-inch world width, one-inch extrusion, water 1000 kg/m3.
+    var mpp=.0254/(width/30), parcelMass=1.5625*mpp*mpp*.0254*1000;
+    var physicalTimeScale=Math.sqrt((30/width)*(options.gravity || 250)/386.0886);
     floats.set([options.reservoirY === undefined ? floor : options.reservoirY,cell,1.5625,parcelMass*mpp*mpp/(physicalTimeScale*physicalTimeScale)],20);
     floats.set([ax,ay,aw,ah],24);ints[30]=drain ? 1 : 0;
     var resources={0:config,1:instance.buf.pos,2:instance.buf.affine,3:instance.buf.aux,4:instance.buf.flag,
-      5:slotBuffer,6:ledger,7:freeIds,8:atlas,9:previous,10:events,11:instance.buf.terrainMask,12:instance.paramsBuf,13:chunks};
+      5:slotBuffer,6:ledger,7:freeIds,8:atlas,9:previous,10:events,11:instance.buf.terrainMask,12:instance.paramsBuf,13:chunks,14:editConfig,15:editCandidates,16:editStatus};
     var bindings={initialize:[0,1,2,3,4,5,6,9],beginFrame:[0,6],drainChunks:[0,1,2,3,4,5,6,9,10,13],prefixChunks:[0,6,13],scatterFree:[0,5,7,13],
       clearAtlas:[0,8],splatAtlas:[0,1,5,8],admit:[0,1,2,3,4,5,6,7,8,9,11,12],saveStep:[0,1,5,9],
       constrain:[0,1,2,5,6,9,10],saveCollision:[0,1,3,5,6,9,11,12],impacts:[0,1,3,5,6,9,10,11,12]};
+    if(options.hands)Object.assign(bindings,{stageWall:[0,1,5,11,12,14,15,16],applyWall:[0,1,2,3,4,5,9,15,16],finishWall:[0,6,15,16]});
     var module=device.createShaderModule({label:'toy.native.boundaries',code:SOURCE}), pipes={}, groups={};
     Object.keys(bindings).forEach(function(name){
-      if(bindings[name].filter(function(b){return b!==0 && b!==12;}).length>10)throw new Error('Native stage exceeds ten storage bindings.');
+      if(bindings[name].filter(function(b){return b!==0 && b!==12 && b!==14;}).length>10)throw new Error('Native stage exceeds ten storage bindings.');
       var entries=bindings[name].map(function(b){return {binding:b,visibility:GPUShaderStage.COMPUTE,
-        buffer:{type:b===0||b===12 ? 'uniform' : b===11 ? 'read-only-storage' : 'storage'}};});
+        buffer:{type:b===0||b===12||b===14 ? 'uniform' : b===11 ? 'read-only-storage' : 'storage'}};});
       var layout=device.createBindGroupLayout({label:'toy.native.'+name+'.layout',entries:entries});
       pipes[name]=device.createComputePipeline({label:'toy.native.'+name,layout:device.createPipelineLayout({bindGroupLayouts:[layout]}),
         compute:{module:module,entryPoint:name}});
@@ -326,7 +388,7 @@ fn impacts(@builtin(global_invocation_id) id:vec3<u32>){
       var u=new Uint32Array(buffer,0,LEDGER_WORDS), f=new Float32Array(buffer,0,LEDGER_WORDS);
       return {enabled:true,ready:initialized&&!destroyed,energyUnit:'J',physicalSecondsPerSimulationSecond:physicalTimeScale,pool:pool,tapEnabled:!!ints[2],count:count,initialPresent:initial,
         present:u[0],parked:u[1],requested:u[2],admitted:u[3],drained:u[4],shortfall:u[5],
-        energyIn:f[7],energyOut:f[8],externalWork:f[9],simulationTime:f[10],tick:u[15],frameId:u[16],
+        energyIn:f[7],energyOut:f[8],externalWork:f[9],editWork:f[18],simulationTime:f[10],tick:u[15],frameId:u[16],
         ageMs:Math.max(0,performance.now()-at),eventOverflow:u[12],error:u[13] ? 'Native boundary invariant '+u[13] : extension.error || null};
     }
     function capture(encoder,ring,state) {
@@ -361,6 +423,15 @@ fn impacts(@builtin(global_invocation_id) id:vec3<u32>){
         }
       }).catch(function(e){row.busy=false;if(!destroyed){extension.error=String(e.message||e);extension.ready=false;instance.materialStateError=extension.error;}});
     });}
+    var restoring=false,lastEdit=null,wallResult=options.hands ? readBuffer('toy.native.wallResult',16) : null;
+    function syncTerrain(){
+      var t=instance.terrain,hook=instance.liquid.fillTerrainSolid;
+      if(!t || t.capped || typeof hook!=='function')throw new Error('Wall editing needs the full native terrain region.');
+      var solidTiles=instance.staging.terrainSolid,mask=instance.staging.terrainMask,words=Math.ceil(t.tiles/32);
+      hook(t.originCol,t.originRow,t.w,t.h,solidTiles);mask.fill(0,0,words);
+      for(var i=0;i<t.tiles;i++)if(solidTiles[i])mask[i>>5]|=1<<(i&31);
+      queue.writeBuffer(instance.buf.terrainMask,0,mask,0,words);instance.terrainMaskWords=words;
+    }
     var extension={ready:false,inFlight:false,error:null,grid:grid,maxSubsteps:options.maxSubsteps,
       readyPromise:Promise.all([module.getCompilationInfo()].concat(Object.keys(grid).map(function(k){return grid[k].module.getCompilationInfo();}))).then(function(infos){
         var errors=infos.flatMap(function(info){return info.messages.filter(function(m){return m.type==='error';});});
@@ -406,15 +477,45 @@ fn impacts(@builtin(global_invocation_id) id:vec3<u32>){
       },
       applyPressureCaps:function(geometry,w,h,dx){global.WSSBoundaries.closePressureFaces(geometry,w,h,dx,caps);},
       setCaps:function(value){var next=global.WSSBoundaries.normalizeCaps(value);
+        if(restoring)throw new Error('Held boundaries cannot change during wall restoration.');
         if(next.some(function(c){return c.x0<0||c.y0<0||c.x1>width||c.y1>height;}))throw new Error('Held cut lies outside the native domain.');
         var dx=instance.pressureModel && instance.pressureModel.cellSize;
         if(dx && next.some(function(c){return Math.abs(c.at-Math.round(c.at/dx)*dx)>1e-5;}))throw new Error('Held cuts must lie on pressure faces.');
         caps=next;writeCaps();if(instance.pressureModel && instance.pressureModel.refreshToyCaps)instance.pressureModel.refreshToyCaps();return caps.slice();},
       setTapEnabled:function(value){ints[2]=tap && value ? 1 : 0;queue.writeBuffer(config,0,bytes);return !!ints[2];},
+      syncWallTerrain:syncTerrain,
+      restoreWall:async function(cell,bodies){
+        if(!options.hands)throw new Error('Safe wall editing was not enabled for this setup.');
+        if(!extension.ready || destroyed || restoring)throw new Error('Wait for the native wall edit to finish.');
+        if(!instance.pressureModel || instance.pressureModel.cellSize!==cell.width || cell.width!==cell.height ||
+          [cell.x,cell.y].some(function(v){return !Number.isFinite(v)||Math.abs(v/cell.width-Math.round(v/cell.width))>1e-5;}) ||
+          cell.x<=0 || cell.y<=0 || cell.x+cell.width>=width || cell.y+cell.height>=height ||
+          !Number.isInteger(cell.neighbors)||cell.neighbors<0||cell.neighbors>15)
+          throw new Error('Hole punch needs one complete pressure cell inside the apparatus.');
+        bodies=bodies || [];
+        if(bodies.length>16 || bodies.some(function(r){return !Array.isArray(r)||r.length!==4||!r.every(Number.isFinite)||r[0]>r[2]||r[1]>r[3];}))
+          throw new Error('The live slime bounds cannot be guarded for this wall edit.');
+        restoring=true;
+        try{
+          await queue.onSubmittedWorkDone();if(destroyed)throw new Error('Wall edit was retired.');extension.validateHost();syncTerrain();
+          var editBytes=new ArrayBuffer(288),ef=new Float32Array(editBytes),eu=new Uint32Array(editBytes);
+          ef.set([cell.x,cell.y,cell.width,cell.height]);eu[4]=cell.neighbors;eu[5]=bodies.length;
+          bodies.forEach(function(r,i){ef.set(r,8+i*4);});queue.writeBuffer(editConfig,0,editBytes);
+          var result=wallResult,encoder=device.createCommandEncoder({label:'toy.native.restoreWall'});
+          encoder.clearBuffer(editStatus);encode(encoder,'stageWall',count);encode(encoder,'applyWall',count);serial(encoder,'finishWall');
+          encoder.copyBufferToBuffer(editStatus,0,result.buffer,0,16);queue.submit([encoder.finish()]);
+          await result.buffer.mapAsync(GPUMapMode.READ);var data=result.buffer.getMappedRange().slice(0);result.buffer.unmap();
+          if(destroyed)throw new Error('Wall edit was retired.');var u=new Uint32Array(data),f=new Float32Array(data);
+          lastEdit={displaced:u[1],blocked:u[0],workJoules:f[2]};
+          if(u[0])throw new Error('Wall restoration blocked by trapped water or a closed boundary.');
+          return Object.assign({},lastEdit);
+        }finally{restoring=false;}
+      },
+      wallEditStats:function(){return Object.assign({pending:restoring},lastEdit);},
       setEventConsumer:function(fn){consumer=typeof fn==='function'?fn:null;},
-      stats:function(){var row=latest || latestSnapshot;return row ? Object.fromEntries(['enabled','energyUnit','physicalSecondsPerSimulationSecond','pool','count','initialPresent','present','parked','requested','admitted','drained','shortfall','energyIn','energyOut','externalWork','simulationTime','frameId','eventOverflow'].map(function(k){return [k,row[k]];}).concat([['inFlight',extension.inFlight],['pendingFrames',extension.inFlight?1:0],['tapEnabled',!!ints[2]],['ready',extension.ready],['ageMs',Math.max(0,performance.now()-row.capturedAtMs)],['error',extension.error||row.error]])) :
+      stats:function(){var row=latest || latestSnapshot;return row ? Object.fromEntries(['enabled','energyUnit','physicalSecondsPerSimulationSecond','pool','count','initialPresent','present','parked','requested','admitted','drained','shortfall','energyIn','energyOut','externalWork','editWork','simulationTime','frameId','eventOverflow'].map(function(k){return [k,row[k]];}).concat([['inFlight',extension.inFlight],['pendingFrames',extension.inFlight?1:0],['tapEnabled',!!ints[2]],['ready',extension.ready],['ageMs',Math.max(0,performance.now()-row.capturedAtMs)],['error',extension.error||row.error]])) :
         {enabled:true,ready:extension.ready,inFlight:extension.inFlight,pendingFrames:extension.inFlight?1:0,energyUnit:'J',physicalSecondsPerSimulationSecond:physicalTimeScale,pool:pool,tapEnabled:!!ints[2],count:count,initialPresent:initial,present:initial,parked:count-initial,requested:0,admitted:0,drained:0,shortfall:0,
-          energyIn:0,energyOut:0,externalWork:0,simulationTime:0,frameId:0,ageMs:null,error:extension.error,eventOverflow:0};},
+          energyIn:0,energyOut:0,externalWork:0,editWork:0,simulationTime:0,frameId:0,ageMs:null,error:extension.error,eventOverflow:0};},
       snapshot:function(){return latestSnapshot ? Object.assign({},latestSnapshot,{ageMs:Math.max(0,performance.now()-latestSnapshot.capturedAtMs)}) : null;},
       destroy:function(){destroyed=true;extension.ready=false;extension.inFlight=false;consumer=null;buffers.forEach(function(b){try{b.destroy();}catch(e){}});}
     };

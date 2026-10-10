@@ -43,5 +43,18 @@
     var along = c.axis === 'x' ? a.y+(b.y-a.y)*t : a.x+(b.x-a.x)*t;
     return along >= c.start-1e-5 && along <= c.end+1e-5 ? {t:t,along:along} : null;
   }
-  global.WSSBoundaries = {normalizeCaps:normalizeCaps, closePressureFaces:closePressureFaces, crossing:crossing};
+  function restorationCell(walls, target, width, height, tile) {
+    if (!(walls instanceof Uint8Array) || !(target instanceof Uint8Array) || walls.length!==width*height || target.length!==walls.length)
+      throw new Error('Wall restoration needs matching wall grids.');
+    var changed=[];
+    for(var i=0;i<walls.length;i++)if(walls[i]!==target[i])changed.push(i);
+    if(changed.length!==1)throw new Error('Only one-cell hole history is supported.');
+    var index=changed[0],col=index%width,row=Math.floor(index/width);
+    if(col<=0 || row<=0 || col>=width-1 || row>=height-1)throw new Error('The outside wall cannot be punched.');
+    if(walls[index] || target[index]!==1)throw new Error('This operation does not restore one wall cell.');
+    var neighbors=0;
+    [-width,-1,1,width].forEach(function(offset,k){if(!walls[index+offset] && !target[index+offset])neighbors|=1<<k;});
+    return {index:index,x:col*tile,y:row*tile,width:tile,height:tile,neighbors:neighbors};
+  }
+  global.WSSBoundaries = {normalizeCaps:normalizeCaps, closePressureFaces:closePressureFaces, crossing:crossing, restorationCell:restorationCell};
 })(typeof window !== 'undefined' ? window : globalThis);

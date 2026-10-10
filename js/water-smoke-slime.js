@@ -124,6 +124,7 @@
     fallbackURL.searchParams.delete('build');fallbackURL.hash='';
     window.location.assign(fallbackURL.href);return true;
   }
+  var handsRequested=new URLSearchParams(location.search).get('lab')==='1' && new URLSearchParams(location.search).get('hands')==='1';
   function nativeMachineScene(name){return !!(machineRegistry && machineRegistry.lookup(name));}
   function fixedMachineScene(name){return name==='cup' || name==='siphon' || name==='heron' || nativeMachineScene(name);}
   function machineSize(name){var entry=machineRegistry && machineRegistry.lookup(name);return entry ? entry.world : machineWorld;}
@@ -1192,7 +1193,7 @@
     }
     liquidWGPU = window.LiquidWGPU.create({
       mainCanvas: canvas,
-      toyNativeExtension: bootMachine ? window.WSSNative.create : undefined,
+      toyNativeExtension: bootMachine || handsRequested ? window.WSSNative.create : undefined,
       liquid: {
         maxParticles: LIQUID_MAX_PARTICLES,
         getCount: function () { return liquidCount; },
@@ -12243,6 +12244,7 @@
   }
 
   function beginToolInput(x,y,id) {
+    if(handsPending)return;
     pointerDown = true;
     pointerId = id;
     px = lastPaintX = x; py = lastPaintY = y;
@@ -12279,6 +12281,9 @@
   });
 
   function moveToolInput(x,y) {
+    if(handsRequested && tool==='build' && buildKind==='punch'){
+      handsSelection=window.WSSHands.pickWall({x:x,y:y},walls,gridW,gridH,TILE,fitScale,valveSeats);machineOverlayCache=null;
+    }
     pointerIn = true;
     if (pointerDown) {
       var now = performance.now();
@@ -12439,7 +12444,8 @@
   /* ---- Toolbar wiring -------------------------------------------------- */
   var toolButtons = [];
   function setTool(name) {
-    if(nativeMachineScene(currentScene) && name!=='poke')return;
+    if(handsPending)return;
+    if((nativeMachineScene(currentScene) || handsRequested) && name!=='poke' && !(handsRequested && name==='build'))return;
     if(pointerDown){
       var oldPointer=pointerId;releasePointer({pointerId:oldPointer},true);
       try{inputEl.releasePointerCapture(oldPointer);}catch(error){}
@@ -13148,11 +13154,12 @@
 
   var machineState=null;
   var toyBoundary=null,toySound=null,thumbWanted=false;
+  var handsPending=false,handsController=null,handsSelection=null,handsThumbRelease=false;
   var machineBuilder=null;
   var machineRequest=0,machineLoading=false,machineResumePause=false;
   var startupMachine=null,sharedBuildApplied=false,toyBootReady=false;
   var machineWaterLook=null;
-  var buildKind='pipe',buildOptions={bore:24,direction:'up',material:'glass',open:true};
+  var buildKind=handsRequested ? 'punch' : 'pipe',buildOptions={bore:24,direction:'up',material:'glass',open:true};
   var buildGesture=null,buildError=sharedBuildError,glassWalls=true,pressureColors=false,airPressureColors=true;
   var pressureViewCanvas=null,pressureViewCache=null;
   var machineOverlayCache=null;
@@ -13185,12 +13192,53 @@
     machineBuilder=window.WaterMachinesBuilder.create({width:gridW,height:gridH,tile:TILE,walls:walls,
       onChange:function(){
         wallsVersion++;airGeometryVersion=-1;rebuildValveSeats();
-        wakeLiquidNear(worldW*.5,worldH*.5,worldW+worldH);
+        if(!toyBoundary)wakeLiquidNear(worldW*.5,worldH*.5,worldW+worldH);
         wakeJelloNear(worldW*.5,worldH*.5,worldW+worldH);
       }});
     return machineBuilder;
   }
+  function publishHandsWalls(){
+    if(!toyBoundary || !handsController)throw new Error('The native wall setup is unavailable.');
+    toyBoundary.syncWallTerrain();airGeometryVersion=-1;airGeometryTick();machineOverlayCache=null;wallsBakedVersion=-1;
+    if(machineState)machineState.energyModified=true;
+    render();liquidWGPU.draw();
+  }
+  function enableHandsHistory(){
+    if(!handsRequested || !toyBoundary || !toyBoundary.ready || !airModel || airModel.cellSize!==TILE)
+      throw new Error('Hole punch needs a native machine with matching wall and pressure cells.');
+    machineBuilder.clearHistory();
+    handsController=window.WSSHands.bindHistory(machineBuilder,{
+      pending:function(value){
+        handsPending=value;
+        if(!value && handsThumbRelease){handsThumbRelease=false;machineThumb(false);}
+        syncRunning();
+      },
+      settled:function(){return liquidWGPU.queue.onSubmittedWorkDone();},
+      restore:function(cell){
+        var bodies=jelloBodies.map(function(b){
+          var left=Infinity,top=Infinity,right=-Infinity,bottom=-Infinity;
+          for(var i=0;i<b.n;i++){left=Math.min(left,b.px[i]);right=Math.max(right,b.px[i]);top=Math.min(top,b.py[i]);bottom=Math.max(bottom,b.py[i]);}
+          return [left-3,top-3,right+3,bottom+3];
+        });
+        return toyBoundary.restoreWall(cell,bodies);
+      },published:publishHandsWalls
+    });
+    // Opening an existing valve removes a solid seat. Closing its larger seat
+    // is outside this one-cell restoration item and fails before publication.
+    machineBuilder.updatePart=function(id,patch){
+      if(handsPending)throw new Error('Wait for the wall restoration to finish.');
+      var part=machineBuilder.parts.find(function(p){return p.id===id;});
+      if(!part || (part.type!=='flap' && part.type!=='check') || Object.keys(patch).length!==1 || patch.open!==true)
+        throw new Error('This wall lab can open existing valves. Close them in the original scene.');
+      part.open=true;machineBuilder._notify('Valve open',[]);publishHandsWalls();return Object.assign({},part);
+    };
+  }
   function setBuildTool(kind,options){
+    if(handsRequested){
+      if(kind!=='punch')throw new Error('This lab supports Hole punch and its Undo only.');
+      if(!handsController || !machineState || !machineState.ready)throw new Error('Hole punch needs a ready cup, siphon, fountain or native machine.');
+      cancelBuildGesture();buildKind=kind;setTool('build');return {kind:kind,options:{}};
+    }
     if(nativeMachineScene(currentScene))throw new Error('Choose an original scene to build.');
     if(['draw','erase','pipe','open-vessel','sealed-vessel','vent','seal','check','flap','nozzle'].indexOf(kind)<0)
       throw new Error('Unknown build tool.');
@@ -13206,12 +13254,18 @@
     buildGesture=null;
   }
   function beginBuildGesture(x,y){
+    if(handsRequested){
+      if(!handsController || handsPending)return;
+      handsSelection=window.WSSHands.pickWall({x:x,y:y},walls,gridW,gridH,TILE,fitScale,valveSeats);
+      buildGesture={kind:'punch',start:{x:x,y:y},end:{x:x,y:y},points:[]};return;
+    }
     var builder=ensureBuilder();builder.begin(buildKind);
     var point=builder.snap({x:x,y:y});
     buildGesture={kind:tool==='draw' || tool==='erase' ? tool : buildKind,start:point,end:point,points:[point]};
   }
   function extendBuildGesture(x,y){
     if(!buildGesture)return;
+    if(handsRequested){handsSelection=window.WSSHands.pickWall({x:x,y:y},walls,gridW,gridH,TILE,fitScale,valveSeats);return;}
     var point=machineBuilder.snap({x:x,y:y}),last=buildGesture.points[buildGesture.points.length-1];
     buildGesture.end=point;
     if(point.x!==last.x || point.y!==last.y)buildGesture.points.push(point);
@@ -13219,6 +13273,16 @@
   function finishBuildGesture(){
     if(!buildGesture)return;
     var gesture=buildGesture;buildGesture=null;
+    if(handsRequested){
+      try{
+        if(!handsController || handsPending || !handsSelection)throw new Error('Choose a solid wall cell.');
+        var cell=handsSelection;
+        if(!walls[cell.index] || valveSeats && valveSeats[cell.index])throw new Error('That wall cell is no longer available.');
+        machineBuilder.begin('Hole punch');machineBuilder.vent({x:cell.x,y:cell.y,width:TILE,height:TILE},true);machineBuilder.commit();
+        publishHandsWalls();buildError=null;
+      }catch(error){buildError=error.message;}
+      return;
+    }
     try{
       var a=gesture.start,b=gesture.end,kind=gesture.kind;
       var r={x:Math.min(a.x,b.x)-TILE*.5,y:Math.min(a.y,b.y)-TILE*.5,
@@ -13238,10 +13302,15 @@
     }catch(error){machineBuilder.cancel();buildError=error.message;}
   }
   function buildUndo(redo){
+    if(handsRequested){
+      if(!handsController || handsPending)return Promise.reject(new Error('Wait for the native wall setup.'));
+      cancelBuildGesture();return (redo ? machineBuilder.redo() : machineBuilder.undo()).then(function(result){buildError=null;return result;}).catch(function(error){buildError=error.message;throw error;});
+    }
     if(nativeMachineScene(currentScene))return false;
     cancelBuildGesture();return redo ? ensureBuilder().redo() : ensureBuilder().undo();
   }
   function setManualValve(id,open){
+    if(handsPending)throw new Error('Wait for the wall restoration to finish.');
     var builder=ensureBuilder(),part=builder.getParts().find(function(p){return p.id===id;});
     if(!part || (part.type!=='flap' && part.type!=='check'))throw new Error('Choose a valve to change its opening.');
     manualValves.add(id);var result=builder.updatePart(id,{open:!!open});
@@ -13263,12 +13332,14 @@
     setManualValve(selected.id,!selected.open);return true;
   }
   function shareBuild(){
+    if(handsRequested)throw new Error('Wall lab builds cannot be shared yet.');
     if(nativeMachineScene(currentScene))throw new Error('This machine uses a fixed apparatus.');
     var url=new URL(window.location.href);url.searchParams.delete('scene');
     url.searchParams.delete('seed');url.searchParams.delete('smoke');
     return ensureBuilder().share(url.href);
   }
   async function loadBuild(input){
+    if(handsRequested)throw new Error('Shared builds are not supported by this wall lab.');
     if(bootMachine)throw new Error('Choose an original scene to load a build.');
     var decoded=window.WaterMachinesBuilder.decode(input);
     if(decoded.width!==gridW || decoded.height!==gridH || decoded.tile!==TILE)
@@ -13316,7 +13387,7 @@
   function measureMachine(state,snapshot){
     var I=window.WaterMachinesInstruments;if(!I)return;
     var definition=state.definition,m=definition.measure;
-    if(toyBoundary){measureNativeMachine(state,snapshot);return;}
+    if(toyBoundary && state.definition.boundaries){measureNativeMachine(state,snapshot);return;}
     var units=I.scale({width:worldW,density:airModel.settings.density || 1});
     var vesselOptions={tile:TILE,floor:worldH};
     if(definition.name==='heron'){
@@ -13452,6 +13523,7 @@
       numericalStatus:I.numericalStatus(snapshot),error:boundary.error || buildError || airState.error};
   }
   async function machineThumb(held){
+    if(handsPending){if(!held)handsThumbRelease=true;return false;}
     thumbWanted=!!held;
     if(!machineState || machineState.definition.name!=='thumb-straw')return false;
     if(!held){
@@ -13465,6 +13537,7 @@
     machineOverlayCache=null;return thumbWanted;
   }
   async function constructMachine(name,options){
+    if(handsPending)throw new Error('Wait for the wall restoration to finish.');
     options=options || {};
     if(!window.WaterMachinesScenes || !window.WaterMachinesBuilder)throw new Error('Water apparatus definitions are unavailable.');
     if(waterState!=='on')return Promise.reject(new Error(waterState==='off' ? 'Water machines need WebGPU in this browser.' : 'Wait for the water engine to finish loading.'));
@@ -13473,7 +13546,7 @@
     var request=++machineRequest, ownBoundary=null;
     try{
     clearWorldAll(options.canvasThumb);setGravityUI(1);
-    machineBuilder=null;valveSeats=null;manualValves.clear();instrumentSample=null;instrumentPending=false;instrumentNextAt=0;
+    machineBuilder=null;handsController=null;handsSelection=null;valveSeats=null;manualValves.clear();instrumentSample=null;instrumentPending=false;instrumentNextAt=0;
     var module=nativeMachineScene(name) ? await machineRegistry.load(name) : window.WaterMachinesScenes;
     if(request!==machineRequest)return null;
     var definition=nativeMachineScene(name) ? module.make({w:worldW,h:worldH,tile:TILE},options) : module.make(name,{w:worldW,h:worldH,tile:TILE},options);
@@ -13523,12 +13596,12 @@
     var state=machineState={definition:definition,seed:options.seed || 17,initialParticles:added,ready:false,
       primaryUsed:false,startedAt:null,wallClockStartedAt:null,energyInput:0,inputParticles:0,energyModified:false};
     setSceneChip(name);if(!options.canvasThumb)setTool('poke');bakeWalls();updateReadout();
-    if(definition.boundaries){
-      var boundaryOptions=Object.assign({},definition.boundaries,{width:worldW,height:worldH,initialPresent:added,floor:worldH,gravity:250,maxSubsteps:isMobile ? 2 : undefined});
+    if(definition.boundaries || handsRequested){
+      var boundaryOptions=Object.assign({},definition.boundaries || {},{hands:handsRequested,width:worldW,height:worldH,initialPresent:added,floor:worldH,gravity:250,maxSubsteps:isMobile ? 2 : undefined});
       ownBoundary=await liquidWGPU.configureToyNative(boundaryOptions);
       if(request!==machineRequest){ownBoundary.destroy();return null;}
       toyBoundary=ownBoundary;
-      if(definition.boundaries.pool){
+      if(definition.boundaries && definition.boundaries.pool){
         for(var parked=added;parked<LIQUID_MAX_PARTICLES;parked++){
           liquidX[parked]=-1024;liquidY[parked]=-1024;liquidVX[parked]=0;liquidVY[parked]=0;
           liquidG00[parked]=0;liquidG01[parked]=0;liquidG10[parked]=0;liquidG11[parked]=0;
@@ -13572,6 +13645,7 @@
     if(request!==machineRequest)return null;
     if(liquidWGPU.materialStateError)throw new Error(liquidWGPU.materialStateError);
     state.ready=true;state.startedAt=liquidWGPU.simulationClock;state.wallClockStartedAt=performance.now();
+    if(handsRequested)enableHandsHistory();
     fitStage();
     instrumentTick(performance.now());
     return state;
@@ -13590,6 +13664,7 @@
   }
 
   function machinePrimary(){
+    if(handsPending)return false;
     if(!machineState || !machineState.ready)return false;
     var definition=machineState.definition,primary=definition.primary;
     if(primary.kind==='tap'){
@@ -13691,6 +13766,7 @@
   }
 
   function scene(name) {
+    if(handsPending){buildError='Wait for the wall restoration to finish.';return;}
     var size=machineSize(name);
     if(toyBootReady && ((fixedMachineScene(name) && (worldW!==size.w || worldH!==size.h)) || nativeMachineScene(name)!==!!bootMachine || (bootMachine && name!==bootMachine.id))){
       thumbWanted=false;if(toySound)toySound.setActive(false);
@@ -13886,7 +13962,7 @@
       instrumentsCanvas.setAttribute('aria-hidden','true');stage.appendChild(instrumentsCanvas);
       instrumentsCtx=instrumentsCanvas.getContext('2d');
     }
-    var overlayKey=[wallsVersion,pressureColors,airPressureColors,fitScale,viewPanX,viewPanY,cameraWidth,cameraHeight,currentScene,highlightedValve].join(':');
+    var overlayKey=[wallsVersion,pressureColors,airPressureColors,fitScale,viewPanX,viewPanY,cameraWidth,cameraHeight,currentScene,highlightedValve,handsSelection && handsSelection.index].join(':');
     if(!buildGesture && !keyboardCursorVisible && machineOverlayCache && machineOverlayCache.key===overlayKey && machineOverlayCache.sample===instrumentSample)return;
     machineOverlayCache=!buildGesture && !keyboardCursorVisible ? {key:overlayKey,sample:instrumentSample} : null;
     var c=instrumentsCtx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,worldW,worldH);instrumentsDirty=true;
@@ -13933,6 +14009,11 @@
       c.drawImage(pressureViewCanvas,0,0,worldW,worldH);
     }
     c.lineWidth=1;c.strokeStyle=accent;c.fillStyle=text;c.font='14px "Commit Mono", monospace';
+    if(handsRequested && tool==='build' && handsSelection){
+      var selected=handsSelection;c.save();c.lineWidth=2/fitScale;c.strokeRect(selected.x,selected.y,selected.width,selected.height);
+      c.setLineDash([3/fitScale,3/fitScale]);var hit=22/fitScale;
+      c.strokeRect(selected.x+selected.width*.5-hit,selected.y+selected.height*.5-hit,hit*2,hit*2);c.restore();
+    }
     if(machineState){
       var definition=machineState.definition;
       definition.marks.forEach(function(mark){
@@ -14062,7 +14143,7 @@
 
   function frame(tNow) {
     rafId = requestAnimationFrame(frame);
-    if(toyBoundary && toyBoundary.inFlight){instrumentTick(tNow);return;}
+    if(handsPending || toyBoundary && toyBoundary.inFlight){instrumentTick(tNow);return;}
     var dt = lastT ? (tNow - lastT) / 1000 : 1 / 60;
     lastT = tNow;
     toyFrameNo++;
@@ -14125,7 +14206,7 @@
   }
 
   function syncRunning() {
-    var active=!userPaused && !document.hidden && visibleFrac>=0.06;
+    var active=!handsPending && !userPaused && !document.hidden && visibleFrac>=0.06;
     if(toySound)toySound.setActive(active && !!toyBoundary);
     if(!active)stopLoop();else startLoop();
   }
@@ -14186,6 +14267,13 @@
     if(bootMachine){
       try{await machineRegistry.load(bootMachine.id);}
       catch(error){if(defaultMachineFallback())return;document.getElementById('toy-fallback').hidden=false;buildError=error.message;return;}
+    }
+    if(handsRequested && !window.WSSNative){
+      try{
+        for(var path of ['wss-boundaries','wss-hands','wss-native'])await new Promise(function(resolve,reject){
+          var script=document.createElement('script');script.src='/js/'+path+'.js?v='+encodeURIComponent(TOY_VERSION);script.onload=resolve;script.onerror=function(){reject(new Error('The wall lab did not load.'));};document.head.appendChild(script);
+        });
+      }catch(error){document.getElementById('toy-fallback').hidden=false;buildError=error.message;return;}
     }
     addBorder();
     bootLiquid();
@@ -14365,7 +14453,8 @@
       soundStats:function(){return toySound ? toySound.stats() : {enabled:false};},
       builder: function () { return machineBuilder; },
       buildTool:setBuildTool,
-      buildState:function(){return {kind:buildKind,options:Object.assign({},buildOptions),error:buildError,sharing:!!sharedBuildData};},
+      buildState:function(){return {kind:buildKind,options:Object.assign({},buildOptions),error:buildError,sharing:!!sharedBuildData,
+        handsLab:handsRequested,handsReady:!!handsController,pending:handsPending,wallEdit:toyBoundary ? toyBoundary.wallEditStats() : null};},
       undo:function(){return buildUndo(false);},redo:function(){return buildUndo(true);},
       shareBuild:shareBuild,loadBuild:loadBuild,
       valve:setManualValve,
