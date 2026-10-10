@@ -21,6 +21,10 @@
     return {
       name:'roman-inverted-siphon', title:'Roman inverted siphon', seed:options.seed || 17,
       setup:sameHead ? 'same-head' : 'lower-receiver', action:closed ? 'Open intake' : 'Close intake',
+      setups:[{id:'lower-receiver',label:'Lower reservoir',options:{sameHead:false}},
+        {id:'same-head',label:'Equal starting levels',options:{sameHead:true}}],
+      readingLabel:'Stored water',
+      boundaryNote:'The pipe starts full. Closing the intake seals the source end; there is no pump, tap or drain.',
       caption:'Vitruvius described pipes crossing a valley floor and rising up the far side. '+
         (sameHead ? 'With both water surfaces at the same height, gravity supplies no steady head for delivery.' :
           'This pipe starts full, and the higher reservoir supplies the pressure for the climb.'),
