@@ -42,6 +42,8 @@
     definition.boundaries.tap.x = 432;
     definition.slimes.push({x:112, y:152, radius:24, held:false});
     definition.solids.push({x:32, y:176, width:128, height:8});
+    // A visible passive lip keeps the unfrozen body on its shelf.
+    definition.solids.push({x:24, y:120, width:8, height:64});
     definition.measure.mouth = {x:156, y:152, width:16, height:8};
     definition.measure.mouthLine = 156;
     definition.measure.mouthCenter = {x:164, y:156};
