@@ -149,6 +149,7 @@ async function consumeRound(page, pairs, { touch = false, viewport } = {}) {
     assert.deepEqual(await page.locator('.sb-fighter-name').allTextContents(), names, 'the round preserves the exact chosen order and sides');
     for (const id of pairs[index]) { assert.equal(seen.has(id), false, 'a character never repeats'); seen.add(id); }
     if (touch) await readablePhoneLayout(page);
+    assert.equal(await page.locator('#sb-next').isVisible(), false, 'each matchup starts unanswered, including replayed rounds');
     if (!await page.locator('#sb-next').isVisible()) {
       assert.equal(await page.locator('#sb-round-actions').isVisible(), false, 'advance controls stay hidden until a vote is saved');
       if (viewport && index === 0) await capture(page, '/tmp/spongebob-phone-' + viewport.width + 'x' + viewport.height + '-choices.png');
@@ -192,9 +193,19 @@ async function consumeRound(page, pairs, { touch = false, viewport } = {}) {
     await page.locator('#sb-refresh').click(); await page.waitForFunction(() => document.getElementById('sb-vote-total').textContent.startsWith('2 votes'));
     const repeated = await page.evaluate(() => SpongeBobVotes.vote({ pair: ['patrick-star', 'spongebob-squarepants'], winner: 'spongebob-squarepants' }));
     assert.equal(repeated.total, 2); assert.equal(repeated.winner, 'patrick-star', 'first vote sticks for reversed pair');
+    const previousId = await page.evaluate(() => SpongeBobVotes.getVoterId());
+    await page.evaluate(id => {
+      localStorage.setItem('spongebob-voter-v1', id);
+      sessionStorage.setItem('spongebob-voter-v1', id);
+    }, previousId);
     await page.reload(); await fightReady(page);
-    assert.match(await page.locator('#sb-vote-status').textContent(), /saved choice: Patrick Star/);
-    assert.match(await page.locator('#sb-vote-total').textContent(), /^2 votes/);
+    assert.notEqual(await page.evaluate(() => SpongeBobVotes.getVoterId()), previousId, 'a reload ignores both legacy saved identities');
+    assert.equal(await page.locator('#sb-vote-state').isVisible(), false, 'a reload does not reveal a previous vote');
+    assert.equal(await page.locator('#sb-result-left').isVisible(), false);
+    assert.equal(await page.locator('#sb-next').isVisible(), false);
+    await voteFor(page, 'SpongeBob SquarePants');
+    assert.match(await page.locator('#sb-vote-status').textContent(), /^You chose SpongeBob SquarePants/);
+    assert.match(await page.locator('#sb-vote-total').textContent(), /^3 votes/, 'new rounds add responses while preserving community totals');
     const outage = await context({ width: 320, height: 568 }, { isMobile: true, hasTouch: true }); failure = 'get';
     await outage.page.goto(share); await outage.page.locator('#sb-vote-retry').waitFor({ state: 'visible' });
     assert.equal(await outage.page.locator('#sb-fighter-left').isDisabled(), true);
@@ -208,8 +219,8 @@ async function consumeRound(page, pairs, { touch = false, viewport } = {}) {
     assert.equal(await outage.page.locator('#sb-next').isVisible(), false, 'an unconfirmed vote cannot advance');
     await readablePhoneLayout(outage.page);
     failure = null; await outage.page.locator('#sb-vote-retry').tap(); await outage.page.locator('#sb-next').waitFor({ state: 'visible' });
-    assert.match(await outage.page.locator('#sb-vote-total').textContent(), /^3 votes/, 'retry confirms exactly one saved vote');
-    assert.equal(sqlite.prepare('SELECT COUNT(*) AS n FROM matchup_votes').get().n, 3);
+    assert.match(await outage.page.locator('#sb-vote-total').textContent(), /^4 votes/, 'retry confirms exactly one saved vote');
+    assert.equal(sqlite.prepare('SELECT COUNT(*) AS n FROM matchup_votes').get().n, 4);
     await readablePhoneLayout(outage.page); await outage.context.close();
     await page.goto(base + '/spongebob-fight.html'); await fightReady(page);
     const decoded = await page.evaluate(async ids => {
@@ -220,7 +231,10 @@ async function consumeRound(page, pairs, { touch = false, viewport } = {}) {
     await capture(page, '/tmp/spongebob-showdown-desktop.png');
     await consumeRound(page, requestedPairs);
     await capture(page, '/tmp/spongebob-showdown-complete.png');
-    await page.locator('#sb-restart').click(); await consumeRound(page, requestedPairs);
+    const completedRoundId = await page.evaluate(() => SpongeBobVotes.getVoterId());
+    await page.locator('#sb-restart').click(); await fightReady(page);
+    assert.notEqual(await page.evaluate(() => SpongeBobVotes.getVoterId()), completedRoundId, 'Play another round starts a fresh identity');
+    await consumeRound(page, requestedPairs);
     const forwarded = await context();
     await forwarded.page.goto(base + '/spongebob-fight.html#' + new URLSearchParams({ roster: forwardedRosterIds.join(','), matchups: JSON.stringify(requestedPairs) }));
     await consumeRound(forwarded.page, requestedPairs); await forwarded.context.close();
@@ -243,9 +257,13 @@ async function consumeRound(page, pairs, { touch = false, viewport } = {}) {
     assert.match(await missingAPI.page.locator('#sb-load-state').textContent(), /vote service did not load/);
     assert.equal(await missingAPI.page.locator('#sb-matchup').isVisible(), false); await missingAPI.context.close();
     const noStorage = await context();
-    await noStorage.context.addInitScript(() => { Object.defineProperty(window, 'localStorage', { get() { throw new DOMException('Storage unavailable', 'SecurityError'); } }); });
+    await noStorage.context.addInitScript(() => {
+      for (const name of ['localStorage', 'sessionStorage']) Object.defineProperty(window, name, { get() { throw new DOMException('Storage unavailable', 'SecurityError'); } });
+    });
     await noStorage.page.goto(share); await fightReady(noStorage.page); await voteFor(noStorage.page, 'Patrick Star');
-    await noStorage.page.reload(); await fightReady(noStorage.page); assert.match(await noStorage.page.locator('#sb-vote-status').textContent(), /saved choice: Patrick Star/); await noStorage.context.close();
+    await noStorage.page.reload(); await fightReady(noStorage.page);
+    assert.equal(await noStorage.page.locator('#sb-result-left').isVisible(), false, 'storage is unnecessary for fresh rounds');
+    await voteFor(noStorage.page, 'SpongeBob SquarePants'); await noStorage.context.close();
     for (const viewport of [{ width: 320, height: 480 }, { width: 320, height: 568 }, { width: 375, height: 667 }, { width: 390, height: 844 }, { width: 430, height: 932 }, { width: 568, height: 320 }, { width: 667, height: 375 }, { width: 844, height: 390 }]) {
       const phone = await context(viewport, { isMobile: true, hasTouch: true });
       await phone.page.goto(base + '/spongebob-fight.html'); await consumeRound(phone.page, requestedPairs, { touch: true, viewport });
@@ -255,7 +273,7 @@ async function consumeRound(page, pairs, { touch = false, viewport } = {}) {
     assert.ok(!fs.readFileSync(path.join(root, 'archive.html'), 'utf8').includes('spongebob-picker.html'));
     assert.ok(!JSON.parse(fs.readFileSync(path.join(root, 'search-index.json'))).posts.some(post => post.url === 'spongebob-picker.html'));
     assert.deepEqual(errors, [], 'no browser script errors');
-    console.log('PASS: ten exact pairs with no repeats; touch voting/results/large Next across eight phone viewports and both orientations; no Skip/menu/captions/picker; 95 clean portraits; real isolated vote totals, duplicate prevention, persistence and retry.');
+    console.log('PASS: ten exact pairs with no repeats; touch voting/results/large Next across eight phone viewports and both orientations; no Skip/menu/captions/picker; 95 clean portraits; real isolated vote totals, fresh reloads and replays, ignored legacy storage, duplicate prevention within a round and safe retry.');
   } finally {
     await browser?.close(); await new Promise(resolve => server.close(resolve)); sqlite.close();
   }

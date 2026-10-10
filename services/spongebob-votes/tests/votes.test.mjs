@@ -63,7 +63,7 @@ async function vote(env, winner, voterId = voterOne, selectedPair = pair) {
   return response.json();
 }
 
-test('real SQLite counts, unordered pair, first vote sticks, reload identifies visitor', async () => {
+test('real SQLite counts, unordered pair, first vote sticks, same round identifies its response', async () => {
   const env = database();
   try {
     const empty = await worker.fetch(new Request(`https://votes.example/v1/votes?a=${pair[0]}&b=${pair[1]}&voterId=${voterOne}`), env);
@@ -93,13 +93,42 @@ test('real SQLite counts, unordered pair, first vote sticks, reload identifies v
   } finally { env.sqlite.close(); }
 });
 
-test('simultaneous submissions count once, independent browser votes count separately', async () => {
+test('simultaneous submissions count once, independent rounds count separately', async () => {
   const env = database();
   try {
     await Promise.all(Array.from({ length: 20 }, (_, index) => vote(env, pair[index % 2])));
     const last = await vote(env, 'patrick-star', voterTwo);
     assert.equal(last.total, 2);
     assert.equal(Object.values(last.counts).reduce((sum, value) => sum + value, 0), 2);
+  } finally { env.sqlite.close(); }
+});
+
+test('owner cleanup deletes only the exact reviewed row and is safe to retry', async () => {
+  const env = database();
+  env.VOTE_MAINTENANCE_TOKEN = 'test-maintenance-secret-that-is-over-forty-characters';
+  env.VOTE_MAINTENANCE_EXPIRES_AT = String(Math.floor(Date.now() / 1000) + 60);
+  const request = (body, token = env.VOTE_MAINTENANCE_TOKEN, origin) => new Request('https://votes.example/internal/remove-vote', {
+    method: 'POST', headers: { Authorization: 'Bearer ' + token, ...(origin ? { Origin: origin } : {}) }, body: JSON.stringify(body)
+  });
+  try {
+    await vote(env, 'patrick-star');
+    await vote(env, 'spongebob-squarepants', voterTwo);
+    const row = env.sqlite.prepare('SELECT * FROM matchup_votes WHERE winner = ?').get('patrick-star');
+    const target = { pair, voterHash: row.voter_hash, winner: row.winner, createdAt: row.created_at };
+    assert.equal((await worker.fetch(request(target, 'wrong'), env)).status, 404);
+    assert.equal((await worker.fetch(request(target, env.VOTE_MAINTENANCE_TOKEN, origin), env)).status, 404);
+    assert.equal((await worker.fetch(request(target), { ...env, VOTE_MAINTENANCE_EXPIRES_AT: '1' })).status, 404);
+    assert.equal((await worker.fetch(request(target), { DB: env.DB })).status, 404);
+    assert.equal((await worker.fetch(request({ ...target, voterHash: 'invalid' }), env)).status, 400);
+    for (const mismatch of [{ winner: 'spongebob-squarepants' }, { createdAt: row.created_at + 1 }, { voterHash: '0'.repeat(64) }]) {
+      const result = await (await worker.fetch(request({ ...target, ...mismatch }), env)).json();
+      assert.equal(result.removed, 0); assert.equal(result.total, 2);
+    }
+    const result = await (await worker.fetch(request(target), env)).json();
+    assert.equal(result.removed, 1); assert.equal(result.total, 1);
+    assert.deepEqual(result.counts, { 'patrick-star': 0, 'spongebob-squarepants': 1 });
+    assert.equal((await (await worker.fetch(request(target), env)).json()).removed, 0);
+    assert.equal(env.sqlite.prepare('SELECT COUNT(*) AS n FROM matchup_votes').get().n, 1);
   } finally { env.sqlite.close(); }
 });
 

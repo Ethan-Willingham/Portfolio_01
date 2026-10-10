@@ -2,25 +2,15 @@
   'use strict';
 
   const endpoint = String(window.SPONGEBOB_VOTES_ENDPOINT || 'https://spongebob-votes-ethan.snugbay4.chatgpt.site').replace(/\/$/, '');
-  const identityKey = 'spongebob-voter-v1';
-  const identityPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   let identity;
 
-  function getVoterId() {
-    if (identity) return identity;
-    for (const name of ['localStorage', 'sessionStorage']) {
-      try {
-        const stored = window[name].getItem(identityKey);
-        if (stored && identityPattern.test(stored)) {
-          identity = stored;
-          return identity;
-        }
-      } catch (_) {}
-    }
+  // A round belongs to this page load. Keep its ID stable only for safe retries.
+  function startRound() {
     identity = crypto.randomUUID();
-    for (const name of ['localStorage', 'sessionStorage']) {
-      try { window[name].setItem(identityKey, identity); } catch (_) {}
-    }
+  }
+
+  function getVoterId() {
+    if (!identity) startRound();
     return identity;
   }
 
@@ -73,6 +63,7 @@
 
   window.SpongeBobVotes = Object.freeze({
     endpoint,
+    startRound,
     getVoterId,
     get: pair => request(pair),
     vote: ({ pair, winner, voterId }) => {

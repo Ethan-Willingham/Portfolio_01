@@ -4,7 +4,7 @@ Bikini Bottom Showdown uses `js/spongebob-votes.js`. It calls a separate Sites W
 
 Service URL: `https://spongebob-votes-ethan.snugbay4.chatgpt.site`.
 
-Version 3 was published on October 9, 2026, with 1,371 allowed IDs: the 1,370-character original-TV catalog and the separately preserved Bare-Knuckles selection. The health check confirmed the database binding and allowlist size. Updating the catalog preserves recorded votes. No test votes were inserted into production.
+Version 4 was published on October 9, 2026, with bounded owner vote removal and 1,371 allowed IDs: the 1,370-character original-TV catalog and the separately preserved Bare-Knuckles selection. The health check confirmed the database binding and allowlist size. Updating the catalog preserves recorded votes. No test votes were inserted into production.
 
 Sites project: `appgprj_6ac94fd85c608191bac6cf13f1a46571`. Its source files are in `services/spongebob-votes/`. The manifest declares the logical `DB` binding; Sites provisions the database and applies the tracked SQL migration during publication.
 
@@ -18,23 +18,29 @@ const resultAfterVote = await window.SpongeBobVotes.vote({
 });
 ```
 
-Both calls return a sorted `pair`, `counts` and `percentages` keyed by character ID, `total`, the current browser's `winner` (or null), and `alreadyVoted`. POST also returns `accepted`, true only for the first response from that browser to this pair. No responses are prefilled or simulated. A zero-vote pair has two zero percentages until its first vote.
+Both calls return a sorted `pair`, `counts` and `percentages` keyed by character ID, `total`, the current round's `winner` (or null), and `alreadyVoted`. POST also returns `accepted`, true only for the first response from that round to this pair. No responses are prefilled or simulated. A zero-vote pair has two zero percentages until its first vote.
 
-The first response sticks. Swapping the displayed left and right character leaves the same pair and totals. Reloading the page retrieves this browser's recorded response. Sending the same response again after a lost connection is safe.
+The first response in a round sticks. Swapping the displayed left and right character leaves the same pair and totals. Every page load and Play another round starts unanswered with a new round ID. Percentages appear only after a choice. Reloading does not restore an earlier choice or erase community totals. Sending the same response again after a lost connection is safe.
 
-The client stores a random UUID in localStorage, with sessionStorage as a fallback, and sends it to the service. The database stores only its SHA-256 hash, two character IDs, the chosen ID and a timestamp. The application does not collect names, accounts, IP addresses or browser fingerprints. Anonymous browser identity prevents accidental duplicate votes; clearing storage or using another browser can create another identity. This is a casual poll, without account-level voter verification.
+The client keeps a random round UUID only in page memory and sends it to the service. Earlier localStorage and sessionStorage voter IDs are ignored. The database stores only the UUID's SHA-256 hash, two character IDs, the chosen ID and a timestamp. The application does not collect names, accounts, IP addresses or browser fingerprints. Each round can contribute one response per pair; a person can play and contribute again on another visit. This is a casual poll, without account-level voter verification.
 
 Requests that fail must show an unavailable/retry state. The frontend must not claim a vote was saved or show visitor percentages from local guesses. The client throws when the service is unreachable or returns invalid totals.
 
 ## HTTP API
 
-`GET /v1/votes?a=<id>&b=<id>&voterId=<uuid>` retrieves current counts and this browser's response.
+`GET /v1/votes?a=<id>&b=<id>&voterId=<uuid>` retrieves current counts and this round's response.
 
-`POST /v1/votes` accepts JSON `{ "pair": ["id-a", "id-b"], "winner": "id-a", "voterId": "uuid" }` and returns updated counts in the same atomic D1 batch as the insertion. Its compound primary key allows one vote per browser and unordered pair.
+`POST /v1/votes` accepts JSON `{ "pair": ["id-a", "id-b"], "winner": "id-a", "voterId": "uuid" }` and returns updated counts in the same atomic D1 batch as the insertion. Its compound primary key allows one vote per round and unordered pair.
 
 Only registered character IDs are accepted. JSON request size is limited to 2 KiB. POST requires an approved Origin. CORS allows `https://ethanwillingham.com`, its `www` variant, the repository's GitHub Pages hostname, the service itself, and localhost HTTP ports for development. CORS limits browser origins; it does not authenticate arbitrary HTTP clients.
 
 `GET /health` reports the configured database binding and number of allowed character IDs. A valid `GET /v1/votes` additionally checks that the schema is usable.
+
+## Removing a requested response
+
+`POST /internal/remove-vote` is owner maintenance, with no public UI. It requires a secret `VOTE_MAINTENANCE_TOKEN` of at least 40 characters in the Authorization bearer header and a future Unix-seconds `VOTE_MAINTENANCE_EXPIRES_AT`. It rejects browser Origin headers and returns 404 when disabled, unauthorized or expired. Configure these temporary values through Sites, never in source.
+
+Inspect the live table first. Submit only the reviewed row's `pair`, `voterHash`, `winner` and `createdAt`. The deletion matches all five database columns and can remove at most one row. It returns the removed count and remaining pair totals in one atomic batch; repeating the cleanup removes zero additional rows. Revoke the temporary environment values and redeploy after the operation. Do not use schema migrations for data cleanup.
 
 ## Updating and testing
 

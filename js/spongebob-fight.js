@@ -16,6 +16,7 @@
   }
   // Each character appears in one matchup per round.
   function resetRound() {
+    window.SpongeBobVotes.startRound();
     roundPairs = configuredPairs ? configuredPairs.map(pair => [...pair]) : randomPairs();
     totalPairs = roundPairs.length;
     position = 0;
@@ -87,7 +88,7 @@
     try {
       const result = await window.SpongeBobVotes.get(pair);
       if (token !== requestToken) return;
-      if (result.alreadyVoted && result.winner) reveal(result, true);
+      if (refresh && result.alreadyVoted && result.winner) reveal(result, true);
       else if (refresh) throw new Error('Your saved vote could not be read.');
       else { $('sb-vote-state').hidden = true; status(''); setChoicesEnabled(true); }
       retryMode = null;

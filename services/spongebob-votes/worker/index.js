@@ -71,9 +71,43 @@ function resultFor(pair, stats, accepted) {
   };
 }
 
+// Owner maintenance is disabled unless a short-lived secret is configured.
+// Match the entire reviewed row so a cleanup can remove at most one response.
+async function removeVote(request, env) {
+  const expires = Number(env.VOTE_MAINTENANCE_EXPIRES_AT);
+  if (request.method !== 'POST' || request.headers.has('Origin') ||
+      !env.VOTE_MAINTENANCE_TOKEN || env.VOTE_MAINTENANCE_TOKEN.length < 40 ||
+      !Number.isSafeInteger(expires) || expires <= Math.floor(Date.now() / 1000) ||
+      request.headers.get('Authorization') !== 'Bearer ' + env.VOTE_MAINTENANCE_TOKEN) {
+    return response(request, { error: 'not_found' }, 404);
+  }
+  let input;
+  try {
+    const body = await request.text();
+    if (body.length > 2048) return response(request, { error: 'request_too_large' }, 413);
+    input = JSON.parse(body);
+  } catch { return response(request, { error: 'invalid_json' }, 400); }
+  const pair = pairFrom(input?.pair);
+  if (!pair || !pair.includes(input.winner) ||
+      !/^[0-9a-f]{64}$/.test(input.voterHash) ||
+      !Number.isSafeInteger(input.createdAt) || input.createdAt < 1) {
+    return response(request, { error: 'invalid_vote' }, 400);
+  }
+  if (!env.DB) return response(request, { error: 'votes_unavailable' }, 503);
+  try {
+    const db = typeof env.DB.withSession === 'function' ? env.DB.withSession('first-primary') : env.DB;
+    const deleted = db.prepare(`DELETE FROM matchup_votes
+      WHERE pair_a = ?1 AND pair_b = ?2 AND voter_hash = ?3 AND winner = ?4 AND created_at = ?5`)
+      .bind(pair[0], pair[1], input.voterHash, input.winner, input.createdAt);
+    const batch = await db.batch([deleted, statsStatement(db, pair, '')]);
+    return response(request, { removed: Number(batch[0].meta.changes), ...resultFor(pair, batch[1].results[0]) });
+  } catch { return response(request, { error: 'votes_unavailable' }, 503); }
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    if (url.pathname === '/internal/remove-vote') return removeVote(request, env);
     const origin = request.headers.get('Origin');
     if (origin && !allowedOrigin(origin, request)) {
       return response(request, { error: 'origin_not_allowed' }, 403);
