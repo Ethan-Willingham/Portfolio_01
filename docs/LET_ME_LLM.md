@@ -42,8 +42,10 @@ and trims the result. It removes Cc controls except newline and tab, Cf format
 characters except U+200C and U+200D, lone surrogates, and tag characters U+E0000
 through U+E007F. Each grapheme keeps at most one text or emoji variation selector
 (U+FE0E or U+FE0F); other variation selectors are removed. Each grapheme is capped
-at 12 code points. Use `Intl.Segmenter` where available, with `Array.from` as the
-fallback. The replica and the ChatGPT URL must contain the same sanitized text.
+at 12 code points. Sanitizing uses `Intl.Segmenter` where available. Its fallback
+conservatively groups combining marks, joiners, Indic linkers, Hangul and flags
+to keep those safety caps. Typing uses the separate `Array.from` fallback.
+The replica and the ChatGPT URL must contain the same sanitized text.
 Render question text through `textContent`.
 
 ## ChatGPT handoff

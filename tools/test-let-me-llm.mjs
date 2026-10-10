@@ -128,6 +128,44 @@ check('Typing never splits extended graphemes', () => {
   assert.deepEqual(plain(fallback.LMLTFY.graphemes('\u{1F600}a')), ['\u{1F600}', 'a']);
 });
 
+check('Missing Segmenter preserves sanitizer caps independently of typing fallback', () => {
+  const fallback = createContext({ TextEncoder, TextDecoder, btoa, atob,
+    Intl: { Segmenter: undefined } });
+  runInContext(source, fallback, { timeout: 1000 });
+  const safe = fallback.LMLTFY;
+  const vectors = ['a\u{FE0F}\u{FE0F}\u{FE0E}', 'x' + '\u{301}'.repeat(30),
+    '\u{1F469}' + '\u{200D}\u{1F4BB}'.repeat(10),
+    '\u{915}\u{94D}'.repeat(10) + '\u{915}\u{93F}',
+    '\u{1100}'.repeat(20), '\u{1161}'.repeat(20), '\u{11A8}'.repeat(20),
+    '\u{D4E}'.repeat(15) + '\u{D15}', '\u{111C2}'.repeat(15) + 'a',
+    '\u{1F1FA}\u{1F1F8}\u{FE0F}\u{FE0E}',
+    'before\n\tafter', '\u{645}\u{631}\u{62D}\u{628}\u{627}',
+    '\u{4E2D}\u{6587}', '\u{D55C}\u{AE00}'];
+  const random = api.rng(753);
+  const pool = ['a', ' ', '\n', '\t', '\u{301}', '\u{200D}', '\u{200C}',
+    '\u{FE0F}', '\u{FE0E}', '\u{E0100}', '\u{915}', '\u{94D}',
+    '\u{1100}', '\u{1161}', '\u{11A8}', '\u{D4E}', '\u{1F469}',
+    '\u{1F3FB}', '\u{1F1FA}', '\u{1F1F8}'];
+  for (let sample = 0; sample < 1000; sample++) {
+    let text = '';
+    for (let point = 0; point < 40; point++) text += pool[Math.floor(random() * pool.length)];
+    vectors.push(text);
+  }
+  for (const raw of vectors) {
+    const clean = safe.sanitize(raw);
+    assert.equal(safe.sanitize(clean), clean);
+    for (const part of api.graphemes(clean)) {
+      assert.ok(Array.from(part).length <= 12, 'Fallback leaves an oversized native grapheme');
+      assert.ok((part.match(/\p{Variation_Selector}/gu) || []).length <= 1);
+    }
+    assert.equal(safe.decode(safe.encode(raw)), clean);
+    assert.equal(new URL(safe.destination(clean)).searchParams.get('q'), clean);
+    assert.equal(safe.plan(clean).graphemes.join(''), clean);
+  }
+  assert.equal(safe.sanitize('ordinary words'), 'ordinary words');
+  assert.deepEqual(plain(safe.graphemes('e\u{301}')), ['e', '\u{301}']);
+});
+
 check('The planner schema, seed, pacing and paste threshold are stable', () => {
   const question = 'a'.repeat(30);
   const plan = api.plan(question, { seed: 71, width: 320, height: 568 });

@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-2qyvMjTT6kz2LqMwml+AcRJ/sz2saRzpr7PffB/wHC8=' 'sha256-/CrS3C5o81HXEuUvulVKjvsCLHAjxXvdvHMdHBolanI='; style-src 'sha256-Pqla+AvksYcc/Ln5fa5/BxrJtRLN+99pouD2/3d5dRE='; img-src data:; base-uri 'none'; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-e8CELAfCb8OqXrRg8ghl7o0Apq6nRqTFedPq+uFmvSE=' 'sha256-GGQNBW1yIsKYHZC+jztn/w6PhNbziA+2JK1vMRtM5KE='; style-src 'sha256-hsJeGiRNak+F6w6auZxFSHewKalMpGdPptxkEpDabIY='; img-src data:; base-uri 'none'; form-action 'none'">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#171717" media="(prefers-color-scheme: dark)">
   <title>Let me LLM that for you</title>
-  <meta name="description" content="Make a link that types a question, presses send, then opens ChatGPT.">
+  <meta name="description" content="Let Me Google That For You, for ChatGPT.">
   <link rel="canonical" href="https://ethanwillingham.com/let-me-llm-that-for-you.html">
   <meta property="og:title" content="Let me LLM that for you">
   <meta property="og:description" content="Watch your question get typed, then continue in ChatGPT.">
@@ -98,7 +98,7 @@
     .send[aria-disabled="true"] .send-icon, .send:not(.ready) .send-icon { background: var(--inactive); }
     .send svg { width: 18px; height: 18px; }
     .hint { min-height: 22px; margin: 10px 0 0; font-size: 13px; text-align: center; color: var(--secondary); }
-    .quiet { padding: 10px 12px; border: 0; background: transparent; color: var(--secondary); font-size: 14px; }
+    .quiet { min-height: 44px; padding: 10px 12px; border: 0; background: transparent; color: var(--secondary); font-size: 14px; }
     .quiet:hover, footer a:hover { color: var(--ink); }
     .skip { position: fixed; z-index: 20; left: 12px; top: 12px; padding: 12px; background: var(--bg); transform: translateY(-200%); }
     .skip:focus { transform: none; }
@@ -125,6 +125,8 @@
     .bubble {
       margin-inline-start: auto; width: fit-content; max-width: 75%; padding: 10px 16px;
       border: 1px solid var(--hairline); border-radius: 20px; background: var(--fill);
+    }
+    .bubble-text {
       white-space: pre-wrap; overflow-wrap: anywhere; display: -webkit-box;
       -webkit-box-orient: vertical; -webkit-line-clamp: 8; overflow: hidden;
     }
@@ -141,7 +143,11 @@
     .pointer svg { display: block; filter: drop-shadow(0 1px 1px rgb(0 0 0 / 20%)); }
     .pointer .ibeam { margin: -11px 0 0 -5px; }
     .pointer .tip { width: 28px; height: 28px; margin: -14px 0 0 -14px; border-radius: 50%; background: var(--tip); }
-    @media (max-height: 450px) { main { padding-top: 24px; padding-bottom: 36px; } .thread { top: 24px; } }
+    @media (max-height: 450px) {
+      main { padding-top: 24px; padding-bottom: 36px; } .thread { top: 24px; }
+      .bubble-text { -webkit-line-clamp: 2; } .handoff { margin-top: 8px; }
+    }
+    @media (max-height: 359px) { .bubble-text { -webkit-line-clamp: 1; } }
   </style>
 </head>
 <body>
@@ -153,7 +159,7 @@
       <p class="caption">Make a link that types their question and opens ChatGPT.</p>
       <div id="input-card">
         <div class="composer">
-          <textarea id="question" rows="1" aria-label="Their question" placeholder="What did they ask you?" enterkeyhint="send" dir="auto" spellcheck="false" aria-describedby="hint"></textarea>
+          <textarea id="question" rows="1" aria-label="Their question" placeholder="Paste their question here" enterkeyhint="send" dir="auto" spellcheck="false" aria-describedby="hint"></textarea>
           <button id="make" class="send" type="button" aria-label="Make link" aria-disabled="true">
             <span class="send-icon"><svg viewBox="0 0 18 18" aria-hidden="true"><path d="M3 9h12m-5-5 5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
           </button>
@@ -162,12 +168,12 @@
       </div>
       <div id="link-card" class="link-card" hidden>
         <input id="link" class="link-field" aria-label="Your link" readonly spellcheck="false">
-        <p class="link-note">Send them this link. It opens ChatGPT with their question.</p>
+        <p class="link-note">The link types their question, then opens ChatGPT.</p>
         <div class="actions">
           <button id="copy" class="primary" type="button">Copy link</button>
           <button id="preview" class="quiet" type="button">Preview</button>
-          <button id="share" class="quiet" type="button" hidden>Share</button>
-          <button id="edit" class="quiet" type="button">Edit question</button>
+          <button id="share" class="quiet" type="button" hidden>Share link</button>
+          <button id="edit" class="quiet" type="button">Edit</button>
         </div>
         <p id="copy-status" class="hint"></p>
       </div>
@@ -186,10 +192,10 @@
       <button id="finished-send" class="send ready" type="button" aria-label="Open ChatGPT with your question" hidden><span class="send-icon"><svg viewBox="0 0 18 18" aria-hidden="true"><path d="M3 9h12m-5-5 5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button>
     </section>
     <div id="thread" class="thread" hidden>
-      <div id="bubble" class="bubble" dir="auto"></div>
+      <div id="bubble" class="bubble" dir="auto"><span id="bubble-text" class="bubble-text"></span></div>
       <div id="thinking" class="thinking"><span class="bars" aria-hidden="true"><i></i><i></i><i></i></span><span id="thinking-label">Opening ChatGPT</span></div>
       <div id="handoff" class="handoff" hidden>
-        <p id="preview-note" hidden>The preview stops here. The shared link continues to ChatGPT.</p>
+        <p id="preview-note" hidden>Your link opens ChatGPT here.</p>
         <button id="return" class="quiet" type="button" hidden>Back to your link</button>
         <p id="paste-caption" hidden>Step 3: Paste it into ChatGPT</p>
         <button id="paste-open" class="primary" type="button" hidden>Copy question and open ChatGPT</button>
@@ -222,6 +228,41 @@
       : Array.from(text);
   }
 
+  function hangulKind(point) {
+    const code = point.codePointAt(0);
+    if ((code >= 0x1100 && code <= 0x115F) || (code >= 0xA960 && code <= 0xA97C)) return 'L';
+    if ((code >= 0x1160 && code <= 0x11A7) || (code >= 0xD7B0 && code <= 0xD7C6)) return 'V';
+    if ((code >= 0x11A8 && code <= 0x11FF) || (code >= 0xD7CB && code <= 0xD7FB)) return 'T';
+    if (code >= 0xAC00 && code <= 0xD7A3) return (code - 0xAC00) % 28 ? 'T' : 'V';
+    return '';
+  }
+
+  // Without Segmenter, conservatively group joiners and Indic linkers for the safety caps.
+  function safetyClusters(text) {
+    if (segmenter) return graphemes(text);
+    const groups = [];
+    const prepend = /[\u0D4E\u{111C2}-\u{111C3}\u{113D1}\u{1193F}\u{11941}\u{11A84}-\u{11A89}\u{11D46}\u{11F02}]/u;
+    const linker = /[\u094D\u09CD\u0ACD\u0B4D\u0C4D\u0D4D\u1039\u17D2\u1A60\u1B44\u1BAB\u1CF5\u1CF6\uA9C0\uAAF6\u{10A3F}\u{11133}\u{113D0}\u{1193E}\u{11A3A}\u{11A47}\u{11A99}\u{11F42}]/u;
+    let previous = '', previousKind = '', regional = 0, linked = false;
+    for (const point of text) {
+      const kind = hangulKind(point), isRegional = /\p{Regional_Indicator}/u.test(point);
+      const extend = /[\p{M}\p{Grapheme_Extend}\p{Emoji_Modifier}\u200C\u200D]/u.test(point) || linker.test(point);
+      const hangul = previousKind === 'L' && ['L', 'V', 'T'].includes(kind)
+        || previousKind === 'V' && ['V', 'T'].includes(kind) || previousKind === 'T' && kind === 'T';
+      const boundary = /[\n\t\u2028\u2029]/u.test(point + previous);
+      const join = groups.length && !boundary && (extend || previous === '\u200D'
+        || prepend.test(previous) || linked && /\p{L}/u.test(point)
+        || hangul || isRegional && regional % 2 === 1);
+      if (join) groups[groups.length - 1] += point;
+      else { groups.push(point); linked = false; }
+      if (linker.test(point)) linked = true;
+      else if (!extend) linked = false;
+      regional = isRegional ? regional + 1 : 0;
+      previous = point; previousKind = kind;
+    }
+    return groups;
+  }
+
   function cleanGrapheme(grapheme) {
     let selector = false;
     const result = [];
@@ -243,7 +284,7 @@
       .replace(/[\u{E0000}-\u{E007F}]/gu, '').normalize('NFC');
     // Removing hidden points can join two graphemes, so clean to a stable result.
     for (;;) {
-      const clean = graphemes(text).map(cleanGrapheme).join('').normalize('NFC').trim();
+      const clean = safetyClusters(text).map(cleanGrapheme).join('').normalize('NFC').trim();
       if (clean === text) return clean;
       text = clean;
     }
@@ -326,15 +367,17 @@
 
   function movementBeats(random, options) {
     const startOffset = { x: 160 + random() * 80, y: 160 + random() * 80 };
-    const distance = Math.hypot(startOffset.x, startOffset.y);
     const width = Math.max(240, Math.min(680, (options.width || 1280) - 40));
+    const dx = startOffset.x + (options.reachOffset?.x ?? width * .45 - 14);
+    const dy = startOffset.y + (options.reachOffset?.y ?? 0);
+    const distance = Math.hypot(dx, dy);
     const fitts = (distance, target) => clamp(250 + 150 * Math.log2(distance / target + 1), 350, 1000);
     const jump = options.pointer === 'coarse' || Boolean(options.reduced);
     return {
       startOffset,
       arc: (0.06 + random() * 0.06) * (random() < 0.5 ? -1 : 1),
       reach: fitts(distance, 16),
-      send: fitts(width - 74, 36),
+      send: fitts(options.sendDistance ?? width - 74, 36),
       jump
     };
   }
@@ -407,16 +450,21 @@
     }
 
     function copyResult(promise) {
+      const link = $('link').value;
+      const visible = () => !$('maker').hidden && !$('link-card').hidden;
       promise.then(() => {
+        if ($('link').value !== link) return;
         $('copy').textContent = 'Copied';
         $('copy-status').textContent = '';
-        say('Link ready. Copied.');
+        if (visible()) say('Link ready. Copied.');
       }).catch(() => {
+        if ($('link').value !== link) return;
         $('copy').textContent = 'Copy link';
-        $('link').focus();
-        $('link').select();
         $('copy-status').textContent = touch ? 'Touch and hold the selected link to copy it.' : 'Press Ctrl+C or Command+C to copy the selected link.';
-        say('Link ready. Select the link and copy it.');
+        if (visible()) {
+          $('link').focus(); $('link').select();
+          say('Link ready. Select the link and copy it.');
+        }
       });
     }
 
@@ -438,7 +486,7 @@
       copyResult(copied);
     }
 
-    function maker() {
+    function maker(focus = true) {
       stopClock();
       $('maker').hidden = false;
       $('recipient').hidden = true;
@@ -447,8 +495,10 @@
       $('skip').hidden = true;
       previewing = false;
       $('return').textContent = 'Back to your link';
-      if (!$('input-card').hidden) $('question').focus();
-      else $('preview').focus();
+      if (focus) {
+        if (!$('input-card').hidden) $('question').focus();
+        else $('preview').focus();
+      }
     }
 
     $('question').addEventListener('input', sizeInput);
@@ -481,16 +531,21 @@
     function start(text, preview = false) {
       stopClock(); $('thinking').hidden = false; $('bubble').hidden = false;
       question = sanitize(text); previewing = preview || Boolean(tune);
-      const timeline = plan(question, { pointer: coarse ? 'coarse' : 'fine', reduced,
-        width: innerWidth, height: innerHeight });
-      sequence = { ...timeline, text: question, time: 0, last: null, running: true, step: 0 };
       $('maker').hidden = true; $('recipient').hidden = false;
+      $('typed').textContent = ''; $('replica').style.transform = '';
+      const textTarget = anchor($('row'), .05, .5), center = anchor($('replica'), .5, .5);
+      const sendTarget = anchor($('ghost-send'), .5, .5);
+      const timeline = plan(question, { pointer: coarse ? 'coarse' : 'fine', reduced,
+        width: innerWidth, height: innerHeight,
+        reachOffset: { x: center.x - textTarget.x, y: center.y - textTarget.y },
+        sendDistance: Math.hypot(sendTarget.x - textTarget.x, sendTarget.y - textTarget.y) });
+      sequence = { ...timeline, text: question, time: 0, last: null, running: true, step: 0 };
       $('handoff').hidden = true; $('finished-send').hidden = true;
       $('preview-note').hidden = true; $('return').hidden = true;
       $('paste-caption').hidden = true; $('paste-open').hidden = true; $('open').hidden = true;
       $('skip').href = destination(question); $('open').href = destination(question);
       $('skip').hidden = previewing || USE_PASTE_STEP;
-      $('bubble').textContent = question; $('typed').textContent = '';
+      $('bubble-text').textContent = question; $('typed').textContent = '';
       $('return').textContent = 'Back to your link';
       document.activeElement?.blur();
       say('Step 1: Type your question: ' + question);
@@ -536,22 +591,23 @@
       const { times, beats } = sequence;
       const entering = t >= times.reach && t < times.type;
       const sending = t >= times.send && !sent;
+      const click = t >= times.click && t < times.click + 90;
+      const press = t >= times.sent - 90 && !sent;
+      $('replica').style.transform = click && !reduced ? 'scale(.995)' : '';
+      $('ghost-send').style.transform = press && !reduced ? 'scale(.94)' : '';
       let point = pointAt(t), opacity = entering || sending ? 1 : 0;
       if (coarse || reduced) {
         point = entering ? anchor($('row'), .05, .5) : anchor($('ghost-send'), .5, .5);
         const phase = entering ? (t - times.reach) / (beats.reach + beats.click) : (t - times.send) / beats.send;
         opacity *= Math.max(0, Math.min(1, phase * 6, (1 - phase) * 6));
       } else if (entering) opacity *= Math.min(1, (t - times.reach) / 160);
-      const click = t >= times.click && t < times.click + 90;
-      const press = t >= times.sent - 90 && !sent;
       $('pointer').hidden = opacity <= 0;
       $('pointer').style.opacity = opacity;
       $('pointer').style.transform = `translate(${point.x}px, ${point.y}px) scale(${click || press ? .88 : 1})`;
       const textTarget = !sending && t >= times.click - 80;
-      $('arrow').hidden = coarse || textTarget;
-      $('ibeam').hidden = coarse || !textTarget;
+      $('arrow').toggleAttribute('hidden', coarse || textTarget);
+      $('ibeam').toggleAttribute('hidden', coarse || !textTarget);
       $('tip').hidden = !coarse;
-      $('ghost-send').style.transform = press ? 'scale(.94)' : '';
       const bounds = $('ghost-send').getBoundingClientRect();
       $('ghost-send').classList.toggle('ghost-hover', sending && point.x >= bounds.left && point.x <= bounds.right && point.y >= bounds.top && point.y <= bounds.bottom);
     }
@@ -592,6 +648,12 @@
     function render(t) {
       const { times } = sequence;
       const sent = t >= times.sent;
+      $('bubble').hidden = false;
+      $('thinking').hidden = previewing && t >= times.end;
+      if (previewing) {
+        const complete = t >= times.end;
+        $('handoff').hidden = !complete; $('preview-note').hidden = !complete; $('return').hidden = !complete;
+      }
       const step = t >= times.send ? 2 : 1;
       if (step !== sequence.step) {
         sequence.step = step;
@@ -600,6 +662,7 @@
       }
       const nearStep = t - times.send;
       $('caption').style.opacity = nearStep < 0 ? Math.min(1, -nearStep / 120) : Math.min(1, nearStep / 120);
+      $('replica').style.transform = ''; $('ghost-send').style.transform = '';
       paintTyping(t, sent); paintSent(t, sent); paintPointer(t, sent);
     }
 
@@ -610,7 +673,7 @@
       if (previewing) {
         $('thinking').hidden = true;
         $('handoff').hidden = false; $('preview-note').hidden = false; $('return').hidden = false;
-        say('The preview stops here. The shared link continues to ChatGPT.');
+        say('Your link opens ChatGPT here.');
       } else if (USE_PASTE_STEP) {
         $('handoff').hidden = false; $('paste-caption').hidden = false; $('paste-open').hidden = false;
         say('Step 3: Paste it into ChatGPT. Copy question and open ChatGPT.');
@@ -630,6 +693,7 @@
       stopClock(); render(sequence.times.end);
       $('pointer').hidden = true;
       $('typed').textContent = question; $('placeholder').hidden = true;
+      paintSent(sequence.times.end, true);
       $('thread').hidden = false; $('thinking').hidden = true;
       $('bubble').hidden = true; $('handoff').hidden = false;
       $('finished-send').hidden = previewing || USE_PASTE_STEP;
@@ -663,16 +727,25 @@
     };
 
     // Entry: only the fragment is a question; readable query forms never enter.
-    if (tune && tune.mode !== 'maker') start(tune.question || SAMPLE, true);
-    else if (tune?.mode === 'maker') sizeInput();
-    else if (location.hash) {
+    function enter(back = false) {
+      maker(false); $('link-card').hidden = true; $('input-card').hidden = false; sizeInput();
+      if (!location.hash) {
+        if (matchMedia('(pointer: fine)').matches) $('question').focus();
+        return;
+      }
       try {
         question = decode(location.hash.slice(1));
         if (!question) throw new Error('Empty question');
         start(question);
-        if (performance.getEntriesByType('navigation')[0]?.type === 'back_forward') finished();
-      } catch { $('hint').textContent = 'This link is broken. You can make a new one.'; }
-    } else if (matchMedia('(pointer: fine)').matches) $('question').focus();
+        if (back) finished();
+      } catch { $('hint').textContent = "The link isn't valid. Make a new one here."; }
+    }
+    if (tune && tune.mode !== 'maker') start(tune.question || SAMPLE, true);
+    else if (tune?.mode === 'maker') sizeInput();
+    else {
+      enter(performance.getEntriesByType('navigation')[0]?.type === 'back_forward');
+      addEventListener('hashchange', () => enter());
+    }
   }
   </script>
 </body>
