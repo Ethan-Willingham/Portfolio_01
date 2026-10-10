@@ -45,7 +45,7 @@ async function render(width, height, suffix, source) {
       return { text: document.body.innerText.trim(), composerRadius: getComputedStyle(composer).borderRadius, sendRadius: getComputedStyle(send).borderRadius, background: getComputedStyle(document.body).backgroundColor, pointerOnSend: p.left + 3 >= s.left && p.left + 3 <= s.right && p.top + 2 >= s.top && p.top + 2 <= s.bottom };
     });
     const homepage = source === homeSource;
-    const text = homepage ? 'Let me LLM\nthat for you\n\nStep 2: Press send\n\nHow many ounces\nare in a cup?' : '';
+    const text = homepage ? 'How many ounces\nare in a cup?\nOpening ChatGPT\nYour question goes here' : '';
     assert.deepEqual(state, { text, composerRadius: '26px', sendRadius: '12px', background: homepage ? 'rgb(23, 23, 23)' : 'rgb(255, 255, 255)', pointerOnSend: true });
     const basename = `let-me-llm-that-for-you${suffix}`;
     const jpg = path.join(assets, basename + '.jpg');
@@ -57,7 +57,7 @@ async function render(width, height, suffix, source) {
       execFileSync('cwebp', ['-quiet', '-q', '90', jpg, '-o', webp]);
       recordImage(webp, width, height);
     }
-    report.checks.push(`${width}x${height}: ${homepage ? 'dark tool with title, step caption and sample question' : 'wordless light composer'}, 26px composer radius, 12px send radius, pointer on send`);
+    report.checks.push(`${width}x${height}: ${homepage ? 'dark tool with sent question, Opening ChatGPT and composer placeholder' : 'wordless light composer'}, 26px composer radius, 12px send radius, pointer on send`);
   } finally { await context.close(); }
 }
 
@@ -66,7 +66,7 @@ async function render(width, height, suffix, source) {
   fs.mkdirSync(evidence, { recursive: true });
   try {
     browser = await playwright.chromium.launch({ headless: true, executablePath: report.browser });
-    await render(600, 400, '-text', homeSource);
+    await render(600, 400, '-chat', homeSource);
     if (!process.argv.includes('--homepage-only')) await render(1200, 630, '-og', shareSource);
     assert.deepEqual(report.errors, []);
     report.passed = true;

@@ -1,13 +1,13 @@
 [
   {
     "href": "let-me-llm-that-for-you.html",
-    "thumb": "let-me-llm-that-for-you-text.jpg",
+    "thumb": "let-me-llm-that-for-you-chat.jpg",
     "date": "2026-10-09",
     "dateDisplay": "9 Oct 2026",
     "createdCommit": "797bd9f70221c486d12c9d6e7a81fb3a7c9d1bba",
     "createdAt": "2026-10-09T19:42:47-05:00",
     "title": "Let me LLM that for you",
-    "alt": "The tool showing \"How many ounces are in a cup?\" with a pointer on send.",
+    "alt": "A sent question above \"Opening ChatGPT\", with the composer and pointer at send below.",
     "keywords": "let me llm that for you chatgpt question link chat animation send cursor",
     "desc": "A link types their question, presses send, then opens ChatGPT."
   },
