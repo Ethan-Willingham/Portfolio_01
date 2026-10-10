@@ -39,9 +39,9 @@
       ? 'The opening above the crest lets room air enter the drain. Compare it with the closed crest to see whether the tube sustains a full discharge.'
       : 'The tap raises the water above the drain\'s crest. Once the tube fills, the cup can empty until air reaches the intake.';
     definition.primary = {kind:'tap'};
-    // This clears a roof cell over the horizontal crest, outside the cup.
+    // This clears four roof cells over the horizontal crest, outside the cup.
     // It changes both parcel passage and pressure topology through the builder.
-    definition.vent = {x:584, y:168, width:8, height:8};
+    definition.vent = {x:576, y:168, width:32, height:8};
     definition.vents = options.vented ? [Object.assign({}, definition.vent)] : [];
     definition.boundaries = {
       pool:true,

@@ -1,6 +1,6 @@
 {
   "date": "2026-10-10",
-  "status": "Three-seed straw behavior passed independent review. Cup and Tantalus remain workshop experiments.",
+  "status": "Three-seed straw behavior and impact-sound core passed independent review. Cup and Tantalus remain workshop experiments.",
   "method": "Native parcel positions and outlet crossings on three seeds. Times are submitted solver seconds, not wall time or the Earth-gravity-scaled display clock. Gas capture is a separate final snapshot. These are behavior checks, not calibrated physical accuracy.",
   "roomPressurePsi": 14.7,
   "straw": [
@@ -177,20 +177,108 @@
     "primaryTouchTargetHeight": 44
   },
   "sound": {
+    "acceptedScope": "Procedural water-impact core. Full bubble, vent, rigid-body and siphon-break sound remains pending.",
     "enabledByRealGesture": true,
-    "nativeImpactsVoiced": 12,
+    "nativeImpactsVoiced": 84,
     "maxHandlerMs": 0.20000004768371582,
-    "offlineNativeLogReplay": {
-      "events": 13,
-      "frames": 96000,
-      "sampleRate": 48000,
-      "peakDbFS": -25.205371896965815,
-      "rmsDbFS": -52.006521867175515
+    "timing": {
+      "voicedMatched": 84,
+      "captureAgeMaxMs": 16.399999856948853,
+      "ackAfterDeliveryMaxMs": 0.9000000953674316,
+      "captureThroughAckMaxMs": 16.5,
+      "ackFrameDeltaRange": [
+        0,
+        0
+      ]
     },
-    "source": "Real native collision losses and kinetic energy absorbed when water enters the visible collector. This check used the workshop cup with a declared 960-parcel-per-second inlet at 150 pixels per second downward.",
-    "limits": "Optional impact sonification. It is not calibrated glass or bubble resonance. A boundary with no measured energy loss produces no sound."
+    "minimumPairedNativeFrameMs": 18.5,
+    "offlineTimedVoicedLogReplay": {
+      "events": 64,
+      "offsets": [
+        0,
+        0.016000000000000014,
+        0.016000000000000014,
+        0.016000000000000014,
+        0.016000000000000014,
+        0.016000000000000014,
+        0.04266666666666641,
+        0.04266666666666641,
+        0.04266666666666641,
+        0.04266666666666641,
+        0.04266666666666641,
+        0.04266666666666641,
+        0.04266666666666641,
+        0.04266666666666641,
+        0.04266666666666641,
+        0.05866666666666642,
+        0.05866666666666642,
+        0.05866666666666642,
+        0.08000000000000007,
+        0.08000000000000007,
+        0.08000000000000007,
+        0.10133333333333283,
+        0.10133333333333283,
+        0.10133333333333283,
+        0.12266666666666648,
+        0.14400000000000013,
+        0.14400000000000013,
+        0.1653333333333329,
+        0.1653333333333329,
+        0.1653333333333329,
+        0.1653333333333329,
+        0.1653333333333329,
+        0.1653333333333329,
+        0.1653333333333329,
+        0.1653333333333329,
+        0.1653333333333329,
+        0.1653333333333329,
+        0.1653333333333329,
+        0.1653333333333329,
+        0.1653333333333329,
+        0.1653333333333329,
+        0.18666666666666654,
+        0.18666666666666654,
+        0.18666666666666654,
+        0.18666666666666654,
+        0.18666666666666654,
+        0.18666666666666654,
+        0.18666666666666654,
+        0.18666666666666654,
+        0.18666666666666654,
+        0.18666666666666654,
+        0.23466666666666658,
+        0.23466666666666658,
+        0.2506666666666666,
+        0.2506666666666666,
+        0.277333333333333,
+        0.277333333333333,
+        0.293333333333333,
+        0.293333333333333,
+        0.293333333333333,
+        0.293333333333333,
+        0.293333333333333,
+        0.293333333333333,
+        0.293333333333333
+      ],
+      "seconds": 4,
+      "sampleRate": 48000,
+      "peakDbFS": -25.292867939391197,
+      "maxThreeSecondLUFS": -45.30205554222421
+    },
+    "policy": {
+      "actualHidden": true,
+      "hiddenAudible": false,
+      "hiddenPendingEvents": 0,
+      "pausedAudible": false,
+      "rememberedOnReload": true,
+      "reloadContext": "absent",
+      "freshGestureEnabled": true,
+      "muteContext": "suspended"
+    },
+    "source": "Real native collision losses and kinetic energy absorbed when water enters the visible collector. This browser observation used the workshop cup with a declared 960-parcel-per-second inlet at 150 world pixels per second downward.",
+    "limits": "One browser observation on this Mac, with the visible collector as the observed event path. Capture-to-worklet acknowledgment is measured, not loudspeaker latency. Optional impact sonification is not calibrated glass or bubble resonance."
   },
-  "remaining": "Cup requires three full fill/discharge/air-break cycles on every seed. Its first geometry was too slow, the wider pipe kept a trickle, and a lower physical crest is now being tested. Tantalus uses the same unfinished plumbing.",
+  "remaining": "Cup needs the remaining seeds and controls, long-run inventory/spatial checks and frame budgets before acceptance. Tantalus shares this plumbing and still needs its fixed mouth-region measurements. General hand tools and the remaining sound sources are unfinished.",
   "return": "Collected water is stored in fixed native reserve. A powered return lifts it to the visible tap; external work and refused requests are shown in Instruments.",
   "releaseEvidence": {
     "image": "/assets/images/water-machines/straw-release-2026-10-10.webp",
@@ -401,5 +489,25 @@
         "label": "Released 30 s"
       }
     ]
+  },
+  "cupTrial": {
+    "accepted": false,
+    "seed": 17,
+    "submittedBreakSeconds": [
+      71.71666666666547,
+      158.14999999999858,
+      277.1083333333346
+    ],
+    "physicalBreaksIndependentlyChecked": 3,
+    "risingBoreWorldPixels": 16,
+    "descendingBoreWorldPixels": 8,
+    "roofControlOpeningWorldPixels": 32,
+    "roofControlSubmittedSeconds": 302.7666666666777,
+    "roofControlSourceLevelAfter50SecondsWorldPixels": [
+      164,
+      172
+    ],
+    "method": "Actual native source rises, outlet passages, intake exposure and same-epoch parcel positions across the rising tube. Source levels are 8-pixel-bin medians. Detached residual droplets are retained in the record.",
+    "limits": "One checked seed and its physical roof control. Other seeds, tap-off, longevity, spatial coverage, frame budgets and Tantalus remain pending."
   }
 }
