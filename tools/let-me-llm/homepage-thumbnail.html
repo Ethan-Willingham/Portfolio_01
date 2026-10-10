@@ -13,6 +13,7 @@
       display: grid; place-items: center; color: #ececec;
       font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     }
+    .frame { position: fixed; inset: 12px; border: 2px solid rgb(255 255 255 / 60%); border-radius: 26px; }
     .chat { position: relative; width: 512px; height: 312px; }
     .bubble {
       position: absolute; top: 0; right: 0; width: 348px; padding: 12px 28px;
@@ -47,6 +48,7 @@
   </style>
 </head>
 <body>
+  <div class="frame" aria-hidden="true"></div>
   <div class="chat" aria-hidden="true">
     <div class="bubble">How many ounces<br>are in a cup?</div>
     <div class="thinking">

@@ -66,7 +66,7 @@ async function render(width, height, suffix, source) {
   fs.mkdirSync(evidence, { recursive: true });
   try {
     browser = await playwright.chromium.launch({ headless: true, executablePath: report.browser });
-    await render(600, 400, '-chat', homeSource);
+    await render(600, 400, '-frame', homeSource);
     if (!process.argv.includes('--homepage-only')) await render(1200, 630, '-og', shareSource);
     assert.deepEqual(report.errors, []);
     report.passed = true;
