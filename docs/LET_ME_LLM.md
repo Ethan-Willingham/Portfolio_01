@@ -153,29 +153,25 @@ unavailable environment UNVERIFIED with its reason.
 
 ## Thumbnails and site integration
 
-The homepage thumbnail is a crop of Johannes Vermeer's *The Love Letter*,
-c. 1669-1670, from the Rijksmuseum. The owner requested richer artwork after
-finding the blank composer thumbnail too plain on 2026-10-09. The sourced
-painting stays wordless and keeps its original colors. Attribution, rights,
-source and crop coordinates are in `tools/let-me-llm/ARTWORK.md`.
-
-```sh
-node tools/let-me-llm/build-art-thumbnail.cjs
-```
-
-This rebuilds the 600x400 homepage JPG/WebP pair. The maker's OG artwork still
-uses the original empty composer and pointer. Its source is
-`tools/let-me-llm/thumbnail-lab.html`, with the original renderer:
+The homepage thumbnail shows the tool's dark chat with a question bubble,
+thinking bars, composer and pointer at send. It stays wordless, with short
+strokes representing the question. The owner requested a fuller view of the
+actual tool on 2026-10-09. Its source is
+`tools/let-me-llm/homepage-thumbnail.html`; the maker's original light OG source
+is `tools/let-me-llm/thumbnail-lab.html`.
 
 ```sh
 node tools/let-me-llm/render-thumbnails.cjs
+node tools/let-me-llm/render-thumbnails.cjs /path/to/evidence --homepage-only
 ```
 
-This owns Chrome for Testing and writes the legacy 600x400 UI pair and the
-1200x630 OG JPG under `assets/thumbs/`. Its report and PNG evidence go to
+This owns Chrome for Testing and writes the 600x400 homepage JPG/WebP pair
+(`let-me-llm-that-for-you-tool`) and the 1200x630 OG JPG under `assets/thumbs/`.
+Use `--homepage-only` to rebuild the card without changing the OG image.
+Its report and PNG evidence go to
 `research/let-me-llm/evidence/integration/`. The page never requests these
-images. On 2026-10-09 the render passed, with no visible text, matching dimensions,
-the specified radii, no requests and no console errors.
+images. Homepage revision evidence is in `evidence/thumbnail-tool-v2/`, with
+desktop and phone screenshots at the displayed card size.
 
 Before adding a homepage entry, `node tools/gen-hubs.mjs --homepage` must leave
 the current `index.html` byte-identical. The generator accepts either an
