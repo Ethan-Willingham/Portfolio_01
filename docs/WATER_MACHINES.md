@@ -795,7 +795,7 @@ Evidence preserves the source freezes, complete candidate 49-step raw traces, se
 
 Evidence: assets/images/water-machines/native-water-volume-and-wall-progress-2026-10-09.json.
 
-The recording package uses a JSON index and native-water-volume-and-wall-recordings-2026-10-09.zip. Reversible byte-lane shuffling improves the ZIP compression of particle fields. The pair occupies 26,909,966 bytes, compared with the original 43,420,959-byte embedded index. All 383 original archive paths and all 873 original blob hashes remain byte-identical; the decoder and packaging source add two more records. This addresses the Pages build's site-size warning without dropping recordings or changing physics. Verify or restore files with tools/unpack-water-evidence.py, which also accepts the older embedded gzip/base64 packages. Its --output destination must be a new directory.
+The recording package uses a JSON index and native-water-volume-and-wall-recordings-2026-10-09.zip. Reversible byte-lane shuffling improves the ZIP compression of particle fields. The compacted pair occupies about 26.9 MB, compared with the original 43.4 MB embedded index. All 383 original archive paths and all 873 original blob hashes remain byte-identical; the decoder and packaging source add two more records. The ZIP is a public asset on GitHub release water-machines-evidence-2026-10-09, keeping its 26,494,208 bytes outside the Pages site artifact. The same ZIP checksum and original records are retained. Verify or restore files with tools/unpack-water-evidence.py, which also accepts the older embedded gzip/base64 packages. Its --output destination must be a new directory.
 
 ## One-pocket pressure reduction (October 9, 2026)
 
