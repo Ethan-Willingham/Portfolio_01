@@ -30,7 +30,7 @@
       if(pending || builder._pending)throw new Error('Finish the wall edit first.');
       var source=redo ? builder._future : builder._past,destination=redo ? builder._past : builder._future;
       var record=source[source.length-1];if(!record)return false;
-      if(record.label!=='Hole punch')throw new Error('Only hole-punch history is available in this lab.');
+      if(record.label!=='Hole punch')throw new Error('Only hole-punch history is available for these walls.');
       var target=redo ? record.after : record.before,change=[];
       for(var i=0;i<builder.walls.length;i++)if(builder.walls[i]!==target.walls[i])change.push(i);
       if(change.length!==1)throw new Error('Only one-cell hole history is supported.');
@@ -52,10 +52,10 @@
       }finally{pending=false;hooks.pending(false);}
     }
     builder.undo=function(){return history(false);};builder.redo=function(){return history(true);};
-    // The small lab supports hole removal and its guarded undo, not solid drawing.
+    // Hole punch supports hole removal and its guarded undo, not solid drawing.
     var begin=builder.begin;
     builder.begin=function(label){
-      if(pending || label!=='Hole punch')throw new Error('This lab supports Hole punch and its Undo only.');
+      if(pending || label!=='Hole punch')throw new Error('Use Hole punch and Undo to edit these walls.');
       return begin.call(builder,label);
     };
     return {pending:function(){return pending;}};

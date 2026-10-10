@@ -95,7 +95,9 @@
       if (button.classList.contains('is-on') !== active) button.classList.toggle('is-on', active);
     }
     function controlsHeight() {
-      var height = Math.ceil(shell.querySelector('.toy-dock').getBoundingClientRect().height + shell.querySelector('.toy-foot').getBoundingClientRect().height);
+      var dock=shell.querySelector('.toy-dock'),position=getComputedStyle(dock).position;
+      var height = Math.ceil((position==='absolute' || position==='fixed' ? 0 : dock.getBoundingClientRect().height) + shell.querySelector('.toy-foot').getBoundingClientRect().height);
+      shell.style.setProperty('--toy-top-height',shell.querySelector('.toy-top').getBoundingClientRect().height+'px');
       var value = height + 'px';
       if (shell.style.getPropertyValue('--toy-controls-height') !== value) {
         shell.style.setProperty('--toy-controls-height', value);
@@ -527,7 +529,7 @@
       pressed(bar.querySelector('.toy-tools [data-tool="build"]'), building);
       var builderState = toy.buildState ? toy.buildState() : null;
       var hands=!!(builderState && builderState.handsLab);
-      shell.classList.toggle('is-hands-lab',hands);
+      shell.classList.toggle('has-wall-editor',hands);
       if(hands){
         bar.querySelectorAll('.toy-tools [data-tool]').forEach(function(button){button.hidden=!/^(poke|build)$/.test(button.dataset.tool);});
         presetsButton.hidden=true;
@@ -536,7 +538,7 @@
         document.getElementById('toy-build-share').hidden=true;
         ['undo','redo'].forEach(function(name){document.getElementById('toy-build-'+name).disabled=!builderState.handsReady || builderState.pending;});
         var edit=builderState.wallEdit,world=toy.world(),width=30*8/world.w;
-        handsNote.textContent='Lab wall edits open one '+width.toFixed(2)+'-inch cell. Undo needs a clear adjacent exit; old walls, held caps and slime bounds block the move. '+
+        handsNote.textContent='Hole punch opens one '+width.toFixed(2)+'-inch cell. Undo needs a clear adjacent exit; old walls, held caps and slime bounds block the move. '+
           (edit && Number.isFinite(edit.workJoules) ? 'Last edit: '+edit.displaced+' parcels, '+(edit.workJoules/1.3558179483314).toFixed(5)+' ft lb of signed parcel work.' : 'Signed parcel work appears here after Undo.')+
           (!builderState.handsReady ? ' Choose a cup, siphon, fountain or native machine.' : ' Existing valves can open here; closing them and other wall drawing use the original scene.');
       }
@@ -632,7 +634,9 @@
       syncFullscreen();
     }
     fullButton.addEventListener('click', toggleFullscreen);
-    if(nativeScenes[new URLSearchParams(location.search).get('scene')] && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)){
+    var initialParameters=new URLSearchParams(location.search),phoneScene=initialParameters.get('scene');
+    if(!phoneScene && !initialParameters.has('smoke') && !initialParameters.has('build') && navigator.gpu)phoneScene='self-flushing-cup';
+    if(nativeScenes[phoneScene] && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)){
       shell.classList.add('is-expanded');syncFullscreen();
     }
     document.addEventListener('fullscreenchange', syncFullscreen);

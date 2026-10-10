@@ -124,23 +124,35 @@
     fallbackURL.searchParams.delete('build');fallbackURL.hash='';
     window.location.assign(fallbackURL.href);return true;
   }
-  var handsRequested=new URLSearchParams(location.search).get('lab')==='1' && new URLSearchParams(location.search).get('hands')==='1';
+  function wallEditorRequested(name){
+    if(sharedBuildData)return false;
+    var entry=machineRegistry && machineRegistry.lookup(name);
+    if((name==='self-flushing-cup' || name==='thumb-straw') && entry && entry.accepted)return true;
+    if(bootParams.get('hands')!=='1')return false;
+    return name==='cup' || name==='siphon' || name==='heron' ||
+      bootParams.get('lab')==='1' && !!entry && /^(self-flushing-cup|thumb-straw|tantalus)$/.test(name);
+  }
+  var handsRequested=wallEditorRequested(bootScene);
   function nativeMachineScene(name){return !!(machineRegistry && machineRegistry.lookup(name));}
   function fixedMachineScene(name){return name==='cup' || name==='siphon' || name==='heron' || nativeMachineScene(name);}
   function machineSize(name){var entry=machineRegistry && machineRegistry.lookup(name);return entry ? entry.world : machineWorld;}
   var fixedMachineRequested = fixedMachineScene(bootScene);
   var portrait = window.innerHeight > window.innerWidth * 1.15;
   var worldW = sharedBuildData ? sharedBuildData.width*sharedBuildData.tile : fixedMachineRequested ? machineSize(bootScene).w : Math.round(availW);
+  function controlRowHeight(element){
+    var style=getComputedStyle(element);
+    return style.position==='absolute' || style.position==='fixed' ? 0 : element.getBoundingClientRect().height;
+  }
   function stageRoom() {
     var h = window.innerHeight - (viewport.getBoundingClientRect().top + window.scrollY) - 16;
     ['.toy-dock', '.toy-foot'].forEach(function (selector) {
-      h -= document.querySelector(selector).getBoundingClientRect().height;
+      h -= controlRowHeight(document.querySelector(selector));
     });
     return Math.max(80, h);
   }
   function displayStageRoom(){
     var h=window.innerHeight-Math.max(0,viewport.getBoundingClientRect().top)-16;
-    ['.toy-dock','.toy-foot'].forEach(function(selector){h-=document.querySelector(selector).getBoundingClientRect().height;});
+    ['.toy-dock','.toy-foot'].forEach(function(selector){h-=controlRowHeight(document.querySelector(selector));});
     return Math.max(80,h);
   }
   var availableHeight = stageRoom();
@@ -168,7 +180,7 @@
       h = shell.clientHeight;
       topHeight = shell.querySelector('.toy-top').getBoundingClientRect().height;
       ['.toy-top', '.toy-dock', '.toy-foot'].forEach(function (selector) {
-        h -= shell.querySelector(selector).getBoundingClientRect().height;
+        h -= controlRowHeight(shell.querySelector(selector));
       });
       h = Math.max(1, h);
     }
@@ -13239,13 +13251,13 @@
       if(handsPending)throw new Error('Wait for the wall restoration to finish.');
       var part=machineBuilder.parts.find(function(p){return p.id===id;});
       if(!part || (part.type!=='flap' && part.type!=='check') || Object.keys(patch).length!==1 || patch.open!==true)
-        throw new Error('This wall lab can open existing valves. Close them in the original scene.');
+        throw new Error('Hole punch can open existing valves. Close them in the original scene.');
       part.open=true;machineBuilder._notify('Valve open',[]);publishHandsWalls();return Object.assign({},part);
     };
   }
   function setBuildTool(kind,options){
     if(handsRequested){
-      if(kind!=='punch')throw new Error('This lab supports Hole punch and its Undo only.');
+      if(kind!=='punch')throw new Error('Use Hole punch and Undo to edit these walls.');
       if(!handsReadyNow())throw new Error('Hole punch needs a ready cup, siphon, fountain or native machine.');
       cancelBuildGesture();buildKind=kind;setTool('build');return {kind:kind,options:{}};
     }
@@ -13342,14 +13354,14 @@
     setManualValve(selected.id,!selected.open);return true;
   }
   function shareBuild(){
-    if(handsRequested)throw new Error('Wall lab builds cannot be shared yet.');
+    if(handsRequested)throw new Error('Hole-punched machines cannot be shared yet.');
     if(nativeMachineScene(currentScene))throw new Error('This machine uses a fixed apparatus.');
     var url=new URL(window.location.href);url.searchParams.delete('scene');
     url.searchParams.delete('seed');url.searchParams.delete('smoke');
     return ensureBuilder().share(url.href);
   }
   async function loadBuild(input){
-    if(handsRequested)throw new Error('Shared builds are not supported by this wall lab.');
+    if(handsRequested)throw new Error('Shared builds are not supported by Hole punch.');
     if(bootMachine)throw new Error('Choose an original scene to load a build.');
     var decoded=window.WaterMachinesBuilder.decode(input);
     if(decoded.width!==gridW || decoded.height!==gridH || decoded.tile!==TILE)
@@ -13778,7 +13790,7 @@
   function scene(name) {
     if(handsPending){buildError='Wait for the wall restoration to finish.';return;}
     var size=machineSize(name);
-    if(toyBootReady && ((handsRequested && toyBoundary && !fixedMachineScene(name)) ||
+    if(toyBootReady && (wallEditorRequested(name)!==handsRequested || (handsRequested && toyBoundary && !fixedMachineScene(name)) ||
         (fixedMachineScene(name) && (worldW!==size.w || worldH!==size.h)) || nativeMachineScene(name)!==!!bootMachine || (bootMachine && name!==bootMachine.id))){
       handsController=null;handsSelection=null;handsThumbRelease=false;
       thumbWanted=false;if(toySound)toySound.setActive(false);
@@ -14283,7 +14295,7 @@
     if(handsRequested && !window.WSSNative){
       try{
         for(var path of ['wss-boundaries','wss-hands','wss-native'])await new Promise(function(resolve,reject){
-          var script=document.createElement('script');script.src='/js/'+path+'.js?v='+encodeURIComponent(TOY_VERSION);script.onload=resolve;script.onerror=function(){reject(new Error('The wall lab did not load.'));};document.head.appendChild(script);
+          var script=document.createElement('script');script.src='/js/'+path+'.js?v='+encodeURIComponent(TOY_VERSION);script.onload=resolve;script.onerror=function(){reject(new Error('Hole punch did not load.'));};document.head.appendChild(script);
         });
       }catch(error){document.getElementById('toy-fallback').hidden=false;buildError=error.message;return;}
     }
