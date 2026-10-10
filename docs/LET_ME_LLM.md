@@ -159,7 +159,8 @@ The homepage thumbnail keeps the tool's sent-state layout: the question
 below, with the pointer at send. The owner requested actual words on 2026-10-09,
 superseding the original wordless homepage rule, then chose this layout over
 the version with a large title. Type is enlarged for the card. A thin white
-outline with rounded corners frames the whole scene, by owner request. Its source is
+outline with rounded corners sits 20px inward at 40 percent opacity, by owner
+request. Its source is
 `tools/let-me-llm/homepage-thumbnail.html`; the maker's original light OG source
 is `tools/let-me-llm/thumbnail-lab.html`.
 
@@ -169,11 +170,11 @@ node tools/let-me-llm/render-thumbnails.cjs /path/to/evidence --homepage-only
 ```
 
 This owns Chrome for Testing and writes the 600x400 homepage JPG/WebP pair
-(`let-me-llm-that-for-you-frame`) and the 1200x630 OG JPG under `assets/thumbs/`.
+(`let-me-llm-that-for-you-frame-soft`) and the 1200x630 OG JPG under `assets/thumbs/`.
 Use `--homepage-only` to rebuild the card without changing the OG image.
 Its report and PNG evidence go to
 `research/let-me-llm/evidence/integration/`. The page never requests these
-images. Homepage revision evidence is in `evidence/thumbnail-frame-v5/`, with
+images. Homepage revision evidence is in `evidence/thumbnail-frame-v6/`, with
 desktop and phone screenshots at the displayed card size.
 
 Before adding a homepage entry, `node tools/gen-hubs.mjs --homepage` must leave
