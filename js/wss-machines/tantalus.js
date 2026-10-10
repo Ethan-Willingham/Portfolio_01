@@ -10,12 +10,12 @@
     var definition = cup.make(world, options);
     definition.name = 'tantalus';
     definition.title = 'Tantalus';
-    definition.slimes.push({x:112, y:160, radius:24, held:false});
-    definition.solids.push({x:80, y:184, width:64, height:8});
-    definition.measure.mouth = {x:156, y:160, width:16, height:8};
-    definition.measure.mouthLine = 164;
-    definition.measure.mouthCenter = {x:164, y:164};
-    definition.marks.push({id:'mouth-line', x:156, y:164, width:16});
+    definition.slimes.push({x:112, y:152, radius:24, held:false});
+    definition.solids.push({x:32, y:176, width:128, height:8});
+    definition.measure.mouth = {x:156, y:152, width:16, height:8};
+    definition.measure.mouthLine = 156;
+    definition.measure.mouthCenter = {x:164, y:156};
+    definition.marks.push({id:'mouth-line', x:156, y:156, width:16});
     definition.caption = options.vented
       ? 'The mouth line stays fixed above the drain\'s crest. The opening in the crest lets room air into the tube, changing how the cup drains.'
       : 'The tap fills toward the fixed mouth line above the drain\'s crest. Once the tube fills, it can pull the water back below the intake.';
