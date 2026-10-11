@@ -12124,6 +12124,9 @@
       // A membrane gets native contact reactions, not solid-body buoyancy.
       if(b && b.waterBalloon)continue;
       if (!b || b.frozen || !isFinite(b.bboxL + b.bboxR + b.bboxT + b.bboxB)) continue;
+      var diverContact=b.cartesianDiver,farSurf=Infinity;
+      if(diverContact){b._wetCells=diverContact.wetProbeCount;if(!b._wetCells)continue;b.sleeping=false;b.sleepFrames=0;}
+      else {
       if (!waterCellsAny) { b._wetCells = 0; continue; }
 
       // Coarse wet probe over the bbox (cheap, runs even for sleepers so
@@ -12171,7 +12174,6 @@
       // body's reference. Each sampled column reads its POOL-LOCAL
       // surface anchored at the body's depth, so pools on other floors
       // in the same columns are invisible too.
-      var farSurf = Infinity;
       var anchorRow = (b.cy / TILE) | 0;
       var bandT = Math.max(0, ((b.bboxT / TILE) | 0) - 1);
       var bandB = Math.min(gridH - 1, ((b.bboxB / TILE) | 0) + 1);
@@ -12220,6 +12222,7 @@
       } else {
         b._surfRef = null;
       }
+      }
       var n = b.n, px = b.px, py = b.py, ox = b.ox, oy = b.oy;
       var dbg = (window.__cdb && bi === 0) ? { t: toyFrameNo, dvy: 0, phi: 0, np: 0 } : null;
       // Body real velocity (for entry physics below).
@@ -12236,7 +12239,7 @@
       // floats second (the instant full-strength lift made the surface a
       // trampoline: balls skipped on a skin-tight notch instead of
       // carving a crater).
-      var buoyScale = 1 / (1 + bSpd / 260);
+      var buoyScale = diverContact ? 1 : 1 / (1 + bSpd / 260);
       var displacedMassRatio=b.cartesianDiver ? window.WSSCartesianDivers.lift(b) : 1+BUOY_BETA;
       var buoyA = -JELLO_GRAVITY * displacedMassRatio * dt * buoyScale;   // times phi per point
       var rampInv = 1 / (TILE * 2.0);                      // surface straddle ramp, ~16 px
@@ -12247,13 +12250,14 @@
         // (Local density is useless here: the guest boundary keeps the
         // inside of a submerged slime EMPTY, measured raw [0,0,0,0].)
         var surfY = farSurf;
-        if (surfY === Infinity) {
+        if (!diverContact && surfY === Infinity) {
           // No usable far-field (mid-air, wall-to-wall tube): the point's
           // own column, but POOL-LOCAL, anchored at the point itself.
           surfY = poolSurfaceAt((px[i] / TILE) | 0, (py[i] / TILE) | 0);
         }
         var phi = 0;
-        if (surfY < Infinity) {
+        if(diverContact)phi=diverContact.submergedFraction;
+        else if (surfY < Infinity) {
           phi = (py[i] - surfY) * rampInv;
           if (phi < 0) phi = 0; else if (phi > 1) phi = 1;
         }
