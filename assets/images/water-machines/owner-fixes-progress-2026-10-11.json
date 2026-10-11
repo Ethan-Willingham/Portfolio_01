@@ -1,0 +1,118 @@
+{
+  "updated": "2026-10-11",
+  "acceptedNewCapabilities": 5,
+  "acceptedNovelMachines": 11,
+  "scope": "Progress record for private failed candidates. This does not replace the acceptance records linked beside public machines.",
+  "kettle": {
+    "status": "private, rejected",
+    "candidate": "cbde2bb93be0225e09458f0c589b1e4304b32e2e",
+    "seed": 17,
+    "method": "Three unchanged10-native-second cases: heated/open, unheated/open, heated/capped. Values below are the heated/open case.",
+    "maximumGasGaugePsi": 2.8129327309817707,
+    "maximumAllowedGasGaugePsi": 1,
+    "sampledSurfaceSpanInches": 1.1815001169840496,
+    "maximumAllowedSurfaceSpanInches": 0.25,
+    "scalePixelsPerInch": 24,
+    "bottomVaporBirths": 953,
+    "phaseMassResidualUnits": 0,
+    "limits": "Fractional liquid mass and enthalpy are debited before native vapor births. This accounting pass does not establish satisfactory interface dynamics; pressure and surface limits both fail."
+  },
+  "slimeContact": {
+    "status": "private, rejected",
+    "observation": "Actual enlarged phone views retain dark water pockets at ordinary slime, float and deformed balloon skins. Smooth balloon curves and native containment pass their scoped checks; wet-contact acceptance does not."
+  },
+  "sandSorting": {
+    "status": "private, rejected",
+    "method": "Three30-native-second heavy/light-grain contrasts and equal-density controls, actual same native material-slip engine. Both grain species settle. All three density contrasts miss both sorting thresholds.",
+    "seeds": [
+      17,
+      42,
+      913
+    ],
+    "meanHeavyBelowLightPixels": [
+      1.5218,
+      2.50574,
+      2.01508
+    ],
+    "requiredMeanGapPixels": 6,
+    "lowerHalfHeavyShares": [
+      0.54756,
+      0.60122,
+      0.57683
+    ],
+    "requiredLowerHalfShare": 0.65,
+    "limits": "No sand sorting or gold sluice is accepted. Oil has a separate accepted record with its own partial-control stratification limitation."
+  },
+  "glassToilet": {
+    "status": "private, rejected",
+    "candidate": "53f27a213a9304549a70b7098416b03a9d98be46",
+    "method": "Unchanged six-case150 native-second prototype, actual Flush then manual Close at40 native seconds; original55-cell candidate flag retained as a sampled indicator, not full hydraulic proof.",
+    "cases": [
+      {
+        "seed": 17,
+        "half": false,
+        "candidatePrime": false,
+        "laterAir": false,
+        "bowlFinalPx": 252,
+        "weirPx": 256,
+        "finalInletOpenness": 0
+      },
+      {
+        "seed": 17,
+        "half": true,
+        "candidatePrime": true,
+        "laterAir": true,
+        "bowlFinalPx": 252,
+        "weirPx": 256,
+        "finalInletOpenness": 0.03233877691460041
+      },
+      {
+        "seed": 42,
+        "half": false,
+        "candidatePrime": true,
+        "laterAir": true,
+        "bowlFinalPx": 252,
+        "weirPx": 256,
+        "finalInletOpenness": 0.0691254857970014
+      },
+      {
+        "seed": 42,
+        "half": true,
+        "candidatePrime": false,
+        "laterAir": false,
+        "bowlFinalPx": 252,
+        "weirPx": 256,
+        "finalInletOpenness": 0
+      },
+      {
+        "seed": 913,
+        "half": false,
+        "candidatePrime": false,
+        "laterAir": false,
+        "bowlFinalPx": 252,
+        "weirPx": 256,
+        "finalInletOpenness": 0.07356731013695228
+      },
+      {
+        "seed": 913,
+        "half": true,
+        "candidatePrime": false,
+        "laterAir": false,
+        "bowlFinalPx": 252,
+        "weirPx": 256,
+        "finalInletOpenness": 0
+      }
+    ],
+    "limits": "Ongoing declared refill materially adds water before the half17 candidate. Two full-tank cases miss the sampled flag while half17 records it. All final bowls are within the existing8-pixel weir band, but three inlets remain partly open. All six have a sampled nonpositive gas volume and unresolved phase/pressure diagnostics. No new hydraulic witness was built and no acceptance bar changed."
+  },
+  "birds": {
+    "status": "private, rejected source preserved; actual spawn repair awaits native validation",
+    "candidate": "27ef4d6cdfc35c0554c6fa60e5471de452a616ff",
+    "observation": "Actual native loads have19 points each, while the CPU dry-reset derivation expected61-point float versus19-point weight. The30-native-second run has real float motion and gas-powered voice events but no repeat or first-three-second cord motion. A longer run was stopped and remains incomplete.",
+    "spawnRepairCandidate": "41c8f91af7b36145019d95b2db573d8660648a29"
+  },
+  "ordinarySubmergedAir": {
+    "status": "unresolved",
+    "observation": "The three-seed positive-gas transport comparison does not demonstrate consistent clearing improvement. That engine experiment remains private. The accepted hose source/Stop record applies to the hose apparatus."
+  }
+}
