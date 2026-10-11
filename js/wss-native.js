@@ -444,7 +444,7 @@ fn finishWall(){
       for(var i=0;i<t.tiles;i++)if(solidTiles[i])mask[i>>5]|=1<<(i&31);
       queue.writeBuffer(instance.buf.terrainMask,0,mask,0,words);instance.terrainMaskWords=words;
     }
-    var extension={ready:false,inFlight:false,error:null,grid:grid,maxSubsteps:options.maxSubsteps,
+    var extension={ledgerBuffer:ledger,ready:false,inFlight:false,error:null,grid:grid,maxSubsteps:options.maxSubsteps,
       readyPromise:Promise.all([module.getCompilationInfo()].concat(Object.keys(grid).map(function(k){return grid[k].module.getCompilationInfo();})).concat(burst ? [burst.readyPromise.then(function(){return {messages:[]};})] : [])).then(function(infos){
         var errors=infos.flatMap(function(info){return info.messages.filter(function(m){return m.type==='error';});});
         if(errors.length)throw new Error(errors.map(function(m){return m.lineNum+': '+m.message;}).join('\n'));return extension;
@@ -544,7 +544,7 @@ fn finishWall(){
         {enabled:true,ready:extension.ready,inFlight:extension.inFlight,pendingFrames:extension.inFlight?1:0,energyUnit:'J',physicalSecondsPerSimulationSecond:physicalTimeScale,pool:pool,tapEnabled:!!ints[2],count:count,initialPresent:initial,present:initial,parked:count-initial,requested:0,admitted:0,drained:0,shortfall:0,
           energyIn:0,energyOut:0,externalWork:0,editWork:0,simulationTime:0,frameId:0,ageMs:null,error:extension.error,eventOverflow:0};if(burst)result.burstDisk=burst.stats();return result;},
       snapshot:function(){return latestSnapshot ? Object.assign({},latestSnapshot,{ageMs:Math.max(0,performance.now()-latestSnapshot.capturedAtMs)}) : null;},
-      destroy:function(){destroyed=true;extension.ready=false;extension.inFlight=false;consumer=null;if(burst)burst.destroy();buffers.forEach(function(b){try{b.destroy();}catch(e){}});}
+      destroy:function(){destroyed=true;extension.ready=false;extension.inFlight=false;consumer=null;if(instance.toyNativeExtension===extension)instance.toyNativeExtension=null;if(burst)burst.destroy();buffers.forEach(function(b){try{b.destroy();}catch(e){}});}
     };
     writeCaps();return extension;
   }
