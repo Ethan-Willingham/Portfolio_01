@@ -5,7 +5,8 @@
     {id:'self-flushing-cup',title:'Self-flushing cup',cue:'Open or close the tap.',preview:'cup',accepted:true,world:{w:720,h:400},pool:true},
     {id:'tantalus',title:'Tantalus',cue:'Watch the fixed mouth line.',preview:'tantalus',accepted:true,world:{w:720,h:400},pool:true},
     {id:'roman-inverted-siphon',title:'Roman inverted siphon',cue:'Close or open the intake.',preview:'inverted-siphon',accepted:true,world:{w:720,h:400},pool:false},
-    {id:'thumb-straw',title:'The straw and the thumb',cue:'Hold the top, then release.',preview:'straw',accepted:true,world:{w:720,h:400},pool:false}
+    {id:'thumb-straw',title:'The straw and the thumb',cue:'Hold the top, then release.',preview:'straw',accepted:true,world:{w:720,h:400},pool:false},
+    {id:'burst-disk',title:'The burst disk',cue:'Compare two membrane strengths.',preview:'burst-disk',accepted:false,world:{w:720,h:400},pool:false}
   ];
   var lab = new URLSearchParams(location.search).get('lab') === '1';
   var loaded = {};
@@ -29,6 +30,7 @@
     await script('/js/wss-boundaries.js');
     await script('/js/wss-hands.js');
     await script('/js/wss-native.js');
+    if(id==='burst-disk')await script('/js/wss-burst-disk.js');
     await script('/js/wss-sound.js');
     if(id==='tantalus')await script('/js/wss-machines/self-flushing-cup.js');
     await script('/js/wss-machines/'+id+'.js');
@@ -53,6 +55,11 @@
       path('M5 8v20h16V8M53 21v21h15V21M15 25h12v19h19V33h13','toy-preview-glass');
       path('M6 12h14v15H6ZM54 33h13v8H54Z','toy-preview-water');
       path('M16 25h11v19h19V33h14','toy-preview-stream');
+    }else if(kind==='burst-disk'){
+      path('M10 8v27h18V8M27 23h27v8H27','toy-preview-glass');
+      path('M11 14h15v20H11Z M27 24h16v6H27Z','toy-preview-water');
+      path('M44 23v8','toy-preview-mouth');
+      path('M55 32v7','toy-preview-stream');
     }else if(kind==='straw'){
       path('M31 9v24M42 9v24','toy-preview-glass');
       path('M33 15h7v17h-7Z','toy-preview-water');

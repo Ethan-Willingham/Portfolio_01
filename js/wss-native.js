@@ -324,6 +324,7 @@ fn finishWall(){
     var width=options.width, height=options.height, floor=options.floor === undefined ? height : options.floor;
     if (![width,height,floor].every(Number.isFinite) || width<=0 || height<=0) throw new Error('Boundary domain is invalid.');
     var tap=options.tap || null, drain=options.drain || null, caps=global.WSSBoundaries.normalizeCaps(options.caps);
+    if(options.burstDisk && (options.hands || pool || !global.WSSBurstDisk))throw new Error('Burst disk needs its opt-in helper, finite inventory and no wall editor.');
     if (drain && (![drain.x,drain.y,drain.width,drain.height].every(Number.isFinite) || drain.width<=0 || drain.height<=0 || drain.x<0 || drain.y<0 || drain.x+drain.width>width || drain.y+drain.height>height)) throw new Error('Collector drain is outside the native domain.');
     if (options.reservoirY !== undefined && (!Number.isFinite(options.reservoirY) || options.reservoirY<0 || options.reservoirY>height)) throw new Error('Reservoir datum is outside the native domain.');
     if (!pool && (tap || drain)) throw new Error('Taps and drains require a fixed resident inventory.');
@@ -332,6 +333,8 @@ fn finishWall(){
     if (tap && [tap.x,tap.y,tap.vx || 0,tap.vy || 0].some(function(v){return !Number.isFinite(v);})) throw new Error('Tap state is invalid.');
     var device=instance.device, queue=instance.queue, buffers=[], destroyed=false, initialized=false;
     if(device.limits.maxStorageBuffersPerShaderStage<10)throw new Error('Native boundaries require ten storage buffers.');
+    var burst=options.burstDisk ? global.WSSBurstDisk.create(instance,options.burstDisk,width,height) : null;
+    if(burst){try{burst.guardCaps(caps);}catch(e){burst.destroy();throw e;}}
     function storage(label,size) {
       var b=device.createBuffer({label:'toy.native.'+label,size:Math.max(16,size),
         usage:GPUBufferUsage.STORAGE|GPUBufferUsage.COPY_SRC|GPUBufferUsage.COPY_DST});buffers.push(b);return b;
@@ -366,11 +369,12 @@ fn finishWall(){
       clearAtlas:[0,8],splatAtlas:[0,1,5,8],admit:[0,1,2,3,4,5,6,7,8,9,11,12],saveStep:[0,1,5,9],
       constrain:[0,1,2,5,6,9,10],saveCollision:[0,1,3,5,6,9,11,12],impacts:[0,1,3,5,6,9,10,11,12]};
     if(options.hands)Object.assign(bindings,{stageWall:[0,1,5,6,11,12,14,15,16],applyWall:[0,1,2,3,4,5,9,15,16],finishWall:[0,6,14,15,16]});
-    var module=device.createShaderModule({label:'toy.native.boundaries',code:SOURCE}), pipes={}, groups={};
+    if(burst){resources[17]=burst.buffer;bindings.constrain.push(17);}
+    var module=device.createShaderModule({label:'toy.native.boundaries',code:burst ? global.WSSBurstDisk.variant(SOURCE) : SOURCE}), pipes={}, groups={};
     Object.keys(bindings).forEach(function(name){
       if(bindings[name].filter(function(b){return b!==0 && b!==12 && b!==14;}).length>10)throw new Error('Native stage exceeds ten storage bindings.');
       var entries=bindings[name].map(function(b){return {binding:b,visibility:GPUShaderStage.COMPUTE,
-        buffer:{type:b===0||b===12||b===14 ? 'uniform' : b===11 ? 'read-only-storage' : 'storage'}};});
+        buffer:{type:b===0||b===12||b===14 ? 'uniform' : b===11||b===17 ? 'read-only-storage' : 'storage'}};});
       var layout=device.createBindGroupLayout({label:'toy.native.'+name+'.layout',entries:entries});
       pipes[name]=device.createComputePipeline({label:'toy.native.'+name,layout:device.createPipelineLayout({bindGroupLayouts:[layout]}),
         compute:{module:module,entryPoint:name}});
@@ -378,7 +382,7 @@ fn finishWall(){
     });
     var grid=instance.createToyLifecycleGrid(slotBuffer);
     var frameId=0, latest=null, latestSnapshot=null, consumer=null, lastSnapshotAt=-Infinity;
-    var frameBytes=LEDGER_WORDS*4+EVENT_CAP*32, stateBytes=LEDGER_WORDS*4+count*68;
+    var frameBytes=LEDGER_WORDS*4+EVENT_CAP*32, stateBytes=LEDGER_WORDS*4+count*68+(burst ? 64 : 0);
     function readBuffer(label,size){var b=device.createBuffer({label:label,size:size,usage:GPUBufferUsage.COPY_DST|GPUBufferUsage.MAP_READ});buffers.push(b);return {buffer:b,busy:false,captured:false};}
     var eventRing=[readBuffer('toy.native.events.0',frameBytes),readBuffer('toy.native.events.1',frameBytes)];
     var stateRing=[readBuffer('toy.native.state.0',stateBytes),readBuffer('toy.native.state.1',stateBytes)];
@@ -402,6 +406,7 @@ fn finishWall(){
       [[instance.buf.pos,16],[instance.buf.affine,16],[instance.buf.aux,16],[instance.buf.flag,4],[slotBuffer,16]].forEach(function(entry){
         encoder.copyBufferToBuffer(entry[0],0,row.buffer,offset,count*entry[1]);offset+=count*entry[1];
       });
+      if(burst)encoder.copyBufferToBuffer(burst.buffer,0,row.buffer,offset,64);
     }
     function readRing(ring,state){ring.forEach(function(row){
       if(!row.captured)return;row.captured=false;
@@ -422,6 +427,7 @@ fn finishWall(){
           function take(Type,words){var a=new Type(data,off,count*words);off+=count*words*4;return a;}
           latestSnapshot=Object.assign(stats,{pos:take(Float32Array,4),affine:take(Float32Array,4),aux:take(Float32Array,4),
             flags:take(Uint32Array,1),slots:take(Uint32Array,4),slotStride:4,parcelArea:1.5625,ledger:new Uint32Array(data,0,LEDGER_WORDS)});
+          if(burst){latestSnapshot.burstDisk=burst.read(data,off,row.at);if(latestSnapshot.burstDisk.fault){extension.error='Native burst disk pressure or geometry fault.';extension.ready=false;instance.materialStateError=extension.error;}}
         }
       }).catch(function(e){row.busy=false;if(!destroyed){extension.error=String(e.message||e);extension.ready=false;instance.materialStateError=extension.error;}});
     });}
@@ -439,12 +445,13 @@ fn finishWall(){
       queue.writeBuffer(instance.buf.terrainMask,0,mask,0,words);instance.terrainMaskWords=words;
     }
     var extension={ready:false,inFlight:false,error:null,grid:grid,maxSubsteps:options.maxSubsteps,
-      readyPromise:Promise.all([module.getCompilationInfo()].concat(Object.keys(grid).map(function(k){return grid[k].module.getCompilationInfo();}))).then(function(infos){
+      readyPromise:Promise.all([module.getCompilationInfo()].concat(Object.keys(grid).map(function(k){return grid[k].module.getCompilationInfo();})).concat(burst ? [burst.readyPromise.then(function(){return {messages:[]};})] : [])).then(function(infos){
         var errors=infos.flatMap(function(info){return info.messages.filter(function(m){return m.type==='error';});});
         if(errors.length)throw new Error(errors.map(function(m){return m.lineNum+': '+m.message;}).join('\n'));return extension;
       }),
       initialize:function(){return extension.readyPromise.then(function(){
         if(destroyed)throw new Error('Boundary extension was destroyed.');
+        if(burst)burst.attach(instance.pressureModel);
         var L=instance.liquid;
         if(L.getCount()!==count)throw new Error('Host resident count must match the native boundary count.');
         // Direct pressure transport does not upload/reset native material.
@@ -466,27 +473,29 @@ fn finishWall(){
       beginFrame:function(encoder){extension.inFlight=true;frameId++;ints[28]=frameId;queue.writeBuffer(config,0,bytes);serial(encoder,'beginFrame');},
       beforeSubstep:function(encoder,step){
         if(Math.abs(step.h-1/120)>1e-7)throw new Error('Native boundaries require a fixed 1/120 quantum.');
+        if(burst)burst.encode(encoder);
         ints[31]=Math.round((tap && tap.rate || 0)*step.h*65536);queue.writeBuffer(config,0,bytes);
         encode(encoder,'drainChunks',chunkCount);serial(encoder,'prefixChunks');encode(encoder,'scatterFree',chunkCount);
         encode(encoder,'clearAtlas',aw*ah);
         if(tap && ints[2]){encode(encoder,'splatAtlas',count);serial(encoder,'admit');}
         encode(encoder,'saveStep',count);
       },
-      constrain:function(encoder){if(caps.length)encode(encoder,'constrain',count);},
+      constrain:function(encoder){if(caps.length || burst)encode(encoder,'constrain',count);},
       beforeCollision:function(encoder){encode(encoder,'saveCollision',count);},
-      afterSubstep:function(encoder){encode(encoder,'impacts',count);if(caps.length)encode(encoder,'constrain',count);},
+      afterSubstep:function(encoder){encode(encoder,'impacts',count);if(caps.length || burst)encode(encoder,'constrain',count);},
       captureFrame:function(encoder){capture(encoder,eventRing,false);var now=performance.now();if(now-lastSnapshotAt>=150){capture(encoder,stateRing,true);lastSnapshotAt=now;}},
       afterSubmit:function(){readRing(eventRing,false);readRing(stateRing,true);
         queue.onSubmittedWorkDone().then(function(){extension.inFlight=false;}).catch(function(e){
           extension.inFlight=false;if(!destroyed){extension.error=String(e.message||e);extension.ready=false;instance.materialStateError=extension.error;}
         });
       },
-      applyPressureCaps:function(geometry,w,h,dx){global.WSSBoundaries.closePressureFaces(geometry,w,h,dx,caps);},
+      applyPressureCaps:function(geometry,w,h,dx){global.WSSBoundaries.closePressureFaces(geometry,w,h,dx,caps);if(burst)burst.applyPressureCut(geometry,w,h,dx);},
       setCaps:function(value){var next=global.WSSBoundaries.normalizeCaps(value);
         if(restoring)throw new Error('Held boundaries cannot change during wall restoration.');
         if(next.some(function(c){return c.x0<0||c.y0<0||c.x1>width||c.y1>height;}))throw new Error('Held cut lies outside the native domain.');
         var dx=instance.pressureModel && instance.pressureModel.cellSize;
         if(dx && next.some(function(c){return Math.abs(c.at-Math.round(c.at/dx)*dx)>1e-5;}))throw new Error('Held cuts must lie on pressure faces.');
+        if(burst)burst.guardCaps(next);
         caps=next;writeCaps();if(instance.pressureModel && instance.pressureModel.refreshToyCaps)instance.pressureModel.refreshToyCaps();return caps.slice();},
       setTapEnabled:function(value){ints[2]=tap && value ? 1 : 0;queue.writeBuffer(config,0,bytes);return !!ints[2];},
       syncWallTerrain:syncTerrain,
@@ -531,11 +540,11 @@ fn finishWall(){
       },
       wallEditStats:function(){return Object.assign({pending:restoring},lastEdit);},
       setEventConsumer:function(fn){consumer=typeof fn==='function'?fn:null;},
-      stats:function(){var row=latest || latestSnapshot;return row ? Object.fromEntries(['enabled','energyUnit','physicalSecondsPerSimulationSecond','pool','count','initialPresent','present','parked','requested','admitted','drained','shortfall','energyIn','energyOut','externalWork','editWork','simulationTime','frameId','eventOverflow'].map(function(k){return [k,row[k]];}).concat([['inFlight',extension.inFlight],['pendingFrames',extension.inFlight?1:0],['tapEnabled',!!ints[2]],['ready',extension.ready],['ageMs',Math.max(0,performance.now()-row.capturedAtMs)],['error',extension.error||row.error]])) :
+      stats:function(){var row=latest || latestSnapshot;var result=row ? Object.fromEntries(['enabled','energyUnit','physicalSecondsPerSimulationSecond','pool','count','initialPresent','present','parked','requested','admitted','drained','shortfall','energyIn','energyOut','externalWork','editWork','simulationTime','frameId','eventOverflow'].map(function(k){return [k,row[k]];}).concat([['inFlight',extension.inFlight],['pendingFrames',extension.inFlight?1:0],['tapEnabled',!!ints[2]],['ready',extension.ready],['ageMs',Math.max(0,performance.now()-row.capturedAtMs)],['error',extension.error||row.error]])) :
         {enabled:true,ready:extension.ready,inFlight:extension.inFlight,pendingFrames:extension.inFlight?1:0,energyUnit:'J',physicalSecondsPerSimulationSecond:physicalTimeScale,pool:pool,tapEnabled:!!ints[2],count:count,initialPresent:initial,present:initial,parked:count-initial,requested:0,admitted:0,drained:0,shortfall:0,
-          energyIn:0,energyOut:0,externalWork:0,editWork:0,simulationTime:0,frameId:0,ageMs:null,error:extension.error,eventOverflow:0};},
+          energyIn:0,energyOut:0,externalWork:0,editWork:0,simulationTime:0,frameId:0,ageMs:null,error:extension.error,eventOverflow:0};if(burst)result.burstDisk=burst.stats();return result;},
       snapshot:function(){return latestSnapshot ? Object.assign({},latestSnapshot,{ageMs:Math.max(0,performance.now()-latestSnapshot.capturedAtMs)}) : null;},
-      destroy:function(){destroyed=true;extension.ready=false;extension.inFlight=false;consumer=null;buffers.forEach(function(b){try{b.destroy();}catch(e){}});}
+      destroy:function(){destroyed=true;extension.ready=false;extension.inFlight=false;consumer=null;if(burst)burst.destroy();buffers.forEach(function(b){try{b.destroy();}catch(e){}});}
     };
     writeCaps();return extension;
   }

@@ -13992,7 +13992,9 @@
       instrumentsCanvas.setAttribute('aria-hidden','true');stage.appendChild(instrumentsCanvas);
       instrumentsCtx=instrumentsCanvas.getContext('2d');
     }
+    var burstView=machineState && machineState.definition.boundaries && machineState.definition.boundaries.burstDisk && toyBoundary ? toyBoundary.stats().burstDisk : null;
     var overlayKey=[wallsVersion,pressureColors,airPressureColors,fitScale,viewPanX,viewPanY,cameraWidth,cameraHeight,currentScene,highlightedValve,handsSelection && handsSelection.index].join(':');
+    if(burstView)overlayKey+=':'+burstView.opened+':'+burstView.fault;
     if(!buildGesture && !keyboardCursorVisible && machineOverlayCache && machineOverlayCache.key===overlayKey && machineOverlayCache.sample===instrumentSample)return;
     machineOverlayCache=!buildGesture && !keyboardCursorVisible ? {key:overlayKey,sample:instrumentSample} : null;
     var c=instrumentsCtx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,worldW,worldH);instrumentsDirty=true;
@@ -14067,6 +14069,13 @@
           var cap=definition.primary,o=cap.opening;c.lineWidth=cap.closed ? 4 : 1;c.beginPath();
           if(o.axis==='x'){c.moveTo(o.at,o.start);c.lineTo(o.at,o.end);}else{c.moveTo(o.start,o.at);c.lineTo(o.end,o.at);}c.stroke();c.lineWidth=1;
           c.fillText(cap.label+(cap.closed ? ' closed' : ' open'),o.axis==='x' ? o.at+14 : o.end+14,o.axis==='x' ? o.start-8 : o.at+4);
+        }
+        if(b.burstDisk){
+          var disk=b.burstDisk.opening,open=burstView && burstView.opened && !burstView.fault;
+          c.lineWidth=3;c.beginPath();
+          if(disk.axis==='x'){c.moveTo(disk.at,disk.start);c.lineTo(disk.at,open ? disk.start+4 : disk.end);}
+          else{c.moveTo(disk.start,disk.at);c.lineTo(open ? disk.start+4 : disk.end,disk.at);}
+          c.stroke();c.lineWidth=1;c.fillText(open ? 'Disk open' : 'Disk intact',disk.axis==='x' ? disk.at+12 : disk.end+12,disk.axis==='x' ? disk.start-12 : disk.at+4);
         }
         if(definition.measure.mouth){var mouth=definition.measure.mouth;c.strokeRect(mouth.x,mouth.y,mouth.width,mouth.height);}
       }
