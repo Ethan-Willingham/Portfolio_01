@@ -1013,6 +1013,51 @@ fn transportAffine(p:vec2<f32>,fallback:vec2<f32>,native:vec4<f32>,dt:f32)->vec4
 
 `;
 
+  // Optional current smoke temperatures share the existing gas binding. The
+  // reference amount remains n*R*T_room, so heating never creates gas.
+  function thermalSource(source) {
+    var extra = /* wgsl */ `
+fn smokeKelvin(c:u32)->f32 {
+  let tail=((cfg.cells+3u)/4u)*4u;
+  return clamp(bitcast<f32>(phaseGet(tail+c/4u,c%4u)),293.15,1172.6);
+}
+fn temperatureRatio(c:u32)->f32 {
+  let weight=atomicLoad(&gas[c].allocatedVolume);
+  if(weight<=0){return 1.0;}
+  return f32(atomicLoad(&gas[c].allocatedAmount))/f32(weight);
+}
+@compute @workgroup_size(128)
+fn clearThermalMean(@builtin(global_invocation_id) id:vec3<u32>){
+  let c=id.x;if(c>=cfg.cells){return;}
+  // The remap passes have consumed these two scratch lanes already.
+  atomicStore(&gas[c].allocatedAmount,0);atomicStore(&gas[c].allocatedVolume,0);
+}
+@compute @workgroup_size(128)
+fn collectThermalMean(@builtin(global_invocation_id) id:vec3<u32>){
+  let c=id.x;if(c>=cfg.cells){return;}
+  let r=airRoot(c);if(r==0u || r==NONE){return;}
+  let volume=localAirArea(c);
+  atomicAdd(&gas[r-1u].allocatedVolume,encodeVolume(volume));
+  atomicAdd(&gas[r-1u].allocatedAmount,encodeVolume(volume*smokeKelvin(c)/293.15));
+}
+`;
+    source += extra;
+    source = source.replace('p=cfg.atmosphere*amount/max(integrated,1.0e-8)-cfg.atmosphere;',
+      'p=cfg.atmosphere*amount*temperatureRatio(c)/max(integrated,1.0e-8)-cfg.atmosphere;');
+    source = source.replace('if(!GEOMETRIC_GAS && minRoot', 'if(false && !GEOMETRIC_GAS && minRoot');
+    source = source.replace('Isothermal gas: (V - F - S + K*p)*(atmosphere+p)=atmosphere*amount.',
+      'Thermal gas: (V - F - S + K*p)*(atmosphere+p)=n*R*meanTemperature.');
+    source = source.replace('let amount=f32(atomicLoad(&gas[c].amount))/cfg.volumeScale;',
+      'let amount=f32(atomicLoad(&gas[c].amount))/cfg.volumeScale*temperatureRatio(c);');
+    source = source.replace('let a=cfg.atmosphere*f32(atomicLoad(&gas[c].amount))/cfg.volumeScale;',
+      'let a=cfg.atmosphere*f32(atomicLoad(&gas[c].amount))/cfg.volumeScale*temperatureRatio(c);');
+    source = source.replace('f32(atomicLoad(&gas[c].integratedVolume)-atomicLoad(&gas[c].amount))/cfg.volumeScale',
+      '(f32(atomicLoad(&gas[c].integratedVolume))-f32(atomicLoad(&gas[c].amount))*temperatureRatio(c))/cfg.volumeScale');
+    source = source.replace('cfg.atmosphere*f32(history[c].amount))-1.0;',
+      'cfg.atmosphere*f32(history[c].amount)*temperatureRatio(c))-1.0;');
+    return source;
+  }
+
   function create(instance, options) {
     options = options || {};
     var directTransport = options.directGather === true && options.macTransfer !== true;
@@ -1056,7 +1101,9 @@ fn transportAffine(p:vec2<f32>,fallback:vec2<f32>,native:vec4<f32>,dt:f32)->vec4
     var labels = storage('labels',count * 8);
     var history = storage('history',count * 32);
     var phaseOffset=(count+2)*64;
-    var gasSize=phaseOffset+Math.ceil(count/4)*64;
+    var thermal=options.smokeTemperature===true;
+    var thermalOffset=phaseOffset+Math.ceil(count/4)*64;
+    var gasSize=thermalOffset+(thermal ? Math.ceil(count/16)*64 : 0);
     var gas = storage('gas',gasSize);
     var pressureA = storage('pressureA',count * 16);
     var pressureB = storage('pressureB',count * 16);
@@ -1066,7 +1113,7 @@ fn transportAffine(p:vec2<f32>,fallback:vec2<f32>,native:vec4<f32>,dt:f32)->vec4
       mac=global.LiquidAirMAC.create(instance,{width:width,height:height,dx:dx,config:config,geometry:geometry,cells:fields});
       buffers.push(mac.buffer,mac.terrainBuffer);
     }
-    var shaderSource=SOURCE;
+    var shaderSource=thermal ? thermalSource(SOURCE) : SOURCE;
     if(redBlack)shaderSource=shaderSource.replace('const RED_BLACK:bool=false;', 'const RED_BLACK:bool=true;');
     if(options.nonlinearGas===true)shaderSource=shaderSource.replace('const NONLINEAR_GAS:bool=false;', 'const NONLINEAR_GAS:bool=true;');
     if(options.vaporClosure===true)shaderSource=shaderSource.replace('const VAPOR_CLOSURE:bool=false;', 'const VAPOR_CLOSURE:bool=true;');
@@ -1089,6 +1136,7 @@ fn transportAffine(p:vec2<f32>,fallback:vec2<f32>,native:vec4<f32>,dt:f32)->vec4
     var names = ['clearDiagnostics','prepare','connect','compress','collectPhase','classifyPhase','restartTopology','checkConnectivity','collectVolumes',
       'remapAmounts','balanceAmounts','initializeGas','countInterfaces','gasWallFlux','initializeWater','clearPressureBound',
       'measurePressure','waterJacobi','gasJacobi','finish','finishGas','certifyExpansion','finishDiagnostics','applyVelocity'];
+    if(thermal)names.push('clearThermalMean','collectThermalMean');
     if(directTransport)names.push('publishTransport');
     if(mac)names.push('macDensities');
     if(redBlack)names.push('waterRed','waterBlack');
@@ -1117,7 +1165,7 @@ fn transportAffine(p:vec2<f32>,fallback:vec2<f32>,native:vec4<f32>,dt:f32)->vec4
       width:width,height:height,cellSize:dx,iterations:iterations,geometryStride:8,redBlack:redBlack,
       settings:{density:floats[5],soundSpeed:floats[6],atmospherePressure:floats[7],minimumPressure:floats[8],threshold:floats[9],
         volumeScale:volumeScale,diagonalScale:floats[11],fluxScale:floats[12],neighborScale:floats[13],pressureTolerance:floats[14],
-        particlePressure:!mac && options.particlePressure === true,projectedVelocity:floats[15]>0,directGather:!!directGather,collapseEmptyCells:collapseEmptyCells,geometricGas:options.geometricGas===true,boundaryReconstruction:options.boundaryReconstruction===true,nonlinearGas:options.nonlinearGas===true,vaporClosure:options.vaporClosure===true},
+        particlePressure:!mac && options.particlePressure === true,projectedVelocity:floats[15]>0,directGather:!!directGather,collapseEmptyCells:collapseEmptyCells,geometricGas:options.geometricGas===true,boundaryReconstruction:options.boundaryReconstruction===true,nonlinearGas:options.nonlinearGas===true,vaporClosure:options.vaporClosure===true,smokeTemperature:thermal,ambientTemperatureK:293.15},
       buffers:{geometry:geometry,cells:fields,labels:labels,history:history,gas:gas,pressure:pressureA,phase:gas,mac:mac ? mac.buffer : null},phaseOffset:phaseOffset,
       enabled:false,particlePressure:!mac && options.particlePressure === true,
       frameGeometry:directTransport,
@@ -1134,6 +1182,16 @@ fn transportAffine(p:vec2<f32>,fallback:vec2<f32>,native:vec4<f32>,dt:f32)->vec4
         if (errors.length) throw new Error(errors.map(function (m) {return m.lineNum+': '+m.message;}).join('\n'));
         return true;
       }),
+      setSmokeTemperature:function(values){
+        if(!thermal || destroyed)throw new Error('Current smoke temperature requires an active opt-in model.');
+        if(!values || values.length!==count)throw new Error('Smoke temperature field dimensions differ.');
+        var field=new Float32Array(count);
+        for(var c=0;c<count;c++){
+          if(!Number.isFinite(values[c]) || values[c]<Math.fround(293.15) || values[c]>Math.fround(1172.6))throw new Error('Smoke temperature must be finite and within the declared thermal range.');
+          field[c]=values[c];
+        }
+        instance.queue.writeBuffer(gas,thermalOffset,field);
+      },
       setMinimumPressure:function(value){
         if(destroyed)throw new Error('The air model has been destroyed.');
         if(typeof value!=='number' || !Number.isFinite(value) || value>0 || !(floats[7]+value>0))
@@ -1226,6 +1284,7 @@ fn transportAffine(p:vec2<f32>,fallback:vec2<f32>,native:vec4<f32>,dt:f32)->vec4
         dispatch('checkConnectivity');
         if(mac)dispatch('macDensities',0,mac.records-1);
         dispatch('collectVolumes');dispatch('remapAmounts');dispatch('balanceAmounts');
+        if(thermal){dispatch('clearThermalMean');dispatch('collectThermalMean');}
         dispatch('initializeGas');dispatch('countInterfaces');dispatch('gasWallFlux');dispatch('initializeWater');
         for (var i=0;i<iterations;i++) {
           var parity=redBlack ? 0 : i%2;
@@ -1312,13 +1371,14 @@ fn transportAffine(p:vec2<f32>,fallback:vec2<f32>,native:vec4<f32>,dt:f32)->vec4
             if(active)waterFloorVolume+=Math.max(0,r);
           }
           for(var c=0;c<count;c++) if(snapshot.labels[c*2]===c+1){
+            var temperatureRatio=thermal && snapshot.gas[c*16+11]>0 ? snapshot.gas[c*16+10]/snapshot.gas[c*16+11] : 1;
             var faceCount=Math.max(1,snapshot.gas[c*16+7]);
             var ds=Math.min(model.settings.diagonalScale,1e9/Math.max(faceCount*dt*dt/model.settings.density,1e-20));
             var diagonal=snapshot.cells[c*8+5]+snapshot.gas[c*16+4]/ds;
             var r=snapshot.pressure[c*4+3],p=snapshot.pressure[c*4],vapor=snapshot.historyInts[c*8+6]===1;
             if(model.settings.nonlinearGas && !vapor){
               var absolute=model.settings.atmospherePressure+p;
-              diagonal=snapshot.gas[c*16+4]/ds+model.settings.atmospherePressure*snapshot.historyInts[c*8+2]/volumeScale/(absolute*absolute);
+              diagonal=snapshot.gas[c*16+4]/ds+model.settings.atmospherePressure*snapshot.historyInts[c*8+2]*temperatureRatio/volumeScale/(absolute*absolute);
             }
             var active=p<=model.settings.minimumPressure+0.01,violation=active?Math.max(0,-r):Math.abs(r);
             if(vapor && model.settings.vaporClosure)diagonal=snapshot.gas[c*16+4]/ds;
@@ -1326,7 +1386,7 @@ fn transportAffine(p:vec2<f32>,fallback:vec2<f32>,native:vec4<f32>,dt:f32)->vec4
             if(active && !vapor)gasFloorVolume+=Math.max(0,r);
             snapshot.pockets.push({root:c,pressure:p,amount:snapshot.historyInts[c*8+2]/volumeScale,
               volume:snapshot.historyInts[c*8+3]/volumeScale,geometryVolume:snapshot.history[c*8+4],
-              vapor:vapor,diagonal:diagonal,eosError:snapshot.history[c*8+7],residual:snapshot.pressure[c*4+3]});
+              temperatureK:293.15*temperatureRatio,temperatureRatio:temperatureRatio,vapor:vapor,diagonal:diagonal,eosError:snapshot.history[c*8+7],residual:snapshot.pressure[c*4+3]});
           }
           snapshot.convergence={waterPressureError:waterError,gasPressureError:gasError,
             waterResidual:waterResidual,gasResidual:gasResidual,waterFloorVolume:waterFloorVolume,gasFloorVolume:gasFloorVolume,
@@ -1348,5 +1408,5 @@ fn transportAffine(p:vec2<f32>,fallback:vec2<f32>,native:vec4<f32>,dt:f32)->vec4
     return model;
   }
 
-  global.LiquidAirWGPU = {create:create,shaderSource:SOURCE};
+  global.LiquidAirWGPU = {create:create,shaderSource:SOURCE,thermalShaderSource:function(){return thermalSource(SOURCE);}};
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -98,6 +98,7 @@
 
     var dye, velocity, divergence, curl, pressure;
     var flowSample = null, flowProgram = null, flowValues = null, lastStepDt = 0;
+    var temperatureSample=null,temperatureProgram=null,temperatureBytes=null,temperatureValues=null,heatSourceProgram=null;
     var copyProgram, clearProgram, splatProgram, advectionProgram,
         divergenceProgram, curlProgram, vorticityProgram, pressureProgram,
         gradientSubtractProgram, scrollProgram;
@@ -1371,6 +1372,52 @@
       return {width:flowSample.width,height:flowSample.height,values:flowValues,dt:lastStepDt};
     }
 
+    // A declared rectangular heat patch adds heat only inside its marked
+    // footprint. Buoyancy and advection move it after injection.
+    function heatSource (bounds, heat, color) {
+      if(!ready || !(heat>0))return;
+      if(!heatSourceProgram)heatSourceProgram=new Program(compileShader(gl.VERTEX_SHADER,BASE_VS),compileShader(gl.FRAGMENT_SHADER,
+        'precision highp float; precision highp sampler2D; varying vec2 vUv; uniform sampler2D uDye; uniform vec2 lower; uniform vec2 upper; uniform float heat; uniform vec3 color; void main(){vec4 base=texture2D(uDye,vUv); float covered=step(lower.x,vUv.x)*step(lower.y,vUv.y)*step(vUv.x,upper.x)*step(vUv.y,upper.y); gl_FragColor=vec4(base.rgb+covered*color,min(64.0,base.a+covered*heat));}'));
+      gl.disable(gl.BLEND);heatSourceProgram.bind();
+      uniform1i(heatSourceProgram.uniforms.uDye,dye.read.attach(0));
+      uniform2f(heatSourceProgram.uniforms.lower,bounds.x,bounds.y);
+      uniform2f(heatSourceProgram.uniforms.upper,bounds.x+bounds.width,bounds.y+bounds.height);
+      uniform1f(heatSourceProgram.uniforms.heat,heat);
+      uniform3f(heatSourceProgram.uniforms.color,color.r,color.g,color.b);
+      blit(dye.write);dye.swap();
+    }
+
+    // Read the current advected temperature, not the water particle mirror.
+    // This lazy RGBA8 target supports WebGL 1 too. Sixteen sample points per
+    // pressure cell approximate its area mean; RG packs a 16-bit heat value.
+    function sampleTemperature (width, height) {
+      if(!ready)return null;
+      if(!Number.isInteger(width) || !Number.isInteger(height) || width<1 || height<1 || width*height>500000)
+        throw new Error('Invalid smoke temperature sampling grid.');
+      if(!temperatureProgram){
+        temperatureProgram=new Program(compileShader(gl.VERTEX_SHADER,BASE_VS),compileShader(gl.FRAGMENT_SHADER,
+          'precision highp float; precision highp sampler2D; varying vec2 vUv; uniform sampler2D uDye; uniform vec2 cellSize; void main(){float heat=0.0; for(int y=0;y<4;y++){for(int x=0;x<4;x++){vec2 offset=(vec2(float(x),float(y))+0.5)/4.0-0.5; heat+=texture2D(uDye,vUv+offset*cellSize).a/16.0;}} float q=floor(clamp(heat/8.7945,0.0,1.0)*65535.0+0.5); gl_FragColor=vec4(mod(q,256.0)/255.0,floor(q/256.0)/255.0,0.0,1.0);}'));
+      }
+      if(!temperatureSample || temperatureSample.width!==width || temperatureSample.height!==height){
+        if(temperatureSample){gl.deleteTexture(temperatureSample.texture);gl.deleteFramebuffer(temperatureSample.fbo);}
+        temperatureSample=createFBO(width,height,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,gl.NEAREST);
+        temperatureBytes=new Uint8Array(width*height*4);temperatureValues=new Float32Array(width*height);
+      }
+      gl.disable(gl.BLEND);temperatureProgram.bind();
+      uniform1i(temperatureProgram.uniforms.uDye,dye.read.attach(0));
+      uniform2f(temperatureProgram.uniforms.cellSize,1/width,1/height);
+      blit(temperatureSample);
+      gl.readPixels(0,0,width,height,gl.RGBA,gl.UNSIGNED_BYTE,temperatureBytes);
+      // Textures are Y-up; pressure-cell rows are world Y-down. The material
+      // calibration is 100 kelvin per unit of actual smoke temperature alpha.
+      for(var y=0;y<height;y++)for(var x=0;x<width;x++){
+        var j=((height-1-y)*width+x)*4,q=temperatureBytes[j]+256*temperatureBytes[j+1];
+        temperatureValues[y*width+x]=293.15+879.45*q/65535;
+      }
+      gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+      return {width:width,height:height,kelvin:temperatureValues};
+    }
+
     function getCanvas () { return canvas; }
 
     // Composite the GL canvas into a 2D context. Caller passes the
@@ -1415,6 +1462,8 @@
       paintObstacleQuads: paintObstacleQuads,  // v10.87 — WebGL-native obstacle paint
       setMovingBodies: setMovingBodies,
       sampleFlow: sampleFlow,
+      sampleTemperature:sampleTemperature,
+      heatSource:heatSource,
       setLiquidField: setLiquidField,
       clearObstacle: clearObstacle,
       isReady: isReady,
