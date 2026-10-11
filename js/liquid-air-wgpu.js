@@ -1161,6 +1161,7 @@ fn collectThermalMean(@builtin(global_invocation_id) id:vec3<u32>){
     var geometryHost = new Float32Array(count * 8);
     var uncappedGeometry = null;
     var enabled = false, steps = 0, pending = false, snapshot = null, destroyed = false;
+    var phaseCompanion = null;
     var model = {
       width:width,height:height,cellSize:dx,iterations:iterations,geometryStride:8,redBlack:redBlack,
       settings:{density:floats[5],soundSpeed:floats[6],atmospherePressure:floats[7],minimumPressure:floats[8],threshold:floats[9],
@@ -1191,6 +1192,11 @@ fn collectThermalMean(@builtin(global_invocation_id) id:vec3<u32>){
           field[c]=values[c];
         }
         instance.queue.writeBuffer(gas,thermalOffset,field);
+      },
+      setPhaseCompanion:function(companion){
+        if(options.phaseChange!==true)throw new Error('Phase change requires an opt-in air model.');
+        if(companion && (typeof companion.beginGas!=='function' || typeof companion.collectGas!=='function' || companion.finishGas && typeof companion.finishGas!=='function'))throw new Error('Invalid phase companion.');
+        phaseCompanion=companion || null;
       },
       setMinimumPressure:function(value){
         if(destroyed)throw new Error('The air model has been destroyed.');
@@ -1267,6 +1273,7 @@ fn collectThermalMean(@builtin(global_invocation_id) id:vec3<u32>){
       encode:function (encoder) {
         if (!enabled || destroyed) return;
         if(mac)mac.before(encoder);
+        if(phaseCompanion)phaseCompanion.beginGas(encoder);
         // Sequential dispatches share storage dependencies, as in the legacy
         // pressure/update/boundary pass. Preserve their order while avoiding
         // hundreds of pass begin/end pairs per fixed step.
@@ -1284,6 +1291,10 @@ fn collectThermalMean(@builtin(global_invocation_id) id:vec3<u32>){
         dispatch('checkConnectivity');
         if(mac)dispatch('macDensities',0,mac.records-1);
         dispatch('collectVolumes');dispatch('remapAmounts');dispatch('balanceAmounts');
+        if(phaseCompanion){
+          pass.end();phaseCompanion.collectGas(encoder);
+          pass=encoder.beginComputePass({label:'liquid.air.phase-pressure'});boundParity=-1;
+        }
         if(thermal){dispatch('clearThermalMean');dispatch('collectThermalMean');}
         dispatch('initializeGas');dispatch('countInterfaces');dispatch('gasWallFlux');dispatch('initializeWater');
         for (var i=0;i<iterations;i++) {
@@ -1298,6 +1309,7 @@ fn collectThermalMean(@builtin(global_invocation_id) id:vec3<u32>){
         if(!directTransport)dispatch('applyVelocity',0,mac ? mac.faceRecords : instance.grid.cells);
         if(transport){pass.setPipeline(pipes.publishTransport);pass.setBindGroup(0,transportGroup);pass.dispatchWorkgroups(Math.ceil(count/128));}
         pass.end();
+        if(phaseCompanion && phaseCompanion.finishGas)phaseCompanion.finishGas(encoder);
         steps++;
       },
       reset:function () {

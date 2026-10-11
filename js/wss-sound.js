@@ -9,6 +9,7 @@
     peakLimit: 0.06, staleMs: 100
   });
   var PREFERENCE = 'wss-impact-sound';
+  function ventFrequency(soundSpeed,pipeLength,throatArea){return soundSpeed/(4*(pipeLength+.6*Math.sqrt(throatArea/Math.PI)));}
 
   // This function is serialized once into the worklet. Its fixed arrays are also
   // used by the author test, so offline checks exercise the actual synthesis.
@@ -112,6 +113,7 @@
     var enabled = false, active = true, retired = false, freshBatch = true, enableEpoch = 0;
     var lastFrame = -1, serial = 0, pending = null, log = [], preference = false, lastAckTime = -Infinity, lastError = null;
     var hissBuffer=null,hissVoices=[],thermalLog=[],thermalCount=0;
+    var ventVoice=null,ventLog=[],ventCount=0;
     var counters = { accepted: 0, dropped: 0, stolen: 0, stale: 0, duplicates: 0,
       suppressed: 0, maxVoices: 0, activeVoices: 0, lastHandleMs: 0, maxHandleMs: 0 };
     try { preference = localStorage.getItem(PREFERENCE) === '1'; } catch (_) {}
@@ -126,6 +128,7 @@
       freshBatch = true; lastFrame = -1; pending = null; counters.activeVoices = 0;
       if (master) { master.gain.cancelScheduledValues(context.currentTime); master.gain.setValueAtTime(0, context.currentTime); }
       if (node) node.port.postMessage({ kind: 'active', value: false });
+      if(ventVoice){ventVoice.gain.gain.cancelScheduledValues(context.currentTime);ventVoice.gain.gain.setValueAtTime(0,context.currentTime);}
     }
     function publishActive() {
       if (!node) return;
@@ -233,7 +236,22 @@
       return Object.assign({}, counters, { enabled: enabled, preference: preference, active: active,
         audible: !!audible(), contextState: context ? context.state : 'absent',
         voiceCapacity: TUNING.voices, queue: pending ? pending.entries.length : 0,
-        queueCapacity: TUNING.batch, eventLog: log.slice(), thermalEvents:thermalLog.slice(), thermalVoices:hissVoices.length, thermalCount:thermalCount, error: lastError });
+        queueCapacity: TUNING.batch, eventLog: log.slice(), thermalEvents:thermalLog.slice(), thermalVoices:hissVoices.length, thermalCount:thermalCount,
+        ventEvents:ventLog.slice(),ventVoices:ventVoice?1:0,ventCount:ventCount,error: lastError });
+    }
+    function vent(event){
+      if(!audible() || !event || !(event.massFlowKgPerSecond>0) || !(event.soundSpeedMPerSecond>0) ||
+        !Number.isFinite(event.massFlowKgPerSecond+event.soundSpeedMPerSecond) || performance.now()-event.receivedAt>TUNING.staleMs)return false;
+      var frequency=ventFrequency(event.soundSpeedMPerSecond,event.whistleLengthM,event.throatAreaM2);
+      if(!(frequency>0 && frequency<context.sampleRate*.45))return false;
+      if(!ventVoice){var oscillator=context.createOscillator(),gain=context.createGain(),pan=context.createStereoPanner();
+        oscillator.type='sine';gain.gain.value=0;oscillator.connect(gain);gain.connect(pan);pan.connect(master);oscillator.start();ventVoice={oscillator:oscillator,gain:gain,pan:pan};}
+      var now=context.currentTime,power=.5*event.massFlowKgPerSecond*event.jetSpeedMPerSecond*event.jetSpeedMPerSecond;
+      var amplitude=.022*Math.sqrt(power/(power+1));ventVoice.pan.pan.setValueAtTime(Math.max(-.8,Math.min(.8,(event.x/720-.5)*1.6)),now);
+      ventVoice.oscillator.frequency.setTargetAtTime(frequency,now,.015);ventVoice.gain.gain.cancelScheduledValues(now);
+      ventVoice.gain.gain.setTargetAtTime(amplitude,now,.008);ventVoice.gain.gain.setTargetAtTime(0,now+.035,.045);
+      ventCount++;ventLog.push({kind:'vent',frameId:event.frameId,simulationTime:event.simulationTime,audioTime:now,
+        massFlowKgPerSecond:event.massFlowKgPerSecond,kineticPowerWatts:power,frequencyHz:frequency,gain:amplitude});if(ventLog.length>64)ventLog.shift();return true;
     }
     function hiss(heatJ,x,clock){
       if(!audible() || !(heatJ>0) || !Number.isFinite(heatJ))return false;
@@ -258,9 +276,10 @@
       if (context && context.state !== 'closed') context.close().catch(function () {});
       log.length = 0;
       hissVoices.forEach(function(source){try{source.stop();}catch(e){}});hissVoices.length=0;thermalLog.length=0;hissBuffer=null;
+      if(ventVoice){ventVoice.oscillator.stop();ventVoice.oscillator.disconnect();ventVoice.gain.disconnect();ventVoice.pan.disconnect();ventVoice=null;}ventLog.length=0;
     }
     document.addEventListener('visibilitychange', visibility);
-    return { enable: enable, mute: mute, setActive: setActive, consume: consume, hiss:hiss, stats: stats, destroy: destroy };
+    return { enable: enable, mute: mute, setActive: setActive, consume: consume, hiss:hiss, vent:vent, stats: stats, destroy: destroy };
   }
-  window.WSSSound = Object.freeze({ create: create });
+  window.WSSSound = Object.freeze({ create: create,ventFrequency:ventFrequency });
 })();
