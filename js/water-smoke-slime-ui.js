@@ -405,7 +405,7 @@
         'The pressure sample is current. Open Instruments for the calculation status.';
       if(cannon){pressureLabel=state.paused?'Paused':'Live';pressureMessage=wind?'A steady fan drives the smoke past the supported slime.':'The smoke carries the push. Instruments explains the flat section.';}
       if(balloon){pressureLabel=state.paused?'Paused':'Live';pressureMessage='Drag, fling and pop. Instruments explains the elastic skin.';}
-      if(steam){pressureLabel=state.paused?'Paused':'Diagnostic';pressureMessage=birds?'Grab the pipe’s top to change its note. Instruments has the quiet controls and acoustic limits.':'The white plume traces escaping vapor. Instruments explains the thermal model.';}
+      if(steam){pressureLabel=state.paused?'Paused':'Diagnostic';pressureMessage=birds?'Grab the pipe’s top to change its note. Instruments has the comparisons and acoustic limits.':'The white plume traces escaping vapor. Instruments explains the thermal model.';}
       document.getElementById('toy-machine-diagnostics').hidden=!contextual || fire || balloon;
       text('toy-machine-diagnostics',contextual ? pressureMessage : '');
       if(contextual)text('toy-status',fire ? state.paused?'Paused':'Live' : pressureLabel || (state.paused ? 'Paused' : 'Live'));
