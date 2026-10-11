@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.109'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.115'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -117,6 +117,8 @@
   var defaultMachineRequested=!bootParams.has('scene') && !bootParams.has('smoke') && !bootParams.has('build') && !!navigator.gpu;
   var bootScene=defaultMachineRequested ? 'self-flushing-cup' : bootParams.get('scene');
   var bootMachine=machineRegistry && machineRegistry.lookup(bootScene);
+  var solidSkinLab=bootScene==='smoke-wind-tunnel' && !(bootParams.get('lab')==='1' && bootParams.get('solidSkin')==='0');
+  var solidSlipLab=solidSkinLab && !(bootParams.get('lab')==='1' && bootParams.get('solidSlip')==='0');
   function defaultMachineFallback(){
     if(!defaultMachineRequested)return false;
     defaultMachineRequested=false;startupMachine=null;
@@ -619,6 +621,7 @@
    * retires immediately; moving spray gets four seconds to land or rejoin.
    * Real streams and pools reset their dwell because they have ample support. */
   function retireLiquidOrphans() {
+    if (solidSkinLab && currentScene==='smoke-wind-tunnel') return;
     // Finite material jars keep every native parcel, including isolated spray.
     if (toyMaterialSlip || airModel && airModel.enabled || toyFire || toyBalloon || toyDivers) return;
     liquidOrphanTick++;
@@ -810,6 +813,34 @@
   // existing slot; wetness only decides membership when more than eight are
   // eligible. Holes are preserved with inactive placeholders below.
   var liquidGuestSlots = new Array(8);
+  var solidSkinHistory=null,solidSkinIdentity=null;
+  function toySolidSkinBody(b) {
+    return !!(solidSkinLab && currentScene==='smoke-wind-tunnel' && b && b===solidSkinIdentity && jelloBodies.indexOf(b)>=0 &&
+      b.surfaceSlime && !b._melting && !b.waterBalloon && !b.cartesianDiver && !b.floatSlider);
+  }
+  function toySolidSkinGuest(b) {
+    var m=b.surfaceSlime,cached=m.fluidFrame===jelloFrameNo && m.fluidAccum===jelloAccum && m.fluidAge===m.age;
+    if(cached && m.solidFluidGuest)return m.fluidGuest;
+    var g=toyBalloonSkinGuest(b);if(!g)return null;
+    m.fluidControls=new Float64Array(jelloRingBakeN*2);
+    for(var i=0;i<jelloRingBakeN;i++){m.fluidControls[i*2]=jelloROX[i];m.fluidControls[i*2+1]=jelloROY[i];}
+    g.membrane=false;m.solidFluidGuest=true;return g;
+  }
+  function toySolidCurveBoundary(gs,state) {
+    var b=solidSkinIdentity,slot=liquidGuestSlots.indexOf(b);
+    if(!toySolidSkinBody(b) || slot<0 || !gs || !gs.guests || gs.guests[slot]!==b.surfaceSlime.fluidGuest){solidSkinHistory=null;return null;}
+    if(!(state.seconds>0 && Number.isFinite(state.clock+state.seconds)))throw Error('A solid curve requires the actual native interval.');
+    var controls=b.surfaceSlime.fluidControls,history=solidSkinHistory;
+    var valid=history && history.body===b && history.ring===b.ring && history.controls.length===controls.length &&
+      Math.abs(history.expectedClock-state.clock)<1e-9;
+    var points=window.WSSWaterBalloons.geometry.curveRing(controls,function(i,t){
+      var u=(i+t)/(controls.length/2),now=window.WSSWaterBalloons.geometry.quadratic(controls,u),old=valid ? window.WSSWaterBalloons.geometry.quadratic(history.controls,u) : now;
+      return {vx:(now.x-old.x)/state.seconds,vy:(now.y-old.y)/state.seconds};
+    });
+    // Commit only through the next observation of the actual advanced clock.
+    solidSkinHistory={body:b,ring:b.ring,controls:Array.from(controls),expectedClock:state.clock+state.seconds};
+    return {slot:slot,points:points};
+  }
 
   function pushWake(cx, cy, r, blast) {
     toyWakes.push({ cx: cx, cy: cy, r: r, blastScale: blast, t0: performance.now() });
@@ -1103,6 +1134,7 @@
       for (var i = 0; i < guestLimit; i++) {
         var b = liquidGuestSlots[i];
         if (!b || i === pokeSlot) continue;
+        if(toySolidSkinBody(b)){var solidSkin=toySolidSkinGuest(b);if(solidSkin){out[i]=solidSkin;any=true;}continue;}
         if(b.waterBalloon){
           var skin=toySlimeFluidGuest(b);if(skin){out[i]=skin;if(toyBalloon)toyBalloon.setSlot(i);any=true;}continue;
         }
@@ -1429,6 +1461,8 @@
       // only after they settle, so resolve the factory at that point.
       toyNativeExtension: bootMachine || handsRequested ? function(instance,options){return window.WSSNative.create(instance,options);} : undefined,
       materialSlipFactory: window.LiquidMaterialSlipWGPU ? window.LiquidMaterialSlipWGPU.create : undefined,
+      curveBoundaryFactory:solidSkinLab ? function(instance,options){return window.LiquidCurveBoundary.create(instance,
+        Object.assign({},options,{getCurve:toySolidCurveBoundary,normalProjection:solidSlipLab}));} : undefined,
       liquid: {
         maxParticles: LIQUID_MAX_PARTICLES,
         getCount: function () { return liquidCount; },
@@ -1571,7 +1605,7 @@
     liquidGPULastSeq = seqNow;
     if (liquidCount === 0 && !mutated) { liquidPendingDt = 0; return; }
     var awake = liquidWGPU.awakeCount;
-    var quiet = !toyBoundary && !toyFire && !toyBalloon && !toyDivers && awake === 0 && !mutated && !toyWakes.length && !pokeGuest;
+    var quiet = !(solidSkinLab && currentScene==='smoke-wind-tunnel') && !toyBoundary && !toyFire && !toyBalloon && !toyDivers && awake === 0 && !mutated && !toyWakes.length && !pokeGuest;
     if (quiet && liquidCount > 0) {
       liquidSimSkipFrames++;
       if (liquidSimSkipFrames < 45) {       // heartbeat: one real step ~0.75 s
@@ -12046,6 +12080,8 @@
    * become no-ops; the disc builder gets the game's 8 px lattice pitch
    * back (at the toy's TILE=8 the original TILE/(NPT+1) formula would
    * build a 2 px lattice — four times the game's density). ==== */
+  var toyOriginalRenderBody=surfaceSlimeRenderBody;
+  surfaceSlimeRenderBody=function(b){return toySolidSkinBody(b) ? b : toyOriginalRenderBody(b);};
   function jelloPlayerFling() {}
   function jelloPlayerCouple() {}
   function jelloResolvePlayer() {}
@@ -14088,6 +14124,7 @@
       setGravityUI(0);toyCannon=definition.name==='smoke-wind-tunnel' ?
         window.WSSSmokeWindTunnel.create(definition,SmokeFluid,{w:worldW,h:worldH},jelloBodies) :
         window.WSSSmokeCannon.create(definition,SmokeFluid,{w:worldW,h:worldH});
+      if(solidSkinLab){solidSkinIdentity=jelloBodies[0] || null;solidSkinHistory=null;}
       smokeAwakeT=SMOKE_IDLE_HOLD;smokeFrame(1/60);render();
       state.ready=true;state.startedAt=0;state.wallClockStartedAt=performance.now();fitStage();instrumentTick(performance.now());return state;
     }
@@ -14785,7 +14822,7 @@
     firePourTick(dt);
     if(toyDivers)toyDivers.tick();
     retireLiquidOrphans();
-    if(!toyBalloon && !toyDivers && !toyFloatSlider)updateLiquidToy(dt);
+    if(!(solidSkinLab && currentScene==='smoke-wind-tunnel') && !toyBalloon && !toyDivers && !toyFloatSlider)updateLiquidToy(dt);
     // v4.20 perf: rebucket the mirror only when a NEW readback landed
     // (engine readbackApplyGen). The mirror refreshes every few frames;
     // rebuilding identical buckets on the frames between was pure waste
@@ -14810,7 +14847,7 @@
     if(toyBalloon)toyBalloonFinishTerrain(jelloStepH>0?jelloStepH:JELLO_H);
     // The new membrane's final native substep uses the displayed gel pose.
     if(toyFloatSlider){toyFloatSlider.project(toyFloatSlider.body,jelloStepH>0?jelloStepH:JELLO_H*jelloImpulseScale(),JELLO_TIMESCALE);toyFloatSlider.sync();}
-    if(toyBalloon || toyDivers || toyFloatSlider)updateLiquidToy(dt);
+    if(solidSkinLab && currentScene==='smoke-wind-tunnel' || toyBalloon || toyDivers || toyFloatSlider)updateLiquidToy(dt);
     if(toyDivers)toyDivers.sample();
     if (window.__cdb && window.__cdb.length && jelloBodies.length) {
       var dbgB = jelloBodies[0];
@@ -14971,6 +15008,13 @@
     readoutEl = document.getElementById('toy-readout');
     wireUI();
     var helpers=bootMachine ? machineRegistry.load(bootMachine.id) : Promise.resolve();
+    if(solidSkinLab){
+      helpers=helpers.then(function(){return Promise.all([machineRegistry.load('water-balloons'),new Promise(function(resolve,reject){
+        var script=document.createElement('script');script.src='/js/liquid-curve-boundary.js?v='+encodeURIComponent(TOY_VERSION);
+        script.onload=resolve;script.onerror=function(){reject(Error('Solid curve lab did not load.'));};document.head.appendChild(script);
+      })]);});
+      await helpers;
+    }
     if(handsRequested && !bootMachine && !window.WSSNative){
       helpers=helpers.then(function(){return Promise.all(['wss-boundaries','wss-hands','wss-native'].map(function(path){return new Promise(function(resolve,reject){
           var script=document.createElement('script');script.src='/js/'+path+'.js?v='+encodeURIComponent(TOY_VERSION);script.onload=resolve;script.onerror=function(){reject(new Error('Hole punch did not load.'));};document.head.appendChild(script);
