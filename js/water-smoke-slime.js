@@ -1217,7 +1217,9 @@
     liquidWGPU = window.LiquidWGPU.create({
       mainCanvas: canvas,
       hudInset: 0,
-      toyNativeExtension: bootMachine || handsRequested ? window.WSSNative.create : undefined,
+      // Helpers download alongside engine boot. Native configuration happens
+      // only after they settle, so resolve the factory at that point.
+      toyNativeExtension: bootMachine || handsRequested ? function(instance,options){return window.WSSNative.create(instance,options);} : undefined,
       liquid: {
         maxParticles: LIQUID_MAX_PARTICLES,
         getCount: function () { return liquidCount; },
@@ -12395,7 +12397,7 @@
   }
 
   function beginToolInput(x,y,id) {
-    if(handsPending)return;
+    if(handsPending || machineLoading || startupMachine || bootMachine && !toyBootReady)return;
     pointerDown = true;
     pointerId = id;
     px = lastPaintX = x; py = lastPaintY = y;
@@ -13333,7 +13335,7 @@
   var toyBoundary=null,toySound=null,thumbWanted=false;
   var handsPending=false,handsController=null,handsSelection=null,handsThumbRelease=false;
   var machineBuilder=null;
-  var machineRequest=0,machineLoading=false,machineResumePause=false;
+  var machineRequest=0,machineLoading=false;
   var startupMachine=null,sharedBuildApplied=false,toyBootReady=false;
   var machineWaterLook=null;
   var buildKind=handsRequested ? 'punch' : 'pipe',buildOptions={bore:24,direction:'up',material:'glass',open:true};
@@ -13774,8 +13776,7 @@
     options=options || {};
     if(!window.WaterMachinesScenes || !window.WaterMachinesBuilder)throw new Error('Water apparatus definitions are unavailable.');
     if(waterState!=='on')return Promise.reject(new Error(waterState==='off' ? 'Water machines need WebGPU in this browser.' : 'Wait for the water engine to finish loading.'));
-    var wasPaused=machineLoading ? machineResumePause : userPaused;
-    machineResumePause=wasPaused;machineLoading=true;userPaused=true;syncRunning();
+    machineLoading=true;syncRunning();
     var request=++machineRequest, ownBoundary=null,ownFire=null,ownBalloon=null,ownSteam=null,ownBubbles=null;
     try{
     if(toyCannon){toyCannon.destroy();toyCannon=null;}
@@ -13841,6 +13842,9 @@
     var state=machineState={definition:definition,seed:options.seed || 17,initialParticles:added,ready:false,
       primaryUsed:false,startedAt:null,wallClockStartedAt:null,energyInput:0,inputParticles:0,energyModified:false};
     setSceneChip(name);if(!options.canvasThumb)setTool('poke');bakeWalls();updateReadout();
+    // The real initial divers and water can be drawn while their pressure
+    // pipelines finish. Uploading the authored state advances no simulation.
+    if(definition.divers){liquidWGPU.prepareMaterialState({reset:true});render();}
     if(definition.boundaries || handsRequested){
       var boundaryOptions=Object.assign({},definition.boundaries || {},{hands:handsRequested,width:worldW,height:worldH,initialPresent:added,floor:worldH,gravity:250,maxSubsteps:isMobile ? 2 : undefined});
       ownBoundary=await liquidWGPU.configureToyNative(boundaryOptions);
@@ -13957,7 +13961,7 @@
       if(request===machineRequest){
         if(machineState)machineState.ready=false;
         airState.error=error.message;buildError=error.message;
-        wasPaused=true;machineResumePause=true;
+        userPaused=true;
       }
       throw error;
     }finally{
@@ -13966,7 +13970,7 @@
       if(request!==machineRequest && ownBubbles && ownBubbles!==toyBubbles)ownBubbles.destroy();
       if(request!==machineRequest && ownBalloon && ownBalloon!==toyBalloon)ownBalloon.destroy();
       if(request!==machineRequest && ownSteam && ownSteam!==toySteam)ownSteam.destroy();
-      if(request===machineRequest){machineLoading=false;userPaused=machineResumePause;syncRunning();}
+      if(request===machineRequest){machineLoading=false;updateReadout();syncRunning();}
     }
   }
 
@@ -14121,7 +14125,7 @@
     }
     if(fixedMachineScene(name))return constructMachine(name,{});
     machineRequest++;
-    if(machineLoading){machineLoading=false;userPaused=machineResumePause;syncRunning();}
+    if(machineLoading){machineLoading=false;syncRunning();}
     if(machineWaterLook!==null){presetSet('waterLook',machineWaterLook);machineWaterLook=null;}
     if(toyCannon){toyCannon.destroy();toyCannon=null;}
     machineState=null;
@@ -14672,7 +14676,7 @@
   }
 
   function syncRunning() {
-    var active=!handsPending && !userPaused && !document.hidden && visibleFrac>=0.06;
+    var active=!handsPending && !machineLoading && !userPaused && !document.hidden && visibleFrac>=0.06;
     if(toySound)toySound.setActive(active && !!(toyBoundary || toyFire));
     if(!active)stopLoop();else startLoop();
   }
@@ -14730,16 +14734,11 @@
   async function boot() {
     readoutEl = document.getElementById('toy-readout');
     wireUI();
-    if(bootMachine){
-      try{await machineRegistry.load(bootMachine.id);}
-      catch(error){if(defaultMachineFallback())return;document.getElementById('toy-fallback').hidden=false;buildError=error.message;return;}
-    }
-    if(handsRequested && !window.WSSNative){
-      try{
-        for(var path of ['wss-boundaries','wss-hands','wss-native'])await new Promise(function(resolve,reject){
+    var helpers=bootMachine ? machineRegistry.load(bootMachine.id) : Promise.resolve();
+    if(handsRequested && !bootMachine && !window.WSSNative){
+      helpers=helpers.then(function(){return Promise.all(['wss-boundaries','wss-hands','wss-native'].map(function(path){return new Promise(function(resolve,reject){
           var script=document.createElement('script');script.src='/js/'+path+'.js?v='+encodeURIComponent(TOY_VERSION);script.onload=resolve;script.onerror=function(){reject(new Error('Hole punch did not load.'));};document.head.appendChild(script);
-        });
-      }catch(error){document.getElementById('toy-fallback').hidden=false;buildError=error.message;return;}
+        });}));});
     }
     addBorder();
     bootLiquid();
@@ -14755,6 +14754,10 @@
     ['mass', 'motion', 'size'].forEach(function (key) {
       if (smokeQuery.has(key)) window.__toy.smokeTune(key, smokeQuery.get(key));
     });
+    if(startupMachine){currentScene=startupMachine;setSceneChip(currentScene);}
+    fitStage();updateReadout();
+    try{await helpers;}
+    catch(error){if(defaultMachineFallback())return;document.getElementById('toy-fallback').hidden=false;buildError=error.message;return;}
     if (location.search.indexOf('flingtest=1') >= 0 && jelloBodies[2]) {
       jelloLaunchBody(jelloBodies[2], 520, -420, {
         blend: 0.92, maxSpeed: 1400, maxPointSpeed: 1600, omega: 3.5
@@ -14833,6 +14836,7 @@
           fps: rafId ? Math.round(fpsEMA) : 0, waterState: waterState, smoke: smokeActive,
           awake: liquidWGPU ? liquidWGPU.awakeCount : -1,
           scene: currentScene, tool: tool, paused: userPaused,
+          loading:machineLoading || !!startupMachine || !!bootMachine && !toyBootReady,
           waterFeel: Math.round(waterFeel * 100), debugParticles: debugParticles,
           waterLook: PRESET_ACTIVE.waterLook, rainbow: rainbowWater ? rainbowWater.stats() : null
         };
@@ -14873,7 +14877,6 @@
       setCamera: setCamera,
       pause: function (paused) {
         userPaused = !!paused;
-        if(machineLoading)machineResumePause=userPaused;
         if(userPaused)machineThumb(false);
         if (userPaused && pointerDown) {
           slimeGhost = null;

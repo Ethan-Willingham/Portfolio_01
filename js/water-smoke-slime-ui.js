@@ -408,7 +408,7 @@
       if(steam){pressureLabel=state.paused?'Paused':'Diagnostic';pressureMessage=birds?'Grab the pipe’s top to change its note. Instruments has the comparisons and acoustic limits.':'The white plume traces escaping vapor. Instruments explains the thermal model.';}
       document.getElementById('toy-machine-diagnostics').hidden=!contextual || fire || balloon;
       text('toy-machine-diagnostics',contextual ? pressureMessage : '');
-      if(contextual)text('toy-status',fire ? state.paused?'Paused':'Live' : pressureLabel || (state.paused ? 'Paused' : 'Live'));
+      if(contextual)text('toy-status',state.loading ? 'Starting machine' : fire ? state.paused?'Paused':'Live' : pressureLabel || (state.paused ? 'Paused' : 'Live'));
       document.getElementById('toy-machine-material-notice').hidden = !air.enabled;
       document.getElementById('toy-machine-summary').hidden = !machine;
       document.getElementById('toy-machine-metrics').hidden = !machine || fire || cannon || balloon;
@@ -530,10 +530,10 @@
       pauseButton.setAttribute('aria-label', state.paused ? 'Resume' : 'Pause');
       pauseButton.title = (state.paused ? 'Resume' : 'Pause') + ' (Space)';
       pauseButton.querySelector('path').setAttribute('d', state.paused ? 'm8 5 11 7-11 7Z' : 'M8 5v14M16 5v14');
-      resumeButton.hidden = !state.paused;
+      resumeButton.hidden = !state.paused || state.loading;
       var resumeParent=building ? playback : document.getElementById('toy-viewport');
       if(resumeButton.parentElement!==resumeParent)resumeParent.appendChild(resumeButton);
-      var label = state.paused ? 'Paused' : state.waterState === 'booting' ? 'Starting water' : 'Live';
+      var label = state.loading ? 'Starting machine' : state.paused ? 'Paused' : state.waterState === 'booting' ? 'Starting water' : 'Live';
       if (status.textContent !== label) status.textContent = label;
       var entry=window.WSSMachineRegistry && window.WSSMachineRegistry.lookup(state.scene);
       var instruction = state.tool === 'poke' ? (sceneHints[state.scene] || entry && entry.cue || hints.poke) : hints[state.tool] || hints.poke;
@@ -694,7 +694,7 @@
     });
     var readout = new MutationObserver(function () {
       var state = toy.stats();
-      var label = state.paused ? 'Paused' : state.waterState === 'booting' ? 'Starting water' : 'Live';
+      var label = state.loading ? 'Starting machine' : state.paused ? 'Paused' : state.waterState === 'booting' ? 'Starting water' : 'Live';
       if (status.textContent !== label) sync();
     });
     readout.observe(document.getElementById('toy-readout'), { childList: true });

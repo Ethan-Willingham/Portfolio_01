@@ -37,22 +37,22 @@
   async function load(id) {
     var entry=lookup(id);
     if(!entry)throw new Error('This machine is not available.');
-    await script('/js/wss-boundaries.js');
-    await script('/js/wss-hands.js');
-    await script('/js/wss-native.js');
-    if(id==='float-slider-cistern')await script('/js/wss-float-slider.js');
-    if(id==='air-hose')await script('/js/wss-bubbles.js');
-    if(id==='douse-fire')await script('/js/wss-fire.js');
-    if(id==='kettle' || id==='singing-pipe')await script('/js/wss-steam.js');
-    if(id==='singing-pipe')await script('/js/wss-singing-pipe.js');
-    if(id==='smoke-ring-cannon')await script('/js/wss-smoke-cannon.js');
-    if(id==='smoke-wind-tunnel'){await script('/js/wss-smoke-cannon.js');await script('/js/wss-smoke-wind-tunnel.js');}
-    if(id==='water-balloons')await script('/js/wss-water-balloons.js');
-    if(id==='cartesian-divers')await script('/js/wss-cartesian-divers.js');
-    if(id==='burst-disk')await script('/js/wss-burst-disk.js');
-    await script('/js/wss-sound.js');
-    if(id==='tantalus')await script('/js/wss-machines/self-flushing-cup.js');
-    await script('/js/wss-machines/'+id+'.js');
+    // These scripts install functions. Their dependencies are read when a
+    // machine is created, after every script has loaded, not during evaluation.
+    var paths=['wss-boundaries','wss-hands','wss-native','wss-sound'];
+    if(id==='float-slider-cistern')paths.push('wss-float-slider');
+    if(id==='air-hose')paths.push('wss-bubbles');
+    if(id==='douse-fire')paths.push('wss-fire');
+    if(id==='kettle' || id==='singing-pipe')paths.push('wss-steam');
+    if(id==='singing-pipe')paths.push('wss-singing-pipe');
+    if(id==='smoke-ring-cannon' || id==='smoke-wind-tunnel')paths.push('wss-smoke-cannon');
+    if(id==='smoke-wind-tunnel')paths.push('wss-smoke-wind-tunnel');
+    if(id==='water-balloons')paths.push('wss-water-balloons');
+    if(id==='cartesian-divers')paths.push('wss-cartesian-divers');
+    if(id==='burst-disk')paths.push('wss-burst-disk');
+    if(id==='tantalus')paths.push('wss-machines/self-flushing-cup');
+    paths.push('wss-machines/'+id);
+    await Promise.all(paths.map(function(path){return script('/js/'+path+'.js');}));
     var module=window.WSSMachines && window.WSSMachines[id];
     if(!module || typeof module.make!=='function')throw new Error('This machine did not start.');
     return module;
