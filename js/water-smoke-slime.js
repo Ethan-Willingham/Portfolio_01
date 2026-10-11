@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.71'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.72'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -2882,6 +2882,7 @@
    * no world-lock scroll), obstacles as NDC quads rasterised straight
    * from the wall grid's horizontal runs, moving slime velocity boundaries,
    * and an idle gate so a dissipated field costs nothing. ==== */
+  var toyCannon = null;
   var smokeCanvas = null;
   var smokeActive = false;
   var smokeAwakeT = 0;
@@ -3003,6 +3004,7 @@
       dt * timeMul, smokeObW, smokeObH);
     smokeWaterFlowCouple();
     SmokeFluid.step(toyFire ? fireFrameDt : dt * timeMul);
+    if(toyCannon)toyCannon.capture(dt*timeMul,jelloBodies);
     SmokeFluid.displayPass();
   }
 
@@ -12516,7 +12518,7 @@
   var toolButtons = [];
   function setTool(name) {
     if(handsPending)return;
-    if((nativeMachineScene(currentScene) && !toyFire || handsRequested) && name!=='poke' && !(handsRequested && name==='build'))return;
+    if(((nativeMachineScene(currentScene) && !toyFire && !toyCannon) || handsRequested) && name!=='poke' && !(handsRequested && name==='build'))return;
     if(pointerDown){
       var oldPointer=pointerId;releasePointer({pointerId:oldPointer},true);
       try{inputEl.releasePointerCapture(oldPointer);}catch(error){}
@@ -13440,6 +13442,13 @@
 
   function instrumentTick(now){
     if(toyFire && machineState){var heat=toyFire.stats();machineState.readings={ready:true,caption:machineState.definition.caption,action:machineState.definition.action,particleCount:liquidCount,fire:heat,mirrorAgeSimulationMs:liquidWGPU.getReadbackAge()*1000,inputWaterWorkFootPounds:(machineState.energyInput || 0)/1.3558179483314,energyBudgetStatus:machineState.definition.energyBudgetStatus,error:buildError || airState.error};return;}
+    if(toyCannon && machineState && machineState.ready){
+      machineState.readings={ready:true,caption:machineState.definition.caption,action:machineState.definition.action,
+        smokeCannon:toyCannon.stats(jelloBodies),particleCount:liquidCount,sampleAgeMs:0,
+        scaleText:'The box is 30 inches wide and 1 inch deep. The slime floats in zero gravity.',
+        numericalStatus:'Current smoke pressure drives the slime. This is a two-dimensional section.',
+        energyBudgetStatus:machineState.definition.energyBudgetStatus,error:buildError};return;
+    }
     if(!airModel || !airModel.enabled || instrumentPending || now<instrumentNextAt)return;
     var model=airModel,state=machineState;
     instrumentPending=true;instrumentNextAt=now+150;
@@ -13635,6 +13644,7 @@
     machineResumePause=wasPaused;machineLoading=true;userPaused=true;syncRunning();
     var request=++machineRequest, ownBoundary=null,ownFire=null;
     try{
+    if(toyCannon){toyCannon.destroy();toyCannon=null;}
     clearWorldAll(options.canvasThumb);setGravityUI(1);
     machineBuilder=null;handsController=null;handsSelection=null;valveSeats=null;manualValves.clear();instrumentSample=null;instrumentPending=false;instrumentNextAt=0;
     var module=nativeMachineScene(name) ? await machineRegistry.load(name) : window.WaterMachinesScenes;
@@ -13706,6 +13716,12 @@
       if(window.WSSSound && !toySound)toySound=window.WSSSound.create();
       if(toySound)toyBoundary.setEventConsumer(function(events){toySound.consume(events);});
     }
+    if(definition.name==='smoke-ring-cannon'){
+      if(airModel && airModel.enabled)await enableAirModel({enabled:false});
+      setGravityUI(0);toyCannon=window.WSSSmokeCannon.create(definition,SmokeFluid,{w:worldW,h:worldH});
+      smokeAwakeT=SMOKE_IDLE_HOLD;smokeFrame(1/60);render();
+      state.ready=true;state.startedAt=0;state.wallClockStartedAt=performance.now();fitStage();instrumentTick(performance.now());return state;
+    }
     var pressureSettings=Object.assign({},definition.settings,options.pressure || {},{resetMaterial:true});
     if(definition.settings.roomPressurePsi!==undefined && !(options.pressure && options.pressure.atmospherePressure!==undefined)){
       pressureSettings.atmospherePressure=window.WaterMachinesInstruments.scale({width:worldW,density:pressureSettings.density || 1}).pressureFromPsi(definition.settings.roomPressurePsi);
@@ -13776,7 +13792,9 @@
     if(primary.kind==='fire-pour'){
       var queued=Math.min(700,LIQUID_MAX_PARTICLES-liquidCount-firePourPending);
       firePourPending+=queued;return queued>0;
-    }else if(primary.kind==='tap'){
+    }
+    if(primary.kind==='smoke-push'){smokeAwakeT=SMOKE_IDLE_HOLD;return toyCannon.push();}
+    if(primary.kind==='tap'){
       var enabled=definition.action==='Open tap';
       toyBoundary.setTapEnabled(enabled);definition.action=enabled ? 'Close tap' : 'Open tap';
       machineOverlayCache=null;return true;
@@ -13898,6 +13916,7 @@
     machineRequest++;
     if(machineLoading){machineLoading=false;userPaused=machineResumePause;syncRunning();}
     if(machineWaterLook!==null){presetSet('waterLook',machineWaterLook);machineWaterLook=null;}
+    if(toyCannon){toyCannon.destroy();toyCannon=null;}
     machineState=null;
     if (rainbowWater) rainbowWater.reset();
     currentScene = name;
@@ -14322,6 +14341,7 @@
       }
     }
     fireTick(dt);
+    if(toyCannon)smokeAwakeT=SMOKE_IDLE_HOLD;
     smokeFrame(dt);
     instrumentTick(tNow);
     render();
@@ -14512,6 +14532,7 @@
     surfaceSlimeGrip.body.sleeping = false; surfaceSlimeGrip.body.sleepFrames = 0;
   }
   function jelloGrabSubstep(b, h) {
+    if(toyCannon)toyCannon.load(b,h,JELLO_TIMESCALE);
     if (surfaceSlimeGrip && surfaceSlimeGrip.body === b && b._grabbed) softHandlingStep(b, h);
   }
   function jelloDrivePostSubstep() {}
@@ -14651,6 +14672,7 @@
           omega: omega || 0, maxOmega: 7
         }) : null;
       },
+      smokeCannon: function(){return toyCannon;},
       smoke: function () {
         return { fluid: SmokeFluid, awake: smokeAwakeT, active: smokeActive,
           waterFlowFrames: smokeWaterFlowFrames, emitterSplats: smokeEmitterSplats };

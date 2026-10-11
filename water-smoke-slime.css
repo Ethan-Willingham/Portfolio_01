@@ -358,3 +358,7 @@ body.toy-expanded { overflow: hidden; }
 .toy-shell.is-native-machine.has-fire .toy-dock { display: flex; position: absolute; z-index: 10; top: calc(var(--toy-top-height,56px) + 8px); left: 10px; right: auto; padding: 0; border: 0; gap: 4px; }
 .toy-shell.is-native-machine.has-fire .toy-tools { flex: 0 0 auto; gap: 4px; }
 .toy-shell.is-native-machine.has-fire .toy-dock > .toy-settings { display: none; }
+.toy-shell[data-scene="smoke-ring-cannon"] .toy-dock { display: flex; position: absolute; z-index: 10; top: calc(var(--toy-top-height,56px) + 8px); left: 10px; right: auto; padding: 0; border: 0; gap: 4px; }
+.toy-shell[data-scene="smoke-ring-cannon"] .toy-tools { flex: 0 0 auto; gap: 4px; }
+.toy-shell[data-scene="smoke-ring-cannon"] .toy-settings { display: none; }
+.toy-shell[data-scene="smoke-ring-cannon"] .toy-instrument-values { display: none; }

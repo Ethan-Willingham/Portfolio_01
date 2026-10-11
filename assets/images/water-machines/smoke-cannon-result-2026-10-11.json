@@ -1,0 +1,115 @@
+{
+  "candidate": "944a6047",
+  "physicalPass": true,
+  "repeatShotVisible": true,
+  "framesAndPhonePass": true,
+  "rows": [
+    {
+      "seed": 17,
+      "noPush": false,
+      "peakDisplacementPx": 20.224203379542352,
+      "tracerPast330": 78.33611506223679,
+      "maxStrain": 0.03894395988041377,
+      "nodes": 61,
+      "bad": 0,
+      "sustainedWall": 0
+    },
+    {
+      "seed": 17,
+      "noPush": true,
+      "peakDisplacementPx": 2.6190733568633685e-05,
+      "tracerPast330": 0,
+      "maxStrain": 1.3013228228331286e-06,
+      "nodes": 61,
+      "bad": 0,
+      "sustainedWall": 0
+    },
+    {
+      "seed": 42,
+      "noPush": false,
+      "peakDisplacementPx": 15.333890011295063,
+      "tracerPast330": 80.25644659996033,
+      "maxStrain": 0.039165248596256697,
+      "nodes": 61,
+      "bad": 0,
+      "sustainedWall": 0
+    },
+    {
+      "seed": 42,
+      "noPush": true,
+      "peakDisplacementPx": 9.811052984616731e-06,
+      "tracerPast330": 0,
+      "maxStrain": 1.4561944206015198e-06,
+      "nodes": 61,
+      "bad": 0,
+      "sustainedWall": 0
+    },
+    {
+      "seed": 913,
+      "noPush": false,
+      "peakDisplacementPx": 19.51137209476736,
+      "tracerPast330": 79.04647308588028,
+      "maxStrain": 0.04028341133681457,
+      "nodes": 61,
+      "bad": 0,
+      "sustainedWall": 0
+    },
+    {
+      "seed": 913,
+      "noPush": true,
+      "peakDisplacementPx": 9.47243453252172e-06,
+      "tracerPast330": 0,
+      "maxStrain": 1.1828132258084878e-06,
+      "nodes": 61,
+      "bad": 0,
+      "sustainedWall": 0
+    }
+  ],
+  "frames": [
+    {
+      "phone": false,
+      "medianMs": 3.399999999999636,
+      "p95Ms": 4.399999999999636,
+      "durationMs": 20003.2,
+      "visibleControls": 12,
+      "minimumTargetPx": 44
+    },
+    {
+      "phone": true,
+      "medianMs": 3.299999999999727,
+      "p95Ms": 4.199999999999818,
+      "durationMs": 20002.8,
+      "visibleControls": 12,
+      "minimumTargetPx": 44
+    }
+  ],
+  "actualSecondTap": {
+    "pushesBefore": 1,
+    "pushesAfter": 2,
+    "travelDyeAfter": 126.22527527809143
+  },
+  "errors": [],
+  "toyVersion": "v5.72",
+  "source": {
+    "title": "BYU Physics, Vortex Cannon",
+    "url": "https://physics.byu.edu/faculty/gee/vortexcannon",
+    "fact": "A push through an opening forms a traveling vortex ring."
+  },
+  "limits": [
+    "This is a two-dimensional vortex-pair section, not a three-dimensional torus.",
+    "Each declared rear tap supplies chamber smoke dye and an air impulse.",
+    "Projection pressure loads the gel; its moving boundary feeds motion back to the fluid.",
+    "Air density and gel mass are model parameters; energy is not calibrated or closed.",
+    "The free target can drift in zero gravity. Grab can bring it back into the swirl."
+  ],
+  "protection": {
+    "smokeFeatureOffCheckpoints": 49,
+    "sluiceBoot": true,
+    "mergedRegression": {
+      "oldScenes": 14,
+      "fireHitAndMiss": true,
+      "cannonSeededCases": 6,
+      "pass": true
+    }
+  }
+}

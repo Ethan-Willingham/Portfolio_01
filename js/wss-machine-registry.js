@@ -2,11 +2,12 @@
 (function () {
   'use strict';
   var entries = [
-    {id:'douse-fire',title:'Put out the fire',cue:'Pour water onto the glowing plume.',preview:'fire',accepted:true,world:{w:720,h:400},pool:false},
+    {id:'douse-fire',capability:'Fire',title:'Put out the fire',cue:'Pour water onto the glowing plume.',preview:'fire',accepted:true,world:{w:720,h:400},pool:false},
     {id:'self-flushing-cup',title:'Self-flushing cup',cue:'Open or close the tap.',preview:'cup',accepted:true,world:{w:720,h:400},pool:true},
     {id:'tantalus',title:'Tantalus',cue:'Watch the fixed mouth line.',preview:'tantalus',accepted:true,world:{w:720,h:400},pool:true},
     {id:'roman-inverted-siphon',title:'Roman inverted siphon',cue:'Close or open the intake.',preview:'inverted-siphon',accepted:true,world:{w:720,h:400},pool:false},
     {id:'thumb-straw',title:'The straw and the thumb',cue:'Hold the top, then release.',preview:'straw',accepted:true,world:{w:720,h:400},pool:false},
+    {id:'smoke-ring-cannon',capability:'Smoke',title:'The smoke-ring cannon',cue:'Tap the back. Catch the swirl with a slime.',preview:'smoke-cannon',accepted:true,world:{w:720,h:400},pool:false},
     {id:'burst-disk',title:'The burst disk',cue:'Compare two membrane strengths.',preview:'burst-disk',accepted:true,world:{w:720,h:400},pool:false}
   ];
   var lab = new URLSearchParams(location.search).get('lab') === '1';
@@ -32,6 +33,7 @@
     await script('/js/wss-hands.js');
     await script('/js/wss-native.js');
     if(id==='douse-fire')await script('/js/wss-fire.js');
+    if(id==='smoke-ring-cannon')await script('/js/wss-smoke-cannon.js');
     if(id==='burst-disk')await script('/js/wss-burst-disk.js');
     await script('/js/wss-sound.js');
     if(id==='tantalus')await script('/js/wss-machines/self-flushing-cup.js');
@@ -57,6 +59,10 @@
       path('M25 43h23v-4H25Z','toy-preview-glass');
       path('M28 37c-5-8 10-14 5-25 14 10 20 23 8 25Z','toy-preview-slime');
       path('M12 7h10v4H12M17 13v15','toy-preview-stream');
+    }else if(kind==='smoke-cannon'){
+      path('M7 16h22v6M7 36h22v-6M7 16v20','toy-preview-glass');
+      path('M34 23c-5-8 8-10 8-3s-8 6-5 1M34 31c-5 8 8 10 8 3s-8-6-5-1','toy-preview-stream');
+      path('M52 19c-9 0-9 15 0 15s11-15 0-15Z','toy-preview-slime');
     }else if(kind==='inverted-siphon'){
       path('M5 8v20h16V8M53 21v21h15V21M15 25h12v19h19V33h13','toy-preview-glass');
       path('M6 12h14v15H6ZM54 33h13v8H54Z','toy-preview-water');
@@ -100,7 +106,8 @@
       var cue=document.createElement('span');cue.className='toy-scene-cue';cue.textContent=e.cue;
       copy.appendChild(name);copy.appendChild(cue);button.appendChild(copy);list.appendChild(button);
     }
-    heading('Water machines');entries.filter(function(e){return e.accepted;}).forEach(machine);
+    ['Fire','Smoke'].forEach(function(group){var choices=entries.filter(function(e){return e.accepted && e.capability===group;});if(choices.length){heading(group);choices.forEach(machine);}});
+    heading('Earlier water machines');entries.filter(function(e){return e.accepted && !e.capability;}).forEach(machine);
     var workshop=window.WSSMachineRegistry.list().filter(function(e){return !e.accepted;});
     if(workshop.length){heading('Workshop');workshop.forEach(machine);}
     heading('Original scenes');originals.forEach(function(button){list.appendChild(button);});
