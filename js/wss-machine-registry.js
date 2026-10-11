@@ -2,6 +2,7 @@
 (function () {
   'use strict';
   var entries = [
+    {id:'float-slider-cistern',capability:'Valves and logic',title:'Guided float prototype',cue:'Watch the float close the inlet. Compare a pin.',preview:'cup',accepted:false,world:{w:720,h:400},pool:true},
     {id:'air-hose',capability:'Bubbles',title:'Air hose',cue:'Stop the air. Watch the last bubbles rise.',preview:'straw',accepted:true,world:{w:720,h:400},pool:false},
     {id:'cartesian-divers',capability:'Water slimes',title:'Three Cartesian divers',cue:'Squeeze the jar. Watch the gas shrink.',preview:'divers',accepted:true,world:{w:720,h:400},pool:false},
     {id:'kettle',capability:'Steam',title:'Whistling kettle',cue:'Heat water. Cool its vapor back to water.',preview:'kettle',accepted:true,world:{w:720,h:400},pool:false},
@@ -38,6 +39,7 @@
     await script('/js/wss-boundaries.js');
     await script('/js/wss-hands.js');
     await script('/js/wss-native.js');
+    if(id==='float-slider-cistern')await script('/js/wss-float-slider.js');
     if(id==='air-hose')await script('/js/wss-bubbles.js');
     if(id==='douse-fire')await script('/js/wss-fire.js');
     if(id==='kettle')await script('/js/wss-steam.js');

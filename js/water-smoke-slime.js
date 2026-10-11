@@ -816,7 +816,7 @@
   }
 
   function buildGuests() {
-    var materialGuests=!!(toyBalloon || toyDivers || airModel && airModel.enabled && (airModel.preserveMaterialState || machineState && machineState.definition.name==='cup'));
+    var materialGuests=!!(toyBalloon || toyDivers || toyFloatSlider || airModel && airModel.enabled && (airModel.preserveMaterialState || machineState && machineState.definition.name==='cup'));
     var waterGuestTime=1;
     if(materialGuests){
       waterGuestTime=liquidWGPU.getSimParam('TIMESCALE');
@@ -994,7 +994,7 @@
   // machine request. Ordinary scenes do not allocate its GPU resources.
   function airGeometryTick() {
     if (!airModel || !airModel.enabled) return;
-    var materialGuests=!!(toyDivers || airModel.preserveMaterialState || machineState && machineState.definition.name==='cup');
+    var materialGuests=!!(toyDivers || toyFloatSlider || airModel.preserveMaterialState || machineState && machineState.definition.name==='cup');
     var boundaryGuests=materialGuests ? buildGuests() : null;
     var hasBodies=materialGuests ? !!(boundaryGuests && boundaryGuests.some(function(g){return g.pts && g.pts.length>=12;})) : !!jelloBodies.length;
     if (airGeometryVersion === wallsVersion && !hasBodies && !airHadBodies) return;
@@ -12121,7 +12121,7 @@
     // Cup buoyancy uses the actual Verlet microstep. Applying an outer-step
     // position impulse to XPBD multiplies lift by its substep count.
     // Keep the established ordinary-scene coupling unchanged.
-    var couplingH = toyDivers || machineState && machineState.definition.name === 'cup'
+    var couplingH = toyDivers || toyFloatSlider || machineState && machineState.definition.name === 'cup'
       ? JELLO_H * jelloImpulseScale() : JELLO_H;
     var invV = ts / couplingH;
     var applyK = couplingH / ts;
@@ -13286,6 +13286,7 @@
 
   function clearWorldAll(preserveThumbInput) {
     if(smokeCanvas)smokeCanvas.style.opacity='1';
+    if(toyFloatSlider){toyFloatSlider.destroy();toyFloatSlider=null;}
     if(toyBubbles){toyBubbles.destroy();toyBubbles=null;}
     if(toyDivers){toyDivers.destroy();toyDivers=null;}
     if(toySound)toySound.setActive(false);
@@ -13318,6 +13319,7 @@
   var toyFire=null,fireSplatAcc=0,fireFrameDt=0,fireWaterClock=0,firePourPending=0,firePourAcc=0,firePourClock=0;
   var toyBalloon=null;
   var toyDivers=null;
+  var toyFloatSlider=null;
   var toySteam=null,steamWaterClock=0,steamFrameDt=0,steamPlumeSamples=0,steamPlumeMass=0;
   var toyBubbles=null;
   var fireDomainPrevious=null,fireDomainActive=false;
@@ -13603,7 +13605,7 @@
       sampleAgeMs:diverUnits.seconds(diverStats.ageSimulationSeconds)*1000,pressureAgeSimulationMs:diverStats.ageSimulationSeconds*1000,
       roomAbsolutePressurePsi:diverUnits.psi(airModel.settings.atmospherePressure),energyBudgetStatus:definition.energyBudgetStatus,
       numericalStatus:I.numericalStatus(snapshot),ledger:snapshot.ledger,convergence:snapshot.convergence,error:diverStats.error || buildError || airState.error};return;}
-    if(toyBoundary && state.definition.boundaries){measureNativeMachine(state,snapshot);return;}
+    if(toyBoundary && state.definition.boundaries){measureNativeMachine(state,snapshot);if(toyFloatSlider){state.readings.floatSlider=toyFloatSlider.stats();state.readings.numericalStatus=state.readings.floatSlider.model;}return;}
     var units=I.scale({width:worldW,density:airModel.settings.density || 1});
     var vesselOptions={tile:TILE,floor:worldH};
     if(definition.name==='heron'){
@@ -13775,12 +13777,13 @@
     if(request!==machineRequest)return null;
     var definition=nativeMachineScene(name) ? module.make({w:worldW,h:worldH,tile:TILE},options) : module.make(name,{w:worldW,h:worldH,tile:TILE},options);
     currentScene=name;fitStage();
-    var balloonBody=null,balloonSeedRing=null,diverBodies=[];
+    var balloonBody=null,balloonSeedRing=null,diverBodies=[],sliderBody=null;
     if(definition.membrane){
       var initialSlime=definition.slimes[0];balloonBody=spawnSlimeAt(initialSlime.x,initialSlime.y,initialSlime.radius,true);
       if(!balloonBody)throw Error('The water balloon skin could not be created.');
       balloonBody.waterBalloon=true;balloonSeedRing=window.WSSWaterBalloons.geometry.bodyRing(balloonBody);
     }
+    if(definition.slider){var sliderSpec=definition.slimes[0];sliderBody=spawnSlimeAt(sliderSpec.x,sliderSpec.y,sliderSpec.radius,true);if(!sliderBody)throw Error('The guided float could not be created.');}
     if(definition.divers)definition.slimes.forEach(function(s){var b=spawnSlimeAt(s.x,s.y,s.radius,true);if(!b)throw Error('The gas diver could not be created.');diverBodies.push(b);});
     ensureBuilder();
     machineBuilder.begin('Construct '+definition.title);
@@ -13804,6 +13807,7 @@
     // gravity keeps increasing its tangential velocity on every step.
     var seedRadius=liquidWGPU.cellSize*.5*.85+.0625;
     function seedClear(x,y){
+      if(sliderBody){var sliderNear=jelloNearestOnRing(sliderBody,x,y);if(jelloPointInRing(sliderBody,x,y)||Math.hypot(sliderNear.x-x,sliderNear.y-y)<3)return false;}
       if(definition.divers && diverBodies.some(function(b){var near=jelloNearestOnRing(b,x,y);return jelloPointInRing(b,x,y) || Math.hypot(near.x-x,near.y-y)<3;}))return false;
       for(var row=Math.floor((y-seedRadius)/TILE);row<=Math.floor((y+seedRadius)/TILE);row++){
         for(var col=Math.floor((x-seedRadius)/TILE);col<=Math.floor((x+seedRadius)/TILE);col++){
@@ -13825,7 +13829,7 @@
       if(addLiquidParticle('water',px,py,0,0,0)>=0)added++;
     }
     if((definition.boundaries || definition.divers) && added!==requested)throw new Error('Apparatus exceeds the particle capacity: '+requested+' requested, '+added+' added.');
-    if(!definition.membrane && !definition.divers)definition.slimes.forEach(function(s){if(!s.held)spawnSlimeAt(s.x,s.y,s.radius);});
+    if(!definition.membrane && !definition.divers && !definition.slider)definition.slimes.forEach(function(s){if(!s.held)spawnSlimeAt(s.x,s.y,s.radius);});
     var state=machineState={definition:definition,seed:options.seed || 17,initialParticles:added,ready:false,
       primaryUsed:false,startedAt:null,wallClockStartedAt:null,energyInput:0,inputParticles:0,energyModified:false};
     setSceneChip(name);if(!options.canvasThumb)setTool('poke');bakeWalls();updateReadout();
@@ -13909,6 +13913,7 @@
       if(options.thumbGesture){toyBoundary.setCaps(thumbWanted ? [definition.primary.opening] : []);state.thumbHeld=thumbWanted;}
       await ownBoundary.initialize();
       if(request!==machineRequest)return null;
+      if(definition.slider){toyFloatSlider=window.WSSFloatSlider.create({body:sliderBody,slider:definition.slider,boundary:ownBoundary,liquid:liquidWGPU,staticCaps:definition.boundaries.caps});toyFloatSlider.sync();airGeometryVersion=-1;airGeometryTick();}
     }
     if(definition.steam){
       ownSteam=await window.WSSSteam.create(Object.assign({},definition.steam,{liquid:liquidWGPU,air:model,maxParticles:LIQUID_MAX_PARTICLES}));
@@ -13962,6 +13967,7 @@
     if(!machineState || !machineState.ready)return false;
     var definition=machineState.definition,primary=definition.primary;
     if(primary.kind==='bubble-toggle'){var injecting=toyBubbles.toggle();definition.action=injecting?'Stop the air':'Start the air';machineOverlayCache=null;return true;}
+    if(primary.kind==='slider-supply'){var supply=toyBoundary.setTapEnabled(!toyBoundary.stats().tapEnabled);definition.action=supply?'Stop supply':'Start supply';machineOverlayCache=null;return true;}
     if(primary.kind==='diver-squeeze'){toyDivers.toggle();machineOverlayCache=null;return true;}
     if(primary.kind==='steam-heat-toggle'){
       var heated=toySteam.toggle();definition.action=heated?'Turn heater off':'Turn heater on';
@@ -14296,6 +14302,7 @@
     if(toyFire)overlayKey+=':'+toyFire.stats().burning;
     if(toyBubbles)overlayKey+=':'+toyBubbles.captureClock;
     if(toyCannon && toyCannon.overlayKey)overlayKey+=':'+toyCannon.overlayKey();
+    if(toyFloatSlider)overlayKey+=':'+toyFloatSlider.stats().y.toFixed(3);
     if(!buildGesture && !keyboardCursorVisible && machineOverlayCache && machineOverlayCache.key===overlayKey && machineOverlayCache.sample===instrumentSample)return;
     machineOverlayCache=!buildGesture && !keyboardCursorVisible ? {key:overlayKey,sample:instrumentSample} : null;
     var c=instrumentsCtx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,worldW,worldH);instrumentsDirty=true;
@@ -14351,6 +14358,7 @@
     if(machineState){
       var definition=machineState.definition;
       if(toyCannon && toyCannon.draw)toyCannon.draw(c);
+      if(toyFloatSlider)toyFloatSlider.draw(c);
       if(toySteam){var steamDefinition=definition.steam,steamHeat=toySteam.stats();
         c.fillText(steamHeat.heated?'Heater on':'Cooling',steamDefinition.heater.x-44,steamDefinition.heater.y+28);
         c.strokeRect(steamDefinition.heater.x,steamDefinition.heater.y,steamDefinition.heater.width,steamDefinition.heater.height);
@@ -14513,7 +14521,7 @@
     // An uncapped browser can call back faster than the solvers' tiny-dt
     // guard. Bank those callbacks into a real membrane update instead of
     // losing elapsed time or redrawing unchanged native water thousands of times.
-    if((toyBalloon || toyDivers || toySteam) && lastT && dt<1/120)return;
+    if((toyBalloon || toyDivers || toySteam || toyFloatSlider) && lastT && dt<1/120)return;
     lastT = tNow;
     toyFrameNo++;
     // Measure real frame time before limiting the simulation step.
@@ -14526,7 +14534,7 @@
     firePourTick(dt);
     if(toyDivers)toyDivers.tick();
     retireLiquidOrphans();
-    if(!toyBalloon && !toyDivers)updateLiquidToy(dt);
+    if(!toyBalloon && !toyDivers && !toyFloatSlider)updateLiquidToy(dt);
     // v4.20 perf: rebucket the mirror only when a NEW readback landed
     // (engine readbackApplyGen). The mirror refreshes every few frames;
     // rebuilding identical buckets on the frames between was pure waste
@@ -14538,6 +14546,7 @@
     }
     waterLivelinessTick(dt);
     if(toyBalloon)toyBalloon.couple(jelloStepH>0?jelloStepH:JELLO_H,JELLO_TIMESCALE,SOFT_CONTACT_POINT_MASS);
+    if(toyFloatSlider)toyFloatSlider.prepare();
     jelloWaterCoupleTick(dt);
     if (toyFrameNo % 30 === 0) wakeSleepersOnBodies();   // sparse: every WAKE op
       // bumps the mutation seq, and a seq moving every 4th frame starves the
@@ -14548,7 +14557,8 @@
       // mirror breathes between sweeps.
     updateJello(dt);
     // The new membrane's final native substep uses the displayed gel pose.
-    if(toyBalloon || toyDivers)updateLiquidToy(dt);
+    if(toyFloatSlider){toyFloatSlider.project(toyFloatSlider.body,jelloStepH>0?jelloStepH:JELLO_H*jelloImpulseScale(),JELLO_TIMESCALE);toyFloatSlider.sync();}
+    if(toyBalloon || toyDivers || toyFloatSlider)updateLiquidToy(dt);
     if(toyDivers)toyDivers.sample();
     if (window.__cdb && window.__cdb.length && jelloBodies.length) {
       var dbgB = jelloBodies[0];
@@ -14788,7 +14798,7 @@
     if(toyCannon)toyCannon.load(b,h,JELLO_TIMESCALE);
     if (surfaceSlimeGrip && surfaceSlimeGrip.body === b && b._grabbed) softHandlingStep(b, h);
   }
-  function jelloDrivePostSubstep() {}
+  function jelloDrivePostSubstep(b,h) {if(toyFloatSlider)toyFloatSlider.project(b,h,JELLO_TIMESCALE);}
   function jelloGrabEnd() {
     if (surfaceSlimeGrip) {
       var b = surfaceSlimeGrip.body;
@@ -14896,6 +14906,7 @@
       thermoscope:function(){return toyThermoscope;},
       balloons:function(){return toyBalloon;},
       divers:function(){return toyDivers;},
+      floatSlider:function(){return toyFloatSlider;},
       steam:function(){return toySteam;},
       bubbles:function(){return toyBubbles;},
       sound:function(enabled){
