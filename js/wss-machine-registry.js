@@ -2,6 +2,7 @@
 (function () {
   'use strict';
   var entries = [
+    {id:'water-balloons',capability:'Water slimes',title:'Water balloons',cue:'Drag, fling, then pop the skin.',preview:'water-balloon',accepted:true,world:{w:720,h:400},pool:false},
     {id:'thermoscope',capability:'Fire',title:"Galileo's thermoscope",cue:'Warm the bulb. Watch the water fall.',preview:'thermoscope',accepted:true,world:{w:720,h:400},pool:false},
     {id:'douse-fire',capability:'Fire',title:'Put out the fire',cue:'Pour water onto the glowing plume.',preview:'fire',accepted:true,world:{w:720,h:400},pool:false},
     {id:'self-flushing-cup',title:'Self-flushing cup',cue:'Open or close the tap.',preview:'cup',accepted:true,world:{w:720,h:400},pool:true},
@@ -35,6 +36,7 @@
     await script('/js/wss-native.js');
     if(id==='douse-fire')await script('/js/wss-fire.js');
     if(id==='smoke-ring-cannon')await script('/js/wss-smoke-cannon.js');
+    if(id==='water-balloons')await script('/js/wss-water-balloons.js');
     if(id==='burst-disk')await script('/js/wss-burst-disk.js');
     await script('/js/wss-sound.js');
     if(id==='tantalus')await script('/js/wss-machines/self-flushing-cup.js');
@@ -60,6 +62,9 @@
       path('M27 6h21v13H27ZM33 19v24M42 19v24M15 29v19h44V29','toy-preview-glass');
       path('M16 36h17v-4h9v4h16v11H16Z','toy-preview-water');
       path('M32 14h11','toy-preview-mouth');
+    }else if(kind==='water-balloon'){
+      path('M36 6c-15 0-23 15-18 27 5 15 30 15 36 0C59 21 51 6 36 6Z','toy-preview-glass');
+      path('M17 26h39c-1 25-38 25-39 0Z','toy-preview-water');
     }else if(kind==='fire'){
       path('M25 43h23v-4H25Z','toy-preview-glass');
       path('M28 37c-5-8 10-14 5-25 14 10 20 23 8 25Z','toy-preview-slime');

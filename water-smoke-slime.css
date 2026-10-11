@@ -366,3 +366,7 @@ body.toy-expanded { overflow: hidden; }
 .toy-shell[data-scene="thermoscope"] .toy-dock { display: flex; position: absolute; z-index: 10; top: calc(var(--toy-top-height,56px) + 8px); left: 10px; right: auto; padding: 0; border: 0; gap: 4px; }
 .toy-shell[data-scene="thermoscope"] .toy-tools { flex: 0 0 auto; gap: 4px; }
 .toy-shell[data-scene="thermoscope"] .toy-settings { display: none; }
+.toy-shell[data-scene="water-balloons"] .toy-dock { display: flex; position: absolute; z-index: 10; top: calc(var(--toy-top-height,56px) + 8px); left: 10px; right: auto; padding: 0; border: 0; gap: 4px; }
+.toy-shell[data-scene="water-balloons"] .toy-tools { flex: 0 0 auto; gap: 4px; }
+.toy-shell[data-scene="water-balloons"] .toy-settings { display: none; }
+.toy-shell[data-scene="water-balloons"] .toy-instrument-values { display: none; }
