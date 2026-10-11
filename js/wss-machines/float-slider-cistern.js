@@ -1,4 +1,4 @@
-/* Lab-only slow inlet float checkpoint. The flush outlet remains shut. */
+/* Slow inlet float exhibit. The outlet remains shut. */
 (function(root){
 'use strict';
 function make(world,options){

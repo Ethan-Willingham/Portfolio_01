@@ -416,7 +416,7 @@
       if(balloon)text('toy-hint','Grab the skin and fling it. Pop releases the water.');
       if(state.scene==='air-hose')text('toy-hint','Stop the declared air source and watch the remaining gas.');
       if(divers)text('toy-hint','Squeeze and release. Grab a diver to move it.');
-      if(state.scene==='float-slider-cistern')text('toy-hint','Watch the guided float. Instruments has the pinned-low comparison.');
+      if(state.scene==='float-slider-cistern')text('toy-hint','Grab the float and pull it down to open the inlet. Instruments has the pinned-low comparison.');
       var siphon=state.scene==='siphon';
       document.getElementById('toy-siphon-options').hidden=!siphon;
       document.getElementById('toy-siphon-setup-note').hidden=!siphon;

@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   var entries = [
-    {id:'float-slider-cistern',capability:'Valves and logic',title:'Guided float prototype',cue:'Watch the float close the inlet. Compare a pin.',preview:'cup',accepted:false,world:{w:720,h:400},pool:true},
+    {id:'float-slider-cistern',capability:'Valves and logic',title:'Float-controlled inlet',cue:'Pull the float down to reopen the water inlet.',preview:'cup',accepted:true,world:{w:720,h:400},pool:true},
     {id:'air-hose',capability:'Bubbles',title:'Air hose',cue:'Stop the air. Watch the last bubbles rise.',preview:'straw',accepted:true,world:{w:720,h:400},pool:false},
     {id:'cartesian-divers',capability:'Water slimes',title:'Three Cartesian divers',cue:'Squeeze the jar. Watch the gas shrink.',preview:'divers',accepted:true,world:{w:720,h:400},pool:false},
     {id:'kettle',capability:'Steam',title:'Whistling kettle',cue:'Heat water. Cool its vapor back to water.',preview:'kettle',accepted:true,world:{w:720,h:400},pool:false},
