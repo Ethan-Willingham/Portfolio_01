@@ -4,7 +4,7 @@
   var entries = [
     {id:'self-flushing-cup',title:'Self-flushing cup',cue:'Open or close the tap.',preview:'cup',accepted:true,world:{w:720,h:400},pool:true},
     {id:'tantalus',title:'Tantalus',cue:'Watch the fixed mouth line.',preview:'tantalus',accepted:true,world:{w:720,h:400},pool:true},
-    {id:'roman-inverted-siphon',title:'Roman inverted siphon',cue:'Close or open the intake.',preview:'inverted-siphon',accepted:false,world:{w:720,h:400},pool:false},
+    {id:'roman-inverted-siphon',title:'Roman inverted siphon',cue:'Close or open the intake.',preview:'inverted-siphon',accepted:true,world:{w:720,h:400},pool:false},
     {id:'thumb-straw',title:'The straw and the thumb',cue:'Hold the top, then release.',preview:'straw',accepted:true,world:{w:720,h:400},pool:false}
   ];
   var lab = new URLSearchParams(location.search).get('lab') === '1';

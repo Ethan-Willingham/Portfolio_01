@@ -29,7 +29,7 @@
         (sameHead ? 'With both water surfaces at the same height, gravity supplies no steady head for delivery.' :
           'This pipe starts full, and the higher reservoir supplies the pressure for the climb.'),
       source:{title:'Vitruvius, On Architecture 8.6.5', url:'https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Vitruvius/8%2A.html#6.5'},
-      viewBounds:{x:32,y:48,width:656,height:272},
+      viewBounds:{x:32,y:40,width:656,height:280},
       vessels:[{id:'source',label:'Source reservoir',rect:source,sealed:false},
         {id:'receiver',label:sameHead ? 'Same-height receiver' : 'Lower reservoir',rect:receiver,sealed:false}],
       pipes:[{id:'valley-pipe',points:route,bore:16,primed:true}],
