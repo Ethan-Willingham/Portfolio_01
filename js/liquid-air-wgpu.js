@@ -1167,7 +1167,7 @@ fn collectThermalMean(@builtin(global_invocation_id) id:vec3<u32>){
       settings:{density:floats[5],soundSpeed:floats[6],atmospherePressure:floats[7],minimumPressure:floats[8],threshold:floats[9],
         volumeScale:volumeScale,diagonalScale:floats[11],fluxScale:floats[12],neighborScale:floats[13],pressureTolerance:floats[14],
         particlePressure:!mac && options.particlePressure === true,projectedVelocity:floats[15]>0,directGather:!!directGather,collapseEmptyCells:collapseEmptyCells,geometricGas:options.geometricGas===true,boundaryReconstruction:options.boundaryReconstruction===true,nonlinearGas:options.nonlinearGas===true,vaporClosure:options.vaporClosure===true,smokeTemperature:thermal,ambientTemperatureK:293.15},
-      buffers:{geometry:geometry,cells:fields,labels:labels,history:history,gas:gas,pressure:pressureA,phase:gas,mac:mac ? mac.buffer : null},phaseOffset:phaseOffset,
+      buffers:{geometry:geometry,cells:fields,labels:labels,history:history,gas:gas,pressure:pressureA,transport:transport,phase:gas,mac:mac ? mac.buffer : null},phaseOffset:phaseOffset,
       enabled:false,particlePressure:!mac && options.particlePressure === true,
       frameGeometry:directTransport,
       nativeDomain:directTransport ? {minX:0,minY:0,maxX:options.width,maxY:options.height} : null,
@@ -1285,6 +1285,10 @@ fn collectThermalMean(@builtin(global_invocation_id) id:vec3<u32>){
           pass.dispatchWorkgroups(Math.ceil((n || count)/128));
         }
         dispatch('clearDiagnostics',0,1);dispatch('prepare');
+        if(phaseCompanion && phaseCompanion.prepareGas){
+          pass.end();phaseCompanion.prepareGas(encoder);
+          pass=encoder.beginComputePass({label:'liquid.air.dispersed-topology'});boundParity=-1;
+        }
         for(var round=0;round<8;round++){dispatch('connect');dispatch('compress');}
         dispatch('collectPhase');dispatch('classifyPhase');dispatch('restartTopology');
         for(var round=0;round<8;round++){dispatch('connect');dispatch('compress');}
