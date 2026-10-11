@@ -2,6 +2,7 @@
 (function () {
   'use strict';
   var entries = [
+    {id:'thermoscope',capability:'Fire',title:"Galileo's thermoscope",cue:'Warm the bulb. Watch the water fall.',preview:'thermoscope',accepted:true,world:{w:720,h:400},pool:false},
     {id:'douse-fire',capability:'Fire',title:'Put out the fire',cue:'Pour water onto the glowing plume.',preview:'fire',accepted:true,world:{w:720,h:400},pool:false},
     {id:'self-flushing-cup',title:'Self-flushing cup',cue:'Open or close the tap.',preview:'cup',accepted:true,world:{w:720,h:400},pool:true},
     {id:'tantalus',title:'Tantalus',cue:'Watch the fixed mouth line.',preview:'tantalus',accepted:true,world:{w:720,h:400},pool:true},
@@ -55,7 +56,11 @@
     }
     path('M3 43v6h66v-6','toy-preview-glass');
     path('M4 45h64v3H4Z','toy-preview-water');
-    if(kind==='fire'){
+    if(kind==='thermoscope'){
+      path('M27 6h21v13H27ZM33 19v24M42 19v24M15 29v19h44V29','toy-preview-glass');
+      path('M16 36h17v-4h9v4h16v11H16Z','toy-preview-water');
+      path('M32 14h11','toy-preview-mouth');
+    }else if(kind==='fire'){
       path('M25 43h23v-4H25Z','toy-preview-glass');
       path('M28 37c-5-8 10-14 5-25 14 10 20 23 8 25Z','toy-preview-slime');
       path('M12 7h10v4H12M17 13v15','toy-preview-stream');

@@ -24,7 +24,7 @@
   <link rel="preload" href="/assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/assets/fonts/commit_mono_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/style.css">
-  <link rel="stylesheet" href="/water-smoke-slime.css?v=v5.72">
+  <link rel="stylesheet" href="/water-smoke-slime.css?v=v5.74">
 </head>
 <body class="physics-page">
   <div class="site-wrapper toy-page">
@@ -206,6 +206,11 @@
     <main class="post-body toy-prose" id="how-it-works">
       <section id="water-machines-progress" aria-labelledby="water-machines-progress-title">
         <h2 id="water-machines-progress-title">Water machines: progress</h2>
+        <p>Warm the thermoscope's bulb and the water column falls. Turn the heater off and it rises again. All three starting seeds pass both directions. Starting with no heater, or with the upper vent open, leaves the column almost still. <a href="?scene=thermoscope#toy">Try Galileo's thermoscope.</a> <a href="/assets/images/water-machines/thermoscope-result-2026-10-11.json">Measurements and limits.</a></p>
+        <figure class="u-figure">
+          <picture><source type="image/webp" srcset="/assets/images/water-machines/thermoscope-2026-10-11.webp"><img class="u-figure-img" src="/assets/images/water-machines/thermoscope-2026-10-11.webp" width="1512" height="820" loading="lazy" alt="The actual heated thermoscope. A marked heater warms the glass bulb above a basin, and its water column falls below the starting line."></picture>
+          <figcaption class="u-figure-cap">The marked heater warms the air. Instruments shows its temperature and pressure, with an unheated bulb and an open vent for comparison.</figcaption>
+        </figure>
         <p>Tap the back of the smoke cannon and two curls roll out of its opening toward a slime. Their pressure moves and wobbles the slime; grab it and bring it back into the swirl when it drifts away. <a href="?scene=smoke-ring-cannon#toy">Try the cannon.</a> Three starting seeds pass with a still-air comparison, and repeat taps launch fresh visible smoke. <a href="/assets/images/water-machines/smoke-cannon-result-2026-10-11.json">Measurements and limits.</a></p>
         <figure class="u-figure">
           <picture><source type="image/webp" srcset="/assets/images/water-machines/smoke-cannon-2026-10-11.webp"><img class="u-figure-img" src="/assets/images/water-machines/smoke-cannon-2026-10-11.webp" width="1512" height="820" loading="lazy" alt="An actual smoke cannon shot, with two pale curling vortices outside the opening and a green slime in their path."></picture>
@@ -214,7 +219,7 @@
         <p><time datetime="2026-10-11">Updated October 11, 2026.</time> Pour water onto the fire and its bright plume becomes cool smoke, with a hiss if sound is on. The water drains through the grate, and a declared ember warms the fuel until it catches again. <a href="?scene=douse-fire#toy">Put out the fire.</a> All three starting seeds pass the cooling and relighting checks; pouring beside the fuel leaves it burning. <a href="/assets/images/water-machines/fire-result-2026-10-11.json">Measurements and limits.</a></p>
         <figure class="u-figure">
           <picture><source type="image/webp" srcset="/assets/images/water-machines/fire-2026-10-11.webp"><img class="u-figure-img" src="/assets/images/water-machines/fire-2026-10-11.webp" width="1512" height="820" loading="lazy" alt="The actual fire scene, with a curling orange and white fluid flame above an open grate and a water spout overhead."></picture>
-          <figcaption class="u-figure-cap">The flame's color follows the smoke solver's temperature. Instruments shows the fuel, ember and coarse water-heating model; combustion chemistry, boiling and sealed-pocket heating are still pending.</figcaption>
+          <figcaption class="u-figure-cap">The flame's color follows the smoke solver's temperature. Instruments shows the fuel, ember and coarse water-heating model; combustion chemistry and boiling are still pending.</figcaption>
         </figure>
         <p><time datetime="2026-10-10">Updated October 10, 2026.</time> The straw has two open ends. Hold its top and the air above the water drops below room pressure. Across three starting seeds, the held straw keeps 97.4% of its water for sixty simulation seconds. Releasing the top or opening a second upper hole drains it completely. <a href="?scene=thumb-straw#toy">Try the straw</a> or read the <a href="/assets/images/water-machines/slice-workshop-progress-2026-10-10.json">measurements and remaining work.</a> Landscape phone layout and frame times were checked in browser emulation.</p>
         <figure class="u-figure">
@@ -327,7 +332,7 @@
       <details class="toy-method"><summary>How the simulation works</summary>
         <dl>
           <div><dt>Water</dt><dd>Particles carry the liquid. A temporary grid exchanges their momentum and applies pressure, then sends them on their way. The MLS-MPM solver runs on WebGPU, adapted from <a href="https://oimo.io/works/water/">saharan’s water demo</a>.</dd></div>
-          <div><dt>Air</dt><dd>Machine mode adds a pressure solve while keeping the water particles. Room air sets zero gauge pressure. Each connected sealed pocket has one pressure at a fixed temperature, and compresses as water takes its space. <a href="https://orionquest.github.io/papers/MMTFBIF/paper.html">Aanjaneya, Patkar and Fedkiw’s bubble model</a> describes this uniform, isothermal approximation. Room pressure and sound speed are scaled for this toy; Instruments lists their current values. A pressure floor limits the modeled drop below room pressure, and column separation is still being tested. Airflow within a pocket, heat transfer and dissolved gas are omitted.</dd></div>
+          <div><dt>Air</dt><dd>Machine mode adds a pressure solve while keeping the water particles. Room air sets zero gauge pressure. Each connected sealed pocket has one pressure at a fixed temperature in the earlier water machines, and compresses as water takes its space. <a href="https://orionquest.github.io/papers/MMTFBIF/paper.html">Aanjaneya, Patkar and Fedkiw’s bubble model</a> describes this uniform, isothermal approximation. Room pressure and sound speed are scaled for this toy; Instruments lists their current values. A pressure floor limits the modeled drop below room pressure, and column separation is still being tested. The thermoscope also uses the current smoke temperature averaged over each pocket to model heating and cooling, following the <a href="https://www.grc.nasa.gov/www/k-12/BGP/eqstat.html">ideal gas law</a>. Compression heating, water heat exchange and dissolved gas are omitted.</dd></div>
           <div><dt>Smoke</dt><dd>A WebGL fluid solver moves velocity and dye through a grid, following <a href="https://github.com/PavelDoGreat/WebGL-Fluid-Simulation">Pavel Dobryakov’s work</a>. The visible smoke is dye in that flow.</dd></div>
           <div><dt>Slime</dt><dd>A mesh of elastic connections holds its volume while stretching and compressing. Sluice’s current material, skin contacts, and spring grip use <a href="https://mmacklin.com/xpbd.pdf">XPBD</a> on the CPU. Highlights attach to the deforming mesh. There are no creature brains or eyes here.</dd></div>
         </dl>
@@ -352,9 +357,9 @@
   <script src="/js/water-machines-scenes.js?v=v5.41"></script>
   <script src="/js/water-machines-instruments.js?v=v5.41"></script>
   <script src="/js/water-machines-pressure-view.js?v=v5.57"></script>
-  <script src="/js/wss-machine-registry.js?v=v5.72"></script>
-  <script src="/js/water-smoke-slime.js?v=v5.73"></script>
-  <script src="/js/water-smoke-slime-ui.js?v=v5.72"></script>
+  <script src="/js/wss-machine-registry.js?v=v5.74"></script>
+  <script src="/js/water-smoke-slime.js?v=v5.74"></script>
+  <script src="/js/water-smoke-slime-ui.js?v=v5.74"></script>
   <script src="/js/smoke-presets-ui.js?v=4"></script>
 </body>
 </html>

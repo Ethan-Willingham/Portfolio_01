@@ -60,4 +60,41 @@ function smokeShaders(source){
 assert.deepEqual(smokeShaders(fs.readFileSync('js/sluice/190-smoke-webgl.js','utf8')),
   smokeShaders(cp.execFileSync('git',['show',(process.env.BASE_REF||'7827e99a')+':js/sluice/190-smoke-webgl.js'],{encoding:'utf8'})),
   'All existing smoke shader expressions remain exact when the lazy methods are not called');
-console.log('PASS thermal opt-in allocation, field validation, dispatch, gas law, packed indexing and exact feature-off commands');
+const B=require('../js/water-machines-builder.js');
+const scope={};vm.createContext(scope);vm.runInContext(fs.readFileSync('js/wss-machines/thermoscope.js','utf8'),scope);
+function apparatus(options){
+  const definition=scope.WSSMachines.thermoscope.make({w:720,h:400,tile:8},options),walls=new Uint8Array(90*50);
+  const b=B.create({width:90,height:50,tile:8,walls});
+  definition.vessels.forEach(v=>b.vessel(v.rect,v.sealed));definition.solids.forEach(r=>b.vent(r,false));definition.vents.forEach(r=>b.vent(r,true));
+  const visited=new Set(),stack=[14*90+45];
+  while(stack.length){const c=stack.pop(),x=c%90,y=Math.floor(c/90);if(visited.has(c)||walls[c]||x<0||y<0||x>=90||y>=50||y>=37&&x>=29&&x<61)continue;visited.add(c);for(const n of [c-1,c+1,c-90,c+90])stack.push(n);}
+  return {definition,visited,walls};
+}
+const sealed=apparatus({}),vented=apparatus({vented:true}),unheated=apparatus({unheated:true});
+assert(!sealed.visited.has(14*90+54),'Water seal traps bulb gas');
+assert(vented.visited.has(14*90+54),'The real upper wall vent connects to room');
+assert.deepEqual(unheated.walls,sealed.walls,'Unheated control keeps exactly the same physical geometry');
+assert.equal(unheated.definition.thermoscope.heated,false);assert.equal(sealed.definition.thermoscope.heated,true);
+assert.equal(sealed.definition.primary.kind,'heat-toggle');assert.equal(sealed.definition.settings.smokeTemperature,true);
+assert.equal(sealed.definition.caption.match(/[.!?](?: |$)/g).length,2,'Two-sentence caption');
+// Run the actual host measurement and primary functions with the real
+// instrument module. The empty-pipe thermoscope must never use the cup law.
+const host=fs.readFileSync('js/water-smoke-slime.js','utf8'),I=require('../js/water-machines-instruments.js');
+const particles={count:24,x:new Float32Array(24).fill(360),y:new Float32Array(24).fill(300),vx:new Float32Array(24),vy:new Float32Array(24),time:1};
+const snapshot={width:90,height:50,cellSize:8,simulationTime:1,cells:new Float32Array(4500*8),pressure:new Float32Array(4500*4),labels:new Uint32Array(4500*2),pockets:[{root:0,temperatureK:303.15}]};
+const gasCell=14*90+45;snapshot.labels[gasCell*2]=1;snapshot.pressure[gasCell*4]=1234;
+const runtime={window:{WaterMachinesInstruments:I},worldW:720,worldH:400,TILE:8,isMobile:false,handsPending:false,machineOverlayCache:{},
+  machineState:{definition:sealed.definition,initialParticles:24,ready:true,startedAt:0},toyThermoscope:{heated:true,sampleClock:1},
+  airModel:{settings:{density:1,atmospherePressure:atmosphere,minimumPressure:-80000,soundSpeed:2500}},airState:{error:null},buildError:null,
+  liquidWGPU:{simulationClock:1,getReadbackAge:()=>0},particleInstrumentSample:()=>particles,
+  toyBoundary:{stats:()=>({present:24}),snapshot:()=>({count:0,slots:[],pos:[],simulationTime:1})}};
+vm.createContext(runtime);
+vm.runInContext(host.slice(host.indexOf('  function measureNativeMachine('),host.indexOf('  async function machineThumb(')),runtime);
+runtime.measureNativeMachine(runtime.machineState,snapshot);
+assert.equal(runtime.machineState.readings.error,null);assert.equal(runtime.machineState.readings.thermoscope.temperatureF,86);
+assert(Number.isFinite(runtime.machineState.readings.gasPressurePsi));assert.equal(runtime.machineState.readings.idealSpeedInchesPerSecond,null);
+vm.runInContext(host.slice(host.indexOf('  function machinePrimary()'),host.indexOf('  function setGravityUI(')),runtime);
+assert.equal(runtime.machinePrimary(),true);assert.equal(runtime.toyThermoscope.heated,false);assert.equal(runtime.machineState.definition.action,'Warm the bulb');
+assert.equal(runtime.machinePrimary(),true);assert.equal(runtime.toyThermoscope.heated,true);
+assert.deepEqual(Array.from(sealed.definition.vessels,v=>v.label),['Bulb','Room water']);
+console.log('PASS thermal opt-in allocation, field validation, dispatch, packed indexing, exact feature-off commands and real thermoscope controls');

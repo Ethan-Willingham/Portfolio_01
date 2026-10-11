@@ -387,7 +387,7 @@
       var liveMachine = toy.machineState ? toy.machineState() : null;
       var air = toy.airStats ? toy.airStats() : { enabled: false };
       var fire=!!(liveMachine && liveMachine.definition.fire);
-      var cannon=state.scene==='smoke-ring-cannon';
+      var cannon=state.scene==='smoke-ring-cannon',thermal=state.scene==='thermoscope';
       var contextual = machine || air.enabled;
       var ledger=sample.ledger || {},convergence=sample.convergence;
       var fatal=sample.error || air.error || (toy.liquid && toy.liquid() && toy.liquid().materialStateError);
@@ -428,14 +428,14 @@
         var holdingThumb=state.scene==='thumb-straw' && (thumbPointer!==null || thumbKeyboard);
         document.getElementById('toy-machine-primary').disabled = (!ready && !holdingThumb) || !!fatal || (state.scene === 'cup' && liveMachine && liveMachine.primaryUsed);
       }
-      text('toy-compact-head-label',state.scene==='thumb-straw' ? 'Air' : state.scene==='tantalus' ? 'Water to mouth' : 'Head');
-      text('toy-compact-head', number(state.scene==='thumb-straw' ? sample.gasPressurePsi : state.scene==='tantalus' ? sample.mouthDistanceInches : sample.headInches, state.scene==='thumb-straw' ? 'psi' : 'in'));
+      text('toy-compact-head-label',state.scene==='thumb-straw' || thermal ? 'Air' : state.scene==='tantalus' ? 'Water to mouth' : 'Head');
+      text('toy-compact-head', number(state.scene==='thumb-straw' || thermal ? sample.gasPressurePsi : state.scene==='tantalus' ? sample.mouthDistanceInches : sample.headInches, state.scene==='thumb-straw' || thermal ? 'psi' : 'in'));
       document.getElementById('toy-compact-head').parentElement.hidden=state.scene==='burst-disk';
       document.getElementById('toy-native-reading').hidden=!native;
-      text('toy-native-reading',fire && sample.fire ? 'Source '+Math.round(sample.fire.sourceC*1.8+32)+' degrees Fahrenheit; '+(sample.fire.burning?'burning':'cooling') : state.scene==='thumb-straw' ? Number.isFinite(sample.retainedFraction) ? 'Water held '+(100*sample.retainedFraction).toFixed(0)+'%' : 'Waiting for water sample' :
+      text('toy-native-reading',thermal && sample.thermoscope ? 'Air '+number(sample.thermoscope.temperatureF,'degrees Fahrenheit') : fire && sample.fire ? 'Source '+Math.round(sample.fire.sourceC*1.8+32)+' degrees Fahrenheit; '+(sample.fire.burning?'burning':'cooling') : state.scene==='thumb-straw' ? Number.isFinite(sample.retainedFraction) ? 'Water held '+(100*sample.retainedFraction).toFixed(0)+'%' : 'Waiting for water sample' :
         liveMachine && liveMachine.definition.readingLabel || 'Powered return');
       document.getElementById('toy-native-options').hidden=!native;
-      document.querySelector('#toy-native-options > p').textContent=cannon ? 'Choosing a setup refills the smoke chamber. The no-push comparison starts with still air.' : 'Choosing a setup restarts it with the same initial water. Hold starts a freshly filled straw; releasing opens its top.';
+      document.querySelector('#toy-native-options > p').textContent=thermal ? 'Compare the sealed bulb with no heat or an open upper vent. Each setup starts with the same water.' : cannon ? 'Choosing a setup refills the smoke chamber. The no-push comparison starts with still air.' : 'Choosing a setup restarts it with the same initial water. Hold starts a freshly filled straw; releasing opens its top.';
       document.getElementById('toy-machine-view').hidden=native;
       var setup=document.getElementById('toy-native-setup');
       if(native && liveMachine && nativeSetupScene!==state.scene){
@@ -510,7 +510,7 @@
     function sync() {
       syncCamera();
       var state = toy.stats();
-      var native=nativeScene(state.scene),cannon=state.scene==='smoke-ring-cannon';shell.classList.toggle('is-native-machine',native);
+      var native=nativeScene(state.scene),cannon=state.scene==='smoke-ring-cannon',thermal=state.scene==='thermoscope';shell.classList.toggle('is-native-machine',native);
       shell.dataset.scene=state.scene;
       shell.classList.toggle('has-fire',!!toy.fire());
       var building = /^(build|draw|erase)$/.test(state.tool);
@@ -550,7 +550,7 @@
       var builderState = toy.buildState ? toy.buildState() : null;
       var hands=!!(builderState && builderState.handsLab);
       shell.classList.toggle('has-wall-editor',hands);
-      if(cannon){bar.querySelectorAll('.toy-tools [data-tool]').forEach(function(button){button.hidden=false;});presetsButton.hidden=false;}
+      if(cannon || thermal){bar.querySelectorAll('.toy-tools [data-tool]').forEach(function(button){button.hidden=false;});presetsButton.hidden=false;}
       if(hands){
         bar.querySelectorAll('.toy-tools [data-tool]').forEach(function(button){button.hidden=!/^(poke|build)$/.test(button.dataset.tool);});
         presetsButton.hidden=true;

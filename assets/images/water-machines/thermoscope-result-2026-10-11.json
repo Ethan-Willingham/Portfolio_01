@@ -1,0 +1,161 @@
+{
+  "candidate": "f68665b4ad77682fe9c2ebe18ad7667c233b1763",
+  "physicalPass": true,
+  "method": "Current native positions and ideal-gas pocket temperature, pressure and conserved amount. One real heater toggle, unheated and physical upper-vent controls.",
+  "rows": [
+    {
+      "seed": 17,
+      "kind": "heated",
+      "columnDropPx": 27.98193359375,
+      "coolReturnPx": 0.208709716796875,
+      "hotTemperatureF": 88.50822944177872,
+      "initialWater": 12062,
+      "gasAmountError": 0,
+      "bad": 0,
+      "deepWall": 0,
+      "sustainedWall": 0,
+      "pass": true
+    },
+    {
+      "seed": 17,
+      "kind": "unheated",
+      "columnDropPx": -0.319580078125,
+      "coolReturnPx": null,
+      "hotTemperatureF": 68.0,
+      "initialWater": 12062,
+      "gasAmountError": 0,
+      "bad": 0,
+      "deepWall": 0,
+      "sustainedWall": 0,
+      "pass": true
+    },
+    {
+      "seed": 17,
+      "kind": "vented",
+      "columnDropPx": -0.10089111328125,
+      "coolReturnPx": null,
+      "hotTemperatureF": null,
+      "initialWater": 12062,
+      "gasAmountError": 0,
+      "bad": 0,
+      "deepWall": 0,
+      "sustainedWall": 0,
+      "pass": true
+    },
+    {
+      "seed": 42,
+      "kind": "heated",
+      "columnDropPx": 28.1873779296875,
+      "coolReturnPx": 0.49053955078125,
+      "hotTemperatureF": 88.44581299401688,
+      "initialWater": 12056,
+      "gasAmountError": 0,
+      "bad": 0,
+      "deepWall": 0,
+      "sustainedWall": 0,
+      "pass": true
+    },
+    {
+      "seed": 42,
+      "kind": "unheated",
+      "columnDropPx": -0.29827880859375,
+      "coolReturnPx": null,
+      "hotTemperatureF": 68.0,
+      "initialWater": 12056,
+      "gasAmountError": 0,
+      "bad": 0,
+      "deepWall": 0,
+      "sustainedWall": 0,
+      "pass": true
+    },
+    {
+      "seed": 42,
+      "kind": "vented",
+      "columnDropPx": -0.183349609375,
+      "coolReturnPx": null,
+      "hotTemperatureF": null,
+      "initialWater": 12056,
+      "gasAmountError": 0,
+      "bad": 0,
+      "deepWall": 0,
+      "sustainedWall": 0,
+      "pass": true
+    },
+    {
+      "seed": 913,
+      "kind": "heated",
+      "columnDropPx": 27.263885498046875,
+      "coolReturnPx": 0.0330810546875,
+      "hotTemperatureF": 88.06065069305802,
+      "initialWater": 12057,
+      "gasAmountError": 0,
+      "bad": 0,
+      "deepWall": 0,
+      "sustainedWall": 0,
+      "pass": true
+    },
+    {
+      "seed": 913,
+      "kind": "unheated",
+      "columnDropPx": -0.24444580078125,
+      "coolReturnPx": null,
+      "hotTemperatureF": 68.0,
+      "initialWater": 12057,
+      "gasAmountError": 0,
+      "bad": 0,
+      "deepWall": 0,
+      "sustainedWall": 0,
+      "pass": true
+    },
+    {
+      "seed": 913,
+      "kind": "vented",
+      "columnDropPx": -0.00689697265625,
+      "coolReturnPx": null,
+      "hotTemperatureF": null,
+      "initialWater": 12057,
+      "gasAmountError": 0,
+      "bad": 0,
+      "deepWall": 0,
+      "sustainedWall": 0,
+      "pass": true
+    }
+  ],
+  "errors": [],
+  "limits": [
+    "Two-dimensional ideal gas at one mean temperature per sealed pocket.",
+    "Current smoke temperature is calibrated at 100 kelvin per dye-alpha unit; sixteen samples approximate each pressure cell mean.",
+    "A declared heater adds heat in its marked footprint. Advection, buoyancy and exponential room cooling evolve the temperature.",
+    "Native water pressure moves the column. No pressure, water position or return time is prescribed.",
+    "Compression heat work, radiation, chemistry and water heat exchange are omitted. This is not a calibrated thermometer."
+  ],
+  "source": {
+    "title": "Museo Galileo, Thermoscope",
+    "url": "https://catalogue.museogalileo.it/multimedia/ThermoscopeBis.html",
+    "fact": "Warming the air lowers water in the tube; cooling raises it."
+  },
+  "framesAndPhonePass": true,
+  "frames": [
+    {
+      "phone": false,
+      "medianMs": 9.5,
+      "p95Ms": 18.700000000000728,
+      "durationMs": 20009.4,
+      "visibleControls": 13,
+      "minimumTargetPx": 44
+    },
+    {
+      "phone": true,
+      "medianMs": 9.300000000001091,
+      "p95Ms": 18.799999999999955,
+      "durationMs": 20000.800000000003,
+      "visibleControls": 12,
+      "minimumTargetPx": 44
+    }
+  ],
+  "protection": {
+    "smokeFeatureOffCheckpoints": 49,
+    "sluiceBoot": true
+  },
+  "toyVersion": "v5.74"
+}
