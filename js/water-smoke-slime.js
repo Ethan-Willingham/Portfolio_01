@@ -14565,7 +14565,7 @@
     // An uncapped browser can call back faster than the solvers' tiny-dt
     // guard. Bank those callbacks into a real membrane update instead of
     // losing elapsed time or redrawing unchanged native water thousands of times.
-    if((toyBalloon || toyDivers || toySteam || toyFloatSlider) && lastT && dt<1/120)return;
+    if((toyBalloon || toyDivers || toySteam || toyFloatSlider || toyMaterialSlip) && lastT && dt<1/120)return;
     lastT = tNow;
     toyFrameNo++;
     // Measure real frame time before limiting the simulation step.
