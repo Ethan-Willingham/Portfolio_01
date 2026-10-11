@@ -365,7 +365,7 @@
     "Marked air hose admits0.34 cubic inches of room-reference gas per native second, three quantized parcels per native second. It never adds or removes water.",
     "Current projected water velocity advects dispersed gas. Native contacts exclude actual water and transmit normal interface speed. Gas inertia, resolved wake reaction, shape deformation, mixing and closed mechanical work are absent.",
     "Largest positive-overlap descendant retains whole gas amount. Supported pockets larger than three coarse cells use Eulerian pressure; lost support reconstructs gas at its last validated local support. Mechanical work from growth, coalescence and representation changes is unmeasured.",
-    "The cream outlines draw current dispersed parcels. Large dark cavities are the coarse native water interface, not resolved spherical bubbles.",
+    "Dispersed gas excludes native water; circle overlays have been removed. Large dark cavities are the coarse native water interface, not resolved spherical bubbles.",
     "No dissolved gas, soda, fizz, foam, calibrated aquarium or monolithic Rayleigh-Plesset claim."
   ],
   "pass": true,
