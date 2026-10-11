@@ -24,7 +24,7 @@
   <link rel="preload" href="/assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/assets/fonts/commit_mono_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/style.css">
-  <link rel="stylesheet" href="/water-smoke-slime.css?v=v5.65">
+  <link rel="stylesheet" href="/water-smoke-slime.css?v=v5.66">
 </head>
 <body class="physics-page">
   <div class="site-wrapper toy-page">
@@ -216,10 +216,15 @@
           <picture><source type="image/webp" srcset="/assets/images/water-machines/hands-stage-2026-10-10.webp"><img class="u-figure-img" src="/assets/images/water-machines/hands-stage-2026-10-10.webp" width="720" height="1104" loading="lazy" alt="Actual straw frames. Water stays under the held top, then falls after a hole opens beside the trapped air."></picture>
           <figcaption class="u-figure-cap">The upper two rows show the held straw. In the lower two, a side hole lets room air in and the water falls. <a href="/assets/images/water-machines/hands-result-2026-10-10.json">Actual frame times.</a></figcaption>
         </figure>
-        <p>The cup fills, drains and begins filling again three times on each of three starting seeds. Opening its roof keeps the water high and replaces the deep drains with overflow. Closing the tap below the crest produces no outlet flow in sixty simulation seconds. The cup also completes 1,802 simulation seconds with a fixed water inventory and no recorded finite-state or wall failures. <a href="?scene=self-flushing-cup#toy">Try the cup.</a> <a href="?scene=tantalus&amp;lab=1#toy">Tantalus remains in the workshop.</a> The revised setup has passed its first two physical seeds; its shelf, remaining seed and controls are still being tested. Their powered return lifts collected water back to the tap; Instruments shows stored water, refused requests and external work. The <a href="/assets/images/water-machines/slice-workshop-progress-2026-10-10.json">measurements</a> include the tube positions at each confirmed break and the longer run, with its readback-age limits.</p>
+        <p>The cup fills, drains and begins filling again three times on each of three starting seeds. Opening its roof keeps the water high and replaces the deep drains with overflow. Closing the tap below the crest produces no outlet flow in sixty simulation seconds. The cup also completes 1,802 simulation seconds with a fixed water inventory and no recorded finite-state or wall failures. <a href="?scene=self-flushing-cup#toy">Try the cup.</a> Their powered return lifts collected water back to the tap; Instruments shows stored water, refused requests and external work. The <a href="/assets/images/water-machines/slice-workshop-progress-2026-10-10.json">measurements</a> include the tube positions at each confirmed break and the longer run, with its readback-age limits.</p>
         <figure class="u-figure">
           <picture><source type="image/webp" srcset="/assets/images/water-machines/cup-cycle-2026-10-10.webp"><img class="u-figure-img" src="/assets/images/water-machines/cup-cycle-2026-10-10.webp" width="1600" height="320" loading="lazy" alt="Actual cup frames showing the bowl filling, draining and refilling. A second row follows its flowing drain at one thirtieth of a simulation second per frame."></picture>
           <figcaption class="u-figure-cap">An actual cup cycle followed by refilling. The lower row samples discharge at one thirtieth of a simulation second per frame. <a href="/assets/images/water-machines/cup-cycle-evidence-2026-10-10.json">Frame record.</a></figcaption>
+        </figure>
+        <p>Tantalus keeps the water below a fixed mouth line while the slime stays on its shelf. The cup drains and begins filling again three times on each of three starting seeds, with no recorded water entering that marker; the longer run reaches six hundred simulation seconds. Opening the crest keeps the water high, wets the marker and replaces the deep drains with overflow. Closing the tap below the crest produces no outlet flow in sixty simulation seconds. Its powered return lifts collected water back to the tap, and Instruments records the external work. <a href="?scene=tantalus#toy">Try Tantalus.</a> <a href="/assets/images/water-machines/tantalus-result-2026-10-10.json">Measurements and limits.</a></p>
+        <figure class="u-figure">
+          <picture><source type="image/webp" srcset="/assets/images/water-machines/tantalus-cycle-2026-10-10.webp"><img class="u-figure-img" src="/assets/images/water-machines/tantalus-cycle-2026-10-10.webp" width="1600" height="320" loading="lazy" alt="Actual Tantalus frames follow filling, discharge, a gap in the rising water column and refilling, beside an unfrozen slime on its shelf."></picture>
+          <figcaption class="u-figure-cap">Actual Tantalus frames follow filling, discharge, a gap in the rising water column and refilling. The lower row samples discharge at one thirtieth of a simulation second per frame.</figcaption>
         </figure>
         <p>Sound starts with a click and follows the energy water loses at the collector. Hiding the tab or pausing clears the sounds; a fresh page still needs a click. The tones aren't calibrated bubble or glass sounds. The <a href="/assets/images/water-machines/slice-workshop-progress-2026-10-10.json">test record</a> includes the actual event timing and audio replay.</p>
         <p><time datetime="2026-10-09">Updated October 9, 2026.</time> The water solver now checks closed walls even where its pressure grid calls a partly filled cell air. The missed check let water cross a floor before collision pushed it back. Moving walls keep their own normal speed. Three cup runs deliver 101.8%, 98.4%, 98.8% of the initially estimated drainable water; all six hold controls pass and every particle is conserved. Some water below that estimate also drains.</p>
@@ -327,8 +332,8 @@
   <script src="/js/water-machines-scenes.js?v=v5.41"></script>
   <script src="/js/water-machines-instruments.js?v=v5.41"></script>
   <script src="/js/water-machines-pressure-view.js?v=v5.57"></script>
-  <script src="/js/wss-machine-registry.js?v=v5.63"></script>
-  <script src="/js/water-smoke-slime.js?v=v5.65"></script>
+  <script src="/js/wss-machine-registry.js?v=v5.66"></script>
+  <script src="/js/water-smoke-slime.js?v=v5.66"></script>
   <script src="/js/water-smoke-slime-ui.js?v=v5.65"></script>
   <script src="/js/smoke-presets-ui.js?v=4"></script>
 </body>
