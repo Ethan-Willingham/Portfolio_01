@@ -432,6 +432,7 @@
       text('toy-native-reading',state.scene==='thumb-straw' ? Number.isFinite(sample.retainedFraction) ? 'Water held '+(100*sample.retainedFraction).toFixed(0)+'%' : 'Waiting for water sample' :
         liveMachine && liveMachine.definition.readingLabel || 'Powered return');
       document.getElementById('toy-native-options').hidden=!native;
+      document.querySelector('#toy-native-options > p').textContent=cannon ? 'Choosing a setup refills the smoke chamber. The no-push comparison starts with still air.' : 'Choosing a setup restarts it with the same initial water. Hold starts a freshly filled straw; releasing opens its top.';
       document.getElementById('toy-machine-view').hidden=native;
       var setup=document.getElementById('toy-native-setup');
       if(native && liveMachine && nativeSetupScene!==state.scene){
