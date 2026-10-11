@@ -9,13 +9,14 @@
     var savedPhysics=fluid.getPhysics();fluid.setPhysics({HEAT:0,COOLING:0,BUOYANCY:0,WEIGHT:0,VISCOSITY:.08,EDGE_SPIN:0},0);
     function fill(){
       for(var x=176;x<=224;x+=16)for(var y=176;y<=224;y+=16)
-        fluid.splat(x/world.w,1-y/world.h,0,0,{r:.22,g:.205,b:.18},.11);
+        fluid.splat(x/world.w,1-y/world.h,0,0,{r:.8,g:.72,b:.6},.11);
     }
     function push(){
       if(definition.noPush)return false;
       // One declared impulse across the rear of the chamber. The opening and
       // projection solve form the counter-rotating section, not authored spin.
-      for(var y=160;y<=240;y+=16)fluid.splatVelocity(136/world.w,1-y/world.h,280,0,.045);
+      for(var x=112;x<=224;x+=16)for(var y=168;y<=232;y+=16)
+        fluid.splatVelocity(x/world.w,1-y/world.h,42,0,.065);
       pushes++;return true;
     }
     function sample(x,y){
@@ -37,7 +38,7 @@
     }
     function load(b,h,timescale){
       if(!field || !b.ringN)return;
-      var dt=h/timescale,massPoint=.09,airDensity=.0012;
+      var dt=h/timescale,massPoint=.09,airDensity=.000012;
       // Uniform exterior pressure has zero net force around a closed ring.
       // Each edge's traction is split between its two existing gel nodes.
       var mean=0,loads=[];
