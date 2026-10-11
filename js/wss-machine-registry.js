@@ -10,7 +10,7 @@
     {id:'roman-inverted-siphon',title:'Roman inverted siphon',cue:'Close or open the intake.',preview:'inverted-siphon',accepted:true,world:{w:720,h:400},pool:false},
     {id:'thumb-straw',title:'The straw and the thumb',cue:'Hold the top, then release.',preview:'straw',accepted:true,world:{w:720,h:400},pool:false},
     {id:'smoke-ring-cannon',capability:'Smoke',title:'The smoke-ring cannon',cue:'Tap the back. Catch the swirl with a slime.',preview:'smoke-cannon',accepted:true,world:{w:720,h:400},pool:false},
-    {id:'smoke-wind-tunnel',capability:'Smoke',title:'The slime wind tunnel',cue:'Stop the fan. Watch the wake change.',preview:'smoke-tunnel',accepted:false,world:{w:720,h:400},pool:false},
+    {id:'smoke-wind-tunnel',capability:'Smoke',title:'The slime wind tunnel',cue:'Stop the fan. Watch the wake change.',preview:'smoke-tunnel',accepted:true,world:{w:720,h:400},pool:false},
     {id:'burst-disk',title:'The burst disk',cue:'Compare two membrane strengths.',preview:'burst-disk',accepted:true,world:{w:720,h:400},pool:false}
   ];
   var lab = new URLSearchParams(location.search).get('lab') === '1';

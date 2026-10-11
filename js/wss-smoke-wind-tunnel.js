@@ -54,7 +54,7 @@
       c.save();c.lineWidth=1;c.globalAlpha=.65;c.beginPath();c.moveTo(anchor.x,support.top);
       c.lineTo(anchor.x,anchor.y);c.lineTo(body.px[node],body.py[node]);c.stroke();
       c.beginPath();c.arc(anchor.x,support.top,3,0,Math.PI*2);c.stroke();c.globalAlpha=1;
-      c.fillText(fan.enabled?'Fan on':'Fan off',80,104);c.fillText('Support',anchor.x+12,96);c.restore();
+      c.fillText(fan.enabled?'Fan on':'Fan off',80,140);c.fillText('Support',anchor.x+12,140);c.restore();
     }
     return {prepare:prepare,capture:pressure.capture,load:load,stats:stats,draw:draw,
       overlayKey:function(){return fan.enabled+':'+body.px[node].toFixed(1)+':'+body.py[node].toFixed(1);},
