@@ -3,6 +3,7 @@
   'use strict';
   var entries = [
     {id:'float-slider-cistern',capability:'Valves and logic',title:'Float-controlled inlet',cue:'Pull the float down to reopen the water inlet.',preview:'cup',accepted:true,world:{w:720,h:400},pool:true},
+    {id:'singing-pipe',capability:'Sound',title:"Hero's sliding pipe (precursor)",cue:'Turn on sound. Drag the pipe to bend the note.',preview:'sliding-pipe',accepted:false,world:{w:720,h:400},pool:false},
     {id:'air-hose',capability:'Bubbles',title:'Air hose',cue:'Stop the air. Watch the last bubbles rise.',preview:'straw',accepted:true,world:{w:720,h:400},pool:false},
     {id:'cartesian-divers',capability:'Water slimes',title:'Three Cartesian divers',cue:'Squeeze the jar. Watch the gas shrink.',preview:'divers',accepted:true,world:{w:720,h:400},pool:false},
     {id:'kettle',capability:'Steam',title:'Whistling kettle',cue:'Heat water. Cool its vapor back to water.',preview:'kettle',accepted:true,world:{w:720,h:400},pool:false},
@@ -42,7 +43,8 @@
     if(id==='float-slider-cistern')await script('/js/wss-float-slider.js');
     if(id==='air-hose')await script('/js/wss-bubbles.js');
     if(id==='douse-fire')await script('/js/wss-fire.js');
-    if(id==='kettle')await script('/js/wss-steam.js');
+    if(id==='kettle' || id==='singing-pipe')await script('/js/wss-steam.js');
+    if(id==='singing-pipe')await script('/js/wss-singing-pipe.js');
     if(id==='smoke-ring-cannon')await script('/js/wss-smoke-cannon.js');
     if(id==='smoke-wind-tunnel'){await script('/js/wss-smoke-cannon.js');await script('/js/wss-smoke-wind-tunnel.js');}
     if(id==='water-balloons')await script('/js/wss-water-balloons.js');
@@ -68,7 +70,11 @@
     }
     path('M3 43v6h66v-6','toy-preview-glass');
     path('M4 45h64v3H4Z','toy-preview-water');
-    if(kind==='divers'){
+    if(kind==='sliding-pipe'){
+      path('M6 5v17h16V5M36 25h20v23H36ZM18 19h10v23h12M51 25V13','toy-preview-glass');
+      path('M7 10h14v10H7ZM38 40h16v6H38Z','toy-preview-water');
+      path('M48 11h7v7h-7ZM48 18v9M55 18v9','toy-preview-mouth');
+    }else if(kind==='divers'){
       path('M13 8v38h46V8M12 13h48M36 13V4','toy-preview-glass');
       path('M15 25h42v19H15Z','toy-preview-water');
       path('M23 27a4 4 0 1 0 0-8 4 4 0 0 0 0 8M36 27a5 5 0 1 0 0-10 5 5 0 0 0 0 10M49 27a6 6 0 1 0 0-12 6 6 0 0 0 0 12','toy-preview-slime');
