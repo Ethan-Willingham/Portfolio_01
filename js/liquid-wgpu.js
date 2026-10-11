@@ -800,6 +800,8 @@
     // 15 legacy vec4 lanes + guest meta + guest ring vertices, sized from
     // the GS_* constants (v26.09; see the derivation at GS_META_BASE).
     instance.gameParamsHost = new Float32Array(GS_PARAM_LANES * GS_FRAME_SLOTS);
+    if (instance.curveBoundaryFactory) instance.curveBoundary = instance.curveBoundaryFactory(instance,
+      {slots:GS_FRAME_SLOTS});
     // v14.26 — SimParams uniform: the live-tunable fluid-feel physics
     // constants every compute kernel reads. 94 vec4 = 1504 bytes, including
     // five curved bath liners and the bounded bath thermal field. See WGSL_SIM_PARAMS for the lane layout. simParamsHost
@@ -1202,6 +1204,9 @@
     if (slots > GS_FRAME_SLOTS) slots = GS_FRAME_SLOTS;
     var hook = instance.liquid && instance.liquid.getGameState;
     var gs = (typeof hook === 'function') ? hook() : null;
+    if (instance.curveBoundary) instance.curveBoundary.prepare(gs,
+      {steps:slots,writeSlots:activeSlotsOnly?slots:GS_FRAME_SLOTS,h:instance.stepDt || LIQUID_SUBSTEP_DT,
+       clock:instance.simulationClock,seconds:slots*(instance.stepDt || LIQUID_SUBSTEP_DT)});
     // Every live reader uses slot zero or a substep below slots. Prepare each
     // used slot before its commands; standalone fixtures still populate all five.
     for (var slot = 0; slot < (activeSlotsOnly ? slots : GS_FRAME_SLOTS); slot++) {
@@ -9048,6 +9053,7 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
     // bind. Dense layout lands at 9 storage buffers (the GPU path already
     // requires 9 via P2G), sparse at 10 (already required).
     uEntries.push({ binding: 12, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } });
+    if (instance.curveBoundary) uEntries.push({binding:13,visibility:GPUShaderStage.COMPUTE,buffer:{type:'uniform'}});
     var uBgl = dev.createBindGroupLayout({
       label: 'liquid.gridUpdateBGL',
       entries: uEntries
@@ -9057,6 +9063,7 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
     var gameBindGrid = '\n@group(0) @binding(9) var<uniform> gameP : GameParams;\n';
 
     function uPipe(label, code) {
+      if (instance.curveBoundary) code = instance.curveBoundary.specialize(code,13);
       return dev.createComputePipeline({
         label: label,
         layout: uLayout,
@@ -9154,6 +9161,7 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
         uBgEntries.push({ binding: 11, resource: { buffer: instance.buf.blockList } });
       }
       uBgEntries.push({ binding: 12, resource: { buffer: instance.buf.terrainMask } });
+      if (instance.curveBoundary) uBgEntries.push({binding:13,resource:{buffer:instance.curveBoundary.buffers[gbs]}});
       instance.gridUpdateBGs.push(dev.createBindGroup({
         label: 'liquid.gridUpdateBG.' + gbs,
         layout: uBgl,
@@ -9763,6 +9771,22 @@ struct P2GParams {
       ];
     var bgl = dev.createBindGroupLayout({label:'liquid.collideBGL',entries:bglEntries});
     var layout = dev.createPipelineLayout({ bindGroupLayouts: [bgl] });
+    if (instance.curveBoundary) {
+      var curveBGL=dev.createBindGroupLayout({label:'liquid.curveCollisionBGL',entries:bglEntries.concat([
+        {binding:15,visibility:GPUShaderStage.COMPUTE,buffer:{type:'uniform'}}])});
+      var curveCode=instance.curveBoundary.specialize(WGSL_GAME_PARAMS+WGSL_COLLIDE_PRELUDE+
+        WGSL_GUEST_GEOMETRY+WGSL_SIM_PARAMS+simBind(6)+WGSL_COLLIDE,15);
+      instance.curveCollision=dev.createComputePipeline({label:'liquid.curveCollision',
+        layout:dev.createPipelineLayout({bindGroupLayouts:[curveBGL]}),
+        compute:{module:dev.createShaderModule({code:curveCode}),entryPoint:'main'}});
+      instance.curveCollisionBGs=instance.gameParamsBufs.map(function(gameBuffer,slot){
+        var resources=[instance.paramsBuf,instance.buf.pos,instance.buf.aux,instance.buf.flag,
+          instance.buf.terrainMask,gameBuffer,instance.simParamsBuf,instance.buf.snowFallbackCount,instance.buf.snowFallbackIndices];
+        var entries=resources.map(function(buffer,binding){return {binding:binding,resource:{buffer:buffer}};});
+        entries.push({binding:15,resource:{buffer:instance.curveBoundary.buffers[slot]}});
+        return dev.createBindGroup({layout:curveBGL,entries:entries});
+      });
+    }
     var liquidCacheEntry={binding:13,visibility:GPUShaderStage.COMPUTE,buffer:{type:'storage'}};
     var liquidEntries = bglEntries.concat([{binding:9,visibility:GPUShaderStage.COMPUTE,buffer:{type:'storage'}},liquidCacheEntry]);
     var liquidFallbackEntries=bglEntries.concat([liquidCacheEntry]);
@@ -10211,6 +10235,12 @@ fn machinePointExitClear(a:vec2<f32>,b:vec2<f32>,r:f32)->bool {
     writeSimParams(instance);
     var enc = liquidEncoder(instance, 'liquid.runCollide');
     var cp = grainPass || enc.beginComputePass({ label: 'liquid.collide' });
+    if (!snowOnly && instance.curveBoundary && instance.curveBoundary.active) {
+      cp.setPipeline(instance.curveCollision);cp.setBindGroup(0,instance.curveCollisionBGs[substepSlot | 0]);
+      cp.dispatchWorkgroups(Math.ceil(count/WG));cp.end();
+      if (instance.diagnosticsFrame) captureLiquidDiagnosticsBatch(instance,enc,false,false);
+      liquidSubmit(instance,enc);return;
+    }
     var collideBG = instance.collideBGs && instance.collideBGs[substepSlot | 0];
     cp.setBindGroup(0, snowOnly ? instance.snowPrimaryBGs[substepSlot | 0] : instance.liquidPrimaryBGs[substepSlot | 0] || instance.liquidPrimaryBGs[0]);
     // Terrain-only snow has no queue reads or writes. The next queue batch resets.
@@ -12687,6 +12717,7 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
       surfTexView: null,        // v24.113 — its view
       surfTexW: 0, surfTexH: 0, // v24.113 — current field texture size
       toyNativeFactory: opts.toyNativeExtension || null,
+      curveBoundaryFactory: opts.curveBoundaryFactory || null,
       uploadedCount: 0,
       lastUploadSeq: -1,     // v14.2 — liquidMutationSeq at the last upload
       residentSeeded: false, // v14.2 — GPU buffers hold a live particle set
@@ -13243,6 +13274,7 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
             if (instance.buf[k]) { try { instance.buf[k].destroy(); } catch (_) {} }
           }
         }
+        if (instance.curveBoundary) instance.curveBoundary.destroy();
         if (instance.paramsBuf) { try { instance.paramsBuf.destroy(); } catch (_) {} }
         if (instance.gameParamsBufs) {
           for (var gb = 0; gb < instance.gameParamsBufs.length; gb++) {
