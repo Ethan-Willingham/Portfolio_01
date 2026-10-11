@@ -9410,6 +9410,8 @@ struct P2GParams {
   // live frame (veto false) or after uploadParticles' denseClearAll, so
   // they exercise the lever-selected path either way.
   function useSparse(instance) {
+    // The opt-in multi-material grid owns dense packed momentum planes.
+    if (instance.materialSlip) return false;
     return !!(LIQUID_SPARSE && !instance.sparseVeto && instance.sparseGridOK &&
               instance.sparseP2GOK && instance.sparseGrid2OK);
   }
@@ -12017,6 +12019,11 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
   function runFrame(instance, dt) {
     var toyExtension = instance.toyNativeExtension;
     var toyMembrane = instance.toyMembrane;
+    var materialSlip = instance.materialSlip;
+    if (materialSlip && !materialSlip.ready) {
+      if (materialSlip.error) throw new Error(materialSlip.error);
+      return;
+    }
     if (toyMembrane && toyMembrane.error) throw new Error(toyMembrane.error);
     if (toyExtension) {
       if (!toyExtension.ready) { if (toyExtension.error) throw new Error(toyExtension.error); return; }
@@ -12164,7 +12171,7 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
       if (L.arrays.type[snowIndex] === 5) { hasSnow = true; break; }
     }
     // Shorter prediction steps limit the overlap each contact solve must remove.
-    var grainSteps = Math.max(1, Math.ceil(instance.stepDt / LIQUID_TIMESCALE * 480));
+    var grainSteps = materialSlip ? 1 : Math.max(1, Math.ceil(instance.stepDt / LIQUID_TIMESCALE * 480));
     if (hasSnow) prepareSnowGrains(instance, instance.stepDt / LIQUID_TIMESCALE / grainSteps);
     var frameEncoder = instance.device.createCommandEncoder({ label: 'liquid.frame' });
     instance.frameEncoder = frameEncoder;
@@ -12186,8 +12193,11 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
         runDeclump(instance);
         if (toyExtension && toyExtension.ready) toyExtension.constrain(frameEncoder);
         runP2G(instance);
-        runGrid2(instance, ss, true);
-        runG2P(instance);
+        if (materialSlip) materialSlip.encode(frameEncoder);
+        else {
+          runGrid2(instance, ss, true);
+          runG2P(instance);
+        }
         if (toyExtension && toyExtension.ready) {
           toyExtension.constrain(frameEncoder);
           toyExtension.beforeCollision(frameEncoder);
@@ -12196,10 +12206,15 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
         if (toyExtension && toyExtension.ready) toyExtension.afterSubstep(frameEncoder);
         if (toyMembrane) toyMembrane.afterSubstep(frameEncoder,
           {h:instance.stepDt,substep:ss,count:count});
+        if (hasSnow && materialSlip) materialSlip.beforeGrains(frameEncoder);
         if (hasSnow) for (var grainStep = 0; grainStep < grainSteps; grainStep++) {
           // Terrain, rig and bowl stay on every pass; resident skins are
           // projected once, after the tick's final contact.
-          runSnowGrains(instance, 'predict', ss, false, true);
+          // Slip G2P already advanced grains and saved their sweep origin.
+          // Resolve that motion before contacts overwrite aux.zw. Reuse the
+          // native swept terrain footprint, without the snow force predictor.
+          if (materialSlip) runCollide(instance, ss, true, null, true);
+          else runSnowGrains(instance, 'predict', ss, false, true);
           // G2P has consumed the liquid fields. Rebuild only the neighbor
           // index at the grains' predicted positions for contact queries.
           buildGrid(instance, true, true);
@@ -12211,6 +12226,7 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
             runSnowGrains(instance, finalShield ? 'shield' : 'contacts', ss, contact === 0, contact === 0);
           }
         }
+        if (hasSnow && materialSlip) materialSlip.afterGrains(frameEncoder);
       }
       // Clear the last substep's active blocks before its grid mapping moves.
       runSparseEndClear(instance);
@@ -12774,6 +12790,28 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
         instance.toyMembrane = companion || null;
         instance.materialStateError = null;
       },
+      configureMaterialSlip: function (options) {
+        if (typeof opts.materialSlipFactory !== 'function')
+          return Promise.reject(new Error('Material slip was not registered at engine creation.'));
+        return instance.readyPromise.then(function () {
+          if (!instance.simActive || instance.toyMembrane || instance.pressureModel && instance.pressureModel.enabled)
+            throw new Error('Material slip needs the native liquid grid without another phase model.');
+          if (instance.materialSlip) instance.materialSlip.destroy();
+          var model = opts.materialSlipFactory(instance, Object.assign({}, options, {
+            restDensity:LIQUID_DENSITY, cellSize:LIQUID_CELL_DEFAULT, fixedScale:FIXED_SCALE,
+            gridMaxCells:GRID_MAX_CELLS
+          }));
+          instance.materialSlip = model;
+          instance.materialStateError = null;
+          return model.readyPromise.then(function () { return model; });
+        });
+      },
+      clearMaterialSlip: function () {
+        if (instance.materialSlip) {
+          instance.materialSlip.destroy();
+          instance.materialStateError = null;
+        }
+      },
       configureToyNative: function (options) {
         if (typeof opts.toyNativeExtension !== 'function') {
           return Promise.reject(new Error('Toy native extension was not registered at creation.'));
@@ -12824,6 +12862,12 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
         try {
           runFrame(instance, dt);
         } catch (e) {
+          if (instance.materialSlip) {
+            instance.materialStateError = (e && e.message) || String(e);
+            instance.materialSlip.error = instance.materialStateError;
+            instance.materialSlip.ready = false;
+            return;
+          }
           if (instance.toyMembrane) {
             instance.materialStateError = (e && e.message) || String(e);
             instance.toyMembrane.error = instance.materialStateError;
@@ -13181,6 +13225,7 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
         return n;
       },
       dispose: function () {
+        if (instance.materialSlip) instance.materialSlip.destroy();
         if (instance.toyNativeExtension) {
           instance.toyNativeExtension.destroy();
           instance.toyNativeExtension = null;
