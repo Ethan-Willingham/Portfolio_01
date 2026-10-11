@@ -3,6 +3,7 @@
   'use strict';
   var entries = [
     {id:'cartesian-divers',capability:'Water slimes',title:'Three Cartesian divers',cue:'Squeeze the jar. Watch the gas shrink.',preview:'divers',accepted:true,world:{w:720,h:400},pool:false},
+    {id:'kettle',capability:'Steam',title:'Boiling kettle prototype',cue:'Heat water. Cool its vapor back to water.',preview:'kettle',accepted:false,world:{w:720,h:400},pool:false},
     {id:'water-balloons',capability:'Water slimes',title:'Water balloons',cue:'Drag, fling, then pop the skin.',preview:'water-balloon',accepted:true,world:{w:720,h:400},pool:false},
     {id:'thermoscope',capability:'Fire',title:"Galileo's thermoscope",cue:'Warm the bulb. Watch the water fall.',preview:'thermoscope',accepted:true,world:{w:720,h:400},pool:false},
     {id:'douse-fire',capability:'Fire',title:'Put out the fire',cue:'Pour water onto the glowing plume.',preview:'fire',accepted:true,world:{w:720,h:400},pool:false},
@@ -37,6 +38,7 @@
     await script('/js/wss-hands.js');
     await script('/js/wss-native.js');
     if(id==='douse-fire')await script('/js/wss-fire.js');
+    if(id==='kettle')await script('/js/wss-steam.js');
     if(id==='smoke-ring-cannon')await script('/js/wss-smoke-cannon.js');
     if(id==='smoke-wind-tunnel'){await script('/js/wss-smoke-cannon.js');await script('/js/wss-smoke-wind-tunnel.js');}
     if(id==='water-balloons')await script('/js/wss-water-balloons.js');

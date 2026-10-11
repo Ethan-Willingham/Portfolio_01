@@ -387,6 +387,7 @@
       var liveMachine = toy.machineState ? toy.machineState() : null;
       var air = toy.airStats ? toy.airStats() : { enabled: false };
       var fire=!!(liveMachine && liveMachine.definition.fire);
+      var steam=!!(liveMachine && liveMachine.definition.steam);
       var wind=state.scene==='smoke-wind-tunnel',cannon=state.scene==='smoke-ring-cannon'||wind,thermal=state.scene==='thermoscope',balloon=state.scene==='water-balloons',divers=state.scene==='cartesian-divers';
       var contextual = machine || air.enabled;
       var ledger=sample.ledger || {},convergence=sample.convergence;
@@ -403,6 +404,7 @@
         'The pressure sample is current. Open Instruments for the calculation status.';
       if(cannon){pressureLabel=state.paused?'Paused':'Live';pressureMessage=wind?'A steady fan drives the smoke past the supported slime.':'The smoke carries the push. Instruments explains the flat section.';}
       if(balloon){pressureLabel=state.paused?'Paused':'Live';pressureMessage='Drag, fling and pop. Instruments explains the elastic skin.';}
+      if(steam){pressureLabel=state.paused?'Paused':'Diagnostic';pressureMessage='The white plume traces escaping vapor. Instruments explains the thermal model.';}
       document.getElementById('toy-machine-diagnostics').hidden=!contextual || fire || balloon;
       text('toy-machine-diagnostics',contextual ? pressureMessage : '');
       if(contextual)text('toy-status',fire ? state.paused?'Paused':'Live' : pressureLabel || (state.paused ? 'Paused' : 'Live'));
@@ -431,14 +433,14 @@
         var holdingThumb=state.scene==='thumb-straw' && (thumbPointer!==null || thumbKeyboard);
         document.getElementById('toy-machine-primary').disabled = (!ready && !holdingThumb) || !!fatal || ((state.scene === 'cup' || balloon) && liveMachine && liveMachine.primaryUsed);
       }
-      text('toy-compact-head-label',divers ? 'Under 1' : state.scene==='thumb-straw' || thermal ? 'Air' : state.scene==='tantalus' ? 'Water to mouth' : 'Head');
-      text('toy-compact-head', number(state.scene==='thumb-straw' || thermal || divers ? sample.gasPressurePsi : state.scene==='tantalus' ? sample.mouthDistanceInches : sample.headInches, state.scene==='thumb-straw' || thermal || divers ? 'psi' : 'in'));
+      text('toy-compact-head-label',divers ? 'Under 1' : state.scene==='thumb-straw' || thermal || steam ? 'Air' : state.scene==='tantalus' ? 'Water to mouth' : 'Head');
+      text('toy-compact-head', number(state.scene==='thumb-straw' || thermal || steam || divers ? sample.gasPressurePsi : state.scene==='tantalus' ? sample.mouthDistanceInches : sample.headInches, state.scene==='thumb-straw' || thermal || steam || divers ? 'psi' : 'in'));
       document.getElementById('toy-compact-head').parentElement.hidden=state.scene==='burst-disk';
       document.getElementById('toy-native-reading').hidden=!native;
-      text('toy-native-reading',balloon && sample.balloon ? sample.balloon.popped ? 'Skin popped' : Number.isFinite(sample.balloon.retainedFraction) ? 'Water held '+(100*sample.balloon.retainedFraction).toFixed(0)+'%' : 'Water inside the skin' : thermal && sample.thermoscope ? 'Air '+number(sample.thermoscope.temperatureF,'degrees Fahrenheit') : fire && sample.fire ? 'Source '+Math.round(sample.fire.sourceC*1.8+32)+' degrees Fahrenheit; '+(sample.fire.burning?'burning':'cooling') : state.scene==='thumb-straw' ? Number.isFinite(sample.retainedFraction) ? 'Water held '+(100*sample.retainedFraction).toFixed(0)+'%' : 'Waiting for water sample' :
+      text('toy-native-reading',steam && sample.steam ? 'Water '+number(Number.isFinite(sample.steam.waterTemperatureC) ? sample.steam.waterTemperatureC*1.8+32 : null,'degrees Fahrenheit')+'; vapor '+sample.steam.vaporParcels : balloon && sample.balloon ? sample.balloon.popped ? 'Skin popped' : Number.isFinite(sample.balloon.retainedFraction) ? 'Water held '+(100*sample.balloon.retainedFraction).toFixed(0)+'%' : 'Water inside the skin' : thermal && sample.thermoscope ? 'Air '+number(sample.thermoscope.temperatureF,'degrees Fahrenheit') : fire && sample.fire ? 'Source '+Math.round(sample.fire.sourceC*1.8+32)+' degrees Fahrenheit; '+(sample.fire.burning?'burning':'cooling') : state.scene==='thumb-straw' ? Number.isFinite(sample.retainedFraction) ? 'Water held '+(100*sample.retainedFraction).toFixed(0)+'%' : 'Waiting for water sample' :
         liveMachine && liveMachine.definition.readingLabel || 'Powered return');
       document.getElementById('toy-native-options').hidden=!native;
-      document.querySelector('#toy-native-options > p').textContent=divers ? 'The open side vent releases the piston pressure to room air. Each setup starts with fresh divers and water.' : balloon ? 'Choosing a setup starts a fresh partly filled balloon. The slit removes one lower-side edge, above the basin floor.' : thermal ? 'Compare the sealed bulb with no heat or an open upper vent. Each setup starts with the same water.' : wind ? 'Both setups supply smoke at the inlet; fan off supplies no air impulse.' : cannon ? 'Choosing a setup refills the smoke chamber. The no-push comparison starts with still air.' : 'Choosing a setup restarts it with the same initial water. Hold starts a freshly filled straw; releasing opens its top.';
+      document.querySelector('#toy-native-options > p').textContent=steam ? 'Each setup starts with the same hot water. No heater makes no vapor; settling water can still push dry air through the whistle. Capped closes the gas port.' : divers ? 'The open side vent releases the piston pressure to room air. Each setup starts with fresh divers and water.' : balloon ? 'Choosing a setup starts a fresh partly filled balloon. The slit removes one lower-side edge, above the basin floor.' : thermal ? 'Compare the sealed bulb with no heat or an open upper vent. Each setup starts with the same water.' : wind ? 'Both setups supply smoke at the inlet; fan off supplies no air impulse.' : cannon ? 'Choosing a setup refills the smoke chamber. The no-push comparison starts with still air.' : 'Choosing a setup restarts it with the same initial water. Hold starts a freshly filled straw; releasing opens its top.';
       document.getElementById('toy-machine-view').hidden=native;
       var setup=document.getElementById('toy-native-setup');
       if(native && liveMachine && nativeSetupScene!==state.scene){
@@ -453,14 +455,14 @@
         var b=liveMachine.definition.boundaries || {pool:false};
         text('toy-native-boundaries',liveMachine.definition.boundaryNote || (b.pool ? 'Drained water feeds the tap. The powered return adds energy to lift it. The tap requests '+b.tap.rate+' parcels per simulation second at '+b.tap.vy+' pixels per second downward; each parcel represents 1.5625 square pixels. All '+state.allocation+' allocated slots are either present water or stored reserve.' : 'Only the upper opening is held. The lower end stays open. The side-hole comparison connects the upper air space to the room.'));
         var ledger=sample.boundary;
-        text('toy-native-ledger',b && b.pool && ledger ? 'Present '+ledger.present+'; reserve '+ledger.parked+'. Requested '+ledger.requested+'; admitted '+ledger.admitted+'; collected '+ledger.drained+'; refused '+ledger.shortfall+'. Return work '+number(ledger.externalWork,'J')+'.' : '');
+        text('toy-native-ledger',steam && sample.steam ? 'Water parcels: '+sample.steam.liquidParcels+' liquid, '+sample.steam.vaporParcels+' vapor, '+sample.steam.escapedVaporParcels+' escaped. Heat supplied '+number(sample.steam.heatInputJ/1.3558179483314,'ft·lbf')+'.' : b && b.pool && ledger ? 'Present '+ledger.present+'; reserve '+ledger.parked+'. Requested '+ledger.requested+'; admitted '+ledger.admitted+'; collected '+ledger.drained+'; refused '+ledger.shortfall+'. Return work '+number(ledger.externalWork,'J')+'.' : '');
       }
       var soundButton=document.getElementById('toy-sound'),sound=toy.soundStats ? toy.soundStats() : {enabled:false};
       soundButton.hidden=divers || balloon || !native && !fire;pressed(soundButton,!!sound.enabled);soundButton.textContent=sound.enabled ? 'Sound on' : 'Sound off';
-      soundButton.title=fire?'A synthesized hiss from water cooling the source. Enable sound with this button.':'Synthesized water impacts. Enable sound with this button.';
+      soundButton.title=steam?'A pipe-mode whistle powered by escaping gas. Enable sound with this button.':fire?'A synthesized hiss from water cooling the source. Enable sound with this button.':'Synthesized water impacts. Enable sound with this button.';
       if(state.scene==='thumb-straw'){primaryButton.setAttribute('aria-pressed',String(thumbPointer!==null || thumbKeyboard || !!(liveMachine && liveMachine.thumbHeld)));}else primaryButton.removeAttribute('aria-pressed');
       text('toy-compact-flow', number(sample.flowCubicInchesPerSecond, 'in³/s'));
-      document.getElementById('toy-compact-flow').parentElement.hidden=divers;
+      document.getElementById('toy-compact-flow').parentElement.hidden=divers || steam;
       document.getElementById('toy-machine-metrics').classList.toggle('is-stale', stale);
       document.getElementById('toy-machine-metrics').title = stale ? 'The measurement sample is more than a quarter second old.' : '';
       text('toy-machine-scale', sample.scaleText || 'The box is 30 inches wide and 1 inch deep. Seconds use Earth gravity.');
@@ -489,7 +491,7 @@
         text('toy-pressure-legend', airPressureColors ? 'Air: gold above room pressure, rose below. Labels show gauge psi; room air is 0. Readings are diagnostic.' :
           'Water: rose below room pressure, gold above. Full color at ' + (Number.isFinite(cap) ? '±' + number(cap, 'psi') : 'the model limit') + '.');
       }
-      document.querySelectorAll('#toy-panel-instruments > .toy-instrument-values, #toy-panel-instruments > .toy-details, #toy-panel-instruments .toy-instrument-actions + .toy-panel-note').forEach(function(node){if(node.hidden!==(fire||cannon||balloon))node.hidden=fire||cannon||balloon;});
+      document.querySelectorAll('#toy-panel-instruments > .toy-instrument-values, #toy-panel-instruments > .toy-details, #toy-panel-instruments .toy-instrument-actions + .toy-panel-note').forEach(function(node){if(node.hidden!==(fire||cannon||balloon||steam))node.hidden=fire||cannon||balloon||steam;});
       ['toy-air-pressure-toggle','toy-air-pressure-compact','toy-pressure-toggle'].forEach(function(id){document.getElementById(id).hidden=fire||cannon||balloon;});
       var builderState = toy.buildState ? toy.buildState() : {};
       var message = builderState.error || sample.error || notice;

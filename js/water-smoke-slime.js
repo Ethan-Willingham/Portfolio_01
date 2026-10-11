@@ -383,7 +383,7 @@
       .concat(simplifyWall(points.slice(split), tolerance));
   }
 
-  function wallOutline(glassDetail) {
+  function wallOutline() {
     function solid(r, c) {
       return r > 0 && c > 0 && r < gridH - 1 && c < gridW - 1 && tileAt(r,c)!==null;
     }
@@ -436,14 +436,14 @@
       }
       var smooth = simplifyWall(corners.slice(0, far + 1), TILE * 1.5).slice(0, -1)
         .concat(simplifyWall(corners.slice(far).concat([corners[0]]), TILE * 1.5).slice(0, -1));
-      if (!glassDetail && smooth.length >= 3) corners = smooth;
+      if (smooth.length >= 3) corners = smooth;
       for (var k = 0; k < corners.length; k++) {
         var p = corners[k], prev = corners[(k + corners.length - 1) % corners.length];
         var after = corners[(k + 1) % corners.length];
         var ax = prev.x - p.x, ay = prev.y - p.y;
         var bx = after.x - p.x, by = after.y - p.y;
         var al = Math.hypot(ax, ay), bl = Math.hypot(bx, by);
-        var radius = Math.min(glassDetail ? 2 : TILE * 4, al * 0.45, bl * 0.45);
+        var radius = Math.min(TILE * 4, al * 0.45, bl * 0.45);
         var ix = p.x + ax / al * radius, iy = p.y + ay / al * radius;
         if (k === 0) path.moveTo(ix, iy); else path.lineTo(ix, iy);
         path.quadraticCurveTo(p.x, p.y, p.x + bx / bl * radius, p.y + by / bl * radius);
@@ -458,8 +458,7 @@
     wallsBakedVersion = wallsVersion;
     wallsCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
     wallsCtx.clearRect(0, 0, worldW, worldH);
-    var glassDetail=glassWalls && machineState && /^(thermoscope|roman-inverted-siphon)$/.test(machineState.definition.name);
-    var path = wallOutline(glassDetail);
+    var path = wallOutline();
     var palette = getComputedStyle(document.documentElement);
     if(glassWalls && airModel && airModel.enabled){
       wallsCtx.fillStyle=palette.getPropertyValue('--accent').trim();
@@ -468,11 +467,6 @@
         if(tileAt(row,col)!==null)wallsCtx.fillRect(col*TILE,row*TILE,TILE,TILE);
       wallsCtx.globalAlpha=1;wallsCtx.strokeStyle=palette.getPropertyValue('--accent').trim();
       wallsCtx.lineWidth=1;wallsCtx.globalAlpha=.72;
-      if(glassDetail){
-        // A narrow glass edge follows the unchanged native wall mask.
-        wallsCtx.lineJoin='round';wallsCtx.lineWidth=3;wallsCtx.globalAlpha=.15;wallsCtx.stroke(path);
-        wallsCtx.lineWidth=1;wallsCtx.globalAlpha=.72;wallsCtx.stroke(path);wallsCtx.globalAlpha=1;return;
-      }
       for(row=1;row<gridH-1;row++)for(col=1;col<gridW-1;col++){
         if(tileAt(row,col)===null)continue;
         var x=col*TILE,y=row*TILE;
@@ -3068,7 +3062,7 @@
     if(toyThermoscope)SmokeFluid.setLiquidField(liquidX,liquidY,liquidVX,liquidVY,0,0,0,worldW,worldH,WATER_CELL_REST/(TILE*TILE),liquidFrozen);
     else smokeWaterFlowCouple();
     if(toyCannon && toyCannon.prepare)toyCannon.prepare(dt*timeMul);
-    SmokeFluid.step(toyFire ? fireFrameDt : toyThermoscope ? thermoscopeDt : dt * timeMul);
+    SmokeFluid.step(toyFire ? fireFrameDt : toyThermoscope ? thermoscopeDt : toySteam ? steamFrameDt : dt * timeMul);
     if(toyThermoscope && airModel && airModel.enabled){
       var temperature=SmokeFluid.sampleTemperature(airModel.width,airModel.height);
       if(temperature){airModel.setSmokeTemperature(temperature.kelvin);toyThermoscope.sampleClock=liquidWGPU.simulationClock;}
@@ -13285,9 +13279,9 @@
   }
 
   function clearWorldAll(preserveThumbInput) {
-    if(smokeCanvas)smokeCanvas.style.opacity='1';
     if(toyDivers){toyDivers.destroy();toyDivers=null;}
     if(toySound)toySound.setActive(false);
+    if(toySteam){toySteam.destroy();toySteam=null;steamFrameDt=0;SmokeFluid.setPhysics(null,0);SmokeFluid.setThermalStyle(null);}
     if(toyThermoscope){toyThermoscope=null;thermoscopeAcc=0;SmokeFluid.setPhysics(null,0);SmokeFluid.setThermalStyle(null);}
     if(toyBoundary){toyBoundary.destroy();toyBoundary=null;}
     if(toyBalloon){liquidWGPU.setToyMembrane(null);toyBalloon.destroy();toyBalloon=null;}
@@ -13316,6 +13310,7 @@
   var toyFire=null,fireSplatAcc=0,fireFrameDt=0,fireWaterClock=0,firePourPending=0,firePourAcc=0,firePourClock=0;
   var toyBalloon=null;
   var toyDivers=null;
+  var toySteam=null,steamWaterClock=0,steamFrameDt=0,steamPlumeSamples=0,steamPlumeMass=0;
   var fireDomainPrevious=null,fireDomainActive=false;
   var machineState=null;
   var toyBoundary=null,toySound=null,thumbWanted=false;
@@ -13524,6 +13519,21 @@
   }
 
   function instrumentTick(now){
+    if(toySteam && machineState && machineState.ready){
+      var steamStats=toySteam.stats(),steamState=machineState;
+      steamStats.plume={samples:steamPlumeSamples,tracedMassKg:steamPlumeMass};
+      var steamProbe=instrumentSample && window.WaterMachinesInstruments.cell(instrumentSample,360,200);
+      var steamUnits=window.WaterMachinesInstruments.scale({width:worldW,density:1});
+      steamState.readings={ready:true,caption:steamState.definition.caption,action:steamState.definition.action,steam:steamStats,
+        particleCount:steamStats.liquidParcels,simulationSeconds:liquidWGPU.simulationClock-steamState.startedAt,
+        gasPressurePsi:steamProbe && steamProbe.pressure!==null ? steamUnits.psi(steamProbe.pressure) : null,
+        sampleAgeMs:instrumentSample ? Math.max(0,liquidWGPU.simulationClock-instrumentSample.simulationTime)*1000 : null,
+        numericalStatus:steamStats.approximation,energyBudgetStatus:steamState.definition.energyBudgetStatus,error:steamStats.error || buildError};
+      if(airModel && !instrumentPending && now>=instrumentNextAt){var steamAir=airModel;instrumentPending=true;instrumentNextAt=now+150;
+        steamAir.capture().then(function(snapshot){if(steamAir===airModel && steamState===machineState){instrumentSample=snapshot;var units=window.WaterMachinesInstruments.scale({width:worldW,density:1});
+          var probe=window.WaterMachinesInstruments.cell(snapshot,360,200);steamState.readings.gasPressurePsi=probe?units.psi(probe.pressure):null;}}).catch(function(error){buildError=error.message;}).finally(function(){instrumentPending=false;});}
+      return;
+    }
     if(toyBalloon && machineState && machineState.ready){
       var membrane=toyBalloon.stats();machineState.readings={ready:true,caption:machineState.definition.caption,action:machineState.definition.action,
         balloon:membrane,particleCount:liquidCount,sampleAgeMs:membrane.contactAgeSimulationSeconds*1000,
@@ -13743,7 +13753,7 @@
     if(waterState!=='on')return Promise.reject(new Error(waterState==='off' ? 'Water machines need WebGPU in this browser.' : 'Wait for the water engine to finish loading.'));
     var wasPaused=machineLoading ? machineResumePause : userPaused;
     machineResumePause=wasPaused;machineLoading=true;userPaused=true;syncRunning();
-    var request=++machineRequest, ownBoundary=null,ownFire=null,ownBalloon=null;
+    var request=++machineRequest, ownBoundary=null,ownFire=null,ownBalloon=null,ownSteam=null;
     try{
     if(toyCannon){toyCannon.destroy();toyCannon=null;}
     clearWorldAll(options.canvasThumb);setGravityUI(1);
@@ -13827,7 +13837,6 @@
       if(toySound)toyBoundary.setEventConsumer(function(events){toySound.consume(events);});
     }
     if(definition.name==='smoke-ring-cannon' || definition.name==='smoke-wind-tunnel'){
-      if(smokeCanvas)smokeCanvas.style.opacity=definition.name==='smoke-ring-cannon' ? '.9' : '1';
       if(airModel && airModel.enabled)await enableAirModel({enabled:false});
       setGravityUI(0);toyCannon=definition.name==='smoke-wind-tunnel' ?
         window.WSSSmokeWindTunnel.create(definition,SmokeFluid,{w:worldW,h:worldH},jelloBodies) :
@@ -13882,6 +13891,13 @@
       await ownBoundary.initialize();
       if(request!==machineRequest)return null;
     }
+    if(definition.steam){
+      ownSteam=await window.WSSSteam.create(Object.assign({},definition.steam,{liquid:liquidWGPU,air:model,maxParticles:LIQUID_MAX_PARTICLES}));
+      if(request!==machineRequest){ownSteam.destroy();ownSteam=null;return null;}
+      toySteam=ownSteam;liquidWGPU.setToyMembrane(ownSteam);airPressureColors=true;
+      steamWaterClock=liquidWGPU.simulationClock;steamFrameDt=0;steamPlumeSamples=0;steamPlumeMass=0;
+      SmokeFluid.setThermalStyle({glow:0});SmokeFluid.setPhysics({HEAT:1,COOLING:1.2,BUOYANCY:220},0);
+    }
     state.energyInitial=window.WaterMachinesInstruments.waterEnergy(Object.assign({},particleInstrumentSample(),{count:added}),
       {floor:worldH,gravity:250*gravMul*presetGravScale,density:model.settings.density || 1});
     state.energyGravity=250*gravMul*presetGravScale;
@@ -13916,6 +13932,7 @@
       if(request!==machineRequest && ownBoundary && ownBoundary!==toyBoundary)ownBoundary.destroy();
       if(request!==machineRequest && ownFire && ownFire!==toyFire)ownFire.destroy();
       if(request!==machineRequest && ownBalloon && ownBalloon!==toyBalloon)ownBalloon.destroy();
+      if(request!==machineRequest && ownSteam && ownSteam!==toySteam)ownSteam.destroy();
       if(request===machineRequest){machineLoading=false;userPaused=machineResumePause;syncRunning();}
     }
   }
@@ -13925,6 +13942,10 @@
     if(!machineState || !machineState.ready)return false;
     var definition=machineState.definition,primary=definition.primary;
     if(primary.kind==='diver-squeeze'){toyDivers.toggle();machineOverlayCache=null;return true;}
+    if(primary.kind==='steam-heat-toggle'){
+      var heated=toySteam.toggle();definition.action=heated?'Turn heater off':'Turn heater on';
+      definition.caption=window.WSSMachines.kettle.caption(heated,definition.steam.capped,false);machineOverlayCache=null;return true;
+    }
     if(primary.kind==='balloon-pop'){
       if(!toyBalloon.pop())return false;
       if(surfaceSlimeGrip && surfaceSlimeGrip.body===toyBalloon.body)jelloGrabEnd();
@@ -14307,6 +14328,14 @@
     if(machineState){
       var definition=machineState.definition;
       if(toyCannon && toyCannon.draw)toyCannon.draw(c);
+      if(toySteam){var steamDefinition=definition.steam,steamHeat=toySteam.stats();
+        c.fillText(steamHeat.heated?'Heater on':'Cooling',steamDefinition.heater.x-44,steamDefinition.heater.y+28);
+        c.strokeRect(steamDefinition.heater.x,steamDefinition.heater.y,steamDefinition.heater.width,steamDefinition.heater.height);
+        c.fillText(steamHeat.vaporParcels+' vapor parcels',288,184);
+        c.beginPath();c.moveTo(412,152);c.lineTo(412,112);c.moveTo(420,152);c.lineTo(420,112);c.stroke();
+        c.fillText(steamDefinition.capped?'Capped':'Whistle',356,100);if(steamDefinition.capped)c.fillRect(412,110,8,2);
+        if(steamHeat.heated){c.globalAlpha=.35;c.fillStyle=accent;c.fillRect(steamDefinition.heater.x,steamDefinition.heater.y,steamDefinition.heater.width,steamDefinition.heater.height);c.globalAlpha=1;c.fillStyle=text;}
+      }
       if(toyFire){var f=definition.fire,hot=toyFire.stats();c.fillText(hot.burning?'Burning':hot.smothered?'Out, wet':'Ember reheating',f.x+48,f.y-12);
         c.fillText('Ember',f.x-80,f.y+36);c.strokeRect(f.x-36,f.y+16,16,8);
         c.fillText('Pour',f.pour.x-14,f.pour.y-16);c.strokeRect(f.pour.x-8,f.pour.y-4,16,8);}
@@ -14460,7 +14489,7 @@
     // An uncapped browser can call back faster than the solvers' tiny-dt
     // guard. Bank those callbacks into a real membrane update instead of
     // losing elapsed time or redrawing unchanged native water thousands of times.
-    if((toyBalloon || toyDivers) && lastT && dt<1/120)return;
+    if((toyBalloon || toyDivers || toySteam) && lastT && dt<1/120)return;
     lastT = tNow;
     toyFrameNo++;
     // Measure real frame time before limiting the simulation step.
@@ -14509,6 +14538,7 @@
     }
     fireTick(dt);
     thermoscopeTick();
+    steamTick();
     if(toyCannon)smokeAwakeT=SMOKE_IDLE_HOLD;
     smokeFrame(dt);
     instrumentTick(tNow);
@@ -14564,6 +14594,23 @@
     thermoscopeAcc+=h;
     var n=Math.min(3,Math.floor(thermoscopeAcc/SMOKE_EMITTER_DT));thermoscopeAcc-=n*SMOKE_EMITTER_DT;
     for(var i=0;i<n;i++)SmokeFluid.heatSource({x:(t.x-t.width*.5)/worldW,y:1-(t.y+t.height*.5)/worldH,width:t.width/worldW,height:t.height/worldH},t.alphaPerSample,{r:.015,g:.011,b:.006});
+  }
+
+  function steamTick(){
+    if(!toySteam || !machineState)return;
+    var clock=liquidWGPU.simulationClock;steamFrameDt=Math.max(0,clock-steamWaterClock);steamWaterClock=clock;
+    var definition=machineState.definition.steam;
+    toySteam.events().forEach(function(event){
+      if(performance.now()-event.receivedAt>100)return;
+      if(toySound)toySound.vent(event);
+      if(!smokeActive || !(event.steamMassKg>0))return;
+      var densityDose=event.steamMassKg/toySteam.stats().parcelMassKg*.08;
+      var resolvedArea=(8/24*.0254)*.0254;
+      var velocity=event.actualVolumeM3PerSecond/resolvedArea*(24/.0254)*(SmokeFluid.config.SIM_RESOLUTION/worldH);
+      SmokeFluid.setPhysics({HEAT:Math.max(0,Math.min(4,event.temperatureK/293.15-1)),COOLING:1.2,BUOYANCY:220},0);
+      smokePuff(definition.outlet.x,definition.outlet.y,0,velocity,{r:densityDose,g:densityDose*.97,b:densityDose*.92},.08);
+      steamPlumeSamples++;steamPlumeMass+=event.steamMassKg;
+    });
   }
 
   function startLoop() {
@@ -14825,6 +14872,7 @@
       thermoscope:function(){return toyThermoscope;},
       balloons:function(){return toyBalloon;},
       divers:function(){return toyDivers;},
+      steam:function(){return toySteam;},
       sound:function(enabled){
         if(!toySound)return Promise.resolve(false);
         if(!enabled){toySound.mute();return Promise.resolve(false);}
