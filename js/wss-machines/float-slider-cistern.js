@@ -4,8 +4,8 @@
 function make(world,options){
  options=options||{};if(world.w!==720||world.h!==400||world.tile!==8)throw Error('The cistern needs a 720 by 400 world.');
  var pinned=options.pinned===true,tank={x:208,y:64,width:256,height:200},receiver={x:24,y:312,width:672,height:72};
- return {name:'float-slider-cistern',title:'Guided float prototype',setup:pinned?'pinned-low':'ordinary',action:'Stop supply',primary:{kind:'slider-supply'},readingLabel:'Slow inlet float',
- caption:'A rising float closes a cistern’s inlet as the tank fills. Stop the supply, or compare a float pinned low so its inlet stays open.',
+ return {name:'float-slider-cistern',title:'Float-controlled inlet',setup:pinned?'pinned-low':'ordinary',action:'Stop supply',primary:{kind:'slider-supply'},readingLabel:'Slow inlet float',
+ caption:'Water lifts the guided float, which closes the cistern’s inlet. Stop the supply, or pin the float low to keep its inlet open.',
  source:{title:'Gallagher, Float-controlled valve for toilet flush tanks',url:'https://patents.google.com/patent/US4431024A/en'},
  viewBounds:{x:80,y:0,width:624,height:400},setups:[{id:'ordinary',label:'Free inlet float',options:{}},{id:'pinned-low',label:'Inlet float pinned low',options:{pinned:true}}],
  vessels:[{id:'header',label:'Supply',rect:{x:104,y:32,width:80,height:168},sealed:false},{id:'source',label:'Cistern',rect:tank,sealed:false},{id:'receiver',label:'Receiving basin',rect:receiver,sealed:false}],
