@@ -24,7 +24,7 @@
   <link rel="preload" href="/assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/assets/fonts/commit_mono_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/style.css">
-  <link rel="stylesheet" href="/water-smoke-slime.css?v=v5.82">
+  <link rel="stylesheet" href="/water-smoke-slime.css?v=v5.83">
 </head>
 <body class="physics-page">
   <div class="site-wrapper toy-page">
@@ -206,7 +206,12 @@
     <main class="post-body toy-prose" id="how-it-works">
       <section id="water-machines-progress" aria-labelledby="water-machines-progress-title">
         <h2 id="water-machines-progress-title">Water machines: progress</h2>
-        <p>Work in progress: a private waterwheel catches water in a lower cup and barely turns, so its drainage geometry is being changed. The kettle vents real vapor and makes sound, but a vapor-ownership check still fails. Oil and water keep their material counts but have not separated into layers. Sand stays behind the riffles instead of washing through. These prototypes are not in the public chooser yet.</p>
+        <p>The kettle boils and sends vapor through its whistle. Turn off the heater to cool it, or open Instruments and cap the whistle to watch trapped vapor condense back into water. All three starting seeds pass each comparison, with the water and gas accounted for. Sound follows the measured gas escaping and starts off. <a href="?scene=kettle#toy">Try the kettle.</a> <a href="/assets/images/water-machines/kettle-result-2026-10-11.json">Measurements and limits.</a></p>
+        <figure class="u-figure">
+          <picture><source type="image/webp" srcset="/assets/images/water-machines/kettle-2026-10-11.webp"><img class="u-figure-img" src="/assets/images/water-machines/kettle-2026-10-11.webp" width="1512" height="820" loading="lazy" alt="The actual glass kettle, with a marked immersed heater and white tracer rising from its narrow whistle."></picture>
+          <figcaption class="u-figure-cap">The marked heater boils the water, and pressure sends vapor through the narrow whistle. The white plume traces escaping steam; Instruments explains the coarse phase model and pipe-mode sound estimate.</figcaption>
+        </figure>
+        <p>Work in progress: the private waterwheel now makes full turns, but its high-friction comparison also reverses, so it has not passed. A plate freezes 475 water parcels and melts them when warmed; floating ice is next. The oil model preserves both liquids but still mixes them. Sand remains behind the riffles instead of washing through. These prototypes stay out of the public chooser.</p>
         <p>Squeeze the jar and the three gas slimes shrink and sink in order. Release it and they expand and return to the surface; opening the air vent prevents the squeeze from sinking them. All three starting seeds pass, with every water parcel accounted for. <a href="?scene=cartesian-divers#toy">Try the divers.</a> <a href="/assets/images/water-machines/cartesian-divers-result-2026-10-11.json">Measurements and limits.</a></p>
         <figure class="u-figure">
           <picture><source type="image/webp" srcset="/assets/images/water-machines/cartesian-divers-2026-10-11.webp"><img class="u-figure-img" src="/assets/images/water-machines/cartesian-divers-2026-10-11.webp" width="1512" height="820" loading="lazy" alt="Three numbered gas slimes under a driven piston in the actual sealed water jar."></picture>
@@ -235,7 +240,7 @@
         <p><time datetime="2026-10-11">Updated October 11, 2026.</time> Pour water onto the fire and its bright plume becomes cool smoke, with a hiss if sound is on. The water drains through the grate, and a declared ember warms the fuel until it catches again. <a href="?scene=douse-fire#toy">Put out the fire.</a> All three starting seeds pass the cooling and relighting checks; pouring beside the fuel leaves it burning. <a href="/assets/images/water-machines/fire-result-2026-10-11.json">Measurements and limits.</a></p>
         <figure class="u-figure">
           <picture><source type="image/webp" srcset="/assets/images/water-machines/fire-2026-10-11.webp"><img class="u-figure-img" src="/assets/images/water-machines/fire-2026-10-11.webp" width="1512" height="820" loading="lazy" alt="The actual fire scene, with a curling orange and white fluid flame above an open grate and a water spout overhead."></picture>
-          <figcaption class="u-figure-cap">The flame's color follows the smoke solver's temperature. Instruments shows the fuel, ember and coarse water-heating model; combustion chemistry and boiling are still pending.</figcaption>
+          <figcaption class="u-figure-cap">The flame's color follows the smoke solver's temperature. Instruments shows the fuel, ember and coarse water-heating model; combustion chemistry and fire-driven boiling are still pending.</figcaption>
         </figure>
         <p><time datetime="2026-10-10">Updated October 10, 2026.</time> The straw has two open ends. Hold its top and the air above the water drops below room pressure. Across three starting seeds, the held straw keeps 97.4% of its water for sixty simulation seconds. Releasing the top or opening a second upper hole drains it completely. <a href="?scene=thumb-straw#toy">Try the straw</a> or read the <a href="/assets/images/water-machines/slice-workshop-progress-2026-10-10.json">measurements and remaining work.</a> Landscape phone layout and frame times were checked in browser emulation.</p>
         <figure class="u-figure">
@@ -373,9 +378,9 @@
   <script src="/js/water-machines-scenes.js?v=v5.41"></script>
   <script src="/js/water-machines-instruments.js?v=v5.41"></script>
   <script src="/js/water-machines-pressure-view.js?v=v5.57"></script>
-  <script src="/js/wss-machine-registry.js?v=v5.80"></script>
-  <script src="/js/water-smoke-slime.js?v=v5.82"></script>
-  <script src="/js/water-smoke-slime-ui.js?v=v5.80"></script>
+  <script src="/js/wss-machine-registry.js?v=v5.83"></script>
+  <script src="/js/water-smoke-slime.js?v=v5.83"></script>
+  <script src="/js/water-smoke-slime-ui.js?v=v5.83"></script>
   <script src="/js/smoke-presets-ui.js?v=4"></script>
 </body>
 </html>

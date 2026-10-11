@@ -11,7 +11,7 @@
     options=options||{};
     if(world.w!==720 || world.h!==400 || world.tile!==8)throw Error('Kettle needs a 720 by 400 world.');
     var heated=options.unheated!==true,capped=options.capped===true,kettle={x:272,y:152,width:176,height:208},water={x:280,y:280,width:160,height:72};
-    return {name:'kettle',title:'Whistling kettle prototype',setup:capped?'capped':heated?'heated':'unheated',seed:options.seed||17,
+    return {name:'kettle',title:'Whistling kettle',setup:capped?'capped':heated?'heated':'unheated',seed:options.seed||17,
       action:heated?'Turn heater off':'Turn heater on',primary:{kind:'steam-heat-toggle'},
       caption:caption(heated,capped,!heated),
       source:{title:'NIST, steam tables',url:'https://tsapps.nist.gov/publication/get_pdf.cfm?pub_id=906704'},

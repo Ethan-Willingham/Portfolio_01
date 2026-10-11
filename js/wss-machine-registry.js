@@ -3,7 +3,7 @@
   'use strict';
   var entries = [
     {id:'cartesian-divers',capability:'Water slimes',title:'Three Cartesian divers',cue:'Squeeze the jar. Watch the gas shrink.',preview:'divers',accepted:true,world:{w:720,h:400},pool:false},
-    {id:'kettle',capability:'Steam',title:'Boiling kettle prototype',cue:'Heat water. Cool its vapor back to water.',preview:'kettle',accepted:false,world:{w:720,h:400},pool:false},
+    {id:'kettle',capability:'Steam',title:'Whistling kettle',cue:'Heat water. Cool its vapor back to water.',preview:'kettle',accepted:true,world:{w:720,h:400},pool:false},
     {id:'water-balloons',capability:'Water slimes',title:'Water balloons',cue:'Drag, fling, then pop the skin.',preview:'water-balloon',accepted:true,world:{w:720,h:400},pool:false},
     {id:'thermoscope',capability:'Fire',title:"Galileo's thermoscope",cue:'Warm the bulb. Watch the water fall.',preview:'thermoscope',accepted:true,world:{w:720,h:400},pool:false},
     {id:'douse-fire',capability:'Fire',title:'Put out the fire',cue:'Pour water onto the glowing plume.',preview:'fire',accepted:true,world:{w:720,h:400},pool:false},
