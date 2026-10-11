@@ -375,7 +375,7 @@
       "p95Ms": 17.799999999999272,
       "actualGrabCaught": true,
       "heldLengthInches": 4.000000021421481,
-      "visibleTools": 5,
+      "registeredTools": 5,
       "pass": true
     },
     {
@@ -385,7 +385,7 @@
       "p95Ms": 17.800000000000182,
       "actualGrabCaught": true,
       "heldLengthInches": 4,
-      "visibleTools": 5,
+      "registeredTools": 5,
       "pass": true
     }
   ],
