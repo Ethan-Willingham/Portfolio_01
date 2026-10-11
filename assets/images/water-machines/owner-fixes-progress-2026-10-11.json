@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-11",
+  "updated": "2026-10-11T21:00:35.743579+00:00",
   "acceptedNewCapabilities": 5,
   "acceptedNovelMachines": 11,
   "scope": "Owner correction progress. The balloon skin record below is accepted; failed private candidates remain distinct from public machine acceptance records.",
@@ -19,8 +19,10 @@
   },
   "slimeContact": {
     "status": "balloon correction accepted; other slime contact rejected",
-    "observation": "The isolated smooth balloon passes six native closed/slit cases and seven maximum-zoom phone views. Sampled wet lower edges meet the drawn curve. The float underside and diver flanks still have dark gaps; diver floor overlap also remains rejected.",
-    "balloonRecord": "water-balloons-smooth-skin-result-2026-10-11.json"
+    "observation": "The live smooth balloon passes six native closed/slit cases and seven maximum-zoom phone views. The private final-skin candidate exports every resident skin, and inspected diver views no longer cross the drawn floor. Float underside and diver flank gaps still reject universal contact. Actual curve and native-center observations establish local excess collision-envelope exclusion, but do not explain every dark fragment.",
+    "balloonRecord": "water-balloons-smooth-skin-result-2026-10-11.json",
+    "privateCandidate": "d52c135e56722488493cc3cfdd6cc63a22c860cb",
+    "limits": "Three-seed floor contact proof applies to one ordinary SPA resident, not universal contact. The wind Water stroke admits real water in zero gravity; its top view still shows a gap. The next curve-boundary implementation is private and unaccepted."
   },
   "sandSorting": {
     "status": "private, rejected",
@@ -45,12 +47,12 @@
     "limits": "No sand sorting or gold sluice is accepted. Oil has a separate accepted record with its own partial-control stratification limitation."
   },
   "glassToilet": {
-    "status": "private, rejected; final physical air-gap apparatus awaits native validation",
-    "candidate": "e8a5b4bc0a8a960fc8cfde22faddea1e62a1fb13",
-    "method": "Seed17 full/half150 native-second pair with actual Flush, then manual Close at40 native seconds. The original55-cell priming flag remains a sampled indicator.",
-    "observation": "The full tank records the sampled priming flag but finishes12 pixels above the weir, outside the8-pixel band. The half tank does not record that flag and finishes8 pixels above the weir. Both inlets remain fully open.",
+    "status": "private, rejected after final fourth formulation; preserved",
+    "candidate": "801f139aba561c28eb82c4c5c972117bbd230554",
+    "method": "Seed17 full/half150 native-second pair with the physical refill air gap, actual Flush and manual Close at40 native seconds. The original55-cell priming flag remains a sampled indicator.",
+    "observation": "The full tank does not record the sampled priming flag and finishes12 pixels above the weir, outside the8-pixel band. The half tank records that flag and finishes4 pixels above the weir. Full and half inlet openness finish at1.0 and0.0404947. This reverses the first short-run contrast.",
     "waterAccounting": "Zero residual in both cases; finite and sustained-wall guards pass.",
-    "limits": "Open inlets alone do not establish failed refill; water continues to enter late in the run. Pressure, cavitation and unclosed-work limitations remain. No full/half acceptance or three-seed result."
+    "limits": "No full/half acceptance or three-seed result. Pressure, cavitation and unclosed-work limitations remain; no fifth apparatus attempt follows."
   },
   "birds": {
     "status": "private, rejected after final fourth formulation; preserved",
@@ -69,6 +71,6 @@
   },
   "ordinarySubmergedAir": {
     "status": "unresolved",
-    "observation": "The three-seed positive-gas transport comparison does not demonstrate consistent clearing improvement. That engine experiment remains private. The accepted hose source/Stop record applies to the hose apparatus."
+    "observation": "Existing-root transfer passes scoped three-seed native gas ownership without injection. That does not prove faster or general clearing. Neither the physical room-water pressure floor nor the current-water-pressure neighbor comparison consistently reduces cavities on three seeds; volume failures remain recorded. All experiments stay private. The accepted hose source/Stop record applies to the hose apparatus."
   }
 }
