@@ -3,7 +3,7 @@
   'use strict';
   var entries = [
     {id:'float-slider-cistern',capability:'Valves and logic',title:'Float-controlled inlet',cue:'Pull the float down to reopen the water inlet.',preview:'cup',accepted:true,world:{w:720,h:400},pool:true},
-    {id:'singing-pipe',capability:'Sound',title:"Hero's sliding pipe (precursor)",cue:'Turn on sound. Drag the pipe to bend the note.',preview:'sliding-pipe',accepted:false,world:{w:720,h:400},pool:false},
+    {id:'singing-pipe',capability:'Sound',title:"Hero's sliding pipe (precursor)",cue:'Turn on sound. Drag the pipe to bend the note.',preview:'sliding-pipe',accepted:true,world:{w:720,h:400},pool:false},
     {id:'air-hose',capability:'Bubbles',title:'Air hose',cue:'Stop the air. Watch the last bubbles rise.',preview:'straw',accepted:true,world:{w:720,h:400},pool:false},
     {id:'cartesian-divers',capability:'Water slimes',title:'Three Cartesian divers',cue:'Squeeze the jar. Watch the gas shrink.',preview:'divers',accepted:true,world:{w:720,h:400},pool:false},
     {id:'kettle',capability:'Steam',title:'Whistling kettle',cue:'Heat water. Cool its vapor back to water.',preview:'kettle',accepted:true,world:{w:720,h:400},pool:false},

@@ -1,0 +1,403 @@
+{
+  "machine": "singing-pipe",
+  "scope": "Finite-water sliding musical pipe; not repeating singing birds, swivel owl or the complete sound-capability debut.",
+  "nativeMethod": "Existing native position snapshot and E4 counters, with actual CDP Grab gestures retuning the same pressure-driven pipe voice. Sliding-pipe precursor only, no S4/C11 acceptance.",
+  "cases": [
+    {
+      "options": {
+        "seed": 17
+      },
+      "modes": [
+        {
+          "length": 2,
+          "hz": 1627.2936550201398,
+          "clock": 0.3666666666666667,
+          "ventUpdates": 7
+        },
+        {
+          "length": 4.000000021421481,
+          "hz": 828.5700519594532,
+          "clock": 2.866666666666665,
+          "ventUpdates": 67
+        },
+        {
+          "length": 2,
+          "hz": 1626.3257495063344,
+          "clock": 6.408333333333345,
+          "ventUpdates": 152
+        }
+      ],
+      "fillDelta": 8014,
+      "outwardKg": 0.0032238840886975595,
+      "admittedKg": 0.0027716516513862643,
+      "ventUpdates": 294,
+      "guards": {
+        "finite": 0,
+        "deep": 0,
+        "waterPresent": 16611,
+        "waterMassResidual": 0,
+        "dryAmountResidual": 0,
+        "vapor": 0
+      },
+      "audio": {
+        "enabled": true,
+        "context": "running",
+        "voices": 1,
+        "maxVentGain": 0.008678141248209089
+      },
+      "predictionPassed": true,
+      "detached": true,
+      "completed": true
+    },
+    {
+      "options": {
+        "seed": 17,
+        "closed": true
+      },
+      "modes": [
+        {
+          "length": 2,
+          "hz": 1627.076870110657,
+          "clock": 0.3666666666666667,
+          "ventUpdates": 7
+        },
+        {
+          "length": 4.000000021421481,
+          "hz": 828.513129727274,
+          "clock": 2.866666666666665,
+          "ventUpdates": 67
+        },
+        {
+          "length": 2,
+          "hz": 1627.0831504968917,
+          "clock": 6.61666666666668,
+          "ventUpdates": 157
+        }
+      ],
+      "fillDelta": 15,
+      "outwardKg": 0.001956269547122247,
+      "admittedKg": 0.0019550521854796443,
+      "ventUpdates": 288,
+      "guards": {
+        "finite": 0,
+        "deep": 0,
+        "waterPresent": 16611,
+        "waterMassResidual": 0,
+        "dryAmountResidual": 0,
+        "vapor": 0
+      },
+      "audio": {
+        "enabled": true,
+        "context": "running",
+        "voices": 1,
+        "maxVentGain": 0.002977480159525927
+      },
+      "predictionPassed": true,
+      "detached": true,
+      "completed": true
+    },
+    {
+      "options": {
+        "seed": 17,
+        "capped": true
+      },
+      "modes": [],
+      "fillDelta": 500,
+      "outwardKg": 0,
+      "admittedKg": 0,
+      "ventUpdates": 0,
+      "guards": {
+        "finite": 0,
+        "deep": 0,
+        "waterPresent": 16611,
+        "waterMassResidual": 0,
+        "dryAmountResidual": 0,
+        "vapor": 0
+      },
+      "audio": {
+        "enabled": true,
+        "context": "running",
+        "voices": 0,
+        "maxVentGain": 0
+      },
+      "predictionPassed": true,
+      "detached": true,
+      "completed": true
+    },
+    {
+      "options": {
+        "seed": 42
+      },
+      "modes": [
+        {
+          "length": 2,
+          "hz": 1628.0723101448336,
+          "clock": 0.35833333333333334,
+          "ventUpdates": 8
+        },
+        {
+          "length": 4.000000021421481,
+          "hz": 829.0205807827532,
+          "clock": 2.8583333333333316,
+          "ventUpdates": 68
+        },
+        {
+          "length": 2,
+          "hz": 1627.7772813983227,
+          "clock": 6.650000000000013,
+          "ventUpdates": 159
+        }
+      ],
+      "fillDelta": 7622,
+      "outwardKg": 0.003079813469412329,
+      "admittedKg": 0.002663776790399197,
+      "ventUpdates": 290,
+      "guards": {
+        "finite": 0,
+        "deep": 0,
+        "waterPresent": 16588,
+        "waterMassResidual": 0,
+        "dryAmountResidual": 0,
+        "vapor": 0
+      },
+      "audio": {
+        "enabled": true,
+        "context": "running",
+        "voices": 1,
+        "maxVentGain": 0.0071934210330266155
+      },
+      "predictionPassed": true,
+      "detached": true,
+      "completed": true
+    },
+    {
+      "options": {
+        "seed": 42,
+        "closed": true
+      },
+      "modes": [
+        {
+          "length": 2,
+          "hz": 1628.067687664126,
+          "clock": 0.325,
+          "ventUpdates": 6
+        },
+        {
+          "length": 4.000000021421481,
+          "hz": 829.0147395233743,
+          "clock": 2.7416666666666654,
+          "ventUpdates": 64
+        },
+        {
+          "length": 2,
+          "hz": 1627.0845949822967,
+          "clock": 6.533333333333346,
+          "ventUpdates": 155
+        }
+      ],
+      "fillDelta": 16,
+      "outwardKg": 0.0019614948259913945,
+      "admittedKg": 0.001962987053815368,
+      "ventUpdates": 289,
+      "guards": {
+        "finite": 0,
+        "deep": 0,
+        "waterPresent": 16588,
+        "waterMassResidual": 0,
+        "dryAmountResidual": 0,
+        "vapor": 0
+      },
+      "audio": {
+        "enabled": true,
+        "context": "running",
+        "voices": 1,
+        "maxVentGain": 0.00297717783903924
+      },
+      "predictionPassed": true,
+      "detached": true,
+      "completed": true
+    },
+    {
+      "options": {
+        "seed": 42,
+        "capped": true
+      },
+      "modes": [],
+      "fillDelta": 509,
+      "outwardKg": 0,
+      "admittedKg": 0,
+      "ventUpdates": 0,
+      "guards": {
+        "finite": 0,
+        "deep": 0,
+        "waterPresent": 16588,
+        "waterMassResidual": 0,
+        "dryAmountResidual": 0,
+        "vapor": 0
+      },
+      "audio": {
+        "enabled": true,
+        "context": "running",
+        "voices": 0,
+        "maxVentGain": 0
+      },
+      "predictionPassed": true,
+      "detached": true,
+      "completed": true
+    },
+    {
+      "options": {
+        "seed": 913
+      },
+      "modes": [
+        {
+          "length": 2,
+          "hz": 1627.294785340852,
+          "clock": 0.3666666666666667,
+          "ventUpdates": 7
+        },
+        {
+          "length": 4.000000021421481,
+          "hz": 828.9545263809515,
+          "clock": 2.699999999999999,
+          "ventUpdates": 63
+        },
+        {
+          "length": 2,
+          "hz": 1625.1331819449588,
+          "clock": 6.366666666666678,
+          "ventUpdates": 151
+        }
+      ],
+      "fillDelta": 7857,
+      "outwardKg": 0.003151492483880247,
+      "admittedKg": 0.0026942275461294685,
+      "ventUpdates": 290,
+      "guards": {
+        "finite": 0,
+        "deep": 0,
+        "waterPresent": 16607,
+        "waterMassResidual": 0,
+        "dryAmountResidual": 0,
+        "vapor": 0
+      },
+      "audio": {
+        "enabled": true,
+        "context": "running",
+        "voices": 1,
+        "maxVentGain": 0.007451835686796682
+      },
+      "predictionPassed": true,
+      "detached": true,
+      "completed": true
+    },
+    {
+      "options": {
+        "seed": 913,
+        "closed": true
+      },
+      "modes": [
+        {
+          "length": 2,
+          "hz": 1627.0683915507864,
+          "clock": 0.4,
+          "ventUpdates": 9
+        },
+        {
+          "length": 4.000000021421481,
+          "hz": 828.5148246592153,
+          "clock": 2.899999999999998,
+          "ventUpdates": 69
+        },
+        {
+          "length": 2,
+          "hz": 1628.065292265461,
+          "clock": 6.69166666666668,
+          "ventUpdates": 160
+        }
+      ],
+      "fillDelta": 17,
+      "outwardKg": 0.001961543958600487,
+      "admittedKg": 0.0019603204444536004,
+      "ventUpdates": 289,
+      "guards": {
+        "finite": 0,
+        "deep": 0,
+        "waterPresent": 16607,
+        "waterMassResidual": 0,
+        "dryAmountResidual": 0,
+        "vapor": 0
+      },
+      "audio": {
+        "enabled": true,
+        "context": "running",
+        "voices": 1,
+        "maxVentGain": 0.0029770386885502194
+      },
+      "predictionPassed": true,
+      "detached": true,
+      "completed": true
+    },
+    {
+      "options": {
+        "seed": 913,
+        "capped": true
+      },
+      "modes": [],
+      "fillDelta": 464,
+      "outwardKg": 0,
+      "admittedKg": 0,
+      "ventUpdates": 0,
+      "guards": {
+        "finite": 0,
+        "deep": 0,
+        "waterPresent": 16607,
+        "waterMassResidual": 0,
+        "dryAmountResidual": 0,
+        "vapor": 0
+      },
+      "audio": {
+        "enabled": true,
+        "context": "running",
+        "voices": 0,
+        "maxVentGain": 0
+      },
+      "predictionPassed": true,
+      "detached": true,
+      "completed": true
+    }
+  ],
+  "frames": [
+    {
+      "phoneEmulation": false,
+      "durationMs": 20015.199999999997,
+      "medianMs": 17.19999999999709,
+      "p95Ms": 17.799999999999272,
+      "actualGrabCaught": true,
+      "heldLengthInches": 4.000000021421481,
+      "visibleTools": 5,
+      "pass": true
+    },
+    {
+      "phoneEmulation": true,
+      "durationMs": 20006.4,
+      "medianMs": 8.300000000001091,
+      "p95Ms": 17.800000000000182,
+      "actualGrabCaught": true,
+      "heldLengthInches": 4,
+      "visibleTools": 5,
+      "pass": true
+    }
+  ],
+  "nativeErrors": [],
+  "viewErrors": [],
+  "nativeCompleted": true,
+  "viewPassed": true,
+  "limits": [
+    "Quarter-wave pipe-mode estimate driven by fresh positive native gas transfer; native solver does not resolve acoustic standing waves.",
+    "Changing acoustic load, gas volume and drag work do not feed back into airflow; gas momentum and total work remain unresolved.",
+    "Software audio context, oscillator and positive gain observed; physical speaker loudness and timbre are uncalibrated.",
+    "Closing the feed stops new filling but still produces gas transfer and voice updates; only the capped port is the silence control.",
+    "Phone view is emulated, not a physical-phone performance measurement."
+  ]
+}
