@@ -14075,7 +14075,7 @@
           c.lineWidth=3;c.beginPath();
           if(disk.axis==='x'){c.moveTo(disk.at,disk.start);c.lineTo(disk.at,open ? disk.start+4 : disk.end);}
           else{c.moveTo(disk.start,disk.at);c.lineTo(open ? disk.start+4 : disk.end,disk.at);}
-          c.stroke();c.lineWidth=1;c.fillText(open ? 'Disk open' : 'Disk intact',disk.axis==='x' ? disk.at+12 : disk.end+12,disk.axis==='x' ? disk.start-12 : disk.at+4);
+          c.stroke();c.lineWidth=1;c.fillText(open ? 'Disk open' : 'Disk intact',disk.axis==='x' ? disk.at+12 : disk.end+12,disk.axis==='x' ? disk.end+20 : disk.at+24);
         }
         if(definition.measure.mouth){var mouth=definition.measure.mouth;c.strokeRect(mouth.x,mouth.y,mouth.width,mouth.height);}
       }

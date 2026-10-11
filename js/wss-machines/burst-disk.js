@@ -14,7 +14,7 @@
     var stronger=options.stronger===true,closed=options.closed===true;
     return {
       name:'burst-disk',title:'The burst disk',seed:seed,predictionKind:'burst-disk',
-      viewBounds:{x:16,y:48,width:688,height:336},
+      viewBounds:{x:16,y:42,width:688,height:342},
       setup:stronger ? 'stronger' : 'ordinary',
       setups:[{id:'ordinary',label:'Ordinary disk',options:{stronger:false}},
         {id:'stronger',label:'Stronger disk',options:{stronger:true}}],

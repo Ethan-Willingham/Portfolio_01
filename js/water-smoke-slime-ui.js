@@ -425,6 +425,7 @@
       }
       text('toy-compact-head-label',state.scene==='thumb-straw' ? 'Air' : state.scene==='tantalus' ? 'Water to mouth' : 'Head');
       text('toy-compact-head', number(state.scene==='thumb-straw' ? sample.gasPressurePsi : state.scene==='tantalus' ? sample.mouthDistanceInches : sample.headInches, state.scene==='thumb-straw' ? 'psi' : 'in'));
+      document.getElementById('toy-compact-head').parentElement.hidden=state.scene==='burst-disk';
       document.getElementById('toy-native-reading').hidden=!native;
       text('toy-native-reading',state.scene==='thumb-straw' ? Number.isFinite(sample.retainedFraction) ? 'Water held '+(100*sample.retainedFraction).toFixed(0)+'%' : 'Waiting for water sample' :
         liveMachine && liveMachine.definition.readingLabel || 'Powered return');
