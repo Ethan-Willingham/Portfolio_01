@@ -1205,6 +1205,7 @@
     }
     liquidWGPU = window.LiquidWGPU.create({
       mainCanvas: canvas,
+      hudInset: 0,
       toyNativeExtension: bootMachine || handsRequested ? window.WSSNative.create : undefined,
       liquid: {
         maxParticles: LIQUID_MAX_PARTICLES,
