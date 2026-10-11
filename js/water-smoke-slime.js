@@ -13677,7 +13677,7 @@
       if(toySound)toyBoundary.setEventConsumer(function(events){toySound.consume(events);});
     }
     if(definition.name==='smoke-ring-cannon'){
-      if(airModel && airModel.enabled)await airModel.disable();
+      if(airModel && airModel.enabled)await enableAirModel({enabled:false});
       setGravityUI(0);toyCannon=window.WSSSmokeCannon.create(definition,SmokeFluid,{w:worldW,h:worldH});
       smokeAwakeT=SMOKE_IDLE_HOLD;smokeFrame(1/60);render();
       state.ready=true;state.startedAt=0;state.wallClockStartedAt=performance.now();fitStage();instrumentTick(performance.now());return state;
