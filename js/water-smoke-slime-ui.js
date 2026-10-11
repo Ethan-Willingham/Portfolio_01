@@ -386,6 +386,7 @@
       var sample = toy.instruments ? toy.instruments() : { ready: false };
       var liveMachine = toy.machineState ? toy.machineState() : null;
       var air = toy.airStats ? toy.airStats() : { enabled: false };
+      var cannon=state.scene==='smoke-ring-cannon';
       var contextual = machine || air.enabled;
       var ledger=sample.ledger || {},convergence=sample.convergence;
       var fatal=sample.error || air.error || (toy.liquid && toy.liquid() && toy.liquid().materialStateError);
@@ -399,12 +400,13 @@
       var pressureMessage=fatal ? 'The pressure calculation stopped. Restart or choose another scene.' : !sample.ready || !convergence ? 'Waiting for a pressure sample.' :
         diagnostic ? 'Pressure readings are diagnostic. Open Instruments for the calculation status.' : stale ? 'The pressure sample is old. Open Instruments for its age.' :
         'The pressure sample is current. Open Instruments for the calculation status.';
+      if(cannon){pressureLabel=state.paused?'Paused':'Live';pressureMessage='The smoke carries the push. Instruments explains the flat section.';}
       document.getElementById('toy-machine-diagnostics').hidden=!contextual;
       text('toy-machine-diagnostics',contextual ? pressureMessage : '');
       if(contextual)text('toy-status',pressureLabel || (state.paused ? 'Paused' : 'Live'));
       document.getElementById('toy-machine-material-notice').hidden = !air.enabled;
       document.getElementById('toy-machine-summary').hidden = !machine;
-      document.getElementById('toy-machine-metrics').hidden = !machine;
+      document.getElementById('toy-machine-metrics').hidden = !machine || cannon;
       var siphon=state.scene==='siphon';
       document.getElementById('toy-siphon-options').hidden=!siphon;
       document.getElementById('toy-siphon-setup-note').hidden=!siphon;
@@ -444,7 +446,7 @@
         var b=liveMachine.definition.boundaries;
         text('toy-native-boundaries',liveMachine.definition.boundaryNote || (b.pool ? 'Drained water feeds the tap. The powered return adds energy to lift it. The tap requests '+b.tap.rate+' parcels per simulation second at '+b.tap.vy+' pixels per second downward; each parcel represents 1.5625 square pixels. All '+state.allocation+' allocated slots are either present water or stored reserve.' : 'Only the upper opening is held. The lower end stays open. The side-hole comparison connects the upper air space to the room.'));
         var ledger=sample.boundary;
-        text('toy-native-ledger',b.pool && ledger ? 'Present '+ledger.present+'; reserve '+ledger.parked+'. Requested '+ledger.requested+'; admitted '+ledger.admitted+'; collected '+ledger.drained+'; refused '+ledger.shortfall+'. Return work '+number(ledger.externalWork,'J')+'.' : '');
+        text('toy-native-ledger',b && b.pool && ledger ? 'Present '+ledger.present+'; reserve '+ledger.parked+'. Requested '+ledger.requested+'; admitted '+ledger.admitted+'; collected '+ledger.drained+'; refused '+ledger.shortfall+'. Return work '+number(ledger.externalWork,'J')+'.' : '');
       }
       var soundButton=document.getElementById('toy-sound'),sound=toy.soundStats ? toy.soundStats() : {enabled:false};
       soundButton.hidden=!native;pressed(soundButton,!!sound.enabled);soundButton.textContent=sound.enabled ? 'Sound on' : 'Sound off';
@@ -473,7 +475,8 @@
       var legend = document.getElementById('toy-pressure-legend');
       airPressureColors=toy.airPressureView();
       ['toy-air-pressure-toggle','toy-air-pressure-compact'].forEach(function(id){pressed(document.getElementById(id),airPressureColors);});
-      legend.hidden = !(pressureColors || airPressureColors) || !contextual;
+      ['toy-air-pressure-toggle','toy-air-pressure-compact'].forEach(function(id){document.getElementById(id).hidden=cannon;});
+      legend.hidden = cannon || !(pressureColors || airPressureColors) || !contextual;
       if (!legend.hidden) {
         var cap = window.WaterMachinesInstruments && toy.world ? window.WaterMachinesInstruments.scale({ width: toy.world().w }).psi(80000) : null;
         text('toy-pressure-legend', airPressureColors ? 'Air: gold above room pressure, rose below. Labels show gauge psi; room air is 0. Readings are diagnostic.' :
@@ -502,7 +505,7 @@
     function sync() {
       syncCamera();
       var state = toy.stats();
-      var native=nativeScene(state.scene);shell.classList.toggle('is-native-machine',native);
+      var native=nativeScene(state.scene),cannon=state.scene==='smoke-ring-cannon';shell.classList.toggle('is-native-machine',native);
       shell.dataset.scene=state.scene;
       var building = /^(build|draw|erase)$/.test(state.tool);
       shell.dataset.activeTool = state.tool;
@@ -541,6 +544,7 @@
       var builderState = toy.buildState ? toy.buildState() : null;
       var hands=!!(builderState && builderState.handsLab);
       shell.classList.toggle('has-wall-editor',hands);
+      if(cannon){bar.querySelectorAll('.toy-tools [data-tool]').forEach(function(button){button.hidden=false;});presetsButton.hidden=false;}
       if(hands){
         bar.querySelectorAll('.toy-tools [data-tool]').forEach(function(button){button.hidden=!/^(poke|build)$/.test(button.dataset.tool);});
         presetsButton.hidden=true;

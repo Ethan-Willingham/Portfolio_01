@@ -6,6 +6,7 @@
     {id:'tantalus',title:'Tantalus',cue:'Watch the fixed mouth line.',preview:'tantalus',accepted:true,world:{w:720,h:400},pool:true},
     {id:'roman-inverted-siphon',title:'Roman inverted siphon',cue:'Close or open the intake.',preview:'inverted-siphon',accepted:true,world:{w:720,h:400},pool:false},
     {id:'thumb-straw',title:'The straw and the thumb',cue:'Hold the top, then release.',preview:'straw',accepted:true,world:{w:720,h:400},pool:false},
+    {id:'smoke-ring-cannon',title:'The smoke-ring cannon',cue:'Tap the back. Catch the swirl with a slime.',preview:'smoke-cannon',accepted:false,world:{w:720,h:400},pool:false},
     {id:'burst-disk',title:'The burst disk',cue:'Compare two membrane strengths.',preview:'burst-disk',accepted:true,world:{w:720,h:400},pool:false}
   ];
   var lab = new URLSearchParams(location.search).get('lab') === '1';
@@ -30,6 +31,7 @@
     await script('/js/wss-boundaries.js');
     await script('/js/wss-hands.js');
     await script('/js/wss-native.js');
+    if(id==='smoke-ring-cannon')await script('/js/wss-smoke-cannon.js');
     if(id==='burst-disk')await script('/js/wss-burst-disk.js');
     await script('/js/wss-sound.js');
     if(id==='tantalus')await script('/js/wss-machines/self-flushing-cup.js');
@@ -51,7 +53,11 @@
     }
     path('M3 43v6h66v-6','toy-preview-glass');
     path('M4 45h64v3H4Z','toy-preview-water');
-    if(kind==='inverted-siphon'){
+    if(kind==='smoke-cannon'){
+      path('M7 16h22v6M7 36h22v-6M7 16v20','toy-preview-glass');
+      path('M34 23c-5-8 8-10 8-3s-8 6-5 1M34 31c-5 8 8 10 8 3s-8-6-5-1','toy-preview-stream');
+      path('M52 19c-9 0-9 15 0 15s11-15 0-15Z','toy-preview-slime');
+    }else if(kind==='inverted-siphon'){
       path('M5 8v20h16V8M53 21v21h15V21M15 25h12v19h19V33h13','toy-preview-glass');
       path('M6 12h14v15H6ZM54 33h13v8H54Z','toy-preview-water');
       path('M16 25h11v19h19V33h14','toy-preview-stream');

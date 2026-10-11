@@ -87,6 +87,7 @@
     function getPhysics() { return Object.assign({}, physicsTarget); }
 
     var dye, velocity, divergence, curl, pressure;
+    var flowSample = null, flowProgram = null, flowValues = null, lastStepDt = 0;
     var copyProgram, clearProgram, splatProgram, advectionProgram,
         divergenceProgram, curlProgram, vorticityProgram, pressureProgram,
         gradientSubtractProgram, scrollProgram;
@@ -1096,6 +1097,7 @@
     function step (dt) {
       if (!ready) return;
       if (dt <= 0) return;
+      lastStepDt = dt;
       if (physicsTransition > 0) {
         var blend = Math.min(1, dt / physicsTransition);
         for (var key in physics) physics[key] += (physicsTarget[key] - physics[key]) * blend;
@@ -1316,6 +1318,30 @@
       blit(null);
     }
 
+    // Opt-in current-field readback for exterior pressure traction. The legacy
+    // path never calls this, allocates its target, or compiles its shader.
+    function sampleFlow (domainW, domainH) {
+      if (!ready || !ext.isWebGL2 || !(lastStepDt > 0)) return null;
+      if (!flowProgram) {
+        flowProgram = new Program(compileShader(gl.VERTEX_SHADER, BASE_VS),
+          compileShader(gl.FRAGMENT_SHADER,
+            'precision highp float; precision highp sampler2D; varying vec2 vUv; uniform sampler2D uVelocity; uniform sampler2D uPressure; uniform sampler2D uDye; uniform vec3 scale; void main(){vec2 v=texture2D(uVelocity,vUv).xy*scale.xy; float p=texture2D(uPressure,vUv).x*scale.z; vec3 c=texture2D(uDye,vUv).rgb; gl_FragColor=vec4(v,p,max(c.r,max(c.g,c.b)));}'));
+        flowSample = createFBO(96, 54, gl.RGBA32F, gl.RGBA, gl.FLOAT, gl.NEAREST);
+        flowValues = new Float32Array(96 * 54 * 4);
+      }
+      gl.disable(gl.BLEND); flowProgram.bind();
+      uniform1i(flowProgram.uniforms.uVelocity, velocity.read.attach(0));
+      uniform1i(flowProgram.uniforms.uPressure, pressure.read.attach(1));
+      uniform1i(flowProgram.uniforms.uDye, dye.read.attach(2));
+      var dx = domainW / velocity.width;
+      // Projection uses a two-cell pressure difference without the usual 1/2.
+      uniform3f(flowProgram.uniforms.scale, dx, domainH / velocity.height, 2 * dx * dx / lastStepDt);
+      blit(flowSample);
+      gl.readPixels(0, 0, flowSample.width, flowSample.height, gl.RGBA, gl.FLOAT, flowValues);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      return {width:flowSample.width,height:flowSample.height,values:flowValues,dt:lastStepDt};
+    }
+
     function getCanvas () { return canvas; }
 
     // Composite the GL canvas into a 2D context. Caller passes the
@@ -1359,6 +1385,7 @@
       setObstacleAlpha: setObstacleAlpha,
       paintObstacleQuads: paintObstacleQuads,  // v10.87 — WebGL-native obstacle paint
       setMovingBodies: setMovingBodies,
+      sampleFlow: sampleFlow,
       setLiquidField: setLiquidField,
       clearObstacle: clearObstacle,
       isReady: isReady,

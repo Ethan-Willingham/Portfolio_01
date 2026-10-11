@@ -1533,6 +1533,7 @@
     function getPhysics() { return Object.assign({}, physicsTarget); }
 
     var dye, velocity, divergence, curl, pressure;
+    var flowSample = null, flowProgram = null, flowValues = null, lastStepDt = 0;
     var copyProgram, clearProgram, splatProgram, advectionProgram,
         divergenceProgram, curlProgram, vorticityProgram, pressureProgram,
         gradientSubtractProgram, scrollProgram;
@@ -2542,6 +2543,7 @@
     function step (dt) {
       if (!ready) return;
       if (dt <= 0) return;
+      lastStepDt = dt;
       if (physicsTransition > 0) {
         var blend = Math.min(1, dt / physicsTransition);
         for (var key in physics) physics[key] += (physicsTarget[key] - physics[key]) * blend;
@@ -2762,6 +2764,30 @@
       blit(null);
     }
 
+    // Opt-in current-field readback for exterior pressure traction. The legacy
+    // path never calls this, allocates its target, or compiles its shader.
+    function sampleFlow (domainW, domainH) {
+      if (!ready || !ext.isWebGL2 || !(lastStepDt > 0)) return null;
+      if (!flowProgram) {
+        flowProgram = new Program(compileShader(gl.VERTEX_SHADER, BASE_VS),
+          compileShader(gl.FRAGMENT_SHADER,
+            'precision highp float; precision highp sampler2D; varying vec2 vUv; uniform sampler2D uVelocity; uniform sampler2D uPressure; uniform sampler2D uDye; uniform vec3 scale; void main(){vec2 v=texture2D(uVelocity,vUv).xy*scale.xy; float p=texture2D(uPressure,vUv).x*scale.z; vec3 c=texture2D(uDye,vUv).rgb; gl_FragColor=vec4(v,p,max(c.r,max(c.g,c.b)));}'));
+        flowSample = createFBO(96, 54, gl.RGBA32F, gl.RGBA, gl.FLOAT, gl.NEAREST);
+        flowValues = new Float32Array(96 * 54 * 4);
+      }
+      gl.disable(gl.BLEND); flowProgram.bind();
+      uniform1i(flowProgram.uniforms.uVelocity, velocity.read.attach(0));
+      uniform1i(flowProgram.uniforms.uPressure, pressure.read.attach(1));
+      uniform1i(flowProgram.uniforms.uDye, dye.read.attach(2));
+      var dx = domainW / velocity.width;
+      // Projection uses a two-cell pressure difference without the usual 1/2.
+      uniform3f(flowProgram.uniforms.scale, dx, domainH / velocity.height, 2 * dx * dx / lastStepDt);
+      blit(flowSample);
+      gl.readPixels(0, 0, flowSample.width, flowSample.height, gl.RGBA, gl.FLOAT, flowValues);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      return {width:flowSample.width,height:flowSample.height,values:flowValues,dt:lastStepDt};
+    }
+
     function getCanvas () { return canvas; }
 
     // Composite the GL canvas into a 2D context. Caller passes the
@@ -2805,6 +2831,7 @@
       setObstacleAlpha: setObstacleAlpha,
       paintObstacleQuads: paintObstacleQuads,  // v10.87 — WebGL-native obstacle paint
       setMovingBodies: setMovingBodies,
+      sampleFlow: sampleFlow,
       setLiquidField: setLiquidField,
       clearObstacle: clearObstacle,
       isReady: isReady,
@@ -2824,6 +2851,7 @@
    * no world-lock scroll), obstacles as NDC quads rasterised straight
    * from the wall grid's horizontal runs, moving slime velocity boundaries,
    * and an idle gate so a dissipated field costs nothing. ==== */
+  var toyCannon = null;
   var smokeCanvas = null;
   var smokeActive = false;
   var smokeAwakeT = 0;
@@ -2945,6 +2973,7 @@
       dt * timeMul, smokeObW, smokeObH);
     smokeWaterFlowCouple();
     SmokeFluid.step(dt * timeMul);
+    if(toyCannon)toyCannon.capture(dt*timeMul,jelloBodies);
     SmokeFluid.displayPass();
   }
 
@@ -12458,7 +12487,7 @@
   var toolButtons = [];
   function setTool(name) {
     if(handsPending)return;
-    if((nativeMachineScene(currentScene) || handsRequested) && name!=='poke' && !(handsRequested && name==='build'))return;
+    if(((nativeMachineScene(currentScene) && currentScene!=='smoke-ring-cannon') || handsRequested) && name!=='poke' && !(handsRequested && name==='build'))return;
     if(pointerDown){
       var oldPointer=pointerId;releasePointer({pointerId:oldPointer},true);
       try{inputEl.releasePointerCapture(oldPointer);}catch(error){}
@@ -13373,6 +13402,13 @@
   }
 
   function instrumentTick(now){
+    if(toyCannon && machineState && machineState.ready){
+      machineState.readings={ready:true,caption:machineState.definition.caption,action:machineState.definition.action,
+        smokeCannon:toyCannon.stats(jelloBodies),particleCount:liquidCount,sampleAgeMs:0,
+        scaleText:'The box is 30 inches wide and 1 inch deep. The slime floats in zero gravity.',
+        numericalStatus:'Current smoke pressure drives the slime. This is a two-dimensional section.',
+        energyBudgetStatus:machineState.definition.energyBudgetStatus,error:buildError};return;
+    }
     if(!airModel || !airModel.enabled || instrumentPending || now<instrumentNextAt)return;
     var model=airModel,state=machineState;
     instrumentPending=true;instrumentNextAt=now+150;
@@ -13568,6 +13604,7 @@
     machineResumePause=wasPaused;machineLoading=true;userPaused=true;syncRunning();
     var request=++machineRequest, ownBoundary=null;
     try{
+    if(toyCannon){toyCannon.destroy();toyCannon=null;}
     clearWorldAll(options.canvasThumb);setGravityUI(1);
     machineBuilder=null;handsController=null;handsSelection=null;valveSeats=null;manualValves.clear();instrumentSample=null;instrumentPending=false;instrumentNextAt=0;
     var module=nativeMachineScene(name) ? await machineRegistry.load(name) : window.WaterMachinesScenes;
@@ -13639,6 +13676,12 @@
       if(window.WSSSound && !toySound)toySound=window.WSSSound.create();
       if(toySound)toyBoundary.setEventConsumer(function(events){toySound.consume(events);});
     }
+    if(definition.name==='smoke-ring-cannon'){
+      if(airModel && airModel.enabled)await airModel.disable();
+      setGravityUI(0);toyCannon=window.WSSSmokeCannon.create(definition,SmokeFluid,{w:worldW,h:worldH});
+      smokeAwakeT=SMOKE_IDLE_HOLD;smokeFrame(1/60);render();
+      state.ready=true;state.startedAt=0;state.wallClockStartedAt=performance.now();fitStage();instrumentTick(performance.now());return state;
+    }
     var pressureSettings=Object.assign({},definition.settings,options.pressure || {},{resetMaterial:true});
     if(definition.settings.roomPressurePsi!==undefined && !(options.pressure && options.pressure.atmospherePressure!==undefined)){
       pressureSettings.atmospherePressure=window.WaterMachinesInstruments.scale({width:worldW,density:pressureSettings.density || 1}).pressureFromPsi(definition.settings.roomPressurePsi);
@@ -13690,6 +13733,7 @@
     if(handsPending)return false;
     if(!machineState || !machineState.ready)return false;
     var definition=machineState.definition,primary=definition.primary;
+    if(primary.kind==='smoke-push'){smokeAwakeT=SMOKE_IDLE_HOLD;return toyCannon.push();}
     if(primary.kind==='tap'){
       var enabled=definition.action==='Open tap';
       toyBoundary.setTapEnabled(enabled);definition.action=enabled ? 'Close tap' : 'Open tap';
@@ -13812,6 +13856,7 @@
     machineRequest++;
     if(machineLoading){machineLoading=false;userPaused=machineResumePause;syncRunning();}
     if(machineWaterLook!==null){presetSet('waterLook',machineWaterLook);machineWaterLook=null;}
+    if(toyCannon){toyCannon.destroy();toyCannon=null;}
     machineState=null;
     if (rainbowWater) rainbowWater.reset();
     currentScene = name;
@@ -14230,6 +14275,7 @@
         dbgE.cyPost = dbgB.cy;
       }
     }
+    if(toyCannon)smokeAwakeT=SMOKE_IDLE_HOLD;
     smokeFrame(dt);
     instrumentTick(tNow);
     render();
@@ -14384,6 +14430,7 @@
     surfaceSlimeGrip.body.sleeping = false; surfaceSlimeGrip.body.sleepFrames = 0;
   }
   function jelloGrabSubstep(b, h) {
+    if(toyCannon)toyCannon.load(b,h,JELLO_TIMESCALE);
     if (surfaceSlimeGrip && surfaceSlimeGrip.body === b && b._grabbed) softHandlingStep(b, h);
   }
   function jelloDrivePostSubstep() {}
@@ -14522,6 +14569,7 @@
           omega: omega || 0, maxOmega: 7
         }) : null;
       },
+      smokeCannon: function(){return toyCannon;},
       smoke: function () {
         return { fluid: SmokeFluid, awake: smokeAwakeT, active: smokeActive,
           waterFlowFrames: smokeWaterFlowFrames, emitterSplats: smokeEmitterSplats };
