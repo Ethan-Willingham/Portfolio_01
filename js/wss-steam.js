@@ -310,6 +310,13 @@ fn recordSteam(i:u32,r:u32,support:u32,boil:f32){
         }read.unmap();
       }).catch(function(e){error=e.message;companion.error=error;}).finally(function(){pending=false;});},
       toggle:function(){heated=!heated;return heated;},
+      setWhistleLength:function(inches){
+        if(!options.adjustableWhistle || retired || !Number.isFinite(inches))return null;
+        options.whistleLengthInches=Math.max(1.5,Math.min(5,inches));
+        if(lastVent)lastVent.whistleLengthM=options.whistleLengthInches*.0254;
+        events.forEach(function(event){event.whistleLengthM=options.whistleLengthInches*.0254;});
+        return options.whistleLengthInches;
+      },
       stats:function(){return {heated:heated,liquidParcels:latest[10],vaporParcels:latest[11],evaporations:latest[4],condensations:latest[5],
         parcelMassKg:mass,heaterWatts:heated?options.powerWatts:0,heatInputJ:latest[2]/64,heatLossJ:latest[3]/64,initialHeatJ:latest[8]/64,
         currentHeatJ:latest[12]/64,escapedHeatJ:latest[28]/64,heatResidualJ:(latest[8]+latest[2]-latest[3]-latest[12]-latest[28])/64,
@@ -322,7 +329,8 @@ fn recordSteam(i:u32,r:u32,support:u32,boil:f32){
         unownedVaporMaxSeconds:latest[30]*L.stepDt,unownedVaporCurrentMaxSeconds:latest[31]*L.stepDt,phaseRelaxationSeconds:options.phaseRelaxationSeconds||.5,
         escapedVaporParcels:latest[27],waterMassKg:{initial:initialCount*mass,added:Math.max(0,latest[25]-initialCount)*mass,
           liquid:latest[10]*mass,vapor:latest[11]*mass,escaped:latest[27]*mass,residual:(latest[25]-latest[10]-latest[11]-latest[27])*mass},
-        vent:{capped:!!options.capped,diameterInches:options.ventDiameterInches||.25,coefficient:options.ventCoefficient||.62,
+        vent:{capped:!!options.capped,whistleLengthInches:options.whistleLengthInches||2,adjustableWhistle:!!options.adjustableWhistle,diameterInches:options.ventDiameterInches||.25,coefficient:options.ventCoefficient||.62,
+          escapedDryMassKg:latestVent[2],admittedDryMassKg:latestVent[9],
           requestedVaporMassKg:latestVent[10],escapedVaporMassKg:latest[27]*mass,quantizationCreditKg:latestVent[0],maxParcelKg:mass,
           events:eventFrames,last:lastVent},
         captureClock:capturedClock,captureAgeSimulationSeconds:Math.max(0,L.simulationClock-capturedClock),pending:pending,error:error,
