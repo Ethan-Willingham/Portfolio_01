@@ -16,7 +16,7 @@
       // One declared impulse across the rear of the chamber. The opening and
       // projection solve form the counter-rotating section, not authored spin.
       for(var x=112;x<=224;x+=16)for(var y=168;y<=232;y+=16)
-        fluid.splatVelocity(x/world.w,1-y/world.h,42,0,.065);
+        fluid.splatVelocity(x/world.w,1-y/world.h,210,0,.065);
       pushes++;return true;
     }
     function sample(x,y){
