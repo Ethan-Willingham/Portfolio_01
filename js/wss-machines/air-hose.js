@@ -5,10 +5,10 @@
     options=options||{};if(world.w!==720||world.h!==400||world.tile!==8)throw Error('Air hose needs a 720 by 400 world.');
     var inject=options.inject!==false,jar={x:248,y:56,width:224,height:328};
     return {name:'air-hose',title:'Air hose prototype',seed:options.seed||17,setup:inject?'air-on':'air-off',action:inject?'Stop the air':'Start the air',primary:{kind:'bubble-toggle'},readingLabel:'Gas parcels',
-      caption:'A bubble expands as the surrounding water pressure falls. This declared air hose supplies gas at the bottom; stop it to watch the remaining bubbles reach the surface.',
+      caption:'Air bubbles expand as the surrounding pressure falls. Stop the hose and watch the remaining bubbles reach the surface.',
       source:{title:'Patkar and colleagues, Hybrid Lagrangian-Eulerian Bubble Formulation',url:'https://pages.cs.wisc.edu/~aanjneya/papers/HLEFBGD/paper.html'},
       setups:[{id:'air-on',label:'Air on',options:{}},{id:'air-off',label:'Air off',options:{inject:false}}],
-      viewBounds:{x:208,y:40,width:304,height:344},vessels:[{id:'jar',label:'Water',rect:jar,sealed:false}],pipes:[],solids:[],vents:[],parts:[],slimes:[],
+      viewBounds:{x:208,y:0,width:304,height:400},vessels:[{id:'jar',label:'Water',rect:jar,sealed:false}],pipes:[],solids:[],vents:[],parts:[],slimes:[],
       initial:[{kind:'rect',rect:{x:256,y:112,width:208,height:264}}],marks:[],meters:[],
       settings:{particlePressure:true,projectedVelocity:true,directGather:true,collapseEmptyCells:true,geometricGas:true,nonlinearGas:true,vaporClosure:true,boundaryReconstruction:true,phaseChange:true,cellSize:8,soundSpeed:2500,iterations:32,redBlack:true,roomPressurePsi:14.7,minimumPressure:-80000},boundaries:null,
       bubbles:{inject:inject,hose:{x:360,y:352},rateArea:195,parcelArea:65,dragCoefficient:1,gravity:250},measure:{source:jar,receiver:jar},
