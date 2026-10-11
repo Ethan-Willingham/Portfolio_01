@@ -387,7 +387,7 @@
       var liveMachine = toy.machineState ? toy.machineState() : null;
       var air = toy.airStats ? toy.airStats() : { enabled: false };
       var fire=!!(liveMachine && liveMachine.definition.fire);
-      var cannon=state.scene==='smoke-ring-cannon',thermal=state.scene==='thermoscope',balloon=state.scene==='water-balloons';
+      var wind=state.scene==='smoke-wind-tunnel',cannon=state.scene==='smoke-ring-cannon'||wind,thermal=state.scene==='thermoscope',balloon=state.scene==='water-balloons';
       var contextual = machine || air.enabled;
       var ledger=sample.ledger || {},convergence=sample.convergence;
       var fatal=sample.error || air.error || (toy.liquid && toy.liquid() && toy.liquid().materialStateError);
@@ -401,7 +401,7 @@
       var pressureMessage=fatal ? 'The pressure calculation stopped. Restart or choose another scene.' : !sample.ready || !convergence ? 'Waiting for a pressure sample.' :
         diagnostic ? 'Pressure readings are diagnostic. Open Instruments for the calculation status.' : stale ? 'The pressure sample is old. Open Instruments for its age.' :
         'The pressure sample is current. Open Instruments for the calculation status.';
-      if(cannon){pressureLabel=state.paused?'Paused':'Live';pressureMessage='The smoke carries the push. Instruments explains the flat section.';}
+      if(cannon){pressureLabel=state.paused?'Paused':'Live';pressureMessage=wind?'A steady fan drives the smoke past the supported slime.':'The smoke carries the push. Instruments explains the flat section.';}
       if(balloon){pressureLabel=state.paused?'Paused':'Live';pressureMessage='Drag, fling and pop. Instruments explains the elastic skin.';}
       document.getElementById('toy-machine-diagnostics').hidden=!contextual || fire || balloon;
       text('toy-machine-diagnostics',contextual ? pressureMessage : '');
@@ -410,7 +410,7 @@
       document.getElementById('toy-machine-summary').hidden = !machine;
       document.getElementById('toy-machine-metrics').hidden = !machine || fire || cannon || balloon;
       if(fire)text('toy-hint','Pour from the spout, or use Water to splash the source.');
-      if(cannon)text('toy-hint','Tap the back. Drag the slime back into the swirl.');
+      if(cannon)text('toy-hint',wind?'Grab the slime. Stop the fan to compare its wake.':'Tap the back. Drag the slime back into the swirl.');
       if(balloon)text('toy-hint','Grab the skin and fling it. Pop releases the water.');
       var siphon=state.scene==='siphon';
       document.getElementById('toy-siphon-options').hidden=!siphon;
@@ -437,7 +437,7 @@
       text('toy-native-reading',balloon && sample.balloon ? sample.balloon.popped ? 'Skin popped' : Number.isFinite(sample.balloon.retainedFraction) ? 'Water held '+(100*sample.balloon.retainedFraction).toFixed(0)+'%' : 'Water inside the skin' : thermal && sample.thermoscope ? 'Air '+number(sample.thermoscope.temperatureF,'degrees Fahrenheit') : fire && sample.fire ? 'Source '+Math.round(sample.fire.sourceC*1.8+32)+' degrees Fahrenheit; '+(sample.fire.burning?'burning':'cooling') : state.scene==='thumb-straw' ? Number.isFinite(sample.retainedFraction) ? 'Water held '+(100*sample.retainedFraction).toFixed(0)+'%' : 'Waiting for water sample' :
         liveMachine && liveMachine.definition.readingLabel || 'Powered return');
       document.getElementById('toy-native-options').hidden=!native;
-      document.querySelector('#toy-native-options > p').textContent=balloon ? 'Choosing a setup starts a fresh partly filled balloon. The slit removes one lower-side edge, above the basin floor.' : thermal ? 'Compare the sealed bulb with no heat or an open upper vent. Each setup starts with the same water.' : cannon ? 'Choosing a setup refills the smoke chamber. The no-push comparison starts with still air.' : 'Choosing a setup restarts it with the same initial water. Hold starts a freshly filled straw; releasing opens its top.';
+      document.querySelector('#toy-native-options > p').textContent=balloon ? 'Choosing a setup starts a fresh partly filled balloon. The slit removes one lower-side edge, above the basin floor.' : thermal ? 'Compare the sealed bulb with no heat or an open upper vent. Each setup starts with the same water.' : wind ? 'Both setups supply smoke at the inlet; fan off supplies no air impulse.' : cannon ? 'Choosing a setup refills the smoke chamber. The no-push comparison starts with still air.' : 'Choosing a setup restarts it with the same initial water. Hold starts a freshly filled straw; releasing opens its top.';
       document.getElementById('toy-machine-view').hidden=native;
       var setup=document.getElementById('toy-native-setup');
       if(native && liveMachine && nativeSetupScene!==state.scene){
@@ -512,7 +512,7 @@
     function sync() {
       syncCamera();
       var state = toy.stats();
-      var native=nativeScene(state.scene),cannon=state.scene==='smoke-ring-cannon',thermal=state.scene==='thermoscope',balloon=state.scene==='water-balloons';shell.classList.toggle('is-native-machine',native);
+      var native=nativeScene(state.scene),wind=state.scene==='smoke-wind-tunnel',cannon=state.scene==='smoke-ring-cannon'||wind,thermal=state.scene==='thermoscope',balloon=state.scene==='water-balloons';shell.classList.toggle('is-native-machine',native);
       shell.dataset.scene=state.scene;
       shell.classList.toggle('has-fire',!!toy.fire());
       var building = /^(build|draw|erase)$/.test(state.tool);

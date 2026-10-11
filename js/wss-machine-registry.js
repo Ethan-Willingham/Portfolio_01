@@ -10,6 +10,7 @@
     {id:'roman-inverted-siphon',title:'Roman inverted siphon',cue:'Close or open the intake.',preview:'inverted-siphon',accepted:true,world:{w:720,h:400},pool:false},
     {id:'thumb-straw',title:'The straw and the thumb',cue:'Hold the top, then release.',preview:'straw',accepted:true,world:{w:720,h:400},pool:false},
     {id:'smoke-ring-cannon',capability:'Smoke',title:'The smoke-ring cannon',cue:'Tap the back. Catch the swirl with a slime.',preview:'smoke-cannon',accepted:true,world:{w:720,h:400},pool:false},
+    {id:'smoke-wind-tunnel',capability:'Smoke',title:'The slime wind tunnel',cue:'Stop the fan. Watch the wake change.',preview:'smoke-tunnel',accepted:false,world:{w:720,h:400},pool:false},
     {id:'burst-disk',title:'The burst disk',cue:'Compare two membrane strengths.',preview:'burst-disk',accepted:true,world:{w:720,h:400},pool:false}
   ];
   var lab = new URLSearchParams(location.search).get('lab') === '1';
@@ -36,6 +37,7 @@
     await script('/js/wss-native.js');
     if(id==='douse-fire')await script('/js/wss-fire.js');
     if(id==='smoke-ring-cannon')await script('/js/wss-smoke-cannon.js');
+    if(id==='smoke-wind-tunnel'){await script('/js/wss-smoke-cannon.js');await script('/js/wss-smoke-wind-tunnel.js');}
     if(id==='water-balloons')await script('/js/wss-water-balloons.js');
     if(id==='burst-disk')await script('/js/wss-burst-disk.js');
     await script('/js/wss-sound.js');
@@ -73,6 +75,10 @@
       path('M7 16h22v6M7 36h22v-6M7 16v20','toy-preview-glass');
       path('M34 23c-5-8 8-10 8-3s-8 6-5 1M34 31c-5 8 8 10 8 3s-8-6-5-1','toy-preview-stream');
       path('M52 19c-9 0-9 15 0 15s11-15 0-15Z','toy-preview-slime');
+    }else if(kind==='smoke-tunnel'){
+      path('M8 13h57M8 39h57M8 16v20M30 13v8','toy-preview-glass');
+      path('M11 23h10M11 30h10M40 24c10-9 17 8 25-2M40 31c10 9 17-8 25 2','toy-preview-stream');
+      path('M31 21c-9 0-9 15 0 15s11-15 0-15Z','toy-preview-slime');
     }else if(kind==='inverted-siphon'){
       path('M5 8v20h16V8M53 21v21h15V21M15 25h12v19h19V33h13','toy-preview-glass');
       path('M6 12h14v15H6ZM54 33h13v8H54Z','toy-preview-water');

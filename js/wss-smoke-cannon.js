@@ -1,7 +1,7 @@
 /* Exterior smoke pressure loads the existing elastic slime ring. */
 (function(root){
   'use strict';
-  function create(definition,fluid,world){
+  function create(definition,fluid,world,options){
     var field=null,clock=0,pushes=0,pressureImpulseX=0,pressureImpulseY=0,peakLoad=0,bodyStart=null;
     var savedConfig={},keys=['CURL','VELOCITY_DISSIPATION','DENSITY_DISSIPATION','PRESSURE_ITERATIONS'];
     keys.forEach(function(k){savedConfig[k]=fluid.config[k];});
@@ -78,7 +78,7 @@
         pressureImpulseX:pressureImpulseX,pressureImpulseY:pressureImpulseY,peakEdgeLoad:peakLoad,
         noPush:definition.noPush,model:'2D vortex-pair section; current projection pressure traction; no authored path or wobble'};
     }
-    if(definition.noPush)fill();else push();
+    if(!options || options.initial!==false){if(definition.noPush)fill();else push();}
     return {push:push,capture:capture,load:load,stats:stats,sample:sample,
       destroy:function(){keys.forEach(function(k){fluid.config[k]=savedConfig[k];});fluid.setPhysics(savedPhysics,0);}};
   }

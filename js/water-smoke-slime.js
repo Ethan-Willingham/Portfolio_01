@@ -3057,6 +3057,7 @@
       dt * timeMul, smokeObW, smokeObH);
     if(toyThermoscope)SmokeFluid.setLiquidField(liquidX,liquidY,liquidVX,liquidVY,0,0,0,worldW,worldH,WATER_CELL_REST/(TILE*TILE),liquidFrozen);
     else smokeWaterFlowCouple();
+    if(toyCannon && toyCannon.prepare)toyCannon.prepare(dt*timeMul);
     SmokeFluid.step(toyFire ? fireFrameDt : toyThermoscope ? thermoscopeDt : dt * timeMul);
     if(toyThermoscope && airModel && airModel.enabled){
       var temperature=SmokeFluid.sampleTemperature(airModel.width,airModel.height);
@@ -13514,7 +13515,7 @@
     if(toyCannon && machineState && machineState.ready){
       machineState.readings={ready:true,caption:machineState.definition.caption,action:machineState.definition.action,
         smokeCannon:toyCannon.stats(jelloBodies),particleCount:liquidCount,sampleAgeMs:0,
-        scaleText:'The box is 30 inches wide and 1 inch deep. The slime floats in zero gravity.',
+        scaleText:'The box is 30 inches wide and 1 inch deep. '+(machineState.definition.name==='smoke-wind-tunnel'?'One material point has a compliant support; gravity is zero.':'The slime floats in zero gravity.'),
         numericalStatus:'Current smoke pressure drives the slime. This is a two-dimensional section.',
         energyBudgetStatus:machineState.definition.energyBudgetStatus,error:buildError};return;
     }
@@ -13799,9 +13800,11 @@
       if(window.WSSSound && !toySound)toySound=window.WSSSound.create();
       if(toySound)toyBoundary.setEventConsumer(function(events){toySound.consume(events);});
     }
-    if(definition.name==='smoke-ring-cannon'){
+    if(definition.name==='smoke-ring-cannon' || definition.name==='smoke-wind-tunnel'){
       if(airModel && airModel.enabled)await enableAirModel({enabled:false});
-      setGravityUI(0);toyCannon=window.WSSSmokeCannon.create(definition,SmokeFluid,{w:worldW,h:worldH});
+      setGravityUI(0);toyCannon=definition.name==='smoke-wind-tunnel' ?
+        window.WSSSmokeWindTunnel.create(definition,SmokeFluid,{w:worldW,h:worldH},jelloBodies) :
+        window.WSSSmokeCannon.create(definition,SmokeFluid,{w:worldW,h:worldH});
       smokeAwakeT=SMOKE_IDLE_HOLD;smokeFrame(1/60);render();
       state.ready=true;state.startedAt=0;state.wallClockStartedAt=performance.now();fitStage();instrumentTick(performance.now());return state;
     }
@@ -13908,6 +13911,7 @@
       machineOverlayCache=null;return true;
     }
     if(primary.kind==='smoke-push'){smokeAwakeT=SMOKE_IDLE_HOLD;return toyCannon.push();}
+    if(primary.kind==='smoke-fan'){smokeAwakeT=SMOKE_IDLE_HOLD;machineOverlayCache=null;return toyCannon.toggle();}
     if(primary.kind==='tap'){
       var enabled=definition.action==='Open tap';
       toyBoundary.setTapEnabled(enabled);definition.action=enabled ? 'Close tap' : 'Open tap';
@@ -14217,6 +14221,7 @@
     if(burstView)overlayKey+=':'+burstView.opened+':'+burstView.fault;
     if(toyThermoscope)overlayKey+=':'+toyThermoscope.heated;
     if(toyFire)overlayKey+=':'+toyFire.stats().burning;
+    if(toyCannon && toyCannon.overlayKey)overlayKey+=':'+toyCannon.overlayKey();
     if(!buildGesture && !keyboardCursorVisible && machineOverlayCache && machineOverlayCache.key===overlayKey && machineOverlayCache.sample===instrumentSample)return;
     machineOverlayCache=!buildGesture && !keyboardCursorVisible ? {key:overlayKey,sample:instrumentSample} : null;
     var c=instrumentsCtx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,worldW,worldH);instrumentsDirty=true;
@@ -14270,6 +14275,7 @@
     }
     if(machineState){
       var definition=machineState.definition;
+      if(toyCannon && toyCannon.draw)toyCannon.draw(c);
       if(toyFire){var f=definition.fire,hot=toyFire.stats();c.fillText(hot.burning?'Burning':hot.smothered?'Out, wet':'Ember reheating',f.x+48,f.y-12);
         c.fillText('Ember',f.x-80,f.y+36);c.strokeRect(f.x-36,f.y+16,16,8);
         c.fillText('Pour',f.pour.x-14,f.pour.y-16);c.strokeRect(f.pour.x-8,f.pour.y-4,16,8);}
@@ -14818,6 +14824,7 @@
         }) : null;
       },
       smokeCannon: function(){return toyCannon;},
+      smokeWindTunnel: function(){return currentScene==='smoke-wind-tunnel' ? toyCannon : null;},
       smoke: function () {
         return { fluid: SmokeFluid, awake: smokeAwakeT, active: smokeActive,
           waterFlowFrames: smokeWaterFlowFrames, emitterSplats: smokeEmitterSplats };
