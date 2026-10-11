@@ -107,7 +107,7 @@ fn outsidePressure(q:vec2f,r:f32)->f32{
 }
 @compute @workgroup_size(128) fn inject(@builtin(global_invocation_id) id:vec3u){let c=id.x;if(c<u32(p.air.y*p.air.z)){atomicAdd(&gas[c*16u+2u],atomicLoad(&current[c]));}}
 @compute @workgroup_size(128) fn finish(@builtin(global_invocation_id) id:vec3u){let c=id.x;if(c<u32(p.air.y*p.air.z)){let amount=atomicLoad(&current[c]);if(amount>history[c].amount){atomicAdd(&ledger[8],1);}atomicStore(&previous[c],min(amount,max(0,history[c].amount)));}}
-@compute @workgroup_size(64) fn move(@builtin(global_invocation_id) id:vec3u){
+@compute @workgroup_size(64) fn advance(@builtin(global_invocation_id) id:vec3u){
  let i=id.x;if(i>=u32(max(0,atomicLoad(&ledger[4]))) || material[i].z<.5 || material[i].z>1.5){return;}
  var q=bubbles[i].xy;let amount=material[i].x/p.air.w;let absolute=outsidePressure(q,material[i].y);
  let radius=2.*p.material.x*amount/3.14159265/(sqrt(p.material.z*p.material.z+4.*absolute*p.material.x*amount/3.14159265)+p.material.z);
@@ -153,16 +153,16 @@ fn outsidePressure(q:vec2f,r:f32)->f32{
     var module=device.createShaderModule({label:'toy.bubbles.model',code:SOURCE}),info=await module.getCompilationInfo();
     var errors=info.messages.filter(function(m){return m.type==='error';});if(errors.length)throw Error(errors.map(function(m){return m.lineNum+': '+m.message;}).join('; '));
     var resources=[params,bubbles,material,witness,ledger,A.buffers.history,A.buffers.cells,A.buffers.geometry,A.buffers.labels,A.buffers.gas,previous,current,A.buffers.transport,L.buf.pos,L.buf.flag,L.buf.affine];
-    var bindings={admit:[0,1,2,3,4,5,6,7],sparger:[0,2,3,4,6,7,8],strip:[0,4,5,10,11],descendants:[0,5,6,7,8,9,10],assign:[0,1,2,3,4,6,7,8,9,10,11],inject:[0,9,11],finish:[0,4,5,10,11],move:[0,1,2,4,5,6,7,12],coalesce:[0,1,2,4,7],contact:[0,1,2,4,7,13,14,15],inventory:[0,1,2,4]},pipes={},groups={};
+    var bindings={admit:[0,1,2,3,4,5,6,7],sparger:[0,2,3,4,6,7,8],strip:[0,4,5,10,11],descendants:[0,5,6,7,8,9,10],assign:[0,1,2,3,4,6,7,8,9,10,11],inject:[0,9,11],finish:[0,4,5,10,11],advance:[0,1,2,4,5,6,7,12],coalesce:[0,1,2,4,7],contact:[0,1,2,4,7,13,14,15],inventory:[0,1,2,4]},pipes={},groups={};
     for(var name of Object.keys(bindings)){pipes[name]=await device.createComputePipelineAsync({layout:'auto',compute:{module:module,entryPoint:name}});groups[name]=device.createBindGroup({layout:pipes[name].getBindGroupLayout(0),entries:bindings[name].map(function(binding){return {binding:binding,resource:{buffer:resources[binding]}};})});}
     var active=options.inject!==false,retired=false,clock=0,quantity=0,latest=new Int32Array(32),points=[],error=null;
     var reads=Array.from({length:3},function(){return {buffer:buffer('read',128+n*32,U.COPY_DST|U.MAP_READ),busy:false,captured:false};}),row=null;
-    function encode(enc,key,number){var pass=enc.beginComputePass({label:'toy.bubbles.'+key});pass.setPipeline(pipes[key]);pass.setBindGroup(0,groups[key]);pass.dispatchWorkgroups(Math.max(1,Math.ceil(number/(['admit','coalesce'].includes(key)?1:['move','assign','inventory'].includes(key)?64:128))));pass.end();}
+    function encode(enc,key,number){var pass=enc.beginComputePass({label:'toy.bubbles.'+key});pass.setPipeline(pipes[key]);pass.setBindGroup(0,groups[key]);pass.dispatchWorkgroups(Math.max(1,Math.ceil(number/(['admit','coalesce'].includes(key)?1:['advance','assign','inventory'].includes(key)?64:128))));pass.end();}
     var companion={
       beginFrame:function(enc,frame){clock=frame.clock;quantity=frame.count;var mpp=.0254/(options.width/30),tension=.072*A.settings.atmospherePressure/101325/mpp;
         queue.writeBuffer(params,0,new Float32Array([frame.h,frame.count,n,clock,A.cellSize,A.width,A.height,A.settings.volumeScale,options.hose.x,options.hose.y,options.rateArea,active?1:0,A.settings.atmospherePressure,options.parcelArea,tension,options.dragCoefficient||1,options.width,options.height,options.gravity||250,0]));},
       beforeSubstep:function(enc,step){encode(enc,'admit',1);encode(enc,'contact',step.count);},
-      afterSubstep:function(enc,step){encode(enc,'move',n);encode(enc,'coalesce',1);encode(enc,'contact',step.count);},
+      afterSubstep:function(enc,step){encode(enc,'advance',n);encode(enc,'coalesce',1);encode(enc,'contact',step.count);},
       beginGas:function(enc){encode(enc,'strip',count);},prepareGas:function(enc){encode(enc,'sparger',count);},
       collectGas:function(enc){encode(enc,'descendants',count);encode(enc,'assign',n);encode(enc,'inject',count);},finishGas:function(enc){encode(enc,'finish',count);},
       captureFrame:function(enc){enc.clearBuffer(ledger,8,8);encode(enc,'inventory',n);row=reads.find(function(r){return !r.busy;})||null;if(row){row.busy=true;row.captured=true;row.clock=clock;row.count=Math.min(n,Math.max(64,latest[4]+64));enc.copyBufferToBuffer(ledger,0,row.buffer,0,128);enc.copyBufferToBuffer(bubbles,0,row.buffer,128,row.count*16);enc.copyBufferToBuffer(material,0,row.buffer,128+n*16,row.count*16);}},
