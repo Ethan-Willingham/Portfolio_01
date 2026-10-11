@@ -11,7 +11,7 @@ struct Geometry {volume:vec4f,faces:vec4f};
 struct Label {current:atomic<u32>,previous:u32};
 @group(0) @binding(0) var<uniform> p:Params;
 @group(0) @binding(1) var<storage,read_write> bubbles:array<vec4f>;
-// Fixed-point room-reference gas amount, radius, state (1 dispersed, 2 Eulerian, 3 escaped), native root.
+// Fixed-point room-reference gas amount, radius, state (1 mobile, 3 escaped; 2 is reserved), native root.
 @group(0) @binding(2) var<storage,read_write> material:array<vec4f>;
 // Last validated spatial gas support, birth clock, birth y, last birth substep.
 @group(0) @binding(3) var<storage,read_write> witness:array<vec4f>;
@@ -78,31 +78,15 @@ fn outsidePressure(q:vec2f,r:f32)->f32{
 @compute @workgroup_size(128) fn strip(@builtin(global_invocation_id) id:vec3u){
  let c=id.x;if(c>=u32(p.air.y*p.air.z)){return;}let amount=atomicLoad(&previous[c]);
  if(amount>history[c].amount){atomicAdd(&ledger[8],1);}history[c].amount-=min(amount,history[c].amount);
- atomicStore(&previous[c],-1);atomicStore(&current[c],0);
-}
-@compute @workgroup_size(128) fn descendants(@builtin(global_invocation_id) id:vec3u){
- let c=id.x;if(c>=u32(p.air.y*p.air.z)){return;}let old=history[c].airRoot;let now=supported(c);
- if(old==0u || old==NONE || now==NONE || history[old-1u].volume<=0 || cells[c].kind==0u){return;}
- let overlap=min((1.-history[c].fraction)*p.air.x*p.air.x,voidArea(c));if(round(overlap*p.air.w)<=0.){return;}
- let volume=select(0,atomicLoad(&gas[(max(1u,now)-1u)*16u]),now>0u);loop{
-  let prior=atomicLoad(&previous[old-1u]);var priorRoot=NONE;var priorVolume=-1;
-  if(prior>0){priorRoot=supported(u32(prior-1));if(priorRoot!=NONE){priorVolume=select(0,atomicLoad(&gas[(max(1u,priorRoot)-1u)*16u]),priorRoot>0u);}}
-  if(volume<priorVolume || (volume==priorVolume && priorRoot<now) || (volume==priorVolume && priorRoot==now && prior>0 && u32(prior-1)<=c)){return;}
-  let changed=atomicCompareExchangeWeak(&previous[old-1u],prior,i32(c+1u));if(changed.exchanged){return;}
- }
+ atomicStore(&previous[c],0);atomicStore(&current[c],0);
 }
 @compute @workgroup_size(64) fn assign(@builtin(global_invocation_id) id:vec3u){
- let i=id.x;let used=u32(max(0,atomicLoad(&ledger[4])));if(i>=used || material[i].z<.5 || material[i].z>2.5){return;}
- var r=NONE;var support=cell(bubbles[i].xy);
- if(material[i].z>1.5 && material[i].w>0.){let old=u32(material[i].w);let child=atomicLoad(&previous[old-1u]);if(child>0){support=u32(child-1);r=supported(support);}}
- if(r==NONE){support=cell(bubbles[i].xy);r=supported(support);}
- if(r==NONE && material[i].z>1.5 && witness[i].x>0.){support=u32(witness[i].x-1.);r=supported(support);}
+ let i=id.x;let used=u32(max(0,atomicLoad(&ledger[4])));if(i>=used || material[i].z<.5 || material[i].z>1.5){return;}
+ // A submerged parcel keeps its transported interface even inside a large void.
+ // Only current spatial support may transfer it to the atmosphere.
+ let support=cell(bubbles[i].xy);let r=supported(support);
  if(r==0u){material[i].z=3.;material[i].w=0.;atomicAdd(&ledger[1],i32(material[i].x));atomicAdd(&ledger[17],1);return;}
- if(r==NONE){
-  if(material[i].z>1.5){material[i].z=1.;if(witness[i].x>0.){bubbles[i]=vec4f(center(u32(witness[i].x-1.)),bubbles[i].zw);}atomicAdd(&ledger[12],1);}
-  material[i].w=-1.;return;
- }
- if(material[i].z<1.5 && f32(atomicLoad(&gas[(r-1u)*16u]))/p.air.w>=3.*p.air.x*p.air.x){material[i].z=2.;atomicAdd(&ledger[11],1);}
+ if(r==NONE){material[i].w=-1.;return;}
  material[i].w=f32(r);witness[i].x=f32(support+1u);atomicAdd(&current[r-1u],i32(material[i].x));
 }
 @compute @workgroup_size(128) fn inject(@builtin(global_invocation_id) id:vec3u){let c=id.x;if(c<u32(p.air.y*p.air.z)){atomicAdd(&gas[c*16u+2u],atomicLoad(&current[c]));}}
@@ -153,7 +137,7 @@ fn outsidePressure(q:vec2f,r:f32)->f32{
     var module=device.createShaderModule({label:'toy.bubbles.model',code:SOURCE}),info=await module.getCompilationInfo();
     var errors=info.messages.filter(function(m){return m.type==='error';});if(errors.length)throw Error(errors.map(function(m){return m.lineNum+': '+m.message;}).join('; '));
     var resources=[params,bubbles,material,witness,ledger,A.buffers.history,A.buffers.cells,A.buffers.geometry,A.buffers.labels,A.buffers.gas,previous,current,A.buffers.transport,L.buf.pos,L.buf.flag,L.buf.affine];
-    var bindings={admit:[0,1,2,3,4,5,6,7],sparger:[0,2,3,4,6,7,8],strip:[0,4,5,10,11],descendants:[0,5,6,7,8,9,10],assign:[0,1,2,3,4,6,7,8,9,10,11],inject:[0,9,11],finish:[0,4,5,10,11],advance:[0,1,2,4,5,6,7,12],coalesce:[0,1,2,4,7],contact:[0,1,2,4,7,13,14,15],inventory:[1,2,4]},pipes={},groups={};
+    var bindings={admit:[0,1,2,3,4,5,6,7],sparger:[0,2,3,4,6,7,8],strip:[0,4,5,10,11],assign:[0,1,2,3,4,6,7,8,11],inject:[0,9,11],finish:[0,4,5,10,11],advance:[0,1,2,4,5,6,7,12],coalesce:[0,1,2,4,7],contact:[0,1,2,4,7,13,14,15],inventory:[1,2,4]},pipes={},groups={};
     for(var name of Object.keys(bindings)){pipes[name]=await device.createComputePipelineAsync({layout:'auto',compute:{module:module,entryPoint:name}});groups[name]=device.createBindGroup({layout:pipes[name].getBindGroupLayout(0),entries:bindings[name].map(function(binding){return {binding:binding,resource:{buffer:resources[binding]}};})});}
     var active=options.inject!==false,retired=false,clock=0,quantity=0,latest=new Int32Array(32),points=[],error=null;
     var reads=Array.from({length:3},function(){return {buffer:buffer('read',128+n*32,U.COPY_DST|U.MAP_READ),busy:false,captured:false};}),row=null;
@@ -164,12 +148,11 @@ fn outsidePressure(q:vec2f,r:f32)->f32{
       beforeSubstep:function(enc,step){encode(enc,'admit',1);encode(enc,'contact',step.count);},
       afterSubstep:function(enc,step){encode(enc,'advance',n);encode(enc,'coalesce',1);encode(enc,'contact',step.count);},
       beginGas:function(enc){encode(enc,'strip',count);},prepareGas:function(enc){encode(enc,'sparger',count);},
-      collectGas:function(enc){encode(enc,'descendants',count);encode(enc,'assign',n);encode(enc,'inject',count);},finishGas:function(enc){encode(enc,'finish',count);},
+      collectGas:function(enc){encode(enc,'assign',n);encode(enc,'inject',count);},finishGas:function(enc){encode(enc,'finish',count);},
       captureFrame:function(enc){enc.clearBuffer(ledger,8,8);encode(enc,'inventory',n);row=reads.find(function(r){return !r.busy;})||null;if(row){row.busy=true;row.captured=true;row.clock=clock;row.count=Math.min(n,Math.max(64,latest[4]+64));enc.copyBufferToBuffer(ledger,0,row.buffer,0,128);enc.copyBufferToBuffer(bubbles,0,row.buffer,128,row.count*16);enc.copyBufferToBuffer(material,0,row.buffer,128+n*16,row.count*16);}},
       afterSubmit:function(){var read=row;row=null;if(!read || !read.captured)return;read.captured=false;read.buffer.mapAsync(GPUMapMode.READ).then(function(){if(!retired){var data=read.buffer.getMappedRange();latest=new Int32Array(data,0,32).slice();var b=new Float32Array(data,128,read.count*4),m=new Float32Array(data,128+n*16,read.count*4);points=[];for(var i=0;i<Math.min(latest[4],read.count);i++)if(m[i*4+2]>.5&&m[i*4+2]<1.5)points.push({x:b[i*4],y:b[i*4+1],radius:m[i*4+1],amount:m[i*4]/A.settings.volumeScale});companion.captureClock=read.clock;}read.buffer.unmap();}).catch(function(e){error=e.message;companion.error=error;}).finally(function(){read.busy=false;});},
       captureClock:0,toggle:function(){active=!active;return active;},
       stats:function(){var scale=A.settings.volumeScale;return {injecting:active,injectedAmount:latest[0]/scale,escapedAmount:latest[1]/scale,dispersedAmount:latest[2]/scale,eulerianAmount:latest[3]/scale,residual:(latest[0]-latest[1]-latest[2]-latest[3])/scale,births:latest[10],transitions:latest[11],recoveries:latest[12],coalescences:latest[18],finiteErrors:latest[9],historyUnderflows:latest[8],capacityRefusals:latest[13],blockedSource:latest[15],spargerGasSteps:latest[16],surfaceExits:latest[17],blockedContacts:latest[19],waterContacts:latest[20],usedSlots:latest[4],points:points,captureClock:companion.captureClock,captureAgeSimulationSeconds:Math.max(0,L.simulationClock-companion.captureClock),error:error};},
-      draw:function(ctx,colors){ctx.save();ctx.strokeStyle=colors.edge;ctx.fillStyle=colors.fill;ctx.lineWidth=1;points.forEach(function(b){ctx.beginPath();ctx.arc(b.x,b.y,b.radius,0,Math.PI*2);ctx.globalAlpha=.65;ctx.fill();ctx.globalAlpha=.85;ctx.stroke();});ctx.restore();},
       buffers:{position:bubbles,material:material,witness:witness,ledger:ledger},
       destroy:function(){retired=true;L.setToyMembrane(null);A.setPhaseCompanion(null);buffers.forEach(function(b){try{b.destroy();}catch(e){}});}
     };A.setPhaseCompanion(companion);return companion;
