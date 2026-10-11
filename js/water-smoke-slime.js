@@ -579,7 +579,7 @@
   }
 
   function removeLiquidParticle(i) {
-    if(toyBalloon || toyBoundary && toyBoundary.ready)return;
+    if(toyBalloon || toyDivers || toyBoundary && toyBoundary.ready)return;
     var last = liquidCount - 1;
     if (i < 0 || i > last) return;
     if(machineState && machineState.energyInitial)machineState.energyModified=true;
@@ -613,7 +613,7 @@
    * retires immediately; moving spray gets four seconds to land or rejoin.
    * Real streams and pools reset their dwell because they have ample support. */
   function retireLiquidOrphans() {
-    if (airModel && airModel.enabled || toyFire || toyBalloon) return;
+    if (airModel && airModel.enabled || toyFire || toyBalloon || toyDivers) return;
     liquidOrphanTick++;
     if (liquidOrphanTick < 30 || !liquidCount) return;
     liquidOrphanTick = 0;
@@ -810,7 +810,7 @@
   }
 
   function buildGuests() {
-    var materialGuests=!!(toyBalloon || airModel && airModel.enabled && (airModel.preserveMaterialState || machineState && machineState.definition.name==='cup'));
+    var materialGuests=!!(toyBalloon || toyDivers || airModel && airModel.enabled && (airModel.preserveMaterialState || machineState && machineState.definition.name==='cup'));
     var waterGuestTime=1;
     if(materialGuests){
       waterGuestTime=liquidWGPU.getSimParam('TIMESCALE');
@@ -822,6 +822,7 @@
     // velocity, so poured water piles on a slime instead of passing through.
     // Eight slots since engine v26.09 (GS_MAX_GUESTS). The eight wettest
     // eligible bodies are selected, but a selected body's slot is stable.
+    var guestLimit=toyDivers?7:8;
     var order = [];
     if (typeof jelloBodies !== 'undefined' && jelloBodies.length) {
       order = jelloBodies.filter(function (b0) {
@@ -829,19 +830,20 @@
           isFinite(b0.bboxL + b0.bboxR + b0.bboxT + b0.bboxB);
       }).sort(function (a, bb2) {
         if(!!a.waterBalloon!==!!bb2.waterBalloon)return a.waterBalloon ? -1 : 1;
+        if(!!a.cartesianDiver!==!!bb2.cartesianDiver)return a.cartesianDiver ? -1 : 1;
         return (bb2._wetCells || 0) - (a._wetCells || 0);
       });
-      if (order.length > 8) order.length = 8;
+      if (order.length > guestLimit) order.length = guestLimit;
     }
     // Clear bodies that left the wettest-eight set, then put new entrants
     // into real empty slots. Existing members never move just because their
     // wet-cell ranking changed.
     for (var si = 0; si < liquidGuestSlots.length; si++) {
-      if (order.indexOf(liquidGuestSlots[si]) < 0) liquidGuestSlots[si] = null;
+      if (si>=guestLimit || order.indexOf(liquidGuestSlots[si]) < 0) liquidGuestSlots[si] = null;
     }
     for (var oi = 0; oi < order.length; oi++) {
       if (liquidGuestSlots.indexOf(order[oi]) >= 0) continue;
-      for (var sf = 0; sf < liquidGuestSlots.length; sf++) {
+      for (var sf = 0; sf < guestLimit; sf++) {
         if (!liquidGuestSlots[sf]) { liquidGuestSlots[sf] = order[oi]; break; }
       }
     }
@@ -851,10 +853,10 @@
       // POKE is an ephemeral boundary. Give it a free slot without shifting
       // any slime; at full capacity it temporarily owns the last slot, which
       // matches the old seven-slimes-plus-pointer limit while held.
-      for (var ps = 0; ps < liquidGuestSlots.length; ps++) {
+      for (var ps = 0; ps < guestLimit; ps++) {
         if (!liquidGuestSlots[ps]) { pokeSlot = ps; break; }
       }
-      if (pokeSlot < 0) pokeSlot = liquidGuestSlots.length - 1;
+      if (pokeSlot < 0) pokeSlot = guestLimit - 1;
     }
 
     var out = new Array(8);
@@ -887,7 +889,7 @@
       // Machine boundaries and water both report distance per water simulation
       // second. The ordinary toy retains its calibrated real-time conversion.
       if(materialGuests)ih/=waterGuestTime;
-      for (var i = 0; i < liquidGuestSlots.length; i++) {
+      for (var i = 0; i < guestLimit; i++) {
         var b = liquidGuestSlots[i];
         if (!b || i === pokeSlot) continue;
         var rn = b.ringN | 0;
@@ -946,6 +948,7 @@
         any = true;
       }
     }
+    if(toyDivers){out[7]=toyDivers.guest();any=true;}
     return any ? out : null;
   }
 
@@ -985,7 +988,7 @@
   // machine request. Ordinary scenes do not allocate its GPU resources.
   function airGeometryTick() {
     if (!airModel || !airModel.enabled) return;
-    var materialGuests=!!(airModel.preserveMaterialState || machineState && machineState.definition.name==='cup');
+    var materialGuests=!!(toyDivers || airModel.preserveMaterialState || machineState && machineState.definition.name==='cup');
     var boundaryGuests=materialGuests ? buildGuests() : null;
     var hasBodies=materialGuests ? !!(boundaryGuests && boundaryGuests.some(function(g){return g.pts && g.pts.length>=12;})) : !!jelloBodies.length;
     if (airGeometryVersion === wallsVersion && !hasBodies && !airHadBodies) return;
@@ -1351,7 +1354,7 @@
     liquidGPULastSeq = seqNow;
     if (liquidCount === 0 && !mutated) { liquidPendingDt = 0; return; }
     var awake = liquidWGPU.awakeCount;
-    var quiet = !toyBoundary && !toyFire && !toyBalloon && awake === 0 && !mutated && !toyWakes.length && !pokeGuest;
+    var quiet = !toyBoundary && !toyFire && !toyBalloon && !toyDivers && awake === 0 && !mutated && !toyWakes.length && !pokeGuest;
     if (quiet && liquidCount > 0) {
       liquidSimSkipFrames++;
       if (liquidSimSkipFrames < 45) {       // heartbeat: one real step ~0.75 s
@@ -1419,6 +1422,7 @@
 
   function clearLiquid() {
     if(toyBalloon)toyBalloon.resetBirth();
+    if(toyDivers)toyDivers.resetPressure();
     var previousCount=liquidCount;
     var preserve=airModel && airModel.enabled && airModel.preserveMaterialState;
     liquidCount = 0;
@@ -12111,7 +12115,7 @@
     // Cup buoyancy uses the actual Verlet microstep. Applying an outer-step
     // position impulse to XPBD multiplies lift by its substep count.
     // Keep the established ordinary-scene coupling unchanged.
-    var couplingH = machineState && machineState.definition.name === 'cup'
+    var couplingH = toyDivers || machineState && machineState.definition.name === 'cup'
       ? JELLO_H * jelloImpulseScale() : JELLO_H;
     var invV = ts / couplingH;
     var applyK = couplingH / ts;
@@ -12233,7 +12237,8 @@
       // trampoline: balls skipped on a skin-tight notch instead of
       // carving a crater).
       var buoyScale = 1 / (1 + bSpd / 260);
-      var buoyA = -JELLO_GRAVITY * (1 + BUOY_BETA) * dt * buoyScale;   // times phi per point
+      var displacedMassRatio=b.cartesianDiver ? window.WSSCartesianDivers.lift(b) : 1+BUOY_BETA;
+      var buoyA = -JELLO_GRAVITY * displacedMassRatio * dt * buoyScale;   // times phi per point
       var rampInv = 1 / (TILE * 2.0);                      // surface straddle ramp, ~16 px
                                                            // (wider = softer response to lapping
                                                            // waves; 10 px made lift jerk per wave)
@@ -12579,7 +12584,7 @@
   var toolButtons = [];
   function setTool(name) {
     if(handsPending)return;
-    if(((nativeMachineScene(currentScene) && !toyFire && !toyCannon && !toyThermoscope && !toyBalloon) || handsRequested) && name!=='poke' && !(handsRequested && name==='build'))return;
+    if(((nativeMachineScene(currentScene) && !toyFire && !toyCannon && !toyThermoscope && !toyBalloon && !toyDivers) || handsRequested) && name!=='poke' && !(handsRequested && name==='build'))return;
     if(pointerDown){
       var oldPointer=pointerId;releasePointer({pointerId:oldPointer},true);
       try{inputEl.releasePointerCapture(oldPointer);}catch(error){}
@@ -13269,6 +13274,7 @@
   }
 
   function clearWorldAll(preserveThumbInput) {
+    if(toyDivers){toyDivers.destroy();toyDivers=null;}
     if(toySound)toySound.setActive(false);
     if(toyThermoscope){toyThermoscope=null;thermoscopeAcc=0;SmokeFluid.setPhysics(null,0);SmokeFluid.setThermalStyle(null);}
     if(toyBoundary){toyBoundary.destroy();toyBoundary=null;}
@@ -13297,6 +13303,7 @@
 
   var toyFire=null,fireSplatAcc=0,fireFrameDt=0,fireWaterClock=0,firePourPending=0,firePourAcc=0,firePourClock=0;
   var toyBalloon=null;
+  var toyDivers=null;
   var fireDomainPrevious=null,fireDomainActive=false;
   var machineState=null;
   var toyBoundary=null,toySound=null,thumbWanted=false;
@@ -13556,6 +13563,11 @@
   function measureMachine(state,snapshot){
     var I=window.WaterMachinesInstruments;if(!I)return;
     var definition=state.definition,m=definition.measure;
+    if(toyDivers){var diverUnits=I.scale({width:worldW,density:airModel.settings.density}),diverStats=toyDivers.stats();state.readings={ready:true,caption:definition.caption,action:definition.action,
+      divers:diverStats,particleCount:liquidCount,gasPressurePsi:diverUnits.psi(diverStats.bodies[0].absolutePressure-airModel.settings.atmospherePressure),
+      sampleAgeMs:diverUnits.seconds(diverStats.ageSimulationSeconds)*1000,pressureAgeSimulationMs:diverStats.ageSimulationSeconds*1000,
+      roomAbsolutePressurePsi:diverUnits.psi(airModel.settings.atmospherePressure),energyBudgetStatus:definition.energyBudgetStatus,
+      numericalStatus:I.numericalStatus(snapshot),ledger:snapshot.ledger,convergence:snapshot.convergence,error:diverStats.error || buildError || airState.error};return;}
     if(toyBoundary && state.definition.boundaries){measureNativeMachine(state,snapshot);return;}
     var units=I.scale({width:worldW,density:airModel.settings.density || 1});
     var vesselOptions={tile:TILE,floor:worldH};
@@ -13728,12 +13740,13 @@
     if(request!==machineRequest)return null;
     var definition=nativeMachineScene(name) ? module.make({w:worldW,h:worldH,tile:TILE},options) : module.make(name,{w:worldW,h:worldH,tile:TILE},options);
     currentScene=name;fitStage();
-    var balloonBody=null,balloonSeedRing=null;
+    var balloonBody=null,balloonSeedRing=null,diverBodies=[];
     if(definition.membrane){
       var initialSlime=definition.slimes[0];balloonBody=spawnSlimeAt(initialSlime.x,initialSlime.y,initialSlime.radius,true);
       if(!balloonBody)throw Error('The water balloon skin could not be created.');
       balloonBody.waterBalloon=true;balloonSeedRing=window.WSSWaterBalloons.geometry.bodyRing(balloonBody);
     }
+    if(definition.divers)definition.slimes.forEach(function(s){var b=spawnSlimeAt(s.x,s.y,s.radius,true);if(!b)throw Error('The gas diver could not be created.');diverBodies.push(b);});
     ensureBuilder();
     machineBuilder.begin('Construct '+definition.title);
     definition.vessels.forEach(function(v){machineBuilder.vessel(v.rect,v.sealed);});
@@ -13756,6 +13769,7 @@
     // gravity keeps increasing its tangential velocity on every step.
     var seedRadius=liquidWGPU.cellSize*.5*.85+.0625;
     function seedClear(x,y){
+      if(definition.divers && diverBodies.some(function(b){var near=jelloNearestOnRing(b,x,y);return jelloPointInRing(b,x,y) || Math.hypot(near.x-x,near.y-y)<3;}))return false;
       for(var row=Math.floor((y-seedRadius)/TILE);row<=Math.floor((y+seedRadius)/TILE);row++){
         for(var col=Math.floor((x-seedRadius)/TILE);col<=Math.floor((x+seedRadius)/TILE);col++){
           if(tileAt(row,col)===null && !(valveSeats && valveSeats[row*gridW+col]))continue;
@@ -13775,8 +13789,8 @@
       requested++;
       if(addLiquidParticle('water',px,py,0,0,0)>=0)added++;
     }
-    if(definition.boundaries && added!==requested)throw new Error('Apparatus exceeds the particle capacity: '+requested+' requested, '+added+' added.');
-    if(!definition.membrane)definition.slimes.forEach(function(s){if(!s.held)spawnSlimeAt(s.x,s.y,s.radius);});
+    if((definition.boundaries || definition.divers) && added!==requested)throw new Error('Apparatus exceeds the particle capacity: '+requested+' requested, '+added+' added.');
+    if(!definition.membrane && !definition.divers)definition.slimes.forEach(function(s){if(!s.held)spawnSlimeAt(s.x,s.y,s.radius);});
     var state=machineState={definition:definition,seed:options.seed || 17,initialParticles:added,ready:false,
       primaryUsed:false,startedAt:null,wallClockStartedAt:null,energyInput:0,inputParticles:0,energyModified:false};
     setSceneChip(name);if(!options.canvasThumb)setTool('poke');bakeWalls();updateReadout();
@@ -13838,6 +13852,8 @@
       smokeAwakeT=SMOKE_IDLE_HOLD;model={settings:{density:1}};
     }else model=await enableAirModel(pressureSettings);
     if(!model || request!==machineRequest)return null;
+    if(definition.divers){var diverPalette=getComputedStyle(document.documentElement);toyDivers=window.WSSCartesianDivers.create({liquid:liquidWGPU,model:model,definition:definition,bodies:diverBodies,
+      colors:{accent:diverPalette.getPropertyValue('--accent').trim(),text:diverPalette.getPropertyValue('--text').trim()}});airPressureColors=false;airGeometryVersion=-1;airGeometryTick();}
     if(definition.thermoscope){
       if(!smokeActive)throw new Error('The thermoscope needs the smoke temperature field.');
       toyThermoscope={heated:definition.thermoscope.heated,sampleClock:null};
@@ -13895,6 +13911,7 @@
     if(handsPending)return false;
     if(!machineState || !machineState.ready)return false;
     var definition=machineState.definition,primary=definition.primary;
+    if(primary.kind==='diver-squeeze'){toyDivers.toggle();machineOverlayCache=null;return true;}
     if(primary.kind==='balloon-pop'){
       if(!toyBalloon.pop())return false;
       if(surfaceSlimeGrip && surfaceSlimeGrip.body===toyBalloon.body)jelloGrabEnd();
@@ -14198,6 +14215,7 @@
     drawSmokeRig();
     drawJelloBlobs();
     drawSlimeLooks();
+    if(toyDivers)toyDivers.draw(ctx);
     drawCursor();
     drawLiquidToy();
     drawMachineOverlay();
@@ -14429,7 +14447,7 @@
     // An uncapped browser can call back faster than the solvers' tiny-dt
     // guard. Bank those callbacks into a real membrane update instead of
     // losing elapsed time or redrawing unchanged native water thousands of times.
-    if(toyBalloon && lastT && dt<1/120)return;
+    if((toyBalloon || toyDivers) && lastT && dt<1/120)return;
     lastT = tNow;
     toyFrameNo++;
     // Measure real frame time before limiting the simulation step.
@@ -14440,8 +14458,9 @@
     presetTick(dt);
     emittersTick(dt);
     firePourTick(dt);
+    if(toyDivers)toyDivers.tick();
     retireLiquidOrphans();
-    if(!toyBalloon)updateLiquidToy(dt);
+    if(!toyBalloon && !toyDivers)updateLiquidToy(dt);
     // v4.20 perf: rebucket the mirror only when a NEW readback landed
     // (engine readbackApplyGen). The mirror refreshes every few frames;
     // rebuilding identical buckets on the frames between was pure waste
@@ -14463,7 +14482,8 @@
       // mirror breathes between sweeps.
     updateJello(dt);
     // The new membrane's final native substep uses the displayed gel pose.
-    if(toyBalloon)updateLiquidToy(dt);
+    if(toyBalloon || toyDivers)updateLiquidToy(dt);
+    if(toyDivers)toyDivers.sample();
     if (window.__cdb && window.__cdb.length && jelloBodies.length) {
       var dbgB = jelloBodies[0];
       var dbgE = window.__cdb[window.__cdb.length - 1];
@@ -14791,6 +14811,7 @@
       fire:function(){return toyFire;},
       thermoscope:function(){return toyThermoscope;},
       balloons:function(){return toyBalloon;},
+      divers:function(){return toyDivers;},
       sound:function(enabled){
         if(!toySound)return Promise.resolve(false);
         if(!enabled){toySound.mute();return Promise.resolve(false);}

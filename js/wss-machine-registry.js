@@ -2,6 +2,7 @@
 (function () {
   'use strict';
   var entries = [
+    {id:'cartesian-divers',capability:'Water slimes',title:'Three Cartesian divers',cue:'Squeeze the jar. Watch the gas shrink.',preview:'divers',accepted:false,world:{w:720,h:400},pool:false},
     {id:'water-balloons',capability:'Water slimes',title:'Water balloons',cue:'Drag, fling, then pop the skin.',preview:'water-balloon',accepted:true,world:{w:720,h:400},pool:false},
     {id:'thermoscope',capability:'Fire',title:"Galileo's thermoscope",cue:'Warm the bulb. Watch the water fall.',preview:'thermoscope',accepted:true,world:{w:720,h:400},pool:false},
     {id:'douse-fire',capability:'Fire',title:'Put out the fire',cue:'Pour water onto the glowing plume.',preview:'fire',accepted:true,world:{w:720,h:400},pool:false},
@@ -39,6 +40,7 @@
     if(id==='smoke-ring-cannon')await script('/js/wss-smoke-cannon.js');
     if(id==='smoke-wind-tunnel'){await script('/js/wss-smoke-cannon.js');await script('/js/wss-smoke-wind-tunnel.js');}
     if(id==='water-balloons')await script('/js/wss-water-balloons.js');
+    if(id==='cartesian-divers')await script('/js/wss-cartesian-divers.js');
     if(id==='burst-disk')await script('/js/wss-burst-disk.js');
     await script('/js/wss-sound.js');
     if(id==='tantalus')await script('/js/wss-machines/self-flushing-cup.js');
@@ -60,7 +62,11 @@
     }
     path('M3 43v6h66v-6','toy-preview-glass');
     path('M4 45h64v3H4Z','toy-preview-water');
-    if(kind==='thermoscope'){
+    if(kind==='divers'){
+      path('M13 8v38h46V8M12 13h48M36 13V4','toy-preview-glass');
+      path('M15 25h42v19H15Z','toy-preview-water');
+      path('M23 27a4 4 0 1 0 0-8 4 4 0 0 0 0 8M36 27a5 5 0 1 0 0-10 5 5 0 0 0 0 10M49 27a6 6 0 1 0 0-12 6 6 0 0 0 0 12','toy-preview-slime');
+    }else if(kind==='thermoscope'){
       path('M27 6h21v13H27ZM33 19v24M42 19v24M15 29v19h44V29','toy-preview-glass');
       path('M16 36h17v-4h9v4h16v11H16Z','toy-preview-water');
       path('M32 14h11','toy-preview-mouth');
