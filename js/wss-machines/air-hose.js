@@ -1,10 +1,10 @@
-/* Lab-only precursor to dissolved-gas machines. */
+/* Small-bubble precursor to dissolved-gas machines. */
 (function(root){
   'use strict';
   function make(world,options){
     options=options||{};if(world.w!==720||world.h!==400||world.tile!==8)throw Error('Air hose needs a 720 by 400 world.');
     var inject=options.inject!==false,jar={x:248,y:56,width:224,height:328};
-    return {name:'air-hose',title:'Air hose prototype',seed:options.seed||17,setup:inject?'air-on':'air-off',action:inject?'Stop the air':'Start the air',primary:{kind:'bubble-toggle'},readingLabel:'Gas parcels',
+    return {name:'air-hose',title:'Air hose',seed:options.seed||17,setup:inject?'air-on':'air-off',action:inject?'Stop the air':'Start the air',primary:{kind:'bubble-toggle'},readingLabel:'Gas parcels',
       caption:'Air bubbles expand as the surrounding pressure falls. Stop the hose and watch the remaining bubbles reach the surface.',
       source:{title:'Patkar and colleagues, Hybrid Lagrangian-Eulerian Bubble Formulation',url:'https://pages.cs.wisc.edu/~aanjneya/papers/HLEFBGD/paper.html'},
       setups:[{id:'air-on',label:'Air on',options:{}},{id:'air-off',label:'Air off',options:{inject:false}}],

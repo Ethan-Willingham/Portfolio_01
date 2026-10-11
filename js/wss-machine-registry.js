@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   var entries = [
-    {id:'air-hose',capability:'Bubbles',title:'Air hose prototype',cue:'Stop the air. Watch the last bubbles rise.',preview:'straw',accepted:false,world:{w:720,h:400},pool:false},
+    {id:'air-hose',capability:'Bubbles',title:'Air hose',cue:'Stop the air. Watch the last bubbles rise.',preview:'straw',accepted:true,world:{w:720,h:400},pool:false},
     {id:'cartesian-divers',capability:'Water slimes',title:'Three Cartesian divers',cue:'Squeeze the jar. Watch the gas shrink.',preview:'divers',accepted:true,world:{w:720,h:400},pool:false},
     {id:'kettle',capability:'Steam',title:'Whistling kettle',cue:'Heat water. Cool its vapor back to water.',preview:'kettle',accepted:true,world:{w:720,h:400},pool:false},
     {id:'water-balloons',capability:'Water slimes',title:'Water balloons',cue:'Drag, fling, then pop the skin.',preview:'water-balloon',accepted:true,world:{w:720,h:400},pool:false},
@@ -132,7 +132,7 @@
       var cue=document.createElement('span');cue.className='toy-scene-cue';cue.textContent=e.cue;
       copy.appendChild(name);copy.appendChild(cue);button.appendChild(copy);list.appendChild(button);
     }
-    ['Fire','Smoke'].forEach(function(group){var choices=entries.filter(function(e){return e.accepted && e.capability===group;});if(choices.length){heading(group);choices.forEach(machine);}});
+    ['Fire','Smoke','Sand','Water slimes','Floating things','Steam','Oil and water','Ice','Bubbles','Valves and logic','Sound','Waves'].forEach(function(group){var choices=entries.filter(function(e){return e.accepted && e.capability===group;});if(choices.length){heading(group);choices.forEach(machine);}});
     heading('Earlier water machines');entries.filter(function(e){return e.accepted && !e.capability;}).forEach(machine);
     var workshop=window.WSSMachineRegistry.list().filter(function(e){return !e.accepted;});
     if(workshop.length){heading('Workshop');workshop.forEach(machine);}

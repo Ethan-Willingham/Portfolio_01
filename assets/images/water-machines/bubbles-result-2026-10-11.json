@@ -1,0 +1,372 @@
+{
+  "machine": "Air hose",
+  "capability": "E5 small-bubble precursor, C9 soda and Mentos remains pending",
+  "behaviorCandidate": "17e97d4d16edd72b5bab9787bc25a77660a898f0",
+  "source": "https://pages.cs.wisc.edu/~aanjneya/papers/HLEFBGD/paper.html",
+  "method": "Direct current native water, gas, pressure and fixed-point amount; 15 native seconds per seed and source-off control, actual Stop then 3 native seconds; rAF deltas over 20 seconds with vsync off. Phone viewport 844 by 390.",
+  "rows": [
+    {
+      "seed": 17,
+      "inject": true,
+      "firstVisibleMs": 418,
+      "max": {
+        "gasResidual": 0,
+        "bad": 0,
+        "sustained": 0,
+        "historyUnderflows": 0,
+        "capacityRefusals": 0
+      },
+      "lineage": {
+        "slot": 1,
+        "birthStep": 1288,
+        "firstClock": 10.816666666666737,
+        "lastClock": 13.508333333333436,
+        "firstAmount": 33280,
+        "lastAmount": 33280,
+        "rise": 263.3045654296875,
+        "relativeAmountChange": 0
+      },
+      "firstThree": {
+        "clock": 4.283333333333327,
+        "born": 780,
+        "escaped": 130,
+        "micro": 390,
+        "euler": 260,
+        "residual": 0,
+        "births": 12,
+        "contacts": 22412,
+        "exits": 1,
+        "n": 34734
+      },
+      "last": {
+        "clock": 15.158333333333456,
+        "born": 2925,
+        "escaped": 1950,
+        "micro": 520,
+        "euler": 455,
+        "residual": 0,
+        "births": 45,
+        "contacts": 100164,
+        "exits": 26,
+        "n": 34734
+      },
+      "pass": true,
+      "stop": {
+        "before": {
+          "clock": 15.183333333333456,
+          "born": 2925,
+          "escaped": 1950,
+          "micro": 520,
+          "euler": 455,
+          "residual": 0,
+          "births": 45,
+          "contacts": 100289,
+          "exits": 26,
+          "n": 34734
+        },
+        "after": {
+          "clock": 18.51666666666669,
+          "born": 2925,
+          "escaped": 2665,
+          "micro": 0,
+          "euler": 260,
+          "residual": 0,
+          "births": 45,
+          "contacts": 108946,
+          "exits": 36,
+          "n": 34734
+        },
+        "pass": true
+      },
+      "detached": true
+    },
+    {
+      "seed": 17,
+      "inject": false,
+      "firstVisibleMs": null,
+      "max": {
+        "gasResidual": 0,
+        "bad": 0,
+        "sustained": 0,
+        "historyUnderflows": 0,
+        "capacityRefusals": 0
+      },
+      "lineage": null,
+      "firstThree": {
+        "clock": 4.233333333333326,
+        "born": 0,
+        "escaped": 0,
+        "micro": 0,
+        "euler": 0,
+        "residual": 0,
+        "births": 0,
+        "contacts": 0,
+        "exits": 0,
+        "n": 34734
+      },
+      "last": {
+        "clock": 15.133333333333455,
+        "born": 0,
+        "escaped": 0,
+        "micro": 0,
+        "euler": 0,
+        "residual": 0,
+        "births": 0,
+        "contacts": 0,
+        "exits": 0,
+        "n": 34734
+      },
+      "pass": true,
+      "detached": true
+    },
+    {
+      "seed": 42,
+      "inject": true,
+      "firstVisibleMs": 420,
+      "max": {
+        "gasResidual": 0,
+        "bad": 0,
+        "sustained": 0,
+        "historyUnderflows": 0,
+        "capacityRefusals": 0
+      },
+      "lineage": {
+        "slot": 6,
+        "birthStep": 1008,
+        "firstClock": 8.441666666666709,
+        "lastClock": 11.125000000000075,
+        "firstAmount": 33280,
+        "lastAmount": 33280,
+        "rise": 263.18922424316406,
+        "relativeAmountChange": 0
+      },
+      "firstThree": {
+        "clock": 4.283333333333327,
+        "born": 780,
+        "escaped": 65,
+        "micro": 455,
+        "euler": 260,
+        "residual": 0,
+        "births": 12,
+        "contacts": 20851,
+        "exits": 1,
+        "n": 34731
+      },
+      "last": {
+        "clock": 15.158333333333456,
+        "born": 2925,
+        "escaped": 2405,
+        "micro": 390,
+        "euler": 130,
+        "residual": 0,
+        "births": 45,
+        "contacts": 110050,
+        "exits": 33,
+        "n": 34731
+      },
+      "pass": true,
+      "stop": {
+        "before": {
+          "clock": 15.158333333333456,
+          "born": 2925,
+          "escaped": 2405,
+          "micro": 390,
+          "euler": 130,
+          "residual": 0,
+          "births": 45,
+          "contacts": 110050,
+          "exits": 33,
+          "n": 34731
+        },
+        "after": {
+          "clock": 18.491666666666692,
+          "born": 2925,
+          "escaped": 2470,
+          "micro": 0,
+          "euler": 455,
+          "residual": 0,
+          "births": 45,
+          "contacts": 115865,
+          "exits": 34,
+          "n": 34731
+        },
+        "pass": true
+      },
+      "detached": true
+    },
+    {
+      "seed": 42,
+      "inject": false,
+      "firstVisibleMs": null,
+      "max": {
+        "gasResidual": 0,
+        "bad": 0,
+        "sustained": 0,
+        "historyUnderflows": 0,
+        "capacityRefusals": 0
+      },
+      "lineage": null,
+      "firstThree": {
+        "clock": 4.258333333333327,
+        "born": 0,
+        "escaped": 0,
+        "micro": 0,
+        "euler": 0,
+        "residual": 0,
+        "births": 0,
+        "contacts": 0,
+        "exits": 0,
+        "n": 34731
+      },
+      "last": {
+        "clock": 15.158333333333456,
+        "born": 0,
+        "escaped": 0,
+        "micro": 0,
+        "euler": 0,
+        "residual": 0,
+        "births": 0,
+        "contacts": 0,
+        "exits": 0,
+        "n": 34731
+      },
+      "pass": true,
+      "detached": true
+    },
+    {
+      "seed": 913,
+      "inject": true,
+      "firstVisibleMs": 425,
+      "max": {
+        "gasResidual": 0,
+        "bad": 0,
+        "sustained": 0,
+        "historyUnderflows": 0,
+        "capacityRefusals": 0
+      },
+      "lineage": {
+        "slot": 16,
+        "birthStep": 1248,
+        "firstClock": 10.558333333333401,
+        "lastClock": 12.90833333333343,
+        "firstAmount": 33280,
+        "lastAmount": 33280,
+        "rise": 254.71039581298828,
+        "relativeAmountChange": 0
+      },
+      "firstThree": {
+        "clock": 4.283333333333327,
+        "born": 780,
+        "escaped": 65,
+        "micro": 455,
+        "euler": 260,
+        "residual": 0,
+        "births": 12,
+        "contacts": 20857,
+        "exits": 1,
+        "n": 34728
+      },
+      "last": {
+        "clock": 15.26666666666679,
+        "born": 2925,
+        "escaped": 1755,
+        "micro": 390,
+        "euler": 780,
+        "residual": 0,
+        "births": 45,
+        "contacts": 106448,
+        "exits": 24,
+        "n": 34728
+      },
+      "pass": true,
+      "stop": {
+        "before": {
+          "clock": 15.29166666666679,
+          "born": 2925,
+          "escaped": 1755,
+          "micro": 390,
+          "euler": 780,
+          "residual": 0,
+          "births": 45,
+          "contacts": 106591,
+          "exits": 24,
+          "n": 34728
+        },
+        "after": {
+          "clock": 18.62500000000002,
+          "born": 2925,
+          "escaped": 2405,
+          "micro": 0,
+          "euler": 520,
+          "residual": 0,
+          "births": 45,
+          "contacts": 113339,
+          "exits": 32,
+          "n": 34728
+        },
+        "pass": true
+      },
+      "detached": true
+    },
+    {
+      "seed": 913,
+      "inject": false,
+      "firstVisibleMs": null,
+      "max": {
+        "gasResidual": 0,
+        "bad": 0,
+        "sustained": 0,
+        "historyUnderflows": 0,
+        "capacityRefusals": 0
+      },
+      "lineage": null,
+      "firstThree": {
+        "clock": 4.258333333333327,
+        "born": 0,
+        "escaped": 0,
+        "micro": 0,
+        "euler": 0,
+        "residual": 0,
+        "births": 0,
+        "contacts": 0,
+        "exits": 0,
+        "n": 34728
+      },
+      "last": {
+        "clock": 15.133333333333455,
+        "born": 0,
+        "escaped": 0,
+        "micro": 0,
+        "euler": 0,
+        "residual": 0,
+        "births": 0,
+        "contacts": 0,
+        "exits": 0,
+        "n": 34728
+      },
+      "pass": true,
+      "detached": true
+    }
+  ],
+  "frames": [
+    {
+      "phone": false,
+      "median": 1.2000000000007276,
+      "p95": 9.799999999999272
+    },
+    {
+      "phone": true,
+      "median": 1,
+      "p95": 8.700000000000728
+    }
+  ],
+  "limits": [
+    "Two-dimensional isothermal cylindrical pressure-volume closure with Laplace tension, drag-equilibrium terminal slip and coefficient1.",
+    "Marked air hose admits0.34 cubic inches of room-reference gas per native second, three quantized parcels per native second. It never adds or removes water.",
+    "Current projected water velocity advects dispersed gas. Native contacts exclude actual water and transmit normal interface speed. Gas inertia, resolved wake reaction, shape deformation, mixing and closed mechanical work are absent.",
+    "Largest positive-overlap descendant retains whole gas amount. Supported pockets larger than three coarse cells use Eulerian pressure; lost support reconstructs gas at its last validated local support. Mechanical work from growth, coalescence and representation changes is unmeasured.",
+    "The cream outlines draw current dispersed parcels. Large dark cavities are the coarse native water interface, not resolved spherical bubbles.",
+    "No dissolved gas, soda, fizz, foam, calibrated aquarium or monolithic Rayleigh-Plesset claim."
+  ],
+  "pass": true
+}
