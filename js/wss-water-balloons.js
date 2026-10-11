@@ -211,8 +211,8 @@ fn sweep(a:vec2f,b:vec2f,c:vec2f,d:vec2f,v:vec2f,w:vec2f)->vec2f {
       setSlot:function(value){slot=value;},
       beginFrame:function(enc,state){
         if(retired)return;if(error)throw Error(error);if(enabled && slot<0)throw Error('Water balloon left its native boundary slot.');
-        frame++;frameRing=skinRing();
-        if(frameRing.length<3 || frameRing.length>CURVE_CAPACITY)throw Error('Invalid balloon curve geometry.');
+        frame++;frameRing=enabled ? skinRing() : [];
+        if(enabled && (frameRing.length<3 || frameRing.length>CURVE_CAPACITY))throw Error('Invalid balloon curve geometry.');
         var count=frameRing.length,steps=Math.round((state.clock-L.simulationClock)/state.h),old=new Float32Array((CURVE_CAPACITY+1)*4);
         // Re-sample the prior exact curve at this frame's parameters. The
         // adaptive chord count may change, but material parameters do not.
