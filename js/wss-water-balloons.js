@@ -2,6 +2,31 @@
  * The water integrator is unchanged. Contact reactions use the existing gel nodes. */
 (function(root){
   'use strict';
+  var CURVE_ERROR=.01, CURVE_CAPACITY=4096, LEDGER=CURVE_CAPACITY*2;
+  function quadratic(controls,u){
+    var n=controls.length/2,s=u*n,i=Math.floor(s)%n,t=s-Math.floor(s),a=(i+n-1)%n,c=(i+1)%n;
+    var wa=.5*(1-t)*(1-t),wc=.5*t*t,wb=1-wa-wc;
+    return {x:controls[a*2]*wa+controls[i*2]*wb+controls[c*2]*wc,
+      y:controls[a*2+1]*wa+controls[i*2+1]*wb+controls[c*2+1]*wc};
+  }
+  // Each chord's exact quadratic deviation is bounded by .01 world pixels.
+  // Include all original twenty slit boundaries in this same parameterization.
+  function curveRing(controls,point){
+    var n=controls.length/2,out=[];
+    for(var i=0;i<n;i++){
+      var a=(i+n-1)%n,c=(i+1)%n,dx=(controls[a*2]+controls[c*2])*.5-controls[i*2],dy=(controls[a*2+1]+controls[c*2+1])*.5-controls[i*2+1];
+      var pieces=Math.max(1,Math.ceil(Math.sqrt(Math.hypot(dx,dy)/(4*CURVE_ERROR)))),cuts=[];
+      for(var k=0;k<pieces;k++)cuts.push(k/pieces);
+      for(var slit=0;slit<20;slit++){var t=slit*n/20-i;if(t>1e-10 && t<1-1e-10)cuts.push(t);}
+      cuts.sort(function(a,b){return a-b;});
+      cuts.forEach(function(t,index){if(index && t-cuts[index-1]<1e-10)return;
+        var u=(i+t)/n,q=quadratic(controls,u),v=point?point(i,t):{};
+        out.push(Object.assign(v,{x:q.x,y:q.y,param:u}));
+      });
+    }
+    if(out.length>CURVE_CAPACITY)throw Error('Exact balloon curve exceeds the native geometry allocation.');
+    out.controls=Array.from(controls);return out;
+  }
   function contains(ring,x,y){
     var inside=false;
     for(var i=0,j=ring.length-1;i<ring.length;j=i++){
@@ -21,6 +46,7 @@
     return best;
   }
   function bodyRing(b){
+    if(b.surfaceSlime && b.surfaceSlime.fluidRing)return b.surfaceSlime.fluidRing;
     var take=Math.min(20,b.ringN),out=[];
     for(var k=0;k<take;k++){var i=b.ring[Math.floor(k*b.ringN/take)];out.push({x:b.px[i],y:b.py[i],node:i});}
     return out;
@@ -45,11 +71,11 @@
   }
   function source(layout){return `
 struct Params { step:vec4f, mode:vec4f, world:vec4f };
-struct Guests { data:array<vec4f,${layout.lanes/4}> };
+struct Guests { data:array<vec4f,${CURVE_CAPACITY*2}> };
 struct Grid { count:u32, w:u32, h:u32, ox:u32, oy:u32, cells:u32, dt:f32, inv:f32,
  cols:f32, tile:f32, rows:f32, spare:f32, tc:u32, tr:u32, tw:u32, th:u32, region:vec4f };
 @group(0) @binding(0) var<uniform> p:Params;
-@group(0) @binding(1) var<uniform> g:Guests;
+@group(0) @binding(1) var<storage,read> g:Guests;
 @group(0) @binding(2) var<storage,read_write> pos:array<vec4f>;
 @group(0) @binding(3) var<storage,read_write> flag:array<u32>;
 @group(0) @binding(4) var<storage,read_write> sides:array<vec4u>;
@@ -59,8 +85,9 @@ struct Grid { count:u32, w:u32, h:u32, ox:u32, oy:u32, cells:u32, dt:f32, inv:f3
 @group(0) @binding(8) var<uniform> grid:Grid;
 @group(0) @binding(9) var<storage,read> terrain:array<u32>;
 @group(0) @binding(10) var<storage,read_write> affine:array<vec4f>;
-fn n()->u32 {return u32(g.data[${layout.metaBase/4}u+u32(p.step.y)*2u+1u].y);}
-fn ring(k:u32)->vec4f {return g.data[${layout.ringBase/4}u+u32(p.step.y)*20u+k];}
+fn n()->u32 {return u32(p.mode.w);}
+fn ring(k:u32)->vec4f {return g.data[k];}
+fn hole(k:u32)->bool {let u=g.data[${CURVE_CAPACITY}u+k].x;return p.mode.y>=0. && u>=p.mode.y/20.-.0000001 && u<(p.mode.y+1.)/20.-.0000001;}
 fn live(i:u32)->bool {return i<u32(p.step.x) && (flag[i]&128u)==0u && (flag[i]&3u)==0u;}
 fn inside(v:vec2f)->bool {
  var result=false;let count=n();var j=count-1u;
@@ -98,10 +125,10 @@ fn sweep(a:vec2f,b:vec2f,c:vec2f,d:vec2f,v:vec2f,w:vec2f)->vec2f {
 @compute @workgroup_size(256) fn birth(@builtin(global_invocation_id) id:vec3u){
  let i=id.x;if(!live(i)){return;}before[i]=pos[i];if(sides[i].x!=0u || n()<3u){return;}
  let side=select(1u,2u,inside(pos[i].xy));sides[i]=vec4u(side,side,0u,0u);
- atomicAdd(&sums[select(41u,40u,side==2u)],1);
+ atomicAdd(&sums[select(${LEDGER+1}u,${LEDGER}u,side==2u)],1);
 }
 @compute @workgroup_size(256) fn snapshot(@builtin(global_invocation_id) id:vec3u){let i=id.x;if(live(i)){before[i]=pos[i];}}
-@compute @workgroup_size(1) fn saveRing(){for(var k=0u;k<n();k++){history[k]=ring(k);}history[20]=vec4f(1.);}
+@compute @workgroup_size(1) fn saveRing(){for(var k=0u;k<n();k++){history[k]=ring(k);}history[${CURVE_CAPACITY}]=vec4f(1.);}
 @compute @workgroup_size(256) fn contact(@builtin(global_invocation_id) id:vec3u){
  let i=id.x;if(!live(i) || p.mode.x<.5 || n()<3u || sides[i].x==0u){return;}
  let original=pos[i];let start=before[i].xy;let wanted=sides[i].y==2u;
@@ -110,23 +137,23 @@ fn sweep(a:vec2f,b:vec2f,c:vec2f,d:vec2f,v:vec2f,w:vec2f)->vec2f {
   let a=ring(k);let b=ring((k+1u)%n());let edge=b.xy-a.xy;let length=dot(edge,edge);winding+=cross(a.xy,b.xy);
   if(length<1e-10){continue;}let t=clamp(dot(original.xy-a.xy,edge)/length,0.,1.);let q=mix(a.xy,b.xy,t);let d=dot(original.xy-q,original.xy-q);
   if(d<distance){distance=d;face=k;along=t;point=q;}
-  let oldA=select(a.xy,history[k].xy,history[20].x>.5);let oldB=select(b.xy,history[(k+1u)%n()].xy,history[20].x>.5);
+  let oldA=select(a.xy,history[k].xy,history[${CURVE_CAPACITY}].x>.5);let oldB=select(b.xy,history[(k+1u)%n()].xy,history[${CURVE_CAPACITY}].x>.5);
   let crossed=sweep(oldA,oldB,a.xy,b.xy,start,original.xy);
   if(crossed.x<hit.x){hit=crossed;hitFace=k;}
  }
  let now=inside(original.xy);let slit=i32(p.mode.y);
  // Only an actual trajectory crossing the missing edge changes accessible side.
- if(hit.x<=1. && i32(hitFace)==slit){
-  sides[i].y=select(1u,2u,now);sides[i].z+=1u;atomicAdd(&sums[43],1);return;
+ if(hit.x<=1. && hole(hitFace)){
+  sides[i].y=select(1u,2u,now);sides[i].z+=1u;atomicAdd(&sums[${LEDGER+3}],1);return;
  }
- let tunneled=hit.x<=1. && i32(hitFace)!=slit;
+ let tunneled=hit.x<=1. && !hole(hitFace);
  if(now==wanted && distance>=1.5625 && !tunneled){return;}
  if(tunneled){face=hitFace;along=hit.y;point=mix(ring(face).xy,ring((face+1u)%n()).xy,along);}
- if(i32(face)==slit){return;}
+ if(hole(face)){return;}
  let a=ring(face);let b=ring((face+1u)%n());let edge=b.xy-a.xy;let edgeLength=length(edge);if(edgeLength<.00001){return;}
  let outward=vec2f(edge.y,-edge.x)/edgeLength*select(-1.,1.,winding>0.);
  let normal=outward*select(1.,-1.,wanted);let contactPoint=point+normal*1.25;
- if(inside(contactPoint)!=wanted || !clearPath(start,contactPoint)){atomicAdd(&sums[44],1);return;}
+ if(inside(contactPoint)!=wanted || !clearPath(start,contactPoint)){atomicAdd(&sums[${LEDGER+4}],1);return;}
  let faceV=mix(a.zw,b.zw,along);let closing=min(0.,dot(original.zw-faceV,normal));let velocity=original.zw-normal*closing;
  pos[i]=vec4f(contactPoint,velocity);
  flag[i]=flag[i]&~0x00ffff10u;
@@ -136,30 +163,34 @@ fn sweep(a:vec2f,b:vec2f,c:vec2f,d:vec2f,v:vec2f,w:vec2f)->vec2f {
  let left=face*2u;let right=((face+1u)%n())*2u;
  atomicAdd(&sums[left],i32(round(reaction.x*(1.-along)*4096.)));atomicAdd(&sums[left+1u],i32(round(reaction.y*(1.-along)*4096.)));
  atomicAdd(&sums[right],i32(round(reaction.x*along*4096.)));atomicAdd(&sums[right+1u],i32(round(reaction.y*along*4096.)));
- atomicAdd(&sums[42],1);
+ atomicAdd(&sums[${LEDGER+2}],1);
 }
 @compute @workgroup_size(256) fn observe(@builtin(global_invocation_id) id:vec3u){
- let i=id.x;if(!live(i)){return;}let v=pos[i];atomicAdd(&sums[49],1);
- if(any(v!=v) || any(abs(v)>vec4f(1e10))){atomicAdd(&sums[48],1);return;}
+ let i=id.x;if(!live(i)){return;}let v=pos[i];atomicAdd(&sums[${LEDGER+9}],1);
+ if(any(v!=v) || any(abs(v)>vec4f(1e10))){atomicAdd(&sums[${LEDGER+8}],1);return;}
  if(sides[i].x==2u){
-  let contained=n()>=3u && inside(v.xy);if(contained){atomicAdd(&sums[46],1);}else{atomicAdd(&sums[47],1);}
-  atomicAdd(&sums[50],i32(round(v.x*16.)));atomicAdd(&sums[51],i32(round(v.y*16.)));
+  let contained=n()>=3u && inside(v.xy);if(contained){atomicAdd(&sums[${LEDGER+6}],1);}else{atomicAdd(&sums[${LEDGER+7}],1);}
+  atomicAdd(&sums[${LEDGER+10}],i32(round(v.x*16.)));atomicAdd(&sums[${LEDGER+11}],i32(round(v.y*16.)));
  }
- if(p.mode.x>.5 && i32(p.mode.y)<0 && sides[i].x!=0u && inside(v.xy)!=(sides[i].y==2u)){atomicAdd(&sums[45],1);}
+ if(p.mode.x>.5 && i32(p.mode.y)<0 && sides[i].x!=0u && inside(v.xy)!=(sides[i].y==2u)){atomicAdd(&sums[${LEDGER+5}],1);}
 }
 `;}
   async function create(options){
     var L=options.liquid,b=options.body,device=L.device,queue=L.queue,layout=L.getGuestUniformLayout(),U=GPUBufferUsage;
     if(!L.simActive || !b || b.ringN<3)throw Error('Water balloons need native water and a closed elastic ring.');
-    var retired=false,enabled=true,error=null,frame=0,birthGeneration=0,slot=-1,slit=-1,latest=new Int32Array(64),pendingImpulse=[],lastClock=0,maxAge=0;
+    var retired=false,enabled=true,error=null,frame=0,birthGeneration=0,slot=-1,slit=-1,latest=new Int32Array(LEDGER+24),pendingImpulse=[],lastClock=0,maxAge=0,previousControls=null,frameRing=[];
+    function skinRing(){return options.skinRing ? options.skinRing(b) : bodyRing(b);}
     var buffers=[];
     function buffer(size,usage){var value=device.createBuffer({size:size,usage:usage});buffers.push(value);return value;}
     var params=buffer(48,U.UNIFORM|U.COPY_DST),tags=buffer(options.maxParticles*16,U.STORAGE|U.COPY_DST|U.COPY_SRC),
-      before=buffer(options.maxParticles*16,U.STORAGE|U.COPY_SRC),history=buffer(21*16,U.STORAGE|U.COPY_DST),
-      sums=buffer(64*4,U.STORAGE|U.COPY_DST|U.COPY_SRC),reads=Array.from({length:3},function(){return {buffer:buffer(256,U.MAP_READ|U.COPY_DST),busy:false,captured:false};});
+      before=buffer(options.maxParticles*16,U.STORAGE|U.COPY_SRC),history=buffer((CURVE_CAPACITY+1)*16,U.STORAGE|U.COPY_DST),
+      sums=buffer((LEDGER+24)*4,U.STORAGE|U.COPY_DST|U.COPY_SRC),
+      shapes=Array.from({length:layout.slots},function(){return buffer(CURVE_CAPACITY*32,U.STORAGE|U.COPY_DST);}),reads=[];
+    function readRow(){var row={buffer:buffer((LEDGER+24)*4,U.MAP_READ|U.COPY_DST),busy:false,captured:false};reads.push(row);return row;}
+    for(var ri=0;ri<3;ri++)readRow();
     // An exposed lower-side opening can drain while the base rests on the
     // basin. A bottom opening is naturally plugged by that same solid floor.
-    if(options.slit){var initialRing=bodyRing(b),best=-Infinity;for(var k=0;k<initialRing.length;k++){
+    if(options.slit){var initialRing=options.slitRing ? options.slitRing(b) : bodyRing(b),best=-Infinity;for(var k=0;k<initialRing.length;k++){
       var a=initialRing[k],c=initialRing[(k+1)%initialRing.length],x=(a.x+c.x)*.5-b.cx,y=(a.y+c.y)*.5-b.cy;
       var score=x+y*.5;if(y>=0 && score>best){best=score;slit=k;}}
     }
@@ -169,8 +200,8 @@ fn sweep(a:vec2f,b:vec2f,c:vec2f,d:vec2f,v:vec2f,w:vec2f)->vec2f {
     for(var name of ['birth','snapshot','saveRing','contact','observe']){
       pipes[name]=await device.createComputePipelineAsync({layout:'auto',compute:{module:module,entryPoint:name}});
       var used=name==='birth'?[0,1,2,3,4,5,7]:name==='snapshot'?[0,2,3,5]:name==='saveRing'?[0,1,6]:name==='contact'?[0,1,2,3,4,5,6,7,8,9,10]:[0,1,2,3,4,7];
-      groups[name]=L.gameParamsBufs.map(function(guestBuffer){
-        var resources=[params,guestBuffer,L.buf.pos,L.buf.flag,tags,before,history,sums,L.paramsBuf,L.buf.terrainMask,L.buf.affine];
+      groups[name]=shapes.map(function(shapeBuffer){
+        var resources=[params,shapeBuffer,L.buf.pos,L.buf.flag,tags,before,history,sums,L.paramsBuf,L.buf.terrainMask,L.buf.affine];
         return device.createBindGroup({layout:pipes[name].getBindGroupLayout(0),entries:used.map(function(binding){return {binding:binding,resource:{buffer:resources[binding]}};})});
       });
     }
@@ -180,9 +211,24 @@ fn sweep(a:vec2f,b:vec2f,c:vec2f,d:vec2f,v:vec2f,w:vec2f)->vec2f {
       setSlot:function(value){slot=value;},
       beginFrame:function(enc,state){
         if(retired)return;if(error)throw Error(error);if(enabled && slot<0)throw Error('Water balloon left its native boundary slot.');
-        frame++;var values=new Float32Array([state.count,Math.max(0,slot),state.h,frame,enabled?1:0,slit,.002,0,options.width,options.height,state.clock,L.getSimParam('TIMESCALE')]);
-        queue.writeBuffer(params,0,values);enc.clearBuffer(sums,45*4,7*4);
-        queue.writeBuffer(sums,56*4,new Float32Array([state.clock,frame,L.getSimParam('TIMESCALE'),0]));
+        frame++;frameRing=skinRing();
+        if(frameRing.length<3 || frameRing.length>CURVE_CAPACITY)throw Error('Invalid balloon curve geometry.');
+        var count=frameRing.length,steps=Math.round((state.clock-L.simulationClock)/state.h),old=new Float32Array((CURVE_CAPACITY+1)*4);
+        // Re-sample the prior exact curve at this frame's parameters. The
+        // adaptive chord count may change, but material parameters do not.
+        if(previousControls && frameRing.controls){for(var k=0;k<count;k++){var v=quadratic(previousControls,frameRing[k].param);old[k*4]=v.x;old[k*4+1]=v.y;}old[CURVE_CAPACITY*4]=1;}
+        queue.writeBuffer(history,0,old);
+        var vmax=L.getSimParam('MAX_VEL');
+        for(var q=0;q<steps;q++){var shape=new Float32Array(CURVE_CAPACITY*8),back=(steps-1-q)*state.h;
+          for(var k=0;k<count;k++){var v=frameRing[k],vx=v.vx || 0,vy=v.vy || 0,speed=Math.hypot(vx,vy);if(vmax>0 && speed>vmax){vx*=vmax/speed;vy*=vmax/speed;}
+            shape[k*4]=v.x-vx*back;shape[k*4+1]=v.y-vy*back;shape[k*4+2]=vx;shape[k*4+3]=vy;
+            shape[CURVE_CAPACITY*4+k*4]=v.param===undefined ? k/count : v.param;}
+          queue.writeBuffer(shapes[q],0,shape);
+        }
+        previousControls=frameRing.controls ? Array.from(frameRing.controls) : null;
+        var values=new Float32Array([state.count,Math.max(0,slot),state.h,frame,enabled?1:0,slit,.002,count,options.width,options.height,state.clock,L.getSimParam('TIMESCALE')]);
+        queue.writeBuffer(params,0,values);enc.clearBuffer(sums,(LEDGER+5)*4,7*4);
+        queue.writeBuffer(sums,(LEDGER+16)*4,new Float32Array([state.clock,frame,L.getSimParam('TIMESCALE'),0]));
       },
       beforeSubstep:function(enc,state){
         encode(enc,'birth',state.substep,state.count);
@@ -191,36 +237,40 @@ fn sweep(a:vec2f,b:vec2f,c:vec2f,d:vec2f,v:vec2f,w:vec2f)->vec2f {
       },
       afterSubstep:function(enc,state){encode(enc,'contact',state.substep,state.count);},
       captureFrame:function(enc,state){
-        encode(enc,'observe',state.substep,state.count);row=reads.find(function(r){return !r.busy;}) || null;
-        if(row){row.busy=true;row.captured=true;row.generation=birthGeneration;enc.copyBufferToBuffer(sums,0,row.buffer,0,256);enc.clearBuffer(sums,0,40*4);}
+        encode(enc,'observe',state.substep,state.count);row=reads.find(function(r){return !r.busy;}) || readRow();
+        // Every reaction packet retains its own curve-node weights. Never
+        // accumulate impulses across different adaptive tessellations.
+        row.ring=frameRing;row.busy=true;row.captured=true;row.generation=birthGeneration;
+        enc.copyBufferToBuffer(sums,0,row.buffer,0,(LEDGER+24)*4);enc.clearBuffer(sums,0,LEDGER*4);
       },
       afterSubmit:function(){
         var captured=row;row=null;if(!captured || !captured.captured)return;captured.captured=false;var generation=captured.generation;
         captured.buffer.mapAsync(GPUMapMode.READ).then(function(){
           if(retired || generation!==birthGeneration){captured.buffer.unmap();return;}
-          var raw=captured.buffer.getMappedRange(),a=new Int32Array(raw).slice(),meta=new Float32Array(raw,56*4,4);
+          var raw=captured.buffer.getMappedRange(),a=new Int32Array(raw).slice(),meta=new Float32Array(raw,(LEDGER+16)*4,4);
           lastClock=meta[0];maxAge=Math.max(maxAge,L.simulationClock-lastClock);latest=a;
-          if(enabled)pendingImpulse.push({values:a.slice(0,40),clock:lastClock,frame:meta[1],time:meta[2]});
+          if(enabled)pendingImpulse.push({values:a.slice(0,captured.ring.length*2),ring:captured.ring,clock:lastClock,frame:meta[1],time:meta[2]});
           captured.buffer.unmap();
         }).catch(function(e){if(!retired && generation===birthGeneration){error=e.message;companion.error=error;}}).finally(function(){captured.busy=false;});
       },
       couple:function(h,timescale,massPoint){
-        if(!enabled || retired)return;var packets=pendingImpulse.splice(0),ring=bodyRing(b);
+        if(!enabled || retired)return;var packets=pendingImpulse.splice(0);
         packets.forEach(function(packet){
-          var scale=packet.time*h/(timescale*massPoint*4096);
-          for(var k=0;k<ring.length;k++){var i=ring[k].node;b.ox[i]-=packet.values[k*2]*scale;b.oy[i]-=packet.values[k*2+1]*scale;}
+          var ring=packet.ring,scale=packet.time*h/(timescale*massPoint*4096);
+          for(var k=0;k<ring.length;k++){var nodes=ring[k].weights || [{node:ring[k].node,weight:1}];nodes.forEach(function(point){b.ox[point.node]-=packet.values[k*2]*scale*point.weight;b.oy[point.node]-=packet.values[k*2+1]*scale*point.weight;});}
           b.sleeping=false;b.sleepFrames=0;
         });
       },
       pop:function(){if(!enabled)return false;enabled=false;b.waterBalloon=false;pendingImpulse.length=0;return true;},
-      resetBirth:function(){birthGeneration++;queue.writeBuffer(tags,0,new Uint32Array(options.maxParticles*4));queue.writeBuffer(sums,0,new Int32Array(64));latest=new Int32Array(64);pendingImpulse.length=0;lastClock=L.simulationClock;maxAge=0;},
-      stats:function(){var birthInside=latest[40];return {popped:!enabled,slitEdge:slit,birthInside:birthInside,birthOutside:latest[41],
-        inside:latest[46],outside:latest[47],retainedFraction:birthInside?latest[46]/birthInside:null,contacts:latest[42],slitCrossings:latest[43],
-        terrainBlocked:latest[44],sideViolations:latest[45],nonfinite:latest[48],waterCount:latest[49],
-        waterCenterX:birthInside?latest[50]/16/birthInside:null,waterCenterY:birthInside?latest[51]/16/birthInside:null,
-        contactClock:lastClock,contactFrame:new Float32Array(latest.buffer,56*4,4)[1],contactAgeSimulationSeconds:Math.max(0,L.simulationClock-lastClock),
-        maxContactAgeSimulationSeconds:maxAge,frame:frame,pending:reads.some(function(r){return r.busy;}),error:error};},
+      resetBirth:function(){birthGeneration++;queue.writeBuffer(tags,0,new Uint32Array(options.maxParticles*4));queue.writeBuffer(sums,0,new Int32Array(LEDGER+24));latest=new Int32Array(LEDGER+24);previousControls=null;pendingImpulse.length=0;lastClock=L.simulationClock;maxAge=0;},
+      stats:function(){var birthInside=latest[LEDGER+0];return {popped:!enabled,slitEdge:slit,birthInside:birthInside,birthOutside:latest[LEDGER+1],
+        inside:latest[LEDGER+6],outside:latest[LEDGER+7],retainedFraction:birthInside?latest[LEDGER+6]/birthInside:null,contacts:latest[LEDGER+2],slitCrossings:latest[LEDGER+3],
+        terrainBlocked:latest[LEDGER+4],sideViolations:latest[LEDGER+5],nonfinite:latest[LEDGER+8],waterCount:latest[LEDGER+9],
+        waterCenterX:birthInside?latest[LEDGER+10]/16/birthInside:null,waterCenterY:birthInside?latest[LEDGER+11]/16/birthInside:null,
+        contactClock:lastClock,contactFrame:new Float32Array(latest.buffer,(LEDGER+16)*4,4)[1],contactAgeSimulationSeconds:Math.max(0,L.simulationClock-lastClock),
+        maxContactAgeSimulationSeconds:maxAge,curvePoints:frameRing.length,curveErrorWorldPixels:CURVE_ERROR,frame:frame,pending:reads.some(function(r){return r.busy;}),error:error};},
       draw:function(ctx,body){
+        if(options.skinPath){ctx.save();ctx.fillStyle=options.colors.skin;ctx.globalAlpha=.08;ctx.fill(options.skinPath(body,-1));ctx.globalAlpha=1;ctx.lineWidth=2;ctx.strokeStyle=options.colors.edge;ctx.lineJoin='round';ctx.lineCap='round';ctx.stroke(options.skinPath(body,slit));ctx.restore();return;}
         var points=bodyRing(body);ctx.save();ctx.beginPath();ctx.moveTo(points[0].x,points[0].y);
         points.slice(1).forEach(function(v){ctx.lineTo(v.x,v.y);});ctx.closePath();ctx.fillStyle=options.colors.skin;ctx.globalAlpha=.08;ctx.fill();ctx.globalAlpha=1;
         ctx.lineWidth=2;ctx.strokeStyle=options.colors.edge;
@@ -231,5 +281,5 @@ fn sweep(a:vec2f,b:vec2f,c:vec2f,d:vec2f,v:vec2f,w:vec2f)->vec2f {
     };
     return companion;
   }
-  root.WSSWaterBalloons={create:create,geometry:{contains:contains,nearest:nearest,bodyRing:bodyRing,sweptEdge:sweptEdge},source:source};
+  root.WSSWaterBalloons={create:create,geometry:{quadratic:quadratic,curveRing:curveRing,curveError:CURVE_ERROR,contains:contains,nearest:nearest,bodyRing:bodyRing,sweptEdge:sweptEdge},source:source};
 })(typeof window!=='undefined'?window:globalThis);

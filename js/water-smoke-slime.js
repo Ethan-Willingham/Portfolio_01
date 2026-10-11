@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.104'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.107'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -816,6 +816,210 @@
     wakeLiquidNear(cx, cy, r + 60);
   }
 
+  // Only the hollow balloon uses this current quadratic native boundary.
+  // Other toy bodies keep their existing registration and water timing.
+  function toyBalloonWaterScale() {
+    var time=liquidWGPU.getSimParam('TIMESCALE');
+    if(!(Number.isFinite(time) && time>0))throw Error('Moving balloon skins need a positive native clock.');
+    return time;
+  }
+  function toySlimeFluidGuest(body) {
+    var m=body.surfaceSlime;if(!body.waterBalloon || !m)return null;
+    var time=toyBalloonWaterScale();
+    var cached=m.fluidFrame===jelloFrameNo && m.fluidAccum===jelloAccum && m.fluidAge===m.age && m.fluidTime===time;
+    var g=cached ? m.fluidGuest : toyBalloonSkinGuest(body);if(!g)return null;
+    if(!cached){m.fluidTime=time;m.fluidRing=null;
+      m.fluidControls=new Float64Array(jelloRingBakeN*2);
+      for(var i=0;i<jelloRingBakeN;i++){m.fluidControls[i*2]=jelloROX[i];m.fluidControls[i*2+1]=jelloROY[i];}
+    }
+    g.mvx=g.mvy=0;var count=g.pts.length/4;
+    for(var k=0;k<count;k++){g.mvx+=g.pts[k*4+2]/count;g.mvy+=g.pts[k*4+3]/count;}
+    g.membrane=true;return g;
+  }
+  function toyBalloonSkinGuest(body) {
+    var b = surfaceSlimeRenderBody(body), m = body.surfaceSlime;
+    if (m) m.fluidFrame = -1;
+    if (!m || b.ringN < 3 || !isFinite(b.bboxL + b.bboxR + b.bboxT + b.bboxB)) return null;
+    jelloRingBake(b);
+    var n = jelloRingBakeN, take = Math.min(20, n);
+    m.fluidPath = surfaceSlimeSkinPath(); m.fluidView = b;
+    var g = m.fluidGuest;
+    if (!g || g.pts.length !== take * 4) {
+      g = m.fluidGuest = { pts: new Float64Array(take * 4), skin: true,
+        normals: new Float64Array(take * 3), sample: new Float64Array(take * 4) };
+    }
+    var sample = g.sample, lines = g.normals, pts = g.pts, sign = b.ringSign, folded = false;
+    var ih = JELLO_TIMESCALE / (jelloStepH || JELLO_H);
+    var physical = !!body.waterBalloon;
+    var fadeScale = physical ? 1 / toyBalloonWaterScale() : 1;
+    var chamfer = JELLO_EDGE_STYLE >= 1 && body.ringN * 2 <= JELLO_MAX_POINTS;
+    for (var k = 0; k < take; k++) {
+      var s = k * n / take, i = Math.floor(s), t = s - i;
+      var prev = (i + n - 1) % n, next = (i + 1) % n;
+      var a = 0.5 * (1 - t) * (1 - t), c = 0.5 * t * t, mid = 1 - a - c;
+      sample[k * 4] = jelloROX[prev] * a + jelloROX[i] * mid + jelloROX[next] * c;
+      sample[k * 4 + 1] = jelloROY[prev] * a + jelloROY[i] * mid + jelloROY[next] * c;
+      var vx = 0, vy = 0;
+      for (var v = 0; v < 3; v++) {
+        var baked = v === 0 ? prev : (v === 1 ? i : next), weight = v === 0 ? a : (v === 1 ? mid : c);
+        var original = chamfer ? Math.floor(baked / 2) : baked;
+        var cut = chamfer ? (baked % 2 ? 0.75 : 0.25) : 0;
+        for (var side = 0; side < (chamfer ? 2 : 1); side++) {
+          var node = body.ring[(original + side) % body.ringN];
+          var ux = skySlimeClamp((body.px[node] - body.ox[node]) * ih, -600, 600);
+          var uy = skySlimeClamp((body.py[node] - body.oy[node]) * ih, -600, 600);
+          var fade = physical ? fadeScale : skySlimeClamp((Math.hypot(ux, uy) - 20) / 50, 0, 1);
+          var w = weight * (chamfer ? (side ? cut : 1 - cut) : 1) * fade;
+          vx += ux * w; vy += uy * w;
+        }
+      }
+      sample[k * 4 + 2] = vx; sample[k * 4 + 3] = vy;
+    }
+    for (var edge = 0; edge < take; edge++) {
+      var end = (edge + 1) % take, ax = sample[edge * 4], ay = sample[edge * 4 + 1];
+      var dx = sample[end * 4] - ax, dy = sample[end * 4 + 1] - ay;
+      var length = Math.hypot(dx, dy), nx = length > 1e-9 ? sign * dy / length : 0;
+      if (length <= 1e-9) folded = true;
+      var ny = length > 1e-9 ? -sign * dx / length : -1, outset = 0;
+      var from = edge * n / take, to = (edge + 1) * n / take;
+      for (var piece = Math.floor(from); piece < to; piece++) {
+        var ci = piece % n, cp = (ci + n - 1) % n, cn = (ci + 1) % n;
+        var q0 = ((jelloROX[cp] + jelloROX[ci]) * 0.5 - ax) * nx + ((jelloROY[cp] + jelloROY[ci]) * 0.5 - ay) * ny;
+        var q1 = (jelloROX[ci] - ax) * nx + (jelloROY[ci] - ay) * ny;
+        var q2 = ((jelloROX[ci] + jelloROX[cn]) * 0.5 - ax) * nx + ((jelloROY[ci] + jelloROY[cn]) * 0.5 - ay) * ny;
+        var qa = q0 - 2 * q1 + q2, qb = 2 * (q1 - q0);
+        var lo = Math.max(0, from - piece), hi = Math.min(1, to - piece);
+        outset = Math.max(outset, (qa * lo + qb) * lo + q0, (qa * hi + qb) * hi + q0);
+        if (qa < -1e-12) {
+          var peak = -qb / (2 * qa);
+          if (peak > lo && peak < hi) outset = Math.max(outset, (qa * peak + qb) * peak + q0);
+        }
+      }
+      // The existing projection adds 0.5 px. Another 0.4 px keeps the
+      // visible 0.9 px snow grain outside the gel, including roundoff.
+      lines[edge * 3] = nx; lines[edge * 3 + 1] = ny;
+      lines[edge * 3 + 2] = nx * ax + ny * ay + outset + 0.42;
+    }
+    var left = Infinity, right = -Infinity, top = Infinity, bottom = -Infinity;
+    for (var p = 0; p < take; p++) {
+      var previous = (p + take - 1) % take, nx0 = lines[previous * 3], ny0 = lines[previous * 3 + 1];
+      var nx1 = lines[p * 3], ny1 = lines[p * 3 + 1];
+      var d0 = lines[previous * 3 + 2], d1 = lines[p * 3 + 2], det = nx0 * ny1 - ny0 * nx1;
+      var x = sample[p * 4], y = sample[p * 4 + 1];
+      // Find the shortest outward displacement satisfying both faces.
+      // Intersecting the infinite lines alone creates long spikes where
+      // almost parallel faces need slightly different curve clearances.
+      var h0 = Math.max(0, d0 - nx0 * x - ny0 * y);
+      var h1 = Math.max(0, d1 - nx1 * x - ny1 * y), dot = nx0 * nx1 + ny0 * ny1;
+      if (dot < -0.95) folded = true;
+      if (h0 * dot >= h1) { x += nx0 * h0; y += ny0 * h0; }
+      else if (h1 * dot >= h0) { x += nx1 * h1; y += ny1 * h1; }
+      else if (Math.abs(det) > 1e-9) {
+        x += (h0 * ny1 - ny0 * h1) / det; y += (nx0 * h1 - h0 * nx1) / det;
+      }
+      else { var shift = Math.max(h0, h1); x += nx1 * shift; y += ny1 * shift; }
+      if (!isFinite(x + y) || Math.hypot(x - sample[p * 4], y - sample[p * 4 + 1]) > Math.max(8, b.spacing * 2)) folded = true;
+      pts[p * 4] = x; pts[p * 4 + 1] = y;
+      pts[p * 4 + 2] = sample[p * 4 + 2]; pts[p * 4 + 3] = sample[p * 4 + 3];
+      left = Math.min(left, x); right = Math.max(right, x); top = Math.min(top, y); bottom = Math.max(bottom, y);
+    }
+    if (folded) {
+      // A folded cusp has incompatible local outward faces. Use a bounded
+      // convex support envelope until it unfolds, still with twenty edges.
+      // Exact quadratic extrema keep even this rare fallback close to the
+      // outermost gel and prevent an unbounded miter from widening the grid.
+      for (var f = 0; f < take; f++) {
+        var angle = sign * f * Math.PI * 2 / take, fnx = Math.cos(angle), fny = Math.sin(angle), support = -Infinity;
+        for (var cidx = 0; cidx < n; cidx++) {
+          var cprev = (cidx + n - 1) % n, cnext = (cidx + 1) % n;
+          var v0 = (jelloROX[cprev] + jelloROX[cidx]) * 0.5 * fnx + (jelloROY[cprev] + jelloROY[cidx]) * 0.5 * fny;
+          var v1 = jelloROX[cidx] * fnx + jelloROY[cidx] * fny;
+          var v2 = (jelloROX[cidx] + jelloROX[cnext]) * 0.5 * fnx + (jelloROY[cidx] + jelloROY[cnext]) * 0.5 * fny;
+          var ca = v0 - 2 * v1 + v2, cb = 2 * (v1 - v0);
+          support = Math.max(support, v0, v2);
+          if (ca < -1e-12) { var extremum = -cb / (2 * ca); if (extremum > 0 && extremum < 1) support = Math.max(support, (ca * extremum + cb) * extremum + v0); }
+        }
+        lines[f * 3] = fnx; lines[f * 3 + 1] = fny; lines[f * 3 + 2] = support + 0.42;
+      }
+      left = top = Infinity; right = bottom = -Infinity;
+      for (var fp = 0; fp < take; fp++) {
+        var before = (fp + take - 1) % take;
+        var fx0 = lines[before * 3], fy0 = lines[before * 3 + 1], fd0 = lines[before * 3 + 2];
+        var fx1 = lines[fp * 3], fy1 = lines[fp * 3 + 1], fd1 = lines[fp * 3 + 2], determinant = fx0 * fy1 - fy0 * fx1;
+        var fx = (fd0 * fy1 - fy0 * fd1) / determinant, fy = (fx0 * fd1 - fd0 * fx1) / determinant;
+        var closest = 0, closestD2 = Infinity;
+        for (var sv = 0; sv < take; sv++) { var distance2 = (fx - sample[sv * 4]) * (fx - sample[sv * 4]) + (fy - sample[sv * 4 + 1]) * (fy - sample[sv * 4 + 1]); if (distance2 < closestD2) { closestD2 = distance2; closest = sv; } }
+        pts[fp * 4] = fx; pts[fp * 4 + 1] = fy;
+        pts[fp * 4 + 2] = sample[closest * 4 + 2]; pts[fp * 4 + 3] = sample[closest * 4 + 3];
+        left = Math.min(left, fx); right = Math.max(right, fx); top = Math.min(top, fy); bottom = Math.max(bottom, fy);
+      }
+    }
+    if (!isFinite(left + right + top + bottom)) return null;
+    for (var valid = 0; valid < pts.length; valid++) if (!isFinite(pts[valid])) return null;
+    g.convex = sign;
+    for (var corner = 0; corner < take; corner++) {
+      var after = (corner + 1) % take, beforeCorner = (corner + take - 1) % take;
+      var ex0 = pts[corner * 4] - pts[beforeCorner * 4], ey0 = pts[corner * 4 + 1] - pts[beforeCorner * 4 + 1];
+      var ex1 = pts[after * 4] - pts[corner * 4], ey1 = pts[after * 4 + 1] - pts[corner * 4 + 1];
+      if (sign * (ex0 * ey1 - ey0 * ex1) <= 1e-4) { g.convex = 0; break; }
+    }
+    g.x = (left + right) * 0.5; g.y = (top + bottom) * 0.5;
+    g.hw = (right - left) * 0.5; g.hh = (bottom - top) * 0.5;
+    m.fluidFrame = jelloFrameNo; m.fluidAccum = jelloAccum; m.fluidAge = m.age;
+    return g;
+  }
+
+  function toyBalloonCurveWeights(body,i,t,n) {
+    var a=.5*(1-t)*(1-t),c=.5*t*t,weights={},chamfer=JELLO_EDGE_STYLE>=1 && body.ringN*2<=JELLO_MAX_POINTS;
+    [a,1-a-c,c].forEach(function(weight,index){var baked=(i+n+index-1)%n,original=chamfer ? Math.floor(baked/2) : baked,cut=chamfer ? (baked%2 ? .75 : .25) : 0;
+      for(var side=0;side<(chamfer?2:1);side++){var node=body.ring[(original+side)%body.ringN],w=weight*(chamfer ? (side?cut:1-cut) : 1);weights[node]=(weights[node] || 0)+w;}
+    });
+    return Object.keys(weights).map(function(node){return {node:Number(node),weight:weights[node]};});
+  }
+  function toySlimeFluidRing(body) {
+    var g=toySlimeFluidGuest(body);if(!g)return [];
+    var m=body.surfaceSlime;if(m.fluidRing)return m.fluidRing;
+    var count=g.pts.length/4,n=m.fluidControls.length/2,ring=[];
+    for(var k=0;k<count;k++){
+      // The stock folded-cusp envelope also assigns the nearest curve sample.
+      var sample=0,best=Infinity;
+      for(var q=0;q<count;q++){var d=Math.pow(g.pts[k*4]-g.sample[q*4],2)+Math.pow(g.pts[k*4+1]-g.sample[q*4+1],2);if(d<best){best=d;sample=q;}}
+      var s=sample*n/count,i=Math.floor(s),nodes=toyBalloonCurveWeights(body,i,s-i,n);
+      ring.push({x:g.pts[k*4],y:g.pts[k*4+1],node:nodes[0].node,weights:nodes});
+    }
+    return m.fluidRing=ring;
+  }
+  function toyBalloonCurveGeometry(body,controls) {
+    var n=controls.length/2,ih=JELLO_TIMESCALE/(jelloStepH || JELLO_H),time=toyBalloonWaterScale();
+    return window.WSSWaterBalloons.geometry.curveRing(controls,function(i,t){
+      var nodes=toyBalloonCurveWeights(body,i,t,n),vx=0,vy=0;
+      nodes.forEach(function(p){vx+=skySlimeClamp((body.px[p.node]-body.ox[p.node])*ih,-600,600)*p.weight/time;
+        vy+=skySlimeClamp((body.py[p.node]-body.oy[p.node])*ih,-600,600)*p.weight/time;});
+      return {weights:nodes,node:nodes[0].node,vx:vx,vy:vy};
+    });
+  }
+  function toyBalloonCurveRing(body) {
+    if(!toySlimeFluidGuest(body))return [];
+    return toyBalloonCurveGeometry(body,body.surfaceSlime.fluidControls);
+  }
+  function toySlimeFluidPath(body,slit) {
+    var g=toySlimeFluidGuest(body);if(!g)return null;
+    var m=body.surfaceSlime;if(!(slit>=0 && slit<g.pts.length/4))return m.fluidPath;
+    var controls=m.fluidControls,n=controls.length/2,from=slit*n/(g.pts.length/4),to=(slit+1)*n/(g.pts.length/4),path=new Path2D(),last=null;
+    for(var i=0;i<n;i++){
+      var prev=(i+n-1)%n,next=(i+1)%n,ax=(controls[prev*2]+controls[i*2])*.5,ay=(controls[prev*2+1]+controls[i*2+1])*.5,
+        bx=controls[i*2],by=controls[i*2+1],cx=(bx+controls[next*2])*.5,cy=(by+controls[next*2+1])*.5;
+      var intervals=to<=i || from>=i+1 ? [[0,1]] : [[0,Math.max(0,from-i)],[Math.min(1,to-i),1]];
+      intervals.forEach(function(span){var lo=span[0],hi=span[1];if(hi<=lo){last=null;return;}
+        var u=1-lo,v=1-hi,x=u*u*ax+2*u*lo*bx+lo*lo*cx,y=u*u*ay+2*u*lo*by+lo*lo*cy,
+          ex=v*v*ax+2*v*hi*bx+hi*hi*cx,ey=v*v*ay+2*v*hi*by+hi*hi*cy;
+        if(!last || Math.hypot(last.x-x,last.y-y)>1e-8)path.moveTo(x,y);
+        path.quadraticCurveTo(x+(hi-lo)*(u*(bx-ax)+lo*(cx-bx)),y+(hi-lo)*(u*(by-ay)+lo*(cy-by)),ex,ey);last={x:ex,y:ey};
+      });
+    }
+    return path;
+  }
+
   function buildGuests() {
     var materialGuests=!!(toyBalloon || toyDivers || toyFloatSlider || airModel && airModel.enabled && (airModel.preserveMaterialState || machineState && machineState.definition.name==='cup'));
     var waterGuestTime=1;
@@ -899,6 +1103,9 @@
       for (var i = 0; i < guestLimit; i++) {
         var b = liquidGuestSlots[i];
         if (!b || i === pokeSlot) continue;
+        if(b.waterBalloon){
+          var skin=toySlimeFluidGuest(b);if(skin){out[i]=skin;if(toyBalloon)toyBalloon.setSlot(i);any=true;}continue;
+        }
         var rn = b.ringN | 0;
         var take = rn < 20 ? rn : 20;
         var pts = new Array(take * 4);
@@ -13566,7 +13773,7 @@
     if(toyBalloon && machineState && machineState.ready){
       var membrane=toyBalloon.stats();machineState.readings={ready:true,caption:machineState.definition.caption,action:machineState.definition.action,
         balloon:membrane,particleCount:liquidCount,sampleAgeMs:membrane.contactAgeSimulationSeconds*1000,
-        numericalStatus:'Two-sided native water contacts and an elastic twenty-edge skin. Contact frame '+membrane.contactFrame+'.',
+        numericalStatus:'Two-sided native water contacts and a smooth quadratic skin. Contact frame '+membrane.contactFrame+'.',
         energyBudgetStatus:machineState.definition.energyBudgetStatus,error:membrane.error || buildError};return;
     }
     if(toyMaterialSlip && machineState){machineState.readings={ready:true,caption:machineState.definition.caption,action:machineState.definition.action,particleCount:liquidCount,materialSlip:toyMaterialSlip.stats(),numericalStatus:toyMaterialSlip.stats().method,energyBudgetStatus:machineState.definition.energyBudgetStatus,error:buildError || liquidWGPU.materialStateError};return;}
@@ -13799,7 +14006,7 @@
     if(definition.membrane){
       var initialSlime=definition.slimes[0];balloonBody=spawnSlimeAt(initialSlime.x,initialSlime.y,initialSlime.radius,true);
       if(!balloonBody)throw Error('The water balloon skin could not be created.');
-      balloonBody.waterBalloon=true;balloonSeedRing=window.WSSWaterBalloons.geometry.bodyRing(balloonBody);
+      balloonBody.waterBalloon=true;balloonSeedRing=toySlimeFluidRing(balloonBody);
     }
     if(definition.slider){var sliderSpec=definition.slimes[0];sliderBody=spawnSlimeAt(sliderSpec.x,sliderSpec.y,sliderSpec.radius,true);if(!sliderBody)throw Error('The guided float could not be created.');}
     if(definition.divers)definition.slimes.forEach(function(s){var b=spawnSlimeAt(s.x,s.y,s.radius,true);if(!b)throw Error('The gas diver could not be created.');diverBodies.push(b);});
@@ -13907,7 +14114,7 @@
       fireDomainPrevious=liquidWGPU.toyNativeDomain;fireDomainActive=true;
       liquidWGPU.toyNativeDomain={minX:0,minY:0,maxX:worldW,maxY:worldH};
       var palette=getComputedStyle(document.documentElement);
-      ownBalloon=await window.WSSWaterBalloons.create({liquid:liquidWGPU,body:balloonBody,slit:definition.membrane.slit,
+      ownBalloon=await window.WSSWaterBalloons.create({liquid:liquidWGPU,body:balloonBody,slit:definition.membrane.slit,skinRing:toyBalloonCurveRing,slitRing:toySlimeFluidRing,skinPath:toySlimeFluidPath,
         width:worldW,height:worldH,maxParticles:LIQUID_MAX_PARTICLES,colors:{skin:palette.getPropertyValue('--d-emphasis').trim(),edge:palette.getPropertyValue('--d-emphasis').trim()}});
       if(request!==machineRequest){ownBalloon.destroy();ownBalloon=null;return null;}
       toyBalloon=ownBalloon;liquidWGPU.setToyMembrane(ownBalloon);model={settings:{density:1}};
@@ -14600,6 +14807,7 @@
       // frames the worst frozen-droplet latency is a quarter second and the
       // mirror breathes between sweeps.
     updateJello(dt);
+    if(toyBalloon)toyBalloonFinishTerrain(jelloStepH>0?jelloStepH:JELLO_H);
     // The new membrane's final native substep uses the displayed gel pose.
     if(toyFloatSlider){toyFloatSlider.project(toyFloatSlider.body,jelloStepH>0?jelloStepH:JELLO_H*jelloImpulseScale(),JELLO_TIMESCALE);toyFloatSlider.sync();}
     if(toyBalloon || toyDivers || toyFloatSlider)updateLiquidToy(dt);
@@ -14835,8 +15043,76 @@
     surfaceSlimeGrip.x = wx; surfaceSlimeGrip.y = wy;
     surfaceSlimeGrip.body.sleeping = false; surfaceSlimeGrip.body.sleepFrames = 0;
   }
+  // A hollow membrane's drawing and native contacts use one current pose.
+  // Ordinary gel retains the established interpolated production rendering.
+  var ordinarySlimeRenderBody=surfaceSlimeRenderBody;
+  surfaceSlimeRenderBody=function(b){return b.waterBalloon ? b : ordinarySlimeRenderBody(b);};
+  function toyBalloonTerrainProject(b,weights,nx,ny,depth,h) {
+    if(!(depth>0))return;
+    var den=0,vx=0,vy=0;
+    weights.forEach(function(p){den+=p.weight*p.weight;vx+=(b.px[p.node]-b.ox[p.node])*p.weight;vy+=(b.py[p.node]-b.oy[p.node])*p.weight;});
+    // The established unilateral normal/restitution/friction projection,
+    // generalized from two edge nodes to the quadratic's supporting nodes.
+    var normal=Math.max(0,-vx*nx-vy*ny),bounce=normal>JELLO_REST_VEL*h ? JELLO_BOUNCE : 0;
+    var impulse=normal*(1+bounce),tangent=-vx*ny+vy*nx,friction=skySlimeClamp(tangent,-normal*.45,normal*.45);
+    var dvx=nx*impulse+ny*friction,dvy=ny*impulse-nx*friction;
+    weights.forEach(function(p){var w=p.weight/den,mx=nx*depth*w,my=ny*depth*w;
+      b.px[p.node]+=mx;b.py[p.node]+=my;b.ox[p.node]+=mx-dvx*w;b.oy[p.node]+=my-dvy*w;});
+    b._terrainStepHit=true;b.surfaceSlime.fluidFrame=-1;
+  }
+  function toyBalloonTerrainInterval(a,c,left,top,error) {
+    var lo=0,hi=1;
+    for(var axis=0;axis<2;axis++){var p=axis?a.y:a.x,d=(axis?c.y:c.x)-p,lower=(axis?top:left)-error,upper=lower+TILE+error*2;
+      if(Math.abs(d)<1e-10){if(p<=lower || p>=upper)return null;continue;}
+      var x=(lower-p)/d,y=(upper-p)/d;if(x>y){var swap=x;x=y;y=swap;}
+      lo=Math.max(lo,x);hi=Math.min(hi,y);if(lo>=hi)return null;
+    }
+    return hi>0 && lo<1 ? {lo:lo,hi:hi} : null;
+  }
+  function toyBalloonRefreshGeometry(b) {
+    var x=0,y=0,left=Infinity,right=-Infinity,top=Infinity,bottom=-Infinity;
+    for(var i=0;i<b.n;i++){x+=b.px[i];y+=b.py[i];left=Math.min(left,b.px[i]);right=Math.max(right,b.px[i]);top=Math.min(top,b.py[i]);bottom=Math.max(bottom,b.py[i]);}
+    b.cx=x/b.n;b.cy=y/b.n;b.bboxL=left;b.bboxR=right;b.bboxT=top;b.bboxB=bottom;
+  }
+  function toyBalloonSkinTerrain(b,h) {
+    if(!b.waterBalloon || !b._guardPX || !window.WSSWaterBalloons)return;
+    var error=window.WSSWaterBalloons.geometry.curveError;
+    for(var pass=0;pass<6;pass++){
+      toyBalloonRefreshGeometry(b);
+      jelloRingBake(b);var controls=new Float64Array(jelloRingBakeN*2);
+      for(var i=0;i<jelloRingBakeN;i++){controls[i*2]=jelloROX[i];controls[i*2+1]=jelloROY[i];}
+      var ring=toyBalloonCurveGeometry(b,controls),found=false;
+      // Use the existing six contact passes. Re-bake after each local
+      // correction; retain material parameters, never stale curve positions.
+      for(var k=0;k<ring.length;k++){
+        if(found){jelloRingBake(b);for(var q=0;q<jelloRingBakeN;q++){controls[q*2]=jelloROX[q];controls[q*2+1]=jelloROY[q];}}
+        var a=ring[k],c=ring[(k+1)%ring.length],pa=window.WSSWaterBalloons.geometry.quadratic(controls,a.param),pc=window.WSSWaterBalloons.geometry.quadratic(controls,c.param),done=false;
+        a=Object.assign({},a,pa);c=Object.assign({},c,pc);
+        var r0=Math.floor((Math.min(a.y,c.y)-error)/TILE),r1=Math.floor((Math.max(a.y,c.y)+error)/TILE);
+        var c0=Math.floor((Math.min(a.x,c.x)-error)/TILE),c1=Math.floor((Math.max(a.x,c.x)+error)/TILE);
+        for(var row=r0;row<=r1 && !done;row++)for(var col=c0;col<=c1 && !done;col++){
+          if(tileAt(row,col)===null)continue;var hit=toyBalloonTerrainInterval(a,c,col*TILE,row*TILE,error);if(!hit)continue;
+          var t=(hit.lo+hit.hi)*.5,weights={},x=a.x*(1-t)+c.x*t,y=a.y*(1-t)+c.y*t;
+          [a,c].forEach(function(v,end){v.weights.forEach(function(p){weights[p.node]=(weights[p.node] || 0)+p.weight*(end?t:1-t);});});
+          var nodes=Object.keys(weights).map(function(node){return {node:Number(node),weight:weights[node]};}),oldX=0,oldY=0;
+          nodes.forEach(function(p){oldX+=b._guardPX[p.node]*p.weight;oldY+=b._guardPY[p.node]*p.weight;});
+          var face=softTerrainFace(x,y,oldX,oldY,row,col);if(!face)continue;
+          toyBalloonTerrainProject(b,nodes,face[0],face[1],face[2]+SOFT_TERRAIN_SKIN+error,h);found=true;done=true;
+        }
+      }
+      if(!found)break;
+    }
+    toyBalloonRefreshGeometry(b);b.surfaceSlime.fluidFrame=-1;
+  }
+  function toyBalloonFinishTerrain(h) {
+    if(!toyBalloon)return;var b=toyBalloon.body;
+    // Rejected grip steps are atomic. Never reopen their restored pose.
+    if(b.waterBalloon && !b._guardRejectedStep)toyBalloonSkinTerrain(b,h);
+  }
+  var ordinarySoftTerrainSolve=softTerrainSolve;
+  softTerrainSolve=function(b,h){ordinarySoftTerrainSolve(b,h);if(b.waterBalloon && softTerrainBody(b) && !b._guardRejectedStep)toyBalloonSkinTerrain(b,h);};
   var drawOrdinaryJelloBody=jelloDrawBody;
-  jelloDrawBody=function(b){if(toyBalloon && b===toyBalloon.body && b.waterBalloon){toyBalloon.draw(ctx,b);return;}drawOrdinaryJelloBody(b);};
+  jelloDrawBody=function(b){if(b.waterBalloon)toySlimeFluidGuest(b);if(toyBalloon && b===toyBalloon.body && b.waterBalloon){toyBalloon.draw(ctx,b);return;}drawOrdinaryJelloBody(b);};
   function jelloGrabSubstep(b, h) {
     if(toyCannon)toyCannon.load(b,h,JELLO_TIMESCALE);
     if (surfaceSlimeGrip && surfaceSlimeGrip.body === b && b._grabbed) softHandlingStep(b, h);
