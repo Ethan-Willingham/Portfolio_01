@@ -38,7 +38,7 @@
     }
     function load(b,h,timescale){
       if(!field || !b.ringN)return;
-      var dt=h/timescale,massPoint=.09,airDensity=.000012;
+      var dt=h/timescale,massPoint=.09,airDensity=.00006;
       // Uniform exterior pressure has zero net force around a closed ring.
       // Each edge's traction is split between its two existing gel nodes.
       var mean=0,loads=[];
