@@ -406,7 +406,7 @@
         'The pressure sample is current. Open Instruments for the calculation status.';
       if(cannon){pressureLabel=state.paused?'Paused':'Live';pressureMessage=wind?'A steady fan drives the smoke past the supported slime.':'The smoke carries the push. Instruments explains the flat section.';}
       if(balloon){pressureLabel=state.paused?'Paused':'Live';pressureMessage='Drag, fling and pop. Instruments explains the elastic skin.';}
-      if(slip){pressureLabel=state.paused?'Paused':'Prototype';pressureMessage='Separate material momentum. Instruments has the matched-density comparison and model limits.';}
+      if(slip){pressureLabel=state.paused?'Paused':state.scene==='material-oil-jar'?'Live':'Prototype';pressureMessage='Instruments has the matched-density comparison and model limits.';}
       if(steam){pressureLabel=state.paused?'Paused':'Diagnostic';pressureMessage=birds?'Grab the pipe’s top to change its note. Instruments has the comparisons and acoustic limits.':'The white plume traces escaping vapor. Instruments explains the thermal model.';}
       document.getElementById('toy-machine-diagnostics').hidden=!contextual || fire || balloon;
       text('toy-machine-diagnostics',contextual ? pressureMessage : '');
@@ -421,6 +421,7 @@
       if(state.scene==='air-hose')text('toy-hint','Stop the declared air source and watch the remaining gas.');
       if(divers)text('toy-hint','Squeeze and release. Grab a diver to move it.');
       if(slip)text('toy-hint','Stir once. Compare the same jar with matched material densities in Instruments.');
+      document.getElementById('toy-material-slip-sources').hidden=!slip;
       if(state.scene==='float-slider-cistern')text('toy-hint','Grab the float and pull it down to open the inlet. Instruments has the pinned-low comparison.');
       var siphon=state.scene==='siphon';
       document.getElementById('toy-siphon-options').hidden=!siphon;
@@ -459,6 +460,7 @@
       }
       if(native && liveMachine && !setup.disabled){setup.value=liveMachine.definition.setup==='held' ? 'released' : liveMachine.definition.setup;}
       if(native && liveMachine){
+        text('toy-native-setup-note',slip ? 'Matched densities repeats the same jar with equal parcel masses. Water and oil keep their different numerical filters.' : 'Choosing a setup restarts it with the same initial water. Hold starts a freshly filled straw; releasing opens its top.');
         var b=liveMachine.definition.boundaries || {pool:false};
         text('toy-native-boundaries',liveMachine.definition.boundaryNote || (b.pool ? 'Drained water feeds the tap. The powered return adds energy to lift it. The tap requests '+b.tap.rate+' parcels per simulation second at '+b.tap.vy+' pixels per second downward; each parcel represents 1.5625 square pixels. All '+state.allocation+' allocated slots are either present water or stored reserve.' : 'Only the upper opening is held. The lower end stays open. The side-hole comparison connects the upper air space to the room.'));
         var ledger=sample.boundary;

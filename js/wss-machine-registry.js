@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   var entries = [
-    {id:'material-oil-jar',capability:'Material slip, prototypes',title:'Oil slip jar (prototype)',cue:'Stir once. Watch the two materials.',preview:'cup',accepted:false,world:{w:720,h:400},pool:false},
+    {id:'material-oil-jar',capability:'Oil and water',title:'Oil and water',cue:'Stir once. Watch the pale oil rise.',preview:'cup',accepted:true,world:{w:720,h:400},pool:false},
     {id:'material-sand-jar',capability:'Material slip, prototypes',title:'Grain settling (prototype)',cue:'Watch grains move through still water.',preview:'cup',accepted:false,world:{w:720,h:400},pool:false},
     {id:'float-slider-cistern',capability:'Valves and logic',title:'Float-controlled inlet',cue:'Pull the float down to reopen the water inlet.',preview:'cup',accepted:true,world:{w:720,h:400},pool:true},
     {id:'singing-pipe',capability:'Sound',title:"Hero's sliding pipe (precursor)",cue:'Turn on sound. Drag the pipe to bend the note.',preview:'sliding-pipe',accepted:true,world:{w:720,h:400},pool:false},
