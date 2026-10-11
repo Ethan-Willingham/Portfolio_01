@@ -73,6 +73,16 @@
     var physics = Object.assign({}, physicsDefaults);
     var physicsTarget = Object.assign({}, physicsDefaults);
     var physicsTransition = 0;
+    var thermalStyle={glow:0,waterCooling:0};
+    var wetTexture=null,wetActive=false;
+    function setWetField(field){
+      wetActive=!!field;if(!field || !ready)return;
+      gl.activeTexture(gl.TEXTURE5);
+      if(!wetTexture){wetTexture=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,wetTexture);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);}
+      else gl.bindTexture(gl.TEXTURE_2D,wetTexture);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,field.width,field.height,0,gl.RGBA,gl.UNSIGNED_BYTE,field.pixels);
+    }
+    function setThermalStyle(values){values=values || {};thermalStyle.glow=Math.max(0,Math.min(1,Number(values.glow)||0));thermalStyle.waterCooling=Math.max(0,Math.min(60,Number(values.waterCooling)||0));return Object.assign({},thermalStyle);}
     function setPhysics(values, seconds) {
       values = values || {};
       for (var key in physicsDefaults) {
@@ -87,6 +97,7 @@
     function getPhysics() { return Object.assign({}, physicsTarget); }
 
     var dye, velocity, divergence, curl, pressure;
+    var flowSample = null, flowProgram = null, flowValues = null, lastStepDt = 0;
     var copyProgram, clearProgram, splatProgram, advectionProgram,
         divergenceProgram, curlProgram, vorticityProgram, pressureProgram,
         gradientSubtractProgram, scrollProgram;
@@ -304,6 +315,9 @@
       'uniform float dt;\n' +
       'uniform float dissipation;\n' +
       'uniform float cooling;\n' +
+      'uniform float waterCooling;\n' +
+      'uniform sampler2D uWet;\n' +
+      'uniform float useWet;\n' +
       'uniform float useObstacle;\n' +
       'uniform float u_wind_x;\n' +
       'uniform float u_wind_above_y;\n' +
@@ -345,6 +359,8 @@
       '  float temperature = result.a;\n' +
       '  result /= decay;\n' +
       '  if (velocityPass < 0.5) result.a = temperature * exp(-cooling * dt);\n' +
+      '  if (velocityPass < 0.5 && waterCooling > 0.0 && useLiquid > 0.5) result.a *= exp(-waterCooling * texture2D(uLiquid, vUv).b * dt);\n' +
+      '  if (velocityPass < 0.5 && useWet > 0.5 && texture2D(uWet, vUv).b > 0.5) result.a = 0.0;\n' +
       '  if (useLiquid > 0.5 && velocityPass > 0.5) {\n' +
       '    vec4 water = texture2D(uLiquid, vUv);\n' +
       '    vec2 target = (water.rg * 255.0 - 128.0) / 127.0 * liquidVelocityScale / texelSize;\n' +
@@ -554,6 +570,7 @@
       'uniform float opticalBrightness;\n' +
       'uniform float opticalAbsorption;\n' +
       'uniform float edgeSharpness;\n' +
+      'uniform float heatGlow;\n' +
       'void main () {\n' +
       '  vec3 cc = texture2D(uTexture, vUv).rgb;\n' +
       '  vec3 lc = texture2D(uTexture, vL).rgb;\n' +
@@ -573,6 +590,14 @@
       '  float diffuse = clamp(dot(n, l) + 0.7, 0.7, 1.0);\n' +
       '  c *= diffuse;\n' +
       '#endif\n' +
+      '  if (heatGlow > 0.0) {\n' +
+      '    float heat = max(0.0, texture2D(uTexture, vUv).a);\n' +
+      '    float hot = smoothstep(0.18, 1.3, heat) * heatGlow;\n' +
+      '    vec3 flame = mix(vec3(0.32, 0.035, 0.012), vec3(0.9, 0.28, 0.045), smoothstep(0.2, 1.1, heat));\n' +
+      '    flame = mix(flame, vec3(0.98, 0.72, 0.16), smoothstep(1.1, 2.6, heat));\n' +
+      '    flame = mix(flame, vec3(0.96, 0.93, 0.85), smoothstep(2.6, 5.0, heat));\n' +
+      '    c = mix(c, flame * min(1.0, max(c.r, max(c.g, c.b)) * 3.0 + hot * 0.6), hot);\n' +
+      '  }\n' +
       '  vec3 unmasked = c;\n' +
       '  float visibility = 1.0;\n' +
       '  float obstacle = useObstacle > 0.5 ? texture2D(uObstacle, vUv).a : 0.0;\n' +
@@ -1096,6 +1121,7 @@
     function step (dt) {
       if (!ready) return;
       if (dt <= 0) return;
+      lastStepDt = dt;
       if (physicsTransition > 0) {
         var blend = Math.min(1, dt / physicsTransition);
         for (var key in physics) physics[key] += (physicsTarget[key] - physics[key]) * blend;
@@ -1178,6 +1204,10 @@
       uniform1f(advectionProgram.uniforms.velocityPass, 1);
       uniform1f(advectionProgram.uniforms.dt, dt);
       uniform1f(advectionProgram.uniforms.cooling, physics.COOLING);
+      uniform1f(advectionProgram.uniforms.waterCooling, thermalStyle.waterCooling);
+      uniform1f(advectionProgram.uniforms.useWet,wetActive?1:0);
+      uniform1i(advectionProgram.uniforms.uWet,5);
+      gl.activeTexture(gl.TEXTURE5);gl.bindTexture(gl.TEXTURE_2D,wetTexture || obstacleTexture);
       uniform1f(advectionProgram.uniforms.dissipation, config.VELOCITY_DISSIPATION);
       // No wind on velocity pass — keeps the pressure solve clean.
       uniform1f(advectionProgram.uniforms.u_wind_x, 0.0);
@@ -1301,6 +1331,7 @@
       uniform1f(displayMaterial.uniforms.opticalBrightness, config.OPTICAL_BRIGHTNESS);
       uniform1f(displayMaterial.uniforms.opticalAbsorption, config.OPTICAL_ABSORPTION);
       uniform1f(displayMaterial.uniforms.edgeSharpness, config.EDGE_SHARPNESS);
+      uniform1f(displayMaterial.uniforms.heatGlow, thermalStyle.glow);
       bindLiquidField(displayMaterial.uniforms);
       if (displayMaterial.uniforms.texelSize)
         uniform2f(displayMaterial.uniforms.texelSize, dye.texelSizeX, dye.texelSizeY);
@@ -1314,6 +1345,30 @@
         uniform1f(displayMaterial.uniforms.useObstacle, obstacleSrcCanvas ? 1.0 : 0.0);
       }
       blit(null);
+    }
+
+    // Opt-in current-field readback for exterior pressure traction. The legacy
+    // path never calls this, allocates its target, or compiles its shader.
+    function sampleFlow (domainW, domainH) {
+      if (!ready || !ext.isWebGL2 || !(lastStepDt > 0)) return null;
+      if (!flowProgram) {
+        flowProgram = new Program(compileShader(gl.VERTEX_SHADER, BASE_VS),
+          compileShader(gl.FRAGMENT_SHADER,
+            'precision highp float; precision highp sampler2D; varying vec2 vUv; uniform sampler2D uVelocity; uniform sampler2D uPressure; uniform sampler2D uDye; uniform vec3 scale; void main(){vec2 v=texture2D(uVelocity,vUv).xy*scale.xy; float p=texture2D(uPressure,vUv).x*scale.z; vec3 c=texture2D(uDye,vUv).rgb; gl_FragColor=vec4(v,p,max(c.r,max(c.g,c.b)));}'));
+        flowSample = createFBO(96, 54, gl.RGBA32F, gl.RGBA, gl.FLOAT, gl.NEAREST);
+        flowValues = new Float32Array(96 * 54 * 4);
+      }
+      gl.disable(gl.BLEND); flowProgram.bind();
+      uniform1i(flowProgram.uniforms.uVelocity, velocity.read.attach(0));
+      uniform1i(flowProgram.uniforms.uPressure, pressure.read.attach(1));
+      uniform1i(flowProgram.uniforms.uDye, dye.read.attach(2));
+      var dx = domainW / velocity.width;
+      // Projection uses a two-cell pressure difference without the usual 1/2.
+      uniform3f(flowProgram.uniforms.scale, dx, domainH / velocity.height, 2 * dx * dx / lastStepDt);
+      blit(flowSample);
+      gl.readPixels(0, 0, flowSample.width, flowSample.height, gl.RGBA, gl.FLOAT, flowValues);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      return {width:flowSample.width,height:flowSample.height,values:flowValues,dt:lastStepDt};
     }
 
     function getCanvas () { return canvas; }
@@ -1359,12 +1414,15 @@
       setObstacleAlpha: setObstacleAlpha,
       paintObstacleQuads: paintObstacleQuads,  // v10.87 — WebGL-native obstacle paint
       setMovingBodies: setMovingBodies,
+      sampleFlow: sampleFlow,
       setLiquidField: setLiquidField,
       clearObstacle: clearObstacle,
       isReady: isReady,
       config: config,
       setPhysics: setPhysics,
       getPhysics: getPhysics,
+      setThermalStyle:setThermalStyle,
+      setWetField:setWetField,
       physicsVersion: 1,
       create: createSmokeFluid,
     };
