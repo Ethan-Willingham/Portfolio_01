@@ -5,17 +5,24 @@
     if(!bodies[0] || !(bodies[0].ringN>=3))throw Error('The smoke tunnel needs its elastic slime.');
     var pressure=root.WSSSmokeCannon.create(Object.assign({},definition,{noPush:true}),fluid,world,{initial:false});
     var ambientWind=fluid.config.wind_x;fluid.config.wind_x=0;
-    var body=bodies[0],support=definition.support,fan=definition.fan,node=-1,nearest=Infinity;
+    var optics={},opticalKeys=['OPTICAL_DENSITY','OPTICAL_BRIGHTNESS','OPTICAL_ABSORPTION'];
+    opticalKeys.forEach(function(key){optics[key]=fluid.config[key];});
+    fluid.config.OPTICAL_DENSITY=1;fluid.config.OPTICAL_BRIGHTNESS=.55;fluid.config.OPTICAL_ABSORPTION=1;
+    fluid.config.DENSITY_DISSIPATION=.12;
+    var body=bodies[0],support=definition.support,fan=definition.fan,tracer=definition.tracer,node=-1,nearest=Infinity;
     for(var k=0;k<body.ringN;k++){
       var i=body.ring[k],distance=Math.hypot(body.px[i]-support.x,body.py[i]-support.y);
       if(distance<nearest){nearest=distance;node=i;}
     }
     // The spring is born stress-free at the chosen material point.
     var anchor={x:body.px[node],y:body.py[node]},fanImpulse=0,supportWork=0;
+    // Passive initial streaks expose the first flow; they carry no momentum.
+    for(var sx=tracer.start;sx<=tracer.end;sx+=tracer.step)for(var sy=tracer.top;sy<=tracer.bottom;sy+=tracer.spacing)
+      fluid.splat(sx/world.w,1-sy/world.h,0,0,{r:.20*tracer.initialAmount,g:.185*tracer.initialAmount,b:.165*tracer.initialAmount},tracer.radius);
     function prepare(dt){
       var scale=fluid.config.SIM_RESOLUTION/world.h;
       for(var y=fan.top;y<=fan.bottom;y+=fan.spacing){
-        fluid.splat(fan.x/world.w,1-y/world.h,0,0,{r:.8*dt*6,g:.72*dt*6,b:.6*dt*6},.05);
+        fluid.splat(fan.x/world.w,1-y/world.h,0,0,{r:.20*dt*tracer.rate,g:.185*dt*tracer.rate,b:.165*dt*tracer.rate},.025);
         if(fan.enabled)fluid.splatVelocity(fan.x/world.w,1-y/world.h,fan.acceleration*dt*scale,0,.10);
       }
       if(fan.enabled)fanImpulse+=fan.acceleration*dt;
@@ -38,7 +45,8 @@
       function curl(cx,cy){return (pressure.sample(cx+dx,cy).vy-pressure.sample(cx-dx,cy).vy)/(2*dx)-
         (pressure.sample(cx,cy+dy).vx-pressure.sample(cx,cy-dy).vx)/(2*dy);}
       return Object.assign(base,{fanEnabled:fan.enabled,fanImpulse:fanImpulse,
-        wakeUpperVY:upper.vy,wakeLowerVY:lower.vy,wakeUpperCurl:curl(x,y-20),wakeLowerCurl:curl(x,y+20),
+        wakeUpperVY:upper.vy,wakeLowerVY:lower.vy,wakeCenterVY:pressure.sample(x,y).vy,
+        wakeUpperCurl:curl(x,y-20),wakeLowerCurl:curl(x,y+20),wakeCenterCurl:curl(x,y),
         wakeDye:upper.dye+lower.dye,supportError:Math.hypot(body.px[node]-anchor.x,body.py[node]-anchor.y),
         supportWork:supportWork,model:'Steady fan; native obstacle wake and current pressure traction; compliant material-point support; no imposed eddies or sway'});
     }
@@ -51,7 +59,7 @@
     return {prepare:prepare,capture:pressure.capture,load:load,stats:stats,draw:draw,
       overlayKey:function(){return fan.enabled+':'+body.px[node].toFixed(1)+':'+body.py[node].toFixed(1);},
       toggle:function(){fan.enabled=!fan.enabled;definition.action=fan.enabled?'Stop fan':'Start fan';return true;},
-      destroy:function(){pressure.destroy();fluid.config.wind_x=ambientWind;}};
+      destroy:function(){pressure.destroy();fluid.config.wind_x=ambientWind;opticalKeys.forEach(function(key){fluid.config[key]=optics[key];});}};
   }
   root.WSSSmokeWindTunnel={create:create};
 })(typeof window!=='undefined'?window:globalThis);
