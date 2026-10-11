@@ -431,7 +431,7 @@
         var holdingThumb=state.scene==='thumb-straw' && (thumbPointer!==null || thumbKeyboard);
         document.getElementById('toy-machine-primary').disabled = (!ready && !holdingThumb) || !!fatal || ((state.scene === 'cup' || balloon) && liveMachine && liveMachine.primaryUsed);
       }
-      text('toy-compact-head-label',state.scene==='thumb-straw' || thermal || divers ? 'Air' : state.scene==='tantalus' ? 'Water to mouth' : 'Head');
+      text('toy-compact-head-label',divers ? 'Under 1' : state.scene==='thumb-straw' || thermal ? 'Air' : state.scene==='tantalus' ? 'Water to mouth' : 'Head');
       text('toy-compact-head', number(state.scene==='thumb-straw' || thermal || divers ? sample.gasPressurePsi : state.scene==='tantalus' ? sample.mouthDistanceInches : sample.headInches, state.scene==='thumb-straw' || thermal || divers ? 'psi' : 'in'));
       document.getElementById('toy-compact-head').parentElement.hidden=state.scene==='burst-disk';
       document.getElementById('toy-native-reading').hidden=!native;
@@ -460,6 +460,7 @@
       soundButton.title=fire?'A synthesized hiss from water cooling the source. Enable sound with this button.':'Synthesized water impacts. Enable sound with this button.';
       if(state.scene==='thumb-straw'){primaryButton.setAttribute('aria-pressed',String(thumbPointer!==null || thumbKeyboard || !!(liveMachine && liveMachine.thumbHeld)));}else primaryButton.removeAttribute('aria-pressed');
       text('toy-compact-flow', number(sample.flowCubicInchesPerSecond, 'in³/s'));
+      document.getElementById('toy-compact-flow').parentElement.hidden=divers;
       document.getElementById('toy-machine-metrics').classList.toggle('is-stale', stale);
       document.getElementById('toy-machine-metrics').title = stale ? 'The measurement sample is more than a quarter second old.' : '';
       text('toy-machine-scale', sample.scaleText || 'The box is 30 inches wide and 1 inch deep. Seconds use Earth gravity.');
