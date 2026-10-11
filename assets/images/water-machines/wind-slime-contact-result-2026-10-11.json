@@ -1,0 +1,48 @@
+{
+  "status": "PASS, scoped original wind slime contact",
+  "toyVersion": "v5.116",
+  "seeds": [
+    17,
+    42,
+    913
+  ],
+  "method": "Actual Water-tool stroke, native buffer captures every quarter native second across eight native seconds, enlarged phone views. Original geometry-only controls retain the dark upper skin gap.",
+  "geometry": {
+    "sameQuadraticDrawAndCollision": true,
+    "adaptiveMaximumChordErrorPixels": 0.01,
+    "exteriorClearancePixels": 0.42,
+    "response": "Incoming relative normal velocity is projected to zero at the resolved union exterior. Tangential and outgoing normal motion are preserved."
+  },
+  "accounting": {
+    "samplesPerSeed": 32,
+    "admittedParticles": [
+      333,
+      333,
+      333
+    ],
+    "remainingParticles": [
+      333,
+      333,
+      333
+    ],
+    "removedParticles": [
+      0,
+      0,
+      0
+    ],
+    "maximumBalanceResidual": 0,
+    "nonfinite": 0,
+    "retired": 0,
+    "sustainedTerrainIntrusion": 0
+  },
+  "performance": {
+    "method": "20-second requestAnimationFrame deltas, vsync off",
+    "desktopMedianMs": 4.4,
+    "desktopP95Ms": 5.2,
+    "phoneMedianMs": 4.4,
+    "phoneP95Ms": 5.4,
+    "note": "Final public path with actual wet water and advancing native clock; desktop1512 by820 and expanded phone844 by390, five44-pixel tools."
+  },
+  "limits": "Observed wet upper flank and crest on the original wind slime only. No universal contact, submerged underside, additional slime, pressure-diver or guided-float acceptance. Existing ordinary coupling is one-way, with no closed momentum or energy claim. No new capability or machine count.",
+  "evidenceImage": "wind-slime-contact-2026-10-11.webp"
+}

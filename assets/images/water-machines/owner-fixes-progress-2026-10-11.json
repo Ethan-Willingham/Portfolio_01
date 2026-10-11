@@ -1,8 +1,8 @@
 {
-  "updated": "2026-10-11T21:00:35.743579+00:00",
+  "updated": "2026-10-11T21:50:00Z",
   "acceptedNewCapabilities": 5,
   "acceptedNovelMachines": 11,
-  "scope": "Owner correction progress. The balloon skin record below is accepted; failed private candidates remain distinct from public machine acceptance records.",
+  "scope": "Owner correction progress. Balloon and original wind slime skin records are accepted; failed private candidates remain distinct from public machine acceptance records.",
   "kettle": {
     "status": "private, rejected",
     "candidate": "cbde2bb93be0225e09458f0c589b1e4304b32e2e",
@@ -18,11 +18,12 @@
     "limits": "Fractional liquid mass and enthalpy are debited before native vapor births. This accounting pass does not establish satisfactory interface dynamics; pressure and surface limits both fail."
   },
   "slimeContact": {
-    "status": "balloon correction accepted; other slime contact rejected",
-    "observation": "The live smooth balloon passes six native closed/slit cases and seven maximum-zoom phone views. The private final-skin candidate exports every resident skin, and inspected diver views no longer cross the drawn floor. Float underside and diver flank gaps still reject universal contact. Actual curve and native-center observations establish local excess collision-envelope exclusion, but do not explain every dark fragment.",
+    "status": "balloon correction and original wind slime contact accepted; float and diver contact unresolved",
+    "observation": "The smooth balloon passes six native closed/slit cases and seven maximum-zoom phone views. The original wind-tunnel slime now uses its actual adaptive quadratic curve and a frictionless moving-wall normal constraint. Enlarged phone views show water meeting its wet upper flank and crest. Float underside and diver flank gaps still reject universal contact.",
     "balloonRecord": "water-balloons-smooth-skin-result-2026-10-11.json",
     "privateCandidate": "d52c135e56722488493cc3cfdd6cc63a22c860cb",
-    "limits": "Three-seed floor contact proof applies to one ordinary SPA resident, not universal contact. The wind Water stroke admits real water in zero gravity; its top view still shows a gap. The next curve-boundary implementation is private and unaccepted."
+    "limits": "The wind correction covers the original slime, wet upper flanks and crest in the real Water-tool action. It does not establish wet underside contact or contact for additional slimes. Ordinary buoyancy and flow coupling remains one-way; system momentum and energy closure is not claimed.",
+    "windRecord": "wind-slime-contact-result-2026-10-11.json"
   },
   "sandSorting": {
     "status": "private, rejected",
