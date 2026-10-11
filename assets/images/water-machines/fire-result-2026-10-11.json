@@ -1,0 +1,193 @@
+{
+  "candidate": "02151905d5d8b0ec9ee559e50f576d160bd8f6be",
+  "physicalPass": true,
+  "publicAcceptance": true,
+  "method": "Ordinary host and actual pointer pours, current native buffer scans; sampled per-slot deep-wall residence over one simulation second",
+  "seeds": [
+    17,
+    42,
+    913
+  ],
+  "rows": [
+    {
+      "seed": 17,
+      "miss": false,
+      "poured": 700,
+      "nativePresent": 700,
+      "minimumFuelC": 70.46720886230469,
+      "relightFuelC": 520.70751953125,
+      "relightSeconds": 13.5902099609375,
+      "emberHeatJ": 15457.5068359375,
+      "maxResidualJ": 0.662353515625,
+      "nonFinite": 0,
+      "maxWallResidence": 0,
+      "sustainedWall": 0,
+      "burning": true,
+      "hiss": 1,
+      "pass": true,
+      "hissMeaning": "Enabled cooling sounds produced during this case; muted cases produce none."
+    },
+    {
+      "seed": 17,
+      "miss": true,
+      "poured": 700,
+      "nativePresent": 700,
+      "minimumFuelC": 955.3511352539062,
+      "relightFuelC": null,
+      "relightSeconds": null,
+      "emberHeatJ": 0,
+      "maxResidualJ": 0.2578125,
+      "nonFinite": 0,
+      "maxWallResidence": 0,
+      "sustainedWall": 0,
+      "burning": true,
+      "hiss": 0,
+      "pass": true,
+      "hissMeaning": "Enabled cooling sounds produced during this case; muted cases produce none."
+    },
+    {
+      "seed": 42,
+      "miss": false,
+      "poured": 700,
+      "nativePresent": 700,
+      "minimumFuelC": 23.302196502685547,
+      "relightFuelC": 433.3836364746094,
+      "relightSeconds": 10.866122245788574,
+      "emberHeatJ": 15049.533203125,
+      "maxResidualJ": 0.1470947265625,
+      "nonFinite": 0,
+      "maxWallResidence": 0,
+      "sustainedWall": 0,
+      "burning": true,
+      "hiss": 0,
+      "pass": true,
+      "hissMeaning": "Enabled cooling sounds produced during this case; muted cases produce none."
+    },
+    {
+      "seed": 42,
+      "miss": true,
+      "poured": 700,
+      "nativePresent": 700,
+      "minimumFuelC": 949.3634643554688,
+      "relightFuelC": null,
+      "relightSeconds": null,
+      "emberHeatJ": 0,
+      "maxResidualJ": 0.166015625,
+      "nonFinite": 0,
+      "maxWallResidence": 0,
+      "sustainedWall": 0,
+      "burning": true,
+      "hiss": 0,
+      "pass": true,
+      "hissMeaning": "Enabled cooling sounds produced during this case; muted cases produce none."
+    },
+    {
+      "seed": 913,
+      "miss": false,
+      "poured": 700,
+      "nativePresent": 700,
+      "minimumFuelC": 22.195833206176758,
+      "relightFuelC": 435.5913391113281,
+      "relightSeconds": 10.829526901245117,
+      "emberHeatJ": 15018.0673828125,
+      "maxResidualJ": 0.16717529296875,
+      "nonFinite": 0,
+      "maxWallResidence": 0,
+      "sustainedWall": 0,
+      "burning": true,
+      "hiss": 0,
+      "pass": true,
+      "hissMeaning": "Enabled cooling sounds produced during this case; muted cases produce none."
+    },
+    {
+      "seed": 913,
+      "miss": true,
+      "poured": 700,
+      "nativePresent": 700,
+      "minimumFuelC": 946.80908203125,
+      "relightFuelC": null,
+      "relightSeconds": null,
+      "emberHeatJ": 0,
+      "maxResidualJ": 0.2626953125,
+      "nonFinite": 0,
+      "maxWallResidence": 0,
+      "sustainedWall": 0,
+      "burning": true,
+      "hiss": 0,
+      "pass": true,
+      "hissMeaning": "Enabled cooling sounds produced during this case; muted cases produce none."
+    }
+  ],
+  "errors": [],
+  "toyVersion": "v5.71",
+  "source": {
+    "title": "National Park Service, Wildland Fire Facts",
+    "url": "https://www.nps.gov/articles/wildlandfire-facts-fuel-heat-oxygen.htm",
+    "fact": "Water removes heat and can quell fire."
+  },
+  "limits": [
+    "Lumped stationary fuel patch and fixed-temperature ember are declared sources.",
+    "Separate sensible parcel heat drives a coarse native water thermal field.",
+    "Smoke glow follows advected temperature; sealed-pocket heating, boiling and chemistry remain pending."
+  ],
+  "protection": {
+    "smokeFeatureOff": {
+      "profiles": 7,
+      "pixelCheckpoints": 49,
+      "pass": true
+    },
+    "sluiceBoot": true,
+    "originalAndAcceptedSceneCompatibility": {
+      "scenes": 14,
+      "finitePassivePause": true,
+      "pass": true
+    },
+    "liquidFeatureOff": {
+      "framePairs": 96,
+      "legacyShaders": 76,
+      "pass": true
+    }
+  },
+  "frames": {
+    "method": "20-second requestAnimationFrame deltas with vsync off, DPR 2, real declared pour",
+    "desktop": {
+      "duration": 20001.6,
+      "count": 14023,
+      "median": 0.8000000000001819,
+      "p95": 3.2999999999992724
+    },
+    "phone": {
+      "duration": 20000.699999999997,
+      "count": 14209,
+      "median": 0.8000000000001819,
+      "p95": 3.100000000002183
+    }
+  },
+  "phone": {
+    "viewport": [
+      844,
+      390
+    ],
+    "shell": {
+      "x": 0,
+      "y": 0,
+      "width": 844,
+      "height": 390,
+      "right": 844,
+      "bottom": 390
+    },
+    "primary": {
+      "x": 10,
+      "y": 344,
+      "width": 120,
+      "height": 44,
+      "right": 130,
+      "bottom": 388
+    },
+    "visibleControls": 12,
+    "minimumControlWidth": 44,
+    "minimumControlHeight": 44,
+    "tools": 5,
+    "pass": true
+  }
+}

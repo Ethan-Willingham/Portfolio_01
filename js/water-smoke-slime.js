@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.70'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.71'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -613,7 +613,7 @@
    * retires immediately; moving spray gets four seconds to land or rejoin.
    * Real streams and pools reset their dwell because they have ample support. */
   function retireLiquidOrphans() {
-    if (airModel && airModel.enabled) return;
+    if (airModel && airModel.enabled || toyFire) return;
     liquidOrphanTick++;
     if (liquidOrphanTick < 30 || !liquidCount) return;
     liquidOrphanTick = 0;
@@ -1349,7 +1349,7 @@
     liquidGPULastSeq = seqNow;
     if (liquidCount === 0 && !mutated) { liquidPendingDt = 0; return; }
     var awake = liquidWGPU.awakeCount;
-    var quiet = !toyBoundary && awake === 0 && !mutated && !toyWakes.length && !pokeGuest;
+    var quiet = !toyBoundary && !toyFire && awake === 0 && !mutated && !toyWakes.length && !pokeGuest;
     if (quiet && liquidCount > 0) {
       liquidSimSkipFrames++;
       if (liquidSimSkipFrames < 45) {       // heartbeat: one real step ~0.75 s
@@ -3002,7 +3002,7 @@
     SmokeFluid.setMovingBodies(jelloBodies, 0, 0, worldW, worldH,
       dt * timeMul, smokeObW, smokeObH);
     smokeWaterFlowCouple();
-    SmokeFluid.step(dt * timeMul);
+    SmokeFluid.step(toyFire ? fireFrameDt : dt * timeMul);
     SmokeFluid.displayPass();
   }
 
@@ -12516,7 +12516,7 @@
   var toolButtons = [];
   function setTool(name) {
     if(handsPending)return;
-    if((nativeMachineScene(currentScene) || handsRequested) && name!=='poke' && !(handsRequested && name==='build'))return;
+    if((nativeMachineScene(currentScene) && !toyFire || handsRequested) && name!=='poke' && !(handsRequested && name==='build'))return;
     if(pointerDown){
       var oldPointer=pointerId;releasePointer({pointerId:oldPointer},true);
       try{inputEl.releasePointerCapture(oldPointer);}catch(error){}
@@ -13214,6 +13214,12 @@
     machineState=null;instrumentSample=null;
     if(airModel)enableAirModel({enabled:false});
     if(airModel)airModel.reset();
+    if(toyFire){toyFire.destroy();toyFire=null;fireSplatAcc=0;firePourPending=0;firePourAcc=0;liquidWGPU.setBathThermal(null);SmokeFluid.setThermalStyle(null);SmokeFluid.setWetField(null);SmokeFluid.setPhysics(null,0);}
+    if(fireDomainActive){
+      if(fireDomainPrevious===undefined)delete liquidWGPU.toyNativeDomain;
+      else liquidWGPU.toyNativeDomain=fireDomainPrevious;
+      fireDomainPrevious=null;fireDomainActive=false;
+    }
     clearSmokeOnly();
     walls.fill(0);
     addBorder();
@@ -13224,6 +13230,8 @@
     emitters.length = 0;
   }
 
+  var toyFire=null,fireSplatAcc=0,fireFrameDt=0,fireWaterClock=0,firePourPending=0,firePourAcc=0,firePourClock=0;
+  var fireDomainPrevious=null,fireDomainActive=false;
   var machineState=null;
   var toyBoundary=null,toySound=null,thumbWanted=false;
   var handsPending=false,handsController=null,handsSelection=null,handsThumbRelease=false;
@@ -13431,6 +13439,7 @@
   }
 
   function instrumentTick(now){
+    if(toyFire && machineState){var heat=toyFire.stats();machineState.readings={ready:true,caption:machineState.definition.caption,action:machineState.definition.action,particleCount:liquidCount,fire:heat,mirrorAgeSimulationMs:liquidWGPU.getReadbackAge()*1000,inputWaterWorkFootPounds:(machineState.energyInput || 0)/1.3558179483314,energyBudgetStatus:machineState.definition.energyBudgetStatus,error:buildError || airState.error};return;}
     if(!airModel || !airModel.enabled || instrumentPending || now<instrumentNextAt)return;
     var model=airModel,state=machineState;
     instrumentPending=true;instrumentNextAt=now+150;
@@ -13624,7 +13633,7 @@
     if(waterState!=='on')return Promise.reject(new Error(waterState==='off' ? 'Water machines need WebGPU in this browser.' : 'Wait for the water engine to finish loading.'));
     var wasPaused=machineLoading ? machineResumePause : userPaused;
     machineResumePause=wasPaused;machineLoading=true;userPaused=true;syncRunning();
-    var request=++machineRequest, ownBoundary=null;
+    var request=++machineRequest, ownBoundary=null,ownFire=null;
     try{
     clearWorldAll(options.canvasThumb);setGravityUI(1);
     machineBuilder=null;handsController=null;handsSelection=null;valveSeats=null;manualValves.clear();instrumentSample=null;instrumentPending=false;instrumentNextAt=0;
@@ -13701,7 +13710,22 @@
     if(definition.settings.roomPressurePsi!==undefined && !(options.pressure && options.pressure.atmospherePressure!==undefined)){
       pressureSettings.atmospherePressure=window.WaterMachinesInstruments.scale({width:worldW,density:pressureSettings.density || 1}).pressureFromPsi(definition.settings.roomPressurePsi);
     }
-    var model=await enableAirModel(pressureSettings);
+    var model;
+    if(definition.fire){
+      liquidWGPU.setPressureModel(null);airState.ready=false;airPressureColors=false;
+      // Fire has no pressure solver or native tap, but its whole vessel must
+      // remain in the collision/grid domain between particle mirror updates.
+      fireDomainPrevious=liquidWGPU.toyNativeDomain;fireDomainActive=true;
+      liquidWGPU.toyNativeDomain={minX:0,minY:0,maxX:worldW,maxY:worldH};
+      fireWaterClock=liquidWGPU.simulationClock;firePourClock=fireWaterClock;
+      ownFire=await window.WSSFire.create({liquid:liquidWGPU,width:worldW,height:worldH,maxParticles:LIQUID_MAX_PARTICLES,source:definition.fire.source,noEmber:definition.fire.noEmber});
+      if(request!==machineRequest){ownFire.destroy();ownFire=null;return null;}
+      toyFire=ownFire;
+      if(window.WSSSound && !toySound)toySound=window.WSSSound.create();
+      SmokeFluid.setThermalStyle({glow:1,waterCooling:24});
+      SmokeFluid.setPhysics({HEAT:4,COOLING:1.2,BUOYANCY:350},0);
+      smokeAwakeT=SMOKE_IDLE_HOLD;model={settings:{density:1}};
+    }else model=await enableAirModel(pressureSettings);
     if(!model || request!==machineRequest)return null;
     if(toyBoundary){
       if(options.thumbGesture){toyBoundary.setCaps(thumbWanted ? [definition.primary.opening] : []);state.thumbHeld=thumbWanted;}
@@ -13740,6 +13764,7 @@
       throw error;
     }finally{
       if(request!==machineRequest && ownBoundary && ownBoundary!==toyBoundary)ownBoundary.destroy();
+      if(request!==machineRequest && ownFire && ownFire!==toyFire)ownFire.destroy();
       if(request===machineRequest){machineLoading=false;userPaused=machineResumePause;syncRunning();}
     }
   }
@@ -13748,7 +13773,10 @@
     if(handsPending)return false;
     if(!machineState || !machineState.ready)return false;
     var definition=machineState.definition,primary=definition.primary;
-    if(primary.kind==='tap'){
+    if(primary.kind==='fire-pour'){
+      var queued=Math.min(700,LIQUID_MAX_PARTICLES-liquidCount-firePourPending);
+      firePourPending+=queued;return queued>0;
+    }else if(primary.kind==='tap'){
       var enabled=definition.action==='Open tap';
       toyBoundary.setTapEnabled(enabled);definition.action=enabled ? 'Close tap' : 'Open tap';
       machineOverlayCache=null;return true;
@@ -14054,6 +14082,7 @@
     var burstView=machineState && machineState.definition.boundaries && machineState.definition.boundaries.burstDisk && toyBoundary ? toyBoundary.stats().burstDisk : null;
     var overlayKey=[wallsVersion,pressureColors,airPressureColors,fitScale,viewPanX,viewPanY,cameraWidth,cameraHeight,currentScene,highlightedValve,handsSelection && handsSelection.index].join(':');
     if(burstView)overlayKey+=':'+burstView.opened+':'+burstView.fault;
+    if(toyFire)overlayKey+=':'+toyFire.stats().burning;
     if(!buildGesture && !keyboardCursorVisible && machineOverlayCache && machineOverlayCache.key===overlayKey && machineOverlayCache.sample===instrumentSample)return;
     machineOverlayCache=!buildGesture && !keyboardCursorVisible ? {key:overlayKey,sample:instrumentSample} : null;
     var c=instrumentsCtx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,worldW,worldH);instrumentsDirty=true;
@@ -14107,6 +14136,9 @@
     }
     if(machineState){
       var definition=machineState.definition;
+      if(toyFire){var f=definition.fire,hot=toyFire.stats();c.fillText(hot.burning?'Burning':hot.smothered?'Out, wet':'Ember reheating',f.x+48,f.y-12);
+        c.fillText('Ember',f.x-80,f.y+36);c.strokeRect(f.x-36,f.y+16,16,8);
+        c.fillText('Pour',f.pour.x-14,f.pour.y-16);c.strokeRect(f.pour.x-8,f.pour.y-4,16,8);}
       definition.marks.forEach(function(mark){
         c.save();c.setLineDash([5,5]);c.beginPath();c.moveTo(mark.x,mark.y);c.lineTo(mark.x+mark.width,mark.y);c.stroke();c.restore();
         if(mark.id==='trigger')c.fillText('Fill line',mark.x+8,mark.y-7);
@@ -14257,6 +14289,7 @@
     toolTick(dt);
     presetTick(dt);
     emittersTick(dt);
+    firePourTick(dt);
     retireLiquidOrphans();
     updateLiquidToy(dt);
     // v4.20 perf: rebucket the mirror only when a NEW readback landed
@@ -14288,12 +14321,49 @@
         dbgE.cyPost = dbgB.cy;
       }
     }
+    fireTick(dt);
     smokeFrame(dt);
     instrumentTick(tNow);
     render();
 
     readoutTick++;
     if (readoutTick >= 15) { readoutTick = 0; updateReadout(); }
+  }
+
+  // A finite declared inlet, with native rest spacing and explicit admission.
+  // Each primary action queues one pour. The water is never relocated later.
+  function firePourTick(dt){
+    if(!toyFire || !machineState || waterState!=='on')return;
+    var clock=liquidWGPU.simulationClock;
+    var h=liquidCount ? Math.max(0,clock-firePourClock) : dt*Math.max(0,timeMul)*1.55;
+    firePourClock=clock;if(!firePourPending)return;
+    firePourAcc+=h*600;
+    var spout=machineState.definition.fire.pour,n=Math.min(40,firePourPending,Math.floor(firePourAcc));
+    if(n<40 && n!==firePourPending)return;
+    var before=liquidCount;
+    for(var i=0;i<n;i++){
+      var x=spout.x+(i-(n-1)*.5)*1.25,y=spout.y;
+      if(tileAt(Math.floor(y/TILE),Math.floor(x/TILE))===null)addLiquidParticle('water',x,y,0,120,0);
+    }
+    var admitted=liquidCount-before;firePourPending-=admitted;firePourAcc-=n;toyFire.admit(admitted);
+    if(!admitted || liquidCount>=LIQUID_MAX_PARTICLES){firePourPending=0;firePourAcc=0;}
+  }
+
+  function fireTick(dt){
+    if(!toyFire || !machineState || !smokeActive)return;
+    smokeAwakeT=SMOKE_IDLE_HOLD;
+    var waterClock=liquidWGPU.simulationClock;
+    var h=liquidCount ? Math.max(0,waterClock-fireWaterClock) : dt*Math.max(0,timeMul)*1.55;
+    fireWaterClock=waterClock;fireFrameDt=h;
+    toyFire.tick(h,{count:liquidCount,clock:waterClock});
+    liquidWGPU.setBathThermal(toyFire.field());
+    SmokeFluid.setWetField(toyFire.wetField());
+    var heat=toyFire.stats(),f=machineState.definition.fire;
+    if(heat.error){buildError=heat.error;userPaused=true;syncRunning();return;}
+    toyFire.events().forEach(function(event){if(toySound)toySound.hiss(event.energy,f.x,event.clock);});
+    SmokeFluid.setPhysics({HEAT:Math.min(4,Math.max(0,(heat.sourceC-20)/200)),COOLING:1.2,BUOYANCY:350},0);
+    if(heat.burning){fireSplatAcc+=h;var n=Math.min(3,Math.floor(fireSplatAcc/SMOKE_EMITTER_DT));fireSplatAcc-=n*SMOKE_EMITTER_DT;
+      for(var i=0;i<n;i++)smokePuff(f.x,f.y,0,0,{r:.5,g:.46,b:.4},.12);}
   }
 
   function startLoop() {
@@ -14310,7 +14380,7 @@
 
   function syncRunning() {
     var active=!handsPending && !userPaused && !document.hidden && visibleFrac>=0.06;
-    if(toySound)toySound.setActive(active && !!toyBoundary);
+    if(toySound)toySound.setActive(active && !!(toyBoundary || toyFire));
     if(!active)stopLoop();else startLoop();
   }
 
@@ -14548,6 +14618,7 @@
       machinePrimary: machinePrimary,
       machineThumb:machineThumb,
       nativeBoundary:function(){return toyBoundary;},
+      fire:function(){return toyFire;},
       sound:function(enabled){
         if(!toySound)return Promise.resolve(false);
         if(!enabled){toySound.mute();return Promise.resolve(false);}

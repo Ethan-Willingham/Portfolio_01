@@ -386,6 +386,7 @@
       var sample = toy.instruments ? toy.instruments() : { ready: false };
       var liveMachine = toy.machineState ? toy.machineState() : null;
       var air = toy.airStats ? toy.airStats() : { enabled: false };
+      var fire=!!(liveMachine && liveMachine.definition.fire);
       var contextual = machine || air.enabled;
       var ledger=sample.ledger || {},convergence=sample.convergence;
       var fatal=sample.error || air.error || (toy.liquid && toy.liquid() && toy.liquid().materialStateError);
@@ -399,12 +400,13 @@
       var pressureMessage=fatal ? 'The pressure calculation stopped. Restart or choose another scene.' : !sample.ready || !convergence ? 'Waiting for a pressure sample.' :
         diagnostic ? 'Pressure readings are diagnostic. Open Instruments for the calculation status.' : stale ? 'The pressure sample is old. Open Instruments for its age.' :
         'The pressure sample is current. Open Instruments for the calculation status.';
-      document.getElementById('toy-machine-diagnostics').hidden=!contextual;
+      document.getElementById('toy-machine-diagnostics').hidden=!contextual || fire;
       text('toy-machine-diagnostics',contextual ? pressureMessage : '');
-      if(contextual)text('toy-status',pressureLabel || (state.paused ? 'Paused' : 'Live'));
+      if(contextual)text('toy-status',fire ? state.paused?'Paused':'Live' : pressureLabel || (state.paused ? 'Paused' : 'Live'));
       document.getElementById('toy-machine-material-notice').hidden = !air.enabled;
       document.getElementById('toy-machine-summary').hidden = !machine;
-      document.getElementById('toy-machine-metrics').hidden = !machine;
+      document.getElementById('toy-machine-metrics').hidden = !machine || fire;
+      if(fire)text('toy-hint','Pour from the spout, or use Water to splash the source.');
       var siphon=state.scene==='siphon';
       document.getElementById('toy-siphon-options').hidden=!siphon;
       document.getElementById('toy-siphon-setup-note').hidden=!siphon;
@@ -427,7 +429,7 @@
       text('toy-compact-head', number(state.scene==='thumb-straw' ? sample.gasPressurePsi : state.scene==='tantalus' ? sample.mouthDistanceInches : sample.headInches, state.scene==='thumb-straw' ? 'psi' : 'in'));
       document.getElementById('toy-compact-head').parentElement.hidden=state.scene==='burst-disk';
       document.getElementById('toy-native-reading').hidden=!native;
-      text('toy-native-reading',state.scene==='thumb-straw' ? Number.isFinite(sample.retainedFraction) ? 'Water held '+(100*sample.retainedFraction).toFixed(0)+'%' : 'Waiting for water sample' :
+      text('toy-native-reading',fire && sample.fire ? 'Source '+Math.round(sample.fire.sourceC*1.8+32)+' degrees Fahrenheit; '+(sample.fire.burning?'burning':'cooling') : state.scene==='thumb-straw' ? Number.isFinite(sample.retainedFraction) ? 'Water held '+(100*sample.retainedFraction).toFixed(0)+'%' : 'Waiting for water sample' :
         liveMachine && liveMachine.definition.readingLabel || 'Powered return');
       document.getElementById('toy-native-options').hidden=!native;
       document.getElementById('toy-machine-view').hidden=native;
@@ -441,14 +443,14 @@
       }
       if(native && liveMachine && !setup.disabled){setup.value=liveMachine.definition.setup==='held' ? 'released' : liveMachine.definition.setup;}
       if(native && liveMachine){
-        var b=liveMachine.definition.boundaries;
+        var b=liveMachine.definition.boundaries || {pool:false};
         text('toy-native-boundaries',liveMachine.definition.boundaryNote || (b.pool ? 'Drained water feeds the tap. The powered return adds energy to lift it. The tap requests '+b.tap.rate+' parcels per simulation second at '+b.tap.vy+' pixels per second downward; each parcel represents 1.5625 square pixels. All '+state.allocation+' allocated slots are either present water or stored reserve.' : 'Only the upper opening is held. The lower end stays open. The side-hole comparison connects the upper air space to the room.'));
         var ledger=sample.boundary;
         text('toy-native-ledger',b.pool && ledger ? 'Present '+ledger.present+'; reserve '+ledger.parked+'. Requested '+ledger.requested+'; admitted '+ledger.admitted+'; collected '+ledger.drained+'; refused '+ledger.shortfall+'. Return work '+number(ledger.externalWork,'J')+'.' : '');
       }
       var soundButton=document.getElementById('toy-sound'),sound=toy.soundStats ? toy.soundStats() : {enabled:false};
-      soundButton.hidden=!native;pressed(soundButton,!!sound.enabled);soundButton.textContent=sound.enabled ? 'Sound on' : 'Sound off';
-      soundButton.title='Synthesized water impacts. Enable sound with this button.';
+      soundButton.hidden=!native && !fire;pressed(soundButton,!!sound.enabled);soundButton.textContent=sound.enabled ? 'Sound on' : 'Sound off';
+      soundButton.title=fire?'A synthesized hiss from water cooling the source. Enable sound with this button.':'Synthesized water impacts. Enable sound with this button.';
       if(state.scene==='thumb-straw'){primaryButton.setAttribute('aria-pressed',String(thumbPointer!==null || thumbKeyboard || !!(liveMachine && liveMachine.thumbHeld)));}else primaryButton.removeAttribute('aria-pressed');
       text('toy-compact-flow', number(sample.flowCubicInchesPerSecond, 'in³/s'));
       document.getElementById('toy-machine-metrics').classList.toggle('is-stale', stale);
@@ -464,7 +466,7 @@
         if (field[0] === 'age' && stale) value += ' (stale)';
         text('toy-i-' + field[0], value);
       });
-      text('toy-numerical-status', fatal ? 'The pressure calculation stopped. These readings are diagnostic.' :
+      text('toy-numerical-status', fire ? sample.fire && sample.fire.approximation || 'Loading the declared thermal model.' : fatal ? 'The pressure calculation stopped. These readings are diagnostic.' :
         unresolvedGeometry ? 'The water geometry is unresolved. These readings are diagnostic.' :
         sample.numericalStatus || 'Waiting for a pressure sample.');
       text('toy-energy-status', sample.energyBudgetStatus || 'Energy measurements will appear with the next apparatus sample.');
@@ -473,12 +475,14 @@
       var legend = document.getElementById('toy-pressure-legend');
       airPressureColors=toy.airPressureView();
       ['toy-air-pressure-toggle','toy-air-pressure-compact'].forEach(function(id){pressed(document.getElementById(id),airPressureColors);});
-      legend.hidden = !(pressureColors || airPressureColors) || !contextual;
+      legend.hidden = fire || !(pressureColors || airPressureColors) || !contextual;
       if (!legend.hidden) {
         var cap = window.WaterMachinesInstruments && toy.world ? window.WaterMachinesInstruments.scale({ width: toy.world().w }).psi(80000) : null;
         text('toy-pressure-legend', airPressureColors ? 'Air: gold above room pressure, rose below. Labels show gauge psi; room air is 0. Readings are diagnostic.' :
           'Water: rose below room pressure, gold above. Full color at ' + (Number.isFinite(cap) ? '±' + number(cap, 'psi') : 'the model limit') + '.');
       }
+      document.querySelectorAll('#toy-panel-instruments > .toy-instrument-values, #toy-panel-instruments > .toy-details, #toy-panel-instruments .toy-instrument-actions + .toy-panel-note').forEach(function(node){if(node.hidden!==fire)node.hidden=fire;});
+      ['toy-air-pressure-toggle','toy-air-pressure-compact','toy-pressure-toggle'].forEach(function(id){document.getElementById(id).hidden=fire;});
       var builderState = toy.buildState ? toy.buildState() : {};
       var message = builderState.error || sample.error || notice;
       if(builderState.pending)message='Restoring the wall. Water and the clock are paused until the edit finishes.';
@@ -504,6 +508,7 @@
       var state = toy.stats();
       var native=nativeScene(state.scene);shell.classList.toggle('is-native-machine',native);
       shell.dataset.scene=state.scene;
+      shell.classList.toggle('has-fire',!!toy.fire());
       var building = /^(build|draw|erase)$/.test(state.tool);
       shell.dataset.activeTool = state.tool;
       shell.classList.toggle('is-paused', state.paused);

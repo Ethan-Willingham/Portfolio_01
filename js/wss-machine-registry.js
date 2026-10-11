@@ -2,6 +2,7 @@
 (function () {
   'use strict';
   var entries = [
+    {id:'douse-fire',title:'Put out the fire',cue:'Pour water onto the glowing plume.',preview:'fire',accepted:true,world:{w:720,h:400},pool:false},
     {id:'self-flushing-cup',title:'Self-flushing cup',cue:'Open or close the tap.',preview:'cup',accepted:true,world:{w:720,h:400},pool:true},
     {id:'tantalus',title:'Tantalus',cue:'Watch the fixed mouth line.',preview:'tantalus',accepted:true,world:{w:720,h:400},pool:true},
     {id:'roman-inverted-siphon',title:'Roman inverted siphon',cue:'Close or open the intake.',preview:'inverted-siphon',accepted:true,world:{w:720,h:400},pool:false},
@@ -30,6 +31,7 @@
     await script('/js/wss-boundaries.js');
     await script('/js/wss-hands.js');
     await script('/js/wss-native.js');
+    if(id==='douse-fire')await script('/js/wss-fire.js');
     if(id==='burst-disk')await script('/js/wss-burst-disk.js');
     await script('/js/wss-sound.js');
     if(id==='tantalus')await script('/js/wss-machines/self-flushing-cup.js');
@@ -51,7 +53,11 @@
     }
     path('M3 43v6h66v-6','toy-preview-glass');
     path('M4 45h64v3H4Z','toy-preview-water');
-    if(kind==='inverted-siphon'){
+    if(kind==='fire'){
+      path('M25 43h23v-4H25Z','toy-preview-glass');
+      path('M28 37c-5-8 10-14 5-25 14 10 20 23 8 25Z','toy-preview-slime');
+      path('M12 7h10v4H12M17 13v15','toy-preview-stream');
+    }else if(kind==='inverted-siphon'){
       path('M5 8v20h16V8M53 21v21h15V21M15 25h12v19h19V33h13','toy-preview-glass');
       path('M6 12h14v15H6ZM54 33h13v8H54Z','toy-preview-water');
       path('M16 25h11v19h19V33h14','toy-preview-stream');

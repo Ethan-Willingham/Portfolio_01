@@ -111,6 +111,7 @@
     var context = null, node = null, master = null, moduleUrl = null, preparing = null;
     var enabled = false, active = true, retired = false, freshBatch = true, enableEpoch = 0;
     var lastFrame = -1, serial = 0, pending = null, log = [], preference = false, lastAckTime = -Infinity, lastError = null;
+    var hissBuffer=null,hissVoices=[],thermalLog=[],thermalCount=0;
     var counters = { accepted: 0, dropped: 0, stolen: 0, stale: 0, duplicates: 0,
       suppressed: 0, maxVoices: 0, activeVoices: 0, lastHandleMs: 0, maxHandleMs: 0 };
     try { preference = localStorage.getItem(PREFERENCE) === '1'; } catch (_) {}
@@ -232,7 +233,20 @@
       return Object.assign({}, counters, { enabled: enabled, preference: preference, active: active,
         audible: !!audible(), contextState: context ? context.state : 'absent',
         voiceCapacity: TUNING.voices, queue: pending ? pending.entries.length : 0,
-        queueCapacity: TUNING.batch, eventLog: log.slice(), error: lastError });
+        queueCapacity: TUNING.batch, eventLog: log.slice(), thermalEvents:thermalLog.slice(), thermalVoices:hissVoices.length, thermalCount:thermalCount, error: lastError });
+    }
+    function hiss(heatJ,x,clock){
+      if(!audible() || !(heatJ>0) || !Number.isFinite(heatJ))return false;
+      if(!hissBuffer){hissBuffer=context.createBuffer(1,Math.ceil(context.sampleRate*.45),context.sampleRate);var samples=hissBuffer.getChannelData(0),seed=913;
+        for(var i=0;i<samples.length;i++){seed=(Math.imul(seed,1664525)+1013904223)>>>0;samples[i]=(seed/4294967296*2-1);}}
+      if(hissVoices.length>=4){hissVoices.shift().stop();}
+      var source=context.createBufferSource(),filter=context.createBiquadFilter(),gain=context.createGain(),pan=context.createStereoPanner(),now=context.currentTime;
+      source.buffer=hissBuffer;filter.type='bandpass';filter.frequency.value=2400;filter.Q.value=.6;
+      pan.pan.value=Math.max(-.8,Math.min(.8,(x/720-.5)*1.6));
+      var amplitude=.055*Math.sqrt(heatJ/(heatJ+2000));gain.gain.setValueAtTime(0,now);gain.gain.linearRampToValueAtTime(amplitude,now+.015);gain.gain.exponentialRampToValueAtTime(.0001,now+.42);
+      source.connect(filter);filter.connect(gain);gain.connect(pan);pan.connect(master);hissVoices.push(source);
+      source.onended=function(){var index=hissVoices.indexOf(source);if(index>=0)hissVoices.splice(index,1);source.disconnect();filter.disconnect();gain.disconnect();pan.disconnect();};source.start();
+      thermalCount++;thermalLog.push({kind:'quench',heatJ:heatJ,simulationTime:clock,audioTime:now,gain:amplitude});if(thermalLog.length>64)thermalLog.shift();return true;
     }
     function destroy() {
       if (retired) return;
@@ -243,9 +257,10 @@
       if (moduleUrl) URL.revokeObjectURL(moduleUrl);
       if (context && context.state !== 'closed') context.close().catch(function () {});
       log.length = 0;
+      hissVoices.forEach(function(source){try{source.stop();}catch(e){}});hissVoices.length=0;thermalLog.length=0;hissBuffer=null;
     }
     document.addEventListener('visibilitychange', visibility);
-    return { enable: enable, mute: mute, setActive: setActive, consume: consume, stats: stats, destroy: destroy };
+    return { enable: enable, mute: mute, setActive: setActive, consume: consume, hiss:hiss, stats: stats, destroy: destroy };
   }
   window.WSSSound = Object.freeze({ create: create });
 })();
