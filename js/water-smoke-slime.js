@@ -12239,6 +12239,7 @@
       // floats second (the instant full-strength lift made the surface a
       // trampoline: balls skipped on a skin-tight notch instead of
       // carving a crater).
+      var dragRate=diverContact ? diverContact.dragRate : DRAG_K,viscousRate=diverContact ? diverContact.viscosity : 1.8;
       var buoyScale = diverContact ? 1 : 1 / (1 + bSpd / 260);
       var displacedMassRatio=b.cartesianDiver ? window.WSSCartesianDivers.lift(b) : 1+BUOY_BETA;
       var buoyA = -JELLO_GRAVITY * displacedMassRatio * dt * buoyScale;   // times phi per point
@@ -12287,7 +12288,7 @@
         // alone cannot settle a bob, because the splash water around the
         // body co-moves with it and the relative velocity reads ~0.
         if (phi > 0) {
-          var kv = 1 - Math.exp(-1.8 * phi * dt);
+          var kv = 1 - Math.exp(-viscousRate * phi * dt);
           dvx += -vpx * kv;
           dvy += -vpy * kv;
           // v3.5 RAM DRAG, Newton's third law for the plunge. The guest
@@ -12321,13 +12322,13 @@
           var vwx = mvx / dSum, vwy = mvy / dSum;
           var wsp = Math.sqrt(vwx * vwx + vwy * vwy);
           if (wsp > 150) { var wsc = 150 / wsp; vwx *= wsc; vwy *= wsc; }
-          var k = 1 - Math.exp(-DRAG_K * phiD * dt);
+          var k = 1 - Math.exp(-dragRate * phiD * dt);
           dvx += (vwx - vpx) * k;
           dvy += (vwy - vpy) * k;
         } else if (phi > 0) {
           // Inside the evacuated bubble: no local flow to read, so a
           // still-water drag damps plunges and ring-down.
-          var k2 = 1 - Math.exp(-DRAG_K * 0.55 * phi * dt);
+          var k2 = 1 - Math.exp(-dragRate * 0.55 * phi * dt);
           dvx += -vpx * k2;
           dvy += -vpy * k2;
         }

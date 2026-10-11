@@ -15,9 +15,9 @@
   function create(options){
     var L=options.liquid,definition=options.definition,bodies=options.bodies,model=options.model,room=model.settings.atmospherePressure,
       clock=L.simulationClock,offset=0,squeezed=definition.divers.squeezed,pistonVelocity=0,retired=false,generation=0,pending=false,lastAt=-Infinity,
-      sampleClock=clock,sampleFrame=0,latency=0,error=null,pressureBytes=bodies.length*144,coverageCount=20,coverageBytes=coverageCount*32,
+      sampleClock=clock,sampleFrame=0,latency=0,error=null,pressureBytes=bodies.length*144,coverageCount=24,coverageBytes=coverageCount*32,
       read=L.device.createBuffer({label:'toy.divers.pressure',size:pressureBytes+bodies.length*coverageBytes,usage:GPUBufferUsage.MAP_READ|GPUBufferUsage.COPY_DST});
-    bodies.forEach(function(b,k){var spec=definition.slimes[k],amount=area(b);b.cartesianDiver={id:k+1,amount:amount,mass:amount*spec.density,initialArea:amount,absolute:room,target:amount,pressureKind:null,wetProbeCount:0,surfaceY:null,submergedFraction:0};});
+    bodies.forEach(function(b,k){var spec=definition.slimes[k],amount=area(b);b.cartesianDiver={id:k+1,amount:amount,mass:amount*spec.density,initialArea:amount,absolute:room,target:amount,pressureKind:null,dragRate:definition.divers.dragRate,viscosity:definition.divers.viscosity,wetProbeCount:0,surfaceY:null,submergedFraction:0};});
     function guest(){var r=definition.divers.piston,x=r.x,y=r.y+offset,h=r.height,w=r.width,v=pistonVelocity;
       return {x:x+w*.5,y:y+h*.5,hw:w*.5+.01,hh:h*.5+.01,mvx:0,mvy:v,
         pts:[x,y,0,v,x+w,y,0,v,x+w,y+h,0,v,x,y+h,0,v]};}
@@ -39,10 +39,13 @@
           var col=Math.max(0,Math.min(model.width-1,Math.floor(x/model.cellSize))),row=Math.max(0,Math.min(model.height-1,Math.floor(y/model.cellSize))),i=row*model.width+col,at=(k*3+j)*48;
           enc.copyBufferToBuffer(model.buffers.pressure,i*16,read,at,16);enc.copyBufferToBuffer(model.buffers.cells,i*32,read,at+16,32);
         });
-          // Actual exterior water cells establish the local free surface. The
-          // deliberately empty guest interior cannot erase submerged volume.
-          rows[k]=[];for(var j=0;j<coverageCount;j++){var point=poses[k][Math.floor(j*b.ringN/coverageCount)],dx=point.x-b.cx,dy=point.y-b.cy,length=Math.hypot(dx,dy)||1;
-            var x=point.x+dx/length*model.cellSize,y=point.y+dy/length*model.cellSize,col=Math.max(0,Math.min(model.width-1,Math.floor(x/model.cellSize))),row=Math.max(0,Math.min(model.height-1,Math.floor(y/model.cellSize)));
+          // Read neighboring water, beyond the body's own evacuated crater.
+          // Two current exterior columns span the actual ring's height.
+          var left=Infinity,right=-Infinity,top=Infinity,bottom=-Infinity;
+          poses[k].forEach(function(p){left=Math.min(left,p.x);right=Math.max(right,p.x);top=Math.min(top,p.y);bottom=Math.max(bottom,p.y);});
+          rows[k]=[];for(var j=0;j<coverageCount;j++){
+            var x=j<12?left-2*model.cellSize:right+2*model.cellSize,y=top-2*model.cellSize+(bottom-top+4*model.cellSize)*(j%12)/11;
+            var col=Math.max(0,Math.min(model.width-1,Math.floor(x/model.cellSize))),row=Math.max(0,Math.min(model.height-1,Math.floor(y/model.cellSize)));
             rows[k].push(row);enc.copyBufferToBuffer(model.buffers.cells,(row*model.width+col)*32,read,pressureBytes+k*coverageBytes+j*32,32);
           }
         });
