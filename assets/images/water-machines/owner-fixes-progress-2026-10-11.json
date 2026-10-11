@@ -2,7 +2,7 @@
   "updated": "2026-10-11",
   "acceptedNewCapabilities": 5,
   "acceptedNovelMachines": 11,
-  "scope": "Progress record for private failed candidates. This does not replace the acceptance records linked beside public machines.",
+  "scope": "Owner correction progress. The balloon skin record below is accepted; failed private candidates remain distinct from public machine acceptance records.",
   "kettle": {
     "status": "private, rejected",
     "candidate": "cbde2bb93be0225e09458f0c589b1e4304b32e2e",
@@ -18,8 +18,9 @@
     "limits": "Fractional liquid mass and enthalpy are debited before native vapor births. This accounting pass does not establish satisfactory interface dynamics; pressure and surface limits both fail."
   },
   "slimeContact": {
-    "status": "private, rejected",
-    "observation": "Actual enlarged phone views retain dark water pockets at ordinary slime, float and deformed balloon skins. Smooth balloon curves and native containment pass their scoped checks; wet-contact acceptance does not."
+    "status": "balloon correction accepted; other slime contact rejected",
+    "observation": "The isolated smooth balloon passes six native closed/slit cases and seven maximum-zoom phone views. Sampled wet lower edges meet the drawn curve. The float underside and diver flanks still have dark gaps; diver floor overlap also remains rejected.",
+    "balloonRecord": "water-balloons-smooth-skin-result-2026-10-11.json"
   },
   "sandSorting": {
     "status": "private, rejected",
@@ -44,72 +45,27 @@
     "limits": "No sand sorting or gold sluice is accepted. Oil has a separate accepted record with its own partial-control stratification limitation."
   },
   "glassToilet": {
-    "status": "private, rejected",
-    "candidate": "53f27a213a9304549a70b7098416b03a9d98be46",
-    "method": "Unchanged six-case150 native-second prototype, actual Flush then manual Close at40 native seconds; original55-cell candidate flag retained as a sampled indicator, not full hydraulic proof.",
-    "cases": [
-      {
-        "seed": 17,
-        "half": false,
-        "candidatePrime": false,
-        "laterAir": false,
-        "bowlFinalPx": 252,
-        "weirPx": 256,
-        "finalInletOpenness": 0
-      },
-      {
-        "seed": 17,
-        "half": true,
-        "candidatePrime": true,
-        "laterAir": true,
-        "bowlFinalPx": 252,
-        "weirPx": 256,
-        "finalInletOpenness": 0.03233877691460041
-      },
-      {
-        "seed": 42,
-        "half": false,
-        "candidatePrime": true,
-        "laterAir": true,
-        "bowlFinalPx": 252,
-        "weirPx": 256,
-        "finalInletOpenness": 0.0691254857970014
-      },
-      {
-        "seed": 42,
-        "half": true,
-        "candidatePrime": false,
-        "laterAir": false,
-        "bowlFinalPx": 252,
-        "weirPx": 256,
-        "finalInletOpenness": 0
-      },
-      {
-        "seed": 913,
-        "half": false,
-        "candidatePrime": false,
-        "laterAir": false,
-        "bowlFinalPx": 252,
-        "weirPx": 256,
-        "finalInletOpenness": 0.07356731013695228
-      },
-      {
-        "seed": 913,
-        "half": true,
-        "candidatePrime": false,
-        "laterAir": false,
-        "bowlFinalPx": 252,
-        "weirPx": 256,
-        "finalInletOpenness": 0
-      }
-    ],
-    "limits": "Ongoing declared refill materially adds water before the half17 candidate. Two full-tank cases miss the sampled flag while half17 records it. All final bowls are within the existing8-pixel weir band, but three inlets remain partly open. All six have a sampled nonpositive gas volume and unresolved phase/pressure diagnostics. No new hydraulic witness was built and no acceptance bar changed."
+    "status": "private, rejected; final physical air-gap apparatus awaits native validation",
+    "candidate": "e8a5b4bc0a8a960fc8cfde22faddea1e62a1fb13",
+    "method": "Seed17 full/half150 native-second pair with actual Flush, then manual Close at40 native seconds. The original55-cell priming flag remains a sampled indicator.",
+    "observation": "The full tank records the sampled priming flag but finishes12 pixels above the weir, outside the8-pixel band. The half tank does not record that flag and finishes8 pixels above the weir. Both inlets remain fully open.",
+    "waterAccounting": "Zero residual in both cases; finite and sustained-wall guards pass.",
+    "limits": "Open inlets alone do not establish failed refill; water continues to enter late in the run. Pressure, cavitation and unclosed-work limitations remain. No full/half acceptance or three-seed result."
   },
   "birds": {
-    "status": "private, rejected source preserved; actual spawn repair awaits native validation",
-    "candidate": "27ef4d6cdfc35c0554c6fa60e5471de452a616ff",
-    "observation": "Actual native loads have19 points each, while the CPU dry-reset derivation expected61-point float versus19-point weight. The30-native-second run has real float motion and gas-powered voice events but no repeat or first-three-second cord motion. A longer run was stopped and remains incomplete.",
-    "spawnRepairCandidate": "41c8f91af7b36145019d95b2db573d8660648a29"
+    "status": "private, rejected after final fourth formulation; preserved",
+    "candidate": "ef3dd4e027bc2b47f8867ef1ff2cdba36d54bda2",
+    "method": "Unchanged120 native-second repeat test with actual61-point float and19-point weight and a physical float-operated feed shutter.",
+    "cordTravelPixels": 47.449,
+    "cordReversals": 1,
+    "requiredReversals": 2,
+    "nativeVoiceEvents": 2437,
+    "observation": "Real gas flow drives notes, but the apparatus drains once and does not restart its cycle. Continuing voice events do not demonstrate an air break or restart.",
+    "limits": "Native accounting and finite guards pass; pressure, cavitation and mechanical-work limitations remain. No repeat acceptance.",
+    "receiverReversals": 0,
+    "requiredReceiverReversals": 2,
+    "chamberParticleRange": 1129,
+    "requiredChamberParticleRange": 3000
   },
   "ordinarySubmergedAir": {
     "status": "unresolved",

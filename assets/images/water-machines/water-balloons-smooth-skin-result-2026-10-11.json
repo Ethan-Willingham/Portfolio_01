@@ -1,0 +1,136 @@
+{
+  "updated": "2026-10-11",
+  "toyVersion": "5.108",
+  "testedCandidate": "aeb312c86186180744b551164c8454384e9d19ff",
+  "scope": "Correction to the existing water balloon only, not a new capability or acceptance of contact in other slime machines.",
+  "method": "Preserved exported-skin bars plus actual Path2D drawn containment and current accessible-side certificate cloned at the same native clock; all prior Grab, Pop, slit, native guards and thresholds unchanged",
+  "skin": "Sluice outward-baked quadratic skin export; balloon contact samples that same curve adaptively to 0.01 world pixel chord error. The twenty slit intervals and coarse enclosing registration are separate from this contact curve.",
+  "rows": [
+    {
+      "seed": 17,
+      "slit": false,
+      "nativeWaterSlots": 5674,
+      "minimumRetainedFraction": 1,
+      "slitCrossings": 0,
+      "birthTagChanges": 0,
+      "nonfinite": 0,
+      "sustainedWallIntrusions": 0,
+      "drawnSkinTerrainOverlapSamples": 0,
+      "pass": true,
+      "closedDrawnSideViolations": 0,
+      "afterPopWaterSlots": 5674,
+      "releasedWaterSlots": 5674,
+      "releasedBirthTagChanges": 0
+    },
+    {
+      "seed": 17,
+      "slit": true,
+      "nativeWaterSlots": 5674,
+      "minimumRetainedFraction": 0.6097990835389496,
+      "slitCrossings": 4286,
+      "birthTagChanges": 0,
+      "nonfinite": 0,
+      "sustainedWallIntrusions": 0,
+      "drawnSkinTerrainOverlapSamples": 0,
+      "pass": true
+    },
+    {
+      "seed": 42,
+      "slit": false,
+      "nativeWaterSlots": 5673,
+      "minimumRetainedFraction": 1,
+      "slitCrossings": 0,
+      "birthTagChanges": 0,
+      "nonfinite": 0,
+      "sustainedWallIntrusions": 0,
+      "drawnSkinTerrainOverlapSamples": 0,
+      "pass": true,
+      "closedDrawnSideViolations": 0,
+      "afterPopWaterSlots": 5673,
+      "releasedWaterSlots": 5673,
+      "releasedBirthTagChanges": 0
+    },
+    {
+      "seed": 42,
+      "slit": true,
+      "nativeWaterSlots": 5673,
+      "minimumRetainedFraction": 0.6292966684294025,
+      "slitCrossings": 3871,
+      "birthTagChanges": 0,
+      "nonfinite": 0,
+      "sustainedWallIntrusions": 0,
+      "drawnSkinTerrainOverlapSamples": 0,
+      "pass": true
+    },
+    {
+      "seed": 913,
+      "slit": false,
+      "nativeWaterSlots": 5672,
+      "minimumRetainedFraction": 1,
+      "slitCrossings": 0,
+      "birthTagChanges": 0,
+      "nonfinite": 0,
+      "sustainedWallIntrusions": 0,
+      "drawnSkinTerrainOverlapSamples": 0,
+      "pass": true,
+      "closedDrawnSideViolations": 0,
+      "afterPopWaterSlots": 5672,
+      "releasedWaterSlots": 5672,
+      "releasedBirthTagChanges": 0
+    },
+    {
+      "seed": 913,
+      "slit": true,
+      "nativeWaterSlots": 5672,
+      "minimumRetainedFraction": 0.6029619181946403,
+      "slitCrossings": 4347,
+      "birthTagChanges": 0,
+      "nonfinite": 0,
+      "sustainedWallIntrusions": 0,
+      "drawnSkinTerrainOverlapSamples": 0,
+      "pass": true
+    }
+  ],
+  "phone": {
+    "viewport": [
+      844,
+      390
+    ],
+    "pixelRatio": 2,
+    "maximumZoom": 4,
+    "actualViews": 7,
+    "actions": "Real pointer Grab deformation and a physically missing slit interval.",
+    "observation": "Smooth outline; sampled wet lower edge has no uniform dark separation channel or visible basin overlap. This is sampled visual evidence, not a universal contact proof."
+  },
+  "coldLoad": {
+    "firstActualMotionMilliseconds": 418.59999999403954,
+    "nativeClock": 0.1,
+    "lab": false
+  },
+  "frameTimes": [
+    {
+      "phone": false,
+      "seconds": 20.003700000000002,
+      "medianMilliseconds": 8.400000000000091,
+      "p95Milliseconds": 17.799999999999272,
+      "nativeClockBefore": 2.2583333333333337,
+      "nativeClockAfter": 33.30000000000041
+    },
+    {
+      "phone": true,
+      "seconds": 20.0145,
+      "medianMilliseconds": 8.100000000000364,
+      "p95Milliseconds": 17.799999999999272,
+      "nativeClockBefore": 1.8916666666666686,
+      "nativeClockAfter": 32.95000000000045
+    }
+  ],
+  "regression": {
+    "originalScenes": 14,
+    "currentPublicMachineBoots": 8,
+    "sluiceBoot": "pass; pressureModel false; 4,400 particles; no browser errors",
+    "sharedEngineChanged": false
+  },
+  "limits": "Normalized model mass, inelastic contact, delayed water-to-skin reaction and uncalibrated rubber. The model has no closed mechanical work ledger. Dry upper space and local internal water voids remain; float/diver water gaps and ordinary submerged air are unresolved.",
+  "pass": true
+}
