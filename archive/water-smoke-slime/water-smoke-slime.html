@@ -24,7 +24,7 @@
   <link rel="preload" href="/assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/assets/fonts/commit_mono_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/style.css">
-  <link rel="stylesheet" href="/water-smoke-slime.css?v=v5.67">
+  <link rel="stylesheet" href="/water-smoke-slime.css?v=v5.68">
 </head>
 <body class="physics-page">
   <div class="site-wrapper toy-page">
@@ -231,6 +231,11 @@
           <picture><source type="image/webp" srcset="/assets/images/water-machines/roman-siphon-cycle-2026-10-10.webp"><img class="u-figure-img" src="/assets/images/water-machines/roman-siphon-cycle-2026-10-10.webp" width="1600" height="320" loading="lazy" alt="Actual Roman siphon frames show transfer through the valley pipe, a closed intake, and resumed flow after reopening."></picture>
           <figcaption class="u-figure-cap">Actual frames follow transfer, intake closure, the held cap and resumed flow. The lower row samples the closed intake at one thirtieth of a simulation second per frame.</figcaption>
         </figure>
+        <p>Water pressure breaks the burst disk open, and the water falls into the lower basin. A stronger disk holds under the same load on three starting seeds. Once a disk opens, closing the intake stops new water entering the pipe; reopening the intake resumes the discharge. The model uses a fixed membrane with no fragments or fracture energy. <a href="?scene=burst-disk#toy">Try the burst disk.</a> <a href="/assets/images/water-machines/burst-disk-result-2026-10-10.json">Measurements and limits.</a></p>
+        <figure class="u-figure">
+          <picture><source type="image/webp" srcset="/assets/images/water-machines/burst-disk-cycle-2026-10-10.webp"><img class="u-figure-img" src="/assets/images/water-machines/burst-disk-cycle-2026-10-10.webp" width="1600" height="320" loading="lazy" alt="Actual frames show a burst disk opening under water pressure, then the intake closing and reopening while water falls into the lower basin."></picture>
+          <figcaption class="u-figure-cap">The upper row follows discharge, intake closure and resumed flow. The lower row follows the opening disk at one thirtieth of a simulation second per frame.</figcaption>
+        </figure>
         <p>Sound starts with a click and follows the energy water loses at the collector. Hiding the tab or pausing clears the sounds; a fresh page still needs a click. The tones aren't calibrated bubble or glass sounds. The <a href="/assets/images/water-machines/slice-workshop-progress-2026-10-10.json">test record</a> includes the actual event timing and audio replay.</p>
         <p><time datetime="2026-10-09">Updated October 9, 2026.</time> The water solver now checks closed walls even where its pressure grid calls a partly filled cell air. The missed check let water cross a floor before collision pushed it back. Moving walls keep their own normal speed. Three cup runs deliver 101.8%, 98.4%, 98.8% of the initially estimated drainable water; all six hold controls pass and every particle is conserved. Some water below that estimate also drains.</p>
         <p>A private tank test now tracks the volume carried by each moving water particle through 49 steps, without collision rollback. A separate air-volume calculation keeps the tank's gas amount fixed. The new pressure force has also been applied in one actual particle step. That gas repair is still experimental. The published model can still lose small pockets, and sustained 60 FPS and phone performance remain unproved. <a href="https://github.com/Ethan-Willingham/Portfolio_01/releases/download/water-machines-evidence-2026-10-09/native-water-volume-and-wall-recordings-2026-10-09.zip">Native recordings</a>, <a href="/assets/images/water-machines/native-water-volume-and-wall-progress-2026-10-09.json">cup tests and remaining limits.</a></p>
@@ -337,9 +342,9 @@
   <script src="/js/water-machines-scenes.js?v=v5.41"></script>
   <script src="/js/water-machines-instruments.js?v=v5.41"></script>
   <script src="/js/water-machines-pressure-view.js?v=v5.57"></script>
-  <script src="/js/wss-machine-registry.js?v=v5.67"></script>
-  <script src="/js/water-smoke-slime.js?v=v5.67"></script>
-  <script src="/js/water-smoke-slime-ui.js?v=v5.67"></script>
+  <script src="/js/wss-machine-registry.js?v=v5.68"></script>
+  <script src="/js/water-smoke-slime.js?v=v5.68"></script>
+  <script src="/js/water-smoke-slime-ui.js?v=v5.68"></script>
   <script src="/js/smoke-presets-ui.js?v=4"></script>
 </body>
 </html>
