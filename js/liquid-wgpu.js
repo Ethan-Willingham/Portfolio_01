@@ -1319,7 +1319,9 @@
         gh[GS_META_BASE + q * 8 + 1] = (gu[q].y || 0) - gmvy * backTime;
         gh[GS_META_BASE + q * 8 + 2] = gu[q].hw || 0;
         gh[GS_META_BASE + q * 8 + 3] = gu[q].hh || 0;
-        gh[GS_META_BASE + q * 8 + 4] = gu[q].skin ? (gu[q].convex ? (gu[q].convex > 0 ? 3 : 4) : 2) : 1;
+        // A toy membrane uploads the same ring but has no solid interior.
+        // Its opt-in two-sided contact companion owns water crossing.
+        gh[GS_META_BASE + q * 8 + 4] = gu[q].membrane ? 0 : gu[q].skin ? (gu[q].convex ? (gu[q].convex > 0 ? 3 : 4) : 2) : 1;
         gh[GS_META_BASE + q * 8 + 5] = ptN;
         gh[GS_META_BASE + q * 8 + 6] = gmvx;
         gh[GS_META_BASE + q * 8 + 7] = gmvy;
@@ -12014,6 +12016,8 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
 
   function runFrame(instance, dt) {
     var toyExtension = instance.toyNativeExtension;
+    var toyMembrane = instance.toyMembrane;
+    if (toyMembrane && toyMembrane.error) throw new Error(toyMembrane.error);
     if (toyExtension) {
       if (!toyExtension.ready) { if (toyExtension.error) throw new Error(toyExtension.error); return; }
       toyExtension.validateHost();
@@ -12170,9 +12174,13 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
     try {
       if (hasSnow) runSnowBoundary(instance);
       if (toyExtension && toyExtension.ready) toyExtension.beginFrame(frameEncoder);
+      if (toyMembrane) toyMembrane.beginFrame(frameEncoder,
+        {count:count,h:instance.stepDt,clock:instance.simulationClock + instance.stepDt * subSteps});
 
       for (var ss = 0; ss < subSteps; ss++) {
         if (toyExtension && toyExtension.ready) toyExtension.beforeSubstep(frameEncoder,
+          {h:instance.stepDt,substep:ss,count:count});
+        if (toyMembrane) toyMembrane.beforeSubstep(frameEncoder,
           {h:instance.stepDt,substep:ss,count:count});
         buildGrid(instance, ss > 0);
         runDeclump(instance);
@@ -12186,6 +12194,8 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
         }
         runCollide(instance, ss);
         if (toyExtension && toyExtension.ready) toyExtension.afterSubstep(frameEncoder);
+        if (toyMembrane) toyMembrane.afterSubstep(frameEncoder,
+          {h:instance.stepDt,substep:ss,count:count});
         if (hasSnow) for (var grainStep = 0; grainStep < grainSteps; grainStep++) {
           // Terrain, rig and bowl stay on every pass; resident skins are
           // projected once, after the tick's final contact.
@@ -12206,9 +12216,12 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
       runSparseEndClear(instance);
       if (toyExtension && toyExtension.ready) toyExtension.captureFrame(frameEncoder,
         instance.simulationClock + instance.stepDt * subSteps);
+      if (toyMembrane) toyMembrane.captureFrame(frameEncoder,
+        {substep:subSteps-1,count:count});
       instance.queue.submit([frameEncoder.finish()]);
       instance.simulationClock += instance.stepDt * subSteps;
       if (toyExtension && toyExtension.ready) toyExtension.afterSubmit();
+      if (toyMembrane) toyMembrane.afterSubmit();
       if (diagnosticsSample) finishLiquidDiagnostics(instance, diagnosticsSample);
     } finally {
       // A failed encode must not leave subsequent standalone calls holding
@@ -12755,6 +12768,12 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
         instance.pressureModel = model || null;
         instance.materialStateError = null;
       },
+      // No companion resources or shader changes exist unless a toy opts in.
+      setToyMembrane: function (companion) {
+        if (companion && typeof companion.beforeSubstep !== 'function') throw new Error('Invalid native membrane companion.');
+        instance.toyMembrane = companion || null;
+        instance.materialStateError = null;
+      },
       configureToyNative: function (options) {
         if (typeof opts.toyNativeExtension !== 'function') {
           return Promise.reject(new Error('Toy native extension was not registered at creation.'));
@@ -12805,6 +12824,11 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
         try {
           runFrame(instance, dt);
         } catch (e) {
+          if (instance.toyMembrane) {
+            instance.materialStateError = (e && e.message) || String(e);
+            instance.toyMembrane.error = instance.materialStateError;
+            return;
+          }
           if (instance.toyNativeExtension) {
             instance.materialStateError = (e && e.message) || String(e);
             instance.toyNativeExtension.error = instance.materialStateError;
