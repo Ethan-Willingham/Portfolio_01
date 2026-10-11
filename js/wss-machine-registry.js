@@ -2,6 +2,8 @@
 (function () {
   'use strict';
   var entries = [
+    {id:'material-oil-jar',capability:'Material slip, prototypes',title:'Oil slip jar (prototype)',cue:'Stir once. Watch the two materials.',preview:'cup',accepted:false,world:{w:720,h:400},pool:false},
+    {id:'material-sand-jar',capability:'Material slip, prototypes',title:'Grain settling (prototype)',cue:'Watch grains move through still water.',preview:'cup',accepted:false,world:{w:720,h:400},pool:false},
     {id:'float-slider-cistern',capability:'Valves and logic',title:'Float-controlled inlet',cue:'Pull the float down to reopen the water inlet.',preview:'cup',accepted:true,world:{w:720,h:400},pool:true},
     {id:'singing-pipe',capability:'Sound',title:"Hero's sliding pipe (precursor)",cue:'Turn on sound. Drag the pipe to bend the note.',preview:'sliding-pipe',accepted:true,world:{w:720,h:400},pool:false},
     {id:'air-hose',capability:'Bubbles',title:'Air hose',cue:'Stop the air. Watch the last bubbles rise.',preview:'straw',accepted:true,world:{w:720,h:400},pool:false},
@@ -51,7 +53,7 @@
     if(id==='cartesian-divers')paths.push('wss-cartesian-divers');
     if(id==='burst-disk')paths.push('wss-burst-disk');
     if(id==='tantalus')paths.push('wss-machines/self-flushing-cup');
-    paths.push('wss-machines/'+id);
+    paths.push('wss-machines/'+(/^material-(oil|sand)-jar$/.test(id) ? 'material-slip-jar' : id));
     await Promise.all(paths.map(function(path){return script('/js/'+path+'.js');}));
     var module=window.WSSMachines && window.WSSMachines[id];
     if(!module || typeof module.make!=='function')throw new Error('This machine did not start.');

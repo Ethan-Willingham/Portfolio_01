@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.95'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.98'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -560,7 +560,7 @@
     if (liquidCount >= LIQUID_MAX_PARTICLES) return -1;
     var id = liquidCount++;
     liquidMutationSeq++;
-    liquidType[id] = type === 'oil' ? 1 : 0;
+    liquidType[id] = type === 'oil' ? 1 : type === 'sand' ? 5 : 0;
     liquidOrigin[id] = origin || 0;
     liquidX[id] = x;
     liquidY[id] = y;
@@ -585,7 +585,7 @@
   }
 
   function removeLiquidParticle(i) {
-    if(toyBalloon || toyDivers || toyBoundary && toyBoundary.ready)return;
+    if(toyMaterialSlip || toyBalloon || toyDivers || toyBoundary && toyBoundary.ready)return;
     var last = liquidCount - 1;
     if (i < 0 || i > last) return;
     if(machineState && machineState.energyInitial)machineState.energyModified=true;
@@ -619,7 +619,8 @@
    * retires immediately; moving spray gets four seconds to land or rejoin.
    * Real streams and pools reset their dwell because they have ample support. */
   function retireLiquidOrphans() {
-    if (airModel && airModel.enabled || toyFire || toyBalloon || toyDivers) return;
+    // Finite material jars keep every native parcel, including isolated spray.
+    if (toyMaterialSlip || airModel && airModel.enabled || toyFire || toyBalloon || toyDivers) return;
     liquidOrphanTick++;
     if (liquidOrphanTick < 30 || !liquidCount) return;
     liquidOrphanTick = 0;
@@ -1220,6 +1221,7 @@
       // Helpers download alongside engine boot. Native configuration happens
       // only after they settle, so resolve the factory at that point.
       toyNativeExtension: bootMachine || handsRequested ? function(instance,options){return window.WSSNative.create(instance,options);} : undefined,
+      materialSlipFactory: window.LiquidMaterialSlipWGPU ? window.LiquidMaterialSlipWGPU.create : undefined,
       liquid: {
         maxParticles: LIQUID_MAX_PARTICLES,
         getCount: function () { return liquidCount; },
@@ -13294,6 +13296,11 @@
 
   function clearWorldAll(preserveThumbInput) {
     if(smokeCanvas)smokeCanvas.style.opacity='1';
+    if(toyMaterialSlip){
+      liquidWGPU.clearMaterialSlip();toyMaterialSlip=null;
+      if(materialOilLook)materialOilLook.forEach(function(v,i){liquidWGPU.setRenderParam(['OIL_R','OIL_G','OIL_B','OIL_ALPHA'][i],v);});
+      materialOilLook=null;
+    }
     if(toyFloatSlider){toyFloatSlider.destroy();toyFloatSlider=null;}
     if(toyBubbles){toyBubbles.destroy();toyBubbles=null;}
     if(toyDivers){toyDivers.destroy();toyDivers=null;}
@@ -13328,6 +13335,7 @@
   var toyBalloon=null;
   var toyDivers=null;
   var toyFloatSlider=null;
+  var toyMaterialSlip=null,materialOilLook=null;
   var toySteam=null,steamWaterClock=0,steamFrameDt=0,steamPlumeSamples=0,steamPlumeMass=0;
   var toyBubbles=null;
   var fireDomainPrevious=null,fireDomainActive=false;
@@ -13561,6 +13569,7 @@
         numericalStatus:'Two-sided native water contacts and an elastic twenty-edge skin. Contact frame '+membrane.contactFrame+'.',
         energyBudgetStatus:machineState.definition.energyBudgetStatus,error:membrane.error || buildError};return;
     }
+    if(toyMaterialSlip && machineState){machineState.readings={ready:true,caption:machineState.definition.caption,action:machineState.definition.action,particleCount:liquidCount,materialSlip:toyMaterialSlip.stats(),numericalStatus:toyMaterialSlip.stats().method,energyBudgetStatus:machineState.definition.energyBudgetStatus,error:buildError || liquidWGPU.materialStateError};return;}
     if(toyFire && machineState){var heat=toyFire.stats();machineState.readings={ready:true,caption:machineState.definition.caption,action:machineState.definition.action,particleCount:liquidCount,fire:heat,mirrorAgeSimulationMs:liquidWGPU.getReadbackAge()*1000,inputWaterWorkFootPounds:(machineState.energyInput || 0)/1.3558179483314,energyBudgetStatus:machineState.definition.energyBudgetStatus,error:buildError || airState.error};return;}
     if(toyCannon && machineState && machineState.ready){
       machineState.readings={ready:true,caption:machineState.definition.caption,action:machineState.definition.action,
@@ -13777,7 +13786,7 @@
     if(!window.WaterMachinesScenes || !window.WaterMachinesBuilder)throw new Error('Water apparatus definitions are unavailable.');
     if(waterState!=='on')return Promise.reject(new Error(waterState==='off' ? 'Water machines need WebGPU in this browser.' : 'Wait for the water engine to finish loading.'));
     machineLoading=true;syncRunning();
-    var request=++machineRequest, ownBoundary=null,ownFire=null,ownBalloon=null,ownSteam=null,ownBubbles=null;
+    var request=++machineRequest, ownBoundary=null,ownFire=null,ownBalloon=null,ownSteam=null,ownBubbles=null,ownSlip=null;
     try{
     if(toyCannon){toyCannon.destroy();toyCannon=null;}
     clearWorldAll(options.canvasThumb);setGravityUI(1);
@@ -13835,9 +13844,10 @@
       if(balloonSeedRing && (!window.WSSWaterBalloons.geometry.contains(balloonSeedRing,px,py) || window.WSSWaterBalloons.geometry.nearest(balloonSeedRing,px,py).distance<3))continue;
       if(!seedClear(px,py))continue;
       requested++;
-      if(addLiquidParticle('water',px,py,0,0,0)>=0)added++;
+      var seedMaterial=definition.materialSlip ? definition.materialAt(x,y) : 'water';
+      if(addLiquidParticle(seedMaterial,px,py,0,0,0)>=0)added++;
     }
-    if((definition.boundaries || definition.divers) && added!==requested)throw new Error('Apparatus exceeds the particle capacity: '+requested+' requested, '+added+' added.');
+    if((definition.boundaries || definition.divers || definition.materialSlip) && added!==requested)throw new Error('Apparatus exceeds the particle capacity: '+requested+' requested, '+added+' added.');
     if(!definition.membrane && !definition.divers && !definition.slider)definition.slimes.forEach(function(s){if(!s.held)spawnSlimeAt(s.x,s.y,s.radius);});
     var state=machineState={definition:definition,seed:options.seed || 17,initialParticles:added,ready:false,
       primaryUsed:false,startedAt:null,wallClockStartedAt:null,energyInput:0,inputParticles:0,energyModified:false};
@@ -13879,7 +13889,20 @@
       pressureSettings.atmospherePressure=window.WaterMachinesInstruments.scale({width:worldW,density:pressureSettings.density || 1}).pressureFromPsi(definition.settings.roomPressurePsi);
     }
     var model;
-    if(definition.membrane){
+    if(definition.materialSlip){
+      liquidWGPU.setPressureModel(null);airState.ready=false;airPressureColors=false;
+      fireDomainPrevious=liquidWGPU.toyNativeDomain;fireDomainActive=true;
+      liquidWGPU.toyNativeDomain={minX:0,minY:0,maxX:worldW,maxY:worldH};
+      liquidWGPU.prepareMaterialState({reset:true});
+      ownSlip=await liquidWGPU.configureMaterialSlip(Object.assign({width:worldW,height:worldH},definition.materialSlip));
+      if(request!==machineRequest){ownSlip.destroy();return null;}
+      toyMaterialSlip=ownSlip;
+      materialOilLook=Array.from(liquidWGPU.renderParamsHost.slice(16,20));
+      var oilAccent=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+      var oilRGB=/^#[0-9a-f]{6}$/i.test(oilAccent) ? [1,3,5].map(function(i){return parseInt(oilAccent.slice(i,i+2),16)/255;}) : materialOilLook.slice(0,3);
+      oilRGB.concat([.95]).forEach(function(v,i){liquidWGPU.setRenderParam(['OIL_R','OIL_G','OIL_B','OIL_ALPHA'][i],v);});
+      model={settings:{density:1}};
+    }else if(definition.membrane){
       liquidWGPU.setPressureModel(null);airState.ready=false;airPressureColors=false;
       fireDomainPrevious=liquidWGPU.toyNativeDomain;fireDomainActive=true;
       liquidWGPU.toyNativeDomain={minX:0,minY:0,maxX:worldW,maxY:worldH};
@@ -13970,6 +13993,7 @@
       if(request!==machineRequest && ownBubbles && ownBubbles!==toyBubbles)ownBubbles.destroy();
       if(request!==machineRequest && ownBalloon && ownBalloon!==toyBalloon)ownBalloon.destroy();
       if(request!==machineRequest && ownSteam && ownSteam!==toySteam)ownSteam.destroy();
+      if(request!==machineRequest && ownSlip && ownSlip!==toyMaterialSlip)ownSlip.destroy();
       if(request===machineRequest){machineLoading=false;updateReadout();syncRunning();}
     }
   }
@@ -13978,6 +14002,10 @@
     if(handsPending)return false;
     if(!machineState || !machineState.ready)return false;
     var definition=machineState.definition,primary=definition.primary;
+    if(primary.kind==='material-jolt' && toyMaterialSlip){
+      var direction=definition.primary.direction || 1;definition.primary.direction=-direction;
+      machineState.lastMaterialImpulse=toyMaterialSlip.jolt(direction*80);return true;
+    }
     if(primary.kind==='pipe-sound' && toySound){
       if(toySound.stats().enabled)toySound.mute();else toySound.enable().then(function(){syncRunning();}).catch(function(error){buildError=error.message;});return true;
     }
