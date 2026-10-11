@@ -14341,7 +14341,7 @@
       }
       definition.vessels.forEach(function(v){
         var label=v.label || (v.id==='middle' ? 'Source water' : v.id==='bottom' ? 'Receiving water' : v.id==='source' ? 'Higher tank' : v.id==='receiver' ? 'Lower tank' : v.id==='basin' ? 'Basin' : 'Cup');
-        c.fillText(label,v.rect.x+8,v.rect.y-8);
+        c.fillText(label,v.rect.x+8,definition.divers?v.rect.y+80:v.rect.y-8);
       });
     }
     var labelBoxes=[],stageBounds=stage.getBoundingClientRect(),viewBounds=viewport.getBoundingClientRect();
