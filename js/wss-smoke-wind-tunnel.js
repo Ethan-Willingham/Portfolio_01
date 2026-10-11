@@ -7,7 +7,7 @@
     var ambientWind=fluid.config.wind_x;fluid.config.wind_x=0;
     var optics={},opticalKeys=['OPTICAL_DENSITY','OPTICAL_BRIGHTNESS','OPTICAL_ABSORPTION'];
     opticalKeys.forEach(function(key){optics[key]=fluid.config[key];});
-    fluid.config.OPTICAL_DENSITY=1;fluid.config.OPTICAL_BRIGHTNESS=.55;fluid.config.OPTICAL_ABSORPTION=1;
+    fluid.config.OPTICAL_DENSITY=1;fluid.config.OPTICAL_BRIGHTNESS=.55;fluid.config.OPTICAL_ABSORPTION=12;
     fluid.config.DENSITY_DISSIPATION=.12;
     var body=bodies[0],support=definition.support,fan=definition.fan,tracer=definition.tracer,node=-1,nearest=Infinity;
     for(var k=0;k<body.ringN;k++){
@@ -54,7 +54,7 @@
       c.save();c.lineWidth=1;c.globalAlpha=.65;c.beginPath();c.moveTo(anchor.x,support.top);
       c.lineTo(anchor.x,anchor.y);c.lineTo(body.px[node],body.py[node]);c.stroke();
       c.beginPath();c.arc(anchor.x,support.top,3,0,Math.PI*2);c.stroke();c.globalAlpha=1;
-      c.fillText(fan.enabled?'Fan on':'Fan off',80,104);c.fillText('Support',anchor.x+12,136);c.restore();
+      c.fillText(fan.enabled?'Fan on':'Fan off',80,104);c.fillText('Support',anchor.x+12,96);c.restore();
     }
     return {prepare:prepare,capture:pressure.capture,load:load,stats:stats,draw:draw,
       overlayKey:function(){return fan.enabled+':'+body.px[node].toFixed(1)+':'+body.py[node].toFixed(1);},
