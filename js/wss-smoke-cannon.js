@@ -13,6 +13,7 @@
     }
     function push(){
       if(definition.noPush)return false;
+      fill();
       // One declared impulse across the rear of the chamber. The opening and
       // projection solve form the counter-rotating section, not authored spin.
       for(var x=112;x<=224;x+=16)for(var y=168;y<=232;y+=16)
@@ -77,7 +78,7 @@
         pressureImpulseX:pressureImpulseX,pressureImpulseY:pressureImpulseY,peakEdgeLoad:peakLoad,
         noPush:definition.noPush,model:'2D vortex-pair section; current projection pressure traction; no authored path or wobble'};
     }
-    fill();if(!definition.noPush)push();
+    if(definition.noPush)fill();else push();
     return {push:push,capture:capture,load:load,stats:stats,sample:sample,
       destroy:function(){keys.forEach(function(k){fluid.config[k]=savedConfig[k];});fluid.setPhysics(savedPhysics,0);}};
   }
