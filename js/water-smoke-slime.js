@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.80'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.81'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -383,7 +383,7 @@
       .concat(simplifyWall(points.slice(split), tolerance));
   }
 
-  function wallOutline() {
+  function wallOutline(glassDetail) {
     function solid(r, c) {
       return r > 0 && c > 0 && r < gridH - 1 && c < gridW - 1 && tileAt(r,c)!==null;
     }
@@ -436,14 +436,14 @@
       }
       var smooth = simplifyWall(corners.slice(0, far + 1), TILE * 1.5).slice(0, -1)
         .concat(simplifyWall(corners.slice(far).concat([corners[0]]), TILE * 1.5).slice(0, -1));
-      if (smooth.length >= 3) corners = smooth;
+      if (!glassDetail && smooth.length >= 3) corners = smooth;
       for (var k = 0; k < corners.length; k++) {
         var p = corners[k], prev = corners[(k + corners.length - 1) % corners.length];
         var after = corners[(k + 1) % corners.length];
         var ax = prev.x - p.x, ay = prev.y - p.y;
         var bx = after.x - p.x, by = after.y - p.y;
         var al = Math.hypot(ax, ay), bl = Math.hypot(bx, by);
-        var radius = Math.min(TILE * 4, al * 0.45, bl * 0.45);
+        var radius = Math.min(glassDetail ? 2 : TILE * 4, al * 0.45, bl * 0.45);
         var ix = p.x + ax / al * radius, iy = p.y + ay / al * radius;
         if (k === 0) path.moveTo(ix, iy); else path.lineTo(ix, iy);
         path.quadraticCurveTo(p.x, p.y, p.x + bx / bl * radius, p.y + by / bl * radius);
@@ -458,7 +458,8 @@
     wallsBakedVersion = wallsVersion;
     wallsCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
     wallsCtx.clearRect(0, 0, worldW, worldH);
-    var path = wallOutline();
+    var glassDetail=glassWalls && machineState && /^(thermoscope|roman-inverted-siphon)$/.test(machineState.definition.name);
+    var path = wallOutline(glassDetail);
     var palette = getComputedStyle(document.documentElement);
     if(glassWalls && airModel && airModel.enabled){
       wallsCtx.fillStyle=palette.getPropertyValue('--accent').trim();
@@ -467,6 +468,11 @@
         if(tileAt(row,col)!==null)wallsCtx.fillRect(col*TILE,row*TILE,TILE,TILE);
       wallsCtx.globalAlpha=1;wallsCtx.strokeStyle=palette.getPropertyValue('--accent').trim();
       wallsCtx.lineWidth=1;wallsCtx.globalAlpha=.72;
+      if(glassDetail){
+        // A narrow glass edge follows the unchanged native wall mask.
+        wallsCtx.lineJoin='round';wallsCtx.lineWidth=3;wallsCtx.globalAlpha=.15;wallsCtx.stroke(path);
+        wallsCtx.lineWidth=1;wallsCtx.globalAlpha=.72;wallsCtx.stroke(path);wallsCtx.globalAlpha=1;return;
+      }
       for(row=1;row<gridH-1;row++)for(col=1;col<gridW-1;col++){
         if(tileAt(row,col)===null)continue;
         var x=col*TILE,y=row*TILE;
@@ -13279,6 +13285,7 @@
   }
 
   function clearWorldAll(preserveThumbInput) {
+    if(smokeCanvas)smokeCanvas.style.opacity='1';
     if(toyDivers){toyDivers.destroy();toyDivers=null;}
     if(toySound)toySound.setActive(false);
     if(toyThermoscope){toyThermoscope=null;thermoscopeAcc=0;SmokeFluid.setPhysics(null,0);SmokeFluid.setThermalStyle(null);}
@@ -13820,6 +13827,7 @@
       if(toySound)toyBoundary.setEventConsumer(function(events){toySound.consume(events);});
     }
     if(definition.name==='smoke-ring-cannon' || definition.name==='smoke-wind-tunnel'){
+      if(smokeCanvas)smokeCanvas.style.opacity=definition.name==='smoke-ring-cannon' ? '.9' : '1';
       if(airModel && airModel.enabled)await enableAirModel({enabled:false});
       setGravityUI(0);toyCannon=definition.name==='smoke-wind-tunnel' ?
         window.WSSSmokeWindTunnel.create(definition,SmokeFluid,{w:worldW,h:worldH},jelloBodies) :
