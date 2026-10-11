@@ -24,7 +24,7 @@
   <link rel="preload" href="/assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/assets/fonts/commit_mono_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/style.css">
-  <link rel="stylesheet" href="/water-smoke-slime.css?v=v5.89">
+  <link rel="stylesheet" href="/water-smoke-slime.css?v=v5.90">
 </head>
 <body class="physics-page">
   <div class="site-wrapper toy-page">
@@ -218,15 +218,15 @@
         </figure>
         <p>Air now rises through the water in bubbles. Stop the hose: new bubbles stop, while the ones already inside keep moving toward the surface. All three starting seeds and their air-off comparisons pass, with gas and water accounted for. <a href="?scene=air-hose#toy">Try the air hose.</a> <a href="/assets/images/water-machines/bubbles-result-2026-10-11.json">Measurements and limits.</a></p>
         <figure class="u-figure">
-          <picture><source type="image/webp" srcset="/assets/images/water-machines/bubbles-2026-10-11.webp"><img class="u-figure-img" src="/assets/images/water-machines/bubbles-2026-10-11.webp" width="1512" height="820" loading="lazy" alt="The actual air hose feeding small outlined gas bubbles into a glass of blue water."></picture>
-          <figcaption class="u-figure-cap">Small gas parcels rise through the same water used by the other demos. Instruments explains the pressure-volume model, declared hose supply and unresolved wake forces.</figcaption>
+          <picture><source type="image/webp" srcset="/assets/images/water-machines/bubbles-native-water-2026-10-11.webp"><img class="u-figure-img" src="/assets/images/water-machines/bubbles-native-water-2026-10-11.webp" width="1512" height="820" loading="lazy" alt="The actual air hose displacing blue native water as gas rises through the glass, with no painted bubble outlines."></picture>
+          <figcaption class="u-figure-cap">The dark spaces are where gas displaces the native water; circle overlays have been removed. Instruments explains the pressure-volume model, declared hose supply and unresolved wake forces.</figcaption>
         </figure>
         <p>The kettle boils and sends vapor through its whistle. Turn off the heater to cool it, or open Instruments and cap the whistle to watch trapped vapor condense back into water. All three starting seeds pass each comparison, with the water and gas accounted for. Sound follows the measured gas escaping and starts off. <a href="?scene=kettle#toy">Try the kettle.</a> <a href="/assets/images/water-machines/kettle-result-2026-10-11.json">Measurements and limits.</a></p>
         <figure class="u-figure">
           <picture><source type="image/webp" srcset="/assets/images/water-machines/kettle-2026-10-11.webp"><img class="u-figure-img" src="/assets/images/water-machines/kettle-2026-10-11.webp" width="1512" height="820" loading="lazy" alt="The actual glass kettle, with a marked immersed heater and white tracer rising from its narrow whistle."></picture>
           <figcaption class="u-figure-cap">The marked heater boils the water, and pressure sends vapor through the narrow whistle. The white plume traces escaping steam; Instruments explains the coarse phase model and pipe-mode sound estimate.</figcaption>
         </figure>
-        <p>Work in progress: the glass toilet and a motor-driven wave maker are in native testing. Soda is deferred after three models failed to eject water within ten simulation seconds. The waterwheel remains parked after its high-friction comparison reversed. Sand, oil and floating ice are deferred after four physical models each. These prototypes stay out of the public chooser.</p>
+        <p>Work in progress: fixing water contact at each slime’s drawn skin, smoothing balloon skins, rebuilding the kettle’s boiling and shortening cold startup. Sand, oil and ice now share a material-slip engine task so different materials can move past each other. The wheel, toilet, birds and blowhole follow these fixes; their prototypes stay out of the public chooser.</p>
         <p>Squeeze the jar and the three gas slimes shrink and sink in order. Release it and they expand and return to the surface; opening the air vent prevents the squeeze from sinking them. All three starting seeds pass, with every water parcel accounted for. <a href="?scene=cartesian-divers#toy">Try the divers.</a> <a href="/assets/images/water-machines/cartesian-divers-result-2026-10-11.json">Measurements and limits.</a></p>
         <figure class="u-figure">
           <picture><source type="image/webp" srcset="/assets/images/water-machines/cartesian-divers-2026-10-11.webp"><img class="u-figure-img" src="/assets/images/water-machines/cartesian-divers-2026-10-11.webp" width="1512" height="820" loading="lazy" alt="Three numbered gas slimes under a driven piston in the actual sealed water jar."></picture>
@@ -394,7 +394,7 @@
   <script src="/js/water-machines-instruments.js?v=v5.41"></script>
   <script src="/js/water-machines-pressure-view.js?v=v5.57"></script>
   <script src="/js/wss-machine-registry.js?v=v5.89"></script>
-  <script src="/js/water-smoke-slime.js?v=v5.89"></script>
+  <script src="/js/water-smoke-slime.js?v=v5.90"></script>
   <script src="/js/water-smoke-slime-ui.js?v=v5.89"></script>
   <script src="/js/smoke-presets-ui.js?v=4"></script>
 </body>

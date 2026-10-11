@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.89'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.90'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -14318,7 +14318,6 @@
     if(!buildGesture && !keyboardCursorVisible && machineOverlayCache && machineOverlayCache.key===overlayKey && machineOverlayCache.sample===instrumentSample)return;
     machineOverlayCache=!buildGesture && !keyboardCursorVisible ? {key:overlayKey,sample:instrumentSample} : null;
     var c=instrumentsCtx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,worldW,worldH);instrumentsDirty=true;
-    if(toyBubbles){var bubblePalette=getComputedStyle(document.documentElement);toyBubbles.draw(c,{edge:bubblePalette.getPropertyValue('--text-dim').trim(),fill:bubblePalette.getPropertyValue('--bg-raised').trim()});}
     var palette=getComputedStyle(document.documentElement);
     var accent=palette.getPropertyValue('--accent').trim(),text=palette.getPropertyValue('--text').trim();
     if(instrumentSample && airModel && airModel.enabled && window.WaterMachinesInstruments && (pressureColors || airPressureColors)){

@@ -371,5 +371,43 @@
   "pass": true,
   "releaseVersion": "v5.85",
   "originalSceneProtection": "Fourteen original and historical cold boots and seven previous novel public boots pass on merged f6a8641c.",
-  "publicControls": "Ordinary public URLs pass native births, actual Stop and Start, five visible tools and complete chooser on desktop and 844 by 390 phone with phone user agent; runs/bubbles-public-view-5.85."
+  "publicControls": "Ordinary public URLs pass native births, actual Stop and Start, five visible tools and complete chooser on desktop and 844 by 390 phone with phone user agent; runs/bubbles-public-view-5.85.",
+  "ownerAirRenderingCorrection": {
+    "method": "Native water rendered with gas-parcel canvas circles disabled. Existing gas contacts exclude real native liquid; no painted gas fill or circle outline.",
+    "observations": [
+      {
+        "simulationClock": 4.699999999999998,
+        "gasBirths": 13,
+        "dispersedArea": 455,
+        "resolvedArea": 390,
+        "escapedArea": 0,
+        "amountResidual": 0
+      },
+      {
+        "simulationClock": 15.833333333333465,
+        "gasBirths": 47,
+        "dispersedArea": 325,
+        "resolvedArea": 195,
+        "escapedArea": 2535,
+        "amountResidual": 0
+      },
+      {
+        "simulationClock": 19.191666666666663,
+        "gasBirths": 48,
+        "dispersedArea": 0,
+        "resolvedArea": 0,
+        "escapedArea": 3120,
+        "amountResidual": 0
+      },
+      {
+        "simulationClock": 28.749999999999584,
+        "gasBirths": 48,
+        "dispersedArea": 0,
+        "resolvedArea": 0,
+        "escapedArea": 3120,
+        "amountResidual": 0
+      }
+    ],
+    "limit": "This unchanged-source sample is seed17; original three-seed air on/off acceptance protects unchanged physical source. Broader room-air pocket transport remains under owner-requested investigation."
+  }
 }
