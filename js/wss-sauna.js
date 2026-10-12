@@ -6,7 +6,7 @@
   var MASS=Math.pow(1.25/24*.0254,2)*.0254*1000;
   var CP=MASS*4180, LATENT=MASS*2256400, BOIL=80*CP+LATENT;
   var SOURCE=`
-struct Params {step:vec4f, stones:vec4f, heat:vec4f};
+struct Params {step:vec4f, stones:vec4f, heat:vec4f, fuel:vec4f};
 @group(0) @binding(0) var<uniform> p:Params;
 @group(0) @binding(1) var<storage,read> pos:array<vec4f>;
 @group(0) @binding(2) var<storage,read_write> flags:array<u32>;
@@ -15,6 +15,7 @@ struct Params {step:vec4f, stones:vec4f, heat:vec4f};
 @group(0) @binding(4) var<storage,read_write> sums:array<atomic<u32>>;
 // Stone temperature, input, ambient loss, heat given to water, current dose.
 @group(0) @binding(5) var<storage,read_write> stone:array<f32>;
+@group(0) @binding(6) var<storage,read_write> fuel:array<f32>;
 fn liquid(i:u32)->bool{return (flags[i]&163u)==0u && parcels[i].y<.5;}
 fn touching(i:u32)->bool{
  let d=max(max(p.stones.xy-pos[i].xy,pos[i].xy-p.stones.zw),vec2f(0.));
@@ -33,7 +34,12 @@ fn contactEnthalpy()->f32{
  }
 }
 @compute @workgroup_size(1) fn heat(){
- stone[6]=contactEnthalpy();let dt=p.step.x;let input=p.step.z*2200.*dt;
+ stone[6]=contactEnthalpy();let dt=p.step.x;
+ // Exchange stored sensible heat on the same GPU queue as the fire. The
+ // signed dose leaves one reservoir and enters the other exactly once.
+ let reduced=p.fuel.x*p.heat.x/(p.fuel.x+p.heat.x);
+ let input=reduced*(fuel[0]-stone[0])*(1.-exp(-p.fuel.y*dt/reduced));
+ fuel[0]-=input/p.fuel.x;fuel[21]+=input;
  stone[0]+=input/p.heat.x;stone[1]+=input;
  let loss=p.heat.x*max(0.,stone[0]-20.)*(1.-exp(-1.2*dt/p.heat.x));
  stone[0]-=loss/p.heat.x;stone[2]+=loss;
@@ -64,11 +70,11 @@ fn contactEnthalpy()->f32{
 `;
   async function create(options){
     var L=options.liquid,device=L.device,queue=L.queue,U=GPUBufferUsage;
-    var spec=options.definition.sauna,fluid=options.fluid,bodies=options.bodies;
+    var spec=options.definition.sauna,fluid=options.fluid,bodies=options.bodies,fuel=options.fire.heatState();
     var buffers=[],retired=false,pending=false,error=null,receivedClock=0;
     function buffer(label,size,usage){var b=device.createBuffer({label:'toy.sauna.'+label,size:size,usage:usage});buffers.push(b);return b;}
     try{
-      var params=buffer('params',48,U.UNIFORM|U.COPY_DST);
+      var params=buffer('params',64,U.UNIFORM|U.COPY_DST);
       var parcels=buffer('parcels',options.maxParticles*8,U.STORAGE);
       var sums=buffer('sums',32,U.STORAGE|U.COPY_DST|U.COPY_SRC);
       var stones=buffer('stones',32,U.STORAGE|U.COPY_DST|U.COPY_SRC);
@@ -80,10 +86,10 @@ fn contactEnthalpy()->f32{
       var info=await module.getCompilationInfo();
       var errors=info.messages.filter(function(m){return m.type==='error';});
       if(errors.length)throw Error(errors.map(function(m){return m.message;}).join('; '));
-      var resources=[params,L.buf.pos,L.buf.flag,parcels,sums,stones],pipelines={},groups={};
+      var resources=[params,L.buf.pos,L.buf.flag,parcels,sums,stones,fuel.buffer],pipelines={},groups={};
       for(var key of ['contact','heat','evaporate']){
         pipelines[key]=await device.createComputePipelineAsync({layout:'auto',compute:{module:module,entryPoint:key}});
-        var bindings=key==='heat'?[0,4,5]:[0,1,2,3,4,5];
+        var bindings=key==='heat'?[0,4,5,6]:[0,1,2,3,4,5];
         groups[key]=device.createBindGroup({layout:pipelines[key].getBindGroupLayout(0),entries:bindings.map(function(binding){return {binding:binding,resource:{buffer:resources[binding]}};})});
       }
     }catch(e){buffers.forEach(function(b){b.destroy();});throw e;}
@@ -93,7 +99,7 @@ fn contactEnthalpy()->f32{
       if(retired || error || !(dt>0))return;
       dt=Math.min(.1,dt);clock+=dt;
       var r=spec.stones;
-      queue.writeBuffer(params,0,new Float32Array([dt,water.count,fire.burning?1:0,water.clock,r.x,r.y,r.x+r.width,r.y+r.height,spec.capacity,BOIL,CP,LATENT]));
+      queue.writeBuffer(params,0,new Float32Array([dt,water.count,0,water.clock,r.x,r.y,r.x+r.width,r.y+r.height,spec.capacity,BOIL,CP,LATENT,fuel.capacity,4,0,0]));
       queue.writeBuffer(sums,0,new Uint32Array(8));
       var encoder=device.createCommandEncoder({label:'toy.sauna.contact-and-phase'});
       for(var name of ['contact','heat','evaporate']){
@@ -193,7 +199,7 @@ fn contactEnthalpy()->f32{
       });c.restore();
     }
     function roomLabelX(){return spec.room.x+spec.room.width*.48;}
-    return {tick:tick,react:react,stats:stats,draw:draw,destroy:function(){retired=true;buffers.forEach(function(b){try{b.destroy();}catch(e){}});}};
+    return {tick:tick,react:react,stats:stats,draw:draw,heatState:function(){return {buffer:stones,capacity:spec.capacity};},destroy:function(){retired=true;buffers.forEach(function(b){try{b.destroy();}catch(e){}});}};
   }
   root.WSSSauna={create:create};
 })(typeof window!=='undefined'?window:globalThis);

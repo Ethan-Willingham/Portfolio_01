@@ -8,6 +8,8 @@
     if (!toy || !shell || !document.getElementById('toy-fallback').hidden) return;
     // The app page is always full-window; its fullscreen button uses the browser's fullscreen.
     var appMode = document.body.classList.contains('toy-app');
+    var oxygenView = window.WSSOxygenView ? window.WSSOxygenView.create(toy, shell) : null;
+    if (oxygenView) toy.oxygenView = oxygenView;
     var bar = document.getElementById('toy-bar');
     var pauseButton = document.getElementById('toy-pause');
     var resumeButton = document.getElementById('toy-resume');
@@ -446,6 +448,7 @@
       fitPanel();
     }
     function updateMeasurements() {
+      if (oxygenView) oxygenView.update();
       var state = toy.stats(), native=nativeScene(state.scene),machine = /^(siphon|cup|heron)$/.test(state.scene) || native;
       text('toy-fps', state.fps + ' FPS');
       var sample = toy.instruments ? toy.instruments() : { ready: false };
@@ -774,6 +777,7 @@
       if (bounds.bottom < 0 || bounds.top > innerHeight) return;
       if (event.code === 'Space') { event.preventDefault(); pause(!toy.stats().paused); }
       if (event.key.toLowerCase() === 'f') { event.preventDefault(); toggleFullscreen(); }
+      if (event.key.toLowerCase() === 'o' && oxygenView && oxygenView.available()) { event.preventDefault(); oxygenView.toggle(); }
     });
 
     // Observe control changes, including number-key tool selection and presets

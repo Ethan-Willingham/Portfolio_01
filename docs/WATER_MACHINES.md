@@ -144,26 +144,63 @@ desktop/mobile centering, grab recovery, fan controls, an undissipated dye-packe
 exit comparison and boundary restoration. The default smoke regression is
 `BASE_REF=44a0f90b node tools/perf/smoke-equivalence.cjs`.
 
-## Chimney inlet
+## Spatial oxygen and combustion
 
-The chimney inlet changes combustion in the running scene. Its clear collision
-cells replenish a finite mixed air charge in the firebox. Closing the inlet
-depletes that charge, dims the flame and stops new combustion heat and smoke.
-Reopening it replenishes the charge and lets the declared ember relight dry fuel.
-Water contact still quenches the fuel. Building across the inlet changes the
-supply even when the button's last command was to open it.
+The six fuel-burning scenes share a spatial oxygen solver: Candle in a jar,
+Chimney draft, Slime sauna, Douse a fire, Fire brigade and the declared burner in
+Oil slick fire. Thermoscope, kettle and steam apparatus use declared heaters;
+their heaters do not consume oxygen. Passive smoke tracers do not burn fuel.
 
-The normalized charge starts at one. Fresh-air exchange is twice the clear
-inlet fraction per simulation second; full burning consumes 0.6 charge per
-second. Heat and smoke follow the remaining combustible fraction. The model
-records admitted and consumed charge alongside the existing heat ledger. It is
-a mixed firebox approximation, with no resolved oxygen transport or combustion
-chemistry. Smoke still uses the existing temperature and projection solver.
+Oxygen, carrier gas and exhaust are transported on a floating-point GPU grid.
+The grid uses the smoke solver's current velocity and actual wall mask. A
+wall-aware face projection removes flow through blocked faces before smoke and
+species transport. Each interior face shares one conservative donor flux.
+Molecular mixing uses 0.000020 square metres per second at the declared scale.
+Species substeps follow the current maximum outgoing face rate, reduced on the
+GPU, so transport stays within its CFL bound without slowing the airflow.
+No cell inside a jar, firebox or inlet receives a replenishment term. External
+room boundary cells represent the atmosphere; their admitted and exported oxygen
+is recorded. Building a wall removes displaced gas and records it separately.
+Combustion scenes retain their physical world coordinates while the camera
+crops the drawing. Panning, zooming and toolbar resize do not reset oxygen.
 
-Run `node tools/test-chimney-inlet.mjs` for desktop and landscape mobile button
-cycles, initial and built closures, actual plume-temperature changes, charge
-balance and the ordinary fire's water-quench control. The harness owns and closes
-Chrome for Testing; screenshots and measurements go to `/tmp/chimney-inlet-review`.
+The field stores reference-volume inventories. Normal room air contains 20.9%
+oxygen by volume, not by mass. Oxygen mass uses 1.331 kilograms per cubic metre
+at the reference temperature. Local hot fuel consumes the oxygen that reaches
+its surface; reacted oxygen becomes an advected exhaust tracer. A finite fuel
+inventory limits the reaction. The small candle has a declared 60-watt capacity;
+the miniature hearth has 250 watts. These are source capacities, not guaranteed
+outputs. Actual heat follows consumed oxygen at 13.1 megajoules per kilogram,
+the common oxygen-consumption calorimetry approximation described by
+[NIST](https://nvlpubs.nist.gov/nistpubs/sp958-lide/280-282.pdf).
+
+Thirty percent of chemical heat enters the advected gas temperature; the rest
+is credited exactly once to the fuel's native sensible-heat sensor. The source
+has finite stored heat, room losses and actual water contact. The former
+fixed-temperature ember and mixed air counter are removed from these scenes.
+The candle samples oxygen arriving outside its reacting patch, so spent gas
+inside the flame does not falsely extinguish it. A declared smooth flame-support
+closure acts between 15% and 18% incoming oxygen; losing heat then extinguishes
+the wick. Detailed temperature-dependent flame extinction is not solved.
+Closing the chimney inlet can reduce the reaction while the open flue still
+permits inflow and outflow. There is no required three-second extinction.
+
+Oxygen in the top bar, or the O key, enables a read-only overlay. Smooth shading,
+measured contours, flow paths and a pointer probe show the same field that feeds
+the reaction. Instruments reports local oxygen, consumed mass and heat output.
+The overlay requests no additional GPU sampling and never changes the solver.
+
+This is a low-Mach reacting-flow approximation. The exhaust field is an
+oxygen-equivalent product tracer, not separate carbon dioxide and water species.
+Source kinetics, fuel shapes and heat partition are simplified. Thermal gas
+expansion, detailed chemistry and experimental validation remain outside this
+model. The numerical oxygen ledger includes reaction, external exchange and
+geometry edits; its residual is reported rather than hidden by normalization.
+
+Run `node tools/test-oxygen-transport.mjs` for production-shader transport,
+wall isolation, reaction accounting, ordinary browser combustion and overlays.
+The harness owns and closes Chrome for Testing. Visual captures stay outside
+the repository.
 
 ## Air pressure view
 
@@ -974,7 +1011,10 @@ This reduction assumes one connected gas pocket and a fixed domain. General mult
 
 The stone shelf sits above a small fire. Pour water onto the shelf to make white
 steam. The stones have finite stored heat, lose heat to contacting water and
-reheat while the fire burns. A native water parcel leaves the liquid only after
+exchange heat with the finite fuel reservoir. Heat gained by the stones is
+subtracted from the fuel on the same GPU queue, and hotter stones can return
+heat to it. Oxygen consumption supplies the fire's new chemical heat. A native
+water parcel leaves the liquid only after
 receiving its sensible and latent heat at room-pressure boiling. Its inactive
 slot records escaped vapor, so pouring repeatedly does not duplicate water.
 
@@ -990,11 +1030,13 @@ resolve steam pressure, condensation or a calibrated biological model. The
 shared liquid engine and Sluice are unchanged.
 
 Validation stays small: JavaScript syntax checks and one owned Chrome for
-Testing interaction check. One pour
-evaporated all 700 admitted parcels and warmed the guest to its relaxed state.
-Repeated pours produced the hot reaction. Pause and changing scenes passed
-without runtime or GPU errors. The finite-stone heat residual stayed below one
-joule. Run `node tools/test-water-sauna.cjs` for that short interaction check.
+Testing interaction check. Pouring makes paid evaporation warm the guest;
+repeated pours draw down the finite stone heat rather than guaranteeing that
+every admitted parcel boils. The test copies both GPU reservoirs after their
+last exchange and verifies that fuel heat lost equals stone heat gained,
+chemical input stays within measured oxygen reaction heat, and the combined
+ledger closes. Pause and changing scenes are also checked.
+Run `node tools/test-water-sauna.cjs` for that interaction check.
 
 ## Thirsty slime
 

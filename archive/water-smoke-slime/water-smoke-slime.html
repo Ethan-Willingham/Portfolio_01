@@ -25,7 +25,7 @@
   <link rel="preload" href="/assets/fonts/commit_mono_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/water-smoke-slime.css?v=v5.132">
-  <link rel="stylesheet" href="/water-smoke-slime-app.css?v=v5.154">
+  <link rel="stylesheet" href="/water-smoke-slime-app.css?v=v5.155">
 </head>
 <body class="physics-page toy-app toy-expanded">
   <section class="toy-shell is-expanded" id="toy" aria-label="Physics playground">
@@ -51,6 +51,7 @@
         <div class="toy-live-readout" aria-label="Simulation status"><span id="toy-fps" title="Rendered frames per second">0 FPS</span><span id="toy-status" role="status">Starting</span></div>
         <div class="toy-playback" role="group" aria-label="Playback">
           <button class="toy-chip toy-sound" id="toy-sound" aria-pressed="false" hidden>Sound off</button>
+          <button class="toy-chip toy-oxygen-button" id="toy-oxygen-toggle" aria-pressed="false" aria-controls="toy-oxygen-legend" title="Oxygen overlay (O)" hidden>Oxygen</button>
           <button class="toy-instruments-button" id="toy-instruments-open" data-panel="instruments" aria-expanded="false" aria-controls="toy-panel-instruments" hidden>Instruments</button>
           <button class="toy-icon" id="toy-pause" aria-label="Pause" title="Pause (Space)" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg></button>
           <button class="toy-icon" id="toy-restart" aria-label="Restart scene" title="Restart scene"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10a8 8 0 1 1 1.6 7M4 4v6h6"/></svg></button>
@@ -62,9 +63,19 @@
       <div class="toy-viewport" id="toy-viewport">
         <div class="toy-stage" id="toy-stage">
           <canvas id="toy-canvas" aria-hidden="true"></canvas>
+          <canvas id="toy-oxygen-canvas" class="toy-oxygen-canvas" aria-hidden="true" hidden></canvas>
           <div id="toy-input" tabindex="0" role="group" aria-label="Interactive physics canvas" aria-describedby="toy-hint toy-keyboard-help"></div>
         </div>
         <div class="toy-scene-actions" id="toy-scene-actions" role="group" aria-label="Apparatus controls"></div>
+        <aside class="toy-oxygen-legend" id="toy-oxygen-legend" aria-labelledby="toy-oxygen-heading" hidden>
+          <div class="toy-oxygen-heading"><h2 id="toy-oxygen-heading">Oxygen</h2><span>by volume</span></div>
+          <div class="toy-oxygen-reading"><span id="toy-oxygen-location">At the fire</span><output id="toy-oxygen-value">Waiting</output></div>
+          <div class="toy-oxygen-ramp" aria-hidden="true"></div>
+          <div class="toy-oxygen-ticks" aria-label="Concentration scale: 0, 5, 10, 15, and 20.9 percent"><span>0</span><span>5</span><span>10</span><span>15</span><span>20.9%</span></div>
+          <div class="toy-oxygen-options" role="group" aria-label="Oxygen overlay detail"><button type="button" id="toy-oxygen-contours" aria-pressed="true">Contours</button><button type="button" id="toy-oxygen-flow" aria-pressed="true">Airflow</button></div>
+          <p class="toy-oxygen-help" id="toy-oxygen-help">Move over the air to measure it.</p>
+        </aside>
+        <div class="toy-oxygen-probe" id="toy-oxygen-probe" hidden><span>Oxygen</span><output id="toy-oxygen-probe-value"></output></div>
         <button id="toy-resume" class="toy-resume" hidden>Resume</button>
         <div class="toy-fallback" id="toy-fallback" hidden>
           <p>The playground couldn’t start. Try a browser with graphics acceleration enabled.</p>
@@ -141,6 +152,11 @@
           </div>
           <p class="toy-panel-note" id="toy-heron-setup-note" hidden>Changing the setup refills the apparatus. Restart repeats the selected setup.</p>
           <p class="toy-panel-note" id="toy-numerical-status">Waiting for a pressure sample.</p>
+          <div class="toy-oxygen-instruments" id="toy-oxygen-instruments" hidden>
+            <button type="button" class="toy-chip" id="toy-oxygen-instruments-toggle" aria-pressed="false">Oxygen overlay</button>
+            <dl class="toy-instrument-values"><div><dt>Oxygen at the fire</dt><dd id="toy-i-oxygen">Waiting</dd></div><div><dt>Oxygen consumed</dt><dd id="toy-i-oxygen-used">Waiting</dd></div><div><dt>Combustion heat</dt><dd id="toy-i-oxygen-heat">Waiting</dd></div></dl>
+            <p class="toy-panel-note">Color follows the measured oxygen concentration. Lines join equal concentrations at 5, 10, 15 and 19 percent. Moving traces follow the measured airflow.</p>
+          </div>
           <dl class="toy-instrument-values">
             <div><dt>Pressure, gauge</dt><dd id="toy-i-pressure">Waiting</dd></div><div><dt>Measured speed</dt><dd id="toy-i-speed">Waiting</dd></div><div><dt>Ideal speed</dt><dd id="toy-i-ideal-speed">Waiting</dd></div><div><dt>Flow</dt><dd id="toy-i-flow">Waiting</dd></div><div><dt>Time</dt><dd id="toy-i-clock">Waiting</dd></div><div><dt>Jet rise</dt><dd id="toy-i-jet">Waiting</dd></div><div><dt>Ideal jet rise</dt><dd id="toy-i-ideal-jet">Waiting</dd></div><div><dt>Available air work</dt><dd id="toy-i-air-work">Waiting</dd></div><div><dt>Water potential</dt><dd id="toy-i-water-work">Waiting</dd></div><div><dt>Sample age</dt><dd id="toy-i-age">Waiting</dd></div>
           </dl>
@@ -208,7 +224,7 @@
               <div><dt>Slime</dt><dd>A mesh of elastic connections holds its volume while it stretches and compresses, solved with <a href="https://mmacklin.com/xpbd.pdf">XPBD</a> on the CPU.</dd></div>
             </dl>
             <p>The instruments treat the box as 30 inches wide and 1 inch deep. This is a game simulation tuned for play: the engines trade approximate boundary motion instead of sharing one solver.</p>
-            <p>Water needs WebGPU and smoke needs WebGL; without one, the rest still runs. Space pauses, F toggles fullscreen, and keys 1 to 6 choose tools.</p>
+            <p>Water needs WebGPU and smoke needs WebGL; without one, the rest still runs. Space pauses, F toggles fullscreen, O shows oxygen in combustion scenes, and keys 1 to 6 choose tools.</p>
             <div class="toy-about-links"><a href="https://github.com/Ethan-Willingham/Portfolio_01/blob/main/js/water-smoke-slime.js">Read the source</a><a href="/grand-motherload.html">Play Sluice</a><a href="/">ethanwillingham.com</a></div>
           </div>
         </section>
@@ -217,8 +233,8 @@
   </section>
 
   <!-- Shared water engine; the stamp follows GAME_VERSION. -->
-  <script src="/js/liquid-wgpu.js?v=v28.204"></script>
-  <script src="/js/liquid-material-slip-wgpu.js?v=v5.154"></script>
+  <script src="/js/liquid-wgpu.js?v=v28.205"></script>
+  <script src="/js/liquid-material-slip-wgpu.js?v=v5.155"></script>
   <script src="/js/smoke-presets.js?v=4"></script>
   <script src="/js/water-rainbow.js?v=2"></script>
   <script src="/js/liquid-air-model.js?v=v5.57"></script>
@@ -228,10 +244,11 @@
   <script src="/js/water-machines-scenes.js?v=v5.41"></script>
   <script src="/js/water-machines-instruments.js?v=v5.41"></script>
   <script src="/js/water-machines-pressure-view.js?v=v5.57"></script>
-  <script src="/js/wss-machine-registry.js?v=v5.154"></script>
+  <script src="/js/wss-machine-registry.js?v=v5.155"></script>
   <script src="/js/wss-apparatus-art.js?v=v5.146"></script>
-  <script src="/js/water-smoke-slime.js?v=v5.154"></script>
-  <script src="/js/water-smoke-slime-ui.js?v=v5.154"></script>
+  <script src="/js/water-smoke-slime.js?v=v5.155"></script>
+  <script src="/js/wss-oxygen-view.js?v=v5.155"></script>
+  <script src="/js/water-smoke-slime-ui.js?v=v5.155"></script>
   <script src="/js/smoke-presets-ui.js?v=4"></script>
 </body>
 </html>

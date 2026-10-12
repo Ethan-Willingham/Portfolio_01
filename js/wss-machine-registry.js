@@ -328,7 +328,7 @@
     "title": "Candle in a jar",
     "cue": "Keep the lid closed and the candle uses up its air. Lift it while the flame is still burning to let fresh air in.",
     "status": "PARTLY",
-    "blocker": "Oxygen is a well-mixed chamber inventory; spatial gas chemistry and pressure are approximate.",
+    "blocker": "Oxygen moves through the airflow and is consumed locally. Detailed chemistry remains approximate.",
     "draft": true,
     "world": {
       "w": 720,
@@ -369,9 +369,9 @@
     "id": "chimney-draw",
     "capability": "Fire",
     "title": "Chimney draft",
-    "cue": "Close the inlet to starve the flame. Reopen it to revive the fire.",
+    "cue": "Close the inlet and watch oxygen delivery change. Reopen it while the fuel is hot.",
     "status": "PARTLY",
-    "blocker": "Air supply uses a mixed firebox charge, not resolved combustion chemistry.",
+    "blocker": "Spatial oxygen and fuel heat respond to the open inlet and flue; detailed chemistry remains approximate.",
     "draft": true,
     "world": {
       "w": 720,
@@ -2814,7 +2814,7 @@
     if(!entry)throw new Error('This machine is not available.');
     // These scripts install functions. Their dependencies are read when a
     // machine is created, after every script has loaded, not during evaluation.
-    var paths=['wss-boundaries','wss-hands','wss-native','wss-sound'];
+    var paths=['wss-boundaries','wss-hands','wss-native','wss-sound','wss-fire','wss-oxygen'];
     if(id==='float-slider-cistern')paths.push('wss-float-slider');
     if(id==='air-hose')paths.push('wss-bubbles');
     if(id==='douse-fire')paths.push('wss-fire');

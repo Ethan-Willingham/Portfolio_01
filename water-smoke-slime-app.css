@@ -355,3 +355,71 @@ body.toy-app ::selection { background: var(--selection-bg); color: var(--selecti
 .toy-app .toy-shell[data-scene="hourglass"] .toy-resume {
   top: auto; left: auto; right: 20px; bottom: 20px; transform: none;
 }
+
+/* Concentration uses the site's sage, gold and coral data colors. The field
+   shares the apparatus camera; its legend and probe stay at reading size. */
+.toy-app {
+  --oxygen-sage: #9ec79a;
+  --oxygen-gold: #dfc288;
+  --oxygen-coral: #d9978c;
+  --oxygen-brick: #b8796d;
+  --oxygen-text: #e8e2d6;
+  --oxygen-dim: #b8b2a2;
+  --oxygen-rule: #4a544b;
+}
+.toy-app .toy-shell .toy-oxygen-button {
+  min-height: 44px; padding: 6px 12px; border-color: var(--rule-strong);
+}
+.toy-app .toy-shell .toy-oxygen-button.is-on {
+  color: var(--oxygen-sage); border-color: rgb(158 199 154 / .5); background: rgb(158 199 154 / .10);
+}
+.toy-app .toy-stage .toy-oxygen-canvas { z-index: 6; pointer-events: none; }
+.toy-app .toy-stage .toy-oxygen-canvas[hidden] { display: none; }
+.toy-oxygen-legend {
+  position: absolute; z-index: 11; right: 14px; bottom: 14px;
+  width: 238px; padding: 12px 14px 8px;
+  background: rgb(30 36 32 / .94); border: 1px solid var(--oxygen-rule); border-radius: 10px;
+  color: var(--oxygen-text); box-shadow: 0 8px 28px rgb(0 0 0 / .24);
+  font: 12px/1.4 var(--font-body); font-variant-numeric: tabular-nums;
+}
+.toy-oxygen-legend[hidden], .toy-oxygen-probe[hidden] { display: none; }
+.toy-oxygen-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.toy-oxygen-heading h2 { margin: 0; font: 600 13px/1.4 var(--font-body); color: var(--oxygen-text); }
+.toy-oxygen-heading > span { color: var(--oxygen-dim); font-size: 11px; }
+.toy-oxygen-reading { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin: 8px 0 10px; }
+.toy-oxygen-reading > span { color: var(--oxygen-dim); font-size: 11px; }
+.toy-oxygen-reading output { color: var(--oxygen-text); font: 500 22px/1 var(--font-mono); }
+.toy-oxygen-ramp {
+  height: 8px; border-radius: 3px;
+  background: linear-gradient(to right, var(--oxygen-brick), var(--oxygen-coral) 38.28%, var(--oxygen-gold) 71.77%, var(--oxygen-sage));
+}
+.toy-oxygen-ticks { display: flex; justify-content: space-between; gap: 4px; margin: 5px 0 4px; color: var(--oxygen-dim); font: 10px/1.4 var(--font-mono); }
+.toy-oxygen-options { display: flex; gap: 4px; }
+.toy-app .toy-shell .toy-oxygen-options button {
+  flex: 1 1 0; min-height: 44px; padding: 6px; border: 1px solid transparent; color: var(--oxygen-dim);
+  font: 12px/1.2 var(--font-body); background: transparent; border-radius: 5px;
+}
+.toy-app .toy-shell .toy-oxygen-options button[aria-pressed="true"] { color: var(--oxygen-sage); background: rgb(158 199 154 / .08); }
+.toy-app .toy-shell .toy-oxygen-options button:hover { background: rgb(158 199 154 / .13); color: var(--oxygen-text); }
+.toy-oxygen-options button:focus-visible, .toy-app .toy-shell .toy-oxygen-button:focus-visible { outline-color: var(--oxygen-sage); }
+.toy-oxygen-help { margin: 6px 0 1px; color: var(--oxygen-dim); font: 11px/1.4 var(--font-body); }
+.toy-oxygen-probe {
+  position: absolute; z-index: 12; display: flex; align-items: baseline; gap: 9px;
+  width: max-content; padding: 6px 9px; pointer-events: none; border: 1px solid var(--oxygen-rule); border-radius: 5px;
+  background: rgb(30 36 32 / .96); color: var(--oxygen-text); font: 12px/1.4 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.toy-oxygen-probe > span { color: var(--oxygen-dim); font: 11px/1.4 var(--font-body); }
+.toy-oxygen-instruments { margin: 12px 0; padding-top: 12px; border-top: 1px solid var(--rule); }
+.toy-app .toy-shell #toy-oxygen-instruments-toggle { min-height: 44px; }
+.toy-app .toy-shell #toy-oxygen-instruments-toggle.is-on { color: var(--oxygen-sage); background: rgb(158 199 154 / .10); border-color: rgb(158 199 154 / .4); }
+@media (max-width: 720px), (max-height: 560px) {
+  .toy-oxygen-legend { right: 8px; bottom: 8px; width: 204px; padding: 8px 10px 6px; }
+  .toy-oxygen-reading { margin: 5px 0 8px; }
+  .toy-oxygen-reading output { font-size: 19px; }
+  .toy-oxygen-help { display: none; }
+  .toy-app .toy-shell .toy-oxygen-button { padding: 6px 9px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .toy-oxygen-legend, .toy-oxygen-probe { transition: none; animation: none; }
+}

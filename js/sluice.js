@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.204';
+  var GAME_VERSION = 'v28.205';
   // Water-removal comparison for performance recording. Require a fresh
   // no-save run so the diagnostic cannot alter a stored world. Snow keeps
   // its ordinary emission, contacts, slime boundaries and rendering.
@@ -46997,6 +46997,18 @@
     function getPhysics() { return Object.assign({}, physicsTarget); }
 
     var dye, velocity, divergence, curl, pressure;
+    // Optional species solver. Ordinary game smoke never installs this hook.
+    var gasTransport = null;
+    function gasContext() {
+      if (!ready || !ext.isWebGL2) return null;
+      ensureObstacleTexture();
+      return {gl:gl,velocity:velocity,dye:dye,obstacle:obstacleTexture,wet:wetTexture,
+        wetActive:wetActive,draw:blit,canvas:canvas};
+    }
+    function setGasTransport(callback,owner) {
+      if(!owner || gasTransport===owner)gasTransport=callback || null;
+      return gasContext();
+    }
     var flowSample = null, flowProgram = null, flowValues = null, lastStepDt = 0;
     var temperatureSample=null,temperatureProgram=null,temperatureBytes=null,temperatureValues=null,heatSourceProgram=null;
     var copyProgram, clearProgram, splatProgram, advectionProgram,
@@ -48222,6 +48234,7 @@
       velocity.swap();
   
       advectionProgram.bind();
+      if (gasTransport) { gasTransport(dt,gasContext());advectionProgram.bind(); }
       bindLiquidField(advectionProgram.uniforms);
       uniform2f(advectionProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
       if (!ext.supportLinearFiltering)
@@ -48495,6 +48508,7 @@
       paintObstacleQuads: paintObstacleQuads,  // v10.87 — WebGL-native obstacle paint
       setMovingBodies: setMovingBodies,
       sampleFlow: sampleFlow,
+      setGasTransport:setGasTransport,
       sampleTemperature:sampleTemperature,
       heatSource:heatSource,
       setLiquidField: setLiquidField,

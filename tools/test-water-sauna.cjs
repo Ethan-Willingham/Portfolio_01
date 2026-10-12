@@ -23,22 +23,46 @@ const server=http.createServer((req,res)=>{
     await page.waitForFunction(()=>window.__toy?.machineState()?.ready,{},{timeout:25000});
     await page.evaluate(()=>__toy.liquid().device.addEventListener('uncapturederror',e=>window.__saunaGpuError=e.error.message));
     const before=await page.evaluate(()=>__toy.sauna().stats());console.log('BEFORE',JSON.stringify(before));
-    await page.evaluate(()=>{__toy.pause(false);__toy.machinePrimary();});
+    const pour=page.locator('.toy-scene-action[data-control="primary"]');
+    const point=await pour.boundingBox();assert(point,'held pour control is visible');
+    await page.mouse.move(point.x+point.width/2,point.y+point.height/2);
+    await page.evaluate(()=>__toy.pause(false));await page.mouse.down();
+    await page.waitForTimeout(400);await page.mouse.up();
     await page.waitForFunction(()=>__toy.sauna().stats().evaporatedParcels>20,{},{timeout:18000});
     await page.waitForTimeout(3500);
     const first=await page.evaluate(()=>__toy.sauna().stats());console.log('FIRST POUR',JSON.stringify(first));
     assert(first.stonesC<before.stonesC);assert(first.steamSamples>0);assert(first.roomC>20);assert(first.guests[0].temperatureC>20);
-    await page.evaluate(()=>{__toy.machinePrimary();__toy.machinePrimary();});
-    await page.waitForFunction(()=>__toy.sauna().stats().guests[0].mood==='Too hot',{},{timeout:14000});
+    await page.mouse.down();
+    await page.waitForTimeout(3500);
+    await page.mouse.up();
     await page.evaluate(()=>__toy.pause(true));
     const hot=await page.evaluate(()=>__toy.sauna().stats());console.log('REPEATED POURS',JSON.stringify(hot));
-    assert(hot.evaporatedParcels>first.evaporatedParcels);assert(hot.guests[0].mood==='Too hot');
+    assert(hot.evaporatedParcels>=first.evaporatedParcels);assert(hot.waterHeatJ>first.waterHeatJ);assert(hot.guests[0].temperatureC>20);
+    assert(hot.stonesC<first.stonesC,'repeated cold water draws down finite stored heat');
     assert(hot.guests.every(g=>Number.isFinite(g.x+g.y+g.temperatureC)));assert(Math.abs(hot.heatResidualJ)<30);
+    // Copy both reservoirs after their last exchange. Their asynchronous
+    // display readings otherwise fall on opposite sides of the heat pass.
+    const energy=await page.evaluate(async()=>{
+      const L=__toy.liquid(),fuel=__toy.fire().heatState(),stone=__toy.sauna().heatState();
+      const read=L.device.createBuffer({size:128,usage:GPUBufferUsage.MAP_READ|GPUBufferUsage.COPY_DST});
+      try{
+        const encoder=L.device.createCommandEncoder();encoder.copyBufferToBuffer(fuel.buffer,0,read,0,96);encoder.copyBufferToBuffer(stone.buffer,0,read,96,32);
+        L.queue.submit([encoder.finish()]);await read.mapAsync(GPUMapMode.READ);
+        const values=new Float32Array(read.getMappedRange()).slice(),f=values.slice(0,24),s=values.slice(24);
+        __toy.oxygen().capture();
+        return {fuelTransferredJ:f[21],stonesReceivedJ:s[1],fuelChemicalJ:f[4],oxygenChemicalJ:__toy.oxygen().stats().chemicalHeatJ,
+          combinedResidualJ:f[16]+f[4]+stone.capacity*(340-20)-f[5]-f[6]-s[2]-s[3]-fuel.capacity*(f[0]-20)-stone.capacity*(s[0]-20)};
+      }finally{read.destroy();}
+    });
+    console.log('COUPLED ENERGY',JSON.stringify(energy));
+    assert(Math.abs(energy.fuelTransferredJ-energy.stonesReceivedJ)<.02,'fuel heat lost equals stone heat gained');
+    assert(Math.abs(energy.combinedResidualJ)<30,'coupled reservoirs conserve energy');
+    assert(energy.fuelChemicalJ<=energy.oxygenChemicalJ*.7+.1,'fuel input is bounded by actual oxygen reaction heat');
     await page.screenshot({path:path.join(process.env.DUMP||'/tmp','sauna-quick-check.png')});
     assert.equal(await page.evaluate(()=>window.__saunaGpuError||__toy.instruments().error||null),null);assert.deepEqual(errors,[]);
     const paused=hot.roomC;await page.waitForTimeout(200);assert.equal(await page.evaluate(()=>__toy.sauna().stats().roomC),paused);
     await page.evaluate(()=>__toy.machine('douse-fire'));
     assert.equal(await page.evaluate(()=>__toy.sauna()),null);
-    console.log('PASS: contact, evaporation, warming, hot reaction, pause and scene cleanup.');
+    console.log('PASS: conservative fire-to-stone heat, contact, evaporation, warming, finite cooling, pause and scene cleanup.');
   }finally{if(browser)await browser.close();await new Promise(resolve=>server.close(resolve));}
 })().catch(e=>{console.error(e);process.exitCode=1;});

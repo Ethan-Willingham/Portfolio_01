@@ -2,8 +2,8 @@
 (function(root){
   'use strict';
   var entries=[
-    {id:'candle-in-jar',capability:'Fire',title:'Candle in a jar',cue:'Keep the lid closed and the candle uses up its air. Lift it while the flame is still burning to let fresh air in.',status:'PARTLY',blocker:'Oxygen is a well-mixed chamber inventory; spatial gas chemistry and pressure are approximate.',draft:true,world:{w:720,h:400},pool:false},
-    {id:'chimney-draw',capability:'Fire',title:'Chimney draft',cue:'Close the inlet to starve the flame. Reopen it to revive the fire.',status:'PARTLY',blocker:'Air supply uses a mixed firebox charge, not resolved combustion chemistry.',draft:true,world:{w:720,h:400},pool:false},
+    {id:'candle-in-jar',capability:'Fire',title:'Candle in a jar',cue:'Keep the lid closed and the candle uses up its air. Lift it while the flame is still burning to let fresh air in.',status:'PARTLY',blocker:'Oxygen moves through the airflow and is consumed locally. Detailed chemistry remains approximate.',draft:true,world:{w:720,h:400},pool:false},
+    {id:'chimney-draw',capability:'Fire',title:'Chimney draft',cue:'Close the inlet and watch oxygen delivery change. Reopen it while the fuel is hot.',status:'PARTLY',blocker:'Spatial oxygen and fuel heat respond to the open inlet and flue; detailed chemistry remains approximate.',draft:true,world:{w:720,h:400},pool:false},
     {id:'slime-sauna',capability:'Fire',title:'Slime sauna',cue:'Pour onto the stones to make steam. Watch the slime warm up; let the room cool between pours.',status:'WORKS',blocker:'Vented room mixing and guest comfort use an approximate thermal model.',draft:true,world:{w:720,h:400},pool:false},
     {id:'heron-air-smoke',capability:'Smoke',title:"The air in Heron's fountain",cue:'Pour into the basin and follow the smoke in the air link, draft.',status:'PARTLY',blocker:'Smoke traces a separate flow field, not the native compressible gas inventory.',draft:true,world:{w:720,h:400},pool:false},
     {id:'sewer-gas-trap',capability:'Smoke',title:'Sewer gas trap',cue:'Water blocks the smoke. Dry out the trap to let it through, then refill it.',status:'PARTLY',blocker:'Air pressure does not displace the water seal.',draft:true,world:{w:720,h:400},pool:false}
@@ -16,7 +16,7 @@
       action:'Pour water',primary:{kind:'fire-pour'},readingLabel:entry.title,setup:'ordinary',setups:[],
       viewBounds:rect(72,24,576,360),vessels:[],pipes:[],solids:[],vents:[],parts:[],slimes:[],initial:[],marks:[],meters:[],settings:{},boundaries:null,
       boundaryNote:'Draft apparatus. Every water parcel stays in the native liquid solver. Smoke is the existing advected temperature and projection field.',
-      energyBudgetStatus:entry.blocker+' The existing fire is a lumped hot fuel patch and declared ember. Smoke and water coupling is approximate, with no closed energy claim.',
+      energyBudgetStatus:entry.blocker+' Burning fuel uses transported oxygen and finite stored heat. Smoke and water coupling is approximate, with no closed energy claim.',
       measure:{source:rect(8,8,704,384),receiver:rect(8,8,704,384)},draftFireSmoke:{kind:id,pressure:false,labels:[],tracers:[],probes:[]}};
   }
   function fire(d,x,y,pour){d.fire={source:rect(x-8,y-8,16,16),x:x,y:y,noEmber:false,pour:pour};}
@@ -26,18 +26,15 @@
       var jar=rect(232,64,248,312),lid=rect(232,64,248,8),opened=options.opened===true;
       d.vessels=[{id:'jar',label:'Jar',rect:jar,sealed:true}];d.solids=[rect(344,312,32,56)];if(opened)d.vents.push(lid);
       fire(d,360,296,{x:360,y:112});d.action=opened?'Replace lid':'Lift lid';d.primary={kind:'draft-wall-toggle'};
-      var metresPerPixel=.762/world.w;
-      d.fire.noEmber=true;d.fire.air={volumeLitres:((jar.width-16)*(jar.height-16)-32*56)*metresPerPixel*metresPerPixel*.0254*1000,
-        consumptionLitresPerSecond:.008,extinctionFraction:.16,openExchangePerSecond:1.5};
-      d.energyBudgetStatus='The sealed jar has a finite, well-mixed oxygen inventory. Burning consumes it; an open lid exchanges air with the room. The flame weakens near the tuned cutoff and stays out after extinction until reset. There is no reheating ember. Spatial oxygen transport, combustion products and gas pressure are approximate; the source heat ledger retains the existing lumped model.';
+      d.fire.noEmber=true;d.energyBudgetStatus='Local fuel consumes spatial oxygen carried by projected airflow. Chemical heat follows the consumed oxygen. A sealed jar has no oxygen source; opening its lid permits actual gas transport. The candle has finite fuel and stored heat, and does not relight without reset.';
       q.gate={rect:lid,opened:opened,openLabel:'Replace lid',closedLabel:'Lift lid'};q.labels=[{x:252,y:48,text:'Glass lid'},{x:302,y:366,text:'Candle'}];q.probes=[{id:'jar',x:360,y:192},{id:'above-lid',x:360,y:40}];
     }else if(id==='chimney-draw'){
       var inlet=rect(216,312,8,48),closed=options.closed===true;
       d.vessels=[{id:'firebox',label:'Firebox',rect:rect(216,248,304,136),sealed:true}];
       d.solids=[rect(320,40,8,216),rect(392,40,8,216),rect(328,352,16,8),rect(376,352,16,8)];d.vents=[rect(328,248,64,8)];if(!closed)d.vents.push(inlet);
       fire(d,360,328,{x:472,y:104});d.action=closed?'Open inlet':'Close inlet';d.primary={kind:'draft-wall-toggle'};
-      d.fire.ventilation=true;
-      d.energyBudgetStatus='The clear inlet replenishes a finite mixed air charge. Burning consumes it and supplies proportional heat and smoke. A declared ember revives dry fuel when air returns. The smoke solver advects heat through the real flue walls; combustion chemistry and a closed air-energy budget remain approximate.';
+      d.fire.spatialOxygen=true;
+      d.energyBudgetStatus='Oxygen and exhaust travel through the real inlet, firebox and flue. Local reaction consumes oxygen and finite fuel; measured consumption supplies chemical heat. Closing the inlet changes airflow without removing oxygen on command. The chimney can still admit counterflow, and stored fuel heat decays naturally.';
       q.gate={rect:inlet,opened:!closed,openLabel:'Close inlet',closedLabel:'Open inlet'};q.labels=[{x:104,y:306,text:'Air inlet'},{x:404,y:64,text:'Chimney'}];
       q.tracers=[{x:192,y:328},{x:192,y:344},{x:232,y:332}];q.probes=[{id:'inlet',x:224,y:332},{id:'flue',x:360,y:112}];
     }else if(id==='slime-sauna'){
@@ -47,7 +44,7 @@
       d.sauna={stones:rect(224,296,64,8),room:d.vessels[0].rect,bath:d.vessels[1].rect,vent:d.vents[0],initialC:340,capacity:750};
       d.caption=entries[2].cue;
       d.boundaryNote='Water poured from the spout lands on a hot stone shelf above the fire. Native water evaporates only after paying sensible and latent heat. White steam rises through the room and escapes at the upper vent. The bathing slime relaxes as it warms and becomes restless when too hot.';
-      d.energyBudgetStatus='The stones store finite heat and receive 2,200 watts while the fire burns. Contacting native water uses its rest-area mass, sensible heat and latent heat at room-pressure boiling. Evaporated parcels remain inactive in their native slots. An approximate mixed room retains twenty percent of their enthalpy and cools through the vent; guest comfort, condensation and gas pressure are not resolved.';
+      d.energyBudgetStatus='The stones exchange finite stored heat with the oxygen-fed fuel. Every joule transferred to the stones leaves the fuel, and hotter stones can return heat to it. Contacting native water uses its rest-area mass, sensible heat and latent heat at room-pressure boiling. Evaporated parcels remain inactive in their native slots. An approximate mixed room retains twenty percent of their enthalpy and cools through the vent; guest comfort, condensation and gas pressure are not resolved.';
       q.labels=[];q.probes=[{id:'warm-room',x:360,y:128}];
     }else if(id==='heron-air-smoke'){
       d=root.WaterMachinesScenes.make('heron',world,options);var e=entries[3];
@@ -92,7 +89,7 @@
       fluid.splat(x/world.w,1-y/world.h,0,0,{r:.26*amount,g:.24*amount,b:.20*amount},.018);fluid.setPhysics(old,0);
     }
     q.tracers.forEach(function(p){tracer(p.x,p.y,.6);});
-    if(definition.fire)fluid.splat(definition.fire.x/world.w,1-definition.fire.y/world.h,0,0,{r:.12,g:.11,b:.10},.055);
+
     function prepare(dt){
       if(!(dt>0))return;clock+=dt;
       if(q.fan){var scale=fluid.config.SIM_RESOLUTION/world.h;

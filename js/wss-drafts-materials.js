@@ -109,13 +109,14 @@ function fizzRuntime(context){
 }
 function burnerRuntime(context){
  var L=context.liquid,S=context.SmokeFluid,d=context.definition,f=d.draftBurner;
- return root.WSSFire.create({liquid:L,width:720,height:400,maxParticles:L.maxParticles,source:f.source,noEmber:false}).then(function(model){
-  var clock=L.simulationClock,accumulator=0;S.setThermalStyle({glow:1,waterCooling:24});
-  return {tick:function(){var now=L.simulationClock,h=Math.max(0,now-clock);clock=now;if(!h)return;model.tick(h,{count:L.uploadedCount,clock:now});
-   var heat=model.stats();S.setWetField(model.wetField());S.setPhysics({HEAT:Math.min(4,Math.max(0,(heat.sourceC-20)/200)),COOLING:1.2,BUOYANCY:350},0);
-   if(heat.burning){accumulator+=h;while(accumulator>=1/30){accumulator-=1/30;root.__toy.smoke(f.x,f.y,0,0,.012);}}
+ var world=root.__toy.world(),oxygen=root.WSSOxygen.create({fluid:S,width:world.w,height:world.h,scaleWidth:world.scaleWidth,source:f.source});
+ return root.WSSFire.create({liquid:L,width:720,height:400,maxParticles:L.maxParticles,source:f.source,noEmber:true,oxygen:oxygen}).then(function(model){
+  var clock=L.simulationClock;S.setThermalStyle({glow:1,waterCooling:24});
+  return {oxygen:oxygen,tick:function(){var now=L.simulationClock,h=Math.max(0,now-clock);clock=now;if(!h)return;model.tick(h,{count:L.uploadedCount,clock:now});
+   var heat=model.stats();S.setWetField(model.wetField());
+   oxygen.prepare(heat);S.setPhysics({HEAT:0,COOLING:.15,BUOYANCY:350},0);
   },stats:function(){return Object.assign({blocker:'The declared burner has its own fuel; oil consumption is not implemented.'},model.stats());},
-  destroy:function(){model.destroy();S.setWetField(null);S.setPhysics(null,0);S.setThermalStyle(null);}};
+  destroy:function(){oxygen.destroy();model.destroy();S.setWetField(null);S.setPhysics(null,0);S.setThermalStyle(null);}};
  });
 }
 var previousRuntime=root.WSSDraftRuntime;
