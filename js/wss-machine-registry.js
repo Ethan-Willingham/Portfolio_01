@@ -1455,6 +1455,72 @@
     }
   },
   {
+    "id": "trompe",
+    "capability": "Bubbles",
+    "title": "Trompe",
+    "cue": "Draft. Falling water passes a real air inlet into a lower receiver, draft.",
+    "status": "PARTLY",
+    "draft": true,
+    "accepted": true,
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "pool": false,
+    "preview": "cup",
+    "scripts": [
+      "wss-drafts-pressure"
+    ],
+    "loaderDependencies": [
+      "wss-boundaries",
+      "wss-hands",
+      "wss-native",
+      "wss-sound",
+      "wss-drafts-pressure"
+    ],
+    "blocker": "Native air entrainment, compression and separation have not been observed.",
+    "behaviorPlan": {
+      "seed": 17,
+      "seconds": 6,
+      "key": "Gravity-fed water must admit and carry actual positive gas through a side branch into a real lower headspace.",
+      "action": "Use existing machinePrimary once after a short observation. Steam toggles the actual heater; cave and ram use real manual valves; Venturi/trompe/water-hammer/Torricelli use physical caps. Clock primary pours real water, skip for closed inventory check.",
+      "statusIfObserved": "PARTLY"
+    }
+  },
+  {
+    "id": "hydraulic-ram",
+    "capability": "Valves and logic",
+    "title": "Hydraulic ram",
+    "cue": "Draft. Close the waste valve and watch the delivery branch, draft.",
+    "status": "PARTLY",
+    "draft": true,
+    "accepted": true,
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "pool": false,
+    "preview": "cup",
+    "scripts": [
+      "wss-drafts-pressure"
+    ],
+    "loaderDependencies": [
+      "wss-boundaries",
+      "wss-hands",
+      "wss-native",
+      "wss-sound",
+      "wss-drafts-pressure"
+    ],
+    "blocker": "No inertial waste-valve body or automatic check-valve cycle; no pumping claim.",
+    "behaviorPlan": {
+      "seed": 17,
+      "seconds": 6,
+      "key": "Real drive/waste and initially dry upward delivery pipes, manual valves and native air chamber. Receiver starts above source free surface.",
+      "action": "Use existing machinePrimary once after a short observation. Steam toggles the actual heater; cave and ram use real manual valves; Venturi/trompe/water-hammer/Torricelli use physical caps. Clock primary pours real water, skip for closed inventory check.",
+      "statusIfObserved": "PARTLY"
+    }
+  },
+  {
     "id": "fountain-rider",
     "capability": "Water slimes",
     "title": "Fountain rider",
