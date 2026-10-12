@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.119'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.120'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -1092,7 +1092,7 @@
   }
 
   function buildGuests() {
-    var materialGuests=!!(toyBalloon || toyDivers || toyFloatSlider || airModel && airModel.enabled && (airModel.preserveMaterialState || machineState && machineState.definition.name==='cup'));
+    var materialGuests=!!(toyWave || toyBalloon || toyDivers || toyFloatSlider || airModel && airModel.enabled && (airModel.preserveMaterialState || machineState && machineState.definition.name==='cup'));
     var waterGuestTime=1;
     if(materialGuests){
       waterGuestTime=liquidWGPU.getSimParam('TIMESCALE');
@@ -1104,7 +1104,7 @@
     // velocity, so poured water piles on a slime instead of passing through.
     // Eight slots since engine v26.09 (GS_MAX_GUESTS). The eight wettest
     // eligible bodies are selected, but a selected body's slot is stable.
-    var guestLimit=toyDivers?7:8;
+    var guestLimit=toyDivers || toyWave ? 7:8;
     var order = [];
     if (typeof jelloBodies !== 'undefined' && jelloBodies.length) {
       order = jelloBodies.filter(function (b0) {
@@ -1235,6 +1235,7 @@
       }
     }
     if(toyDivers){out[7]=toyDivers.guest();any=true;}
+    if(toyWave){out[7]=toyWave.guest();any=true;}
     return any ? out : null;
   }
 
@@ -1274,7 +1275,7 @@
   // machine request. Ordinary scenes do not allocate its GPU resources.
   function airGeometryTick() {
     if (!airModel || !airModel.enabled) return;
-    var materialGuests=!!(toyDivers || toyFloatSlider || airModel.preserveMaterialState || machineState && machineState.definition.name==='cup');
+    var materialGuests=!!(toyWave || toyDivers || toyFloatSlider || airModel.preserveMaterialState || machineState && machineState.definition.name==='cup');
     var boundaryGuests=materialGuests ? buildGuests() : null;
     var hasBodies=materialGuests ? !!(boundaryGuests && boundaryGuests.some(function(g){return g.pts && g.pts.length>=12;})) : !!jelloBodies.length;
     if (airGeometryVersion === wallsVersion && !hasBodies && !airHadBodies) return;
@@ -1645,7 +1646,7 @@
     liquidGPULastSeq = seqNow;
     if (liquidCount === 0 && !mutated) { liquidPendingDt = 0; return; }
     var awake = liquidWGPU.awakeCount;
-    var quiet = !(solidSkinLab && currentScene==='smoke-wind-tunnel') && !toyBoundary && !toyFire && !toyBalloon && !toyDivers && awake === 0 && !mutated && !toyWakes.length && !pokeGuest;
+    var quiet = !(solidSkinLab && currentScene==='smoke-wind-tunnel') && !toyWave && !toyBoundary && !toyFire && !toyBalloon && !toyDivers && awake === 0 && !mutated && !toyWakes.length && !pokeGuest;
     if (quiet && liquidCount > 0) {
       liquidSimSkipFrames++;
       if (liquidSimSkipFrames < 45) {       // heartbeat: one real step ~0.75 s
@@ -12889,7 +12890,7 @@
   var toolButtons = [];
   function setTool(name) {
     if(handsPending)return;
-    if(((nativeMachineScene(currentScene) && !toyFire && !toyCannon && !toyThermoscope && !toyBalloon && !toyDivers && !toyBubbles) || handsRequested) && name!=='poke' && !(handsRequested && name==='build'))return;
+    if(((nativeMachineScene(currentScene) && !toyFire && !toyCannon && !toyThermoscope && !toyBalloon && !toyDivers && !toyBubbles) || handsRequested) && !(machineState && machineState.definition.draft) && name!=='poke' && !(handsRequested && name==='build'))return;
     if(pointerDown){
       var oldPointer=pointerId;releasePointer({pointerId:oldPointer},true);
       try{inputEl.releasePointerCapture(oldPointer);}catch(error){}
@@ -13589,6 +13590,7 @@
     if(toyBubbles){toyBubbles.destroy();toyBubbles=null;}
     if(toyDivers){toyDivers.destroy();toyDivers=null;}
     if(toySound)toySound.setActive(false);
+    if(toyWave){toyWave.destroy();toyWave=null;}
     if(toySteam){toySteam.destroy();toySteam=null;steamFrameDt=0;SmokeFluid.setPhysics(null,0);SmokeFluid.setThermalStyle(null);}
     if(toyThermoscope){toyThermoscope=null;thermoscopeAcc=0;SmokeFluid.setPhysics(null,0);SmokeFluid.setThermalStyle(null);}
     if(toyBoundary){toyBoundary.destroy();toyBoundary=null;}
@@ -13620,6 +13622,7 @@
   var toyDivers=null;
   var toyFloatSlider=null;
   var toyMaterialSlip=null,materialOilLook=null;
+  var toyWave=null;
   var toySteam=null,steamWaterClock=0,steamFrameDt=0,steamPlumeSamples=0,steamPlumeMass=0;
   var toyBubbles=null;
   var fireDomainPrevious=null,fireDomainActive=false;
@@ -13830,6 +13833,7 @@
   }
 
   function instrumentTick(now){
+    if(machineState && machineState.definition.draft && !toySteam && !toyFire && !toyBalloon && !toyDivers && !toyBubbles && !toyCannon && !toyMaterialSlip){machineState.readings={ready:machineState.ready,caption:machineState.definition.caption,action:machineState.definition.action,particleCount:liquidCount,boundary:toyBoundary?toyBoundary.stats():null,numericalStatus:machineState.definition.boundaryNote,energyBudgetStatus:machineState.definition.energyBudgetStatus,error:buildError};return;}
     if(toySteam && machineState && machineState.ready){
       var steamStats=toySteam.stats(),steamState=machineState;
       steamStats.plume={samples:steamPlumeSamples,tracedMassKg:steamPlumeMass};
@@ -14079,6 +14083,7 @@
     if(request!==machineRequest)return null;
     var definition=nativeMachineScene(name) ? module.make({w:worldW,h:worldH,tile:TILE},options) : module.make(name,{w:worldW,h:worldH,tile:TILE},options);
     currentScene=name;fitStage();
+    if(definition.draft && definition.draftGravity!==undefined)setGravityUI(definition.draftGravity);
     var balloonBody=null,balloonSeedRing=null,diverBodies=[],sliderBody=null;
     if(definition.membrane){
       var initialSlime=definition.slimes[0];balloonBody=spawnSlimeAt(initialSlime.x,initialSlime.y,initialSlime.radius,true);
@@ -14133,6 +14138,7 @@
     }
     if((definition.boundaries || definition.divers || definition.materialSlip) && added!==requested)throw new Error('Apparatus exceeds the particle capacity: '+requested+' requested, '+added+' added.');
     if(!definition.membrane && !definition.divers && !definition.slider)definition.slimes.forEach(function(s){if(!s.held)spawnSlimeAt(s.x,s.y,s.radius);});
+    if(definition.draftExtraSlimes)definition.slimes.slice(1).forEach(function(s){spawnSlimeAt(s.x,s.y,s.radius,true);});
     var state=machineState={definition:definition,seed:options.seed || 17,initialParticles:added,ready:false,
       primaryUsed:false,startedAt:null,wallClockStartedAt:null,energyInput:0,inputParticles:0,energyModified:false};
     setSceneChip(name);if(!options.canvasThumb)setTool('poke');bakeWalls();updateReadout();
@@ -14210,8 +14216,12 @@
       SmokeFluid.setThermalStyle({glow:1,waterCooling:24});
       SmokeFluid.setPhysics({HEAT:4,COOLING:1.2,BUOYANCY:350},0);
       smokeAwakeT=SMOKE_IDLE_HOLD;model={settings:{density:1}};
+    }else if(definition.draft && definition.settings.enabled===false){
+      await enableAirModel({enabled:false});fireDomainPrevious=liquidWGPU.toyNativeDomain;fireDomainActive=true;
+      liquidWGPU.toyNativeDomain={minX:0,minY:0,maxX:worldW,maxY:worldH};liquidWGPU.prepareMaterialState({reset:true});model={settings:{density:1}};
     }else model=await enableAirModel(pressureSettings);
     if(!model || request!==machineRequest)return null;
+    if(definition.wave){toyWave=window.WSSWaveMaker.create(Object.assign({liquid:liquidWGPU},definition.wave));airPressureColors=false;}
     if(definition.bubbles){
       ownBubbles=await window.WSSBubbles.create(Object.assign({liquid:liquidWGPU,air:model,width:worldW,height:worldH,maxParticles:LIQUID_MAX_PARTICLES},definition.bubbles));
       if(request!==machineRequest){ownBubbles.destroy();ownBubbles=null;return null;}
@@ -14294,6 +14304,9 @@
     if(primary.kind==='pipe-sound' && toySound){
       if(toySound.stats().enabled)toySound.mute();else toySound.enable().then(function(){syncRunning();}).catch(function(error){buildError=error.message;});return true;
     }
+    if(primary.kind==='wave-motor'){var motor=toyWave.toggle();definition.action=motor?'Stop paddle':'Start paddle';machineOverlayCache=null;return true;}
+    if(primary.kind==='draft-squeeze')return !!(toyBalloon && window.WSSDraftBodies.squeeze(toyBalloon.body,jelloStepH>0?jelloStepH:JELLO_H,JELLO_TIMESCALE));
+    if(primary.kind==='draft-gravity'){setGravityUI(gravMul===1?.16:1);definition.action=gravMul===1?'Try Moon gravity':'Try Earth gravity';machineOverlayCache=null;return true;}
     if(primary.kind==='bubble-toggle'){var injecting=toyBubbles.toggle();definition.action=injecting?'Stop the air':'Start the air';machineOverlayCache=null;return true;}
     if(primary.kind==='slider-supply'){var supply=toyBoundary.setTapEnabled(!toyBoundary.stats().tapEnabled);definition.action=supply?'Stop supply':'Start supply';machineOverlayCache=null;return true;}
     if(primary.kind==='diver-squeeze'){toyDivers.toggle();machineOverlayCache=null;return true;}
@@ -14322,6 +14335,10 @@
       var enabled=definition.action==='Open tap';
       toyBoundary.setTapEnabled(enabled);definition.action=enabled ? 'Close tap' : 'Open tap';
       machineOverlayCache=null;return true;
+    }else if(primary.kind==='interlocked-cap'){
+      if(!toyFloatSlider || !toyFloatSlider.ready)return false;
+      var closed=!primary.closed,caps=closed?[primary.opening]:[primary.feedOpening];
+      if(!toyFloatSlider.setStaticCaps(caps))return false;primary.closed=closed;definition.boundaries.caps=caps;definition.action=closed?primary.closedLabel:primary.openLabel;machineOverlayCache=null;return true;
     }else if(primary.kind==='cap'){
       var closed=!primary.closed,caps=closed ? [primary.opening] : [];
       toyBoundary.setCaps(caps);
@@ -14624,7 +14641,7 @@
       instrumentsCtx=instrumentsCanvas.getContext('2d');
     }
     var burstView=machineState && machineState.definition.boundaries && machineState.definition.boundaries.burstDisk && toyBoundary ? toyBoundary.stats().burstDisk : null;
-    var overlayKey=[wallsVersion,pressureColors,airPressureColors,fitScale,viewPanX,viewPanY,cameraWidth,cameraHeight,currentScene,highlightedValve,handsSelection && handsSelection.index].join(':');
+    var overlayKey=[toyWave?liquidWGPU.simulationClock:0,wallsVersion,pressureColors,airPressureColors,fitScale,viewPanX,viewPanY,cameraWidth,cameraHeight,currentScene,highlightedValve,handsSelection && handsSelection.index].join(':');
     if(burstView)overlayKey+=':'+burstView.opened+':'+burstView.fault;
     if(toyThermoscope)overlayKey+=':'+toyThermoscope.heated;
     if(toyFire)overlayKey+=':'+toyFire.stats().burning;
@@ -14688,6 +14705,7 @@
       if(toyCannon && toyCannon.draw)toyCannon.draw(c);
       if(toyFloatSlider)toyFloatSlider.draw(c);
       if(toySteam && definition.birds)window.WSSSingingPipe.draw(c,definition,toySteam.stats(),{accent:accent,text:text},fitScale);
+      if(toyWave)toyWave.draw(c,{accent:accent,text:text});
       if(toySteam && !definition.birds){var steamDefinition=definition.steam,steamHeat=toySteam.stats();
         c.fillText(steamHeat.heated?'Heater on':'Cooling',steamDefinition.heater.x-44,steamDefinition.heater.y+28);
         c.strokeRect(steamDefinition.heater.x,steamDefinition.heater.y,steamDefinition.heater.width,steamDefinition.heater.height);
@@ -15311,6 +15329,7 @@
       balloons:function(){return toyBalloon;},
       divers:function(){return toyDivers;},
       floatSlider:function(){return toyFloatSlider;},
+      waves:function(){return toyWave;},
       steam:function(){return toySteam;},
       pipeGrip:function(){return machineState && machineState.definition.birds ? Object.assign({dragging:pointerPipe},window.WSSSingingPipe.geometry(machineState.definition)) : null;},
       bubbles:function(){return toyBubbles;},

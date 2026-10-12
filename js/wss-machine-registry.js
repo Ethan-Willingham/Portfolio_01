@@ -3,7 +3,6 @@
   'use strict';
   var entries = [
     {id:'material-oil-jar',capability:'Oil and water',title:'Oil and water',cue:'Stir once. Watch the pale oil rise.',preview:'cup',accepted:true,world:{w:720,h:400},pool:false},
-    {id:'material-sand-jar',capability:'Material slip, prototypes',title:'Grain settling (prototype)',cue:'Watch grains move through still water.',preview:'cup',accepted:false,world:{w:720,h:400},pool:false},
     {id:'float-slider-cistern',capability:'Valves and logic',title:'Float-controlled inlet',cue:'Pull the float down to reopen the water inlet.',preview:'cup',accepted:true,world:{w:720,h:400},pool:true},
     {id:'singing-pipe',capability:'Sound',title:"Hero's sliding pipe (precursor)",cue:'Turn on sound. Drag the pipe to bend the note.',preview:'sliding-pipe',accepted:true,world:{w:720,h:400},pool:false},
     {id:'air-hose',capability:'Bubbles',title:'Air hose',cue:'Stop the air. Watch the last bubbles rise.',preview:'straw',accepted:true,world:{w:720,h:400},pool:false},
@@ -18,7 +17,13 @@
     {id:'thumb-straw',title:'The straw and the thumb',cue:'Hold the top, then release.',preview:'straw',accepted:true,world:{w:720,h:400},pool:false},
     {id:'smoke-ring-cannon',capability:'Smoke',title:'The smoke-ring cannon',cue:'Tap the back. Catch the swirl with a slime.',preview:'smoke-cannon',accepted:true,world:{w:720,h:400},pool:false},
     {id:'smoke-wind-tunnel',capability:'Smoke',title:'The slime wind tunnel',cue:'Stop the fan. Watch the wake change.',preview:'smoke-tunnel',accepted:true,world:{w:720,h:400},pool:false},
-    {id:'burst-disk',title:'The burst disk',cue:'Compare two membrane strengths.',preview:'burst-disk',accepted:true,world:{w:720,h:400},pool:false}
+    {id:'burst-disk',title:'The burst disk',cue:'Compare two membrane strengths.',preview:'burst-disk',accepted:true,world:{w:720,h:400},pool:false},
+    {"id":"water-balloon-fight","capability":"Water slimes","title":"Water-balloon fight","cue":"Draft. Fling the balloon at the slimes, then pop it.","status":"PARTLY","draft":true,"world":{"w":720,"h":400},"pool":false,"blocker":"Real throwing and popping await the first native boot.","accepted":true,"preview":"cup","scripts":["wss-water-balloons","wss-machines/water-balloons","wss-drafts-bodies"]},
+    {"id":"squid-jet","capability":"Water slimes","title":"Squid jet","cue":"Draft. Squeeze the slit skin and watch the released water.","status":"PARTLY","draft":true,"world":{"w":720,"h":400},"pool":false,"blocker":"A slit and balanced hand impulse are connected; useful propulsion is unproved.","accepted":true,"preview":"cup","scripts":["wss-water-balloons","wss-machines/water-balloons","wss-drafts-bodies"]},
+    {"id":"material-sand-jar","capability":"Sand","title":"Settling and sorting jar","cue":"Draft. Stir the grains through the water.","status":"PARTLY","draft":true,"world":{"w":720,"h":400},"pool":false,"accepted":true,"preview":"cup","scripts":["wss-drafts-materials"]},
+    {"id":"hourglass","capability":"Sand","title":"Hourglass","cue":"Draft. Watch the sand find the narrow neck.","status":"PARTLY","draft":true,"world":{"w":720,"h":400},"pool":false,"accepted":true,"preview":"cup","scripts":["wss-drafts-materials"]},
+    {"id":"aquarium-bubbler","capability":"Bubbles","title":"Aquarium bubbler","cue":"Draft. Stop the air and watch the last bubbles rise.","status":"PARTLY","draft":true,"world":{"w":720,"h":400},"pool":false,"accepted":true,"preview":"cup","scripts":["wss-drafts-materials","wss-bubbles"]},
+    {"id":"air-lift-pump","capability":"Bubbles","title":"Air-lift pump","cue":"Draft. Send bubbles up the riser toward the receiving cup.","status":"PARTLY","draft":true,"world":{"w":720,"h":400},"pool":false,"accepted":true,"preview":"cup","scripts":["wss-drafts-materials","wss-bubbles"]}
   ];
   var lab = new URLSearchParams(location.search).get('lab') === '1';
   var loaded = {};
@@ -53,7 +58,8 @@
     if(id==='cartesian-divers')paths.push('wss-cartesian-divers');
     if(id==='burst-disk')paths.push('wss-burst-disk');
     if(id==='tantalus')paths.push('wss-machines/self-flushing-cup');
-    paths.push('wss-machines/'+(/^material-(oil|sand)-jar$/.test(id) ? 'material-slip-jar' : id));
+    if(entry.draft && entry.scripts)paths=paths.concat(entry.scripts);
+    else paths.push('wss-machines/'+(/^material-(oil|sand)-jar$/.test(id) ? 'material-slip-jar' : id));
     await Promise.all(paths.map(function(path){return script('/js/'+path+'.js');}));
     var module=window.WSSMachines && window.WSSMachines[id];
     if(!module || typeof module.make!=='function')throw new Error('This machine did not start.');
@@ -138,11 +144,11 @@
       button.setAttribute('aria-pressed','false');
       button.appendChild(preview(e.preview));
       var copy=document.createElement('span');copy.className='toy-scene-copy';
-      var name=document.createElement('span');name.className='toy-scene-name';name.textContent=e.title;
+      var name=document.createElement('span');name.className='toy-scene-name';name.textContent=e.title+(e.draft?' ['+({'WORKS':'Working','PARTLY':'Partly working','NOT WORKING':'Not working yet'}[e.status]||'Not working yet')+']':'');
       var cue=document.createElement('span');cue.className='toy-scene-cue';cue.textContent=e.cue;
       copy.appendChild(name);copy.appendChild(cue);button.appendChild(copy);list.appendChild(button);
     }
-    ['Fire','Smoke','Sand','Water slimes','Floating things','Steam','Oil and water','Ice','Bubbles','Valves and logic','Sound','Waves'].forEach(function(group){var choices=entries.filter(function(e){return e.accepted && e.capability===group;});if(choices.length){heading(group);choices.forEach(machine);}});
+    ['Fire','Smoke','Sand','Water slimes','Floating things','Steam','Oil and water','Ice','Bubbles','Valves and logic','Sound','Waves','World'].forEach(function(group){var choices=entries.filter(function(e){return e.accepted && e.capability===group;});if(choices.length){heading(group);choices.forEach(machine);}});
     heading('Earlier water machines');entries.filter(function(e){return e.accepted && !e.capability;}).forEach(machine);
     var workshop=window.WSSMachineRegistry.list().filter(function(e){return !e.accepted;});
     if(workshop.length){heading('Workshop');workshop.forEach(machine);}
