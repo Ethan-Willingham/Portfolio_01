@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.157'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.158'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -260,6 +260,7 @@
       return Math.abs(value-buildViewProjection[index])>.01;
     }))cancelHeldInput();
     buildViewProjection=projection;
+    if(smokeBoundaryCanvas)bakeSmokeBoundary();
     if (userPaused && waterState === 'on') {drawLiquidToy();if(toyDraftRuntime && toyDraftRuntime.render)toyDraftRuntime.render();}
   }
   function cameraState(){
@@ -286,6 +287,7 @@
       px=keyboardX;py=keyboardY;
     }
     drawMachineOverlay();
+    bakeSmokeBoundary();
     return cameraState();
   }
   window.addEventListener('resize', fitStage);
@@ -403,10 +405,10 @@
     }
   }
 
-  /* ---- Continuous walls, cached until the collision mask changes ------
-   * Trace the union, including holes left by the eraser. The same cells
-   * still collide with all three engines. A smooth front lip conceals their
-   * cell-sized edges. No cell texture or internal grid is drawn. */
+  /* ---- Wall surfaces, cached until the collision mask changes ----------
+   * Paint the occupied area itself, including the permanent border and
+   * valve seats. Every visible contact edge uses the exact solver cells.
+   * Shading stays inside the material, with no covering lip or outline. */
   var wallsCanvas = document.createElement('canvas');
   wallsCanvas.width = canvas.width;
   wallsCanvas.height = canvas.height;
@@ -417,91 +419,12 @@
   var instrumentsCanvas=null,instrumentsCtx=null,instrumentsDirty=false;
   var wallsBakedVersion = -1;
 
-  function simplifyWall(points, tolerance) {
-    if (points.length <= 2) return points;
-    var a = points[0], b = points[points.length - 1];
-    var dx = b.x - a.x, dy = b.y - a.y, lengthSq = dx * dx + dy * dy;
-    var split = 0, furthest = tolerance * tolerance;
-    for (var i = 1; i < points.length - 1; i++) {
-      var p = points[i];
-      var t = lengthSq ? Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / lengthSq)) : 0;
-      var ex = p.x - a.x - t * dx, ey = p.y - a.y - t * dy;
-      var distance = ex * ex + ey * ey;
-      if (distance > furthest) { furthest = distance; split = i; }
-    }
-    if (!split) return [a, b];
-    return simplifyWall(points.slice(0, split + 1), tolerance).slice(0, -1)
-      .concat(simplifyWall(points.slice(split), tolerance));
-  }
-
-  function wallOutline(glassDetail) {
-    function solid(r, c) {
-      return r > 0 && c > 0 && r < gridH - 1 && c < gridW - 1 && tileAt(r,c)!==null;
-    }
-    var edges = [], starts = new Map();
-    function edge(x, y, ex, ey, dir) {
-      var id = y * (gridW + 1) + x;
-      var list = starts.get(id);
-      if (!list) { list = []; starts.set(id, list); }
-      list.push(edges.length);
-      edges.push({ x: x, y: y, ex: ex, ey: ey, dir: dir, used: false });
-    }
-    for (var r = 0; r < gridH; r++) {
-      for (var c = 0; c < gridW; c++) {
-        var idx = r * gridW + c;
-        if (!solid(r, c)) continue;
-        if (!solid(r - 1, c)) edge(c, r, c + 1, r, 0);
-        if (!solid(r, c + 1)) edge(c + 1, r, c + 1, r + 1, 1);
-        if (!solid(r + 1, c)) edge(c + 1, r + 1, c, r + 1, 2);
-        if (!solid(r, c - 1)) edge(c, r + 1, c, r, 3);
-      }
-    }
-    var path = new Path2D();
-    for (var e = 0; e < edges.length; e++) {
-      if (edges[e].used) continue;
-      var loop = [], cur = edges[e];
-      while (cur && !cur.used) {
-        cur.used = true;
-        loop.push({ x: cur.x * TILE, y: cur.y * TILE, dir: cur.dir });
-        if (cur.ex === edges[e].x && cur.ey === edges[e].y) break;
-        var candidates = starts.get(cur.ey * (gridW + 1) + cur.ex) || [];
-        var next = null, rank = 5;
-        for (var n = 0; n < candidates.length; n++) {
-          var candidate = edges[candidates[n]];
-          if (candidate.used) continue;
-          // Turn right at a diagonal touch so separate regions stay separate.
-          var turn = (candidate.dir - cur.dir + 4) % 4;
-          var score = turn === 1 ? 0 : turn === 0 ? 1 : turn === 3 ? 2 : 3;
-          if (score < rank) { rank = score; next = candidate; }
-        }
-        cur = next;
-      }
-      var corners = loop.filter(function (point, i) {
-        return point.dir !== loop[(i + loop.length - 1) % loop.length].dir;
-      });
-      if (corners.length < 3) continue;
-      var far = 1, distance = 0;
-      for (var ci = 1; ci < corners.length; ci++) {
-        var dd = Math.hypot(corners[ci].x - corners[0].x, corners[ci].y - corners[0].y);
-        if (dd > distance) { distance = dd; far = ci; }
-      }
-      var smooth = simplifyWall(corners.slice(0, far + 1), TILE * 1.5).slice(0, -1)
-        .concat(simplifyWall(corners.slice(far).concat([corners[0]]), TILE * 1.5).slice(0, -1));
-      if (!glassDetail && smooth.length >= 3) corners = smooth;
-      for (var k = 0; k < corners.length; k++) {
-        var p = corners[k], prev = corners[(k + corners.length - 1) % corners.length];
-        var after = corners[(k + 1) % corners.length];
-        var ax = prev.x - p.x, ay = prev.y - p.y;
-        var bx = after.x - p.x, by = after.y - p.y;
-        var al = Math.hypot(ax, ay), bl = Math.hypot(bx, by);
-        var radius = Math.min(glassDetail ? 2 : TILE * 4, al * 0.45, bl * 0.45);
-        var ix = p.x + ax / al * radius, iy = p.y + ay / al * radius;
-        if (k === 0) path.moveTo(ix, iy); else path.lineTo(ix, iy);
-        path.quadraticCurveTo(p.x, p.y, p.x + bx / bl * radius, p.y + by / bl * radius);
-      }
-      path.closePath();
-    }
-    return path;
+  function wallSurfaceFill(c, palette, height, glass, perimeter) {
+    var fill=c.createLinearGradient(0,0,0,height);
+    fill.addColorStop(0,palette.getPropertyValue(perimeter ? '--rule' : '--line-mid').trim());
+    fill.addColorStop(.45,palette.getPropertyValue(perimeter ? '--rule' : '--rule-strong').trim());
+    fill.addColorStop(1,palette.getPropertyValue(perimeter ? '--bg-raised' : '--rule').trim());
+    c.fillStyle=fill;c.globalAlpha=glass ? .82 : 1;
   }
 
   function bakeWalls() {
@@ -509,64 +432,90 @@
     wallsBakedVersion = wallsVersion;
     wallsCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
     wallsCtx.clearRect(0, 0, worldW, worldH);
-    var sluiceWalls=machineState && machineState.definition.sluice;
-    var glassDetail=sluiceWalls || glassWalls && machineState && /^(thermoscope|roman-inverted-siphon)$/.test(machineState.definition.name);
-    if(machineState && machineState.definition.hourglass)return;
-    var path = wallOutline(glassDetail);
-    var palette = getComputedStyle(document.documentElement);
-    if(glassWalls && airModel && airModel.enabled){
-      wallsCtx.fillStyle=palette.getPropertyValue('--accent').trim();
-      wallsCtx.globalAlpha=.12;
-      for(var row=1;row<gridH-1;row++)for(var col=1;col<gridW-1;col++)
-        if(tileAt(row,col)!==null)wallsCtx.fillRect(col*TILE,row*TILE,TILE,TILE);
-      wallsCtx.globalAlpha=1;wallsCtx.strokeStyle=palette.getPropertyValue('--accent').trim();
-      wallsCtx.lineWidth=1;wallsCtx.globalAlpha=.72;
-      if(glassDetail){
-        // A narrow glass edge follows the unchanged native wall mask.
-        wallsCtx.lineJoin='round';wallsCtx.lineWidth=3;wallsCtx.globalAlpha=.15;wallsCtx.stroke(path);
-        wallsCtx.lineWidth=1;wallsCtx.globalAlpha=.72;wallsCtx.stroke(path);wallsCtx.globalAlpha=1;return;
-      }
-      for(row=1;row<gridH-1;row++)for(col=1;col<gridW-1;col++){
-        if(tileAt(row,col)===null)continue;
-        var x=col*TILE,y=row*TILE;
-        wallsCtx.beginPath();
-        if(tileAt(row-1,col)===null){wallsCtx.moveTo(x,y);wallsCtx.lineTo(x+TILE,y);}
-        if(tileAt(row+1,col)===null){wallsCtx.moveTo(x,y+TILE);wallsCtx.lineTo(x+TILE,y+TILE);}
-        if(tileAt(row,col-1)===null){wallsCtx.moveTo(x,y);wallsCtx.lineTo(x,y+TILE);}
-        if(tileAt(row,col+1)===null){wallsCtx.moveTo(x+TILE,y);wallsCtx.lineTo(x+TILE,y+TILE);}
-        wallsCtx.stroke();
-      }
-      wallsCtx.globalAlpha=1;return;
+    var palette=getComputedStyle(document.documentElement);
+    var glass=glassWalls && airModel && airModel.enabled;
+    var hourglass=machineState && machineState.definition.hourglass;
+    function solid(r,c) {
+      if(r<0 || c<0 || r>=gridH || c>=gridW)return false;
+      if(hourglass && !isBorderCell(r,c))return false;
+      return tileAt(r,c)!==null;
     }
-    var fill = wallsCtx.createLinearGradient(0, 0, worldW * 0.2, worldH);
-    fill.addColorStop(0, palette.getPropertyValue('--bg').trim() || '#303931');
-    fill.addColorStop(1, palette.getPropertyValue('--bg-raised').trim() || '#1e2420');
-    wallsCtx.fillStyle = fill;
-    wallsCtx.shadowColor = 'rgba(0,0,0,0.24)';
-    wallsCtx.shadowBlur = 10 * dpr;
-    wallsCtx.shadowOffsetY = 4 * dpr;
-    // A narrow front lip covers the staircase in the fluid mask.
-    // The bulk water and slime renderers retain their full detail.
-    wallsCtx.strokeStyle = fill;
-    wallsCtx.lineWidth = sluiceWalls ? 1 : TILE * 1.5;
-    wallsCtx.lineJoin = 'round';
-    wallsCtx.stroke(path);
-    wallsCtx.fill(path);
-    if(sluiceWalls){
-      wallsCtx.shadowBlur=0;wallsCtx.shadowOffsetY=0;
-      sluiceWalls.polygons.forEach(function(vertices){
-        wallsCtx.beginPath();vertices.forEach(function(p,i){if(i)wallsCtx.lineTo(p[0],p[1]);else wallsCtx.moveTo(p[0],p[1]);});
-        wallsCtx.closePath();wallsCtx.fill();wallsCtx.strokeStyle=palette.getPropertyValue('--rule-strong').trim();wallsCtx.lineWidth=1;wallsCtx.stroke();
-      });
+    var path=new Path2D(),frame=new Path2D();
+    for(var fr=0;fr<gridH;fr++)for(var fc=0;fc<gridW;fc++)
+      if(isBorderCell(fr,fc) && solid(fr,fc))frame.rect(fc*TILE,fr*TILE,TILE,TILE);
+    for(var r=0;r<gridH;r++)for(var c=0;c<gridW;){
+      if(!solid(r,c)){c++;continue;}
+      var start=c;
+      while(c<gridW && solid(r,c))c++;
+      path.rect(start*TILE,r*TILE,(c-start)*TILE,TILE);
     }
-    wallsCtx.shadowBlur = 0;
-    wallsCtx.shadowOffsetY = 0;
-    wallsCtx.save();
-    wallsCtx.globalAlpha = 0.30;
-    wallsCtx.strokeStyle = palette.getPropertyValue('--accent').trim() || '#d4c4a0';
-    wallsCtx.lineWidth = 2;
-    wallsCtx.stroke(path);
+    // Sluice's native grain contacts also use these authored polygons.
+    var sluice=machineState && machineState.definition.sluice;
+    if(sluice)sluice.polygons.forEach(function(vertices){
+      // Use the same winding as the cell rectangles so overlap stays solid.
+      var area=0;vertices.forEach(function(p,i){var next=vertices[(i+1)%vertices.length];area+=p[0]*next[1]-next[0]*p[1];});
+      if(area<0)vertices=vertices.slice().reverse();
+      path.moveTo(vertices[0][0],vertices[0][1]);
+      vertices.slice(1).forEach(function(p){path.lineTo(p[0],p[1]);});
+      path.closePath();
+    });
+    wallsCtx.save();wallsCtx.clip(path);
+    wallSurfaceFill(wallsCtx,palette,worldH,glass);wallsCtx.fill(path);
+    // A small inset bevel gives the material weight. It never occupies air
+    // or rounds away a solid corner, even in a one-cell pipe or erased hole.
+    var bevel=1.25;
+    wallsCtx.fillStyle=palette.getPropertyValue('--text-dim').trim();wallsCtx.globalAlpha=.16;
+    for(r=0;r<gridH;r++)for(c=0;c<gridW;c++){
+      if(!solid(r,c))continue;
+      if(!solid(r-1,c))wallsCtx.fillRect(c*TILE,r*TILE,TILE,bevel);
+      if(!solid(r,c-1))wallsCtx.fillRect(c*TILE,r*TILE,bevel,TILE);
+    }
+    wallsCtx.fillStyle=palette.getPropertyValue('--bg-raised').trim();wallsCtx.globalAlpha=.5;
+    for(r=0;r<gridH;r++)for(c=0;c<gridW;c++){
+      if(!solid(r,c))continue;
+      if(!solid(r+1,c))wallsCtx.fillRect(c*TILE,(r+1)*TILE-bevel,TILE,bevel);
+      if(!solid(r,c+1))wallsCtx.fillRect((c+1)*TILE-bevel,r*TILE,bevel,TILE);
+    }
+    wallSurfaceFill(wallsCtx,palette,worldH,false,true);wallsCtx.fill(frame);
     wallsCtx.restore();
+  }
+
+  // The grid perimeter contains water and gel. Smoke has its own room
+  // and can have an open outlet, so it gets a separate physical surface.
+  // Smoke can occupy the room around a fitted apparatus. Draw its actual
+  // closed edge bands in viewport coordinates, rather than boxing the camera.
+  var smokeBoundaryCanvas=document.createElement('canvas');
+  smokeBoundaryCanvas.style.cssText='position:absolute;inset:0;pointer-events:none;z-index:7;';
+  smokeBoundaryCanvas.setAttribute('aria-hidden','true');
+  viewport.appendChild(smokeBoundaryCanvas);
+  var smokeBoundaryCtx=smokeBoundaryCanvas.getContext('2d'),smokeBoundaryKey='';
+  function smokeBoundaryThickness() {
+    return Math.min(smokeDomain.w,smokeDomain.h)/Math.max(16,smokeEngine.config.SIM_RESOLUTION)*2;
+  }
+  function bakeSmokeBoundary() {
+    var width=viewport.clientWidth,height=viewport.clientHeight;
+    var left=parseFloat(stage.style.left)||0,top=parseFloat(stage.style.top)||0;
+    var open=smokeActive && !!SmokeFluid.config.OPEN_RIGHT;
+    var edge=smokeActive ? smokeBoundaryThickness() : 0;
+    var key=[width,height,left,top,fitScale,smokeActive,open,edge,smokeDomain.x,smokeDomain.y,smokeDomain.w,smokeDomain.h].join(':');
+    if(key===smokeBoundaryKey)return;
+    smokeBoundaryKey=key;
+    smokeBoundaryCanvas.width=Math.max(1,Math.round(width*dpr));
+    smokeBoundaryCanvas.height=Math.max(1,Math.round(height*dpr));
+    smokeBoundaryCtx.setTransform(dpr,0,0,dpr,0,0);
+    if(!smokeActive)return;
+    var x=left+smokeDomain.x*fitScale,y=top+smokeDomain.y*fitScale;
+    var w=smokeDomain.w*fitScale,h=smokeDomain.h*fitScale,t=edge*fitScale;
+    var shell=new Path2D();
+    shell.rect(x,y,w,t);shell.rect(x,y+h-t,w,t);shell.rect(x,y+t,t,Math.max(0,h-2*t));
+    if(!open)shell.rect(x+w-t,y+t,t,Math.max(0,h-2*t));
+    var palette=getComputedStyle(document.documentElement);
+    wallSurfaceFill(smokeBoundaryCtx,palette,height,false,true);smokeBoundaryCtx.fill(shell);
+    smokeBoundaryCtx.save();smokeBoundaryCtx.clip(shell);
+    smokeBoundaryCtx.globalAlpha=.12;smokeBoundaryCtx.fillStyle=palette.getPropertyValue('--text-dim').trim();
+    smokeBoundaryCtx.fillRect(x+t-1,y+t,1,Math.max(0,h-2*t));
+    smokeBoundaryCtx.fillRect(x+t,y+h-t,Math.max(0,w-t*(open ? 1 : 2)),1);
+    smokeBoundaryCtx.restore();
   }
 
   /* ==== WATER HOST ======================================================
@@ -3711,7 +3660,7 @@
     }
     // Two simulation cells form the closed edge walls. An open outlet has
     // no obstacle cells, so advection and pressure can carry smoke offscreen.
-    var edge=Math.min(smokeDomain.w,smokeDomain.h)/Math.max(16,smokeEngine.config.SIM_RESOLUTION)*2;
+    var edge=smokeBoundaryThickness();
     rect(smokeDomain.x,smokeDomain.y,smokeDomain.x+smokeDomain.w,smokeDomain.y+edge);
     rect(smokeDomain.x,smokeDomain.y+smokeDomain.h-edge,smokeDomain.x+smokeDomain.w,smokeDomain.y+smokeDomain.h);
     rect(smokeDomain.x,smokeDomain.y,smokeDomain.x+edge,smokeDomain.y+smokeDomain.h);
@@ -15227,6 +15176,7 @@
 
   function render() {
     bakeWalls();
+    bakeSmokeBoundary();
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, worldW, worldH);
     drawEmitterFixtures();

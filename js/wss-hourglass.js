@@ -1,4 +1,4 @@
-/* One glass profile for native grain contacts and its Canvas outline.
+/* One glass profile for native grain contacts and its visible glass thickness.
  * The finish reads the resident particle buffer; it never moves a grain. */
 (function(root){
 'use strict';
@@ -130,7 +130,7 @@ async function create(context){
  var palette=getComputedStyle(document.documentElement),gold=rgb(palette.getPropertyValue('--app-brass').trim()||palette.getPropertyValue('--accent').trim()),cream=rgb(palette.getPropertyValue('--app-brass').trim()||palette.getPropertyValue('--text').trim());
  var finishParams=new Float32Array(12);finishParams.set([720,400,0,0]);
  finishParams.set(gold.map(function(v){return v*.56;}).concat([1]),4);finishParams.set(cream.concat([1]),8);queue.writeBuffer(view,0,finishParams);
- var inner=outline(0),outer=outline(4),coat=new Path2D(outer);coat.addPath(inner);
+ var inner=outline(0),outer=outline(7),coat=new Path2D(outer);coat.addPath(inner);
  // Dry grains carry their own ballistic momentum. Reuse the stock native
  // contact passes without liquid APIC averaging in this all-grain scene.
  slip.encode=function(encoder){
@@ -153,16 +153,17 @@ async function create(context){
    pass.setPipeline(finish);pass.setBindGroup(0,finishGroup);pass.draw(6,L.uploadedCount);pass.end();queue.submit([encoder.finish()]);
   },
   draw:function(c){
-   c.save();c.lineJoin='round';
-   // Thin glass with restrained edge reflections. All inner edges use the
-   // same profile as the GPU contact, without the old broad covering lip.
-   var tint=c.createLinearGradient(250,0,470,0);tint.addColorStop(0,'rgba('+gold.map(function(v){return Math.round(v*255);}).join(',')+',.17)');tint.addColorStop(.28,'rgba('+gold.map(function(v){return Math.round(v*255);}).join(',')+',.025)');tint.addColorStop(1,'rgba('+gold.map(function(v){return Math.round(v*255);}).join(',')+',.11)');
+   c.save();
+   // The cavity ends on the exact GPU profile. The glass has visible
+   // thickness outside it, with all lighting clipped to that material.
+   var tint=c.createLinearGradient(250,0,470,0);
+   tint.addColorStop(0,palette.getPropertyValue('--line-mid').trim());
+   tint.addColorStop(.3,palette.getPropertyValue('--rule-strong').trim());
+   tint.addColorStop(.7,palette.getPropertyValue('--rule').trim());
+   tint.addColorStop(1,palette.getPropertyValue('--rule-strong').trim());
    c.fillStyle=tint;c.fill(coat,'evenodd');
-   c.strokeStyle=palette.getPropertyValue('--accent').trim();c.lineWidth=.65;c.globalAlpha=.48;c.stroke(outer);
-   c.globalAlpha=.75;c.lineWidth=.65;c.stroke(inner);
-   c.globalAlpha=.2;c.lineWidth=2;c.stroke(inner);
-   // Short end bands ground the two bulbs without enclosing them in a box.
-   c.globalAlpha=.55;c.lineWidth=.8;c.beginPath();c.moveTo(279,52);c.lineTo(441,52);c.moveTo(279,348);c.lineTo(441,348);c.stroke();
+   c.clip(coat,'evenodd');c.fillStyle=palette.getPropertyValue('--text-dim').trim();c.globalAlpha=.16;
+   c.fillRect(250,49,220,2);c.fillRect(250,344,220,2);
    c.restore();
   },
   stats:function(){return {glassProfile:G,finish:'Resident native grains',finiteCharge:true};},
