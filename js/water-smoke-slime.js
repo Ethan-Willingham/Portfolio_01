@@ -14256,6 +14256,7 @@
     if(!machineBuilder)return false;
     var pad=22/fitScale,selected=null,distance=Infinity;
     machineBuilder.getParts().forEach(function(part){
+      if(machineState && machineState.definition.thermal && machineState.definition.thermal.mode==='freeze' && machineState.definition.parts.some(function(p){return p.id==='fracture'&&p.buildId===part.id;}))return;
       if(part.type!=='flap')return;
       var r=part.rect,dx=Math.max(r.x-x,0,x-r.x-r.width),dy=Math.max(r.y-y,0,y-r.y-r.height),d=Math.hypot(dx,dy);
       if(d<=pad && d<distance){selected=part;distance=d;}
@@ -14799,7 +14800,7 @@
       toySauna=ownSauna;
       SmokeFluid.setThermalStyle({glow:.18,waterCooling:3});
     }
-    if(definition.draft && window.WSSDraftRuntime)toyDraftRuntime=await window.WSSDraftRuntime.create({definition:definition,liquid:liquidWGPU,airModel:airModel,nativeBoundary:toyBoundary,membrane:toyBalloon,divers:toyDivers,terrain:function(x,y){return tileAt(Math.floor(y/TILE),Math.floor(x/TILE))!==null;},terrainVersion:function(){return wallsVersion;},SmokeFluid:SmokeFluid,bodies:jelloBodies,setManualValve:setManualValve,growBody:growDrinkingSlime,skinRing:function(body){if(body.waterBalloon)return toyBalloonCurveRing(body);var g=toySolidSkinGuest(body),ring=[];if(g)for(var k=0;k<g.pts.length;k+=4)ring.push({x:g.pts[k],y:g.pts[k+1]});return ring;},removeBody:function(body){if(surfaceSlimeGrip&&surfaceSlimeGrip.body===body)jelloGrabEnd();var index=jelloBodies.indexOf(body);if(index>=0)jelloBodies.splice(index,1);jelloCount=jelloTotalPoints();}});
+    if(definition.draft && window.WSSDraftRuntime)toyDraftRuntime=await window.WSSDraftRuntime.create({definition:definition,liquid:liquidWGPU,airModel:airModel,nativeBoundary:toyBoundary,membrane:toyBalloon,divers:toyDivers,terrain:function(x,y){return tileAt(Math.floor(y/TILE),Math.floor(x/TILE))!==null;},terrainVersion:function(){return wallsVersion;},SmokeFluid:SmokeFluid,bodies:jelloBodies,setManualValve:setManualValve,growBody:growDrinkingSlime,skinRing:function(body){if(body.waterBalloon)return toyBalloonCurveRing(body);var g=toySolidSkinGuest(body),ring=[];if(g)for(var k=0;k<g.pts.length;k+=4)ring.push({x:g.pts[k],y:g.pts[k+1],vx:g.pts[k+2],vy:g.pts[k+3]});return ring;},removeBody:function(body){if(surfaceSlimeGrip&&surfaceSlimeGrip.body===body)jelloGrabEnd();var index=jelloBodies.indexOf(body);if(index>=0)jelloBodies.splice(index,1);jelloCount=jelloTotalPoints();}});
     state.energyInitial=window.WaterMachinesInstruments.waterEnergy(Object.assign({},particleInstrumentSample(),{count:added}),
       {floor:worldH,gravity:250*gravMul*presetGravScale,density:model.settings.density || 1});
     state.energyGravity=250*gravMul*presetGravScale;
@@ -15481,7 +15482,8 @@
       c.font='11px "Commit Mono", monospace';
       c.scale(1/fitScale,1/fitScale);
       var stockFountainValve=machineState && machineState.definition.name==='heron' && machineState.definition.parts.some(function(p){return p.buildId===part.id;});
-      var label=(stockFountainValve ? 'Valve' : part.id)+': '+(part.open ? 'Open' : 'Closed');
+      var thermalWall=machineState && machineState.definition.thermal && machineState.definition.thermal.mode==='freeze' && machineState.definition.parts.some(function(p){return p.id==='fracture'&&p.buildId===part.id;});
+      var label=thermalWall?'Pipe wall: '+(part.open?'fractured':'intact'):(stockFountainValve ? 'Valve' : part.id)+': '+(part.open ? 'Open' : 'Closed');
       var labelWidth=c.measureText(label).width+8,labelHeight=18;
       // Keep a visible marker's identity inside the cropped view at any zoom.
       // Offscreen markers retain their geometry and await a view change.

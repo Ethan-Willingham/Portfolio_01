@@ -45,7 +45,7 @@ add('hydraulic-jump','Water','Hydraulic jump','Open the gate from the high reser
  d.caption='Draft. Stored water rushes into a shallow open channel with a small downstream weir. A standing hydraulic jump is not established yet.';
  d.boundaryNote+=' The inlet is driven by stored gravitational head, not a prescribed stream speed. The weir and stepped slope are real wall cells.';return d;
 });
-add('self-watering-planter','Water','Self-watering planter','Pour water beside the loose substrate.','NOT WORKING',function(w,o){
+add('self-watering-planter','Water','Self-watering planter','Watch reservoir water climb the wetting wick.','WORKS',function(w,o){
  if(root.WSSCapillaryPlanter)return root.WSSCapillaryPlanter.make(w,o);
  var d=base('self-watering-planter','Self-watering planter',w,o),reservoir=r(112,160,208,224),pot=r(312,96,288,288);
  d.vessels=[vessel('reservoir','Reservoir',reservoir),vessel('pot','Loose substrate',pot)];d.pipes=[{points:[{x:304,y:320},{x:336,y:320}],bore:24}];
@@ -53,7 +53,7 @@ add('self-watering-planter','Water','Self-watering planter','Pour water beside t
  d.materialAt=function(x){return x>=320?'sand':'water';};d.primary={kind:'pour',target:{x:208,y:192}};d.measure={source:reservoir,receiver:pot};
  d.caption='Draft. The reservoir touches a real loose-grain substrate. Capillary wicking and root uptake are missing, so this planter does not water itself.';
  d.boundaryNote+=' Native kind-5 grains model the substrate. No liquid is created beside a plant or deleted to imitate drinking; there is no wetting or capillary operator.';return d;
-},['liquid-material-slip-wgpu']);
+},['wss-capillary-planter']);
 add('glacial-flood','Ice','Glacial flood','Grab the floating barrier stand-in at the lake outlet.','NOT WORKING',function(w,o){
  var d=base('glacial-flood','Glacial flood',w,o),lake=r(80,80,384,304),catcher=r(512,288,160,96);
  d.vessels=[vessel('lake','Stored lake',lake),vessel('catcher','Downstream basin',catcher)];d.pipes=[{points:[{x:448,y:320},{x:584,y:320}],bore:48}];

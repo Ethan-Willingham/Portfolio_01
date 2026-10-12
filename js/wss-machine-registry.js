@@ -1044,8 +1044,8 @@
     "id": "melting-ice",
     "capability": "Ice",
     "title": "Floating ice that melts",
-    "cue": "Draft. Watch lightweight grain proxies move in water.",
-    "status": "NOT WORKING",
+    "cue": "Drag the floating ice through the heated bath. The same frozen native parcels melt into water.",
+    "status": "WORKS",
     "draft": true,
     "world": {
       "w": 720,
@@ -1064,8 +1064,8 @@
     "id": "frozen-pipe",
     "capability": "Ice",
     "title": "Frozen pipe",
-    "cue": "Draft. Remove a real manual plug from the water pipe.",
-    "status": "NOT WORKING",
+    "cue": "Cooling expands ice against a breakable pipe wall. Try the stronger-wall control.",
+    "status": "WORKS",
     "draft": true,
     "world": {
       "w": 720,
@@ -2280,8 +2280,8 @@
     "id": "self-watering-planter",
     "capability": "Water slimes",
     "title": "Self-watering planter",
-    "cue": "Draft. Pour water beside the loose substrate.",
-    "status": "NOT WORKING",
+    "cue": "Watch actual reservoir water climb a wetting wick and bind at the roots. Try the nonwetting control.",
+    "status": "WORKS",
     "draft": true,
     "world": {
       "w": 720,
@@ -2290,7 +2290,7 @@
     "pool": false,
     "dependencies": [
       "wss-drafts-fluid-machines",
-      "liquid-material-slip-wgpu"
+      "wss-capillary-planter"
     ],
     "accepted": true,
     "preview": "cup",

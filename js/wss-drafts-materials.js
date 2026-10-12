@@ -76,20 +76,20 @@ register('interlayer-slime','Oil','Slime between oil and water','Drop and grab a
  d.viewBounds=rect(208,0,304,400);d.vessels=[box('jar','Oil and water',jar)];d.initial=[initial(rect(256,144,208,224))];d.materialSlip=slip();d.materialAt=function(x,y){return y>=256?'oil':'water';};
  d.slimes=[{x:360,y:104,radius:24}];d.measure={source:jar,receiver:jar};return d;
 });
-register('melting-ice','Ice','Floating ice that melts','Watch lightweight grain proxies move in water.','NOT WORKING',function(w,o){
+register('melting-ice','Ice','Floating ice that melts','Drag the ice through the heated bath.','WORKS',function(w,o){
  if(root.WSSThermalMachines)return root.WSSThermalMachines.ice(w,o);
  var d=base('melting-ice','Floating ice that melts','Light grains stand in for ice; rigid cubes, freezing and melting are missing.',w,o),jar=rect(208,144,304,240);
  d.viewBounds=rect(168,96,384,296);d.vessels=[box('jar','Ice proxies in water',jar)];d.initial=[initial(rect(216,264,288,112)),initial(rect(320,192,64,56))];
  d.materialSlip=slip([1,.7733,.917]);d.materialAt=function(x,y){return x>=320&&x<384&&y>=192&&y<248?'sand':'water';};d.measure={source:jar,receiver:jar};
  d.boundaryNote='Draft. These are native granular proxies with actual relative mass0.917, not ice cubes. No freezing, latent heat, thermal melting or rigid bond model is implemented.';return d;
-});
-register('frozen-pipe','Ice','Frozen pipe','Remove a real manual plug from the water pipe.','NOT WORKING',function(w,o){
+},['wss-drafts-bodies','wss-thermal-machines']);
+register('frozen-pipe','Ice','Frozen pipe','Watch freezing expansion fracture the weak pipe.','WORKS',function(w,o){
  if(root.WSSThermalMachines)return root.WSSThermalMachines.pipe(w,o);
  var d=base('frozen-pipe','Frozen pipe','A manual plug blocks real water; freezing expansion and self-bursting are missing.',w,o),source=rect(128,80,184,304),cup=rect(528,312,144,72);
  d.vessels=[box('source','Water head',source),box('cup','Receiving cup',cup)];d.pipes=[{points:[{x:296,y:304},{x:592,y:304}],bore:48}];
  d.parts=[{id:'plug',type:'valve',rect:rect(432,288,16,48),direction:'right',open:false,mass:1}];d.initial=[initial(rect(136,176,168,200)),initial(rect(304,296,120,32))];
  d.materialSlip=slip();d.materialAt=function(){return 'water';};d.primary={kind:'valve',id:'plug'};d.action='Remove proxy plug';d.measure={source:source,receiver:cup};return d;
-});
+},['wss-drafts-bodies','wss-thermal-machines']);
 register('oil-slick-fire','Oil','Burning oil slick','Pour water over the burner beside the slick.','PARTLY',function(w,o){
  var d=base('oil-slick-fire','Burning oil slick','A declared burner burns beside real oil; the oil itself does not supply fuel yet.',w,o),jar=rect(248,184,224,192);
  d.vessels=[box('jar','Oil slick and water',jar)];d.initial=[initial(rect(256,264,208,104))];d.materialSlip=slip();d.materialAt=function(x,y){return y<280?'oil':'water';};

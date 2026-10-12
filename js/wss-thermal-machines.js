@@ -16,15 +16,15 @@ function ice(w,o){
 }
 function pipe(w,o){
  o=o||{};var d=base('frozen-pipe',o);d.title='Frozen pipe';d.vessels=[{id:'pipe',label:'Enclosed pipe charge',rect:r(216,192,288,64),sealed:true},{id:'catcher',label:'Thaw collector',rect:r(160,296,400,88),sealed:false}];
- d.initial=[{kind:'rect',rect:r(224,200,272,48)}];d.thermal={mode:'freeze',heated:o.cooling!==false,control:r(264,160,176,24),ice:r(224,200,272,48),latent:334,coolerW:1200,strong:!!o.strong,wall:r(496,208,8,40),opening:{axis:'x',at:504,start:208,end:248}};
+ d.initial=[{kind:'rect',rect:r(224,200,272,48)}];d.thermal={mode:'freeze',heated:o.cooling!==false,control:r(264,160,176,24),ice:r(224,200,272,48),latent:334,coolerW:2400,strong:!!o.strong,wall:r(496,208,8,40),opening:{axis:'x',at:504,start:208,end:248}};
  d.vents=[r(496,208,16,40)];d.parts=[{id:'fracture',type:'valve',rect:d.thermal.wall,direction:'right',open:false,mass:1}];d.boundaries.caps=[d.thermal.opening];d.action=d.thermal.heated?'Stop cooling':'Start cooling';
  d.setups=[{id:'cool',label:'Cooling weak pipe',options:{cooling:true}},{id:'warm',label:'No cooling control',options:{cooling:false}},{id:'strong',label:'Strong pipe control',options:{cooling:true,strong:true}}];d.setup=o.strong?'strong':o.cooling===false?'warm':'cool';d.setupNote='The no-cooling charge stays liquid. The stronger wall supports the same freezing expansion without fracturing.';
  d.caption='Cooling freezes the enclosed charge. Expansion loads the pipe wall; a weak wall fractures and the thawed charge spills into the collector.';
- d.boundaryNote='The finite native charge uses a lumped enthalpy model and 0.917 ice density. Freezing expansion loads a constrained elastic shell (effective volume stiffness 20 MPa, wall radius 24 pixels, thickness 8 pixels). Hoop stress above strength breaks the actual native wall. After fracture the exposed charge absorbs heat from 20-degree ambient air at conductance 24 W/K. Thermal time runs 15 times faster than the physical clock. No timed fracture or assigned stream.';
+ d.boundaryNote='The finite native charge uses a lumped enthalpy model and 0.917 ice density. Freezing expansion first compresses the measured isothermal headspace, then loads a constrained elastic shell (effective volume stiffness 20 MPa, wall radius 24 pixels, thickness 8 pixels). Mean hoop stress above strength breaks the actual native wall. After fracture the exposed charge absorbs heat from 20-degree ambient air at conductance 24 W/K. Thermal time runs 15 times faster than the physical clock. No timed fracture or assigned stream.';
  d.energyBudgetStatus='Phase mass and sensible/latent energy are tracked. The shell stress is a quasistatic reduced model, not a resolved crack or energy-conserving elastic pipe solver.';return d;
 }
 var SOURCE=`
-struct P {region:vec4f, body:vec4f, state:vec4f, velocity:vec4f};
+struct P {region:vec4f, body:vec4f, state:vec4f, velocity:vec4f, motion:vec4f};
 @group(0) @binding(0) var<uniform> p:P;
 @group(0) @binding(1) var<storage,read_write> pos:array<vec4f>;
 @group(0) @binding(2) var<storage,read_write> flag:array<u32>;
@@ -52,7 +52,7 @@ struct P {region:vec4f, body:vec4f, state:vec4f, velocity:vec4f};
  if(s.z<p.state.y && s.w==2.){
    var q=pos[i].xy;
    // Melting releases the parcel at its current solid pose. Native skin contact supplies clearance.
-   pos[i]=vec4f(q,0.,0.);aux[i]=vec4f(4.,0.,q);affine[i]=vec4f(0.);flag[i]=0u;
+   let relative=q-p.body.xy;let v=p.motion.xy+p.motion.z*vec2f(-relative.y,relative.x);pos[i]=vec4f(q,v);aux[i]=vec4f(4.,0.,q);affine[i]=vec4f(0.);flag[i]=0u;
    phase[i].w=3.;atomicAdd(&sums[1],1u);
  }else if(s.w==2. && p.velocity.w<.5){let local=vec2f(p.velocity.x*s.x-p.velocity.y*s.y,p.velocity.y*s.x+p.velocity.x*s.y);pos[i]=vec4f(p.body.xy+local,0.,0.);flag[i]=32u;}
 }
@@ -61,48 +61,54 @@ function bodyAngle(b){var a=0,z=0;for(var i=0;i<b.n;i++){var x=b.rx[i]-b.rcx,y=b
 async function phaseModel(c){
  var d=c.definition,t=d.thermal,L=c.liquid,b=c.bodies[0],device=L.device,q=L.queue,U=GPUBufferUsage;
  var buffers=[];function buf(size,usage){var v=device.createBuffer({size:size,usage:usage});buffers.push(v);return v;}
- var params=buf(64,U.UNIFORM|U.COPY_DST),phase=buf(L.maxParticles*16,U.STORAGE|U.COPY_DST),sums=buf(12,U.STORAGE|U.COPY_SRC),read=buf(12,U.MAP_READ|U.COPY_DST);
+ var params=buf(80,U.UNIFORM|U.COPY_DST),phase=buf(L.maxParticles*16,U.STORAGE|U.COPY_DST),sums=buf(12,U.STORAGE|U.COPY_SRC),read=buf(12,U.MAP_READ|U.COPY_DST);
  var a=L.liquid.arrays,n=L.liquid.getCount(),rows=[],birth=new Float32Array(n*4),ir=t.ice;
  for(var i=0;i<n;i++){var x=a.x[i],y=a.y[i];if(x>=ir.x&&x<ir.x+ir.width&&y>=ir.y&&y<ir.y+ir.height)rows.push({i:i,rank:Math.max(Math.abs(x-ir.x-ir.width/2)/(ir.width/2),Math.abs(y-ir.y-ir.height/2)/(ir.height/2))});}
  rows.sort(function(a,b){return b.rank-a.rank||a.i-b.i;});rows.forEach(function(v,k){birth[v.i*4+2]=k;birth[v.i*4+3]=-1;});q.writeBuffer(phase,0,birth);
  var mod=device.createShaderModule({code:SOURCE}),pipe=await device.createComputePipelineAsync({layout:'auto',compute:{module:mod,entryPoint:'phaseStep'}});
  var resources=[params,L.buf.pos,L.buf.flag,L.buf.affine,L.buf.aux,phase,sums];var group=device.createBindGroup({layout:pipe.getBindGroupLayout(0),entries:resources.map(function(v,i){return {binding:i,resource:{buffer:v}};})});
- var captured=false,pending=false,initialized=false,retired=false,error=null,iceCount=0,released=0,frozenTotal=0,energy=0,freeze=0,frozenAtFracture=0,thawHeat=0,fractured=false,clock=L.simulationClock,removed=false,bathEnergy=null,heaterInput=0,transferred=0,startArea=null,surface=null,fraction=null,scale=1,heated=t.heated,stats={};
+ var captured=false,pending=false,initialized=false,retired=false,error=null,iceCount=0,released=0,frozenTotal=0,energy=0,freeze=0,frozenAtFracture=0,thawHeat=0,fractured=false,clock=L.simulationClock,removed=false,bathEnergy=null,heaterInput=0,transferred=0,startArea=null,surface=null,fraction=null,wetContact=0,scale=1,pressure=0,hoop=0,breakPressure=0,breakStress=0,headspace=0,heated=t.heated,stats={};
  if(b){b.fluidDensityRatio=.917;b.thermalIce=true;}
  function bathContact(){
   if(!b || removed)return;
   if(L.getReadbackAge()>.3){delete b.fluidSurfaceY;delete b.fluidSubmergedFraction;surface=null;fraction=null;return;}
-  var a=L.liquid.arrays,n=L.liquid.getCount(),bins=new Uint16Array(90*50),tops=new Float32Array(90*50),levels=[];tops.fill(Infinity);
-  for(var i=0;i<n;i++){var x=a.x[i],y=a.y[i];if(a.frozen[i]||x<176||x>=544||y<144||y>=376||x>=b.bboxL-16&&x<=b.bboxR+16)continue;var cell=Math.floor(y/8)*90+Math.floor(x/8);bins[cell]++;tops[cell]=Math.min(tops[cell],y);}
+  var ring=c.skinRing(b);wetContact=0;var radius=L.cellSize*.5*.85+.92;var a=L.liquid.arrays,n=L.liquid.getCount(),bins=new Uint16Array(90*50),tops=new Float32Array(90*50),levels=[];tops.fill(Infinity);
+  for(var i=0;i<n;i++){var x=a.x[i],y=a.y[i];if(a.frozen[i])continue;
+   if(x>=152&&x<=568&&y>=144&&y<=384&&x>b.bboxL-radius&&x<b.bboxR+radius&&y>b.bboxT-radius&&y<b.bboxB+radius){
+    for(var k=0;k<ring.length;k++){var p=ring[k],q=ring[(k+1)%ring.length],dx=q.x-p.x,dy=q.y-p.y,t=Math.max(0,Math.min(1,((x-p.x)*dx+(y-p.y)*dy)/Math.max(1e-9,dx*dx+dy*dy)));if((x-p.x-t*dx)**2+(y-p.y-t*dy)**2<=radius*radius){wetContact++;break;}}
+   }
+   if(x<176||x>=544||y<144||y>=376||x>=b.bboxL-16&&x<=b.bboxR+16)continue;var cell=Math.floor(y/8)*90+Math.floor(x/8);bins[cell]++;tops[cell]=Math.min(tops[cell],y);}
   for(var col=22;col<68;col++){if(col*8>=b.bboxL-16&&col*8<=b.bboxR+16)continue;for(var row=18;row<47;row++)if(bins[row*90+col]>=10){levels.push(tops[row*90+col]-1.25);break;}}
   if(levels.length<6){delete b.fluidSurfaceY;delete b.fluidSubmergedFraction;surface=null;fraction=null;return;}
   levels.sort(function(a,b){return a-b;});surface=levels[Math.floor(levels.length/2)];b.fluidSurfaceY=surface;
-  var ring=c.skinRing(b),cut=[];for(i=0;i<ring.length;i++){var p=ring[i],q=ring[(i+1)%ring.length],inP=p.y>=surface,inQ=q.y>=surface;if(inP)cut.push(p);if(inP!==inQ){var t=(surface-p.y)/(q.y-p.y);cut.push({x:p.x+t*(q.x-p.x),y:surface});}}
+  var cut=[];for(i=0;i<ring.length;i++){var p=ring[i],q=ring[(i+1)%ring.length],inP=p.y>=surface,inQ=q.y>=surface;if(inP)cut.push(p);if(inP!==inQ){var t=(surface-p.y)/(q.y-p.y);cut.push({x:p.x+t*(q.x-p.x),y:surface});}}
   function area(points){var sum=0;for(var k=0;k<points.length;k++){var p=points[k],q=points[(k+1)%points.length];sum+=p.x*q.y-p.y*q.x;}return Math.abs(sum)*.5;}
-  fraction=Math.max(0,Math.min(1,area(cut)/Math.max(1e-6,area(ring))));b.fluidSubmergedFraction=fraction;
+  fraction=Math.max(0,Math.min(1,area(cut)/Math.max(1e-6,area(ring))));if(!wetContact)fraction=0;b.fluidSubmergedFraction=fraction;
  }
  function update(){
   var now=L.simulationClock,dt=Math.max(0,now-clock)*c.nativeBoundary.stats().physicalSecondsPerSimulationSecond*THERMAL_SPEED;clock=now;if(!iceCount)return;if(t.mode==='melt')bathContact();
   // Parcel area 1.5625 px2, one-pixel depth; thermal parcel mass uses the shared 24 px/in, one-inch depth scale.
   var mass=iceCount*PARCEL_GRAMS,total=mass*t.latent;
   if(t.mode==='melt'){
-   var bathMass=Math.max(0,L.liquid.getCount()-iceCount)*PARCEL_GRAMS,capacity=Math.max(.001,bathMass*4.18);if(bathEnergy===null)bathEnergy=capacity*(heated?20:0);var input=heated?t.heaterW*dt:0;heaterInput+=input;bathEnergy+=input;var contact=(b._wetCells||0)>0;var exchange=contact?Math.min(total-energy,bathEnergy,12*Math.max(0,bathEnergy/capacity)*dt):0;energy+=exchange;bathEnergy-=exchange;transferred+=exchange;
+   var bathMass=Math.max(0,L.liquid.getCount()-iceCount+released)*PARCEL_GRAMS,capacity=Math.max(.001,bathMass*4.18);if(bathEnergy===null)bathEnergy=capacity*(heated?20:0);var input=heated?t.heaterW*dt:0;heaterInput+=input;bathEnergy+=input;var contact=!removed&&fraction!==null&&fraction>0&&wetContact>0;var exchange=contact?Math.min(total-energy,bathEnergy,12*Math.max(0,bathEnergy/capacity)*dt):0;energy+=exchange;bathEnergy-=exchange;transferred+=exchange;
   }else if(!fractured){
    if(heated)energy=Math.min(total,energy+t.coolerW*dt);freeze=energy/total;
-   var strain=freeze*(1/.917-1),pressure=20000000*strain,hoop=pressure*24/8,strength=t.strong?8000000:1000000;
-   if(hoop>strength){fractured=true;t.fractured=true;frozenAtFracture=freeze;c.setManualValve(d.parts[0].buildId,true);c.nativeBoundary.setCaps([]);d.action='Pipe fractured';}
+   var volume=t.ice.width*t.ice.height,waterVolume=iceCount*1.5625;headspace=Math.max(0,volume-waterVolume);var expansion=waterVolume*freeze*(1/.917-1),lo=0,hi=20000000*expansion/volume;
+   // Closed room air compresses before the compliant pipe takes the volume.
+   for(var iteration=0;iteration<32;iteration++){var mid=(lo+hi)*.5,accepted=headspace*mid/(101325+mid)+volume*mid/20000000;if(accepted<expansion)lo=mid;else hi=mid;}pressure=(lo+hi)*.5;hoop=pressure*24/8;var strength=t.strong?8000000:1000000;
+   if(hoop>strength){fractured=true;t.fractured=true;breakPressure=pressure;breakStress=hoop;frozenAtFracture=freeze;c.setManualValve(d.parts[0].buildId,true);c.nativeBoundary.setCaps([]);d.action='Pipe fractured';}
   }else{var ambient=Math.min(energy,480*dt);energy-=ambient;thawHeat+=ambient;}
   var melted=t.mode==='melt'?energy/total:fractured?Math.max(0,frozenAtFracture-energy/total):0;
   if(b && !removed){if(startArea===null)startArea=iceCount*1.5625/.917;scale=Math.sqrt(Math.max(.01,1-released/iceCount));c.growBody(b,0,startArea*Math.max(.01,1-released/iceCount));if(released>=iceCount && melted>=1){c.removeBody(b);removed=true;}}
-  stats={mode:t.mode,thermalSpeed:THERMAL_SPEED,parcelGrams:PARCEL_GRAMS,iceParcels:iceCount,releasedParcels:released,solidParcels:(t.mode==='melt'?iceCount:frozenTotal)-released,massGrams:mass,energyJ:energy,latentJ:total,meltFraction:melted,freezeFraction:freeze,fractured:fractured,heaterOn:heated,scale:scale,bathEnergyJ:bathEnergy,heaterInputJ:heaterInput,transferredJ:transferred,releasedLatentJ:released*PARCEL_GRAMS*t.latent,phaseRemainderJ:(t.mode==='melt'?energy:thawHeat)-released*PARCEL_GRAMS*t.latent,thawHeatJ:thawHeat,totalFrozenParcels:frozenTotal,surfaceY:surface,submergedFraction:fraction,thermalContact:!!(b&&b._wetCells>0),error:error};
-  if(t.mode==='freeze')Object.assign(stats,{expansionStrain:freeze*(1/.917-1),pressurePa:20000000*freeze*(1/.917-1),hoopStressPa:60000000*freeze*(1/.917-1),strengthPa:t.strong?8000000:1000000});
-  d.readingLabel=t.mode==='melt'?'Ice '+Math.round((1-melted)*100)+'%':'Frozen '+Math.round(freeze*100)+'%; '+(fractured?'fractured':'intact');
+  stats={mode:t.mode,thermalSpeed:THERMAL_SPEED,parcelGrams:PARCEL_GRAMS,iceParcels:iceCount,releasedParcels:released,solidParcels:(t.mode==='melt'?iceCount:frozenTotal)-released,massGrams:mass,energyJ:energy,latentJ:total,meltFraction:melted,freezeFraction:t.mode==='freeze'?(frozenTotal-released)/iceCount:freeze,maxFreezeFraction:frozenAtFracture,fractured:fractured,heaterOn:heated,scale:scale,bathEnergyJ:bathEnergy,heaterInputJ:heaterInput,transferredJ:transferred,releasedLatentJ:released*PARCEL_GRAMS*t.latent,phaseRemainderJ:(t.mode==='melt'?energy:thawHeat)-released*PARCEL_GRAMS*t.latent,thawHeatJ:thawHeat,totalFrozenParcels:frozenTotal,surfaceY:surface,submergedFraction:fraction,contactParcels:wetContact,thermalContact:t.mode==='melt'&&!!contact,error:error};
+  if(t.mode==='freeze')Object.assign(stats,{expansionStrain:freeze*(1/.917-1),pressurePa:fractured?0:pressure,hoopStressPa:fractured?0:hoop,breakPressurePa:breakPressure,breakStressPa:breakStress,initialHeadspaceArea:headspace,strengthPa:t.strong?8000000:1000000});
+  d.readingLabel=t.mode==='melt'?'Ice '+Math.round((1-melted)*100)+'%':'Frozen '+Math.round((frozenTotal-released)/iceCount*100)+'%; '+(fractured?'fractured':'intact');
  }
  var companion={error:null,beginFrame:function(enc,state){
   update();var region=t.ice,cx=b?b.cx:region.x+region.width/2,cy=b?b.cy:region.y+region.height/2;
-  var radius=b?Math.sqrt(b.restArea/Math.PI):0;
+  var radius=b?Math.sqrt(b.restArea/Math.PI):0,motion=[0,0,0,0];if(b&&!removed){var ring=c.skinRing(b),den=0;ring.forEach(function(v){motion[0]+=v.vx/ring.length;motion[1]+=v.vy/ring.length;});ring.forEach(function(v){var x=v.x-b.cx,y=v.y-b.cy;motion[2]+=x*(v.vy-motion[1])-y*(v.vx-motion[0]);den+=x*x+y*y;});motion[2]/=Math.max(1e-6,den);}
   var target=stats.meltFraction||0;
-  q.writeBuffer(params,0,new Float32Array([region.x,region.y,region.x+region.width,region.y+region.height,cx,cy,radius,scale,state.count,Math.floor(iceCount*target),iceCount*freeze,initialized?1:0,b?Math.cos(bodyAngle(b)):1,b?Math.sin(bodyAngle(b)):0,fractured?1:0,t.mode==='freeze'?1:0]));
+  q.writeBuffer(params,0,new Float32Array([region.x,region.y,region.x+region.width,region.y+region.height,cx,cy,radius,scale,state.count,Math.floor(iceCount*target),iceCount*freeze,initialized?1:0,b?Math.cos(bodyAngle(b)):1,b?Math.sin(bodyAngle(b)):0,fractured?1:0,t.mode==='freeze'?1:0].concat(motion)));
  },beforeSubstep:function(enc,state){var pass=enc.beginComputePass();pass.setPipeline(pipe);pass.setBindGroup(0,group);pass.dispatchWorkgroups(Math.ceil(state.count/64));pass.end();initialized=true;},afterSubstep:function(){},captureFrame:function(enc){if(!pending){pending=true;captured=true;enc.copyBufferToBuffer(sums,0,read,0,12);}},afterSubmit:function(){if(!captured)return;captured=false;read.mapAsync(GPUMapMode.READ).then(function(){if(!retired){var v=new Uint32Array(read.getMappedRange());iceCount=v[0];released=v[1];frozenTotal=v[2];}read.unmap();}).catch(function(e){error=e.message;companion.error=error;}).finally(function(){pending=false;});}};
  L.setToyMembrane(companion);
  return {tick:update,load:function(body){
