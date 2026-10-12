@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.118'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.119'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -119,6 +119,8 @@
   var bootMachine=machineRegistry && machineRegistry.lookup(bootScene);
   var solidSkinLab=bootScene==='smoke-wind-tunnel' && !(bootParams.get('lab')==='1' && bootParams.get('solidSkin')==='0');
   var solidSlipLab=solidSkinLab && !(bootParams.get('lab')==='1' && bootParams.get('solidSlip')==='0');
+  var allSkinLab=solidSkinLab && !(bootParams.get('lab')==='1' && bootParams.get('allSkins')==='0');
+  var allSkinVirtualLab=allSkinLab;
   function defaultMachineFallback(){
     if(!defaultMachineRequested)return false;
     defaultMachineRequested=false;startupMachine=null;
@@ -814,8 +816,10 @@
   // eligible. Holes are preserved with inactive placeholders below.
   var liquidGuestSlots = new Array(8);
   var solidSkinHistory=null,solidSkinIdentity=null;
+  var allSkinHistory=new WeakMap();
+  var allSkinSlots=new Array(64);
   function toySolidSkinBody(b) {
-    return !!(solidSkinLab && currentScene==='smoke-wind-tunnel' && b && b===solidSkinIdentity && jelloBodies.indexOf(b)>=0 &&
+    return !!(solidSkinLab && currentScene==='smoke-wind-tunnel' && b && (allSkinLab || b===solidSkinIdentity) && jelloBodies.indexOf(b)>=0 &&
       b.surfaceSlime && !b._melting && !b.waterBalloon && !b.cartesianDiver && !b.floatSlider);
   }
   function toySolidSkinGuest(b) {
@@ -827,6 +831,7 @@
     g.membrane=false;m.solidFluidGuest=true;return g;
   }
   function toySolidCurveBoundary(gs,state) {
+    if(allSkinLab)return toyAllSolidCurves(gs,state);
     var b=solidSkinIdentity,slot=liquidGuestSlots.indexOf(b);
     if(!toySolidSkinBody(b) || slot<0 || !gs || !gs.guests || gs.guests[slot]!==b.surfaceSlime.fluidGuest){solidSkinHistory=null;return null;}
     if(!(state.seconds>0 && Number.isFinite(state.clock+state.seconds)))throw Error('A solid curve requires the actual native interval.');
@@ -840,6 +845,41 @@
     // Commit only through the next observation of the actual advanced clock.
     solidSkinHistory={body:b,ring:b.ring,controls:Array.from(controls),expectedClock:state.clock+state.seconds};
     return {slot:slot,points:points};
+  }
+
+
+  function toyAllSolidCurves(gs,state) {
+    if(!(state.seconds>0 && Number.isFinite(state.clock+state.seconds)))throw Error('A solid curve requires the actual native interval.');
+    var bodies=jelloBodies.filter(toySolidSkinBody),legacyMask=0;
+    if(allSkinVirtualLab){
+      for(var vi=0;vi<allSkinSlots.length;vi++)if(bodies.indexOf(allSkinSlots[vi])<0)allSkinSlots[vi]=null;
+      bodies.forEach(function(b){
+        if(allSkinSlots.indexOf(b)<0){var empty=allSkinSlots.indexOf(null);if(empty<0)throw Error('Virtual skins exceed the existing gel body allocation.');allSkinSlots[empty]=b;}
+        var g=toySolidSkinGuest(b);if(!g)throw Error('A virtual skin requires an actual final rendered export.');
+        if(gs && gs.guests)for(var legacy=0;legacy<8;legacy++)if(gs.guests[legacy]===g)legacyMask|=1<<legacy;
+      });
+    }
+    var curves=bodies.map(function(b){
+      var slot=allSkinVirtualLab ? 8+allSkinSlots.indexOf(b) : liquidGuestSlots.indexOf(b),m=b.surfaceSlime;
+      if(slot<0 || !allSkinVirtualLab && (!gs || !gs.guests || gs.guests[slot]!==m.fluidGuest))
+        throw Error('All-skin lab cannot represent this body in the eight native guest slots.');
+      var controls=m.fluidControls,history=allSkinHistory.get(b);
+      var valid=!state.preview && history && history.ring===b.ring && history.controls.length===controls.length && Math.abs(history.expectedClock-state.clock)<1e-9;
+      var points=window.WSSWaterBalloons.geometry.curveRing(controls,function(i,t){
+        var u=(i+t)/(controls.length/2),now=window.WSSWaterBalloons.geometry.quadratic(controls,u),old=valid ? window.WSSWaterBalloons.geometry.quadratic(history.controls,u) : now;
+        return {vx:(now.x-old.x)/state.seconds,vy:(now.y-old.y)/state.seconds};
+      });
+      if(!state.preview)allSkinHistory.set(b,{ring:b.ring,controls:Array.from(controls),expectedClock:state.clock+state.seconds});
+      return {slot:slot,points:points,bodyIndex:jelloBodies.indexOf(b)};
+    });
+    curves.legacyMask=legacyMask;return curves;
+  }
+  function preflightAllSolidSkins() {
+    if(!allSkinLab || currentScene!=='smoke-wind-tunnel')return true;
+    try {
+      var gs=getGameStateToy(),curves=toySolidCurveBoundary(gs,{clock:liquidWGPU.simulationClock,seconds:1,preview:true});
+      liquidWGPU.curveBoundary.validate(curves);return true;
+    }catch(error){buildError=error.message;userPaused=true;cancelHeldInput();syncRunning();return false;}
   }
 
   function pushWake(cx, cy, r, blast) {
@@ -1462,7 +1502,7 @@
       toyNativeExtension: bootMachine || handsRequested ? function(instance,options){return window.WSSNative.create(instance,options);} : undefined,
       materialSlipFactory: window.LiquidMaterialSlipWGPU ? window.LiquidMaterialSlipWGPU.create : undefined,
       curveBoundaryFactory:solidSkinLab ? function(instance,options){return window.LiquidCurveBoundary.create(instance,
-        Object.assign({},options,{getCurve:toySolidCurveBoundary,normalProjection:solidSlipLab}));} : undefined,
+        Object.assign({},options,{getCurve:toySolidCurveBoundary,normalProjection:solidSlipLab,multiple:allSkinLab,virtual:allSkinVirtualLab}));} : undefined,
       liquid: {
         maxParticles: LIQUID_MAX_PARTICLES,
         getCount: function () { return liquidCount; },
@@ -1620,6 +1660,7 @@
       if (stepDt > 0.05) stepDt = 0.05;
       liquidPendingDt = 0;
     }
+    if(allSkinLab && !preflightAllSolidSkins())return;
     airGeometryTick();
     liquidWGPU.update(stepDt);
   }
@@ -14124,7 +14165,7 @@
       setGravityUI(0);toyCannon=definition.name==='smoke-wind-tunnel' ?
         window.WSSSmokeWindTunnel.create(definition,SmokeFluid,{w:worldW,h:worldH},jelloBodies) :
         window.WSSSmokeCannon.create(definition,SmokeFluid,{w:worldW,h:worldH});
-      if(solidSkinLab){solidSkinIdentity=jelloBodies[0] || null;solidSkinHistory=null;}
+      if(solidSkinLab){solidSkinIdentity=jelloBodies[0] || null;solidSkinHistory=null;allSkinHistory=new WeakMap();allSkinSlots=new Array(64);}
       smokeAwakeT=SMOKE_IDLE_HOLD;smokeFrame(1/60);render();
       state.ready=true;state.startedAt=0;state.wallClockStartedAt=performance.now();fitStage();instrumentTick(performance.now());return state;
     }
