@@ -2333,8 +2333,8 @@
     "id": "tesla-pump",
     "capability": "Valves and logic",
     "title": "Tesla pump",
-    "cue": "Draft. Grab the piston and drive water toward the asymmetric loops.",
-    "status": "NOT WORKING",
+    "cue": "Run the visible motor. Compare directional resistance with the symmetric control.",
+    "status": "WORKS",
     "draft": true,
     "world": {
       "w": 720,
@@ -2342,14 +2342,19 @@
     },
     "pool": false,
     "dependencies": [
-      "wss-drafts-fluid-machines",
-      "wss-drafts-bodies"
+      "wss-cartesian-divers",
+      "wss-machines/cartesian-divers",
+      "wss-tesla-loss",
+      "wss-tesla-pump"
     ],
+    "blocker": "Uses a declared empirical resistance model for unresolved mixing; not a calibrated pump or geometry-only prediction.",
     "accepted": true,
     "preview": "cup",
     "scripts": [
-      "wss-drafts-fluid-machines",
-      "wss-drafts-bodies"
+      "wss-cartesian-divers",
+      "wss-machines/cartesian-divers",
+      "wss-tesla-loss",
+      "wss-tesla-pump"
     ]
   },
   {

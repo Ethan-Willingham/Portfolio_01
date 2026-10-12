@@ -14962,6 +14962,7 @@
       else target(84,200,24,100);
     }
     else if(kind==='smoke-fan' && d.fan)target(d.fan.x,(d.fan.top+d.fan.bottom)*.5,48,d.fan.bottom-d.fan.top);
+    else if(kind==='tesla-motor' && d.divers){atRect({x:d.divers.piston.x-32,y:d.divers.pistonRodEndY||112,width:d.divers.piston.width+64,height:28},'primary','button');}
     else if(kind==='ballast-valve' && p.target)atRect(p.target,'primary','button');
     else if(kind==='balloon-pop' || kind==='draft-squeeze' || kind==='draft-push' || kind==='creature-gas' || kind==='cork-release')body(0);
     else if(kind==='slime'){

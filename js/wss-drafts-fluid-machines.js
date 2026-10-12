@@ -12,7 +12,8 @@ function base(id,title,world,o){
 }
 function add(id,capability,title,cue,status,make,deps){
  factories[id]=make;entries.push({id:id,capability:capability,title:title,cue:cue,status:status,draft:true,world:{w:720,h:400},pool:false,dependencies:deps||[]});
- root.WSSMachines=root.WSSMachines||{};root.WSSMachines[id]={make:function(w,o){return make(w,o||{});}};
+ root.WSSMachines=root.WSSMachines||{};if(id==='tesla-pump' && root.WSSTeslaPump)return;
+ root.WSSMachines[id]={make:function(w,o){return make(w,o||{});}};
 }
 add('upside-down-tank','Water','Upside-down tank','Open the bottom and watch water and air exchange places.','PARTLY',function(w,o){
  var d=base('upside-down-tank','Upside-down tank',w,o),tank=r(240,48,240,224),catcher=r(104,280,512,104);
