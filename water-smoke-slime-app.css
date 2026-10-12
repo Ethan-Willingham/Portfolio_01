@@ -103,8 +103,10 @@ body.toy-app ::selection { background: var(--selection-bg); color: var(--selecti
   box-shadow: 0 24px 64px rgb(0 0 0 / 0.6); scrollbar-width: thin; scrollbar-color: #3a3c41 transparent;
 }
 .toy-app .toy-scene-list p {
-  grid-column: 1 / -1; margin: 12px 8px 4px; color: var(--text-faint);
-  font: 600 10px/1.4 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase;
+  grid-column: 1 / -1; margin: 16px 0 6px; padding: 8px 10px;
+  color: var(--text-bright); background: var(--d-bg);
+  border-left: 3px solid var(--line-mid); border-radius: 4px;
+  font: 600 12px/1.4 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase;
 }
 .toy-app .toy-scene-list p:first-child { margin-top: 4px; }
 .toy-app .toy-scene-picker .toy-scene-list .toy-chip {
