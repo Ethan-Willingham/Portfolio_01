@@ -74,6 +74,27 @@ and the actual pour button. An empty-bank control keeps the same retaining lips
 and initial water, checking that the lips alone let water pass. Captures and
 measurements go to `/tmp/sand-dam-review`.
 
+## Hourglass
+
+The hourglass starts at 20% playback speed. Its narrow neck and two bulbs use
+one smooth profile for the inner glass outline and GPU grain contacts. The tile
+box outside that profile is a backstop. The sand finish draws the actual resident
+grain positions with their native contact radius, warm pigment and small edge
+highlights. It does not draw a separate surface or invent a stream.
+
+This all-grain scene uses ballistic gravity and the existing native compressive
+pair contacts and friction, without the liquid APIC velocity average. Contact
+reconciliation uses the actual slow simulation interval. The native time
+remainder preserves elapsed time at slow playback. A gentle shake adds one
+horizontal impulse to the finite charge. The shared liquid engine and the other
+material scenes keep their existing models.
+
+This remains a reduced granular demo, without a calibrated sand constitutive
+law. Run `node tools/test-hourglass.mjs` for actual GPU containment and inventory,
+slow-clock accounting, read-only drawing, pause, shake, fullscreen, desktop and
+mobile resize, restart and scene retirement. The harness owns Chrome for Testing
+and writes captures to `/tmp/hourglass-review`.
+
 ## Chimney inlet
 
 The chimney inlet changes combustion in the running scene. Its clear collision

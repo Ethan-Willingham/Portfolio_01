@@ -269,7 +269,7 @@
     "id": "hourglass",
     "capability": "Sand",
     "title": "Hourglass",
-    "cue": "Draft. Watch the sand find the narrow neck.",
+    "cue": "Draft. Watch the grains settle through the glass.",
     "status": "PARTLY",
     "draft": true,
     "world": {
@@ -280,7 +280,8 @@
     "accepted": true,
     "preview": "cup",
     "scripts": [
-      "wss-drafts-materials"
+      "wss-drafts-materials",
+      "wss-hourglass"
     ]
   },
   {

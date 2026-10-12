@@ -340,3 +340,8 @@ body.toy-app ::selection { background: var(--selection-bg); color: var(--selecti
 @media (hover: hover) {
   .toy-app .toy-shell .toy-scene-action:hover { outline: 1px solid rgb(212 196 160 / .25); outline-offset: -4px; }
 }
+
+/* Keep a paused hourglass visible through its neck and falling stream. */
+.toy-app .toy-shell[data-scene="hourglass"] .toy-resume {
+  top: auto; left: auto; right: 20px; bottom: 20px; transform: none;
+}

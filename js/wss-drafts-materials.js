@@ -23,12 +23,18 @@ register('material-sand-jar','Sand','Settling and sorting jar','Stir the grains 
  d.viewBounds=rect(208,0,304,400);d.vessels=[box('jar','Grains in water',jar)];d.initial=[initial(rect(256,120,208,248))];
  d.materialSlip=slip();d.materialAt=function(x,y){return y>=132&&y<232&&Math.floor((x-256)/1.25)%4===0&&Math.floor((y-120)/1.25)%4===0?'sand':'water';};d.measure={source:jar,receiver:jar};return d;
 });
-register('hourglass','Sand','Hourglass','Watch the sand find the narrow neck.','PARTLY',function(w,o){
- var d=base('hourglass','Hourglass','Sand falls through a narrow neck; shake once if a bridge forms.',w,o),jar=rect(232,40,256,336);
- d.viewBounds=rect(192,16,336,376);d.vessels=[box('glass','Hourglass',jar,true)];
- for(var y=104;y<240;y+=8){var gap=Math.max(16,Math.ceil((240-y)*.65/8)*16);d.solids.push(rect(240,y,(240-gap)/2,8),rect(360+gap/2,y,(240-gap)/2,8));}
- d.initial=[initial(rect(256,64,208,104))];d.materialSlip=slip();d.materialAt=function(){return 'sand';};d.measure={source:rect(240,48,240,184),receiver:rect(240,240,240,128)};return d;
-});
+register('hourglass','Sand','Hourglass','Watch the grains settle through the glass.','PARTLY',function(w,o){
+ var d=base('hourglass','Hourglass','A finite charge of grains falls through the glass. Shake gently if a bridge forms.',w,o);
+ d.viewBounds=rect(208,24,304,352);d.vessels=[box('glass','',rect(240,40,240,320),true)];
+ // The broad tile envelope is only a backstop. The shared smooth profile
+ // supplies the actual grain contacts and the visible glass in WSSHourglass.
+ d.hourglass=root.WSSHourglass.geometry();d.seedContains=root.WSSHourglass.contains;
+ d.seedPitch=1.5;d.initial=[initial(rect(256,72,208,94))];d.materialSlip=slip();d.materialAt=function(){return 'sand';};
+ d.primary={kind:'material-jolt',speed:24,target:{x:360,y:351}};d.action='Shake gently';d.readingLabel='Finite sand';
+ d.measure={source:rect(240,48,240,152),receiver:rect(240,200,240,152)};
+ d.boundaryNote='Finite native grains. The drawn glass profile supplies GPU wall contacts after each native grain step. No refill or prescribed stream.';
+ return d;
+},['wss-hourglass']);
 register('aquarium-bubbler','Bubbles','Aquarium bubbler','Stop the air and watch the last bubbles rise.','PARTLY',function(w,o){
  var d=base('aquarium-bubbler','Aquarium bubbler','The declared air pump sends real gas parcels through the water.',w,o),tank=rect(112,96,496,288);
  d.vessels=[box('tank','Aquarium',tank)];d.initial=[initial(rect(120,256,480,120))];d.settings=pressure();d.primary={kind:'bubble-toggle'};d.action=o.inject===false?'Start the air':'Stop the air';
@@ -121,6 +127,7 @@ function burnerRuntime(context){
 }
 var previousRuntime=root.WSSDraftRuntime;
 root.WSSDraftRuntime={create:function(context){
+ if(context.definition.hourglass)return root.WSSHourglass.create(context);
  if(context.definition.materialsDraft==='soda-mentos')return fizzRuntime(context);
  if(context.definition.materialsDraft==='oil-slick-fire')return burnerRuntime(context);
  if(context.definition.materialsDraft!=='hero-jug')return previousRuntime&&previousRuntime.create?previousRuntime.create(context):null;

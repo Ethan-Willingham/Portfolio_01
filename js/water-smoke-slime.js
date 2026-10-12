@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.147'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.148'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -260,7 +260,7 @@
       return Math.abs(value-buildViewProjection[index])>.01;
     }))cancelHeldInput();
     buildViewProjection=projection;
-    if (userPaused && waterState === 'on') drawLiquidToy();
+    if (userPaused && waterState === 'on') {drawLiquidToy();if(toyDraftRuntime && toyDraftRuntime.render)toyDraftRuntime.render();}
   }
   function cameraState(){
     return {zoom:viewZoom,panX:viewPanX,panY:viewPanY,scale:fitScale,baseScale:baseFitScale,
@@ -319,7 +319,7 @@
 
   // ---- Instrument state ------------------------------------------------
   var gravMul = 1;     // 0..2   — water + slime gravity, smoke lift
-  var timeMul = 1;     // 0.05..1 — one slow-motion clock for all three engines
+  var timeMul = bootScene==='hourglass' ? .2 : 1;     // 0.05..1 — one slow-motion clock for all three engines
   var brushR = 16;     // px     — wall/erase/pour/puff radius, slime size seed
   var waterFeel = 0.42; // 0..1, defaults just inside the "fluid" band
   var debugParticles = false;
@@ -510,6 +510,7 @@
     wallsCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
     wallsCtx.clearRect(0, 0, worldW, worldH);
     var glassDetail=glassWalls && machineState && /^(thermoscope|roman-inverted-siphon)$/.test(machineState.definition.name);
+    if(machineState && machineState.definition.hourglass)return;
     var path = wallOutline(glassDetail);
     var palette = getComputedStyle(document.documentElement);
     if(glassWalls && airModel && airModel.enabled){
@@ -14475,12 +14476,13 @@
     machineBuilder.commit();
     var randomState=(options.seed || 17)>>>0;
     function random(){randomState=(Math.imul(randomState,1664525)+1013904223)>>>0;return randomState/4294967296;}
-    var pitch=1.25,requested=0,added=0;
+    var pitch=definition.seedPitch || 1.25,requested=0,added=0;
     // Seed the collision footprint, not just its center, in clear space.
     // A parcel embedded beside a wall can be held at its old position while
     // gravity keeps increasing its tangential velocity on every step.
     var seedRadius=liquidWGPU.cellSize*.5*.85+.0625;
     function seedClear(x,y){
+      if(definition.seedContains && !definition.seedContains(x,y,1.8))return false;
       if(sliderBody){var sliderNear=jelloNearestOnRing(sliderBody,x,y);if(jelloPointInRing(sliderBody,x,y)||Math.hypot(sliderNear.x-x,sliderNear.y-y)<3)return false;}
       if(definition.divers && diverBodies.some(function(b){var near=jelloNearestOnRing(b,x,y);return jelloPointInRing(b,x,y) || Math.hypot(near.x-x,near.y-y)<3;}))return false;
       for(var row=Math.floor((y-seedRadius)/TILE);row<=Math.floor((y+seedRadius)/TILE);row++){
@@ -14704,7 +14706,7 @@
     if(primary.kind==='draft-trap-setup')return constructMachine(definition.name,{dry:!primary.dry,seed:machineState.seed});
     if(primary.kind==='material-jolt' && toyMaterialSlip){
       var direction=definition.primary.direction || 1;definition.primary.direction=-direction;
-      machineState.lastMaterialImpulse=toyMaterialSlip.jolt(direction*80);return true;
+      machineState.lastMaterialImpulse=toyMaterialSlip.jolt(direction*(primary.speed===undefined?80:primary.speed));return true;
     }
     if(primary.kind==='pipe-sound' && toySound){
       if(toySound.stats().enabled)toySound.mute();else toySound.enable().then(function(){syncRunning();}).catch(function(error){buildError=error.message;});return true;
@@ -14817,7 +14819,7 @@
     else if(kind==='balloon-pop' || kind==='draft-squeeze' || kind==='draft-push' || kind==='creature-gas')body(0);
     else if(kind==='slime'){
       var slime=d.slimes[p.index || 0];if(slime)target(slime.x,slime.y,slime.radius*2,slime.radius*2);
-    }else if(kind==='material-jolt')target(source.x+source.width*.5,source.y+source.height-8,source.width,24);
+    }else if(kind==='material-jolt')target(p.target?p.target.x:source.x+source.width*.5,p.target?p.target.y:source.y+source.height-8,p.target?172:source.width,24);
     else if(kind==='wave-motor' && d.wave)target(d.wave.rect.x+d.wave.rect.width*.5,d.wave.rect.y+12,d.wave.rect.width,24);
     else if(kind==='draft-motor')body(0);
     else if(kind==='draft-wall-toggle' && d.draftFireSmoke)atRect(d.draftFireSmoke.gate.rect);
@@ -15088,6 +15090,7 @@
     drawCursor();
     drawLiquidToy();
     drawMachineOverlay();
+    if(toyDraftRuntime && toyDraftRuntime.render)toyDraftRuntime.render();
   }
 
   function drawMachineOverlay(){
@@ -15246,7 +15249,7 @@
         if(definition.measure.mouth){var mouth=definition.measure.mouth;c.strokeRect(mouth.x,mouth.y,mouth.width,mouth.height);}
       }
       definition.vessels.forEach(function(v){
-        if(toySauna && v.id==='tub')return;
+        if(definition.hourglass || toySauna && v.id==='tub')return;
         var label=v.label || (v.id==='middle' ? 'Source water' : v.id==='bottom' ? 'Receiving water' : v.id==='source' ? 'Higher tank' : v.id==='receiver' ? 'Lower tank' : v.id==='basin' ? 'Basin' : 'Cup');
         if(!toyFire)c.fillText(label,v.rect.x+8,definition.divers?v.rect.y+80:v.rect.y-8);
       });
@@ -15749,7 +15752,7 @@
           awake: liquidWGPU ? liquidWGPU.awakeCount : -1,
           scene: currentScene, tool: tool, paused: userPaused,
           loading:machineLoading || !!startupMachine || !!bootMachine && !toyBootReady,
-          waterFeel: Math.round(waterFeel * 100), debugParticles: debugParticles,
+          timeScale:timeMul, waterFeel: Math.round(waterFeel * 100), debugParticles: debugParticles,
           waterLook: PRESET_ACTIVE.waterLook, rainbow: rainbowWater ? rainbowWater.stats() : null
         };
       },
