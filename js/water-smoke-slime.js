@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.169'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.170'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -14903,7 +14903,8 @@
     var d=machineState.definition,p=d.primary,kind=p.kind;
     if(kind==='creature-fixture')return [];
     var disabled=!machineState.ready || machineLoading || handsPending ||
-      ((kind==='balloon-pop' || kind==='slime') && machineState.primaryUsed);
+      ((kind==='balloon-pop' || kind==='slime') && machineState.primaryUsed) ||
+      (kind==='cork-release' && d.corkReading && !d.corkReading.locked);
     var label=d.birds && toySound ? toySound.stats().enabled?'Mute sound':'Turn on sound' : d.action || 'Use apparatus';
     if(kind==='fire-pour' || kind==='pour')label='Hold to pour';
     var controls=[];
@@ -14945,7 +14946,7 @@
       else target(84,200,24,100);
     }
     else if(kind==='smoke-fan' && d.fan)target(d.fan.x,(d.fan.top+d.fan.bottom)*.5,48,d.fan.bottom-d.fan.top);
-    else if(kind==='balloon-pop' || kind==='draft-squeeze' || kind==='draft-push' || kind==='creature-gas')body(0);
+    else if(kind==='balloon-pop' || kind==='draft-squeeze' || kind==='draft-push' || kind==='creature-gas' || kind==='cork-release')body(0);
     else if(kind==='slime'){
       var slime=d.slimes[p.index || 0];if(slime)target(slime.x,slime.y,slime.radius*2,slime.radius*2);
     }else if(kind==='material-jolt')target(p.target?p.target.x:source.x+source.width*.5,p.target?p.target.y:source.y+source.height-8,p.target?172:source.width,24);
@@ -15980,6 +15981,7 @@
   function jelloGrabSubstep(b, h) {
     if(toyThirsty && b===toyThirsty.press.body)toyThirsty.press.begin(h,JELLO_TIMESCALE);
     if(toyCannon)toyCannon.load(b,h,JELLO_TIMESCALE);
+    if(toyDraftRuntime && toyDraftRuntime.load)toyDraftRuntime.load(b,h,JELLO_TIMESCALE);
     if (surfaceSlimeGrip && surfaceSlimeGrip.body === b && b._grabbed) softHandlingStep(b, h);
   }
   function jelloDrivePostSubstep(b,h) {

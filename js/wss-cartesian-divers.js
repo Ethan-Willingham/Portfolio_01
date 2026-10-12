@@ -64,7 +64,7 @@
 
           bodies.forEach(function(b,k){var d=b.cartesianDiver,sum=0,count=0,expected=definition.divers.dryGas?2:1;for(var j=0;j<3;j++){var at=(k*3+j)*12,kind=u[at+7],pressure=f[at];
             if(kind===expected && Number.isFinite(pressure) && room+pressure>0){sum+=pressure;count++;}}
-            d.pressureKind=count?expected:null;if(count){d.absolute=room+sum/count;d.target=volume(d.amount,room,d.absolute);}
+            d.pressureKind=count?expected:null;if(count){d.absolute=room+sum/count;d.target=definition.divers.fixedArea?d.initialArea:volume(d.amount,room,d.absolute);}
             d.surfaceColumns=levels.length?[levels[0],levels[levels.length-1]]:[];d.surfaceColumnCount=poolColumns;d.wetProbeCount=wet;d.surfaceY=poolSurface;
             d.submergedFraction=poolSurface===null?0:submerged(poses[k],poolSurface,bounds);
           });sampleClock=at;sampleFrame=frame;latency=performance.now()-now;read.unmap();
@@ -82,8 +82,8 @@
       draw:function(ctx){var colors=options.colors;
         var r=definition.divers.piston;ctx.save();ctx.strokeStyle=colors.accent;ctx.fillStyle=colors.accent;ctx.lineWidth=2;
         ctx.globalAlpha=.15;ctx.fillRect(r.x,r.y+offset,r.width,r.height);ctx.globalAlpha=1;ctx.strokeRect(r.x,r.y+offset,r.width,r.height);
-        ctx.beginPath();ctx.moveTo(r.x+r.width*.5,r.y+offset);ctx.lineTo(r.x+r.width*.5,96);ctx.stroke();
-        ctx.font='12px "Commit Mono", monospace';ctx.textAlign='center';ctx.fillText(definition.divers.pistonLabel||'Driven piston',r.x+r.width*.5,88);
+        ctx.beginPath();ctx.moveTo(r.x+r.width*.5,r.y+offset);ctx.lineTo(r.x+r.width*.5,definition.divers.pistonRodEndY===undefined?96:definition.divers.pistonRodEndY);ctx.stroke();
+        ctx.font='12px "Commit Mono", monospace';ctx.textAlign='center';ctx.fillText(definition.divers.pistonLabel||'Driven piston',r.x+r.width*.5,definition.divers.pistonLabelY===undefined?88:definition.divers.pistonLabelY);
         bodies.forEach(function(b){var d=b.cartesianDiver;ctx.fillStyle=colors.text;ctx.fillText(String(d.id),b.cx,b.cy+4);});
         ctx.restore();
       },

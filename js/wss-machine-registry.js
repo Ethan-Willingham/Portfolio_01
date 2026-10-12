@@ -2058,9 +2058,9 @@
     "id": "champagne-cork",
     "capability": "Water slimes",
     "title": "Champagne cork",
-    "status": "NOT WORKING",
+    "status": "WORKS",
     "pool": false,
-    "cue": "Draft. A rear air pulse meets the cork; stored bottle gas is not connected.",
+    "cue": "A visible piston stores pressure in real bottle air. Release the latch to launch the cork.",
     "draft": true,
     "world": {
       "w": 720,
@@ -2087,9 +2087,10 @@
     "accepted": true,
     "preview": "cup",
     "scripts": [
-      "wss-smoke-cannon",
-      "wss-machines/smoke-ring-cannon",
-      "wss-drafts-creatures"
+      "wss-cartesian-divers",
+      "wss-machines/cartesian-divers",
+      "wss-drafts-creatures",
+      "wss-champagne-cork"
     ]
   },
   {

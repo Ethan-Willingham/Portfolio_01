@@ -125,6 +125,7 @@
       d.energyBudgetStatus='The piston supplies external work to native gas and water. The nozzle and valve are physical openings; no jet velocity or sprayed quantity is assigned.';return d;
     },
     'champagne-cork':function(w,o){
+      if(root.WSSChampagneCork)return root.WSSChampagneCork.make(w,o);
       var d=root.WSSMachines['smoke-ring-cannon'].make(w,o),e=entries.find(function(e){return e.id==='champagne-cork';});
       d.name=e.id;d.title=e.title;d.draft=true;d.draftSmoke=true;d.setups=[];delete d.source;d.caption=e.cue;d.slimes=[{x:248,y:200,radius:28}];
       d.boundaryNote+=' The gel cork sits in the real chamber opening and receives current smoke pressure traction. This rear hand pulse is not stored compressible bottle gas, fermentation or a gas-energy launch model.';return d;
