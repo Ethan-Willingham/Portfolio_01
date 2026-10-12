@@ -95,15 +95,6 @@
       d.meters=[{id:'throat',a:point(408,256),b:point(408,272),axis:'x',positive:1}];
       d.measure={source:r,receiver:receiver,sourceLevel:56,bore:16,gasProbe:point(388,216),outlet:point(576,264)};
       d.energyBudgetStatus+=' The narrowing is stepped glass geometry. Air must actually enter through the side branch; aspiration and turbulent mixing are not assumed.';
-    }else if(id==='breathing-cave'){
-      d=base(id,'Breathing cave','Smoke marks the cave. Changing weather pressure is not connected yet, draft.',options);
-      r=vessel(d,'Cave',rect(112,128,368,208),true);receiver=rect(16,16,688,368);
-      pipe(d,[point(460,220),point(596,220)],32,false);
-      d.draftFireSmoke={kind:id,pressure:false,labels:[],tracers:[point(240,224),point(424,224)],probes:[{id:'mouth',x:548,y:220}]};
-      d.settings.enabled=false;d.boundaries=null;d.primary={kind:'valve',id:'mouth'};d.action='Close cave mouth';
-      d.parts=[{type:'valve',id:'mouth',rect:rect(528,208,8,32),direction:'right',open:true}];
-      d.measure={source:r,receiver:receiver};d.boundaryNote='Draft, not working yet. The real chamber and mouth hold a passive smoke tracer. There is no changing native room-pressure boundary.';
-      d.energyBudgetStatus='No fan or prescribed breathing flow is present. Smoke is the existing separate incompressible tracer field. A real external pressure control preserving trapped gas is missing.';
     }else if(id==='savery-pump'){
       d=base(id,"Savery's steam pump",'Heat and cool the chamber, using the two real manual valves, draft.',options);
       r=vessel(d,'Steam chamber',rect(272,200,144,160),true);receiver=vessel(d,'Delivery',rect(544,32,144,112),false);
@@ -168,5 +159,5 @@
     return d;
   }
   root.WSSMachines=root.WSSMachines||{};
-  ['glugging-bottle','boyle-j-tube','water-tower','pascal-barrel','moka-pot','torricelli-tube','venturi-aspirator','breathing-cave','savery-pump','pulsometer','trompe','hydraulic-ram','water-hammer','ctesibius-clock'].forEach(function(id){root.WSSMachines[id]={make:function(world,options){return make(id,world,options);}};});
+  ['glugging-bottle','boyle-j-tube','water-tower','pascal-barrel','moka-pot','torricelli-tube','venturi-aspirator','savery-pump','pulsometer','trompe','hydraulic-ram','water-hammer','ctesibius-clock'].forEach(function(id){root.WSSMachines[id]={make:function(world,options){return make(id,world,options);}};});
 })(typeof window!=='undefined'?window:globalThis);

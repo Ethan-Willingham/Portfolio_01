@@ -4,6 +4,44 @@ Release: toy v5.57, shared water engine v28.179. The greedy cup, standalone
 siphon and Heron's fountain are in the public scene menu, with published behavior
 measurements. Full quantitative physical acceptance and steady 60 FPS remain unverified.
 
+## Breathing cave
+
+The cave now breathes as a declared outside pressure cycle rises and falls.
+Its entrance has inertia and quadratic pressure loss. The chamber holds a
+finite ideal-gas mass at fixed temperature; actual signed mass transfer changes
+its pressure. Closing the real mouth valve traps its existing charge. Reopening
+uses that charge, with no reset. Steady pressure and a closed initial mouth are
+available in Instruments. Pause freezes the weather, gas and tracer clocks.
+
+This scene has a separate large scale: one world pixel is one meter, with ten
+meters of section depth. Outside pressure is 101325 Pa plus a 3000 Pa sinusoid
+with a 24-second period. This is accelerated weather, not a measurement of a
+particular cave. The mechanism follows the [National Park Service explanation
+of Wind Cave](https://www.nps.gov/wica/learn/education/what-causes-the-wind-of-wind-cave.htm).
+
+A backward Euler entrance solve couples neck momentum, pressure loss and the
+isothermal gas equation. A finite-volume potential field distributes the
+resulting compression or expansion through the actual clear cells. Solid faces
+carry no flux; outside cells are reservoir boundaries. Preconditioned conjugate
+gradients rebuilds that field only when the collision geometry changes. A finite
+initial mist moves by conservative upwind transport with CFL substeps. It gets
+no velocity splats, replenishment, buoyancy or scheduled direction changes.
+
+The smoke tracer and gas model are specific to this apparatus. The shared
+WebGL smoke, native water and Sluice source are unchanged. This is a reduced
+isothermal and potential-flow approximation; acoustic propagation, turbulence,
+thermal exchange and a closed energy budget remain unresolved. Closing the
+ideal stationary valve does not model the work of a moving shutter.
+
+Run `node tools/test-breathing-cave.cjs` for independent EOS and entrance-momentum
+checks, actual mouth flux, finite gas and tracer inventories, closure/reopening,
+steady/closed controls and frame-size checks. Run
+`DUMP=/tmp/breathing-cave-review node tools/test-breathing-cave.mjs` for owned
+Chrome for Testing playback at desktop and landscape mobile sizes, actual mouse
+and touch operation, pause and the steady-pressure comparison. Screenshots and
+measurements go to that directory. The ordinary smoke scene also boots in that
+browser regression.
+
 ## Water appearance
 
 The demo uses Sluice's density-sensitive water kernels in ordinary scenes and

@@ -1355,9 +1355,9 @@
     "id": "breathing-cave",
     "capability": "Smoke",
     "title": "Breathing cave",
-    "cue": "Draft. Smoke marks the cave; weather pressure is not connected yet, draft.",
-    "status": "NOT WORKING",
-    "draft": true,
+    "cue": "Changing outside pressure moves smoke in and out. Close the mouth to trap the cave air.",
+    "status": "WORKS",
+    "draft": false,
     "accepted": true,
     "world": {
       "w": 720,
@@ -1365,25 +1365,21 @@
     },
     "pool": false,
     "preview": "cup",
-    "scripts": [
-      "wss-drafts-pressure",
-      "wss-drafts-fire-smoke"
-    ],
     "loaderDependencies": [
       "wss-boundaries",
       "wss-hands",
       "wss-native",
       "wss-sound",
-      "wss-drafts-pressure",
-      "wss-drafts-fire-smoke"
+      "wss-breathing-cave",
+      "wss-machines/breathing-cave"
     ],
-    "blocker": "Changing room pressure preserving trapped native gas is absent; the smoke is a separate passive field.",
+    "blocker": "Reduced isothermal gas and potential-flow model; acoustic waves, turbulence and complete energy closure are unresolved.",
     "behaviorPlan": {
       "seed": 17,
-      "seconds": 6,
-      "key": "Actual cave and mouth with zero-momentum smoke tracer. This is a progress screenshot, not breathing.",
-      "action": "Use existing machinePrimary once after a short observation. Steam toggles the actual heater; cave and ram use real manual valves; Venturi/trompe/water-hammer/Torricelli use physical caps. Clock primary pours real water, skip for closed inventory check.",
-      "statusIfObserved": "PARTLY"
+      "seconds": 48,
+      "key": "Pressure-driven airflow reverses through the real cave mouth, with conserved finite air and smoke.",
+      "action": "Close and reopen the entrance; compare steady pressure and a closed initial mouth.",
+      "statusIfObserved": "WORKS"
     }
   },
   {
@@ -2832,6 +2828,7 @@
     if(id==='singing-pipe')paths.push('wss-singing-pipe');
     if(id==='smoke-ring-cannon' || id==='smoke-wind-tunnel')paths.push('wss-smoke-cannon');
     if(id==='smoke-wind-tunnel')paths.push('wss-smoke-wind-tunnel');
+    if(id==='breathing-cave')paths.push('wss-breathing-cave');
     if(id==='water-balloons')paths.push('wss-water-balloons');
     if(id==='cartesian-divers')paths.push('wss-cartesian-divers');
     if(id==='burst-disk')paths.push('wss-burst-disk');

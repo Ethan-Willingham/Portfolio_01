@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.144'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.145'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -3515,6 +3515,7 @@
   }
 
   function smokeFrame(dt) {
+    if(toyBreathingCave){toyBreathingCave.tick(dt*timeMul);return;}
     if (!smokeActive) return;
     if(toyFireSmokeDraft || toyDraftRuntime && toyDraftRuntime.tick)smokeAwakeT=SMOKE_IDLE_HOLD;
     if (smokeAwakeT <= 0) {
@@ -13774,6 +13775,7 @@
   }
 
   function clearWorldAll(preserveThumbInput) {
+    if(toyBreathingCave){toyBreathingCave.destroy();toyBreathingCave=null;}
     if(toySauna){toySauna.destroy();toySauna=null;}
     if(toyFireSmokeDraft){toyFireSmokeDraft.destroy();toyFireSmokeDraft=null;}
     if(smokeCanvas)smokeCanvas.style.opacity='1';
@@ -13815,6 +13817,7 @@
     emitters.length = 0;
   }
 
+  var toyBreathingCave=null;
   var toyFireSmokeDraft=null;
   var toySauna=null;
   var FIRE_POUR_PARTICLES = 2400, FIRE_POUR_RATE = 1800;
@@ -14047,6 +14050,13 @@
       .finally(function(){if(model===airModel && state===machineState)instrumentPending=false;});
   }
   function instrumentTick(now){
+    if(toyBreathingCave && machineState && machineState.ready){
+      var cave=toyBreathingCave.stats();machineState.readings={ready:true,cave:cave,caption:machineState.definition.caption,action:machineState.definition.action,
+        particleCount:0,sampleAgeMs:0,gasPressurePsi:cave.gaugePressurePa/6894.757293168,roomAbsolutePressurePsi:cave.outsidePressurePa/6894.757293168,
+        scaleText:'One world pixel is one meter; the cave section is ten meters deep. Weather is sped up to a 24-second cycle.',
+        numericalStatus:'Finite isothermal air; pressure-driven entrance inertia and loss; conservative smoke transport.',
+        energyBudgetStatus:machineState.definition.energyBudgetStatus,error:cave.error || buildError};return;
+    }
     if(toyFireSmokeDraft && machineState && machineState.ready){machineState.readings={ready:true,caption:machineState.definition.caption,action:machineState.definition.action,particleCount:liquidCount,draftSmoke:toyFireSmokeDraft.stats(false),fire:toyFire?toyFire.stats():null,sauna:toySauna?toySauna.stats():null,energyBudgetStatus:machineState.definition.energyBudgetStatus,error:buildError};return;}
     if(toyDraftRig && machineState && machineState.ready){captureDraftPressureChecks(now);machineState.readings={ready:true,caption:machineState.definition.caption,action:machineState.definition.action,particleCount:liquidCount,draftBodies:toyDraftRig.stats(),numericalStatus:'Draft rigid bodies and guides; water-load coupling is incomplete.',energyBudgetStatus:machineState.definition.energyBudgetStatus,error:buildError};return;}
     if(machineState && machineState.definition.draft && !toySteam && !toyFire && !toyBalloon && !toyDivers && !toyBubbles && !toyCannon && !toyMaterialSlip){captureDraftPressureChecks(now);machineState.readings={ready:machineState.ready,caption:machineState.definition.caption,action:machineState.definition.action,particleCount:liquidCount,boundary:toyBoundary?toyBoundary.stats():null,draftRuntime:toyDraftRuntime && toyDraftRuntime.stats?toyDraftRuntime.stats():null,numericalStatus:machineState.definition.boundaryNote,energyBudgetStatus:machineState.definition.energyBudgetStatus,error:buildError};return;}
@@ -14458,7 +14468,7 @@
       SmokeFluid.setThermalStyle({glow:1,waterCooling:24});
       SmokeFluid.setPhysics({HEAT:4,COOLING:1.2,BUOYANCY:350},0);
       smokeAwakeT=SMOKE_IDLE_HOLD;model={settings:{density:1}};
-    }else if(definition.draftFireSmoke && !definition.draftFireSmoke.pressure){
+    }else if(definition.cave || definition.draftFireSmoke && !definition.draftFireSmoke.pressure){
       liquidWGPU.setPressureModel(null);airState.ready=false;airPressureColors=false;fireDomainPrevious=liquidWGPU.toyNativeDomain;fireDomainActive=true;liquidWGPU.toyNativeDomain={minX:0,minY:0,maxX:worldW,maxY:worldH};model={settings:{density:1}};
     }else if(definition.draft && definition.settings.enabled===false){
       await enableAirModel({enabled:false});fireDomainPrevious=liquidWGPU.toyNativeDomain;fireDomainActive=true;
@@ -14495,6 +14505,11 @@
       toySteam=ownSteam;liquidWGPU.setToyMembrane(ownSteam);airPressureColors=!definition.birds;
       steamWaterClock=liquidWGPU.simulationClock;steamFrameDt=0;steamPlumeSamples=0;steamPlumeMass=0;
       if(!definition.birds){SmokeFluid.setThermalStyle({glow:0});SmokeFluid.setPhysics({HEAT:1,COOLING:1.2,BUOYANCY:220},0);}
+    }
+    if(definition.cave){
+      toyBreathingCave=window.WSSBreathingCave.create(definition,{w:worldW,h:worldH,tile:TILE,
+        version:function(){return wallsVersion;},solidAt:function(x,y){return tileAt(Math.floor(y/TILE),Math.floor(x/TILE))!==null;}});
+      if(toyBreathingCave.stats().error)throw Error(toyBreathingCave.stats().error);
     }
     if(definition.draftFireSmoke){
       if(!smokeActive)throw Error('These drafts need the smoke solver.');
@@ -14621,7 +14636,7 @@
       var valve=definition.parts.filter(function(p){return p.id===primary.id;})[0];
       var current=machineBuilder.getParts().find(function(p){return p.id===valve.buildId;});
       var open=!current.open;setManualValve(valve.buildId,open);
-      definition.action=open ? 'Close valve' : 'Open valve';
+      definition.action=definition.cave ? open ? 'Close cave mouth' : 'Open cave mouth' : open ? 'Close valve' : 'Open valve';
     }
     machineState.primaryUsed=true;return true;
   }
@@ -14968,6 +14983,7 @@
     if(toySauna)overlayKey+=':'+Math.floor(liquidWGPU.simulationClock*12);
     if(toyBubbles)overlayKey+=':'+toyBubbles.captureClock;
     if(toySteam && machineState && machineState.definition.birds)overlayKey+=':'+machineState.definition.steam.whistleLengthInches+':'+pointerPipe;
+    if(toyBreathingCave)overlayKey+=':'+toyBreathingCave.stats().steps;
     if(toyCannon && toyCannon.overlayKey)overlayKey+=':'+toyCannon.overlayKey();
     if(toyFloatSlider)overlayKey+=':'+toyFloatSlider.stats().y.toFixed(3);
     if(!buildGesture && !keyboardCursorVisible && machineOverlayCache && machineOverlayCache.key===overlayKey && machineOverlayCache.sample===instrumentSample)return;
@@ -15036,6 +15052,7 @@
           c.ellipse(waitingSlime.x,waitingSlime.y,waitingSlime.radius*.72,waitingSlime.radius*.68,0,Math.PI*1.12,Math.PI*1.52);c.stroke();c.restore();
         }
       }
+      if(toyBreathingCave)toyBreathingCave.draw(c,{accent:accent,text:text});
       if(toyCannon && toyCannon.draw)toyCannon.draw(c);
       if(toyFireSmokeDraft)toyFireSmokeDraft.draw(c);
       if(toySauna)toySauna.draw(c,{accent:accent,text:text,coral:'#d9978c',clay:'#cf9f78'});
@@ -15683,6 +15700,7 @@
       fire:function(){return toyFire;},
       sauna:function(){return toySauna;},
       fireSmokeDraft:function(){return toyFireSmokeDraft;},
+      breathingCave:function(){return toyBreathingCave;},
       thermoscope:function(){return toyThermoscope;},
       balloons:function(){return toyBalloon;},
       divers:function(){return toyDivers;},
