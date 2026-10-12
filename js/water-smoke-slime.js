@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.131'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.132'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -194,7 +194,8 @@
     baseFitScale = Math.min(w / worldW, (expanded ? h : room) / worldH);
     var overlayControls=expanded && nativeMachineScene(currentScene);
     var frame=overlayControls && machineState && machineState.definition.name===currentScene ? machineState.definition.viewBounds : null;
-    if(frame)baseFitScale=Math.min(w/worldW,h/frame.height,(topHeight+h)/(frame.y+frame.height),(shell.clientHeight-topHeight)/(worldH-frame.y));
+    // Leave room for the bottom wall stroke above the overlaid controls.
+    if(overlayControls)baseFitScale=Math.min(w/worldW,Math.max(1,h-16)/(frame ? frame.height : worldH));
     cameraWidth=w;cameraHeight=expanded ? (overlayControls ? shell.clientHeight : h) : Math.round(worldH*baseFitScale);
     fitScale=baseFitScale*viewZoom;
     cameraMaxPanX=Math.max(0,(worldW*fitScale-cameraWidth)*.5);
@@ -204,7 +205,8 @@
     stage.style.transform = fitScale === 1 ? 'none' : 'scale(' + fitScale + ')';
     stage.style.left = (cameraWidth-worldW*fitScale)*.5+viewPanX+'px';
     var stageTop=frame ? topHeight+(h-frame.height*fitScale)*.5-frame.y*fitScale : overlayControls ? topHeight+(h-worldH*fitScale)*.5 : expanded || viewZoom!==1 ? (cameraHeight-worldH*fitScale)*.5 : 0;
-    if(frame && viewZoom===1)stageTop=Math.max(0,Math.min(cameraHeight-worldH*fitScale,stageTop));
+    // A framed apparatus can start above the viewport; clamping the entire
+    // world to zero would push its lower tank back underneath the footer.
     stage.style.top=stageTop+viewPanY+'px';
     viewport.style.height = cameraHeight+'px';
     var bounds=stage.getBoundingClientRect(),projection=[bounds.left,bounds.top,bounds.width,bounds.height];
