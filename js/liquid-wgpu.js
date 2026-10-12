@@ -8529,9 +8529,7 @@ fn corner(vid : u32) -> vec2<f32> {
   return c;
 }
 
-@vertex
-fn vs(@builtin(vertex_index)   vid : u32,
-      @builtin(instance_index) iid : u32) -> VOut {
+fn particleVertex(vid : u32, iid : u32, grainPass : bool) -> VOut {
   var out : VOut;
   out.pos = vec4<f32>(0.0, 0.0, 0.0, 1.0);
   out.uv  = vec2<f32>(0.0, 0.0);
@@ -8540,7 +8538,11 @@ fn vs(@builtin(vertex_index)   vid : u32,
   out.color = rp.waterColor.rgb;
   out.world = vec2<f32>(0.0, 0.0);
   let fl = flag[iid];
-  out.color = mineralRGB((fl & 3u) | ((fl >> 4u) & 4u));
+  let material = (fl & 3u) | ((fl >> 4u) & 4u);
+  // Water and grains share geometry helpers, but never storage-order blending.
+  // Paint grains last so overlapping soft water drops cannot wash out an edge.
+  if ((material == 5u) != grainPass) { return out; }
+  out.color = mineralRGB(material);
   let frozen = (fl >> 5u) & 1u;
   let isOil  = ((fl & 3u) | ((fl >> 4u) & 4u)) == 1u;
   if (frozen != 0u || isOil) { return out; }
@@ -8638,6 +8640,18 @@ fn vs(@builtin(vertex_index)   vid : u32,
   out.alpha = a * 0.92 * rp.waterColor.a;
   out.world = p.xy + devOff / max(rp.dpws, 0.001);
   return out;
+}
+
+@vertex
+fn vs(@builtin(vertex_index) vid : u32,
+      @builtin(instance_index) iid : u32) -> VOut {
+  return particleVertex(vid, iid, false);
+}
+
+@vertex
+fn vsGrains(@builtin(vertex_index) vid : u32,
+            @builtin(instance_index) iid : u32) -> VOut {
+  return particleVertex(vid, iid, true);
 }
 
 @fragment
@@ -10594,10 +10608,10 @@ fn machinePointExitClear(a:vec2<f32>,b:vec2<f32>,r:f32)->bool {
         ]
       });
       var dropMod = dev.createShaderModule({ code: toyNativeShader(instance, WGSL_TERRAIN_RENDER + WGSL_SURFACE_COMMON + WGSL_SURFACE_DROPLETS) });
-      instance.surfDropletPipeline = dev.createRenderPipeline({
-        label: 'liquid.surfDroplets',
+      function particlePipeline(label, entryPoint) { return dev.createRenderPipeline({
+        label: label,
         layout: dev.createPipelineLayout({ bindGroupLayouts: [instance.surfDropletBGL, instance.terrainRenderBGL] }),
-        vertex: { module: dropMod, entryPoint: 'vs' },
+        vertex: { module: dropMod, entryPoint: entryPoint },
         fragment: {
           module: dropMod,
           entryPoint: 'fs',
@@ -10610,9 +10624,12 @@ fn machinePointExitClear(a:vec2<f32>,b:vec2<f32>,r:f32)->bool {
           }]
         },
         primitive: { topology: 'triangle-list' }
-      });
+      }); }
+      instance.surfDropletPipeline = particlePipeline('liquid.surfDroplets', 'vs');
+      instance.surfGrainPipeline = particlePipeline('liquid.surfGrains', 'vsGrains');
     } catch (eDrop) {
       instance.surfDropletPipeline = null;
+      instance.surfGrainPipeline = null;
       instance.surfDropletBGL = null;
       try { console.log('LiquidWGPU: droplet pipeline build failed (' + ((eDrop && eDrop.message) || eDrop) + ')'); } catch (_) {}
     }
@@ -10892,11 +10909,15 @@ fn machinePointExitClear(a:vec2<f32>,b:vec2<f32>,r:f32)->bool {
       compPass.draw(3);
       // Droplets blend over the composite in this same pass, in the same
       // order, so the full canvas is not reloaded and stored a second time.
-      if (LIQUID_DROPLETS >= 0.5 && instance.surfDropletPipeline &&
+      if (LIQUID_DROPLETS >= 0.5 && instance.surfDropletPipeline && instance.surfGrainPipeline &&
           instance.surfDropletBG && (count > 0 || snowCount > 0)) {
         compPass.setPipeline(instance.surfDropletPipeline);
         compPass.setBindGroup(0, instance.surfDropletBG);
         compPass.setBindGroup(1, instance.terrainRenderBG);
+        if (count > 0) compPass.draw(6, count);
+        // Keep the original grain footprint and pile-density fade. Only the
+        // blend order changes, including grains sharing a pool with droplets.
+        compPass.setPipeline(instance.surfGrainPipeline);
         if (count > 0) compPass.draw(6, count);
         if (snowCount > 0 && instance.snowDropletBG) {
           compPass.setBindGroup(0, instance.snowDropletBG);
@@ -12719,6 +12740,7 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
       surfFieldPipeline: null,  // v24.113 — particle -> density-field splat pipeline
       surfCompositePipeline: null, // v24.113 — field -> canvas threshold composite
       surfDropletPipeline: null,   // v26.16 — field-coverage droplet pass
+      surfGrainPipeline: null,     // grains blend after every water droplet
       surfDropletBGL: null,        // v26.16 — params + particles + density field
       surfDropletBG: null,         // v26.16 — rebuilt with the field texture
       surfCompositeBGL: null,   // v24.113 — composite bind-group layout
