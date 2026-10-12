@@ -30,7 +30,7 @@
       bounds={left:jar.x+model.cellSize,right:jar.x+jar.width-model.cellSize,bottom:jar.y+jar.height-model.cellSize},
       poolSurface=null,poolColumns=0,read=L.device.createBuffer({label:'toy.divers.pressure',size:pressureBytes+coverageBytes,usage:GPUBufferUsage.MAP_READ|GPUBufferUsage.COPY_DST});
     bodies.forEach(function(b,k){var spec=definition.slimes[k],amount=area(b);b.cartesianDiver={id:k+1,amount:amount,mass:amount*spec.density,initialArea:amount,absolute:room,target:amount,pressureKind:null,dragRate:definition.divers.dragRate,viscosity:definition.divers.viscosity,wetProbeCount:0,surfaceColumns:[],surfaceColumnCount:0,surfaceY:null,submergedFraction:0};});
-    function guest(){var r=definition.divers.piston,x=r.x,y=r.y+offset,h=r.height,w=r.width,v=pistonVelocity;
+    function guest(){if(definition.divers.noPiston)return{x:0,y:0,hw:0,hh:0,pts:[]};var r=definition.divers.piston,x=r.x,y=r.y+offset,h=r.height,w=r.width,v=pistonVelocity;
       return {x:x+w*.5,y:y+h*.5,hw:w*.5+.01,hh:h*.5+.01,mvx:0,mvy:v,
         pts:[x,y,0,v,x+w,y,0,v,x+w,y+h,0,v,x,y+h,0,v]};}
     var controller={
@@ -79,7 +79,7 @@
         ageSimulationSeconds:Math.max(0,L.simulationClock-sampleClock),latencyMs:latency,pending:pending,error:error,
         bodies:bodies.map(function(b){var d=b.cartesianDiver;return {id:d.id,x:b.cx,y:b.cy,area:area(b),initialArea:d.initialArea,targetArea:d.target,
           gasAmount:d.amount,ballastMass:d.mass,density:d.mass/area(b),absolutePressure:d.absolute,pressureKind:d.pressureKind,wetProbeCount:d.wetProbeCount,surfaceColumns:d.surfaceColumns,surfaceColumnCount:d.surfaceColumnCount,surfaceY:d.surfaceY,submergedFraction:d.submergedFraction};})};},
-      draw:function(ctx){var colors=options.colors;
+      draw:function(ctx){if(definition.divers.noPiston)return;var colors=options.colors;
         var r=definition.divers.piston;ctx.save();ctx.strokeStyle=colors.accent;ctx.fillStyle=colors.accent;ctx.lineWidth=2;
         ctx.globalAlpha=.15;ctx.fillRect(r.x,r.y+offset,r.width,r.height);ctx.globalAlpha=1;ctx.strokeRect(r.x,r.y+offset,r.width,r.height);
         ctx.beginPath();ctx.moveTo(r.x+r.width*.5,r.y+offset);ctx.lineTo(r.x+r.width*.5,definition.divers.pistonRodEndY===undefined?96:definition.divers.pistonRodEndY);ctx.stroke();

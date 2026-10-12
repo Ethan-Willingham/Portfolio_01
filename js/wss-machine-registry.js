@@ -2103,30 +2103,36 @@
     "id": "pressure-cuff",
     "capability": "Water slimes",
     "title": "Pressure cuff",
-    "status": "NOT WORKING",
+    "status": "WORKS",
     "pool": false,
-    "cue": "Draft. Grab the elastic cuff; a flowing vessel and pressure reading are not connected.",
+    "cue": "Inflate the elastic bladders to restrict real water flow; vent them to reopen the channel.",
     "draft": true,
     "world": {
       "w": 720,
       "h": 400
     },
-    "blocker": "Real elastic cuff only; internal flowing vessel, inflation chamber and blood-pressure measurement are absent.",
+    "blocker": "",
     "dependencies": [
       "wss-drafts-bodies",
-      "wss-drafts-creatures"
+      "wss-cartesian-divers",
+      "wss-machines/cartesian-divers",
+      "wss-drafts-creatures",
+      "wss-pressure-cuff"
     ],
     "behaviorPlan": {
       "seconds": 4,
-      "action": "Actual Grab deforms the cuff",
-      "key": "Fixture remains finite; no circulation or pressure-reading claim.",
-      "statusIfObserved": "NOT WORKING"
+      "action": "Inflate the actual bladders around the native flowing channel",
+      "key": "Native through-flow falls against the disconnected-pump control; native water is conserved.",
+      "statusIfObserved": "WORKS"
     },
     "accepted": true,
     "preview": "cup",
     "scripts": [
       "wss-drafts-bodies",
-      "wss-drafts-creatures"
+      "wss-cartesian-divers",
+      "wss-machines/cartesian-divers",
+      "wss-drafts-creatures",
+      "wss-pressure-cuff"
     ]
   },
   {

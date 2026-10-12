@@ -16,7 +16,7 @@
     ['pitcher-pump','Valves and logic','Pitcher pump','PARTLY',false,'Drive the primed piston down and back; two real check valves route the water.'],
     ['super-soaker','Valves and logic','Super Soaker','PARTLY',false,'Open the nozzle of the water tank under its declared driven piston.'],
     ['champagne-cork','Smoke','Champagne cork','NOT WORKING',false,'A rear air pulse meets the cork; stored bottle gas is not connected.'],
-    ['pressure-cuff','Water slimes','Pressure cuff','NOT WORKING',false,'Grab the elastic cuff; a flowing vessel and pressure reading are not connected.'],
+    ['pressure-cuff','Water slimes','Pressure cuff','WORKS',false,'Inflate the elastic bladders to restrict real water flow; vent them to reopen the channel.'],
     ['snorkel-limit','Water slimes','Snorkel limit','NOT WORKING',false,'Water surrounds the lung slime; its airway and breathing effort are not connected.'],
     ['slime-sipper','Water slimes','Slime sipper','PARTLY',false,'Water can cross a real slit; active suction and drinking are not connected.']
   ];
@@ -132,6 +132,7 @@
       d.boundaryNote+=' The gel cork sits in the real chamber opening and receives current smoke pressure traction. This rear hand pulse is not stored compressible bottle gas, fermentation or a gas-energy launch model.';return d;
     },
     'pressure-cuff':function(w,o){
+      if(root.WSSPressureCuff)return root.WSSPressureCuff.make(w,o);
       var d=base('pressure-cuff',w,o);d.slimes=[{x:360,y:224,radius:28,shape:'draft-trough'}];d.solids=[rect(248,272,224,16)];d.action='Use Grab';d.primary={kind:'creature-fixture'};
       d.boundaryNote+=' The cuff is a deformable lattice. There is no internal flowing vessel, inflating cuff cavity, circulation source or blood-pressure measurement; this fixture makes no pressure-reading claim.';return d;
     },

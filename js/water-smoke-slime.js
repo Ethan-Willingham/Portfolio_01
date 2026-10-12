@@ -846,6 +846,7 @@
   var allSkinHistory=new WeakMap();
   var allSkinSlots=new Array(64);
   function toySolidSkinBody(b) {
+    if(b && b.pressureCuffSkin && b.surfaceSlime)return true;
     return !!(solidSkinLab && currentScene==='smoke-wind-tunnel' && b && (allSkinLab || b===solidSkinIdentity) && jelloBodies.indexOf(b)>=0 &&
       b.surfaceSlime && !b._melting && !b.waterBalloon && !b.cartesianDiver && !b.floatSlider);
   }
@@ -14963,8 +14964,8 @@
     }
     else if(kind==='smoke-fan' && d.fan)target(d.fan.x,(d.fan.top+d.fan.bottom)*.5,48,d.fan.bottom-d.fan.top);
     else if(kind==='tesla-motor' && d.divers){atRect({x:d.divers.piston.x-32,y:d.divers.pistonRodEndY||112,width:d.divers.piston.width+64,height:28},'primary','button');}
-    else if(kind==='ballast-valve' && p.target)atRect(p.target,'primary','button');
-    else if(kind==='balloon-pop' || kind==='draft-squeeze' || kind==='draft-push' || kind==='creature-gas' || kind==='cork-release')body(0);
+    else if((kind==='ballast-valve' || kind==='cuff-pump') && p.target)atRect(p.target,'primary','button');
+    else if(kind==='balloon-pop' || kind==='draft-squeeze' || kind==='draft-push' || kind==='creature-gas' || kind==='cork-release' || kind==='cuff-pump')body(0);
     else if(kind==='slime'){
       var slime=d.slimes[p.index || 0];if(slime)target(slime.x,slime.y,slime.radius*2,slime.radius*2);
     }else if(kind==='material-jolt')target(p.target?p.target.x:source.x+source.width*.5,p.target?p.target.y:source.y+source.height-8,p.target?172:source.width,24);
