@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.121'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.122'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -3339,7 +3339,7 @@
 
   function smokeFrame(dt) {
     if (!smokeActive) return;
-    if(toyFireSmokeDraft)smokeAwakeT=SMOKE_IDLE_HOLD;
+    if(toyFireSmokeDraft || toyDraftRuntime && toyDraftRuntime.tick)smokeAwakeT=SMOKE_IDLE_HOLD;
     if (smokeAwakeT <= 0) {
       if (smokeWasAwake) {
         smokeWasAwake = false;
@@ -13843,7 +13843,7 @@
   function instrumentTick(now){
     if(toyFireSmokeDraft && machineState && machineState.ready){machineState.readings={ready:true,caption:machineState.definition.caption,action:machineState.definition.action,particleCount:liquidCount,draftSmoke:toyFireSmokeDraft.stats(false),fire:toyFire?toyFire.stats():null,energyBudgetStatus:machineState.definition.energyBudgetStatus,error:buildError};return;}
     if(toyDraftRig && machineState && machineState.ready){machineState.readings={ready:true,caption:machineState.definition.caption,action:machineState.definition.action,particleCount:liquidCount,draftBodies:toyDraftRig.stats(),numericalStatus:'Draft rigid bodies and guides; water-load coupling is incomplete.',energyBudgetStatus:machineState.definition.energyBudgetStatus,error:buildError};return;}
-    if(machineState && machineState.definition.draft && !toySteam && !toyFire && !toyBalloon && !toyDivers && !toyBubbles && !toyCannon && !toyMaterialSlip){machineState.readings={ready:machineState.ready,caption:machineState.definition.caption,action:machineState.definition.action,particleCount:liquidCount,boundary:toyBoundary?toyBoundary.stats():null,numericalStatus:machineState.definition.boundaryNote,energyBudgetStatus:machineState.definition.energyBudgetStatus,error:buildError};return;}
+    if(machineState && machineState.definition.draft && !toySteam && !toyFire && !toyBalloon && !toyDivers && !toyBubbles && !toyCannon && !toyMaterialSlip){machineState.readings={ready:machineState.ready,caption:machineState.definition.caption,action:machineState.definition.action,particleCount:liquidCount,boundary:toyBoundary?toyBoundary.stats():null,draftRuntime:toyDraftRuntime && toyDraftRuntime.stats?toyDraftRuntime.stats():null,numericalStatus:machineState.definition.boundaryNote,energyBudgetStatus:machineState.definition.energyBudgetStatus,error:buildError};return;}
     if(toySteam && machineState && machineState.ready){
       var steamStats=toySteam.stats(),steamState=machineState;
       steamStats.plume={samples:steamPlumeSamples,tracedMassKg:steamPlumeMass};
@@ -14946,6 +14946,7 @@
     if(toyFloatSlider){toyFloatSlider.project(toyFloatSlider.body,jelloStepH>0?jelloStepH:JELLO_H*jelloImpulseScale(),JELLO_TIMESCALE);toyFloatSlider.sync();}
     if(solidSkinLab && currentScene==='smoke-wind-tunnel' || toyBalloon || toyDivers || toyFloatSlider || toyDraftRig)updateLiquidToy(dt);
     if(toyDivers)toyDivers.sample();
+    if(toyDraftRuntime && toyDraftRuntime.tick)toyDraftRuntime.tick(dt);
     if (window.__cdb && window.__cdb.length && jelloBodies.length) {
       var dbgB = jelloBodies[0];
       var dbgE = window.__cdb[window.__cdb.length - 1];
