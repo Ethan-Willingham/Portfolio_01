@@ -30,9 +30,9 @@
       bounds={left:jar.x+model.cellSize,right:jar.x+jar.width-model.cellSize,bottom:jar.y+jar.height-model.cellSize},
       poolSurface=null,poolColumns=0,read=L.device.createBuffer({label:'toy.divers.pressure',size:pressureBytes+coverageBytes,usage:GPUBufferUsage.MAP_READ|GPUBufferUsage.COPY_DST});
     bodies.forEach(function(b,k){var spec=definition.slimes[k],amount=area(b);b.cartesianDiver={id:k+1,amount:amount,mass:amount*spec.density,initialArea:amount,absolute:room,target:amount,pressureKind:null,dragRate:definition.divers.dragRate,viscosity:definition.divers.viscosity,wetProbeCount:0,surfaceColumns:[],surfaceColumnCount:0,surfaceY:null,submergedFraction:0};});
-    function guest(){if(definition.divers.noPiston)return{x:0,y:0,hw:0,hh:0,pts:[]};var r=definition.divers.piston,x=r.x,y=r.y+offset,h=r.height,w=r.width,v=pistonVelocity;
-      return {x:x+w*.5,y:y+h*.5,hw:w*.5+.01,hh:h*.5+.01,mvx:0,mvy:v,
-        pts:[x,y,0,v,x+w,y,0,v,x+w,y+h,0,v,x,y+h,0,v]};}
+    function guest(){if(definition.divers.noPiston)return{x:0,y:0,hw:0,hh:0,pts:[]};var r=definition.divers.piston,horizontal=definition.divers.axis==='x',x=r.x+(horizontal?offset:0),y=r.y+(horizontal?0:offset),h=r.height,w=r.width,vx=horizontal?pistonVelocity:0,vy=horizontal?0:pistonVelocity;
+      return {x:x+w*.5,y:y+h*.5,hw:w*.5+.01,hh:h*.5+.01,mvx:vx,mvy:vy,
+        pts:[x,y,vx,vy,x+w,y,vx,vy,x+w,y+h,vx,vy,x,y+h,vx,vy]};}
     var controller={
       ready:true,
       tick:function(){
@@ -81,9 +81,15 @@
           gasAmount:d.amount,ballastMass:d.mass,density:d.mass/area(b),absolutePressure:d.absolute,pressureKind:d.pressureKind,wetProbeCount:d.wetProbeCount,surfaceColumns:d.surfaceColumns,surfaceColumnCount:d.surfaceColumnCount,surfaceY:d.surfaceY,submergedFraction:d.submergedFraction};})};},
       draw:function(ctx){if(definition.divers.noPiston)return;var colors=options.colors;
         var r=definition.divers.piston;ctx.save();ctx.strokeStyle=colors.accent;ctx.fillStyle=colors.accent;ctx.lineWidth=2;
+        if(definition.divers.axis==='x'){
+          var px=r.x+offset;ctx.globalAlpha=.15;ctx.fillRect(px,r.y,r.width,r.height);ctx.globalAlpha=1;ctx.strokeRect(px,r.y,r.width,r.height);
+          ctx.beginPath();ctx.moveTo(px+r.width,r.y+r.height*.5);ctx.lineTo(definition.divers.pistonRodEndX||696,r.y+r.height*.5);ctx.stroke();
+          ctx.font='12px "Commit Mono", monospace';ctx.textAlign='center';ctx.fillText(definition.divers.pistonLabel||'Driven piston',r.x+56,definition.divers.pistonLabelY||r.y-16);
+        }else{
         ctx.globalAlpha=.15;ctx.fillRect(r.x,r.y+offset,r.width,r.height);ctx.globalAlpha=1;ctx.strokeRect(r.x,r.y+offset,r.width,r.height);
         ctx.beginPath();ctx.moveTo(r.x+r.width*.5,r.y+offset);ctx.lineTo(r.x+r.width*.5,definition.divers.pistonRodEndY===undefined?96:definition.divers.pistonRodEndY);ctx.stroke();
         ctx.font='12px "Commit Mono", monospace';ctx.textAlign='center';ctx.fillText(definition.divers.pistonLabel||'Driven piston',r.x+r.width*.5,definition.divers.pistonLabelY===undefined?88:definition.divers.pistonLabelY);
+        }
         bodies.forEach(function(b){var d=b.cartesianDiver;ctx.fillStyle=colors.text;ctx.fillText(String(d.id),b.cx,b.cy+4);});
         ctx.restore();
       },
