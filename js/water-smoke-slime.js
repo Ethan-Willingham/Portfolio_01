@@ -1448,6 +1448,7 @@
   function enableAirModel(options) {
     options=options || {};
     var request=++airRequest;
+    if(toyEntrainedAir){toyEntrainedAir.destroy();toyEntrainedAir=null;}
     if(options.enabled===false){
       var retired=airModel;airModel=null;
       airStaticGeometry=null;airHadBodies=false;
@@ -14002,6 +14003,7 @@
     }
     if(toyFloatSlider){toyFloatSlider.destroy();toyFloatSlider=null;}
     if(toyBubbles){toyBubbles.destroy();toyBubbles=null;}
+    if(toyEntrainedAir){toyEntrainedAir.destroy();toyEntrainedAir=null;}
     if(toyDivers){toyDivers.destroy();toyDivers=null;}
     if(toySound)toySound.setActive(false);
     if(toyWave){toyWave.destroy();toyWave=null;}
@@ -14046,6 +14048,7 @@
   var toyWave=null;
   var toySteam=null,steamWaterClock=0,steamFrameDt=0,steamPlumeSamples=0,steamPlumeMass=0;
   var toyBubbles=null;
+  var toyEntrainedAir=null;
   var fireDomainPrevious=null,fireDomainActive=false;
   var machineState=null;
   var toyBoundary=null,toySound=null,thumbWanted=false;
@@ -14532,7 +14535,7 @@
     if(!window.WaterMachinesScenes || !window.WaterMachinesBuilder)throw new Error('Water apparatus definitions are unavailable.');
     if(waterState!=='on')return Promise.reject(new Error(waterState==='off' ? 'Water machines need WebGPU in this browser.' : 'Wait for the water engine to finish loading.'));
     machineLoading=true;syncRunning();
-    var request=++machineRequest, ownBoundary=null,ownFire=null,ownOxygen=null,ownBalloon=null,ownSteam=null,ownBubbles=null,ownSlip=null,ownSauna=null;
+    var request=++machineRequest, ownBoundary=null,ownFire=null,ownOxygen=null,ownBalloon=null,ownSteam=null,ownBubbles=null,ownEntrainedAir=null,ownSlip=null,ownSauna=null;
     try{
     if(toyCannon){toyCannon.destroy();toyCannon=null;}
     clearWorldAll(options.canvasThumb);setGravityUI(1);
@@ -14713,6 +14716,12 @@
       if(request!==machineRequest){ownBubbles.destroy();ownBubbles=null;return null;}
       toyBubbles=ownBubbles;liquidWGPU.setToyMembrane(ownBubbles);airPressureColors=false;
     }
+    if(definition.entrainedAir){
+      ownEntrainedAir=await window.WSSBubbles.create(Object.assign({liquid:liquidWGPU,air:model,
+        width:worldW,height:worldH,maxParticles:256,inject:false},definition.entrainedAir));
+      if(request!==machineRequest){ownEntrainedAir.destroy();ownEntrainedAir=null;return null;}
+      toyEntrainedAir=ownEntrainedAir;liquidWGPU.setToyMembrane(ownEntrainedAir);
+    }
     if(definition.divers){var diverPalette=getComputedStyle(document.documentElement);toyDivers=window.WSSCartesianDivers.create({liquid:liquidWGPU,model:model,definition:definition,bodies:diverBodies,
       colors:{accent:diverPalette.getPropertyValue('--accent').trim(),text:diverPalette.getPropertyValue('--text').trim()}});airPressureColors=false;airGeometryVersion=-1;airGeometryTick();}
     if(definition.thermoscope){
@@ -14801,6 +14810,7 @@
       if(request!==machineRequest && ownBubbles && ownBubbles!==toyBubbles)ownBubbles.destroy();
       if(request!==machineRequest && ownBalloon && ownBalloon!==toyBalloon)ownBalloon.destroy();
       if(request!==machineRequest && ownSteam && ownSteam!==toySteam)ownSteam.destroy();
+      if(request!==machineRequest && ownEntrainedAir && ownEntrainedAir!==toyEntrainedAir)ownEntrainedAir.destroy();
       if(request!==machineRequest && ownSlip && ownSlip!==toyMaterialSlip)ownSlip.destroy();
       if(request!==machineRequest && ownSauna && ownSauna!==toySauna)ownSauna.destroy();
       if(request===machineRequest){machineLoading=false;updateReadout();syncRunning();}
@@ -16037,6 +16047,7 @@
       steam:function(){return toySteam;},
       pipeGrip:function(){return machineState && machineState.definition.birds ? Object.assign({dragging:pointerPipe},window.WSSSingingPipe.geometry(machineState.definition)) : null;},
       bubbles:function(){return toyBubbles;},
+      entrainedAir:function(){return toyEntrainedAir;},
       sound:function(enabled){
         if(!toySound)return Promise.resolve(false);
         if(!enabled){toySound.mute();return Promise.resolve(false);}

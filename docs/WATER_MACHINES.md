@@ -234,6 +234,44 @@ uniform translation, a compressed cloud, walls, a floor, a corner and inactive
 parcels, checking carried momentum and containment rather than treating filled
 rendering gaps as physical evidence.
 
+## Entrained air
+
+Toy v5.166 gives compact submerged gas in the small Heron apparatus and its
+smoke variant the existing bubble transport model. A detached finite gas pocket
+with at most 200 square world pixels of void transfers its exact room-reference
+gas amount to a mobile parcel. Its center must belong to that pocket and its
+pressure-dependent radius must fit the collision geometry. Atmospheric regions,
+large vessel headspaces and zero-amount vapor cavities retain their existing
+representation.
+
+The parcel samples surrounding water velocity and rises with the existing
+size-dependent buoyancy and quadratic drag model. Water contact preserves its
+interface. Gas is released only at a current atmospheric gas cell; there is no
+age cutoff. The native pressure coupling removes the previously represented
+share before remapping and reinjects it at the current valid gas owner. An
+unresolved owner leaves the gas in its mobile parcel. The parcel ledger records
+captured, coupled, moving and escaped amounts. Coupled amount is already part
+of the pressure inventory and is counted once when checking its balance.
+
+The small apparatus also uses the direct pressure transport and boundary
+reconstruction already used by the larger water machines. Fine-grid particle
+pressure and the spacing correction remain active. The shared game engine and surface rendering are
+unchanged.
+
+`node tools/test-water-entrained-air.mjs` checks actual GPU gas transfer, an
+independent pressure/radius relation, buoyancy, uniform carrier flow, zero
+gravity, a sealed ceiling and exclusion of large headspaces, atmosphere and
+vapor. A native pool comparison tracks a pocket through the water to the
+atmosphere. The real smoke fountain runs with three desktop seeds and a
+landscape phone viewport, checking exact water count, finite state, both gas
+ledgers, owner handoffs and scene cleanup. The dedicated air hose also boots
+and injects through its original path. Source hashes, measurements and captures
+are saved under `/tmp/water-entrained-air-review`.
+
+This is the existing reduced isothermal bubble model, with approximate drag and
+coalescence. It does not add gas dissolution or establish full physical
+acceptance of the fountain's pressure solver.
+
 ## Spatial oxygen and combustion
 
 The six fuel-burning scenes share a spatial oxygen solver: Candle in a jar,

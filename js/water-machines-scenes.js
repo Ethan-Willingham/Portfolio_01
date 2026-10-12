@@ -190,7 +190,9 @@
       // The coarse air solve supplies the gas pressure, while the native
       // fine-grid response keeps the liquid near its resting density.
       // Omitting this response let the small fountain form porous sheets.
-      result.settings.particlePressure=true;
+      Object.assign(result.settings,{particlePressure:true,directGather:true,
+        projectedVelocity:true,boundaryReconstruction:true,phaseChange:true});
+      result.entrainedAir={entrainedArea:200};
       result.title="Heron's fountain";result.action='Pour into basin';
       result.caption='An open basin drains into a sealed receiving jar. Pour water into the basin to test whether the trapped air drives a jet from the source jar.';
       // Bound the finite apparatus independently of surplus world space. A

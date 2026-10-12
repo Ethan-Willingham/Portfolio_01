@@ -27,6 +27,9 @@ struct Label {current:atomic<u32>,previous:u32};
 @group(0) @binding(13) var<storage,read_write> pos:array<vec4f>;
 @group(0) @binding(14) var<storage,read_write> flags:array<u32>;
 @group(0) @binding(15) var<storage,read_write> affine:array<vec4f>;
+struct Natural {area:atomic<i32>,x:atomic<i32>,y:atomic<i32>,pad:atomic<i32>};
+@group(0) @binding(16) var<storage,read_write> natural:array<Natural>;
+@group(0) @binding(17) var<storage,read_write> claims:array<atomic<u32>>;
 const NONE:u32=0xffffffffu;
 fn cell(q:vec2f)->u32{let c=vec2i(floor(q/p.air.x));if(any(c<vec2i(0)) || c.x>=i32(p.air.y) || c.y>=i32(p.air.z)){return NONE;}return u32(c.y)*u32(p.air.y)+u32(c.x);}
 fn center(c:u32)->vec2f{return (vec2f(f32(c%u32(p.air.y)),f32(c/u32(p.air.y)))+.5)*p.air.x;}
@@ -48,6 +51,15 @@ fn clear(q:vec2f,r:f32)->bool{
 fn waterVelocity(q:vec2f)->vec2f {
  let c=cell(q);if(c==NONE || cells[c].kind==0u){return vec2f(0.);}
  let f=fract(q/p.air.x);let face=transport[c*3u];return vec2f(mix(face.x,face.y,f.x),mix(face.z,face.w,f.y));
+}
+fn carrierVelocity(q:vec2f,r:f32)->vec2f{
+ if(p.domain.w<=0.){return waterVelocity(q);}
+ // The center of a gas cavity has little native water mass. Sample the
+ // surrounding liquid instead of amplifying its nearly empty-cell velocity.
+ var velocity=vec2f(0.);var weight=0.;
+ for(var d=0u;d<8u;d++){let a=f32(d)*6.2831853/8.;let sample=q+vec2f(cos(a),sin(a))*(r+p.air.x);let c=cell(sample);
+  if(c!=NONE && cells[c].kind==1u){velocity+=waterVelocity(sample);weight+=1.;}
+ }return velocity/max(1.,weight);
 }
 fn outsidePressure(q:vec2f,r:f32)->f32{
  var pressure=0.;var weight=0.;for(var d=0u;d<8u;d++){let angle=f32(d)*6.2831853/8.;let c=cell(q+vec2f(cos(angle),sin(angle))*(r+p.air.x));
@@ -85,17 +97,17 @@ fn outsidePressure(q:vec2f,r:f32)->f32{
  // A submerged parcel keeps its transported interface even inside a large void.
  // Only current spatial support may transfer it to the atmosphere.
  let support=cell(bubbles[i].xy);let r=supported(support);
- if(r==0u){material[i].z=3.;material[i].w=0.;atomicAdd(&ledger[1],i32(material[i].x));atomicAdd(&ledger[17],1);return;}
- if(r==NONE){material[i].w=-1.;return;}
+ if(r==0u && (p.domain.w<=0. || cells[support].kind==2u)){material[i].z=3.;material[i].w=0.;atomicAdd(&ledger[1],i32(material[i].x));atomicAdd(&ledger[17],1);return;}
+ if(r==NONE || r==0u || (p.domain.w>0. && (cells[r-1u].kind!=2u || atomicLoad(&labels[r-1u].current)!=r))){material[i].w=-1.;return;}
  material[i].w=f32(r);witness[i].x=f32(support+1u);atomicAdd(&current[r-1u],i32(material[i].x));
 }
-@compute @workgroup_size(128) fn inject(@builtin(global_invocation_id) id:vec3u){let c=id.x;if(c<u32(p.air.y*p.air.z)){atomicAdd(&gas[c*16u+2u],atomicLoad(&current[c]));}}
+@compute @workgroup_size(128) fn inject(@builtin(global_invocation_id) id:vec3u){let c=id.x;if(c<u32(p.air.y*p.air.z)){let amount=atomicLoad(&current[c]);atomicAdd(&gas[c*16u+2u],amount);atomicAdd(&ledger[23],amount);}}
 @compute @workgroup_size(128) fn finish(@builtin(global_invocation_id) id:vec3u){let c=id.x;if(c<u32(p.air.y*p.air.z)){let amount=atomicLoad(&current[c]);if(amount>history[c].amount){atomicAdd(&ledger[8],1);}atomicStore(&previous[c],min(amount,max(0,history[c].amount)));}}
 @compute @workgroup_size(64) fn advance(@builtin(global_invocation_id) id:vec3u){
  let i=id.x;if(i>=u32(max(0,atomicLoad(&ledger[4]))) || material[i].z<.5 || material[i].z>1.5){return;}
  var q=bubbles[i].xy;let amount=material[i].x/p.air.w;let absolute=outsidePressure(q,material[i].y);
  let radius=2.*p.material.x*amount/3.14159265/(sqrt(p.material.z*p.material.z+4.*absolute*p.material.x*amount/3.14159265)+p.material.z);
- let velocity=waterVelocity(q)-vec2f(0.,sqrt(3.14159265*radius*p.domain.z/p.material.w));
+ let velocity=carrierVelocity(q,radius)-vec2f(0.,sqrt(3.14159265*radius*p.domain.z/p.material.w));
  let delta=velocity*p.step.x;let count=max(1u,u32(ceil(length(delta)/max(1.,radius*.5))));
  for(var step=1u;step<=count;step++){let candidate=q+delta/f32(count);if(clear(candidate,radius)){q=candidate;}else{
   let x=q+vec2f(delta.x/f32(count),0.);if(clear(x,radius)){q=x;}let y=q+vec2f(0.,delta.y/f32(count));if(clear(y,radius)){q=y;}
@@ -121,6 +133,45 @@ fn outsidePressure(q:vec2f,r:f32)->f32{
   flags[i]=flags[i]&~0x00ffff10u;atomicAdd(&ledger[20],1);
  }pos[i]=value;
 }
+// Transfer only compact, detached finite gas. Atmospheric and large vessel
+// headspaces retain the Eulerian model. No particle is added or removed.
+@compute @workgroup_size(128) fn collectNatural(@builtin(global_invocation_id) id:vec3u){
+ let c=id.x;if(c>=u32(p.air.y*p.air.z)){return;}let r=supported(c);
+ if(r==NONE || r==0u){return;}let root=r-1u;
+ if(history[root].amount<=0 || history[root].vapor!=0u || history[root].geometricVolume>p.domain.w || atomicLoad(&previous[root])>0){return;}
+ let area=voidArea(c);let q=center(c);
+ atomicAdd(&natural[root].area,i32(round(area*p.air.w)));
+ atomicAdd(&natural[root].x,i32(round(area*q.x*p.air.w)));
+ atomicAdd(&natural[root].y,i32(round(area*q.y*p.air.w)));
+}
+@compute @workgroup_size(128) fn validateNatural(@builtin(global_invocation_id) id:vec3u){
+ let c=id.x;if(c>=u32(p.air.y*p.air.z)){return;}let area=f32(atomicLoad(&natural[c].area))/p.air.w;
+ if(area<=0. || area>p.domain.w || history[c].amount<=0){return;}
+ let q=vec2f(f32(atomicLoad(&natural[c].x)),f32(atomicLoad(&natural[c].y)))/(area*p.air.w);
+ let amount=f32(history[c].amount)/p.air.w;let absolute=max(p.material.x*.01,p.material.x+history[c].pressure);
+ let r=2.*p.material.x*amount/3.14159265/(sqrt(p.material.z*p.material.z+4.*absolute*p.material.x*amount/3.14159265)+p.material.z);
+ if(r<=sqrt(p.domain.w/3.14159265) && clear(q,r) && supported(cell(q))==c+1u){atomicStore(&natural[c].pad,1);}
+}
+@compute @workgroup_size(64) fn releaseClaims(@builtin(global_invocation_id) id:vec3u){
+ let i=id.x;if(i<u32(p.step.z) && (material[i].z<.5 || material[i].z>2.5)){atomicStore(&claims[i],0u);}
+}
+@compute @workgroup_size(128) fn captureNatural(@builtin(global_invocation_id) id:vec3u){
+ let c=id.x;if(c>=u32(p.air.y*p.air.z)){return;}let area=f32(atomicLoad(&natural[c].area))/p.air.w;
+ if(atomicLoad(&natural[c].pad)!=1 || history[c].amount<=0 || atomicLoad(&previous[c])>0){return;}
+ let q=vec2f(f32(atomicLoad(&natural[c].x)),f32(atomicLoad(&natural[c].y)))/(area*p.air.w);
+ let amount=history[c].amount;let absolute=max(p.material.x*.01,p.material.x+history[c].pressure);
+ let radius=2.*p.material.x*f32(amount)/p.air.w/3.14159265/(sqrt(p.material.z*p.material.z+4.*absolute*p.material.x*f32(amount)/p.air.w/3.14159265)+p.material.z);
+ for(var j=0u;j<u32(p.step.z);j++){
+  let slot=j;let claim=atomicCompareExchangeWeak(&claims[slot],0u,1u);
+  if(!claim.exchanged){continue;}
+  bubbles[slot]=vec4f(q,0.,0.);material[slot]=vec4f(f32(amount),radius,1.,f32(c+1u));
+  witness[slot]=vec4f(f32(cell(q)+1u),p.step.w,q.y,f32(atomicLoad(&ledger[6])));
+  // finishGas already includes this inventory. Remove its Eulerian share
+  // before the next remap, then inject the parcel at its transported support.
+  atomicStore(&previous[c],amount);atomicMax(&ledger[4],i32(slot+1u));
+  atomicAdd(&ledger[21],amount);atomicAdd(&ledger[22],1);return;
+ }atomicAdd(&ledger[13],1);
+}
 @compute @workgroup_size(64) fn inventory(@builtin(global_invocation_id) id:vec3u){
  let i=id.x;if(i>=u32(max(0,atomicLoad(&ledger[4]))) || material[i].z<.5 || material[i].z>2.5){return;}
  atomicAdd(&ledger[select(2u,3u,material[i].z>1.5)],i32(material[i].x));
@@ -130,29 +181,29 @@ fn outsidePressure(q:vec2f,r:f32)->f32{
   async function create(options){
     var L=options.liquid,A=options.air,device=L.device,queue=L.queue,U=GPUBufferUsage;
     if(!L.simActive || !A || !A.enabled || !A.buffers.transport)throw Error('Bubbles need native direct water transport and opt-in air.');
-    var n=options.maxParticles,count=A.width*A.height,buffers=[];
+    var n=options.maxParticles,count=A.width*A.height,buffers=[],entrained=options.entrainedArea>0;
     function buffer(label,size,usage){var value=device.createBuffer({label:'toy.bubbles.'+label,size:size,usage:usage});buffers.push(value);return value;}
     var params=buffer('params',80,U.UNIFORM|U.COPY_DST),bubbles=buffer('position',n*16,U.STORAGE|U.COPY_SRC),material=buffer('material',n*16,U.STORAGE|U.COPY_SRC),
-      witness=buffer('witness',n*16,U.STORAGE|U.COPY_SRC),ledger=buffer('ledger',128,U.STORAGE|U.COPY_SRC|U.COPY_DST),previous=buffer('previous',count*4,U.STORAGE),current=buffer('current',count*4,U.STORAGE);
+      witness=buffer('witness',n*16,U.STORAGE|U.COPY_SRC),ledger=buffer('ledger',128,U.STORAGE|U.COPY_SRC|U.COPY_DST),previous=buffer('previous',count*4,U.STORAGE),current=buffer('current',count*4,U.STORAGE),natural=entrained?buffer('natural',count*16,U.STORAGE|U.COPY_DST):null,claims=entrained?buffer('claims',n*4,U.STORAGE):null;
     var module=device.createShaderModule({label:'toy.bubbles.model',code:SOURCE}),info=await module.getCompilationInfo();
     var errors=info.messages.filter(function(m){return m.type==='error';});if(errors.length)throw Error(errors.map(function(m){return m.lineNum+': '+m.message;}).join('; '));
-    var resources=[params,bubbles,material,witness,ledger,A.buffers.history,A.buffers.cells,A.buffers.geometry,A.buffers.labels,A.buffers.gas,previous,current,A.buffers.transport,L.buf.pos,L.buf.flag,L.buf.affine];
-    var bindings={admit:[0,1,2,3,4,5,6,7],sparger:[0,2,3,4,6,7,8],strip:[0,4,5,10,11],assign:[0,1,2,3,4,6,7,8,11],inject:[0,9,11],finish:[0,4,5,10,11],advance:[0,1,2,4,5,6,7,12],coalesce:[0,1,2,4,7],contact:[0,1,2,4,7,13,14,15],inventory:[1,2,4]},pipes={},groups={};
-    for(var name of Object.keys(bindings)){pipes[name]=await device.createComputePipelineAsync({layout:'auto',compute:{module:module,entryPoint:name}});groups[name]=device.createBindGroup({layout:pipes[name].getBindGroupLayout(0),entries:bindings[name].map(function(binding){return {binding:binding,resource:{buffer:resources[binding]}};})});}
+    var resources=[params,bubbles,material,witness,ledger,A.buffers.history,A.buffers.cells,A.buffers.geometry,A.buffers.labels,A.buffers.gas,previous,current,A.buffers.transport,L.buf.pos,L.buf.flag,L.buf.affine,natural,claims];
+    var bindings={admit:[0,1,2,3,4,5,6,7],sparger:[0,2,3,4,6,7,8],strip:[0,4,5,10,11],assign:[0,1,2,3,4,6,7,8,11],inject:[0,4,9,11],finish:[0,4,5,10,11],advance:[0,1,2,4,5,6,7,12],coalesce:[0,1,2,4,7],contact:[0,1,2,4,7,13,14,15],inventory:[1,2,4],collectNatural:[0,5,6,7,8,10,16],validateNatural:[0,5,6,7,8,16],releaseClaims:[0,2,17],captureNatural:[0,1,2,3,4,5,10,16,17]},pipes={},groups={};
+    for(var name of Object.keys(bindings)){if(!entrained && ['collectNatural','validateNatural','releaseClaims','captureNatural'].includes(name))continue;pipes[name]=await device.createComputePipelineAsync({layout:'auto',compute:{module:module,entryPoint:name}});groups[name]=device.createBindGroup({layout:pipes[name].getBindGroupLayout(0),entries:bindings[name].map(function(binding){return {binding:binding,resource:{buffer:resources[binding]}};})});}
     var active=options.inject!==false,retired=false,clock=0,quantity=0,latest=new Int32Array(32),points=[],error=null;
     var reads=Array.from({length:3},function(){return {buffer:buffer('read',128+n*32,U.COPY_DST|U.MAP_READ),busy:false,captured:false};}),row=null;
-    function encode(enc,key,number){var pass=enc.beginComputePass({label:'toy.bubbles.'+key});pass.setPipeline(pipes[key]);pass.setBindGroup(0,groups[key]);pass.dispatchWorkgroups(Math.max(1,Math.ceil(number/(['admit','coalesce'].includes(key)?1:['advance','assign','inventory'].includes(key)?64:128))));pass.end();}
+    function encode(enc,key,number){var pass=enc.beginComputePass({label:'toy.bubbles.'+key});pass.setPipeline(pipes[key]);pass.setBindGroup(0,groups[key]);pass.dispatchWorkgroups(Math.max(1,Math.ceil(number/(['admit','coalesce'].includes(key)?1:['advance','assign','inventory','releaseClaims'].includes(key)?64:128))));pass.end();}
     var companion={
       beginFrame:function(enc,frame){clock=frame.clock;quantity=frame.count;var mpp=.0254/(options.width/30),tension=.072*A.settings.atmospherePressure/101325/mpp;
-        queue.writeBuffer(params,0,new Float32Array([frame.h,frame.count,n,clock,A.cellSize,A.width,A.height,A.settings.volumeScale,options.hose.x,options.hose.y,options.rateArea,active?1:0,A.settings.atmospherePressure,options.parcelArea,tension,options.dragCoefficient||1,options.width,options.height,options.gravity||250,0]));},
+        queue.writeBuffer(params,0,new Float32Array([frame.h,frame.count,n,clock,A.cellSize,A.width,A.height,A.settings.volumeScale,(options.hose||{}).x||0,(options.hose||{}).y||0,options.rateArea||0,active?1:0,A.settings.atmospherePressure,options.parcelArea||25,tension,options.dragCoefficient||1,options.width,options.height,options.gravity===undefined?(entrained?L.simParamsHost[0]:250):options.gravity,options.entrainedArea||0]));},
       beforeSubstep:function(enc,step){encode(enc,'admit',1);encode(enc,'contact',step.count);},
       afterSubstep:function(enc,step){encode(enc,'advance',n);encode(enc,'coalesce',1);encode(enc,'contact',step.count);},
       beginGas:function(enc){encode(enc,'strip',count);},prepareGas:function(enc){encode(enc,'sparger',count);},
-      collectGas:function(enc){encode(enc,'assign',n);encode(enc,'inject',count);},finishGas:function(enc){encode(enc,'finish',count);},
+      collectGas:function(enc){enc.clearBuffer(ledger,92,4);encode(enc,'assign',n);encode(enc,'inject',count);},finishGas:function(enc){encode(enc,'finish',count);if(entrained){enc.clearBuffer(natural);encode(enc,'collectNatural',count);encode(enc,'validateNatural',count);encode(enc,'releaseClaims',n);encode(enc,'captureNatural',count);}},
       captureFrame:function(enc){enc.clearBuffer(ledger,8,8);encode(enc,'inventory',n);row=reads.find(function(r){return !r.busy;})||null;if(row){row.busy=true;row.captured=true;row.clock=clock;row.count=Math.min(n,Math.max(64,latest[4]+64));enc.copyBufferToBuffer(ledger,0,row.buffer,0,128);enc.copyBufferToBuffer(bubbles,0,row.buffer,128,row.count*16);enc.copyBufferToBuffer(material,0,row.buffer,128+n*16,row.count*16);}},
       afterSubmit:function(){var read=row;row=null;if(!read || !read.captured)return;read.captured=false;read.buffer.mapAsync(GPUMapMode.READ).then(function(){if(!retired){var data=read.buffer.getMappedRange();latest=new Int32Array(data,0,32).slice();var b=new Float32Array(data,128,read.count*4),m=new Float32Array(data,128+n*16,read.count*4);points=[];for(var i=0;i<Math.min(latest[4],read.count);i++)if(m[i*4+2]>.5&&m[i*4+2]<1.5)points.push({x:b[i*4],y:b[i*4+1],radius:m[i*4+1],amount:m[i*4]/A.settings.volumeScale});companion.captureClock=read.clock;}read.buffer.unmap();}).catch(function(e){error=e.message;companion.error=error;}).finally(function(){read.busy=false;});},
       captureClock:0,toggle:function(){active=!active;return active;},
-      stats:function(){var scale=A.settings.volumeScale;return {injecting:active,injectedAmount:latest[0]/scale,escapedAmount:latest[1]/scale,dispersedAmount:latest[2]/scale,eulerianAmount:latest[3]/scale,residual:(latest[0]-latest[1]-latest[2]-latest[3])/scale,births:latest[10],transitions:latest[11],recoveries:latest[12],coalescences:latest[18],finiteErrors:latest[9],historyUnderflows:latest[8],capacityRefusals:latest[13],blockedSource:latest[15],spargerGasSteps:latest[16],surfaceExits:latest[17],blockedContacts:latest[19],waterContacts:latest[20],usedSlots:latest[4],points:points,captureClock:companion.captureClock,captureAgeSimulationSeconds:Math.max(0,L.simulationClock-companion.captureClock),error:error};},
+      stats:function(){var scale=A.settings.volumeScale;return {injecting:active,injectedAmount:latest[0]/scale,escapedAmount:latest[1]/scale,dispersedAmount:latest[2]/scale,eulerianAmount:latest[3]/scale,capturedAmount:latest[21]/scale,coupledAmount:latest[23]/scale,naturalCaptures:latest[22],residual:(latest[0]+latest[21]-latest[1]-latest[2]-latest[3])/scale,births:latest[10],transitions:latest[11],recoveries:latest[12],coalescences:latest[18],finiteErrors:latest[9],historyUnderflows:latest[8],capacityRefusals:latest[13],blockedSource:latest[15],spargerGasSteps:latest[16],surfaceExits:latest[17],blockedContacts:latest[19],waterContacts:latest[20],usedSlots:latest[4],points:points,captureClock:companion.captureClock,captureAgeSimulationSeconds:Math.max(0,L.simulationClock-companion.captureClock),error:error};},
       buffers:{position:bubbles,material:material,witness:witness,ledger:ledger},
       destroy:function(){retired=true;L.setToyMembrane(null);A.setPhaseCompanion(null);buffers.forEach(function(b){try{b.destroy();}catch(e){}});}
     };A.setPhaseCompanion(companion);return companion;
