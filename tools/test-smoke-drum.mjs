@@ -105,6 +105,8 @@ try {
   assert.deepEqual(attachments,[true,true],'Both physical endpoints meet the casing');
   const joins=await inside('(()=>{const sx=instrumentsCanvas.width/worldW,sy=instrumentsCanvas.height/worldH;return [124,276].map(y=>instrumentsCtx.getImageData(Math.round(88*sx),Math.round(y*sy),1,1).data[3]);})()');
   assert.ok(joins.every(alpha=>alpha>=200),'Both rendered clamps visibly join the casing');
+  const painted=await inside('(()=>{wallRect(552,128,560,272);bakeWalls();var alpha=wallsCtx.getImageData(Math.round(556*dpr),Math.round(200*dpr),1,1).data[3];for(var r=16;r<34;r++)walls[r*gridW+69]=0;wallsVersion++;bakeWalls();return alpha;})()');
+  assert.ok(painted>200,'Visitor-drawn walls remain visible beside the drum');
   const still=await inside(`(()=>{for(let f=0;f<90;f++)smokeFrame(1/60);return toyCannon.stats(jelloBodies);})()`);
   assert.ok(still.travelDye<.01,'No moving skin means no smoke travels across the room');
   // Input is the real hit target, not a call to the firing API.

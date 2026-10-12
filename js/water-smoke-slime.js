@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.162'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.163.1'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -443,7 +443,6 @@
     wallsBakedVersion = wallsVersion;
     wallsCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
     wallsCtx.clearRect(0, 0, worldW, worldH);
-    if(machineState && machineState.definition.drum)return;
     var palette=getComputedStyle(document.documentElement);
     var glass=glassWalls && airModel && airModel.enabled;
     var hourglass=machineState && machineState.definition.hourglass;
