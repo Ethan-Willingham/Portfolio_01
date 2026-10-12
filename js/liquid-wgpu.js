@@ -8025,6 +8025,7 @@ struct RenderParams {
   surf          : vec4<f32>,   // x = threshold, y = softness, z = splat radius scale, w = on/off
   bathTint      : vec4<f32>,   // v25.57 bath: rgb = hot-water tint, w = strength (0 = off)
   bridge        : vec4<f32>,   // x = contact strength, y = tap px, z = droplet stretch, w = free-space bridge
+  reconstruction : vec4<f32>, // x = reconstruct water from current positions
 };
 @group(0) @binding(0) var<uniform> rp : RenderParams;
 
@@ -8035,6 +8036,16 @@ fn mineralRGB(material : u32) -> vec3<f32> {
   if (material == 3u) { return vec3<f32>(0.87, 0.61, 0.30); }
   if (material == 4u) { return vec3<f32>(0.68, 0.53, 0.80); }
   return rp.waterColor.rgb;
+}
+
+fn waterSurfaceSoftness() -> f32 {
+  let softness = max(rp.surf.y, 0.001);
+  // A single parcel has peak weight 1. Even soft appearance presets must
+  // keep it below the body threshold, so it stays a compact droplet.
+  if (rp.reconstruction.x > 0.5) {
+    return min(softness, max(0.001, rp.surf.x - 1.01));
+  }
+  return softness;
 }
 
 `;
@@ -8055,6 +8066,7 @@ fn mineralRGB(material : u32) -> vec3<f32> {
 struct GParams { c0:u32, gridW:u32, gridH:u32, originX:u32, originY:u32, c5:u32, c6:u32, c7:u32 };
 @group(0) @binding(4) var<uniform> gpc : GParams;
 @group(0) @binding(5) var<storage, read> cellCnt : array<u32>;
+// POSITION_SUPPORT_BINDING
 const NB_CELL : f32 = ${LIQUID_CELL_DEFAULT};
 const NB_FULL : f32 = 12.0;   // 3x3 neighbour count for full size; below this the splat shrinks (body interior ~36)
 
@@ -8135,13 +8147,20 @@ fn vs(@builtin(vertex_index)   vid : u32,
   let sleepBit = (fl >> 4u) & 1u;
   if (sleepBit != 0u) { d = min(d, 1.0); }
   let isOil = ((fl & 3u) | ((fl >> 4u) & 4u)) == 1u;
+  // Reconstruct equal water parcels with a compact, fixed kernel. Summed
+  // position support determines the surface, rather than pressure density
+  // (which falls at walls) or the simulation grid (sometimes grain-only).
+  // One kernel peaks at 1, below the surface threshold: detached particles
+  // stay in the droplet pass, and empty gaps wider than the kernel stay dry.
+  let positionSurface = rp.reconstruction.x > 0.5 && !isOil;
+  if (positionSurface) { d = 1.5; }
   // v24.179 — gate the size by REAL neighbour count (water only; oil keeps its
   // own look). The density-based size above says a jet-stranded single particle
   // is full size; counting its actual neighbours (the 3x3 grid cell-count)
   // sizes it down to a speck instead, while the body interior (~36) is
   // unaffected. The 1-cell in-bounds margin keeps the 3x3 fetch safe; off-grid
   // keeps full size.
-  if (!isOil) {
+  if (!isOil && !positionSurface) {
     // v24.180 — look up the cell at the PRE-STEP position (aux.zw), NOT the
     // post-move render position (p.xy). The grid cell counts were built from
     // the pre-step positions (buildGrid runs before g2p moves the particle),
@@ -8170,6 +8189,12 @@ fn vs(@builtin(vertex_index)   vid : u32,
   }
   let sizeBase = select(rp.sizeBaseWater, rp.sizeBaseOil, isOil);
   var pointSize = sizeBase * d * rp.surf.z;
+  if (positionSurface) {
+    // Bounded in world units, independently of colour/particle-size presets.
+    var radius = 2.581875;
+    // POSITION_SUPPORT_RADIUS
+    pointSize = 2.0 * radius * rp.dpws;
+  }
   pointSize = max(pointSize, 0.8);   // v24.158 — was 1.15; let very-sparse strays be specks (body is far above this)
   let halfPx = pointSize * 0.5;
   let scrX = (p.x - rp.camX) * rp.dpws;
@@ -8216,6 +8241,57 @@ fn fs(in : VOut) -> FieldOut {
   out.pigment = in.pigment * w;
   out.snow = in.snow * w * w;
   return out;
+}
+`;
+
+  // A compact water-only support field precedes adaptive reconstruction.
+  // Sparse parcels retain the compact kernel. Only parcels surrounded by
+  // locally dense water gain the wider support needed to cover sampling
+  // gaps in moving pools and pipes. Neither pass reads pressure or grain
+  // neighbour counts, and neither modifies simulation buffers.
+  var WGSL_SURFACE_SUPPORT = WGSL_SURFACE_FIELD.slice(0, WGSL_SURFACE_FIELD.indexOf('struct FieldOut')) + /* wgsl */ `
+@fragment
+fn fs(in : VOut) -> @location(0) f32 {
+  return in.weight.x * clamp(1.0 - dot(in.uv, in.uv), 0.0, 1.0);
+}
+`;
+  var WGSL_SURFACE_RECONSTRUCT = WGSL_SURFACE_FIELD
+    .replace('// POSITION_SUPPORT_BINDING', '@group(0) @binding(6) var positionSupport : texture_2d<f32>;')
+    .replace('// POSITION_SUPPORT_RADIUS', /* wgsl */ `
+    let at = clamp(vec2<i32>((p.xy - vec2<f32>(rp.camX, rp.camY)) * rp.dpws),
+                   vec2<i32>(0), vec2<i32>(textureDimensions(positionSupport)) - vec2<i32>(1));
+    let support = textureLoad(positionSupport, at, 0).r;
+    radius = mix(radius, 3.6, smoothstep(3.0, 5.5, support));`);
+
+  // Resolved gas interfaces have their own current positions and radii.
+  // Cut these out after both body and droplet drawing, including bubbles
+  // smaller than the reconstruction footprint. No coarse air labels or
+  // delayed CPU snapshots are used as a substitute for a real interface.
+  var WGSL_SURFACE_AIR_MASK = /* wgsl */ `
+@group(0) @binding(1) var<storage, read> bubblePos : array<vec4<f32>>;
+@group(0) @binding(2) var<storage, read> bubbleMaterial : array<vec4<f32>>;
+@group(0) @binding(3) var<storage, read> bubbleLedger : array<i32>;
+struct AirOut { @builtin(position) pos : vec4<f32>, @location(0) uv : vec2<f32> };
+@vertex
+fn vs(@builtin(vertex_index) vid : u32, @builtin(instance_index) iid : u32) -> AirOut {
+  var out : AirOut;
+  out.pos = vec4<f32>(0.0, 0.0, 0.0, 1.0); out.uv = vec2<f32>(0.0);
+  if (iid >= u32(max(0, bubbleLedger[4]))) { return out; }
+  let m = bubbleMaterial[iid];
+  if (m.z <= 0.5 || m.z >= 1.5 || m.y <= 0.0) { return out; }
+  var c = vec2<f32>(-1.0, -1.0);
+  if (vid == 1u || vid == 4u) { c = vec2<f32>(1.0, -1.0); }
+  else if (vid == 2u || vid == 3u) { c = vec2<f32>(-1.0, 1.0); }
+  else if (vid == 5u) { c = vec2<f32>(1.0, 1.0); }
+  let xy = (bubblePos[iid].xy - vec2<f32>(rp.camX, rp.camY) + c * m.y) * rp.dpws;
+  out.pos = vec4<f32>(xy.x / (rp.canvasW * 0.5) - 1.0, 1.0 - xy.y / (rp.canvasH * 0.5), 0.0, 1.0);
+  out.uv = c; return out;
+}
+@fragment
+fn fs(in : AirOut) -> @location(0) vec4<f32> {
+  let dist = length(in.uv);
+  let edge = max(fwidth(dist), 0.001);
+  return vec4<f32>(0.0, 0.0, 0.0, 1.0 - smoothstep(1.0 - edge, 1.0, dist));
 }
 `;
 
@@ -8306,7 +8382,7 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
   var pigmentPx = fieldPx;
   var pigmentMass = f.r;
   let t = rp.surf.x;
-  let s = max(rp.surf.y, 0.001);
+  let s = waterSurfaceSoftness();
   // v26.57 GAP BRIDGE + CONTACT WETTING (see the module const banner). The
   // edge test alone uses the boosted field; foam, body and heat keep
   // reading the raw field, so bridged pixels take plain water colour.
@@ -8327,14 +8403,17 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
     fw = fw + rp.bridge.x * rp.bridge.w * gate * nbMax;
   }
   var aWaterEdge = smoothstep(t - s, t + s, fw);
-  let aOilEdge   = smoothstep(t - s, t + s, f.b);
+  let oilSoft = max(rp.surf.y, 0.001);
+  let aOilEdge   = smoothstep(t - oilSoft, t + oilSoft, f.b);
   // Contact can have zero field after the collision ring separates the
   // outer particle row from a wall. Close the narrow wall/floor seam, but
   // never search upward toward a ceiling: that painted an adhesive film
   // above a receding free surface. The cached band limits work to the rim.
   // Each tap stays in the same open passage; a dry pocket or lone drop
   // cannot supply a body, and no field is carried through solid terrain.
-  if (rp.bridge.x > 0.0 && terrain.g > 0.01 && aWaterEdge < 0.999) {
+  // Position support already reaches occupied contact layers. Borrowing
+  // another row's field would paint over genuine pockets beside walls.
+  if (rp.bridge.x > 0.0 && rp.reconstruction.x < 0.5 && terrain.g > 0.01 && aWaterEdge < 0.999) {
     let dirs = array<vec2<f32>, 5>(
       vec2<f32>(-1.0, 0.0), vec2<f32>(1.0, 0.0),
       vec2<f32>(0.0, 1.0),
@@ -8386,7 +8465,7 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
   // as water at that body's edge alpha. A lone droplet peaks near half
   // the threshold, so spray passing low over a floor cannot trigger it;
   // only a real body resting or jiggling above its floor does.
-  if (rp.bridge.x > 0.0 && aWaterEdge < 0.999) {
+  if (rp.bridge.x > 0.0 && rp.reconstruction.x < 0.5 && aWaterEdge < 0.999) {
     let dpw = max(rp.dpws, 0.001);
     if (compositeTerrainSolid(vec2<f32>(wp.x, wp.y + 3.0 / dpw))) {
       let r = max(rp.bridge.y, 1.0);
@@ -8592,7 +8671,7 @@ fn particleVertex(vid : u32, iid : u32, grainPass : bool) -> VOut {
   // the composite bridge; strength 0 restores the raw test.
   var fCov = field.r;
   let tD = rp.surf.x;
-  let sD = max(rp.surf.y, 0.001);
+  let sD = waterSurfaceSoftness();
   if (rp.bridge.x > 0.0 && rp.bridge.w > 0.0 && fCov > tD * 0.08 && fCov < tD + sD) {
     let rB = max(rp.bridge.y, 1.0);
     let dB = rB * 0.7071;
@@ -10420,22 +10499,17 @@ fn machinePointExitClear(a:vec2<f32>,b:vec2<f32>,r:f32)->bool {
     instance.renderCtx     = ctx;
     instance.renderFormat  = fmt;
 
-    // --- RenderParams uniform — 28 f32 lanes, 112 bytes ---
-    // 8 scalars (32 B) + 3 vec4 colour fields (48 B) + the v24.113 surf
-    // vec4 (16 B: threshold, softness, splat scale, on/off). The legacy
-    // disc shader's struct only declares the first 80 bytes; binding the
-    // larger buffer to it is valid (buffer >= struct).
+    // RenderParams: 8 scalars, 3 colours, surface, tint, bridge and
+    // reconstruction, 36 f32 lanes. Older shaders read only their prefix.
     instance.renderParamsBuf = dev.createBuffer({
       label: 'liquid.renderParams',
-      size: 128,
+      size: 144,
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
     });
-    instance.renderParamsHost = new Float32Array(32);   // 8 vec4 (v26.57 bridge)
+    instance.renderParamsHost = new Float32Array(36);
 
     // --- render bind group layout: uniform + 3 read-only particle bufs --
-    var bgl = dev.createBindGroupLayout({
-      label: 'liquid.renderBGL',
-      entries: [
+    var renderEntries = [
         { binding: 0, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT, buffer: { type: 'uniform' } },
         { binding: 1, visibility: GPUShaderStage.VERTEX, buffer: { type: 'read-only-storage' } },
         { binding: 2, visibility: GPUShaderStage.VERTEX, buffer: { type: 'read-only-storage' } },
@@ -10445,8 +10519,8 @@ fn machinePointExitClear(a:vec2<f32>,b:vec2<f32>,r:f32)->bool {
         // legacy-disc + dbg-dots shaders that share this layout ignore them).
         { binding: 4, visibility: GPUShaderStage.VERTEX, buffer: { type: 'uniform' } },
         { binding: 5, visibility: GPUShaderStage.VERTEX, buffer: { type: 'read-only-storage' } }
-      ]
-    });
+      ];
+    var bgl = dev.createBindGroupLayout({ label: 'liquid.renderBGL', entries: renderEntries });
     instance.terrainRenderBGL = dev.createBindGroupLayout({
       label: 'liquid.terrainRenderBGL',
       entries: [
@@ -10528,7 +10602,7 @@ fn machinePointExitClear(a:vec2<f32>,b:vec2<f32>,r:f32)->bool {
     // disc renderer keeps drawing; it must never take down Stage 7.
     try {
       var fieldMod = dev.createShaderModule({ code: toyNativeShader(instance, WGSL_SURFACE_COMMON + WGSL_SURFACE_FIELD) });
-      instance.surfFieldPipeline = dev.createRenderPipeline({
+      var fieldDescriptor = {
         label: 'liquid.surfField',
         layout: dev.createPipelineLayout({ bindGroupLayouts: [bgl] }),
         vertex: { module: fieldMod, entryPoint: 'vs' },
@@ -10555,7 +10629,31 @@ fn machinePointExitClear(a:vec2<f32>,b:vec2<f32>,r:f32)->bool {
           }]
         },
         primitive: { topology: 'triangle-list' }
-      });
+      };
+      instance.surfFieldPipeline = dev.createRenderPipeline(fieldDescriptor);
+      if (instance.surfaceFromPositions) {
+        var supportMod = dev.createShaderModule({ code: toyNativeShader(instance, WGSL_SURFACE_COMMON + WGSL_SURFACE_SUPPORT) });
+        instance.surfSupportPipeline = dev.createRenderPipeline({
+          label: 'liquid.positionSupport', layout: fieldDescriptor.layout,
+          vertex: { module: supportMod, entryPoint: 'vs' },
+          fragment: { module: supportMod, entryPoint: 'fs', targets: [{
+            format: 'r16float', blend: {
+              color: { srcFactor: 'one', dstFactor: 'one', operation: 'add' },
+              alpha: { srcFactor: 'one', dstFactor: 'one', operation: 'add' }
+            }
+          }] }, primitive: fieldDescriptor.primitive
+        });
+        instance.surfReconstructBGL = dev.createBindGroupLayout({ label: 'liquid.positionReconstructionBGL',
+          entries: renderEntries.concat([{ binding: 6, visibility: GPUShaderStage.VERTEX,
+            texture: { sampleType: 'unfilterable-float' } }]) });
+        var reconstructMod = dev.createShaderModule({ code: toyNativeShader(instance, WGSL_SURFACE_COMMON + WGSL_SURFACE_RECONSTRUCT) });
+        instance.surfReconstructPipeline = dev.createRenderPipeline(Object.assign({}, fieldDescriptor, {
+          label: 'liquid.positionReconstruction',
+          layout: dev.createPipelineLayout({ bindGroupLayouts: [instance.surfReconstructBGL] }),
+          vertex: { module: reconstructMod, entryPoint: 'vs' },
+          fragment: Object.assign({}, fieldDescriptor.fragment, { module: reconstructMod })
+        }));
+      }
       instance.surfCompositeBGL = dev.createBindGroupLayout({
         label: 'liquid.surfCompositeBGL',
         entries: [
@@ -10649,6 +10747,23 @@ fn machinePointExitClear(a:vec2<f32>,b:vec2<f32>,r:f32)->bool {
         usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING
       });
       instance.surfTexView = instance.surfTex.createView();
+      if (instance.surfSupportPipeline) {
+        if (instance.surfSupportTex) instance.surfSupportTex.destroy();
+        instance.surfSupportTex = instance.device.createTexture({ label: 'liquid.positionSupport',
+          size: [Math.max(1, cw), Math.max(1, ch)], format: 'r16float',
+          usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING });
+        instance.surfSupportView = instance.surfSupportTex.createView();
+        instance.surfReconstructBG = instance.device.createBindGroup({ label: 'liquid.positionReconstructionBG',
+          layout: instance.surfReconstructBGL, entries: [
+            { binding: 0, resource: { buffer: instance.renderParamsBuf } },
+            { binding: 1, resource: { buffer: instance.buf.pos } },
+            { binding: 2, resource: { buffer: instance.buf.aux } },
+            { binding: 3, resource: { buffer: instance.buf.flag } },
+            { binding: 4, resource: { buffer: instance.paramsBuf } },
+            { binding: 5, resource: { buffer: instance.buf.cellCount } },
+            { binding: 6, resource: instance.surfSupportView }
+          ] });
+      }
       if (instance.surfPigmentTex) { try { instance.surfPigmentTex.destroy(); } catch (_) {} }
       instance.surfPigmentTex = instance.device.createTexture({
         label: 'liquid.surfPigment',
@@ -10699,6 +10814,51 @@ fn machinePointExitClear(a:vec2<f32>,b:vec2<f32>,r:f32)->bool {
       try { console.log('LiquidWGPU Stage 7b: field texture build failed (' + ((eTex && eTex.message) || eTex) + '); legacy disc renderer stays.'); } catch (_) {}
       return false;
     }
+  }
+
+  function encodeSurfaceAirMask(instance, enc) {
+    var model = instance.toyMembrane, buffers = model && model.buffers;
+    if (!instance.surfaceFromPositions || !buffers || !buffers.position || !buffers.material || !buffers.ledger) return;
+    var dev = instance.device;
+    if (!instance.surfAirMaskPipeline) {
+      var shader = dev.createShaderModule({ code: WGSL_SURFACE_COMMON + WGSL_SURFACE_AIR_MASK });
+      instance.surfAirMaskPipeline = dev.createRenderPipeline({ label: 'liquid.resolvedAirMask', layout: 'auto',
+        vertex: { module: shader, entryPoint: 'vs' },
+        fragment: { module: shader, entryPoint: 'fs', targets: [{ format: instance.renderFormat, blend: {
+          color: { srcFactor: 'zero', dstFactor: 'one-minus-src-alpha', operation: 'add' },
+          alpha: { srcFactor: 'zero', dstFactor: 'one-minus-src-alpha', operation: 'add' }
+        } }] }, primitive: { topology: 'triangle-list' } });
+      instance.surfAirArgs = dev.createBuffer({ size: 16, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.INDIRECT });
+      var argsShader = dev.createShaderModule({ code: /* wgsl */ `
+@group(0) @binding(0) var<storage, read> ledger : array<i32>;
+@group(0) @binding(1) var<storage, read> positions : array<vec4<f32>>;
+@group(0) @binding(2) var<storage, read_write> args : array<u32>;
+@compute @workgroup_size(1) fn main() {
+  args[0] = 6u; args[1] = min(u32(max(0, ledger[4])), arrayLength(&positions)); args[2] = 0u; args[3] = 0u;
+}` });
+      instance.surfAirArgsPipeline = dev.createComputePipeline({ layout: 'auto', compute: { module: argsShader, entryPoint: 'main' } });
+    }
+    if (instance.surfAirModel !== model) {
+      instance.surfAirModel = model;
+      instance.surfAirMaskBG = dev.createBindGroup({ layout: instance.surfAirMaskPipeline.getBindGroupLayout(0), entries: [
+        { binding: 0, resource: { buffer: instance.renderParamsBuf } },
+        { binding: 1, resource: { buffer: buffers.position } },
+        { binding: 2, resource: { buffer: buffers.material } },
+        { binding: 3, resource: { buffer: buffers.ledger } }
+      ] });
+      instance.surfAirArgsBG = dev.createBindGroup({ layout: instance.surfAirArgsPipeline.getBindGroupLayout(0), entries: [
+        { binding: 0, resource: { buffer: buffers.ledger } },
+        { binding: 1, resource: { buffer: buffers.position } },
+        { binding: 2, resource: { buffer: instance.surfAirArgs } }
+      ] });
+    }
+    var argsPass = enc.beginComputePass({ label: 'liquid.resolvedAirDrawArgs' });
+    argsPass.setPipeline(instance.surfAirArgsPipeline); argsPass.setBindGroup(0, instance.surfAirArgsBG);
+    argsPass.dispatchWorkgroups(1); argsPass.end();
+    var maskPass = enc.beginRenderPass({ label: 'liquid.resolvedAirMask', colorAttachments: [{
+      view: instance.renderCtx.getCurrentTexture().createView(), loadOp: 'load', storeOp: 'store' }] });
+    maskPass.setPipeline(instance.surfAirMaskPipeline); maskPass.setBindGroup(0, instance.surfAirMaskBG);
+    maskPass.drawIndirect(instance.surfAirArgs, 0); maskPass.end();
   }
 
   /* Render the GPU particle buffer to liquidWGPUCanvas. `view` carries the
@@ -10855,6 +11015,7 @@ fn machinePointExitClear(a:vec2<f32>,b:vec2<f32>,r:f32)->bool {
     // Gap bridge, contact wetting and render-only droplet stretch (lanes 28-31).
     rh[28] = LIQUID_SURF_BRIDGE;   rh[29] = LIQUID_SURF_BRIDGE_R;
     rh[30] = instance.dropletStretch; rh[31] = instance.surfaceGapBridge;
+    rh[32] = instance.surfaceFromPositions ? 1 : 0;
     instance.queue.writeBuffer(instance.renderParamsBuf, 0, rh);
 
     // v24.113 — surface render: splat the particles into the offscreen
@@ -10866,6 +11027,16 @@ fn machinePointExitClear(a:vec2<f32>,b:vec2<f32>,r:f32)->bool {
     var snowCount = uploadAirborneSnow(instance, view.airborneSnow);
     var enc = dev.createCommandEncoder({ label: 'liquid.runRender' });
     if (useSurface) {
+      var reconstruct = instance.surfaceFromPositions && !!instance.surfSupportPipeline;
+      if (reconstruct) {
+        var supportPass = enc.beginRenderPass({ label: 'liquid.positionSupportPass',
+          colorAttachments: [{ view: instance.surfSupportView,
+            clearValue: { r: 0, g: 0, b: 0, a: 0 }, loadOp: 'clear', storeOp: 'store' }] });
+        supportPass.setPipeline(instance.surfSupportPipeline);
+        supportPass.setBindGroup(0, instance.renderBG);
+        if (count > 0) supportPass.draw(6, count);
+        supportPass.end();
+      }
       var fieldPass = enc.beginRenderPass({
         label: 'liquid.surfFieldPass',
         colorAttachments: [{
@@ -10884,8 +11055,8 @@ fn machinePointExitClear(a:vec2<f32>,b:vec2<f32>,r:f32)->bool {
         }]
       });
       if (count > 0) {
-        fieldPass.setPipeline(instance.surfFieldPipeline);
-        fieldPass.setBindGroup(0, instance.renderBG);
+        fieldPass.setPipeline(reconstruct ? instance.surfReconstructPipeline : instance.surfFieldPipeline);
+        fieldPass.setBindGroup(0, reconstruct ? instance.surfReconstructBG : instance.renderBG);
         fieldPass.draw(6, count);
       }
       if (snowCount > 0) {
@@ -10925,6 +11096,7 @@ fn machinePointExitClear(a:vec2<f32>,b:vec2<f32>,r:f32)->bool {
         }
       }
       compPass.end();
+      encodeSurfaceAirMask(instance, enc);
     } else {
       var pass = enc.beginRenderPass({
         label: 'liquid.renderPass',
@@ -12679,6 +12851,8 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
       // Free-space gap filling is separate from terrain contact wetting.
       surfaceGapBridge: typeof opts.surfaceGapBridge === 'number' && isFinite(opts.surfaceGapBridge)
         ? Math.max(0, Math.min(1, opts.surfaceGapBridge)) : 1,
+      // Render-only parcel reconstruction; simulation density is untouched.
+      surfaceFromPositions: !!opts.surfaceFromPositions,
       adapter: null,
       device: null,
       queue: null,
@@ -12738,6 +12912,10 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
       renderReady: false,   // render canvas + pipeline built (Stage 7)
       surfReady: false,         // v24.113 — surface-render pipelines built (Stage 7b)
       surfFieldPipeline: null,  // v24.113 — particle -> density-field splat pipeline
+      surfSupportPipeline: null, surfSupportTex: null, surfSupportView: null,
+      surfReconstructPipeline: null, surfReconstructBGL: null, surfReconstructBG: null,
+      surfAirMaskPipeline: null, surfAirMaskBG: null, surfAirModel: null,
+      surfAirArgs: null, surfAirArgsPipeline: null, surfAirArgsBG: null,
       surfCompositePipeline: null, // v24.113 — field -> canvas threshold composite
       surfDropletPipeline: null,   // v26.16 — field-coverage droplet pass
       surfGrainPipeline: null,     // grains blend after every water droplet
@@ -13018,6 +13196,7 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
             case 'DROPLETS':             LIQUID_DROPLETS = v ? 1 : 0; break;   // v25.32 visible strays/spray
             case 'DROPLET_STRETCH':      instance.dropletStretch = Math.max(0, Math.min(1, v)); break;
             case 'SURFACE_GAP_BRIDGE':   instance.surfaceGapBridge = Math.max(0, Math.min(1, v)); break;
+            case 'SURFACE_FROM_POSITIONS': instance.surfaceFromPositions = v >= 0.5; break;
             // v25.57 BATH B1 heat tint (docs/game/BATHHOUSE_PLAN.md): dial
             // the hot-water look for the feel-check; STR 0 kills the tint.
             case 'BATH_TINT_R':          LIQUID_BATH_TINT_R = v; break;
@@ -13318,6 +13497,8 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
         if (instance.simParamsBuf) { try { instance.simParamsBuf.destroy(); } catch (_) {} }
         if (instance.renderParamsBuf) { try { instance.renderParamsBuf.destroy(); } catch (_) {} }
         if (instance.surfSnowTex) { try { instance.surfSnowTex.destroy(); } catch (_) {} }
+        if (instance.surfSupportTex) { try { instance.surfSupportTex.destroy(); } catch (_) {} }
+        if (instance.surfAirArgs) { try { instance.surfAirArgs.destroy(); } catch (_) {} }
         if (instance.snowAirTexture) { try { instance.snowAirTexture.destroy(); } catch (_) {} }
         if (instance.snowProjectedAir) { try { instance.snowProjectedAir.destroy(); } catch (_) {} }
         if (instance.snowGrainParams) { try { instance.snowGrainParams.destroy(); } catch (_) {} }

@@ -68,20 +68,29 @@ browser regression.
 
 ## Water appearance
 
-The demo uses Sluice's density-sensitive water kernels in ordinary scenes and
-native machines. Underdense parcels shrink into visible droplets; dense pool
-interiors keep their full support. The former native-only `VOLUME_SPLATS` override
-made loose groups keep full-size kernels and look like thick connected strands.
+Every demo uses the shared renderer's `surfaceFromPositions` option. A compact
+water-only field measures current particle support, independently of pressure
+density, sleeping flags and the simulation neighbor grid. That grid can contain
+only grains after sand or ice contacts, which formerly cut holes in occupied
+water. Supported parcels gain a bounded kernel radius, from 2.58 to 3.6 world
+pixels, to close small sampling gaps in pools and pipes. Sparse parcels keep
+the compact footprint and draw as round droplets. The former global radius
+scale of 2 enlarged detached groups as well as pools.
 
-The demo also disables free-space gap filling through the per-instance
-`surfaceGapBridge` render setting. Terrain contact wetting remains active. Both
-the surface and droplet coverage passes use this setting, so separated parcels
-remain visible. The game retains its existing renderer defaults.
+Free-space gap filling and terrain seam borrowing are disabled in this mode.
+Water still clips to the visible walls. The reconstruction smooths gaps at the
+particle sampling scale; larger empty cavities remain visible. Explicit bubble
+models supply their current GPU positions, radii and active states to a separate
+water cutout, preserving even compressed bubbles smaller than a kernel. Soft
+appearance presets cannot promote a lone particle into a surface blob.
 
-`node tools/test-water-demo.mjs` compares the same frozen faucet with the old
-and current finishes, measures separated stream components and dense pool
-coverage, and verifies exact particle-buffer and clock equality. These changes
-do not alter native transport, pressure, viscosity, boundaries or inventory.
+`node tools/test-water-surface.mjs` constructs, advances and renders every public
+scene, with additional landscape mobile checks across the solver families. Its
+frozen fixtures cover shallow layers, narrow pipes, low density, grain-only
+neighbor counts, separated splash groups, empty cavities and small gas
+interfaces. Drawing preserves exact position, auxiliary, affine, pressure,
+material and native inventory buffers. The game retains its existing renderer
+and physics defaults. Captures and measurements go outside the repository.
 
 ## Sand dam setup
 

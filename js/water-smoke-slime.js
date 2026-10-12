@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.152'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.153'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -1548,6 +1548,7 @@
       // Every scene draws the current water position without velocity trails.
       dropletStretch: 0,
       surfaceGapBridge: 0,
+      surfaceFromPositions: true,
       // Helpers download alongside engine boot. Native configuration happens
       // only after they settle, so resolve the factory at that point.
       toyNativeExtension: bootMachine || handsRequested ? function(instance,options){return window.WSSNative.create(instance,options);} : undefined,
@@ -1648,13 +1649,11 @@
             liquidWGPU.setRenderParam('WATER_FOAM_G', 0.78);
             liquidWGPU.setRenderParam('WATER_FOAM_B', 0.82);
             liquidWGPU.setRenderParam('WATER_ALPHA', 0.86);
-            // Reconstruct supported water with overlapping surface kernels.
-            // Tightly cropped kernels turn normal particle gaps
-            // into long tears, especially in the shallow fountain reservoirs.
-            // The neighbour gate still shrinks isolated spray, the droplet
-            // pass stays compact, and the composite clips at the real walls.
+            // Position support keeps occupied pools and pipes continuous,
+            // while detached particles remain compact droplets. The radius
+            // scale below is retained for oil and the reference renderer.
             liquidWGPU.setRenderParam('SURFACE_THRESH', 1.8);
-            liquidWGPU.setRenderParam('SURFACE_RSCALE', 2);
+            liquidWGPU.setRenderParam('SURFACE_RSCALE', 0.9);
             // Per-particle proof dots start hidden. The toolbar toggle keeps
             // the diagnostic pass available without making it the landing view.
             applyParticleDebug();
@@ -13490,7 +13489,7 @@
     WATER_FOAM_R: 0.66, WATER_FOAM_G: 0.78, WATER_FOAM_B: 0.82,
     // A narrow antialiased edge replaces the broad translucent fringe.
     // Changing away from Pearl also restores this surface softness.
-    SURFACE_THRESH: 1.8, SURFACE_RSCALE: 2, SURFACE_SOFT: 0.25
+    SURFACE_THRESH: 1.8, SURFACE_RSCALE: 0.9, SURFACE_SOFT: 0.25
   };
   function pushSim(map) { if (liquidWGPU && liquidWGPU.setSimParam) for (var k in map) liquidWGPU.setSimParam(k, map[k]); }
   function pushRender(map) { if (liquidWGPU && liquidWGPU.setRenderParam) for (var k in map) liquidWGPU.setRenderParam(k, map[k]); }
@@ -14674,9 +14673,8 @@
       toyBalloon=ownBalloon;liquidWGPU.setToyMembrane(ownBalloon);model={settings:{density:1}};
     }else if(definition.fire){
       liquidWGPU.setPressureModel(null);airState.ready=false;airPressureColors=false;
-      // Equal parcel kernels keep a stretched waterfall joined. The native
-      // neighbour gate still separates its spray into compact droplets.
-      liquidWGPU.setRenderParam('VOLUME_SPLATS',1);
+      // Fire water uses the same position-based body and spray reconstruction.
+      liquidWGPU.setRenderParam('VOLUME_SPLATS',0);
       // Fire has no pressure solver or native tap, but its whole vessel must
       // remain in the collision/grid domain between particle mirror updates.
       fireDomainPrevious=liquidWGPU.toyNativeDomain;fireDomainActive=true;

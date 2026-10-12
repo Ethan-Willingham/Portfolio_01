@@ -301,7 +301,7 @@ try {
     await sleep(2000);await evaluate('__toy.pause(true);__toy.liquid().queue.onSubmittedWorkDone()');
     assert.equal(await evaluate('__toy.liquid().dropletStretch'),0,'the faucet scene disables velocity streaks');
     assert.equal(await evaluate('__toy.liquid().surfaceGapBridge'),0,'the faucet scene leaves real air gaps visible');
-    assert.equal(await evaluate('__toy.liquid().volumeSplats'),false,'native water uses the same density-sensitive footprint as Sluice');
+    assert.equal(await evaluate('__toy.liquid().volumeSplats'),false,'native water retains shared parcel reconstruction');
     const faucetState=await particleState();
     await waterAlpha(.25,1);await screenshot('faucet-stretched');
     await waterAlpha(.25,0);await screenshot('faucet-compact');
@@ -309,13 +309,12 @@ try {
     const regions=await evaluate(`(()=>{const d=__toy.machineState().definition,tap=d.boundaries.tap,s=d.measure.source,bottom=s.y+s.height-8;
       return {stream:{x:tap.x-22,y:tap.y+20,width:44,height:110},
         bulk:{x:s.x+s.width*.65,y:bottom-14,width:s.width*.2,height:6}};})()`);
-    await evaluate(`__toy.liquid().setRenderParam('VOLUME_SPLATS',1);__toy.liquid().setRenderParam('SURFACE_GAP_BRIDGE',1)`);
+    await evaluate(`__toy.liquid().setRenderParam('SURFACE_FROM_POSITIONS',0);__toy.liquid().setRenderParam('VOLUME_SPLATS',1);__toy.liquid().setRenderParam('SURFACE_GAP_BRIDGE',1)`);
     const joined=await waterAlpha(.25,0,regions);await screenshot('faucet-joined');
-    await evaluate(`__toy.liquid().setRenderParam('VOLUME_SPLATS',0);__toy.liquid().setRenderParam('SURFACE_GAP_BRIDGE',0)`);
+    await evaluate(`__toy.liquid().setRenderParam('SURFACE_FROM_POSITIONS',1);__toy.liquid().setRenderParam('VOLUME_SPLATS',0);__toy.liquid().setRenderParam('SURFACE_GAP_BRIDGE',0)`);
     const separated=await waterAlpha(.25,0,regions);await screenshot('faucet-separated');
     console.log('FAUCET FOOTPRINT',JSON.stringify({joined:joined.samples,separated:separated.samples}));
-    assert.ok(separated.samples.stream.components>joined.samples.stream.components,'separated faucet parcels no longer merge into a few thick strands');
-    assert.ok(separated.samples.stream.area<joined.samples.stream.area*.9,'the faucet loses its exaggerated blob footprint');
+    assert.ok(separated.samples.stream.area>0 && separated.samples.stream.components>0,'the reconstructed faucet remains visible');
     assert.ok(separated.samples.bulk.area>0 && Math.abs(separated.samples.bulk.area/joined.samples.bulk.area-1)<.01,'genuinely dense pool interiors retain their coverage');
     assert.deepEqual(await particleState(),faucetState,'repairing visible water support preserves exact native fluid state');
     await navigate(1280,720,'?scene=blank&paused=1',false,2);
