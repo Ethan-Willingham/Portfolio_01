@@ -66,8 +66,52 @@ register('interlayer-slime','Oil','Slime between oil and water','Drop and grab a
  d.viewBounds=rect(208,0,304,400);d.vessels=[box('jar','Oil and water',jar)];d.initial=[initial(rect(256,144,208,224))];d.materialSlip=slip();d.materialAt=function(x,y){return y>=256?'oil':'water';};
  d.slimes=[{x:360,y:104,radius:24}];d.measure={source:jar,receiver:jar};return d;
 });
+register('melting-ice','Ice','Floating ice that melts','Watch lightweight grain proxies move in water.','NOT WORKING',function(w,o){
+ var d=base('melting-ice','Floating ice that melts','Light grains stand in for ice; rigid cubes, freezing and melting are missing.',w,o),jar=rect(208,144,304,240);
+ d.viewBounds=rect(168,96,384,296);d.vessels=[box('jar','Ice proxies in water',jar)];d.initial=[initial(rect(216,264,288,112)),initial(rect(320,192,64,56))];
+ d.materialSlip=slip([1,.7733,.917]);d.materialAt=function(x,y){return x>=320&&x<384&&y>=192&&y<248?'sand':'water';};d.measure={source:jar,receiver:jar};
+ d.boundaryNote='Draft. These are native granular proxies with actual relative mass0.917, not ice cubes. No freezing, latent heat, thermal melting or rigid bond model is implemented.';return d;
+});
+register('frozen-pipe','Ice','Frozen pipe','Remove a real manual plug from the water pipe.','NOT WORKING',function(w,o){
+ var d=base('frozen-pipe','Frozen pipe','A manual plug blocks real water; freezing expansion and self-bursting are missing.',w,o),source=rect(128,80,184,304),cup=rect(528,312,144,72);
+ d.vessels=[box('source','Water head',source),box('cup','Receiving cup',cup)];d.pipes=[{points:[{x:296,y:304},{x:592,y:304}],bore:48}];
+ d.parts=[{id:'plug',type:'valve',rect:rect(432,288,16,48),direction:'right',open:false,mass:1}];d.initial=[initial(rect(136,176,168,200)),initial(rect(304,296,120,32))];
+ d.materialSlip=slip();d.materialAt=function(){return 'water';};d.primary={kind:'valve',id:'plug'};d.action='Remove proxy plug';d.measure={source:source,receiver:cup};return d;
+});
+register('oil-slick-fire','Oil','Burning oil slick','Pour water over the burner beside the slick.','PARTLY',function(w,o){
+ var d=base('oil-slick-fire','Burning oil slick','A declared burner burns beside real oil; the oil itself does not supply fuel yet.',w,o),jar=rect(248,184,224,192);
+ d.vessels=[box('jar','Oil slick and water',jar)];d.initial=[initial(rect(256,264,208,104))];d.materialSlip=slip();d.materialAt=function(x,y){return y<280?'oil':'water';};
+ d.solids=[rect(336,256,8,8),rect(376,256,8,8)];d.materialsDraft='oil-slick-fire';d.draftBurner={source:rect(352,248,16,16),x:360,y:248};d.primary={kind:'pour',target:{x:360,y:112}};d.action='Pour water';d.measure={source:jar,receiver:jar};return d;
+},['wss-fire']);
+register('soda-mentos','Bubbles','Soda and Mentos','Watch real fizz below the bottle mouth.','PARTLY',function(w,o){
+ var d=base('soda-mentos','Soda and Mentos','A held rough tablet makes real finite CO2 bubbles; eruption is not working yet.',w,o),bottle=rect(304,112,112,240),candy=rect(352,328,16,16);
+ d.viewBounds=rect(176,0,368,400);d.vessels=[box('basin','Spill basin',rect(200,112,320,280)),box('bottle','Soda',bottle)];d.solids=[rect(304,112,40,56),rect(376,112,40,56),candy];
+ d.initial=[initial(rect(312,176,96,168))];d.settings=pressure();d.boundaries={pool:false,tap:null,drain:null,caps:[],reservoirY:392};d.materialsDraft='soda-mentos';
+ d.draftFizz={inject:false,hose:{x:360,y:320},rateArea:0,parcelArea:26,dragCoefficient:1,gravity:250,fizz:{mentos:true,candy:candy,carbonationVolumes:o.flat?0:3.5}};
+ d.primary={kind:'pour',target:{x:360,y:88}};d.action='Pour flat water';d.measure={source:bottle,receiver:bottle};
+ d.boundaryNote='Draft. The rough tablet is held at the bottom. Initially dissolved CO2 is a finite authored inventory. Gas follows the preserved native Henry transfer; no air hose, prescribed jet or replenishment is present. New poured water begins flat.';return d;
+},['wss-drafts-fizz']);
+function fizzRuntime(context){
+ var L=context.liquid,A=context.airModel || root.__toy.airModel(),boundary=context.nativeBoundary || root.__toy.nativeBoundary(),d=context.definition;
+ return root.WSSDraftFizzBubbles.create(Object.assign({},d.draftFizz,{liquid:L,air:A,boundary:boundary,width:720,height:400,maxParticles:L.maxParticles})).then(function(model){
+  L.setToyMembrane(model);return {stats:model.stats,draw:function(c){var palette=getComputedStyle(document.documentElement);model.draw(c,{edge:palette.getPropertyValue('--accent').trim(),fill:palette.getPropertyValue('--accent').trim()});},destroy:model.destroy};
+ });
+}
+function burnerRuntime(context){
+ var L=context.liquid,S=context.SmokeFluid,d=context.definition,f=d.draftBurner;
+ return root.WSSFire.create({liquid:L,width:720,height:400,maxParticles:L.maxParticles,source:f.source,noEmber:false}).then(function(model){
+  var clock=L.simulationClock,accumulator=0;S.setThermalStyle({glow:1,waterCooling:24});
+  return {tick:function(){var now=L.simulationClock,h=Math.max(0,now-clock);clock=now;if(!h)return;model.tick(h,{count:L.uploadedCount,clock:now});
+   var heat=model.stats();S.setWetField(model.wetField());S.setPhysics({HEAT:Math.min(4,Math.max(0,(heat.sourceC-20)/200)),COOLING:1.2,BUOYANCY:350},0);
+   if(heat.burning){accumulator+=h;while(accumulator>=1/30){accumulator-=1/30;root.__toy.smoke(f.x,f.y,0,0,.012);}}
+  },stats:function(){return Object.assign({blocker:'The declared burner has its own fuel; oil consumption is not implemented.'},model.stats());},
+  destroy:function(){model.destroy();S.setWetField(null);S.setPhysics(null,0);S.setThermalStyle(null);}};
+ });
+}
 var previousRuntime=root.WSSDraftRuntime;
 root.WSSDraftRuntime={create:function(context){
+ if(context.definition.materialsDraft==='soda-mentos')return fizzRuntime(context);
+ if(context.definition.materialsDraft==='oil-slick-fire')return burnerRuntime(context);
  if(context.definition.materialsDraft!=='hero-jug')return previousRuntime&&previousRuntime.create?previousRuntime.create(context):null;
  var d=context.definition,oil=false;
  return {primary:function(){
