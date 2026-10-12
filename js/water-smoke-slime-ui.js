@@ -391,7 +391,9 @@
         button.style.left=left+'px';button.style.top=top+'px';button.style.width=width+'px';button.style.height=height+'px';
         button.classList.toggle('is-body-action',control.pointerMode==='tap-body');
         button.classList.toggle('is-button-action',control.pointerMode==='button');
-        button.classList.toggle('is-fan-action',control.pointerMode==='fan');
+        var fieldAction=control.pointerMode==='seal' || control.pointerMode==='airflow';
+        button.classList.toggle('is-field-action',fieldAction);
+        button.classList.toggle('is-inlet-action',control.pointerMode==='airflow');
         var heldControl=/^(thumb|fire-pour|pour)$/.test(control.kind);
         button.dataset.hold=String(heldControl);
         button.disabled=!!control.disabled;
@@ -400,8 +402,9 @@
         var labelWidth=label.offsetWidth,labelHeight=label.offsetHeight,labelCenter=left+width*.5;
         var fittedCenter=Math.max(8+labelWidth*.5,Math.min(view.width-8-labelWidth*.5,labelCenter));
         button.style.setProperty('--action-label-shift',(fittedCenter-labelCenter)+'px');
-        button.classList.toggle('is-label-above',top+height+4+labelHeight>view.height-8);
+        button.classList.toggle('is-label-above',control.pointerMode==='airflow' || top+height+4+labelHeight>view.height-8);
         if(heldControl)button.setAttribute('aria-pressed',String(activeHeldButton===button && (controlPointer!==null || !!controlKeyboard)));
+        else if(control.pressed!==undefined)button.setAttribute('aria-pressed',String(control.pressed));
         else button.removeAttribute('aria-pressed');
       });
       actionButtons.forEach(function(button,key){if(!liveKeys.has(key)){if(activeHeldButton===button)releaseHeldControl();button.remove();actionButtons.delete(key);}});
@@ -525,8 +528,8 @@
       if(trap){
         var trapFan=liveMachine && liveMachine.definition.draftFireSmoke.fan.enabled;
         pressureLabel=state.paused?'Paused':liveMachine && liveMachine.definition.setup==='dry'?'Trap dry':'Water seal';
-        if(!trapFan && !state.paused)pressureLabel+=', fan off';
-        pressureMessage=(trapFan?'A simulated fan pushes air from the left. Smoke follows that air. ':'The fan is off. Moving air keeps coasting; the smoke source stays on. ')+(liveMachine && liveMachine.definition.caption || 'Starting the comparison.');
+        if(!trapFan && !state.paused)pressureLabel+=', airflow off';
+        pressureMessage=liveMachine && liveMachine.definition.caption || 'Starting the comparison.';
         text('toy-hint',pressureMessage);
       }
       document.getElementById('toy-machine-diagnostics').hidden=!contextual || fire || balloon || thirsty || trap;
@@ -584,7 +587,7 @@
       }
       if(native && liveMachine && !setup.disabled){setup.value=liveMachine.definition.setup==='held' ? 'released' : liveMachine.definition.setup;}
       if(native && liveMachine){
-        text('toy-native-setup-note',sluice ? 'Equal densities changes gold mass. Without riffles removes the raised bars. Each setup starts with the same water and grains.' : trap ? 'Switching removes or restores the water and starts fresh smoke. The fan and pipe stay the same.' : thirsty ? 'Water off starts with a dry slime and no water. Restart restores the selected setup.' : slip ? 'Matched densities repeats the same jar with equal parcel masses. Water and oil keep their different numerical filters.' : cave ? 'Changing a setup resets the cave air and its finite smoke charge.' : 'Choosing a setup restarts it with the same initial water. Hold starts a freshly filled straw; releasing opens its top.');
+        text('toy-native-setup-note',sluice ? 'Equal densities changes gold mass. Without riffles removes the raised bars. Each setup starts with the same water and grains.' : trap ? 'Switching removes or restores the water and starts fresh smoke. The airflow setting stays the same.' : thirsty ? 'Water off starts with a dry slime and no water. Restart restores the selected setup.' : slip ? 'Matched densities repeats the same jar with equal parcel masses. Water and oil keep their different numerical filters.' : cave ? 'Changing a setup resets the cave air and its finite smoke charge.' : 'Choosing a setup restarts it with the same initial water. Hold starts a freshly filled straw; releasing opens its top.');
         var b=liveMachine.definition.boundaries || {pool:false};
         text('toy-native-boundaries',liveMachine.definition.boundaryNote || (b.pool ? 'Drained water feeds the tap. The powered return adds energy to lift it. The tap requests '+b.tap.rate+' parcels per simulation second at '+b.tap.vy+' pixels per second downward; each parcel represents 1.5625 square pixels. All '+state.allocation+' allocated slots are either present water or stored reserve.' : 'Only the upper opening is held. The lower end stays open. The side-hole comparison connects the upper air space to the room.'));
         var ledger=sample.boundary;

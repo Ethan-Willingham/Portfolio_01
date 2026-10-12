@@ -55,19 +55,19 @@
       d.draftFireSmoke={kind:id,pressure:true,labels:[{x:bottom.x+24,y:bottom.y-12,text:'Smoke in air link'}],
         tracers:link.points.concat([{x:bottom.x+bottom.width*.5,y:bottom.y+20}]),probes:link.points.map(function(p,i){return {id:'air-link-'+i,x:p.x,y:p.y};})};
     }else if(id==='sewer-gas-trap'){
-      var dry=options.dry===true;d.setup=dry?'dry':'wet';d.action=dry?'Refill trap':'Dry out trap';d.primary={kind:'draft-trap-setup',dry:dry};
-      d.caption=dry?'The empty bend gives smoke a path into the room. Refill the trap to block it again.':'Smoke reaches the water and stops. Dry out the trap to open the path into the room.';
+      var dry=options.dry===true;d.setup=dry?'dry':'wet';d.action=dry?'Water off':'Water on';d.primary={kind:'draft-trap-setup',dry:dry};
+      d.caption='Click the water to dry or refill the bend. Click the inlet to switch airflow. Each change starts fresh.';
       d.setups=[{id:'wet',label:'Water seal',options:{dry:false}},{id:'dry',label:'Dry trap',options:{dry:true}}];
       d.pipes=[{id:'trap',points:[{x:112,y:184},{x:256,y:184},{x:256,y:304},{x:432,y:304},{x:432,y:184},{x:608,y:184}],bore:48,primed:false}];
       // Seed only the pipe's interior below its waterline. A rectangular fill
       // also placed water in the open space above the inner wall of the bend.
       d.initial=dry?[]:[{kind:'pipe',points:d.pipes[0].points,bore:48,exclude:[{kind:'rect',rect:rect(0,0,720,236)}]}];
       q.fan={x:144,top:168,bottom:200,spacing:8,acceleration:2800,enabled:options.fanOff!==true};
-      q.tracers=[{x:152,y:176},{x:152,y:184},{x:152,y:192}];q.labels=[{x:88,y:144,text:'Sewer gas'},{x:464,y:144,text:'Into the room'},{x:296,y:364,text:dry?'Empty bend':'Water seal'}];
+      q.tracers=[{x:152,y:176},{x:152,y:184},{x:152,y:192}];q.labels=[{x:464,y:144,text:'Into the room'}];
       q.probes=[{id:'sewer',x:208,y:184},{id:'above-water',x:256,y:252},{id:'bend',x:344,y:304},{id:'room-outlet',x:560,y:184},{id:'room-plume',x:640,y:184}];
       q.regions=[{id:'room',rect:rect(616,120,88,160)}];
-      d.boundaryNote='The pale smoke traces air pushed in from the left. Water in the bend blocks its path. Dry out trap removes the water; Refill trap restores the seal. Each switch starts a fresh comparison.';
-      d.energyBudgetStatus='A declared fan supplies air momentum at the left inlet. Native water density supplies the air boundary in the separate smoke solver; air-to-water pressure feedback is absent. Switching wet and dry rebuilds the initial apparatus, not a running drain.';
+      d.boundaryNote='The pale smoke traces air pushed in from the left. Click the water seal to remove or restore it; click the inlet to switch airflow. Each switch starts a fresh comparison.';
+      d.energyBudgetStatus='A declared external force supplies air momentum at the left inlet. Native water density supplies the air boundary in the separate smoke solver; air-to-water pressure feedback is absent. Each toggle rebuilds the initial apparatus.';
     }
     return d;
   }
@@ -124,18 +124,10 @@
       });return report;
     }
     return {prepare:prepare,stats:stats,ventilation:ventilation,
-      toggleFan:function(){if(!trap)return false;q.fan.enabled=!q.fan.enabled;return true;},
       draw:function(c){c.save();q.labels.forEach(function(label){c.textAlign=label.align || 'left';c.fillText(label.text,label.x,label.y);});
       if(trap){
-        var unit=parseFloat(c.font)/12;c.textAlign='center';
-        c.fillText(q.fan.enabled?'Fan drives air; smoke follows.':'Fan off: no new push.',344,108);
-        c.fillText(definition.setup==='dry'?'Dry bend: smoke can pass.':'Wet bend blocks smoke.',344,108+18*unit);
-        // The fan symbol identifies the declared force source. Its drawing
-        // supplies no velocity; prepare() is the only fan momentum source.
-        c.save();c.translate(80,184);c.lineWidth=unit;c.beginPath();c.arc(0,0,12*unit,0,Math.PI*2);c.stroke();
-        c.rotate(q.fan.enabled?clock*4:0);
-        for(var blade=0;blade<3;blade++){c.rotate(Math.PI*2/3);c.beginPath();c.moveTo(0,0);c.quadraticCurveTo(10*unit,-8*unit,9*unit,0);c.stroke();}
-        c.restore();
+        c.textAlign='center';
+        c.fillText(definition.setup==='dry'?'Dry bend: smoke can pass.':'Water blocks the path.',344,108);
       }
       c.restore();},
       destroy:function(){var resized=fluid.config.SIM_RESOLUTION!==saved.SIM_RESOLUTION;

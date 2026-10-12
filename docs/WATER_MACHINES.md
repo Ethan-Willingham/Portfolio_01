@@ -6,29 +6,29 @@ measurements. Full quantitative physical acceptance and steady 60 FPS remain unv
 
 ## Sewer gas trap
 
-The wet bend blocks pale smoke arriving from the left. The visible Dry out trap
-button removes the native water and starts fresh smoke; Refill trap restores
-the seal and clears the previous comparison. Both work while paused. Water is
+The wet bend blocks pale smoke arriving from the left. Click the water itself
+to remove or restore it. Its plain Water on / Water off label sits below the
+seal, with no boxed button. Both states work while paused. Water is
 seeded only inside the pipe below its waterline, preventing the accidental pool
 above the inner wall. The main view names the wet or dry state, with no pressure
 readings to wait for.
 
-The inlet has a visible fan and Stop fan / Start fan control. Stopping leaves
-the existing air and smoke in place, with no new fan impulse; smoke injection
-continues with zero momentum. The fan setting survives wet/dry switches. Main
-labels identify the force source and the water seal. How it works explains the
+The inlet has a plain Airflow on / Airflow off toggle centered on the entrance
+pipe, with no fan illustration. Both toggles restart the water and smoke for
+a fresh comparison, preserving the other setting and manual pause. Smoke
+injection continues with zero momentum when airflow is off. How it works explains the
 calculated airflow, the passive smoke tracer and the missing air-to-water
 pressure response, with links to both source files. The browser regression
-compares the driven dry trap with the same fresh dry setup and its fan off:
-the latter has zero airflow and no smoke in the room. Starting its fan then
-advects that existing tracer through the pipe.
+compares the driven dry trap with the same fresh dry setup and airflow off:
+the latter has zero airflow and no smoke in the room. Switching airflow on
+starts a fresh driven setup that advects smoke through the pipe.
 
 This scene enables the shared smoke solver's solid pressure boundaries and an
 optional liquid barrier derived from the current native water density field.
 Advection clips its backtrace at water and walls instead of sampling through
 them. The pressure grid is capped at 128 cells on its short axis, independent
 of the visible smoke resolution. Other scenes and the game leave the liquid
-barrier disabled. The fan supplies momentum and smoke supplies passive dye;
+barrier disabled. The inlet force supplies momentum and smoke supplies passive dye;
 air pressure cannot displace the water seal. Switching compares fresh setups,
 without simulating evaporation or a drain.
 

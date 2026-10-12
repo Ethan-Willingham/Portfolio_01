@@ -328,7 +328,13 @@ body.toy-app ::selection { background: var(--selection-bg); color: var(--selecti
   position: static; display: block; width: auto; transform: none; padding: 0 10px; border: 0;
   background: transparent; opacity: 1;
 }
-.toy-scene-action.is-fan-action .toy-scene-action-label { opacity: 1; }
+.toy-app .toy-shell .toy-scene-action.is-field-action { border-radius: 0; }
+.toy-scene-action.is-field-action .toy-scene-action-label {
+  border: 0; background: transparent; padding: 4px 0; opacity: 1;
+  color: var(--text-dim); font-family: var(--font-mono); pointer-events: auto;
+}
+.toy-scene-action.is-field-action:hover .toy-scene-action-label,
+.toy-scene-action.is-field-action:focus-visible .toy-scene-action-label { color: var(--accent-hover); text-decoration: underline; text-underline-offset: 4px; }
 .toy-app #toy-trap-physics h3 { margin: 18px 0 8px; font: 600 14px/1.4 var(--font-body); color: var(--text); }
 .toy-app #toy-trap-physics .toy-panel-note { color: var(--text-dim); }
 .toy-app .toy-live-readout { display: flex; align-items: center; gap: 10px; margin-left: 8px; font: 11px/1.3 var(--font-mono); white-space: nowrap; }

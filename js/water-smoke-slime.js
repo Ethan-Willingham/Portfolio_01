@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.164'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.165'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -14925,9 +14925,10 @@
     else if(kind==='draft-motor')body(0);
     else if(kind==='draft-wall-toggle' && d.draftFireSmoke)atRect(d.draftFireSmoke.gate.rect);
     else if(kind==='draft-trap-setup'){
-      target(344,64,128,32,'primary','button');
-      label=d.draftFireSmoke.fan.enabled?'Stop fan':'Start fan';
-      target(80,184,36,36,'trap-fan','fan');
+      target(344,304,176,64,'primary','seal');controls[controls.length-1].pressed=!p.dry;
+      label=d.draftFireSmoke.fan.enabled?'Airflow on':'Airflow off';
+      target(d.pipes[0].points[0].x,d.pipes[0].points[0].y,48,48,'trap-airflow','airflow');
+      controls[controls.length-1].pressed=!!d.draftFireSmoke.fan.enabled;
     }
     else if(kind==='pour'){if(p.control)atRect(p.control,'primary','button');else target(p.target.x,p.target.y,44,44);}
     else if(kind==='draft-primary' && d.releaseCap)opening(d.releaseCap);
@@ -14939,7 +14940,10 @@
     if(held===false)return releaseMachineControl();
     var control=machineControlTargets().find(function(item){return item.id===id;});
     if(!control || control.disabled)return false;
-    if(id==='trap-fan' && toyFireSmokeDraft){var changed=toyFireSmokeDraft.toggleFan();machineOverlayCache=null;drawMachineOverlay();return changed;}
+    if(id==='trap-airflow' && toyFireSmokeDraft){
+      var d=machineState.definition;
+      return constructMachine(d.name,{dry:d.primary.dry,fanOff:!!d.draftFireSmoke.fan.enabled,seed:machineState.seed});
+    }
     if(control.kind==='thumb')return machineThumb(held!==false);
     if(control.kind==='fire-pour' || control.kind==='pour')return machinePour(held===true);
     return machinePrimary();

@@ -38,14 +38,19 @@ const server=http.createServer((req,res)=>{
           if(p.x>300 && p.x<412 && p.y<276)outside++;
         }
         const b=document.querySelector('.toy-scene-action[data-control="primary"]'),r=b.getBoundingClientRect(),label=b.firstElementChild;
+        const controls=T.machineControls(),waterControl=controls.find(c=>c.id==='primary'),airControl=controls.find(c=>c.id==='trap-airflow'),entrance=d.pipes[0].points[0];
         return {setup:d.setup,water:n,outside,minY,maxY,smoke:T.fireSmokeDraft().stats(true),
           label:b.textContent,labelOpacity:getComputedStyle(label).opacity,
+          plain:getComputedStyle(label).borderTopWidth==='0px' && getComputedStyle(label).backgroundColor==='rgba(0, 0, 0, 0)' && !b.classList.contains('is-button-action'),
+          waterTarget:waterControl.x===344 && waterControl.y===304,
+          inletTarget:airControl.x===entrance.x && airControl.y===entrance.y,
           control:{x:r.x,y:r.y,width:r.width,height:r.height,hidden:b.hidden},
           status:document.getElementById('toy-status').textContent,error:T.instruments().error||null};
       });
       reports.push({name,...report});console.log(name,JSON.stringify({setup:report.setup,water:report.water,outside:report.outside,seconds:report.smoke.seconds,probes:report.smoke.probes,regions:report.smoke.regions}));
       assert.equal(report.outside,0,'no water sitting above the inner pipe wall');
       assert.equal(report.labelOpacity,'1','comparison control is visible without hovering');
+      assert(report.plain && report.waterTarget && report.inletTarget,'plain targets sit on the seal and entrance pipe');
       assert(!report.control.hidden && report.control.width>=44 && report.control.height>=44,'control has a visible touch target');
       const view=page.viewportSize();
       assert(report.control.x>=0 && report.control.y>=0 && report.control.x+report.control.width<=view.width+.5 && report.control.y+report.control.height<=view.height+.5,'control stays within the viewport');
@@ -61,7 +66,7 @@ const server=http.createServer((req,res)=>{
       assert(report.smoke.regions[0].maxDye<1e-6,'the room stays clear');
     }
     function dry(report){
-      assert.equal(report.water,0,'dry button removes all water');
+      assert.equal(report.water,0,'water target removes all water');
       assert(dye(report,'room-outlet')>.015 && report.smoke.regions[0].maxDye>.02 && report.smoke.regions[0].meanDye>.003,'actual smoke passes through the pipe and emerges in the room');
     }
     await page.goto(`http://127.0.0.1:${server.address().port}/archive/water-smoke-slime/water-smoke-slime.html?scene=sewer-gas-trap&paused=1`);
@@ -70,38 +75,55 @@ const server=http.createServer((req,res)=>{
     await capture('wet-initial');await page.evaluate(()=>__toy.pause(false));
     await advance(6);sealed(await capture('desktop-wet'));
     await advance(24);sealed(await capture('desktop-wet-long'));
-    await page.getByRole('button',{name:'Dry out trap',exact:true}).click();
+    await page.getByRole('button',{name:'Water on',exact:true}).click();
     await page.waitForFunction(()=>__toy.machineState()?.ready&&__toy.machineState().definition.setup==='dry');
     await advance(12);const driven=await capture('desktop-dry');dry(driven);
-    await page.getByRole('button',{name:'Stop fan',exact:true}).click();
-    const stoppedImpulse=await page.evaluate(()=>__toy.fireSmokeDraft().stats(false).fanImpulse);
-    await advance(4);const coasting=await capture('desktop-fan-stopped');
-    assert.equal(coasting.smoke.fanEnabled,false);assert.equal(coasting.smoke.fanImpulse,stoppedImpulse,'stopping adds no more fan momentum');
-    assert(coasting.smoke.seconds>driven.smoke.seconds+3,'stopping the fan does not pause or restart the air');
-    assert(coasting.smoke.regions[0].maxDye>0,'existing smoke survives the fan switch');
-    await page.getByRole('button',{name:'Start fan',exact:true}).click();
-    await advance(2);const restarted=await capture('desktop-fan-restarted');
-    assert(restarted.smoke.fanEnabled && restarted.smoke.fanImpulse>coasting.smoke.fanImpulse);
-    // Paired fresh control: only the fan drive changes. Zero-momentum smoke
+    await page.getByRole('button',{name:'Airflow on',exact:true}).click();
+    await page.waitForFunction(()=>__toy.machineState()?.ready && !__toy.fireSmokeDraft().stats(false).fanEnabled);
+    assert((await page.evaluate(()=>__toy.fireSmokeDraft().stats(false).seconds))<2,'airflow switch restarts the clock');
+    await advance(4);const stopped=await capture('desktop-airflow-off');
+    assert.equal(stopped.smoke.fanEnabled,false);assert.equal(stopped.smoke.fanImpulse,0,'fresh off setup supplies no momentum');
+    assert.equal(stopped.smoke.regions[0].maxDye,0,'airflow switch clears the previous plume');
+    await page.getByRole('button',{name:'Airflow off',exact:true}).click();
+    await page.waitForFunction(()=>__toy.machineState()?.ready && __toy.fireSmokeDraft().stats(false).fanEnabled);
+    assert((await page.evaluate(()=>__toy.fireSmokeDraft().stats(false).seconds))<2,'turning airflow on also starts fresh');
+    await advance(12);dry(await capture('desktop-airflow-on'));
+    // Paired fresh control: only the inlet drive changes. Zero-momentum smoke
     // cannot traverse an empty trap without an airflow source.
     await page.evaluate(()=>__toy.machine('sewer-gas-trap',{dry:true,fanOff:true}));
-    await advance(12);const still=await capture('fresh-dry-no-fan');
+    await advance(12);const still=await capture('fresh-dry-no-airflow');
     assert.equal(still.smoke.fanImpulse,0);assert.equal(still.smoke.regions[0].maxDye,0);
     assert(still.smoke.probes.every(p=>Math.abs(p.vx)+Math.abs(p.vy)<1e-6),'smoke injection supplies no hidden velocity');
-    await page.getByRole('button',{name:'Start fan',exact:true}).click();
-    await advance(12);dry(await capture('same-dry-fan-started'));
-    await page.getByRole('button',{name:'Refill trap',exact:true}).click();
+    await page.getByRole('button',{name:'Airflow off',exact:true}).click();
+    await page.waitForFunction(()=>__toy.machineState()?.ready && __toy.fireSmokeDraft().stats(false).fanEnabled);
+    await advance(12);dry(await capture('same-dry-airflow-on'));
+    await page.getByRole('button',{name:'Water off',exact:true}).click();
     await page.waitForFunction(()=>__toy.machineState()?.ready&&__toy.machineState().definition.setup==='wet');
     await advance(8);sealed(await capture('desktop-refilled'));
     // Keyboard controls work while paused, and switching keeps manual pause.
     await page.getByRole('button',{name:'Pause',exact:true}).click();
-    await page.getByRole('button',{name:'Dry out trap',exact:true}).focus();await page.keyboard.press('Enter');
+    await page.getByRole('button',{name:'Water on',exact:true}).focus();await page.keyboard.press('Enter');
     await page.waitForFunction(()=>__toy.machineState()?.ready&&__toy.machineState().definition.setup==='dry');
     assert(await page.evaluate(()=>__toy.stats().paused));
+    assert.equal(await page.evaluate(()=>__toy.fireSmokeDraft().stats(false).seconds),0);
     assert.equal((await capture('paused-dry')).water,0);
-    await page.getByRole('button',{name:'Refill trap',exact:true}).click();
+    await page.getByRole('button',{name:'Water off',exact:true}).click();
     await page.waitForFunction(()=>__toy.machineState()?.ready&&__toy.machineState().definition.setup==='wet');
     assert(await page.evaluate(()=>__toy.stats().paused));
+    assert.equal(await page.evaluate(()=>__toy.fireSmokeDraft().stats(false).seconds),0);
+    await page.getByRole('button',{name:'Airflow on',exact:true}).click();
+    await page.waitForFunction(()=>__toy.machineState()?.ready && !__toy.fireSmokeDraft().stats(false).fanEnabled);
+    assert(await page.evaluate(()=>__toy.stats().paused));
+    assert.equal(await page.evaluate(()=>__toy.fireSmokeDraft().stats(false).seconds),0);
+    await page.getByRole('button',{name:'Water on',exact:true}).click();
+    await page.waitForFunction(()=>__toy.machineState()?.ready && __toy.machineState().definition.setup==='dry');
+    assert.equal(await page.evaluate(()=>__toy.fireSmokeDraft().stats(false).fanEnabled),false,'water toggle preserves airflow setting');
+    await page.getByRole('button',{name:'Water off',exact:true}).click();
+    await page.waitForFunction(()=>__toy.machineState()?.ready && __toy.machineState().definition.setup==='wet');
+    await page.getByRole('button',{name:'Airflow off',exact:true}).focus();await page.keyboard.press('Space');
+    await page.waitForFunction(()=>__toy.machineState()?.ready && __toy.fireSmokeDraft().stats(false).fanEnabled);
+    assert(await page.evaluate(()=>__toy.stats().paused));
+    assert.equal(await page.evaluate(()=>__toy.fireSmokeDraft().stats(false).seconds),0);
     await page.setViewportSize({width:480,height:760});
     await page.waitForFunction(()=>{const r=document.querySelector('.toy-scene-action').getBoundingClientRect();return r.x>=0&&r.right<=innerWidth+.5&&r.y>=0&&r.bottom<=innerHeight+.5;});
     await capture('narrow-desktop');
@@ -114,15 +136,17 @@ const server=http.createServer((req,res)=>{
     // The same helpers inspect desktop and touch using the current page.
     page=mobile;
     await advance(8);sealed(await capture('mobile-wet'));
-    await mobile.getByRole('button',{name:'Dry out trap',exact:true}).tap();
+    await mobile.getByRole('button',{name:'Water on',exact:true}).tap();
     await mobile.waitForFunction(()=>__toy.machineState()?.ready&&__toy.machineState().definition.setup==='dry');
     await advance(16);dry(await capture('mobile-dry'));
-    await mobile.getByRole('button',{name:'Refill trap',exact:true}).tap();
+    await mobile.getByRole('button',{name:'Water off',exact:true}).tap();
     await mobile.waitForFunction(()=>__toy.machineState()?.ready&&__toy.machineState().definition.setup==='wet');
     await advance(8);sealed(await capture('mobile-refilled'));
-    await mobile.getByRole('button',{name:'Stop fan',exact:true}).tap();
+    await mobile.getByRole('button',{name:'Airflow on',exact:true}).tap();
+    await mobile.waitForFunction(()=>__toy.machineState()?.ready && !__toy.fireSmokeDraft().stats(false).fanEnabled);
     assert.equal(await mobile.evaluate(()=>__toy.fireSmokeDraft().stats(false).fanEnabled),false);
-    await mobile.getByRole('button',{name:'Start fan',exact:true}).tap();
+    await mobile.getByRole('button',{name:'Airflow off',exact:true}).tap();
+    await mobile.waitForFunction(()=>__toy.machineState()?.ready && __toy.fireSmokeDraft().stats(false).fanEnabled);
     assert.equal(await mobile.evaluate(()=>__toy.fireSmokeDraft().stats(false).fanEnabled),true);
     await mobile.getByRole('button',{name:'How it works',exact:true}).tap();
     const visibleText=await mobile.locator('#toy-panel-instruments').innerText();
@@ -135,7 +159,7 @@ const server=http.createServer((req,res)=>{
     await mobile.waitForTimeout(1000);
     assert.equal(await mobile.evaluate(()=>__toy.instruments().error||null),null);
     assert.equal(await page.evaluate(()=>window.__trapGpuError||null),null);assert.deepEqual(errors,[]);
-    console.log('PASS: wet/dry transport, fan force/coasting, a matched fan-off control, desktop, touch, keyboard, pause and explanation verified.');
+    console.log('PASS: wet/dry transport, plain spatial toggles, restart on every toggle, matched airflow-off control, desktop, touch, keyboard, pause and explanation verified.');
   }finally{
     fs.writeFileSync(path.join(output,'measurements.json'),JSON.stringify({reports,errors},null,2));
     if(browser)await browser.close();await new Promise(resolve=>server.close(resolve));
