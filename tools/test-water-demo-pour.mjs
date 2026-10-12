@@ -6,7 +6,7 @@ import {createServer} from 'node:http';
 import {spawn} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 // Continuous inlet and real GPU waterfall regression. Owns Chrome for Testing.
-// POUR_REFERENCE=/absolute/prior/host.js records the prior inlet for comparison.
+// Checks hold/release timing against real pointer input and native water.
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
 const profile=fs.mkdtempSync(path.join(os.tmpdir(),'wss-water-pour-'));
@@ -16,7 +16,7 @@ const server=createServer((req,res)=>{try{
  const file=path.resolve(root,'.'+new URL(req.url,'http://localhost').pathname);
  if(!file.startsWith(root+path.sep)){res.writeHead(403).end();return;}
  let data=fs.readFileSync(file);
- if(file.endsWith('/js/water-smoke-slime.js')){const source=process.env.POUR_REFERENCE?fs.readFileSync(process.env.POUR_REFERENCE,'utf8'):data.toString(),end=source.lastIndexOf('})();');data=Buffer.from(source.slice(0,end)+'window.__wssInteractionTest=function(source){return eval(source);};\n'+source.slice(end));}
+ if(file.endsWith('/js/water-smoke-slime.js')){const source=data.toString(),end=source.lastIndexOf('})();');data=Buffer.from(source.slice(0,end)+'window.__wssInteractionTest=function(source){return eval(source);};\n'+source.slice(end));}
  const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css','.woff2':'font/woff2'};res.writeHead(200,{'Content-Type':mime[path.extname(file)]||'application/octet-stream'}).end(data);
 }catch(error){res.writeHead(404).end();}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
@@ -37,8 +37,7 @@ try{
  ws.addEventListener('message',event=>{const m=JSON.parse(event.data);if(m.id){let p=pending.get(m.id);if(p){clearTimeout(p.timer);pending.delete(m.id);m.error?p.reject(Error(JSON.stringify(m.error))):p.resolve(m.result);}}else if(m.method==='Runtime.exceptionThrown')errors.push(m.params.exceptionDetails);else if(m.method==='Runtime.consoleAPICalled'&&m.params.type==='error')errors.push(m.params.args.map(a=>a.value||a.description));});
  await send('Runtime.enable');await send('Page.enable');await send('Emulation.setDeviceMetricsOverride',{width:1180,height:780,deviceScaleFactor:1,mobile:false});
 
- const reference=!!process.env.POUR_REFERENCE;
- if(!reference){
+ {
   await load('douse-fire');await ev('__toy.pause(true)');
   // Equal simulated time at different callback rates admits equal inventory.
   const cadence=await sim(`(()=>{
@@ -70,9 +69,10 @@ try{
  }
  for(const viewport of [{width:1440,height:900,mobile:false},{width:844,height:390,mobile:true}]){
   await send('Emulation.setDeviceMetricsOverride',{...viewport,deviceScaleFactor:1});
-  await load('douse-fire');await ev('__toy.pause(true)');await pause(200);
-  await clickTarget();
-  const queued=await sim('firePourPending');assert.equal(queued,reference?700:2400);
+  await load('douse-fire');await sim('stopLoop();');
+  const held=await target();await mouse('mousePressed',held.x,held.y);
+  assert.equal(await ev('__toy.stats().pouring'),true,'press starts the inlet');
+  let releasedCount=null;
   const prefix=viewport.mobile?'mobile':'desktop';
   let start=await ev('__toy.liquid().simulationClock'),captured=new Set(),contact=false;
   for(let step=0;step<220;step++){
@@ -99,24 +99,30 @@ try{
     assert(water.finite,'all native water positions remain finite');
     report.push({prefix,time:time-start,water,fire:stats});
     console.log('FLOW',prefix,mark,JSON.stringify(water));
-    if(!reference && mark===1){assert(water.occupied>=22,'falling stream has no empty horizontal bands');assert(water.inFlight>300,'a full stream reaches the hearth');}
+    if(mark===1){assert(water.occupied>=22,'falling stream has no empty horizontal bands');assert(water.inFlight>300,'a full stream reaches the hearth');}
    }
-   if(time-start>4 && !(await sim('firePourPending')))break;
+   if(time-start>=1.4 && releasedCount===null){
+    await mouse('mouseReleased',held.x,held.y);assert.equal(await ev('__toy.stats().pouring'),false,'release stops the inlet immediately');
+    releasedCount=await ev('__toy.fire().stats().poured');
+   }
+   if(releasedCount!==null)assert.equal(await ev('__toy.fire().stats().poured'),releasedCount,'no water is queued after release');
+   if(time-start>4)break;
   }
-  assert.equal(await ev('__toy.fire().stats().poured'),queued,'the whole finite pail is admitted once');
+  assert(releasedCount>2400,'holding continues pouring beyond the former click budget');
   assert(contact,'native falling water quenches the fire');
-  assert.equal(await sim('firePourPending'),0,'completed pour leaves no queued water');
+  assert.equal(await ev('__toy.stats().pouring'),false,'released pour stays stopped');
   const poured=await ev('__toy.fire().stats().poured');await pause(100);assert.equal(await ev('__toy.fire().stats().poured'),poured,'pause stops admission');
   await ev('__toy.machine("douse-fire",{})');await until('__toy.machineState()?.ready');
-  assert.equal(await sim('firePourPending'),0,'restart clears pending inlet state');
-  await ev('__toy.machine("douse-fire",{miss:true})');await until('__toy.machineState()?.ready');await clickTarget();
+  assert.equal(await ev('__toy.stats().pouring'),false,'restart clears held inlet state');
+  await ev('__toy.machine("douse-fire",{miss:true})');await until('__toy.machineState()?.ready');await sim('stopLoop();');const miss=await target();await mouse('mousePressed',miss.x,miss.y);
   start=await ev('__toy.liquid().simulationClock');
   for(let i=0;i<150 && await ev('__toy.liquid().simulationClock')-start<3;i++){
    await sim('frame(lastT ? lastT+1000/60 : 1000/60);stopLoop();');await ev('__toy.liquid().queue.onSubmittedWorkDone()');
    assert.equal(await ev('__toy.fire().stats().quenchEvents'),0,'pouring beside the hearth does not quench it');
   }
+  await mouse('mouseReleased',miss.x,miss.y);
  }
- if(!reference){
+ {
   await load('blank');await ev('__toy.pause(true)');
   await sim('waterSource(worldW*.5,60,0,110,330);');
   const generation=await ev('__toy.liquid().readbackApplyGen');
@@ -127,8 +133,8 @@ try{
   assert(await ev('__toy.mirror(0).y')>160,'the fresh mirror follows the moving water');
  }
  assert.equal(errors.length,0,JSON.stringify(errors));
- fs.writeFileSync(path.join(output,'report.json'),JSON.stringify({reference,report,errors},null,2));
- console.log('PASS continuous waterfall, capacity, frame rates, wall containment, finite volume and fire contact');
+ fs.writeFileSync(path.join(output,'report.json'),JSON.stringify({report,errors},null,2));
+ console.log('PASS continuous waterfall, capacity, frame rates, wall containment, hold/release timing and fire contact');
 
 }finally{
  for(const p of pending.values())clearTimeout(p.timer);ws?.close();

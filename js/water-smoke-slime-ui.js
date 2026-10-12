@@ -57,7 +57,7 @@
     var playback = shell.querySelector('.toy-playback');
     var actionLayer = document.getElementById('toy-scene-actions');
     var actionButtons = new Map();
-    var activeThumbButton = null;
+    var activeHeldButton = null;
     var sceneHints = {
       falls: 'Drop a slime into the falling water.',
       zerog: 'Pull a slime through the floating water.',
@@ -100,7 +100,7 @@
       var choice=choices && choices.find(function(item){return item.id===value;});
       return choice ? Object.assign({},choice.options) : {vented:value==='vented',tapEnabled:value!=='tap-off',secondHole:value==='second-hole'};
     }
-    var nativeSetupScene=null,thumbPointer=null,thumbKeyboard=false;
+    var nativeSetupScene=null,controlPointer=null,controlKeyboard=false;
     var sceneNames = { 'self-flushing-cup':'Self-flushing cup',tantalus:'Tantalus','thumb-straw':'The straw and the thumb', falls: 'Cascade', zerog: 'Drift', chimney: 'Plumes', rig: 'Rig exhaust', spa: 'Spring', blank: 'Empty', siphon: 'Siphon', cup: 'Greedy cup', heron: "Heron's fountain" };
 
     function text(id, value) {
@@ -290,16 +290,20 @@
       sync();
       if(shared)document.getElementById('toy-share-wrap').scrollIntoView({block:'nearest',inline:'nearest',behavior:'instant'});
     });
-    function releaseThumb(){
-      var holding=thumbKeyboard || thumbPointer!==null;
-      thumbKeyboard=false;thumbPointer=null;
-      if(holding && toy.machineThumb)toy.machineThumb(false);
-      if(activeThumbButton)activeThumbButton.setAttribute('aria-pressed','false');
-      activeThumbButton=null;
+    function releaseHeldControl(event){
+      if(event && event.currentTarget && event.currentTarget.classList && event.currentTarget.classList.contains('toy-scene-action') && event.currentTarget!==activeHeldButton)return;
+      if(event && event.pointerId!==undefined && event.pointerId!==controlPointer)return;
+      var holding=controlKeyboard || controlPointer!==null;
+      var button=activeHeldButton,captured=controlPointer;
+      controlKeyboard=false;controlPointer=null;
+      if(holding)toy.releaseMachineControl();
+      if(activeHeldButton)activeHeldButton.setAttribute('aria-pressed','false');
+      activeHeldButton=null;
+      if(button && captured!==null && button.hasPointerCapture(captured))button.releasePointerCapture(captured);
     }
-    function holdThumb(button){
-      activeThumbButton=button;button.setAttribute('aria-pressed','true');
-      Promise.resolve(toy.activateMachineControl(button.dataset.control,true)).catch(function(error){notice=error.message;releaseThumb();});
+    function holdControl(button){
+      activeHeldButton=button;button.setAttribute('aria-pressed','true');
+      Promise.resolve(toy.activateMachineControl(button.dataset.control,true)).catch(function(error){notice=error.message;releaseHeldControl();});
     }
     function activateControl(button){
       try {
@@ -311,25 +315,27 @@
       button.type='button';button.className='toy-scene-action';button.dataset.control=control.id;
       var label=document.createElement('span');label.className='toy-scene-action-label';button.appendChild(label);
       button.addEventListener('click',function(){if(button.dataset.hold!=='true')activateControl(button);});
-      button.addEventListener('blur',releaseThumb);
+      button.addEventListener('blur',releaseHeldControl);
       button.addEventListener('pointerdown',function(event){
         if(button.dataset.hold!=='true' || button.disabled || event.button!==0)return;
-        event.preventDefault();thumbPointer=event.pointerId;button.setPointerCapture(event.pointerId);holdThumb(button);
+        if(controlPointer!==null || controlKeyboard)return;
+        event.preventDefault();controlPointer=event.pointerId;button.setPointerCapture(event.pointerId);holdControl(button);
       });
-      ['pointerup','pointercancel','lostpointercapture'].forEach(function(name){button.addEventListener(name,releaseThumb);});
+      ['pointerup','pointercancel','lostpointercapture'].forEach(function(name){button.addEventListener(name,releaseHeldControl);});
       button.addEventListener('keydown',function(event){
         if(button.dataset.hold!=='true' || ![' ','Enter'].includes(event.key))return;
-        event.preventDefault();if(!event.repeat && !thumbKeyboard){thumbKeyboard=true;holdThumb(button);}
+        event.preventDefault();if(!event.repeat && !controlKeyboard && controlPointer===null){controlKeyboard=event.key;holdControl(button);}
       });
-      button.addEventListener('keyup',function(event){if(button.dataset.hold==='true' && [' ','Enter'].includes(event.key)){event.preventDefault();releaseThumb();}});
+      button.addEventListener('keyup',function(event){if(button.dataset.hold==='true' && controlKeyboard===event.key){event.preventDefault();releaseHeldControl(event);}});
       actionLayer.appendChild(button);return button;
     }
     function syncMachineControls(){
       if(!toy.machineControls || !actionLayer)return;
       var state=toy.stats();
+      if(activeHeldButton && (state.paused || state.tool!=='poke'))releaseHeldControl();
       // Holding refills the straw asynchronously. Keep its captured target
       // alive until construction finishes or the user releases it.
-      if(activeThumbButton && state.loading)return;
+      if(activeHeldButton && state.loading)return;
       var controls=toy.machineControls();
       var viewport=document.getElementById('toy-viewport'),view=viewport.getBoundingClientRect(),stage=document.getElementById('toy-stage').getBoundingClientRect(),scale=toy.camera().scale;
       var liveKeys=new Set();
@@ -346,7 +352,8 @@
         button.style.left=left+'px';button.style.top=top+'px';button.style.width=width+'px';button.style.height=height+'px';
         button.classList.toggle('is-body-action',control.pointerMode==='tap-body');
         button.classList.toggle('is-button-action',control.pointerMode==='button');
-        button.dataset.hold=String(control.kind==='thumb');
+        var heldControl=/^(thumb|fire-pour|pour)$/.test(control.kind);
+        button.dataset.hold=String(heldControl);
         button.disabled=!!control.disabled;
         button.setAttribute('aria-label',control.label);
         var label=button.firstElementChild;if(label.textContent!==control.label)label.textContent=control.label;
@@ -354,17 +361,17 @@
         var fittedCenter=Math.max(8+labelWidth*.5,Math.min(view.width-8-labelWidth*.5,labelCenter));
         button.style.setProperty('--action-label-shift',(fittedCenter-labelCenter)+'px');
         button.classList.toggle('is-label-above',top+height+4+labelHeight>view.height-8);
-        if(control.kind==='thumb')button.setAttribute('aria-pressed',String(thumbPointer!==null || thumbKeyboard || !!(toy.machineState() && toy.machineState().thumbHeld)));
+        if(heldControl)button.setAttribute('aria-pressed',String(activeHeldButton===button && (controlPointer!==null || !!controlKeyboard)));
         else button.removeAttribute('aria-pressed');
       });
-      actionButtons.forEach(function(button,key){if(!liveKeys.has(key)){if(activeThumbButton===button)releaseThumb();button.remove();actionButtons.delete(key);}});
+      actionButtons.forEach(function(button,key){if(!liveKeys.has(key)){if(activeHeldButton===button)releaseHeldControl();button.remove();actionButtons.delete(key);}});
     }
-    window.addEventListener('blur',releaseThumb);
-    document.addEventListener('visibilitychange',function(){if(document.hidden)releaseThumb();});
-    document.getElementById('toy-pause').addEventListener('click',releaseThumb);
+    window.addEventListener('blur',releaseHeldControl);
+    document.addEventListener('visibilitychange',function(){if(document.hidden)releaseHeldControl();});
+    document.getElementById('toy-pause').addEventListener('click',releaseHeldControl);
     window.addEventListener('resize',syncMachineControls);
     document.getElementById('toy-native-setup').addEventListener('change',async function(){
-      var scene=toy.stats().scene,value=this.value;this.disabled=true;releaseThumb();
+      var scene=toy.stats().scene,value=this.value;this.disabled=true;releaseHeldControl();
       try{await toy.machine(scene,nativeSetupOptions(value));}
       catch(error){notice=error.message;}
       finally{this.disabled=false;updateMeasurements();}
@@ -660,7 +667,7 @@
     }
 
     function pause(value) {
-      if(value)releaseThumb();
+      if(value)releaseHeldControl();
       toy.pause(value);
       sync();
     }
@@ -672,7 +679,7 @@
         if(toy.stats().scene==='siphon')await toy.machine('siphon',{setup:document.getElementById('toy-siphon-setup').value});
         else if(toy.stats().scene==='heron')await toy.machine('heron',{setup:document.getElementById('toy-heron-setup').value});
         else if(nativeScene(toy.stats().scene)){
-          releaseThumb();var setup=document.getElementById('toy-native-setup').value;
+          releaseHeldControl();var setup=document.getElementById('toy-native-setup').value;
           await toy.machine(toy.stats().scene,nativeSetupOptions(setup));
         }else await toy.scene(toy.stats().scene);
         pause(false);

@@ -35,10 +35,34 @@ try{
  ws=new WebSocket(tabs.find(t=>t.type==='page').webSocketDebuggerUrl);await new Promise((r,j)=>{ws.addEventListener('open',r,{once:true});ws.addEventListener('error',j,{once:true});});
  ws.addEventListener('message',event=>{const m=JSON.parse(event.data);if(m.id){let p=pending.get(m.id);if(p){clearTimeout(p.timer);pending.delete(m.id);m.error?p.reject(Error(JSON.stringify(m.error))):p.resolve(m.result);}}else if(m.method==='Runtime.exceptionThrown')errors.push(m.params.exceptionDetails);else if(m.method==='Runtime.consoleAPICalled'&&m.params.type==='error')errors.push(m.params.args.map(a=>a.value||a.description));});
  await send('Runtime.enable');await send('Page.enable');await send('Emulation.setDeviceMetricsOverride',{width:1180,height:780,deviceScaleFactor:1,mobile:false});
- await load('douse-fire');await ev('__toy.pause(true)');await pause(250);
- const before=await sim('firePourPending');await clickTarget();assert.equal(await sim('firePourPending'),before+2400,'water-source click queues real water');
- await clickTarget('fire-source');assert.equal(await sim('firePourPending'),before+4800,'fire click queues real water');
- await ev('__toy.pause(false)');await until('__toy.fire().stats().poured>0');console.log('FIRE water source and fire admit native water');
+ await load('douse-fire');
+ async function pressPour(id='primary'){
+  const r=await target(id);assert(r,'visible pour button');await mouse('mouseMoved',r.x,r.y);await mouse('mousePressed',r.x,r.y);await until('__toy.stats().pouring===true');return r;
+ }
+ async function stopped(label){
+  await until('__toy.stats().pouring===false');const before=await ev('__toy.fire().stats().poured');await pause(150);
+  assert.equal(await ev('__toy.fire().stats().poured'),before,label);return before;
+ }
+ let r=await pressPour();await until('__toy.fire().stats().poured>300');
+ await mouse('mouseMoved',3,60,{buttons:1});await mouse('mouseReleased',3,60);let amount=await stopped('release outside the button stops new water');
+ await ev(`document.querySelector('.toy-scene-action[data-control="primary"]').click()`);await stopped('a click without a hold cannot latch the pour');
+ r=await pressPour('fire-source');await until(`__toy.fire().stats().poured>${amount+200}`);await mouse('mouseReleased',r.x,r.y);amount=await stopped('hearth button release stops new water');
+ for(const key of [' ','Enter']){
+  await ev(`document.querySelector('.toy-scene-action[data-control="primary"]').focus()`);
+  await send('Input.dispatchKeyEvent',{type:'keyDown',key,code:key===' '?'Space':'Enter',windowsVirtualKeyCode:key===' '?32:13});await until('__toy.stats().pouring===true');
+  await until(`__toy.fire().stats().poured>${amount+150}`);
+  await send('Input.dispatchKeyEvent',{type:'keyDown',key,code:key===' '?'Space':'Enter',windowsVirtualKeyCode:key===' '?32:13,autoRepeat:true});
+  await send('Input.dispatchKeyEvent',{type:'keyUp',key,code:key===' '?'Space':'Enter',windowsVirtualKeyCode:key===' '?32:13});amount=await stopped('keyboard release stops new water');
+ }
+ for(const event of ['pointercancel','lostpointercapture']){
+  r=await pressPour();await ev(`document.querySelector('.toy-scene-action[data-control="primary"]').dispatchEvent(new PointerEvent(${JSON.stringify(event)},{pointerId:1,bubbles:true}))`);
+  await mouse('mouseReleased',r.x,r.y);amount=await stopped(event+' cancels the pour');
+ }
+ r=await pressPour();await ev('window.dispatchEvent(new Event("blur"))');await mouse('mouseReleased',r.x,r.y);amount=await stopped('window blur cancels the pour');
+ r=await pressPour();await ev('__toy.pause(true)');await mouse('mouseReleased',r.x,r.y);amount=await stopped('pause cancels the pour');await ev('__toy.pause(false)');await stopped('resume does not restart a cancelled pour');
+ r=await pressPour();await ev('__toy.machine("douse-fire",{})');await until('__toy.machineState()?.ready');await mouse('mouseReleased',r.x,r.y);await stopped('restarting while held clears the inlet');
+ r=await pressPour();await ev('__toy.tool("water")');await mouse('mouseReleased',r.x,r.y);await stopped('changing tools cancels the held button');
+ console.log('FIRE pointer, keyboard, cancellation, blur, pause, restart and tool-change release passed');
  await load('thumb-straw');let straw=await target();await mouse('mousePressed',straw.x,straw.y);await until('__toy.machineState()?.thumbHeld===true&&!__toy.stats().loading');
  assert.equal(await ev('document.querySelector(".toy-scene-action").hidden'),false,'held target survives asynchronous refill');
  await mouse('mouseReleased',straw.x,straw.y);await until('__toy.machineState()?.thumbHeld===false');
@@ -51,6 +75,22 @@ try{
  await load('water-balloons');await sim('gravMul=0;applyGravity();');let b=await ev('__toy.machineControls()[0]'),coords=await sim(`(function(){var r=stage.getBoundingClientRect();return {x:r.left+${b.x}*fitScale,y:r.top+${b.y}*fitScale};})()`);
  await mouse('mousePressed',coords.x,coords.y);await mouse('mouseMoved',coords.x+70,coords.y-20,{buttons:1});await mouse('mouseReleased',coords.x+70,coords.y-20);assert.equal(await ev('__toy.machineState().primaryUsed'),false,'drag preserves balloon');
  await pause(250);b=await ev('__toy.machineControls()[0]');coords=await sim(`(function(){var r=stage.getBoundingClientRect();return {x:r.left+${b.x}*fitScale,y:r.top+${b.y}*fitScale};})()`);await mouse('mousePressed',coords.x,coords.y);await mouse('mouseReleased',coords.x,coords.y);await until('__toy.machineState().primaryUsed===true');console.log('BALLOON drag preserves skin, short click pops');
+ await send('Emulation.setDeviceMetricsOverride',{width:844,height:390,deviceScaleFactor:1,mobile:true});
+ await send('Emulation.setTouchEmulationEnabled',{enabled:true,maxTouchPoints:5});
+ await load('douse-fire');
+ for(const release of ['touchEnd','touchCancel']){
+  const button=await target(),before=await ev('__toy.fire().stats().poured');
+  await send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:button.x,y:button.y,id:1,radiusX:8,radiusY:8,force:1}]});
+  await until('__toy.stats().pouring===true');await until(`__toy.fire().stats().poured>${before+150}`);
+  await send('Input.dispatchTouchEvent',{type:release,touchPoints:[]});await stopped(release+' stops touch pouring');
+ }
+ await load('water-half-adder');
+ const button=await target(),waterBefore=await ev('__toy.stats().water');
+ await send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:button.x,y:button.y,id:1,radiusX:8,radiusY:8,force:1}]});
+ await until('__toy.stats().pouring===true');await until(`__toy.stats().water>${waterBefore+150}`);
+ await send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await until('__toy.stats().pouring===false');
+ const waterAfter=await ev('__toy.stats().water');await pause(150);assert.equal(await ev('__toy.stats().water'),waterAfter,'ordinary pour controls also stop on release');
+ console.log('TOUCH landscape release, cancel and ordinary pour buttons passed');
  assert.equal(errors.length,0,JSON.stringify(errors));console.log('PASS direct actions; no browser errors');
 }finally{
  for(const p of pending.values())clearTimeout(p.timer);ws?.close();

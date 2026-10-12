@@ -131,7 +131,7 @@ try {
       await advance(5);assert.ok(await evaluate('__toy.fire().stats().airStarved'),'initially closed setup also starves');
       await evaluate(`__toy.machine('douse-fire',{})`);await until('__toy.machineState()?.ready','ordinary fire');
       await advance(1);assert.ok(await evaluate('__toy.fire().stats().burning && __toy.fire().stats().burnFraction===1'),'ordinary fire retains its source');
-      await evaluate(`__toy.machinePrimary()`);await until('__toy.fire().stats().smothered','water still quenches ordinary fire');
+      await evaluate(`__toy.activateMachineControl('primary',true)`);await until('__toy.fire().stats().smothered','water still quenches ordinary fire');await evaluate(`__toy.releaseMachineControl()`);
     }
   }
   assert.deepEqual(errors,[],'no JavaScript or GPU errors');

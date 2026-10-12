@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.150'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.151'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -13029,6 +13029,7 @@
   var pointerDown = false, pointerIn = false;
   var pointerControl = false;
   var pointerThumb = false;
+  var pointerPour = false;
   var pointerPipe = false,pipeGrabOffset=0;
   var pointerClickAction=null,pointerStartX=0,pointerStartY=0;
   var pointerId = -1;
@@ -13074,6 +13075,9 @@
       var bodyAction=machineControlTargets().find(function(control){return !control.disabled && control.pointerMode==='tap-body' &&
         Math.abs(x-control.x)<=control.width*.5 && Math.abs(y-control.y)<=control.height*.5;});
       if(bodyAction)pointerClickAction=bodyAction.id;
+      var pourAction=machineControlTargets().find(function(control){return !control.disabled && /^(fire-pour|pour)$/.test(control.kind) &&
+        Math.abs(x-control.x)<=control.width*.5 && Math.abs(y-control.y)<=control.height*.5;});
+      if(pourAction){pointerControl=true;pointerPour=true;machinePour(true);return;}
       if(machineState && machineState.definition.birds && toySteam && window.WSSSingingPipe.hit(machineState.definition,px,py,fitScale)){
         pointerControl=true;pointerPipe=true;pipeGrabOffset=py-window.WSSSingingPipe.geometry(machineState.definition).tipY;return;
       }
@@ -13137,6 +13141,7 @@
     if (!pointerDown || e.pointerId !== pointerId) return;
     var clickAction=!cancelled ? pointerClickAction : null;pointerClickAction=null;
     if(pointerThumb){pointerThumb=false;machineThumb(false);}
+    if(pointerPour){pointerPour=false;machinePour(false);}
     pointerPipe=false;
     pointerDown = false;
     pointerControl=false;
@@ -13200,7 +13205,7 @@
     if(e.key==='Escape' && pointerDown && pointerId===keyboardPointerId){
       e.preventDefault();releasePointer({pointerId:keyboardPointerId},true);drawMachineOverlay();return;
     }
-    var strawKey=e.key===' ' && machineState && machineState.definition.primary.kind==='thumb';
+    var strawKey=e.key===' ' && machineState && /^(thumb|fire-pour|pour)$/.test(machineState.definition.primary.kind);
     if((e.key!=='Enter' && !strawKey) || e.repeat)return;
     e.preventDefault();showKeyboardCursor();
     if(pointerDown){
@@ -13208,12 +13213,12 @@
     }else if(!userPaused || /^(build|draw|erase)$/.test(tool) || machineState && machineState.definition.birds){
       beginToolInput(keyboardX,keyboardY,keyboardPointerId);
       // A manual valve is a single real toggle, not a held stirring gesture.
-      if(pointerControl && !pointerThumb && !pointerPipe)releasePointer({pointerId:keyboardPointerId},false);
+      if(pointerControl && !pointerThumb && !pointerPour && !pointerPipe)releasePointer({pointerId:keyboardPointerId},false);
     }
     updateKeyboardHelp();drawMachineOverlay();
   });
   inputEl.addEventListener('keyup',function(e){
-    if(pointerThumb && pointerId===keyboardPointerId && (e.key==='Enter' || e.key===' ')){
+    if((pointerThumb || pointerPour) && pointerId===keyboardPointerId && (e.key==='Enter' || e.key===' ')){
       e.preventDefault();releasePointer({pointerId:keyboardPointerId},false);drawMachineOverlay();
     }
   });
@@ -13285,6 +13290,7 @@
       try{inputEl.releasePointerCapture(oldPointer);}catch(error){}
     }
     tool = name;
+    machinePour(false);
     if (slimeGhost) slimeGhost = null;
     jelloGrabEnd();
     pokeGuest = null;
@@ -13971,6 +13977,7 @@
   }
 
   function clearWorldAll(preserveThumbInput) {
+    machinePour(false);
     if(toyBreathingCave){toyBreathingCave.destroy();toyBreathingCave=null;}
     if(toySauna){toySauna.destroy();toySauna=null;}
     if(toyFireSmokeDraft){toyFireSmokeDraft.destroy();toyFireSmokeDraft=null;}
@@ -13997,7 +14004,7 @@
     machineState=null;instrumentSample=null;
     if(airModel)enableAirModel({enabled:false});
     if(airModel)airModel.reset();
-    if(toyFire){toyFire.destroy();toyFire=null;fireSplatAcc=0;firePourPending=0;firePourFlow={acc:0};liquidWGPU.setBathThermal(null);liquidWGPU.setRenderParam('VOLUME_SPLATS',0);SmokeFluid.setThermalStyle(null);SmokeFluid.setWetField(null);SmokeFluid.setPhysics(null,0);}
+    if(toyFire){toyFire.destroy();toyFire=null;fireSplatAcc=0;liquidWGPU.setBathThermal(null);liquidWGPU.setRenderParam('VOLUME_SPLATS',0);SmokeFluid.setThermalStyle(null);SmokeFluid.setWetField(null);SmokeFluid.setPhysics(null,0);}
     if(fireDomainActive){
       if(fireDomainPrevious===undefined)delete liquidWGPU.toyNativeDomain;
       else liquidWGPU.toyNativeDomain=fireDomainPrevious;
@@ -14016,9 +14023,9 @@
   var toyBreathingCave=null;
   var toyFireSmokeDraft=null;
   var toySauna=null;
-  var FIRE_POUR_PARTICLES = 2400, FIRE_POUR_RATE = 1800;
-  var firePourFlow = { acc: 0 };
-  var toyFire=null,fireSplatAcc=0,fireFrameDt=0,fireWaterClock=0,firePourPending=0,firePourClock=0;
+  var MACHINE_POUR_RATE = 1800;
+  var machinePourHeld = false, machinePourFlow = { acc: 0 }, machinePourClock = 0;
+  var toyFire=null,fireSplatAcc=0,fireFrameDt=0,fireWaterClock=0;
   var toyBalloon=null;
   var toyDivers=null;
   var toyFloatSlider=null;
@@ -14657,7 +14664,7 @@
       // remain in the collision/grid domain between particle mirror updates.
       fireDomainPrevious=liquidWGPU.toyNativeDomain;fireDomainActive=true;
       liquidWGPU.toyNativeDomain={minX:0,minY:0,maxX:worldW,maxY:worldH};
-      fireWaterClock=liquidWGPU.simulationClock;firePourClock=fireWaterClock;
+      fireWaterClock=liquidWGPU.simulationClock;
       ownFire=await window.WSSFire.create({liquid:liquidWGPU,width:worldW,height:worldH,maxParticles:LIQUID_MAX_PARTICLES,source:definition.fire.source,noEmber:definition.fire.noEmber,ventilation:definition.fire.ventilation,air:definition.fire.air,excludeFrozen:!!definition.sauna});
       if(request!==machineRequest){ownFire.destroy();ownFire=null;return null;}
       toyFire=ownFire;
@@ -14797,10 +14804,7 @@
       var balloonIndex=jelloBodies.indexOf(toyBalloon.body);if(balloonIndex>=0)jelloBodies.splice(balloonIndex,1);
       jelloCount=jelloTotalPoints();definition.action='Popped';machineState.primaryUsed=true;machineOverlayCache=null;return true;
     }
-    if(primary.kind==='fire-pour'){
-      var queued=Math.max(0,Math.min(FIRE_POUR_PARTICLES,LIQUID_MAX_PARTICLES-8-liquidCount-firePourPending));
-      firePourPending+=queued;return queued>0;
-    }
+    if(primary.kind==='fire-pour' || primary.kind==='pour')return false;
     if(primary.kind==='heat-toggle'){
       toyThermoscope.heated=!toyThermoscope.heated;
       definition.action=toyThermoscope.heated?'Cool the bulb':'Warm the bulb';
@@ -14827,8 +14831,6 @@
       if(machineState.primaryUsed)return false;
       var s=definition.slimes[primary.index];
       if(!spawnSlimeAt(s.x,s.y,s.radius,true))return false;
-    }else if(primary.kind==='pour'){
-      spawnWaterJet(primary.target.x,primary.target.y,8,0,80,240);
     }else if(primary.kind==='valve'){
       var valve=definition.parts.filter(function(p){return p.id===primary.id;})[0];
       var current=machineBuilder.getParts().find(function(p){return p.id===valve.buildId;});
@@ -14847,7 +14849,7 @@
     var disabled=!machineState.ready || machineLoading || handsPending ||
       ((kind==='balloon-pop' || kind==='slime') && machineState.primaryUsed);
     var label=d.birds && toySound ? toySound.stats().enabled?'Mute sound':'Turn on sound' : d.action || 'Use apparatus';
-    if(kind==='fire-pour' || kind==='pour')label='Pour water';
+    if(kind==='fire-pour' || kind==='pour')label='Hold to pour';
     var controls=[];
     function target(x,y,width,height,id,mode){
       if(!Number.isFinite(x) || !Number.isFinite(y))return;
@@ -14899,11 +14901,22 @@
     return controls;
   }
   function activateMachineControl(id,held){
+    if(held===false)return releaseMachineControl();
     var control=machineControlTargets().find(function(item){return item.id===id;});
     if(!control || control.disabled)return false;
     if(control.kind==='thumb')return machineThumb(held!==false);
+    if(control.kind==='fire-pour' || control.kind==='pour')return machinePour(held===true);
     return machinePrimary();
   }
+
+  function machinePour(held){
+    if(!held){machinePourHeld=false;machinePourFlow={acc:0};return false;}
+    if(!machineState || !machineState.ready || waterState!=='on' ||
+      !/^(fire-pour|pour)$/.test(machineState.definition.primary.kind))return false;
+    if(!machinePourHeld){machinePourClock=liquidWGPU.simulationClock;machinePourFlow={acc:0};}
+    machinePourHeld=true;return true;
+  }
+  function releaseMachineControl(){machinePour(false);machineThumb(false);}
 
   function setGravityUI(g) { gravMul = g; applyGravity(); syncSliderUI(); }
 
@@ -15275,7 +15288,7 @@
         c.fillText(toySauna?'Fire':hot.smothered?'Out, wet':hot.airStarved?'Out, no air':hot.burning?'Burning':hot.extinguished?'Out':f.noEmber?'Cooling':'Ember reheating',f.x+48,f.y-12);c.restore();
         if(art && !f.air){art.heatSource(c,f.x,f.y,{burning:hot.burning,wet:hot.smothered});
           if(definition.primary.kind==='fire-pour'){
-            art.sourcePort(c,f.pour.x,f.pour.y,{active:firePourPending>0});
+            art.sourcePort(c,f.pour.x,f.pour.y,{active:machinePourHeld});
             c.save();c.fillStyle=palette.getPropertyValue('--text-dim').trim();c.textAlign='center';
             c.strokeStyle=palette.getPropertyValue('--d-canvas-bg').trim();c.lineWidth=3/fitScale;
             c.strokeText('Pour',f.pour.x,f.pour.y-12/fitScale);
@@ -15441,7 +15454,7 @@
     toolTick(dt);
     presetTick(dt);
     emittersTick(dt);
-    firePourTick(dt);
+    machinePourTick(dt);
     if(toyDivers)toyDivers.tick();
     retireLiquidOrphans();
     if(!(solidSkinLab && currentScene==='smoke-wind-tunnel') && !toyBalloon && !toyDivers && !toyFloatSlider && !toyDraftRig)updateLiquidToy(dt);
@@ -15495,19 +15508,18 @@
     if (readoutTick >= 15) { readoutTick = 0; updateReadout(); }
   }
 
-  // Each click queues a finite pail, admitted as a continuous, full stream.
-  // Its inlet samples simulation time; slow motion slows the whole pour.
-  function firePourTick(dt){
-    if(!toyFire || !machineState || waterState!=='on')return;
+  // A held control admits the same full stream. Release leaves no backlog;
+  // water already in flight keeps falling through the native solver.
+  function machinePourTick(dt){
+    if(!machinePourHeld || !machineState || waterState!=='on')return;
     var clock=liquidWGPU.simulationClock;
-    var h=liquidCount ? Math.max(0,clock-firePourClock) : dt*Math.max(0,timeMul)*1.55;
-    firePourClock=clock;if(!firePourPending){firePourFlow.acc=0;return;}
-    var spout=machineState.definition.fire.pour;
-    firePourFlow.x=spout.x;firePourFlow.y=spout.y;
-    var admitted=spawnWaterFlow(firePourFlow,Math.min(h,.05),FIRE_POUR_RATE,12,0,110,
-      Math.min(LIQUID_MAX_PARTICLES-8,liquidCount+firePourPending));
-    firePourPending-=admitted;toyFire.admit(admitted);
-    if(liquidCount>=LIQUID_MAX_PARTICLES-8){firePourPending=0;firePourFlow.acc=0;}
+    var h=liquidCount ? Math.max(0,clock-machinePourClock) : dt*Math.max(0,timeMul)*1.55;
+    machinePourClock=clock;
+    var definition=machineState.definition;
+    var spout=definition.primary.kind==='fire-pour' ? definition.fire.pour : definition.primary.target;
+    machinePourFlow.x=spout.x;machinePourFlow.y=spout.y;
+    var admitted=spawnWaterFlow(machinePourFlow,Math.min(h,.05),MACHINE_POUR_RATE,12,0,110,LIQUID_MAX_PARTICLES-8);
+    if(toyFire)toyFire.admit(admitted);
   }
 
   function fireTick(dt){
@@ -15587,7 +15599,7 @@
   }
 
   function cancelHeldInput() {
-    machineThumb(false);
+    releaseMachineControl();
     if(toySound)toySound.setActive(false);
     if (!pointerDown) return;
     slimeGhost = null;
@@ -15819,7 +15831,7 @@
           water: toyBoundary ? toyBoundary.stats().present : liquidCount, allocation:liquidCount, boundary:toyBoundary ? toyBoundary.stats() : null, slimes: jelloBodies.length, jelloPoints: jelloCount,
           fps: rafId ? Math.round(fpsEMA) : 0, waterState: waterState, smoke: smokeActive,
           awake: liquidWGPU ? liquidWGPU.awakeCount : -1,
-          scene: currentScene, tool: tool, paused: userPaused,
+          scene: currentScene, tool: tool, paused: userPaused, pouring: machinePourHeld,
           loading:machineLoading || !!startupMachine || !!bootMachine && !toyBootReady,
           timeScale:timeMul, waterFeel: Math.round(waterFeel * 100), debugParticles: debugParticles,
           waterLook: PRESET_ACTIVE.waterLook, rainbow: rainbowWater ? rainbowWater.stats() : null
@@ -15861,7 +15873,7 @@
       setCamera: setCamera,
       pause: function (paused) {
         userPaused = !!paused;
-        if(userPaused)machineThumb(false);
+        if(userPaused)releaseMachineControl();
         if (userPaused && pointerDown) {
           slimeGhost = null;
           try { inputEl.releasePointerCapture(pointerId); } catch (e) {}
@@ -15901,6 +15913,7 @@
       machinePrimary: machinePrimary,
       machineControls: machineControlTargets,
       activateMachineControl: activateMachineControl,
+      releaseMachineControl: releaseMachineControl,
       machineThumb:machineThumb,
       nativeBoundary:function(){return toyBoundary;},
       fire:function(){return toyFire;},
