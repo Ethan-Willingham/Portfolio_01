@@ -5,6 +5,7 @@
     if(!bodies[0] || !(bodies[0].ringN>=3))throw Error('The smoke tunnel needs its elastic slime.');
     var pressure=root.WSSSmokeCannon.create(Object.assign({},definition,{noPush:true}),fluid,world,{initial:false});
     var ambientWind=fluid.config.wind_x;fluid.config.wind_x=0;
+    var openRight=fluid.config.OPEN_RIGHT;fluid.config.OPEN_RIGHT=true;
     var optics={},opticalKeys=['OPTICAL_DENSITY','OPTICAL_BRIGHTNESS','OPTICAL_ABSORPTION'];
     opticalKeys.forEach(function(key){optics[key]=fluid.config[key];});
     fluid.config.OPTICAL_DENSITY=1;fluid.config.OPTICAL_BRIGHTNESS=.55;fluid.config.OPTICAL_ABSORPTION=12;
@@ -61,7 +62,7 @@
     return {prepare:prepare,capture:pressure.capture,load:load,stats:stats,draw:draw,
       overlayKey:function(){return fan.enabled+':'+body.px[node].toFixed(1)+':'+body.py[node].toFixed(1);},
       toggle:function(){fan.enabled=!fan.enabled;definition.action=fan.enabled?'Stop fan':'Start fan';return true;},
-      destroy:function(){pressure.destroy();fluid.config.wind_x=ambientWind;opticalKeys.forEach(function(key){fluid.config[key]=optics[key];});}};
+      destroy:function(){pressure.destroy();fluid.config.wind_x=ambientWind;fluid.config.OPEN_RIGHT=openRight;opticalKeys.forEach(function(key){fluid.config[key]=optics[key];});}};
   }
   root.WSSSmokeWindTunnel={create:create};
 })(typeof window!=='undefined'?window:globalThis);

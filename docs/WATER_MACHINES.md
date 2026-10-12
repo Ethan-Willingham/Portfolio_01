@@ -95,6 +95,22 @@ slow-clock accounting, read-only drawing, pause, shake, fullscreen, desktop and
 mobile resize, restart and scene retirement. The harness owns Chrome for Testing
 and writes captures to `/tmp/hourglass-review`.
 
+## Smoke wind tunnel
+
+The slime starts at the midpoint of the straight channel, at (416, 200).
+A damped spring supports its central material point while its skin remains
+elastic and grabbable. The right edge of the smoke domain is an open room-pressure
+outlet. Its velocity extends through the exit without reflection, its exterior
+pressure is zero, and entering air carries no dye. Outgoing dye is lost through
+advection, independently of the usual dye dissipation.
+
+`OPEN_RIGHT` defaults off in the shared smoke engine. The tunnel enables it
+and restores the previous setting when leaving the scene. Outlet shader variants
+are compiled only on first use. Run `node tools/test-smoke-wind-tunnel.mjs` for
+desktop/mobile centering, grab recovery, fan controls, an undissipated dye-packet
+exit comparison and boundary restoration. The default smoke regression is
+`BASE_REF=44a0f90b node tools/perf/smoke-equivalence.cjs`.
+
 ## Chimney inlet
 
 The chimney inlet changes combustion in the running scene. Its clear collision

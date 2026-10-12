@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.148'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.149'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -1909,6 +1909,7 @@
       OPTICAL_BRIGHTNESS: 0.9,
       OPTICAL_ABSORPTION: 1,
       EDGE_SHARPNESS: 0,
+      OPEN_RIGHT: false,
     };
   
     // Runtime material controls. Temperature uses the dye texture's unused
@@ -1949,6 +1950,7 @@
         divergenceProgram, curlProgram, vorticityProgram, pressureProgram,
         gradientSubtractProgram, scrollProgram;
     var displayMaterial;
+    var openRightPrograms = null;
     var blit;
     var blitQuadVBO = null;  // v10.88 — exposed so other helpers can restore the buffer state
     var obstacleTexture = null;
@@ -2225,6 +2227,9 @@
       'uniform float solidProjection;\n' +
       'uniform highp vec2 texelSize;\n' +
       'vec3 solidAt(vec2 uv) {\n' +
+      '#ifdef OPEN_RIGHT\n' +
+      '  if (uv.x > 1.0 && uv.y >= 0.0 && uv.y <= 1.0) return vec3(0.0);\n' +
+      '#endif\n' +
       '  if (any(lessThan(uv, vec2(0.0))) || any(greaterThan(uv, vec2(1.0)))) return vec3(0.0, 0.0, 1.0);\n' +
       '  if (useObstacle > 0.5 && texture2D(uObstacle, uv).a > 0.5) return vec3(0.0, 0.0, 1.0);\n' +
       '  vec4 body = texture2D(uMoving, uv);\n' +
@@ -2251,7 +2256,11 @@
       '  float B = texture2D(uVelocity, vB).y;\n' +
       '  vec2 C = texture2D(uVelocity, vUv).xy;\n' +
       '  if (vL.x < 0.0) { L = -C.x; }\n' +
+      '#ifdef OPEN_RIGHT\n' +
+      '  if (vR.x > 1.0) { R = C.x; }\n' +
+      '#else\n' +
       '  if (vR.x > 1.0) { R = -C.x; }\n' +
+      '#endif\n' +
       '  if (vT.y > 1.0) { T = -C.y; }\n' +
       '  if (vB.y < 0.0) { B = -C.y; }\n' +
       '  if (solidProjection > 0.5) {\n' +
@@ -2376,6 +2385,11 @@
       '  float T = texture2D(uPressure, vT).x;\n' +
       '  float B = texture2D(uPressure, vB).x;\n' +
       '  float C = texture2D(uPressure, vUv).x;\n' +
+      // Zero exterior pressure at the outlet face. Its ghost cell mirrors
+      // the interior pressure about zero instead of extending a closed wall.
+      '#ifdef OPEN_RIGHT\n' +
+      '  if (vR.x > 1.0) R = -C;\n' +
+      '#endif\n' +
       '  float divergence = texture2D(uDivergence, vUv).x;\n' +
       '  float pressure = (L + R + B + T - divergence) * 0.25;\n' +
       '  if (solidProjection > 0.5) {\n' +
@@ -2384,6 +2398,9 @@
       '    if (abs(phase - solidPhase) > 0.5) { gl_FragColor = vec4(C, 0.0, 0.0, 1.0); return; }\n' +
       '    vec4 walls = vec4(solidAt(vL).z, solidAt(vR).z, solidAt(vB).z, solidAt(vT).z);\n' +
       '    float count = 4.0 - dot(walls, vec4(1.0));\n' +
+      '#ifdef OPEN_RIGHT\n' +
+      '    if (vR.x > 1.0) { R = 0.0; count += 1.0; }\n' +
+      '#endif\n' +
       '    pressure = (dot(vec4(L, R, B, T), vec4(1.0) - walls) - divergence) / max(count, 1.0);\n' +
       '    pressure = mix(C, pressure, 1.85);\n' +
       '  }\n' +
@@ -2423,6 +2440,9 @@
       '    if (solidAt(vT).z > 0.5) T = center;\n' +
       '    if (solidAt(vB).z > 0.5) B = center;\n' +
       '  }\n' +
+      '#ifdef OPEN_RIGHT\n' +
+      '  if (vR.x > 1.0) R = -texture2D(uPressure, vUv).x;\n' +
+      '#endif\n' +
       '  vec2 velocity = texture2D(uVelocity, vUv).xy;\n' +
       '  velocity.xy -= vec2(R - L, T - B) * (solidProjection > 0.5 ? 0.5 : 1.0);\n' +
       '  velocity = min(max(velocity, -1000.0), 1000.0);\n' +
@@ -3028,6 +3048,18 @@
       if (!ready) return;
       if (dt <= 0) return;
       lastStepDt = dt;
+      // Compile outlet variants only for an instance that requests them.
+      // Ordinary smoke keeps its existing shader operations and GPU fields.
+      var divProgram = divergenceProgram, pProgram = pressureProgram, gradProgram = gradientSubtractProgram;
+      if (config.OPEN_RIGHT) {
+        if (!openRightPrograms) {
+          var outletVS = compileShader(gl.VERTEX_SHADER, BASE_VS);
+          openRightPrograms = [DIVERGENCE_FS, PRESSURE_FS, GRADIENT_SUBTRACT_FS].map(function (source) {
+            return new Program(outletVS, compileShader(gl.FRAGMENT_SHADER, source, ['OPEN_RIGHT']));
+          });
+        }
+        divProgram = openRightPrograms[0]; pProgram = openRightPrograms[1]; gradProgram = openRightPrograms[2];
+      }
       if (physicsTransition > 0) {
         var blend = Math.min(1, dt / physicsTransition);
         for (var key in physics) physics[key] += (physicsTarget[key] - physics[key]) * blend;
@@ -3060,10 +3092,10 @@
       blit(velocity.write);
       velocity.swap();
   
-      divergenceProgram.bind();
-      bindSolidProjection(divergenceProgram, 2, 3);
-      uniform2f(divergenceProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
-      uniform1i(divergenceProgram.uniforms.uVelocity, velocity.read.attach(0));
+      divProgram.bind();
+      bindSolidProjection(divProgram, 2, 3);
+      uniform2f(divProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+      uniform1i(divProgram.uniforms.uVelocity, velocity.read.attach(0));
       blit(divergence);
   
       clearProgram.bind();
@@ -3072,20 +3104,20 @@
       blit(pressure.write);
       pressure.swap();
   
-      pressureProgram.bind();
-      bindSolidProjection(pressureProgram, 2, 3);
-      uniform2f(pressureProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
-      uniform1i(pressureProgram.uniforms.uDivergence, divergence.attach(0));
+      pProgram.bind();
+      bindSolidProjection(pProgram, 2, 3);
+      uniform2f(pProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+      uniform1i(pProgram.uniforms.uDivergence, divergence.attach(0));
       // The Jacobi passes share one sampler unit and viewport. Only the
       // ping-pong textures/framebuffers change between iterations.
-      uniform1i(pressureProgram.uniforms.uPressure, 1);
+      uniform1i(pProgram.uniforms.uPressure, 1);
       gl.activeTexture(gl.TEXTURE1);
       gl.viewport(0, 0, pressure.width, pressure.height);
       for (var i = 0; i < config.PRESSURE_ITERATIONS; i++) {
         // Red/black SOR carries a drum stroke across the long chamber while
         // the legacy path retains one Jacobi pass per iteration.
         for (var phase = 0; phase < (config.SOLID_PROJECTION ? 2 : 1); phase++) {
-          if (config.SOLID_PROJECTION) uniform1f(pressureProgram.uniforms.solidPhase, phase);
+          if (config.SOLID_PROJECTION) uniform1f(pProgram.uniforms.solidPhase, phase);
           gl.bindTexture(gl.TEXTURE_2D, pressure.read.texture);
           gl.bindFramebuffer(gl.FRAMEBUFFER, pressure.write.fbo);
           gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
@@ -3093,13 +3125,13 @@
         }
       }
   
-      gradientSubtractProgram.bind();
-      bindSolidProjection(gradientSubtractProgram, 2, 3);
-      uniform2f(gradientSubtractProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
-      uniform1i(gradientSubtractProgram.uniforms.uPressure, pressure.read.attach(0));
-      uniform1i(gradientSubtractProgram.uniforms.uVelocity, velocity.read.attach(1));
-      uniform1i(gradientSubtractProgram.uniforms.uObstacle, attachObstacle(2));
-      uniform1f(gradientSubtractProgram.uniforms.useObstacle, useObstacle);
+      gradProgram.bind();
+      bindSolidProjection(gradProgram, 2, 3);
+      uniform2f(gradProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+      uniform1i(gradProgram.uniforms.uPressure, pressure.read.attach(0));
+      uniform1i(gradProgram.uniforms.uVelocity, velocity.read.attach(1));
+      uniform1i(gradProgram.uniforms.uObstacle, attachObstacle(2));
+      uniform1f(gradProgram.uniforms.useObstacle, useObstacle);
       blit(velocity.write);
       velocity.swap();
   
@@ -3418,6 +3450,7 @@
   var smokeWaterFlowFrames = 0;
   var smokeDomain={x:0,y:0,w:worldW,h:worldH};
   var smokeViewport=null,smokePixelScale=1,smokeBoundaryVersion=0,smokePaintedBoundary=-1;
+  var smokePaintedOpenRight=false;
   var smokeEngine=SmokeFluid;
   var smokeWetPixels=null,smokeFlowValues=null,smokeTemperatureValues=null;
   var smokeAuthoredPhysics=smokeEngine.getPhysics();
@@ -3611,13 +3644,13 @@
       v[n++]=u0;v[n++]=t0;v[n++]=u1;v[n++]=t0;v[n++]=u0;v[n++]=t1;
       v[n++]=u1;v[n++]=t0;v[n++]=u1;v[n++]=t1;v[n++]=u0;v[n++]=t1;
     }
-    // Two simulation cells form actual impermeable edge walls. Projection
-    // and advection see these same cells; there is no field behind the walls.
+    // Two simulation cells form the closed edge walls. An open outlet has
+    // no obstacle cells, so advection and pressure can carry smoke offscreen.
     var edge=Math.min(smokeDomain.w,smokeDomain.h)/Math.max(16,smokeEngine.config.SIM_RESOLUTION)*2;
     rect(smokeDomain.x,smokeDomain.y,smokeDomain.x+smokeDomain.w,smokeDomain.y+edge);
     rect(smokeDomain.x,smokeDomain.y+smokeDomain.h-edge,smokeDomain.x+smokeDomain.w,smokeDomain.y+smokeDomain.h);
     rect(smokeDomain.x,smokeDomain.y,smokeDomain.x+edge,smokeDomain.y+smokeDomain.h);
-    rect(smokeDomain.x+smokeDomain.w-edge,smokeDomain.y,smokeDomain.x+smokeDomain.w,smokeDomain.y+smokeDomain.h);
+    if(!SmokeFluid.config.OPEN_RIGHT)rect(smokeDomain.x+smokeDomain.w-edge,smokeDomain.y,smokeDomain.x+smokeDomain.w,smokeDomain.y+smokeDomain.h);
     // Static wall runs are cached until the visitor edits the terrain.
     for (var r = 1; r < gridH-1; r++) {
       var off = r * gridW;
@@ -3633,6 +3666,7 @@
     SmokeFluid.paintObstacleQuads(v, n / 2, smokeObW, smokeObH);
     smokePaintedVersion = wallsVersion;
     smokePaintedBoundary=smokeBoundaryVersion;
+    smokePaintedOpenRight=!!SmokeFluid.config.OPEN_RIGHT;
   }
 
   function smokeWaterFlowCouple() {
@@ -3655,7 +3689,7 @@
     }
     smokeWasAwake = true;
     smokeAwakeT -= dt;
-    if (smokePaintedVersion !== wallsVersion || smokePaintedBoundary!==smokeBoundaryVersion) {
+    if (smokePaintedVersion !== wallsVersion || smokePaintedBoundary!==smokeBoundaryVersion || smokePaintedOpenRight!==!!SmokeFluid.config.OPEN_RIGHT) {
       smokeRepaintObstacle();
     }
     if(toyCannon && toyCannon.prepare)toyCannon.prepare(dt*timeMul);
