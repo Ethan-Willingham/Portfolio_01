@@ -975,8 +975,8 @@
   {
     "id": "sand-dam",
     "capability": "Sand",
-    "title": "Sand dam",
-    "cue": "Draft. Pour water against the loose grain barrier.",
+    "title": "Wash the sand",
+    "cue": "Hold Pour to wash grains into the basin.",
     "status": "PARTLY",
     "draft": true,
     "world": {

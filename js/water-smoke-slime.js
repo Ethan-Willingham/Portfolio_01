@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.163.1'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.164'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -14652,10 +14652,10 @@
       liquidWGPU.toyNativeDomain={minX:0,minY:0,maxX:worldW,maxY:worldH};
       liquidWGPU.prepareMaterialState({reset:true});
       var slipOptions=Object.assign({width:worldW,height:worldH},definition.materialSlip);
-      if(definition.sluice){
+      if(definition.sluice || definition.grainLook){
         var grainStyle=getComputedStyle(document.documentElement);
         function grainColor(token){var hex=grainStyle.getPropertyValue(token).trim();return [1,3,5].map(function(i){return parseInt(hex.slice(i,i+2),16)/255;});}
-        slipOptions.grainColors=grainColor('--text-dim').concat([1],grainColor('--toy-grain-gold'),[1]);
+        slipOptions.grainColors=grainColor(definition.grainLook==='sand'?'--app-brass-dim':'--text-dim').concat([1],grainColor('--toy-grain-gold'),[1]);
       }
       ownSlip=await liquidWGPU.configureMaterialSlip(slipOptions);
       if(request!==machineRequest){ownSlip.destroy();return null;}
@@ -14929,7 +14929,7 @@
       label=d.draftFireSmoke.fan.enabled?'Stop fan':'Start fan';
       target(80,184,36,36,'trap-fan','fan');
     }
-    else if(kind==='pour')target(p.target.x,p.target.y,44,44);
+    else if(kind==='pour'){if(p.control)atRect(p.control,'primary','button');else target(p.target.x,p.target.y,44,44);}
     else if(kind==='draft-primary' && d.releaseCap)opening(d.releaseCap);
     else if(kind==='creature-gates' && d.parts && d.parts.length)atRect(d.parts[0].rect);
     else target(source.x+source.width*.5,source.y+12,48,32);
@@ -15348,6 +15348,20 @@
         if(definition.setup==='vented')c.fillText('Open vent',heater.x+104,100);
       }
       if(toyBubbles){var hose=definition.bubbles.hose;if(art)art.airPort(c,hose.x,hose.y,{bottom:384,active:toyBubbles.stats().injecting});}
+      if(definition.sandDam){
+        c.save();c.textAlign='center';c.fillStyle=text;
+        // Draw the same flat slab used by the native polygon contacts.
+        // A tile wall's thick outline would cover these resting micrograins.
+        var bed=definition.sandDam.bed;c.fillStyle=palette.getPropertyValue('--bg-raised').trim();
+        c.fillRect(bed.x,bed.y,bed.width,bed.height);c.strokeStyle=palette.getPropertyValue('--rule-strong').trim();
+        c.lineWidth=1/fitScale;c.strokeRect(bed.x,bed.y,bed.width,bed.height);
+        c.fillStyle=palette.getPropertyValue('--app-brass-dim').trim();c.fillText('Sand',392,252);
+        c.strokeStyle=palette.getPropertyValue('--text-faint').trim();c.globalAlpha=.5;c.setLineDash([3,3]);
+        var profile=definition.sandDam.profile;c.beginPath();profile.forEach(function(p,i){if(i)c.lineTo(p.x,p.y);else c.moveTo(p.x,p.y);});c.stroke();
+        c.globalAlpha=1;c.setLineDash([]);c.fillStyle=palette.getPropertyValue('--text-faint').trim();
+        c.fillText('Dashed line: starting sand',300,324);
+        c.restore();
+      }
       if(definition.sluice){
         c.fillStyle=palette.getPropertyValue('--text-dim').trim();c.fillText('Sand',202,156);
         c.fillStyle=palette.getPropertyValue('--toy-grain-gold').trim();c.fillText('Gold',242,156);
@@ -15560,6 +15574,15 @@
 
     readoutTick++;
     if (readoutTick >= 15) { readoutTick = 0; updateReadout(); }
+  }
+
+  function sandDamInventory(){
+    var d=machineState && machineState.definition.sandDam,data={total:0,inBasin:0,pouring:machinePourHeld,admitted:machineState?Math.max(0,liquidCount-machineState.initialParticles):0};
+    if(!d)return data;
+    if(liquidWGPU)liquidWGPU.syncReadback();
+    var r=d.basin;
+    for(var i=0;i<liquidCount;i++)if(liquidType[i]===5){data.total++;if(liquidX[i]>=r.x && liquidX[i]<r.x+r.width && liquidY[i]>=r.y && liquidY[i]<r.y+r.height)data.inBasin++;}
+    return data;
   }
 
   function sluiceInventory(){
@@ -15969,6 +15992,7 @@
       machineState: function () { return machineState; },
       machinePrimary: machinePrimary,
       machineControls: machineControlTargets,
+      sandDamStats:sandDamInventory,
       activateMachineControl: activateMachineControl,
       releaseMachineControl: releaseMachineControl,
       machineThumb:machineThumb,

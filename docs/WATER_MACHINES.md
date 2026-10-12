@@ -115,20 +115,28 @@ interfaces. Drawing preserves exact position, auxiliary, affine, pressure,
 material and native inventory buffers. The game retains its existing renderer
 and physics defaults. Captures and measurements go outside the repository.
 
-## Sand dam setup
+## Sand wash
 
-The sand dam uses one continuous trough, a broad bank of loose native grains,
-and two visible retaining lips. The lips sit below the initial waterline. The
-bank starts with about seven times the former sand inventory, water only on
-its upstream side, and a dry downstream side. Its pour target sits over the
-upstream pool. Grains may settle and spread; nothing restores their positions
-or assigns the water a route.
+The former sand dam is now called Wash the sand in the scene menu; its
+`sand-dam` URL remains valid. It starts with a finite, dry bed of individual
+sand-colored grains on an open level slab and an empty receiving basin.
+The labeled Hold to pour button starts water above the sand. Releasing stops
+admission, while the water and grains already in flight continue moving.
+A dashed outline marks the starting sand footprint. The visible collected
+percentage reads the actual resident grains in the basin.
+
+The scene uses the existing separate material momentum, water-grain drag and
+frictional contact model. The slab's native collision polygon and drawn edge
+use the same dimensions. There are no retaining posts, initial water, restored
+grain positions or assigned water trajectories. The shallow charge remains
+on the slab while dry. This remains a reduced model of washing grains, with
+exploratory drag, rather than a calibrated sand-dam or erosion experiment.
 
 Run `node tools/test-sand-dam.mjs` for real WebGPU desktop and landscape mobile
-settling, upstream retention, floor containment, conserved material inventories,
-and the actual pour button. An empty-bank control keeps the same retaining lips
-and initial water, checking that the lips alone let water pass. Captures and
-measurements go to `/tmp/sand-dam-review`.
+checks. A dry comparison distinguishes water-driven grain movement from
+settling. Checks cover water and sand reaching the basin, a visible labeled
+hold control, release stopping admission, finite state and conserved sand.
+Captures and measurements go to `/tmp/sand-dam-review`.
 
 ## Hourglass
 

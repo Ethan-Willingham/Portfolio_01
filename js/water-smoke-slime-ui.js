@@ -368,6 +368,15 @@
       if(activeHeldButton && state.loading)return;
       var controls=toy.machineControls();
       var viewport=document.getElementById('toy-viewport'),view=viewport.getBoundingClientRect(),stage=document.getElementById('toy-stage').getBoundingClientRect(),scale=toy.camera().scale;
+      var guide=document.getElementById('toy-sand-guide');
+      if(guide){
+        guide.hidden=state.scene!=='sand-dam' || state.loading;
+        if(!guide.hidden){
+          guide.style.top=(Math.max(0,shell.querySelector('.toy-top').getBoundingClientRect().bottom-view.top)+12)+'px';
+          var sand=toy.sandDamStats();
+          text('toy-sand-result',sand.admitted ? 'Sand collected in the basin: '+Math.round(sand.inBasin/Math.max(1,sand.total)*100)+'%' : 'Dry sand. Ready to pour.');
+        }
+      }
       var liveKeys=new Set();
       controls.forEach(function(control){
         var key=state.scene+':'+control.id;liveKeys.add(key);
@@ -535,7 +544,7 @@
       if(balloon)text('toy-hint','Drag the skin to fling it. Click it to pop and release the water.');
       if(state.scene==='air-hose')text('toy-hint','Stop the declared air source and watch the remaining gas.');
       if(divers)text('toy-hint','Squeeze and release. Grab a diver to move it.');
-      if(slip)text('toy-hint',sluice?'Pale sand washes downstream. Gold stays on the bed. Hold Pour to rinse with more water.':'Stir once. Compare the same jar with matched material densities in Instruments.');
+      if(slip)text('toy-hint',liveMachine.definition.sandDam?liveMachine.definition.caption:sluice?'Pale sand washes downstream. Gold stays on the bed. Hold Pour to rinse with more water.':'Stir once. Compare the same jar with matched material densities in Instruments.');
       document.getElementById('toy-material-slip-sources').hidden=!slip;
       if(state.scene==='float-slider-cistern')text('toy-hint','Grab the float and pull it down to open the inlet. Instruments has the pinned-low comparison.');
       var siphon=state.scene==='siphon';

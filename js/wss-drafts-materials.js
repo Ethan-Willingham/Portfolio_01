@@ -47,21 +47,22 @@ register('air-lift-pump','Bubbles','Air-lift pump','Send bubbles up the riser to
  d.initial=[initial(rect(168,232,224,144)),initial(rect(432,240,16,96))];d.settings=pressure();d.primary={kind:'bubble-toggle'};d.action=o.inject===false?'Start the air':'Stop the air';
  d.bubbles={inject:o.inject!==false,hose:{x:440,y:320},rateArea:195,parcelArea:65,dragCoefficient:1,gravity:250};d.measure={source:source,receiver:receiver};return d;
 },['wss-bubbles']);
-register('sand-dam','Sand','Sand dam','Pour water against the broad sand bank.','PARTLY',function(w,o){
- var d=base('sand-dam','Sand dam','Pour against a broad sand bank. Watch the wet edge and loose grains as it settles.',w,o),trough=rect(64,144,600,240);
- // One continuous floor avoids the former overlapping vessel walls and
- // low outlet. Short, visible retaining lips keep the loose bank together.
- // Both lips sit below the starting waterline, leaving the sand to stop it.
- d.vessels=[box('channel','Sand bank',trough)];d.materialSlip=slip();
- d.solids=[rect(248,312,16,64),rect(472,312,16,64)];
- var bank=[];
- for(var y=168;y<376;y+=8){
-  var spread=Math.min(104,y-168),r=rect(352-spread,y,32+spread*2,8);bank.push(r);d.initial.push(initial(r));
-  if(y>=296)d.initial.push(initial(rect(72,y,Math.min(248,r.x)-72,8)));
- }
- d.materialAt=function(x,y){return bank.some(function(r){return x>=r.x&&x<r.x+r.width&&y>=r.y&&y<r.y+r.height;})?'sand':'water';};
- d.primary={kind:'pour',target:{x:144,y:240}};d.action='Pour more water';
- d.measure={source:rect(72,144,208,232),receiver:rect(536,144,120,232)};return d;
+register('sand-dam','Sand','Wash the sand','Hold Pour to wash grains into the basin.','PARTLY',function(w,o){
+ var d=base('sand-dam','Wash the sand','Hold Pour to send water across the dry sand. Release to stop, then watch the grains collect in the basin on the right.',w,o);
+ // Dry loose grains on an open level bed. Water and grains can
+ // leave its right edge together; there are no retaining posts or refills.
+ d.solids=[rect(64,192,8,112)];
+ d.vessels=[box('receiver','Receiving basin',rect(504,328,192,56))];
+ d.seedPitch=1.5;d.grainLook='sand';
+ d.initial=[initial(rect(288,276,208,8))];
+ d.materialAt=function(){return 'sand';};
+ d.materialSlip={density:[1,.7733,2.65,2.65],drag:[4,600,600,4,4,4],separateGold:true,grainContacts:true,
+  bed:{line:[72,288,512,288],riffles:[0,8,8,0],count:0,thickness:16}};
+ d.primary={kind:'pour',target:{x:336,y:152},control:rect(292,120,88,28)};d.action='Hold to pour';
+ d.sandDam={bed:rect(72,288,440,16),profile:[{x:288,y:288},{x:288,y:276},{x:496,y:276},{x:496,y:288}],basin:rect(512,336,176,40)};
+ d.measure={source:rect(72,192,440,96),receiver:d.sandDam.basin};
+ d.boundaryNote='The sand starts dry. Holding Pour admits water at the marked source; release stops it. Native water, grain drag and frictional contacts move the finite sand inventory. The level bed and receiving basin are open, with no hidden barrier, grain refill or assigned path.';
+ d.energyBudgetStatus='Separate material momentum, shared compressive pressure and equal/opposite water-grain drag with frictional grain contacts. This reduced 2D model has exploratory drag and unmeasured numerical work; it is not a calibrated erosion or permeability model.';return d;
 });
 register('hero-jug','Oil','Hero\'s wine-or-water jug','Switch the real outlet gates between two liquids.','PARTLY',function(w,o){
  var d=base('hero-jug','Hero\'s wine-or-water jug','A manual outlet selector chooses water or an oil proxy for wine; the air-vent mechanism is missing.',w,o),water=rect(128,64,192,184),oil=rect(400,64,192,184),cup=rect(288,312,144,72);
