@@ -510,6 +510,7 @@
       var wind=state.scene==='smoke-wind-tunnel',cannon=state.scene==='smoke-ring-cannon'||wind,thermal=state.scene==='thermoscope',balloon=state.scene==='water-balloons',divers=state.scene==='cartesian-divers',bubbles=state.scene==='air-hose';
       var thirsty=!!(liveMachine && liveMachine.definition.thirsty);
       var nativeReduced=!!(liveMachine && (liveMachine.definition.thermal || liveMachine.definition.capillary));
+      var nativeCargo=!!(liveMachine && (liveMachine.definition.submarine || liveMachine.definition.cuff || liveMachine.definition.rocket));
       var contextual = machine || air.enabled;
       var ledger=sample.ledger || {},convergence=sample.convergence;
       var fatal=sample.error || air.error || (toy.liquid && toy.liquid() && toy.liquid().materialStateError);
@@ -530,6 +531,7 @@
       if(slip){pressureLabel=state.paused?'Paused':state.scene==='material-oil-jar'||sluice?'Live':'Prototype';pressureMessage='Instruments has the matched-density comparison and model limits.';}
       if(steam){pressureLabel=state.paused?'Paused':'Diagnostic';pressureMessage=birds?'Grab the pipe’s top to change its note. Instruments has the comparisons and acoustic limits.':'The white plume traces escaping vapor. Instruments explains the thermal model.';}
       if(nativeReduced){var reducedError=fatal || sample.boundary && sample.boundary.error || sample.draftRuntime && sample.draftRuntime.error;pressureLabel=reducedError?'Solver stopped':state.paused?'Paused':sample.ready?'Live':'Starting';pressureMessage=reducedError?'Restart to restore the native solver.':'Instruments has the material model and its comparisons.';}
+      if(nativeCargo){var cargoDefinition=liveMachine.definition,cargoReading=cargoDefinition.rocketReading || cargoDefinition.cuffReading || cargoDefinition.submarineReading,cargoError=fatal || cargoReading && cargoReading.error;pressureLabel=cargoError?'Solver stopped':state.paused?'Paused':!liveMachine.ready || !cargoReading?'Starting':cargoDefinition.rocket?'Diagnostic':'Live';pressureMessage=cargoError?'Restart to restore the native solver.':'Instruments explains the carried-water or gas-body model and its comparisons.';}
       if(trap){
         var trapFan=liveMachine && liveMachine.definition.draftFireSmoke.fan.enabled;
         pressureLabel=state.paused?'Paused':liveMachine && liveMachine.definition.setup==='dry'?'Trap dry':'Water seal';
@@ -574,7 +576,7 @@
       }
       text('toy-compact-head-label',divers ? 'Under 1' : state.scene==='thumb-straw' || thermal || steam ? 'Air' : state.scene==='tantalus' ? 'Water to mouth' : 'Head');
       text('toy-compact-head', number(state.scene==='thumb-straw' || thermal || steam || divers ? sample.gasPressurePsi : state.scene==='tantalus' ? sample.mouthDistanceInches : sample.headInches, state.scene==='thumb-straw' || thermal || steam || divers ? 'psi' : 'in'));
-      document.getElementById('toy-compact-head').parentElement.hidden=state.scene==='burst-disk' || bubbles || nativeReduced;
+      document.getElementById('toy-compact-head').parentElement.hidden=state.scene==='burst-disk' || bubbles || nativeReduced || nativeCargo;
       document.getElementById('toy-native-reading').hidden=!native;
       var fireReading=fire && sample.fire ? candle ? 'Oxygen '+(100*sample.fire.oxygenFraction).toFixed(1)+'%; '+(sample.fire.burning?'burning':'out, reset to relight') : 'Source '+Math.round(sample.fire.sourceC*1.8+32)+' degrees Fahrenheit; '+(sample.fire.burning?'burning':'cooling') : '';
       text('toy-native-reading',sample.floatSlider ? 'Inlet '+Math.round(100*sample.floatSlider.openness)+'% open; '+(sample.floatSlider.pinned?'float pinned':'guided float') : birds && sample.birds ? 'Air out '+number(sample.birds.massFlowGrainsPerSecond,'grains/s')+'; pipe '+sample.birds.pipeLengthInches.toFixed(2)+' in' : sample.bubbles ? 'Gas parcels '+sample.bubbles.points.length+'; '+sample.bubbles.surfaceExits+' surface exits' : steam && sample.steam ? 'Water '+number(Number.isFinite(sample.steam.waterTemperatureC) ? sample.steam.waterTemperatureC*1.8+32 : null,'degrees Fahrenheit')+'; vapor '+sample.steam.vaporParcels : balloon && sample.balloon ? sample.balloon.popped ? 'Skin popped' : Number.isFinite(sample.balloon.retainedFraction) ? 'Water held '+(100*sample.balloon.retainedFraction).toFixed(0)+'%' : 'Water inside the skin' : thermal && sample.thermoscope ? 'Air '+number(sample.thermoscope.temperatureF,'degrees Fahrenheit') : fire && sample.fire ? fireReading : state.scene==='thumb-straw' ? Number.isFinite(sample.retainedFraction) ? 'Water held '+(100*sample.retainedFraction).toFixed(0)+'%' : 'Waiting for water sample' :
@@ -603,7 +605,7 @@
       soundButton.title=birds?'Airflow powers the tone. Grab the pipe top to change its estimated mode.':steam?'A pipe-mode whistle powered by escaping gas. Enable sound with this button.':fire?'A synthesized hiss from water cooling the source. Enable sound with this button.':'Synthesized water impacts. Enable sound with this button.';
       syncMachineControls();
       text('toy-compact-flow', number(sample.flowCubicInchesPerSecond, 'in³/s'));
-      document.getElementById('toy-compact-flow').parentElement.hidden=divers || steam || bubbles || nativeReduced;
+      document.getElementById('toy-compact-flow').parentElement.hidden=divers || steam || bubbles || nativeReduced || nativeCargo;
       document.getElementById('toy-machine-metrics').classList.toggle('is-stale', stale);
       document.getElementById('toy-machine-metrics').title = stale ? 'The measurement sample is more than a quarter second old.' : '';
       text('toy-machine-scale', sample.scaleText || 'The box is 30 inches wide and 1 inch deep. Seconds use Earth gravity.');

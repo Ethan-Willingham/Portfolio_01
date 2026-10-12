@@ -2400,8 +2400,8 @@
     "id": "suction-siphon",
     "capability": "Valves and logic",
     "title": "Suction-primed siphon",
-    "cue": "Draft. Grab the air-pump piston above a dry siphon.",
-    "status": "NOT WORKING",
+    "cue": "Pull the sealed syringe, then open the water outlet. A crest leak prevents priming.",
+    "status": "WORKS",
     "draft": true,
     "world": {
       "w": 720,
@@ -2409,14 +2409,17 @@
     },
     "pool": false,
     "dependencies": [
-      "wss-drafts-fluid-machines",
-      "wss-drafts-bodies"
+      "wss-cartesian-divers",
+      "wss-machines/cartesian-divers",
+      "wss-suction-siphon"
     ],
+    "blocker": "One-stroke reduced 2D syringe primer, without a calibrated real pump efficiency.",
     "accepted": true,
     "preview": "cup",
     "scripts": [
-      "wss-drafts-fluid-machines",
-      "wss-drafts-bodies"
+      "wss-cartesian-divers",
+      "wss-machines/cartesian-divers",
+      "wss-suction-siphon"
     ]
   },
   {
