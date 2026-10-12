@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.141'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.142'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -1646,12 +1646,13 @@
             liquidWGPU.setRenderParam('WATER_FOAM_G', 0.78);
             liquidWGPU.setRenderParam('WATER_FOAM_B', 0.82);
             liquidWGPU.setRenderParam('WATER_ALPHA', 0.86);
-            // v3.12: keep a lone field peak below visibility and give dense
-            // water only enough support to bridge about two rest spacings.
-            // Thin sheets belong to the fixed-size droplet pass, not a wide
-            // halo that makes ledges swell and terrain collision look false.
+            // Reconstruct supported water with overlapping surface kernels.
+            // Tightly cropped kernels turn normal particle gaps
+            // into long tears, especially in the shallow fountain reservoirs.
+            // The neighbour gate still shrinks isolated spray, the droplet
+            // pass stays compact, and the composite clips at the real walls.
             liquidWGPU.setRenderParam('SURFACE_THRESH', 1.8);
-            liquidWGPU.setRenderParam('SURFACE_RSCALE', 0.9);
+            liquidWGPU.setRenderParam('SURFACE_RSCALE', 2);
             // Per-particle proof dots start hidden. The toolbar toggle keeps
             // the diagnostic pass available without making it the landing view.
             applyParticleDebug();
@@ -13158,7 +13159,7 @@
     WATER_FOAM_R: 0.66, WATER_FOAM_G: 0.78, WATER_FOAM_B: 0.82,
     // A narrow antialiased edge replaces the broad translucent fringe.
     // Changing away from Pearl also restores this surface softness.
-    SURFACE_THRESH: 1.8, SURFACE_RSCALE: 0.9, SURFACE_SOFT: 0.25
+    SURFACE_THRESH: 1.8, SURFACE_RSCALE: 2, SURFACE_SOFT: 0.25
   };
   function pushSim(map) { if (liquidWGPU && liquidWGPU.setSimParam) for (var k in map) liquidWGPU.setSimParam(k, map[k]); }
   function pushRender(map) { if (liquidWGPU && liquidWGPU.setRenderParam) for (var k in map) liquidWGPU.setRenderParam(k, map[k]); }
