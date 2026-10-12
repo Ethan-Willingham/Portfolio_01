@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.155'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.156'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -1557,6 +1557,7 @@
       dropletStretch: 0,
       surfaceGapBridge: 0,
       surfaceFromPositions: true,
+      particleRegularization: true,
       // Helpers download alongside engine boot. Native configuration happens
       // only after they settle, so resolve the factory at that point.
       toyNativeExtension: bootMachine || handsRequested ? function(instance,options){return window.WSSNative.create(instance,options);} : undefined,

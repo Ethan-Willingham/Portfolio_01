@@ -9187,6 +9187,15 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
         WGSL_WAKE_TERRAIN + WGSL_GRID_WAKE +
         WGSL_GRID_UPDATE)
     };
+    if (instance.particleRegularization) {
+      // Pressure companions may replace the native impulse, but density and
+      // aeration still need a current particle/grid sample. Material-state
+      // companions are excluded at dispatch because they own aux.x.
+      var densityEnd = WGSL_GRID_PRESSURE.indexOf('  // Weakly-compressible pressure.');
+      if (densityEnd < 0) throw new Error('Water density gather marker differs.');
+      instance.grid2Pipe.densityOnly = pPipe('liquid.measureDensity',
+        WGSL_GRID_PRESSURE.slice(0, densityEnd) + '}\n');
+    }
     instance.sparseGrid2OK = false;
     if (instance.sparseCapable) {
       try {
@@ -9569,6 +9578,10 @@ struct P2GParams {
       // It also refreshes aux.x for particle separation and rendering.
       // Models carrying material density in aux.x must leave this off.
       cp.setPipeline(P.pressure);
+      cp.setBindGroup(0, instance.pressureBG);
+      cp.dispatchWorkgroups(partGroups);
+    } else if (count > 0 && instance.particleRegularization && !airModel.preserveMaterialState) {
+      cp.setPipeline(P.densityOnly);
       cp.setBindGroup(0, instance.pressureBG);
       cp.dispatchWorkgroups(partGroups);
     }
@@ -10183,6 +10196,7 @@ fn machinePointExitClear(a:vec2<f32>,b:vec2<f32>,r:f32)->bool {
       instance.declumpReady = false;
       try { console.log('LiquidWGPU declump: pipeline build failed — ' + ((e && e.message) || e)); } catch (_) {}
     }
+    if (instance.particleRegularization) buildWaterRegularization(instance);
   }
 
   /* Run the Stage-5 G2P gather in one command encoder. One kernel — one
@@ -10400,15 +10414,56 @@ fn machinePointExitClear(a:vec2<f32>,b:vec2<f32>,r:f32)->bool {
   // v24.185 — min-separation (anti-clump) dispatch. Runs after buildGrid (fresh
   // grid) each substep; the kernel itself early-returns for all but over-dense
   // knot particles, so this is cheap on a calm pond. Skipped entirely when off.
+  // The demo's pressure modes can leave aux.x at its seed density. More
+  // generally APIC may align close water parcels into filaments while their
+  // averaged grid density remains below the emergency knot threshold. Keep
+  // the sampling distribution healthy with a small, terrain-aware Jacobi
+  // correction. Read a snapshot so dispatch order cannot bias the spacing.
+  // This opt-in changes positions only, preserving parcel mass and velocity.
+  function buildWaterRegularization(instance) {
+    var dev = instance.device;
+    if (!instance.buf.waterSpacingBefore) instance.buf.waterSpacingBefore = dev.createBuffer({
+      label: 'liquid.waterSpacingBefore', size: instance.maxParticles * 16,
+      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
+    });
+    var source = WGSL_DECLUMP
+      .replace('  let fl = flag[i];', '  let fl = flag[i];\n  if ((fl & 128u) != 0u) { return; }')
+      .replace('@group(0) @binding(7) var<storage, read> terrainMask : array<u32>;',
+        '@group(0) @binding(7) var<storage, read> terrainMask : array<u32>;\n' +
+        '@group(0) @binding(8) var<storage, read> before : array<vec4<f32>>;')
+      .replace('let dense = aux[i].x >= ODEN;',
+        'let dense = ((fl & 3u) | ((fl >> 4u) & 4u)) == 0u || aux[i].x >= ODEN;')
+      .replace('let p = pos[i].xy;', 'let p = before[i].xy;')
+      .replace('let d = p - pos[j].xy;', 'let d = p - before[j].xy;')
+      .replace('if (j == i || ((flag[j]&3u)|((flag[j]>>4u)&4u)) == 5u)',
+        'if (j == i || (flag[j] & 128u) != 0u || ((flag[j]&3u)|((flag[j]>>4u)&4u)) == 5u)')
+      .replace('  mv.x = clamp(mv.x, -CELL, CELL);\n  mv.y = clamp(mv.y, -CELL, CELL);',
+        '  let travel = length(mv);\n  if (travel > DMIN * 0.25) { mv = mv * (DMIN * 0.25 / travel); }');
+    var entries = [{ binding: 0, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'uniform' } }];
+    var buffers = [instance.paramsBuf, instance.buf.pos, instance.buf.aux, instance.buf.flag,
+      instance.buf.cellCount, instance.buf.cellStart, instance.buf.sortedIdx,
+      instance.buf.terrainMask, instance.buf.waterSpacingBefore];
+    for (var binding = 1; binding <= 8; binding++) entries.push({ binding: binding,
+      visibility: GPUShaderStage.COMPUTE, buffer: { type: binding === 1 ? 'storage' : 'read-only-storage' } });
+    var layout = dev.createBindGroupLayout({ label: 'liquid.waterSpacingBGL', entries: entries });
+    instance.waterSpacingPipe = dev.createComputePipeline({ label: 'liquid.waterSpacing',
+      layout: dev.createPipelineLayout({ bindGroupLayouts: [layout] }),
+      compute: { module: dev.createShaderModule({ code: toyNativeShader(instance, source) }), entryPoint: 'main' } });
+    instance.waterSpacingBG = dev.createBindGroup({ label: 'liquid.waterSpacingBG', layout: layout,
+      entries: buffers.map(function (buffer, index) { return { binding: index, resource: { buffer: buffer } }; }) });
+  }
+
   function runDeclump(instance) {
     if (!instance.declumpReady || !LIQUID_DECLUMP_ON) return;
     var count = instance.uploadedCount | 0;
     if (count <= 0) return;
     var dev = instance.device;
     var enc = liquidEncoder(instance, 'liquid.runDeclump');
+    var regularize = instance.particleRegularization && instance.waterSpacingPipe;
+    if (regularize) enc.copyBufferToBuffer(instance.buf.pos, 0, instance.buf.waterSpacingBefore, 0, count * 16);
     var cp = enc.beginComputePass({ label: 'liquid.declump' });
-    cp.setPipeline(instance.declumpPipe);
-    cp.setBindGroup(0, instance.declumpBG);
+    cp.setPipeline(regularize ? instance.waterSpacingPipe : instance.declumpPipe);
+    cp.setBindGroup(0, regularize ? instance.waterSpacingBG : instance.declumpBG);
     cp.dispatchWorkgroups(Math.max(1, Math.ceil(count / WG)));
     cp.end();
     liquidSubmit(instance, enc);
@@ -12865,6 +12920,9 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
         ? Math.max(0, Math.min(1, opts.surfaceGapBridge)) : 1,
       // Render-only parcel reconstruction; simulation density is untouched.
       surfaceFromPositions: !!opts.surfaceFromPositions,
+      // Healthy parcel spacing for demo fluids; the game keeps its original
+      // emergency-only correction and allocates no optional snapshot.
+      particleRegularization: opts.particleRegularization === true,
       adapter: null,
       device: null,
       queue: null,

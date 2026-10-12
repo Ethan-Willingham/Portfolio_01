@@ -13,6 +13,7 @@ function run(bodyCode, substeps, cup, initialVelocity = 0) {
     bboxL: 80, bboxR: 88, bboxT: 80, bboxB: 88, cx: 84, cy: 84};
   b.oy = b.py.map(y => y - initialVelocity * (1 / 240 / substeps) / .5);
   const context = {jelloBodies: [b], machineState: cup ? {definition: {name: 'cup'}} : null,
+    toyDivers: null, toyFloatSlider: null,
     JELLO_H: 1 / 240, JELLO_TIMESCALE: .5, JELLO_GRAVITY: 250, jelloImpulseScale: () => 1 / substeps,
     TILE: 8, gridW: 32, gridH: 32, walls: new Uint8Array(1024), waterCellsAny: true,
     waterCellCount: new Uint32Array(1024).fill(40), waterCellVX: new Float64Array(1024), waterCellVY: new Float64Array(1024),

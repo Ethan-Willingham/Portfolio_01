@@ -14,7 +14,9 @@ const context={Array,Math,Number,Object,Set,Float32Array,Uint8Array,
   airModel:{enabled:false,preserveMaterialState:true,width:20,height:20,cellSize:5,
     geometry:(solid,room,vx,vy,faces)=>{capture={solid:Array.from(solid),vx:Array.from(vx),vy:Array.from(vy),faces:Array.from(faces)};}},
   liquidWGPU:{getSimParam:key=>{assert.equal(key,'TIMESCALE');calls++;return time;}},
-  machineState:null,JELLO_TIMESCALE:.5,jelloStepH:1/480,JELLO_H:1/240,jelloBodies:[],liquidGuestSlots:Array(8).fill(null),pokeGuest:null,
+  machineState:null,toyWave:null,toyBalloon:null,toyDivers:null,toyFloatSlider:null,
+  toySolidSkinBody:()=>false,
+  JELLO_TIMESCALE:.5,jelloStepH:1/480,JELLO_H:1/240,jelloBodies:[],liquidGuestSlots:Array(8).fill(null),pokeGuest:null,
   TILE:8,gridW:13,gridH:13,walls:new Uint8Array(169),valveSeats:null,wallsVersion:1,
   airGeometryVersion:-1,airStaticGeometry:null,airHadBodies:false,tileAt:()=>null};
 vm.createContext(context);

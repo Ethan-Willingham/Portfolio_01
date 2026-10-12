@@ -237,15 +237,16 @@ try {
   catch(error){report.failure=await evaluate('window.__offFailure || null');throw error;}
   report.defaultBoots=[];
   for(const kind of ['toy','game']) {
-    await send('Page.navigate',{url:base+(kind==='toy'?'/archive/water-smoke-slime/water-smoke-slime.html':'/grand-motherload.html?dev=1&nosave=1&nopause=1')});
+    await send('Page.navigate',{url:base+(kind==='toy'?'/archive/water-smoke-slime/water-smoke-slime.html?scene=falls':'/grand-motherload.html?dev=1&nosave=1&nopause=1')});
     let ready=false;
     for(let n=0;n<600;n++) {ready=await evaluate(kind==='toy'?'!!window.__toy && __toy.stats().waterState!=="booting"':'!!window.__offGame && __offGame("introPhase===\'done\'")');if(ready)break;await sleep(100);}
     assert(ready,kind+' boot settles');await sleep(2000);
     const state=await evaluate(kind==='toy'?`({version:__toy.version,water:__toy.stats().waterState,air:__toy.airStats(),model:!!__toy.liquid().pressureModel,loadedNative:__offLoadedNativeSHA})`:
-      `__offGame('({version:GAME_VERSION,water:liquidWGPU.simActive,model:!!liquidWGPU.pressureModel,loadedNative:window.__offLoadedNativeSHA})')`);
+      `__offGame('({version:GAME_VERSION,water:liquidWGPU.simActive,model:!!liquidWGPU.pressureModel,regularization:!!liquidWGPU.particleRegularization,spacingBuffer:!!liquidWGPU.buf.waterSpacingBefore,loadedNative:window.__offLoadedNativeSHA})')`);
     assert.equal(state.loadedNative,hashes.after,kind+' boots the exact candidate native source');
     const observation=await evaluate('({buffers:__offObservation.buffers.filter(r=>/liquid\\.air\\.|liquid\\.declumpJacobi|liquid\\.declumpCanonical/.test(r.label)),passes:__offObservation.passes.filter(r=>/liquid\\.air\\.|afterAir|liquid\\.declumpJacobi|liquid\\.declumpCanonical/.test(r.label)),pipelines:__offObservation.pipelines.filter(r=>/liquid\\.air\\.|liquid\\.declumpJacobi|liquid\\.declumpCanonical/.test(r.label))})');
     assert.equal(state.model,false,kind+' model omitted');assert(kind==='toy'?state.water==='on':state.water,kind+' hardware water active');
+    if(kind==='game'){assert.equal(state.regularization,false);assert.equal(state.spacingBuffer,false,'The game allocates no spacing snapshot');}
     assert.equal(observation.buffers.length+observation.passes.length+observation.pipelines.length,0,kind+' creates/encodes no air or snapshot resources');
     if(kind==='toy')assert.equal(state.air.enabled,false);
     report.defaultBoots.push({kind,state,airBuffers:0,airPasses:0,airPipelines:0});

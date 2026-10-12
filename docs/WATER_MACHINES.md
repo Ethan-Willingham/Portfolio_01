@@ -144,6 +144,40 @@ desktop/mobile centering, grab recovery, fan controls, an undissipated dye-packe
 exit comparison and boundary restoration. The default smoke regression is
 `BASE_REF=44a0f90b node tools/perf/smoke-equivalence.cjs`.
 
+## Particle spacing correction
+
+Toy v5.156 corrects particle spacing. Its physical regression uses the original
+surface radius scale of 0.9 with position reconstruction disabled. The rejected
+v5.142 change widened the drawn kernels to 2 without correcting the particles.
+Its frozen-image hole comparison did not test the cause of the strands.
+
+The demo now opts into a terrain-aware spacing correction in the shared water
+engine. It separates water parcels closer than 1.1 world pixels, below the
+1.25-pixel resting pitch. The old emergency correction required density above
+1.6 times rest, so ordinary APIC compression could leave persistent filaments
+below that threshold. Some pressure companions also skipped the density gather,
+leaving the value used by the correction and renderer at its initial value.
+
+The small Heron apparatus also restores the native fine-grid liquid pressure
+response alongside its coarse air solve. The coarse correction alone allowed
+underdense sheets to persist.
+
+The correction reads a GPU position snapshot and writes each parcel's own
+position. Each displacement is bounded to 0.275 world pixels per substep and
+checks the leading edge against the collision terrain. Frozen and parked parcels
+retain their state. Velocities, affine matrices, particle identity and particle
+count are preserved by the isolated correction. Pressure modes that replace the
+native pressure impulse now refresh density and aeration separately; modes that
+own material density remain excluded. The game keeps its original correction,
+with no additional buffer or dispatch when this option is omitted.
+
+`node tools/test-water-spacing.mjs` compares actual GPU particle distributions
+with correction off and on, at the original drawing width. It covers the
+fountain on desktop and landscape mobile and the cascade. It also isolates
+uniform translation, a compressed cloud, walls, a floor, a corner and inactive
+parcels, checking carried momentum and containment rather than treating filled
+rendering gaps as physical evidence.
+
 ## Spatial oxygen and combustion
 
 The six fuel-burning scenes share a spatial oxygen solver: Candle in a jar,

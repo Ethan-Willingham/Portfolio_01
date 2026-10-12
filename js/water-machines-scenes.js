@@ -187,6 +187,10 @@
       result.measure={source:middle,basin:basin,bottom:bottom,nozzle:probe(nozzle.x,nozzle.y-4),
         intake:point(284,340),intakeFloor:352,bore:16,bottomHeight:bottomHeight};
     }else if(name==='heron'){
+      // The coarse air solve supplies the gas pressure, while the native
+      // fine-grid response keeps the liquid near its resting density.
+      // Omitting this response let the small fountain form porous sheets.
+      result.settings.particlePressure=true;
       result.title="Heron's fountain";result.action='Pour into basin';
       result.caption='An open basin drains into a sealed receiving jar. Pour water into the basin to test whether the trapped air drives a jet from the source jar.';
       // Bound the finite apparatus independently of surplus world space. A
