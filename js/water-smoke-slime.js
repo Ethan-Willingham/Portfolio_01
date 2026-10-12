@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.168'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.169'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -12797,7 +12797,7 @@
     // Cup buoyancy uses the actual Verlet microstep. Applying an outer-step
     // position impulse to XPBD multiplies lift by its substep count.
     // Keep the established ordinary-scene coupling unchanged.
-    var couplingH = toyDivers || toyFloatSlider || machineState && machineState.definition.name === 'cup'
+    var couplingH = toyDivers || toyFloatSlider || machineState && (machineState.definition.name === 'cup' || machineState.definition.floatDam)
       ? JELLO_H * jelloImpulseScale() : JELLO_H;
     var invV = ts / couplingH;
     var applyK = couplingH / ts;
@@ -12905,6 +12905,7 @@
         b._surfRef = null;
       }
       }
+      if (Number.isFinite(b.fluidSurfaceY)) farSurf = b.fluidSurfaceY;
       var n = b.n, px = b.px, py = b.py, ox = b.ox, oy = b.oy;
       var dbg = (window.__cdb && bi === 0) ? { t: toyFrameNo, dvy: 0, phi: 0, np: 0 } : null;
       // Body real velocity (for entry physics below).
@@ -12923,7 +12924,7 @@
       // carving a crater).
       var dragRate=diverContact ? diverContact.dragRate : DRAG_K,viscousRate=diverContact ? diverContact.viscosity : 1.8;
       var buoyScale = diverContact ? 1 : 1 / (1 + bSpd / 260);
-      var displacedMassRatio=b.cartesianDiver ? window.WSSCartesianDivers.lift(b) : 1+BUOY_BETA;
+      var displacedMassRatio=b.cartesianDiver ? window.WSSCartesianDivers.lift(b) : Number.isFinite(b.fluidDensityRatio) && b.fluidDensityRatio>0 ? 1/b.fluidDensityRatio : 1+BUOY_BETA;
       var buoyA = -JELLO_GRAVITY * displacedMassRatio * dt * buoyScale;   // times phi per point
       var rampInv = 1 / (TILE * 2.0);                      // surface straddle ramp, ~16 px
                                                            // (wider = softer response to lapping

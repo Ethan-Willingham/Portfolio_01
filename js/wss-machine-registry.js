@@ -997,7 +997,10 @@
     "title": "Gold sluice box",
     "cue": "Wash pale sand downhill and leave gold at the riffles.",
     "accepted": true,
-    "world": {"w": 720, "h": 400},
+    "world": {
+      "w": 720,
+      "h": 400
+    },
     "pool": false,
     "preview": "cup"
   },
@@ -2277,8 +2280,8 @@
     "id": "glacial-flood",
     "capability": "Ice",
     "title": "Glacial flood",
-    "cue": "Draft. Grab the floating barrier stand-in at the lake outlet.",
-    "status": "NOT WORKING",
+    "cue": "An ice-density gel barrier floats up as the lake rises, releasing a flood. Freezing and melting are not modeled.",
+    "status": "WORKS",
     "draft": true,
     "world": {
       "w": 720,
@@ -2292,8 +2295,8 @@
     "accepted": true,
     "preview": "cup",
     "scripts": [
-      "wss-drafts-fluid-machines",
-      "wss-drafts-bodies"
+      "wss-drafts-bodies",
+      "wss-glacial-flood"
     ]
   },
   {
