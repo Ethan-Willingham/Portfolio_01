@@ -4,6 +4,27 @@ Release: toy v5.57, shared water engine v28.179. The greedy cup, standalone
 siphon and Heron's fountain are in the public scene menu, with published behavior
 measurements. Full quantitative physical acceptance and steady 60 FPS remain unverified.
 
+## Chimney inlet
+
+The chimney inlet changes combustion in the running scene. Its clear collision
+cells replenish a finite mixed air charge in the firebox. Closing the inlet
+depletes that charge, dims the flame and stops new combustion heat and smoke.
+Reopening it replenishes the charge and lets the declared ember relight dry fuel.
+Water contact still quenches the fuel. Building across the inlet changes the
+supply even when the button's last command was to open it.
+
+The normalized charge starts at one. Fresh-air exchange is twice the clear
+inlet fraction per simulation second; full burning consumes 0.6 charge per
+second. Heat and smoke follow the remaining combustible fraction. The model
+records admitted and consumed charge alongside the existing heat ledger. It is
+a mixed firebox approximation, with no resolved oxygen transport or combustion
+chemistry. Smoke still uses the existing temperature and projection solver.
+
+Run `node tools/test-chimney-inlet.mjs` for desktop and landscape mobile button
+cycles, initial and built closures, actual plume-temperature changes, charge
+balance and the ordinary fire's water-quench control. The harness owns and closes
+Chrome for Testing; screenshots and measurements go to `/tmp/chimney-inlet-review`.
+
 ## Air pressure view
 
 Machine scenes show a faint tint inside sealed gas pockets. Gold means positive

@@ -24,11 +24,22 @@ fn touching(i:u32)->bool {let d=max(max(p.hot.xy-pos[i].xy,pos[i].xy-p.hot.zw),v
  // The fixed-temperature ember supplies declared heat only while dry.
  let ember=select(p.step.w*CAPACITY*max(0.,800.-state[0])*(1.-exp(-EMBER_CONDUCTANCE*dt/CAPACITY)),0.,wet>0.);
  state[0]+=ember/CAPACITY;state[12]+=ember;
- let burning=wet==0. && state[0]>=350.;
- if(was>0.5 && !burning){state[3]=state[2];state[18]+=1.;}
+ // The chimney has a finite, mixed air charge. Only its actual clear inlet
+ // replenishes that charge. Other fire scenes retain their original source.
+ var combustion=1.;
+ if(p.world.z>0.5){
+  let fresh=min(1.-state[19],2.*p.world.w*(1.-state[19])*dt);
+  state[19]+=fresh;state[21]+=fresh;
+  combustion=clamp((state[19]-0.14)/0.6,0.,1.);
+  if(combustion<0.04){combustion=0.;}
+ }
+ let burning=wet==0. && state[0]>=350. && combustion>0.;
+ state[20]=select(0.,combustion,burning);state[23]=p.world.w;
+ if(p.world.z>0.5){let used=min(state[19],0.6*state[20]*dt);state[19]-=used;state[22]+=used;}
+ if(was>0.5 && !burning && (p.world.z<0.5 || wet>0.)){state[3]=state[2];state[18]+=1.;}
  if(was<0.5 && burning){state[14]+=1.;}
  state[1]=select(0.,1.,burning);
- let input=select(0.,6000.*dt,burning);state[0]+=input/CAPACITY;state[4]+=input;
+ let input=6000.*dt*state[20];state[0]+=input/CAPACITY;state[4]+=input;
  let loss=CAPACITY*(state[0]-20.)*(1.-exp(-5.*dt/CAPACITY));state[0]-=loss/CAPACITY;state[5]+=loss;
  state[9]=0.;state[10]=f32(atomicLoad(&sums[2]))/64.;
  if(wet>0.){
@@ -55,7 +66,7 @@ fn touching(i:u32)->bool {let d=max(max(p.hot.xy-pos[i].xy,pos[i].xy-p.hot.zw),v
     var U=GPUBufferUsage,params=buffer(48,U.UNIFORM|U.COPY_DST),temps=buffer(n*4,U.STORAGE|U.COPY_SRC),
       sums=buffer(sumCount*4,U.STORAGE|U.COPY_DST|U.COPY_SRC),state=buffer(stateSize,U.STORAGE|U.COPY_DST|U.COPY_SRC),
       read=buffer(bytes,U.MAP_READ|U.COPY_DST),initial=new Float32Array(24),reset=new Uint32Array(sumCount);
-    initial[0]=900;initial[1]=1;initial[3]=-1;initial[16]=17600;queue.writeBuffer(state,0,initial);
+    initial[0]=900;initial[1]=1;initial[3]=-1;initial[16]=17600;initial[19]=1;initial[20]=1;initial[23]=1;queue.writeBuffer(state,0,initial);
     for(var k=0;k<72;k++)reset[5+k*3]=0xffffffff;
     var module=device.createShaderModule({code:WGSL}),info=await module.getCompilationInfo();
     if(info.messages.some(function(m){return m.type==='error';}))throw Error(info.messages.map(function(m){return m.message;}).join('; '));
@@ -70,7 +81,8 @@ fn touching(i:u32)->bool {let d=max(max(p.hot.xy-pos[i].xy,pos[i].xy-p.hot.zw),v
     field.set([0,0,width/12,height/6,1,20,0,0]);for(k=0;k<72;k++)field[8+k*4]=20;
     function tick(dt,water){
       if(retired || !(dt>0) || error)return;dt=Math.min(.1,dt);
-      var clock=water.clock,count=water.count,values=new Float32Array([hot.x,hot.y,hot.x+hot.width,hot.y+hot.height,width,height,0,0,dt,count,clock,options.noEmber?0:1]);
+      var supply=options.ventilation ? Math.max(0,Math.min(1,Number.isFinite(water.airSupply)?water.airSupply:0)) : 1;
+      var clock=water.clock,count=water.count,values=new Float32Array([hot.x,hot.y,hot.x+hot.width,hot.y+hot.height,width,height,options.ventilation?1:0,supply,dt,count,clock,options.noEmber?0:1]);
       queue.writeBuffer(params,0,values);queue.writeBuffer(sums,0,reset);
       var enc=device.createCommandEncoder({label:'toy.fire.native-contact'});
       for(var key of ['contact','source','deposit']){var pass=enc.beginComputePass();pass.setPipeline(pipelines[key]);pass.setBindGroup(0,groups[key]);pass.dispatchWorkgroups(key==='source'?1:Math.max(1,Math.ceil(count/64)));pass.end();}
@@ -92,6 +104,8 @@ fn touching(i:u32)->bool {let d=max(max(p.hot.xy-pos[i].xy,pos[i].xy-p.hot.zw),v
     }
     function stats(){return {burning:latest[1]>.5,sourceC:latest[0],ignitionC:350,elapsed:latest[2],quenchedAt:latest[3]<0?null:latest[3],
       wetParcels:latest[8],smothered:latest[13]>.5,relights:latest[14],quenchEvents:latest[18],poured:poured,waterMeanC:field[5],sourceCapacity:20,waterParcelCapacity:2,
+      burnFraction:latest[20],airStarved:!!options.ventilation && latest[19]<.17,airFraction:options.ventilation?latest[19]:null,
+      inletOpenFraction:options.ventilation?latest[23]:null,airAdded:latest[21],airConsumed:latest[22],
       heatInputJ:latest[4],ambientLossJ:latest[5],waterHeatJ:latest[6],sourceToWaterJ:latest[7],emberInputJ:latest[12],
       initialHeatJ:latest[16],sourceHeatJ:20*(latest[0]-20),heatResidualJ:latest[16]+latest[4]+latest[12]-latest[5]-latest[6]-20*(latest[0]-20),
       contactClock:receivedClock,contactAgeSimulationSeconds:Math.max(0,L.simulationClock-receivedClock),maxContactAgeSimulationSeconds:maxDelay,pending:pending,error:error,

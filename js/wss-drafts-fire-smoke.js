@@ -3,7 +3,7 @@
   'use strict';
   var entries=[
     {id:'candle-in-jar',capability:'Fire',title:'Candle in a jar',cue:'Lift the lid and release the hot smoke, draft.',status:'PARTLY',blocker:'The flame does not consume oxygen or go out when the jar is sealed.',draft:true,world:{w:720,h:400},pool:false},
-    {id:'chimney-draw',capability:'Fire',title:'Chimney draft',cue:'Close the inlet and compare the plume in the flue, draft.',status:'PARTLY',blocker:'Native chimney draw has not been observed yet.',draft:true,world:{w:720,h:400},pool:false},
+    {id:'chimney-draw',capability:'Fire',title:'Chimney draft',cue:'Close the inlet to starve the flame. Reopen it to revive the fire.',status:'PARTLY',blocker:'Air supply uses a mixed firebox charge, not resolved combustion chemistry.',draft:true,world:{w:720,h:400},pool:false},
     {id:'slime-sauna',capability:'Fire',title:'Slime sauna',cue:'Pour over the hot stones beside the bathing slime, draft.',status:'PARTLY',blocker:'Water warms, but steam and slime temperature are not connected.',draft:true,world:{w:720,h:400},pool:false},
     {id:'heron-air-smoke',capability:'Smoke',title:"The air in Heron's fountain",cue:'Pour into the basin and follow the smoke in the air link, draft.',status:'PARTLY',blocker:'Smoke traces a separate flow field, not the native compressible gas inventory.',draft:true,world:{w:720,h:400},pool:false},
     {id:'sewer-gas-trap',capability:'Smoke',title:'Sewer gas trap',cue:'Compare the water seal with a dry trap, draft.',status:'PARTLY',blocker:'The smoke feels water occupancy; smoke pressure does not move the water seal.',draft:true,world:{w:720,h:400},pool:false}
@@ -32,6 +32,8 @@
       d.vessels=[{id:'firebox',label:'Firebox',rect:rect(216,248,304,136),sealed:true}];
       d.solids=[rect(320,40,8,216),rect(392,40,8,216),rect(328,352,16,8),rect(376,352,16,8)];d.vents=[rect(328,248,64,8)];if(!closed)d.vents.push(inlet);
       fire(d,360,328,{x:472,y:104});d.action=closed?'Open inlet':'Close inlet';d.primary={kind:'draft-wall-toggle'};
+      d.fire.ventilation=true;
+      d.energyBudgetStatus='The clear inlet replenishes a finite mixed air charge. Burning consumes it and supplies proportional heat and smoke. A declared ember revives dry fuel when air returns. The smoke solver advects heat through the real flue walls; combustion chemistry and a closed air-energy budget remain approximate.';
       q.gate={rect:inlet,opened:!closed,openLabel:'Close inlet',closedLabel:'Open inlet'};q.labels=[{x:104,y:306,text:'Air inlet'},{x:404,y:64,text:'Chimney'}];
       q.tracers=[{x:192,y:328},{x:192,y:344},{x:232,y:332}];q.probes=[{id:'inlet',x:224,y:332},{id:'flue',x:360,y:112}];
     }else if(id==='slime-sauna'){
@@ -76,14 +78,22 @@
         fanImpulse+=q.fan.acceleration*dt;
       }
     }
+    function ventilation(){
+      if(q.kind!=='chimney-draw')return 1;
+      var r=q.gate.rect,clear=0,total=0,tile=world.tile;
+      for(var y=r.y+tile*.5;y<r.y+r.height;y+=tile)for(var x=r.x+tile*.5;x<r.x+r.width;x+=tile){
+        total++;if(!world.solidAt(x,y))clear++;
+      }
+      return total?clear/total:0;
+    }
     function stats(sample){
-      var report={kind:q.kind,seconds:clock,status:definition.status,blocker:definition.blocker,fanImpulse:fanImpulse,probes:[],error:null};
+      var report={kind:q.kind,seconds:clock,status:definition.status,blocker:definition.blocker,fanImpulse:fanImpulse,inletOpenFraction:q.kind==='chimney-draw'?ventilation():null,probes:[],error:null};
       if(!sample)return report;var field=fluid.sampleFlow(world.w,world.h);if(!field){report.error='Current smoke flow sample is unavailable.';return report;}
       for(var i=0;i<field.values.length;i++)if(!Number.isFinite(field.values[i])){report.error='Smoke flow contains a non-finite value.';return report;}
       q.probes.forEach(function(p){var col=Math.max(0,Math.min(field.width-1,Math.floor(p.x/world.w*field.width))),row=Math.max(0,Math.min(field.height-1,Math.floor((1-p.y/world.h)*field.height))),at=(row*field.width+col)*4;
         report.probes.push({id:p.id,vx:field.values[at],vy:-field.values[at+1],pressure:field.values[at+2],dye:field.values[at+3]});});return report;
     }
-    return {prepare:prepare,stats:stats,draw:function(c){q.labels.forEach(function(label){c.fillText(label.text,label.x,label.y);});},
+    return {prepare:prepare,stats:stats,ventilation:ventilation,draw:function(c){q.labels.forEach(function(label){c.fillText(label.text,label.x,label.y);});},
       destroy:function(){Object.keys(saved).forEach(function(k){fluid.config[k]=saved[k];});fluid.setPhysics(savedPhysics,0);}};
   }
   root.WSSMachines=root.WSSMachines||{};entries.forEach(function(entry){root.WSSMachines[entry.id]={make:function(world,options){return make(entry.id,world,options);}};});

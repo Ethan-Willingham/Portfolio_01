@@ -368,9 +368,9 @@
     "id": "chimney-draw",
     "capability": "Fire",
     "title": "Chimney draft",
-    "cue": "Draft. Close the inlet and compare the plume in the flue, draft.",
+    "cue": "Close the inlet to starve the flame. Reopen it to revive the fire.",
     "status": "PARTLY",
-    "blocker": "Native chimney draw has not been observed yet.",
+    "blocker": "Air supply uses a mixed firebox charge, not resolved combustion chemistry.",
     "draft": true,
     "world": {
       "w": 720,
