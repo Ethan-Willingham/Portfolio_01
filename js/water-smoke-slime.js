@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.134'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.135'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -1537,6 +1537,8 @@
     liquidWGPU = window.LiquidWGPU.create({
       mainCanvas: canvas,
       hudInset: 0,
+      // Every scene draws the current water position without velocity trails.
+      dropletStretch: 0,
       // Helpers download alongside engine boot. Native configuration happens
       // only after they settle, so resolve the factory at that point.
       toyNativeExtension: bootMachine || handsRequested ? function(instance,options){return window.WSSNative.create(instance,options);} : undefined,

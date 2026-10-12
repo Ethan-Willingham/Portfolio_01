@@ -8024,7 +8024,7 @@ struct RenderParams {
   oilColor      : vec4<f32>,
   surf          : vec4<f32>,   // x = threshold, y = softness, z = splat radius scale, w = on/off
   bathTint      : vec4<f32>,   // v25.57 bath: rgb = hot-water tint, w = strength (0 = off)
-  bridge        : vec4<f32>,   // v26.57: x = gap-bridge strength, y = tap radius px, z/w spare
+  bridge        : vec4<f32>,   // x = gap-bridge strength, y = tap radius px, z = droplet stretch
 };
 @group(0) @binding(0) var<uniform> rp : RenderParams;
 
@@ -8479,8 +8479,8 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
    * This pass now samples the ACTUAL post-render density field at each
    * particle centre. A particle whose centre is already covered by the
    * composite gets no extra draw; one in a thin sheet, spray, or isolation
-   * gets a compact velocity-aligned mark (~2 px wide and up to 8 px long,
-   * never density-scaled). The two
+   * gets a compact mark (~2 px wide, never density-scaled). The game keeps
+   * velocity stretch up to 8 px; hosts can disable it per instance. The two
    * render paths are complementary by construction, without drawing dots
    * through the interior of a pool. Water only; the legacy disc renderer
    * already draws everything. gm water.DROPLETS.
@@ -8619,16 +8619,15 @@ fn vs(@builtin(vertex_index)   vid : u32,
   // film so the pass fills holes without stippling an already solid body.
   let a = 1.0 - smoothstep(0.25, 0.70, surfaceA);
   if (a <= 0.01) { return out; }
-  // Slow drops stay compact. Moving spray becomes a short ellipse aligned
-  // with its real velocity. This connects a narrow pour visually without
-  // restoring wide circular halos.
+  // A host can keep fast drops compact instead of painting motion streaks.
+  // This affects only the drawn footprint, never positions or velocities.
   let speed = length(p.zw);
   var along = vec2<f32>(0.0, 1.0);
   if (speed > 0.5) { along = p.zw / speed; }
   let across = vec2<f32>(-along.y, along.x);
   let widthPx = max(2.0 * rp.dpws, 2.2);
   let lengthWorld = 2.2 + 5.8 * clamp(speed / 240.0, 0.0, 1.0);
-  let lengthPx = max(lengthWorld * rp.dpws, widthPx);
+  let lengthPx = mix(widthPx, max(lengthWorld * rp.dpws, widthPx), rp.bridge.z);
   let halfW = widthPx * 0.5;
   let halfL = lengthPx * 0.5;
   let c = corner(vid);
@@ -10836,9 +10835,9 @@ fn machinePointExitClear(a:vec2<f32>,b:vec2<f32>,r:f32)->bool {
     // it; with the bath off the field's heat alpha is 0, so it never applies.
     rh[24] = LIQUID_BATH_TINT_R;   rh[25] = LIQUID_BATH_TINT_G;
     rh[26] = LIQUID_BATH_TINT_B;   rh[27] = LIQUID_BATH_TINT_STR;
-    // v26.57 gap bridge + contact wetting (lanes 28-31).
+    // Gap bridge, contact wetting and render-only droplet stretch (lanes 28-31).
     rh[28] = LIQUID_SURF_BRIDGE;   rh[29] = LIQUID_SURF_BRIDGE_R;
-    rh[30] = 0;                    rh[31] = 0;
+    rh[30] = instance.dropletStretch; rh[31] = 0;
     instance.queue.writeBuffer(instance.renderParamsBuf, 0, rh);
 
     // v24.113 — surface render: splat the particles into the offscreen
@@ -12652,6 +12651,10 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
       // v26.68: bottom clip of the liquid render canvas in CSS px. The
       // game's console HUD needs 36; a host with no bottom HUD passes 0.
       hudInsetPx: (opts.hudInset !== undefined && opts.hudInset !== null) ? +opts.hudInset : 36,
+      // Render-only velocity streaks. The game retains its original finish;
+      // a host can draw compact moving droplets with dropletStretch: 0.
+      dropletStretch: typeof opts.dropletStretch === 'number' && isFinite(opts.dropletStretch)
+        ? Math.max(0, Math.min(1, opts.dropletStretch)) : 1,
       adapter: null,
       device: null,
       queue: null,
@@ -12988,6 +12991,7 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
             case 'SURFACE_RSCALE':       LIQUID_SURFACE_RSCALE = v; break;
             case 'VOLUME_SPLATS':        instance.volumeSplats = v >= 0.5; break;
             case 'DROPLETS':             LIQUID_DROPLETS = v ? 1 : 0; break;   // v25.32 visible strays/spray
+            case 'DROPLET_STRETCH':      instance.dropletStretch = Math.max(0, Math.min(1, v)); break;
             // v25.57 BATH B1 heat tint (docs/game/BATHHOUSE_PLAN.md): dial
             // the hot-water look for the feel-check; STR 0 kills the tint.
             case 'BATH_TINT_R':          LIQUID_BATH_TINT_R = v; break;

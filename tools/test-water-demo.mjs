@@ -92,14 +92,16 @@ async function checkWaterResolution(label) {
   assert.ok(size.source.every((value, i) => value >= size.displayed[i]*limit-1), label + ': water covers display resolution');
   console.log('WATER RESOLUTION', label, JSON.stringify(size));
 }
-async function waterAlpha(softness) {
+async function waterAlpha(softness, stretch) {
   return evaluate(`(async () => {
     const engine=__toy.liquid(),device=engine.device;
     // Canvas textures expire after presentation. Copy this exact draw before
     // yielding, rather than sampling a subsequently cleared canvas image.
     engine.renderCtx.configure({device,format:engine.renderFormat,alphaMode:'premultiplied',
       usage:GPUTextureUsage.RENDER_ATTACHMENT|GPUTextureUsage.TEXTURE_BINDING|GPUTextureUsage.COPY_SRC});
-    engine.setRenderParam('SURFACE_SOFT',${softness});engine.draw();
+    engine.setRenderParam('SURFACE_SOFT',${softness});
+    if(${stretch !== undefined})engine.setRenderParam('DROPLET_STRETCH',${stretch || 0});
+    engine.draw();
     const source=engine.renderCanvas,bytesPerRow=Math.ceil(source.width*4/256)*256;
     const buffer=device.createBuffer({size:bytesPerRow*source.height,usage:GPUBufferUsage.COPY_DST|GPUBufferUsage.MAP_READ});
     try {
@@ -107,12 +109,28 @@ async function waterAlpha(softness) {
       encoder.copyTextureToBuffer({texture:engine.renderCtx.getCurrentTexture()},
         {buffer,bytesPerRow},[source.width,source.height]);
       device.queue.submit([encoder.finish()]);await buffer.mapAsync(GPUMapMode.READ);
-      const rgba=new Uint8Array(buffer.getMappedRange());let fringe=0,area=0;
+      const rgba=new Uint8Array(buffer.getMappedRange());let fringe=0,area=0,left=source.width,right=-1,top=source.height,bottom=-1;
       for(let y=0;y<source.height;y++)for(let x=0;x<source.width;x++){
         const alpha=rgba[y*bytesPerRow+x*4+3];area+=alpha/255;if(alpha>20 && alpha<190)fringe++;
+        if(alpha>20){left=Math.min(left,x);right=Math.max(right,x);top=Math.min(top,y);bottom=Math.max(bottom,y);}
       }
-      return {fringe,area};
+      return {fringe,area,width:Math.max(0,right-left+1),height:Math.max(0,bottom-top+1)};
     } finally {buffer.destroy();}
+  })()`);
+}
+async function particleState() {
+  return evaluate(`(async()=>{
+    const engine=__toy.liquid(),device=engine.device,n=engine.uploadedCount;
+    const buffer=device.createBuffer({size:n*36,usage:GPUBufferUsage.COPY_DST|GPUBufferUsage.MAP_READ});
+    try{
+      const encoder=device.createCommandEncoder();
+      encoder.copyBufferToBuffer(engine.buf.pos,0,buffer,0,n*16);
+      encoder.copyBufferToBuffer(engine.buf.aux,0,buffer,n*16,n*16);
+      encoder.copyBufferToBuffer(engine.buf.flag,0,buffer,n*32,n*4);
+      device.queue.submit([encoder.finish()]);await buffer.mapAsync(GPUMapMode.READ);
+      const hash=await crypto.subtle.digest('SHA-256',buffer.getMappedRange());
+      return {hash:Array.from(new Uint8Array(hash)),clock:engine.simulationClock,count:__toy.stats().water};
+    }finally{buffer.destroy();}
   })()`);
 }
 try {
@@ -257,6 +275,24 @@ try {
       assert.ok(await evaluate('__toy.stats().paused'),'camera zoom preserves manual pause');
       await screenshot('cup-zoom-'+height);
     }
+    await navigate(1440,900,'?scene=self-flushing-cup',false,2);
+    for(let i=0;i<200 && !await evaluate('!!__toy.machineState()?.ready');i++)await sleep(100);
+    await sleep(2000);await evaluate('__toy.pause(true);__toy.liquid().queue.onSubmittedWorkDone()');
+    assert.equal(await evaluate('__toy.liquid().dropletStretch'),0,'the faucet scene disables velocity streaks');
+    const faucetState=await particleState();
+    await waterAlpha(.25,1);await screenshot('faucet-stretched');
+    await waterAlpha(.25,0);await screenshot('faucet-compact');
+    assert.deepEqual(await particleState(),faucetState,'removing faucet streaks preserves exact particle state and clock');
+    await navigate(1280,720,'?scene=blank&paused=1',false,2);
+    await evaluate('__toy.pause(true)');
+    await inside(`addLiquidParticle('water',worldW*.5,worldH*.3,0,400,0);liquidWGPU.update(1/120)`);
+    await evaluate('__toy.liquid().queue.onSubmittedWorkDone()');
+    const sprayState=await particleState();
+    const streak=await waterAlpha(.25,1),compact=await waterAlpha(.25,0);
+    console.log('FAST DROPLET',JSON.stringify({streak,compact}));
+    assert.ok(streak.height>streak.width*3,'the reference fast droplet is visibly stretched');
+    assert.ok(compact.area>0 && Math.abs(compact.height-compact.width)<=1,'the fast droplet remains visible and round without streaks');
+    assert.deepEqual(await particleState(),sprayState,'render settings preserve the exact fast-droplet state');
     await inside('liquidWGPU.renderActive = false; updateLiquidToy(1/60);');
     assert.ok(await evaluate('__toy.stats().waterState === "off" && !__toy.stats().rainbow.active && document.getElementById("toy-rainbow-water").hidden'), 'a water backend failure also hides the rainbow finish');
     await send('Page.addScriptToEvaluateOnNewDocument', { source: `
