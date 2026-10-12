@@ -345,6 +345,7 @@
         var top=Math.max(topHeight,Math.min(view.height-height,centerY-height*.5));
         button.style.left=left+'px';button.style.top=top+'px';button.style.width=width+'px';button.style.height=height+'px';
         button.classList.toggle('is-body-action',control.pointerMode==='tap-body');
+        button.classList.toggle('is-button-action',control.pointerMode==='button');
         button.dataset.hold=String(control.kind==='thumb');
         button.disabled=!!control.disabled;
         button.setAttribute('aria-label',control.label);
@@ -445,6 +446,7 @@
       var air = toy.airStats ? toy.airStats() : { enabled: false };
       var cave=state.scene==='breathing-cave',caveReading=sample.cave;
       var fire=!!(liveMachine && liveMachine.definition.fire);
+      var trap=state.scene==='sewer-gas-trap';
       var candle=fire && !!liveMachine.definition.fire.air;
       var slip=!!(liveMachine && liveMachine.definition.materialSlip);
       var steam=!!(liveMachine && liveMachine.definition.steam);
@@ -468,12 +470,13 @@
       if(balloon){pressureLabel=state.paused?'Paused':'Live';pressureMessage='Drag, fling and pop. Instruments explains the elastic skin.';}
       if(slip){pressureLabel=state.paused?'Paused':state.scene==='material-oil-jar'?'Live':'Prototype';pressureMessage='Instruments has the matched-density comparison and model limits.';}
       if(steam){pressureLabel=state.paused?'Paused':'Diagnostic';pressureMessage=birds?'Grab the pipe’s top to change its note. Instruments has the comparisons and acoustic limits.':'The white plume traces escaping vapor. Instruments explains the thermal model.';}
+      if(trap){pressureLabel=state.paused?'Paused':liveMachine && liveMachine.definition.setup==='dry'?'Trap dry':'Water seal';pressureMessage=liveMachine && liveMachine.definition.caption || 'Starting the smoke comparison.';text('toy-hint',pressureMessage);}
       document.getElementById('toy-machine-diagnostics').hidden=!contextual || fire || balloon;
       text('toy-machine-diagnostics',contextual ? pressureMessage : '');
       if(contextual)text('toy-status',state.loading ? 'Starting machine' : fire ? state.paused?'Paused':'Live' : pressureLabel || (state.paused ? 'Paused' : 'Live'));
       document.getElementById('toy-machine-material-notice').hidden = !air.enabled;
       document.getElementById('toy-machine-summary').hidden = !machine;
-      document.getElementById('toy-machine-metrics').hidden = !machine || fire || cannon || balloon || slip || cave;
+      document.getElementById('toy-machine-metrics').hidden = !machine || fire || cannon || balloon || slip || cave || trap;
       if(fire)text('toy-hint',liveMachine.definition.sauna ? 'Click the water source or the stones to make steam. Let the room cool between pours.' : candle?'Lift the lid before the flame goes out. Reset lights a fresh candle.':'Click the upper water source or the fire to pour. You can also splash it with Water.');
       if(birds && state.tool==='poke')text('toy-hint','Grab the pipe’s top and slide it up for a lower note, down for a higher one.');
       if(cave)text('toy-hint','Watch the smoke at the mouth. Close it to trap the air. Instruments has a steady-pressure comparison.');
@@ -506,7 +509,7 @@
       text('toy-native-reading',sample.floatSlider ? 'Inlet '+Math.round(100*sample.floatSlider.openness)+'% open; '+(sample.floatSlider.pinned?'float pinned':'guided float') : birds && sample.birds ? 'Air out '+number(sample.birds.massFlowGrainsPerSecond,'grains/s')+'; pipe '+sample.birds.pipeLengthInches.toFixed(2)+' in' : sample.bubbles ? 'Gas parcels '+sample.bubbles.points.length+'; '+sample.bubbles.surfaceExits+' surface exits' : steam && sample.steam ? 'Water '+number(Number.isFinite(sample.steam.waterTemperatureC) ? sample.steam.waterTemperatureC*1.8+32 : null,'degrees Fahrenheit')+'; vapor '+sample.steam.vaporParcels : balloon && sample.balloon ? sample.balloon.popped ? 'Skin popped' : Number.isFinite(sample.balloon.retainedFraction) ? 'Water held '+(100*sample.balloon.retainedFraction).toFixed(0)+'%' : 'Water inside the skin' : thermal && sample.thermoscope ? 'Air '+number(sample.thermoscope.temperatureF,'degrees Fahrenheit') : fire && sample.fire ? fireReading : state.scene==='thumb-straw' ? Number.isFinite(sample.retainedFraction) ? 'Water held '+(100*sample.retainedFraction).toFixed(0)+'%' : 'Waiting for water sample' :
         cave && caveReading ? 'Cave '+(caveReading.pressurePa/100).toFixed(1)+' hPa; outside '+(caveReading.outsidePressurePa/100).toFixed(1)+' hPa; '+Math.abs(caveReading.speedMetersPerSecond).toFixed(1)+' m/s '+(caveReading.flowM3PerSecond>=0?'out':'in') : liveMachine && liveMachine.definition.readingLabel || 'Powered return');
       document.getElementById('toy-native-options').hidden=!native || state.scene==='hourglass';
-      document.querySelector('#toy-native-options > p').textContent=slip ? 'The comparison changes only the relative phase masses, keeping the same native population, walls, bulk stress and drag.' : state.scene==='float-slider-cistern' ? 'Pinning the float keeps the same water and supply while preventing inlet closure. The flush outlet stays shut in this checkpoint.' : birds ? 'Closing the feed stops new filling; capping the whistle blocks air transfer. Drag the pipe to change its mode estimate. Acoustic load does not feed back into airflow; this precursor has no owl mechanism or repeating cycle.' : bubbles ? 'The air-off setup admits no gas. Both setups begin with the same native water.' : steam ? 'Each setup starts with the same hot water. No heater makes no vapor; settling water can still push dry air through the whistle. Capped closes the gas port.' : divers ? 'The open side vent releases the piston pressure to room air. Each setup starts with fresh divers and water.' : balloon ? 'Choosing a setup starts a fresh partly filled balloon. The slit removes one lower-side edge, above the basin floor.' : thermal ? 'Compare the sealed bulb with no heat or an open upper vent. Each setup starts with the same water.' : cave ? 'Each setup starts with the same finite air and smoke. Steady pressure removes the outside weather cycle; closed mouth traps the initial air.' : wind ? 'Both setups supply smoke at the inlet; fan off supplies no air impulse.' : cannon ? 'Choosing a setup refills the smoke chamber. The no-push comparison starts with still air.' : 'Choosing a setup restarts it with the same initial water. Hold starts a freshly filled straw; releasing opens its top.';
+      document.querySelector('#toy-native-options > p').textContent=trap ? 'Each switch removes or restores the water and starts fresh smoke.' : slip ? 'The comparison changes only the relative phase masses, keeping the same native population, walls, bulk stress and drag.' : state.scene==='float-slider-cistern' ? 'Pinning the float keeps the same water and supply while preventing inlet closure. The flush outlet stays shut in this checkpoint.' : birds ? 'Closing the feed stops new filling; capping the whistle blocks air transfer. Drag the pipe to change its mode estimate. Acoustic load does not feed back into airflow; this precursor has no owl mechanism or repeating cycle.' : bubbles ? 'The air-off setup admits no gas. Both setups begin with the same native water.' : steam ? 'Each setup starts with the same hot water. No heater makes no vapor; settling water can still push dry air through the whistle. Capped closes the gas port.' : divers ? 'The open side vent releases the piston pressure to room air. Each setup starts with fresh divers and water.' : balloon ? 'Choosing a setup starts a fresh partly filled balloon. The slit removes one lower-side edge, above the basin floor.' : thermal ? 'Compare the sealed bulb with no heat or an open upper vent. Each setup starts with the same water.' : cave ? 'Each setup starts with the same finite air and smoke. Steady pressure removes the outside weather cycle; closed mouth traps the initial air.' : wind ? 'Both setups supply smoke at the inlet; fan off supplies no air impulse.' : cannon ? 'Choosing a setup refills the smoke chamber. The no-push comparison starts with still air.' : 'Choosing a setup restarts it with the same initial water. Hold starts a freshly filled straw; releasing opens its top.';
       document.getElementById('toy-machine-view').hidden=native;
       var setup=document.getElementById('toy-native-setup');
       if(native && liveMachine && nativeSetupScene!==state.scene){
@@ -518,7 +521,7 @@
       }
       if(native && liveMachine && !setup.disabled){setup.value=liveMachine.definition.setup==='held' ? 'released' : liveMachine.definition.setup;}
       if(native && liveMachine){
-        text('toy-native-setup-note',slip ? 'Matched densities repeats the same jar with equal parcel masses. Water and oil keep their different numerical filters.' : cave ? 'Changing a setup resets the cave air and its finite smoke charge.' : 'Choosing a setup restarts it with the same initial water. Hold starts a freshly filled straw; releasing opens its top.');
+        text('toy-native-setup-note',trap ? 'Switching removes or restores the water and starts fresh smoke. The fan and pipe stay the same.' : slip ? 'Matched densities repeats the same jar with equal parcel masses. Water and oil keep their different numerical filters.' : cave ? 'Changing a setup resets the cave air and its finite smoke charge.' : 'Choosing a setup restarts it with the same initial water. Hold starts a freshly filled straw; releasing opens its top.');
         var b=liveMachine.definition.boundaries || {pool:false};
         text('toy-native-boundaries',liveMachine.definition.boundaryNote || (b.pool ? 'Drained water feeds the tap. The powered return adds energy to lift it. The tap requests '+b.tap.rate+' parcels per simulation second at '+b.tap.vy+' pixels per second downward; each parcel represents 1.5625 square pixels. All '+state.allocation+' allocated slots are either present water or stored reserve.' : 'Only the upper opening is held. The lower end stays open. The side-hole comparison connects the upper air space to the room.'));
         var ledger=sample.boundary;
@@ -543,7 +546,7 @@
         if (field[0] === 'age' && stale) value += ' (stale)';
         text('toy-i-' + field[0], value);
       });
-      text('toy-numerical-status', slip ? sample.numericalStatus : fire ? sample.fire && sample.fire.approximation || 'Loading the declared thermal model.' : fatal ? 'The pressure calculation stopped. These readings are diagnostic.' :
+      text('toy-numerical-status', trap ? 'Smoke follows the air flow and the water boundary. Air pressure cannot push the water out of this trap.' : slip ? sample.numericalStatus : fire ? sample.fire && sample.fire.approximation || 'Loading the declared thermal model.' : fatal ? 'The pressure calculation stopped. These readings are diagnostic.' :
         unresolvedGeometry ? 'The water geometry is unresolved. These readings are diagnostic.' :
         sample.numericalStatus || 'Waiting for a pressure sample.');
       text('toy-energy-status', sample.energyBudgetStatus || 'Energy measurements will appear with the next apparatus sample.');
@@ -558,8 +561,8 @@
         text('toy-pressure-legend', airPressureColors ? 'Air: gold above room pressure, rose below. Labels show gauge psi; room air is 0. Readings are diagnostic.' :
           'Water: rose below room pressure, gold above. Full color at ' + (Number.isFinite(cap) ? '±' + number(cap, 'psi') : 'the model limit') + '.');
       }
-      document.querySelectorAll('#toy-panel-instruments > .toy-instrument-values, #toy-panel-instruments > .toy-details, #toy-panel-instruments .toy-instrument-actions + .toy-panel-note').forEach(function(node){if(node.hidden!==(fire||cannon||balloon||steam||slip||cave))node.hidden=fire||cannon||balloon||steam||slip||cave;});
-      ['toy-air-pressure-toggle','toy-air-pressure-compact','toy-pressure-toggle'].forEach(function(id){document.getElementById(id).hidden=fire||cannon||balloon||slip||cave;});
+      document.querySelectorAll('#toy-panel-instruments > .toy-instrument-values, #toy-panel-instruments > .toy-details, #toy-panel-instruments .toy-instrument-actions + .toy-panel-note').forEach(function(node){if(node.hidden!==(fire||cannon||balloon||steam||slip||cave||trap))node.hidden=fire||cannon||balloon||steam||slip||cave||trap;});
+      ['toy-air-pressure-toggle','toy-air-pressure-compact','toy-pressure-toggle'].forEach(function(id){document.getElementById(id).hidden=fire||cannon||balloon||slip||cave||trap;});
       var builderState = toy.buildState ? toy.buildState() : {};
       var message = builderState.error || sample.error || notice;
       if(builderState.pending)message='Restoring the wall. Water and the clock are paused until the edit finishes.';

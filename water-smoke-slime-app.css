@@ -318,6 +318,15 @@ body.toy-app ::selection { background: var(--selection-bg); color: var(--selecti
 .toy-scene-action:hover .toy-scene-action-label,
 .toy-scene-action:focus-visible .toy-scene-action-label { opacity: 1; }
 .toy-scene-action.is-label-above .toy-scene-action-label { top: auto; bottom: calc(100% + 4px); }
+.toy-app .toy-shell .toy-scene-action.is-button-action {
+  min-width: 140px; border: 1px solid var(--app-brass-dim); border-radius: 8px;
+  background: var(--bg-raised); color: var(--app-brass);
+}
+.toy-app .toy-shell .toy-scene-action.is-button-action:hover { background: var(--d-bg); }
+.toy-scene-action.is-button-action .toy-scene-action-label {
+  position: static; display: block; width: auto; transform: none; padding: 0 10px; border: 0;
+  background: transparent; opacity: 1;
+}
 .toy-app .toy-live-readout { display: flex; align-items: center; gap: 10px; margin-left: 8px; font: 11px/1.3 var(--font-mono); white-space: nowrap; }
 .toy-app .toy-live-readout #toy-status { gap: 5px; }
 .toy-app .toy-shell .toy-machine-summary { flex-direction: column; align-items: flex-start; gap: 0; margin: 0 0 14px; }

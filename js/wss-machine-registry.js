@@ -499,9 +499,9 @@
     "id": "sewer-gas-trap",
     "capability": "Smoke",
     "title": "Sewer gas trap",
-    "cue": "Draft. Compare the water seal with a dry trap, draft.",
+    "cue": "Water blocks the smoke. Dry out the trap to let it through, then refill it.",
     "status": "PARTLY",
-    "blocker": "The smoke feels water occupancy; smoke pressure does not move the water seal.",
+    "blocker": "Air pressure does not displace the water seal.",
     "draft": true,
     "world": {
       "w": 720,

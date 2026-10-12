@@ -4,6 +4,30 @@ Release: toy v5.57, shared water engine v28.179. The greedy cup, standalone
 siphon and Heron's fountain are in the public scene menu, with published behavior
 measurements. Full quantitative physical acceptance and steady 60 FPS remain unverified.
 
+## Sewer gas trap
+
+The wet bend blocks pale smoke arriving from the left. The visible Dry out trap
+button removes the native water and starts fresh smoke; Refill trap restores
+the seal and clears the previous comparison. Both work while paused. Water is
+seeded only inside the pipe below its waterline, preventing the accidental pool
+above the inner wall. The main view names the wet or dry state, with no pressure
+readings to wait for.
+
+This scene enables the shared smoke solver's solid pressure boundaries and an
+optional liquid barrier derived from the current native water density field.
+Advection clips its backtrace at water and walls instead of sampling through
+them. The pressure grid is capped at 128 cells on its short axis, independent
+of the visible smoke resolution. Other scenes and the game leave the liquid
+barrier disabled. The fan supplies momentum and smoke supplies passive dye;
+air pressure cannot displace the water seal. Switching compares fresh setups,
+without simulating evaporation or a drain.
+
+Run `node tools/test-sewer-gas-trap.cjs` for actual wet and dry smoke transport,
+room-plume measurements, water placement, repeated refill, visible controls,
+keyboard and touch operation, manual pause, narrow desktop and landscape phone
+views, and departure into another smoke scene. The harness owns Chrome for
+Testing and saves screenshots and measurements to `/tmp/sewer-trap-review`.
+
 ## Breathing cave
 
 The cave now breathes as a declared outside pressure cycle rises and falls.

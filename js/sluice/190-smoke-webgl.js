@@ -65,6 +65,7 @@
       OPTICAL_ABSORPTION: 1,
       EDGE_SHARPNESS: 0,
       OPEN_RIGHT: false,
+      LIQUID_BARRIER: false,
     };
   
     // Runtime material controls. Temperature uses the dye texture's unused
@@ -312,6 +313,7 @@
       'uniform float useMoving;\n' +
       'uniform sampler2D uLiquid;\n' +
       'uniform float useLiquid;\n' +
+      'uniform float liquidBarrier;\n' +
       'uniform vec2 liquidVelocityScale;\n' +
       'uniform float velocityPass;\n' +
       'uniform vec2 texelSize;\n' +
@@ -325,6 +327,10 @@
       'uniform float useObstacle;\n' +
       'uniform float u_wind_x;\n' +
       'uniform float u_wind_above_y;\n' +
+      'bool blocked(vec2 uv) {\n' +
+      '  return (useObstacle > 0.5 && texture2D(uObstacle, uv).a > 0.5)\n' +
+      '    || (useLiquid > 0.5 && texture2D(uLiquid, uv).b > 0.6);\n' +
+      '}\n' +
       'vec4 bilerp (sampler2D sam, vec2 uv, vec2 tsize) {\n' +
       '  vec2 st = uv / tsize - 0.5;\n' +
       '  vec2 iuv = floor(st);\n' +
@@ -336,6 +342,9 @@
       '  return mix(mix(a, b, fuv.x), mix(c, d, fuv.x), fuv.y);\n' +
       '}\n' +
       'void main () {\n' +
+      // A water seal excludes air. Opt in only for this apparatus; other
+      // scenes retain their continuous entrainment and dye-in-wake behavior.
+      '  if (liquidBarrier > 0.5 && blocked(vUv)) { gl_FragColor = vec4(0.0); return; }\n' +
       '  if (useObstacle > 0.5 && texture2D(uObstacle, vUv).a > 0.5) {\n' +
       '    gl_FragColor = vec4(0.0);\n' +
       '    return;\n' +
@@ -355,6 +364,25 @@
       '  vec2 coord = vUv - dt * texture2D(uVelocity, vUv).xy * texelSize - vec2(windDrift, 0.0);\n' +
       '  vec4 result = texture2D(uSource, coord);\n' +
       '#endif\n' +
+      // Clip the backtrace at the actual water/wall boundary, including at
+      // fast fan speeds. Sampling the far side would tunnel through a seal.
+      '  if (liquidBarrier > 0.5) {\n' +
+      '    vec2 travel = coord - vUv;\n' +
+      '    float steps = max(1.0, ceil(max(abs(travel.x / texelSize.x), abs(travel.y / texelSize.y)) * 2.0));\n' +
+      '    steps = min(32.0, steps);\n' +
+      '    vec2 clear = vUv;\n' +
+      '    for (int i = 1; i <= 32; i++) {\n' +
+      '      if (float(i) > steps) break;\n' +
+      '      vec2 next = vUv + travel * float(i) / steps;\n' +
+      '      if (blocked(next)) { coord = clear; break; }\n' +
+      '      clear = next;\n' +
+      '    }\n' +
+      '#ifdef MANUAL_FILTERING\n' +
+      '    result = bilerp(uSource, coord, dyeTexelSize);\n' +
+      '#else\n' +
+      '    result = texture2D(uSource, coord);\n' +
+      '#endif\n' +
+      '  }\n' +
       '  if (coord.x < 0.0 || coord.x > 1.0 || coord.y < 0.0 || coord.y > 1.0) {\n' +
       '    gl_FragColor = vec4(0.0);\n' +
       '    return;\n' +
@@ -377,6 +405,9 @@
     // Reflected solid velocities and Neumann pressure boundaries are opt-in.
     // The default preserves the game's existing smoke projection.
     var SOLID_BOUNDARY_GLSL =
+      'uniform sampler2D uLiquid;\n' +
+      'uniform float useLiquid;\n' +
+      'uniform float liquidBarrier;\n' +
       'uniform sampler2D uMoving;\n' +
       'uniform float useMoving;\n' +
       'uniform float solidProjection;\n' +
@@ -387,6 +418,7 @@
       '#endif\n' +
       '  if (any(lessThan(uv, vec2(0.0))) || any(greaterThan(uv, vec2(1.0)))) return vec3(0.0, 0.0, 1.0);\n' +
       '  if (useObstacle > 0.5 && texture2D(uObstacle, uv).a > 0.5) return vec3(0.0, 0.0, 1.0);\n' +
+      '  if (liquidBarrier > 0.5 && useLiquid > 0.5 && texture2D(uLiquid, uv).b > 0.6) return vec3(0.0, 0.0, 1.0);\n' +
       '  vec4 body = texture2D(uMoving, uv);\n' +
       '  if (useMoving > 0.5 && body.a > 0.5) return vec3(body.xy / texelSize, 1.0);\n' +
       '  return vec3(0.0);\n' +
@@ -918,6 +950,7 @@
     function bindSolidProjection(program, obstacleUnit, movingUnit) {
       uniform1f(program.uniforms.solidProjection, config.SOLID_PROJECTION || 0);
       if (!config.SOLID_PROJECTION) return;
+      bindLiquidField(program.uniforms);
       uniform1i(program.uniforms.uObstacle, attachObstacle(obstacleUnit));
       uniform1f(program.uniforms.useObstacle, obstacleSrcCanvas ? 1 : 0);
       uniform1i(program.uniforms.uMoving, movingActive ? movingBoundary.attach(movingUnit) : attachObstacle(movingUnit));
@@ -1086,6 +1119,7 @@
 
     function bindLiquidField (uniforms) {
       uniform1f(uniforms.useLiquid, liquidActive ? 1 : 0);
+      uniform1f(uniforms.liquidBarrier, config.LIQUID_BARRIER ? 1 : 0);
       uniform2f(uniforms.liquidVelocityScale, liquidScaleX, liquidScaleY);
       uniform1i(uniforms.uLiquid, 4);
       gl.activeTexture(gl.TEXTURE4);
