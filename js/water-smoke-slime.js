@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.165'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.166'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -1110,7 +1110,7 @@
   }
 
   function buildGuests() {
-    var materialGuests=!!(toyWave || toyBalloon || toyDivers || toyFloatSlider || airModel && airModel.enabled && (airModel.preserveMaterialState || machineState && machineState.definition.name==='cup'));
+    var materialGuests=!!(toyThirsty || toyWave || toyBalloon || toyDivers || toyFloatSlider || airModel && airModel.enabled && (airModel.preserveMaterialState || machineState && machineState.definition.name==='cup'));
     var waterGuestTime=1;
     if(materialGuests){
       waterGuestTime=liquidWGPU.getSimParam('TIMESCALE');
@@ -1122,7 +1122,7 @@
     // velocity, so poured water piles on a slime instead of passing through.
     // Eight slots since engine v26.09 (GS_MAX_GUESTS). The eight wettest
     // eligible bodies are selected, but a selected body's slot is stable.
-    var guestLimit=toyDivers || toyWave ? 7:8;
+    var guestLimit=toyThirsty ? 6 : toyDivers || toyWave ? 7:8;
     var order = [];
     if (typeof jelloBodies !== 'undefined' && jelloBodies.length) {
       order = jelloBodies.filter(function (b0) {
@@ -1252,6 +1252,7 @@
         any = true;
       }
     }
+    if(toyThirsty){var jaws=toyThirsty.press.guests(waterGuestTime);out[6]=jaws[0];out[7]=jaws[1];any=true;}
     if(toyDivers){out[7]=toyDivers.guest();any=true;}
     if(toyWave){out[7]=toyWave.guest();any=true;}
     return any ? out : null;
@@ -10984,7 +10985,7 @@
     var scale=Math.sqrt(target/b.restArea),cx=b.rcx,cy=b.rcy;
     for(var i=0;i<b.n;i++){b.rx[i]=cx+(b.rx[i]-cx)*scale;b.ry[i]=cy+(b.ry[i]-cy)*scale;}
     for(i=0;i<b.springN;i++)b.sRest[i]*=scale;
-    b.restArea=target;b.surfaceSlime.radius*=scale;
+    b.restArea=target;b.surfaceSlime.radius*=scale;b.spacing*=scale;
     jelloComputeRest(b);jelloInstallSpringHealthMesh(b);jelloShadeAnchors(b);
     b.surfaceSlime.presentation=null;softPresentationInit(b);
     b.sleeping=false;b.sleepFrames=0;
@@ -12640,7 +12641,7 @@
     if (tileAt(Math.floor(wy / TILE), Math.floor(wx / TILE)) !== null) return null;
     var key = JELLO_TYPE_KEYS[slimeHueCycle++ % JELLO_TYPE_KEYS.length];
     var mask = machineSize === true ? null : SLIME_SHAPES[slimeShape];
-    if (!mask) return jelloBuildDisc(wx, wy, r, key, machineSize === true ? 16 : undefined);
+    if (!mask) return jelloBuildDisc(wx, wy, r, key, currentScene==='thirsty-slime' ? 5 : machineSize === true ? 16 : undefined);
     var rows = mask.length, cols = mask[0].length;
     var r0 = Math.round(wy / TILE - rows / 2), c0 = Math.round(wx / TILE - cols / 2);
     var cells = [];
@@ -13034,6 +13035,7 @@
   var pointerThumb = false;
   var pointerPour = false;
   var pointerPipe = false,pipeGrabOffset=0;
+  var pointerPress=false;
   var pointerClickAction=null,pointerStartX=0,pointerStartY=0;
   var pointerId = -1;
   var px = 0, py = 0;            // current world position
@@ -13075,6 +13077,7 @@
     pointerWaterFlow.acc = 0;
     pointerControl=false;pointerClickAction=null;pointerStartX=x;pointerStartY=y;
     if (tool === 'poke') {
+      if(toyThirsty && toyThirsty.press.grab(x,y,fitScale)){pointerPress=true;pointerControl=true;return;}
       var bodyAction=machineControlTargets().find(function(control){return !control.disabled && control.pointerMode==='tap-body' &&
         Math.abs(x-control.x)<=control.width*.5 && Math.abs(y-control.y)<=control.height*.5;});
       if(bodyAction)pointerClickAction=bodyAction.id;
@@ -13126,6 +13129,7 @@
       pvy = pvy * 0.5 + ((y - py) / mdt) * 0.5;
     }
     px = x; py = y;
+    if(pointerPress && toyThirsty)toyThirsty.press.move(x);
     if(pointerDown && Math.hypot(x-pointerStartX,y-pointerStartY)*fitScale>6)pointerClickAction=null;
     if(pointerPipe && pointerDown && toySteam){window.WSSSingingPipe.extend(machineState.definition,toySteam,py-pipeGrabOffset);machineOverlayCache=null;drawMachineOverlay();}
     if(buildGesture && pointerDown)extendBuildGesture(px,py);
@@ -13143,6 +13147,7 @@
   function releasePointer(e,cancelled) {
     if (!pointerDown || e.pointerId !== pointerId) return;
     var clickAction=!cancelled ? pointerClickAction : null;pointerClickAction=null;
+    if(pointerPress && toyThirsty)toyThirsty.press.release();pointerPress=false;
     if(pointerThumb){pointerThumb=false;machineThumb(false);}
     if(pointerPour){pointerPour=false;machinePour(false);}
     pointerPipe=false;
@@ -13216,7 +13221,7 @@
     }else if(!userPaused || /^(build|draw|erase)$/.test(tool) || machineState && machineState.definition.birds){
       beginToolInput(keyboardX,keyboardY,keyboardPointerId);
       // A manual valve is a single real toggle, not a held stirring gesture.
-      if(pointerControl && !pointerThumb && !pointerPour && !pointerPipe)releasePointer({pointerId:keyboardPointerId},false);
+      if(pointerControl && !pointerThumb && !pointerPour && !pointerPipe && !pointerPress)releasePointer({pointerId:keyboardPointerId},false);
     }
     updateKeyboardHelp();drawMachineOverlay();
   });
@@ -13983,7 +13988,7 @@
   function clearWorldAll(preserveThumbInput) {
     machinePour(false);
     if(toyBreathingCave){toyBreathingCave.destroy();toyBreathingCave=null;}
-    if(toyThirsty){liquidWGPU.setToyMembrane(null);toyThirsty.destroy();toyThirsty=null;}
+    if(toyThirsty){pointerPress=false;liquidWGPU.setToyMembrane(null);toyThirsty.destroy();toyThirsty=null;}
     if(toySauna){toySauna.destroy();toySauna=null;}
     if(toyOxygen){toyOxygen.destroy();toyOxygen=null;}
     if(toyFireSmokeDraft){toyFireSmokeDraft.destroy();toyFireSmokeDraft=null;}
@@ -14617,13 +14622,14 @@
       if(request!==machineRequest){ownBoundary.destroy();return null;}
       toyBoundary=ownBoundary;
       if(definition.boundaries && definition.boundaries.pool){
-        for(var parked=added;parked<LIQUID_MAX_PARTICLES;parked++){
+        var reserveCount=toyBoundary.stats().count;
+        for(var parked=added;parked<reserveCount;parked++){
           liquidX[parked]=-1024;liquidY[parked]=-1024;liquidVX[parked]=0;liquidVY[parked]=0;
           liquidG00[parked]=0;liquidG01[parked]=0;liquidG10[parked]=0;liquidG11[parked]=0;
           liquidType[parked]=0;liquidOrigin[parked]=0;liquidDensity[parked]=LIQUID_DENSITY_REST;
           liquidSleeping[parked]=1;liquidFrozen[parked]=1;liquidRestFrames[parked]=0;liquidAeration[parked]=0;
         }
-        liquidCount=LIQUID_MAX_PARTICLES;liquidMutationSeq++;liquidOpsOverflow=true;
+        liquidCount=reserveCount;liquidMutationSeq++;liquidOpsOverflow=true;
       }
       state.thumbHeld=!!options.held;
       if(options.thumbGesture){toyBoundary.setCaps(thumbWanted ? [definition.primary.opening] : []);state.thumbHeld=thumbWanted;}
@@ -14728,7 +14734,12 @@
     if(definition.thirsty){
       var ownThirsty=await window.WSSThirstySlime.create({liquid:liquidWGPU,body:jelloBodies[0],boundary:ownBoundary,grow:growDrinkingSlime});
       if(request!==machineRequest){ownThirsty.destroy();return null;}
-      toyThirsty=ownThirsty;liquidWGPU.setToyMembrane(ownThirsty);
+      toyThirsty=ownThirsty;
+      ownThirsty.press=window.WSSSlimePress.create(jelloBodies[0],{terrain:function(){
+        var b=jelloBodies[0],h=jelloStepH>0?jelloStepH:JELLO_H;
+        for(var i=0;i<b.n;i++){jelloCollidePointWorld(b,i,h);jelloClampWorld(b,i);}
+      }});
+      liquidWGPU.setToyMembrane(ownThirsty);
     }
     if(definition.steam){
       ownSteam=await window.WSSSteam.create(Object.assign({},definition.steam,{liquid:liquidWGPU,air:model,maxParticles:LIQUID_MAX_PARTICLES}));
@@ -15229,6 +15240,10 @@
       instrumentsCanvas.setAttribute('aria-hidden','true');stage.appendChild(instrumentsCanvas);
       instrumentsCtx=instrumentsCanvas.getContext('2d');
     }
+    var overlayDpr=toyThirsty ? Math.min(3,dpr*Math.max(1,fitScale)) : dpr;
+    var overlayW=Math.round(worldW*overlayDpr),overlayH=Math.round(worldH*overlayDpr);
+    if(instrumentsCanvas.width!==overlayW || instrumentsCanvas.height!==overlayH){instrumentsCanvas.width=overlayW;instrumentsCanvas.height=overlayH;machineOverlayCache=null;}
+    instrumentsCanvas.style.width=worldW+'px';instrumentsCanvas.style.height=worldH+'px';
     var burstView=machineState && machineState.definition.boundaries && machineState.definition.boundaries.burstDisk && toyBoundary ? toyBoundary.stats().burstDisk : null;
     var detailAnnotations=!machineState || !machineState.definition.quietApparatus || !document.getElementById('toy-panel-instruments').hidden;
     var overlayKey=[detailAnnotations,toyThirsty || toyWave || toyDraftRuntime?liquidWGPU.simulationClock:0,wallsVersion,pressureColors,airPressureColors,fitScale,viewPanX,viewPanY,cameraWidth,cameraHeight,currentScene,highlightedValve,handsSelection && handsSelection.index].join(':');
@@ -15243,7 +15258,7 @@
     if(toyFloatSlider)overlayKey+=':'+toyFloatSlider.stats().y.toFixed(3);
     if(!buildGesture && !keyboardCursorVisible && machineOverlayCache && machineOverlayCache.key===overlayKey && machineOverlayCache.sample===instrumentSample)return;
     machineOverlayCache=!buildGesture && !keyboardCursorVisible ? {key:overlayKey,sample:instrumentSample} : null;
-    var c=instrumentsCtx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,worldW,worldH);instrumentsDirty=true;
+    var c=instrumentsCtx;c.setTransform(overlayDpr,0,0,overlayDpr,0,0);c.clearRect(0,0,worldW,worldH);instrumentsDirty=true;
     var palette=getComputedStyle(document.documentElement);
     var accent=palette.getPropertyValue('--accent').trim(),text=palette.getPropertyValue('--text').trim();
     if(instrumentSample && airModel && airModel.enabled && window.WaterMachinesInstruments && (pressureColors || airPressureColors)){
@@ -15311,12 +15326,13 @@
       if(toyThirsty){
         var drink=toyThirsty.stats(),tray=definition.vessels[0].rect;
         c.save();c.textAlign='center';c.font=(14/fitScale)+'px \"Segoe UI\", sans-serif';
-        c.fillText('Drag the slime into the falling water.',tray.x+tray.width*.5,24);
+        c.fillText('Let it drink. Drag the gold handles inward to squeeze.',tray.x+tray.width*.5,24);
         c.font=(16/fitScale)+'px \"Commit Mono\", monospace';
-        c.fillText(drink.full?'Full':(drink.drinking?'Drinking':'Thirsty')+', '+Math.round(drink.fraction*100)+'% full',tray.x+tray.width*.5,48);
+        c.fillText((drink.full?'Full':(drink.drinking?'Drinking':'Thirsty')+', '+Math.round(drink.fraction*100)+'% full')+'  /  '+(drink.restArea/drink.dryArea).toFixed(1)+'x area',tray.x+tray.width*.5,48);
         c.lineWidth=3/fitScale;c.strokeStyle=palette.getPropertyValue('--rule').trim();
         c.beginPath();c.moveTo(tray.x+88,60);c.lineTo(tray.x+tray.width-88,60);c.stroke();
         c.strokeStyle=accent;c.beginPath();c.moveTo(tray.x+88,60);c.lineTo(tray.x+88+(tray.width-176)*drink.fraction,60);c.stroke();c.restore();
+        toyThirsty.press.draw(c,{accent:palette.getPropertyValue('--app-brass').trim() || accent,text:text,rule:palette.getPropertyValue('--rule').trim(),dim:palette.getPropertyValue('--text-dim').trim()},fitScale,detailAnnotations);
       }
       if(toyCannon && toyCannon.draw)toyCannon.draw(c);
       if(toyFireSmokeDraft)toyFireSmokeDraft.draw(c);
@@ -15550,7 +15566,7 @@
       // frames the worst frozen-droplet latency is a quarter second and the
       // mirror breathes between sweeps.
     if(toySauna)toySauna.react(dt*timeMul,jelloStepH>0?jelloStepH:JELLO_H,JELLO_TIMESCALE,function(b){return grabBody===b || surfaceSlimeGrip && surfaceSlimeGrip.body===b;});
-    if(toyThirsty)toyThirsty.grow();
+    if(toyThirsty){toyThirsty.grow();toyThirsty.press.wake();}
     updateJello(dt);
     if(toyBalloon)toyBalloonFinishTerrain(jelloStepH>0?jelloStepH:JELLO_H);
     // The new membrane's final native substep uses the displayed gel pose.
@@ -15885,11 +15901,18 @@
   softTerrainSolve=function(b,h){ordinarySoftTerrainSolve(b,h);if(b.waterBalloon && softTerrainBody(b) && !b._guardRejectedStep)toyBalloonSkinTerrain(b,h);};
   var drawOrdinaryJelloBody=jelloDrawBody;
   jelloDrawBody=function(b){if(b.waterBalloon)toySlimeFluidGuest(b);if(toyBalloon && b===toyBalloon.body && b.waterBalloon){toyBalloon.draw(ctx,b);return;}drawOrdinaryJelloBody(b);};
+  var ordinaryMaterialSolve=softMaterialSolve;
+  softMaterialSolve=function(b,h){
+    if(toyThirsty && b===toyThirsty.press.body)toyThirsty.press.solve();
+    else ordinaryMaterialSolve(b,h);
+  };
   function jelloGrabSubstep(b, h) {
+    if(toyThirsty && b===toyThirsty.press.body)toyThirsty.press.begin(h,JELLO_TIMESCALE);
     if(toyCannon)toyCannon.load(b,h,JELLO_TIMESCALE);
     if (surfaceSlimeGrip && surfaceSlimeGrip.body === b && b._grabbed) softHandlingStep(b, h);
   }
   function jelloDrivePostSubstep(b,h) {
+    if(toyThirsty && b===toyThirsty.press.body)toyThirsty.press.finish();
     if(toyFloatSlider)toyFloatSlider.project(b,h,JELLO_TIMESCALE);
     if(toyDraftRig)toyDraftRig.project(b,h,JELLO_TIMESCALE);
   }

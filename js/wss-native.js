@@ -319,7 +319,8 @@ fn finishWall(){
     if (capacity !== 100000 && capacity !== 40000) throw new Error('Toy water allocation must be 100000 or 40000.');
     var initial = options.initialPresent;
     if (!Number.isInteger(initial) || initial < 0 || initial > capacity) throw new Error('Initial water count is invalid.');
-    var count = pool ? capacity : initial;
+    var count = pool ? (options.reserveCapacity === undefined ? capacity : options.reserveCapacity) : initial;
+    if(!Number.isInteger(count) || count<initial || count>capacity)throw new Error('Native reserve capacity is outside the allocated water buffer.');
     if (!count) throw new Error('Native boundary setup needs initial water.');
     var width=options.width, height=options.height, floor=options.floor === undefined ? height : options.floor;
     if (![width,height,floor].every(Number.isFinite) || width<=0 || height<=0) throw new Error('Boundary domain is invalid.');

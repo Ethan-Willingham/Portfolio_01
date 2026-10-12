@@ -1128,41 +1128,50 @@ Run `node tools/test-water-sauna.cjs` for that interaction check.
 
 ## Thirsty slime
 
-Toy v5.152 connects contact absorption and elastic swelling. Drag the slime
-into the falling water. Its fullness rises only when native water reaches its
-skin. At capacity the slime stops drinking, and further water runs over it.
-Click the source to stop or restart its flow. Restart restores the selected
-setup; the Water off comparison begins with a dry slime and no supplied water.
+Toy v5.166 lets the slime grow to sixteen times its dry area. Water touching
+its skin increases its rest area and mass. Drag either gold handle inward to
+close the linked jaws; release it to let the return springs reopen them.
+The larger slime bulges upward under load and spreads out again after release.
+The source still toggles water, and Water off starts with a dry slime.
+
+The 127-node mesh uses central nonlinear elastic springs and local signed
+triangle-area constraints. Four XPBD iterations run inside every existing
+microstep, with terrain and jaw contact interleaved. The jaws share a finite
+mass coordinate through their symmetric linkage. A compliant pointer spring
+pulls that coordinate, and gel contact applies the opposite generalized
+reaction. The pointer never assigns a jaw or skin position. Contact friction,
+internal damping and the return springs control sliding and ring-down.
+The material flecks deform with their triangles; opening Instruments reveals
+the actual spring mesh. This companion belongs only to Thirsty slime.
 
 The contact pass runs after each native water substep. A parcel inside the
 boundary ring or within six world pixels of it transfers to bound ownership
-(state 2), with frozen native guards. These slots remain allocated and cannot
-be admitted at the inlet or recycled by the collector. The native boundary
-variant is selected only by this scene's boundStorage option; other scenes
-retain their existing shader. Instruments counts flowing, bound and reserve
-slots separately. Their sum is the original allocation.
+(state 2), with frozen native guards. Each parcel adds 1.5625 square pixels to
+the elastic rest area. Bound slots remain allocated and cannot be admitted at
+the inlet or recycled by the collector. This scene uses 32,768 resident slots
+on desktop and mobile, including enough reserve for its larger capacity and
+runoff. Other boundary scenes retain their existing allocation. Flowing, bound
+and reserve counts sum to the original resident inventory.
 
-Each confirmed bound parcel adds 1.5625 square pixels to the elastic rest area,
-up to three times the dry area. Springs, the health mesh and material highlights
-follow the enlarged rest geometry. The ordinary elastic and world-contact
-solvers move the visible skin. A readback can precede the next host physics
-frame; grownParcels records the cohort already applied to the rest shape.
-This is a toy absorption model, with approximate drag, swelling work and
-momentum exchange. It is not a calibrated hydrogel model.
+Springs, spacing, triangle rest areas and material highlights follow growth.
+The visible skin moves through the elastic and contact solve. A readback can
+precede the next host physics frame; grownParcels records the cohort applied
+to the rest shape. Both jaws are moving native-water obstacles. The wider
+slime uses uncapped guest bounds and velocities in the water simulation clock.
 
-The normal view has a smaller tray, a shorter fall, an instruction and a
-fullness bar. The return diagram appears in Instruments. Disabled pressure
-readings and controls are hidden in this scene, and its live state reports
-Thirsty, Drinking or Full. The shared Sluice engines are unchanged.
+Absorbed water stays bound during a squeeze. This is a nearly incompressible
+elastic gel, not a porous sponge model. Uptake, water drag and swelling work
+remain approximate; native water does not apply a reciprocal force to the
+jaws. The mechanical jaw/gel reaction is coupled, but the complete water/gel
+system does not claim calibrated material properties or closed energy and
+momentum. The shared Sluice engines are unchanged.
 
-Run node tools/test-thirsty-slime.mjs for the owned Chrome for Testing check.
-Desktop mouse and emulated landscape touch both pass dry and off-stream
-controls, actual uptake, visible growth, exact saturation, native ownership,
-pause, restart and scene cleanup without runtime or GPU errors. The recorded
-slime grows from about 2,472 to 7,414 square pixels of rest area, absorbing
-3,163 parcels. Screenshots and measurements go to /tmp/thirsty-slime-review.
-These checks do not establish real-device performance or biological accuracy.
-
+Run `node tools/test-thirsty-slime.mjs` for the owned Chrome for Testing check.
+It uses actual desktop mouse and emulated landscape touch gestures and records
+screenshots and measurements in `/tmp/thirsty-slime-review`. Checks include
+dry and off-stream controls, visible growth, finite saturation, unique bound
+ownership, jaw resistance, upward bulging, area retention, release, pause,
+restart and scene cleanup. These checks do not establish real-device performance.
 
 ## Gold sluice box
 

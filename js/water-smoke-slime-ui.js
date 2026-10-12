@@ -520,7 +520,7 @@
         diagnostic ? 'Pressure readings are diagnostic. Open Instruments for the calculation status.' : stale ? 'The pressure sample is old. Open Instruments for its age.' :
         'The pressure sample is current. Open Instruments for the calculation status.';
       if(cave){pressureLabel=state.paused?'Paused':caveView?caveView.label:'Starting';pressureMessage='The airflow indicator compares pressure for you. Close the cave mouth or compare steady pressure in Instruments.';}
-      if(thirsty){pressureLabel=state.paused?'Paused':sample.thirsty && sample.thirsty.full?'Full':sample.thirsty && sample.thirsty.drinking?'Drinking':'Thirsty';pressureMessage='Drag the slime into the falling water. It drinks on contact and stops when full.';}
+      if(thirsty){pressureLabel=state.paused?'Paused':sample.thirsty && sample.thirsty.full?'Full':sample.thirsty && sample.thirsty.drinking?'Drinking':'Thirsty';pressureMessage='Let it drink. Drag either gold handle inward to squeeze. Release to let it spring back.';}
       if(cannon){pressureLabel=state.paused?'Paused':'Live';pressureMessage=wind?'A steady fan drives the smoke past the supported slime.':'The smoke carries the push. Instruments explains the flat section.';}
       if(balloon){pressureLabel=state.paused?'Paused':'Live';pressureMessage='Drag, fling and pop. Instruments explains the elastic skin.';}
       if(slip){pressureLabel=state.paused?'Paused':state.scene==='material-oil-jar'||sluice?'Live':'Prototype';pressureMessage='Instruments has the matched-density comparison and model limits.';}

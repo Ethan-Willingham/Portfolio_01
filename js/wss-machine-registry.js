@@ -540,7 +540,7 @@
     "id": "thirsty-slime",
     "capability": "Water slimes",
     "title": "Thirsty slime",
-    "cue": "Drag the slime into the falling water. It drinks on contact and stops when full.",
+    "cue": "Let it drink. Drag the gold handles inward to squeeze, then release.",
     "status": "WORKS",
     "draft": true,
     "world": {
@@ -555,7 +555,8 @@
       "wss-water-balloons",
       "wss-machines/water-balloons",
       "wss-drafts-bodies",
-      "wss-thirsty-slime"
+      "wss-thirsty-slime",
+      "wss-slime-press"
     ]
   },
   {

@@ -46,7 +46,7 @@ struct Params {counts:vec4f, bounds:vec4f};
     var L=options.liquid,b=options.body,boundary=options.boundary;
     if(!b || !boundary || !boundary.ready)throw Error('The drinking slime needs its native water inventory.');
     var device=L.device,queue=L.queue,U=GPUBufferUsage,buffers=[],retired=false,pending=false,captured=false;
-    var dryArea=b.restArea,capacity=Math.floor(dryArea*2/AREA),latest=0,grown=0,error=null,clock=0,lastUptakeClock=-Infinity;
+    var dryArea=b.restArea,capacity=Math.floor(dryArea*15/AREA),latest=0,grown=0,error=null,clock=0,lastUptakeClock=-Infinity;
     function buffer(label,size,usage){var v=device.createBuffer({label:'toy.uptake.'+label,size:size,usage:usage});buffers.push(v);return v;}
     try{
       var params=buffer('params',32,U.UNIFORM|U.COPY_DST);
