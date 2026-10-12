@@ -60,6 +60,33 @@
     var actionLayer = document.getElementById('toy-scene-actions');
     var actionButtons = new Map();
     var activeHeldButton = null;
+    var caveIndicator=document.getElementById('toy-cave-indicator');
+    function syncCaveIndicator(sample,state){
+      if(!caveIndicator)return null;
+      caveIndicator.hidden=state.scene!=='breathing-cave';
+      if(caveIndicator.hidden)return null;
+      var ready=sample && !sample.error && Number.isFinite(sample.gaugePressurePa) && Number.isFinite(sample.speedMetersPerSecond);
+      var speed=ready?sample.speedMetersPerSecond:0;
+      var flow=!ready?'loading':!sample.mouthOpen?'closed':Math.abs(speed)<.2?'still':speed>0?'out':'in';
+      var labels={loading:sample && sample.error?'Airflow stopped':'Starting',closed:'Mouth closed',still:'Air nearly still',out:'Air flowing out',in:'Air flowing in'};
+      if(ready && flow==='still' && Math.abs(speed)<.001)labels.still='Air still';
+      caveIndicator.dataset.flow=state.paused?'paused':flow;
+      text('toy-cave-flow',labels[flow]);
+      document.getElementById('toy-cave-paused').hidden=!state.paused;
+      var delta=ready?sample.gaugePressurePa/100:0,higher=Math.abs(delta)<.05?'equal':delta>0?'cave':'outside';
+      var pressureText=!ready?'Waiting for pressure':higher==='equal'?'Pressures are balanced':
+        (higher==='cave'?'Cave':'Outside')+' higher by '+Math.abs(delta).toFixed(1)+' hPa';
+      text('toy-cave-pressure-text',pressureText);
+      var meter=document.getElementById('toy-cave-meter');
+      meter.dataset.higher=higher;
+      meter.style.setProperty('--pressure-size',(Math.min(60,Math.abs(delta))/60*50)+'%');
+      meter.setAttribute('aria-valuenow',Math.max(-60,Math.min(60,delta)).toFixed(2));
+      meter.setAttribute('aria-valuetext',pressureText);
+      var reversing=ready && (flow==='out' && delta<-.05 || flow==='in' && delta>.05);
+      text('toy-cave-context',!ready?'The cave is starting.':state.paused?'Airflow and pressure are frozen.':flow==='closed'?'The shut entrance traps the cave air.':
+        reversing?'Moving air takes a moment to reverse.':flow==='still'?'Watch the direction change as pressure shifts.':'Air moves toward the lower pressure.');
+      return {label:labels[flow],flow:flow};
+    }
     var sceneHints = {
       falls: 'Drop a slime into the falling water.',
       zerog: 'Pull a slime through the floating water.',
@@ -455,6 +482,7 @@
       var liveMachine = toy.machineState ? toy.machineState() : null;
       var air = toy.airStats ? toy.airStats() : { enabled: false };
       var cave=state.scene==='breathing-cave',caveReading=sample.cave;
+      var caveView=syncCaveIndicator(caveReading,state);
       var fire=!!(liveMachine && liveMachine.definition.fire);
       var trap=state.scene==='sewer-gas-trap';
       var candle=fire && !!liveMachine.definition.fire.air;
@@ -476,7 +504,7 @@
       var pressureMessage=fatal ? 'The pressure calculation stopped. Restart or choose another scene.' : !sample.ready || !convergence ? 'Waiting for a pressure sample.' :
         diagnostic ? 'Pressure readings are diagnostic. Open Instruments for the calculation status.' : stale ? 'The pressure sample is old. Open Instruments for its age.' :
         'The pressure sample is current. Open Instruments for the calculation status.';
-      if(cave){pressureLabel=state.paused?'Paused':caveReading && !caveReading.mouthOpen?'Mouth closed':caveReading && caveReading.flowM3PerSecond>1?'Breathing out':caveReading && caveReading.flowM3PerSecond < -1?'Breathing in':'Air still';pressureMessage='Outside pressure drives the entrance airflow. Close the cave mouth or compare steady pressure in Instruments.';}
+      if(cave){pressureLabel=state.paused?'Paused':caveView?caveView.label:'Starting';pressureMessage='The airflow indicator compares pressure for you. Close the cave mouth or compare steady pressure in Instruments.';}
       if(thirsty){pressureLabel=state.paused?'Paused':sample.thirsty && sample.thirsty.full?'Full':sample.thirsty && sample.thirsty.drinking?'Drinking':'Thirsty';pressureMessage='Drag the slime into the falling water. It drinks on contact and stops when full.';}
       if(cannon){pressureLabel=state.paused?'Paused':'Live';pressureMessage=wind?'A steady fan drives the smoke past the supported slime.':'The smoke carries the push. Instruments explains the flat section.';}
       if(balloon){pressureLabel=state.paused?'Paused':'Live';pressureMessage='Drag, fling and pop. Instruments explains the elastic skin.';}
@@ -493,7 +521,7 @@
       if(fire)text('toy-hint',liveMachine.definition.sauna ? 'Click the water source or the stones to make steam. Let the room cool between pours.' : candle?'Lift the lid before the flame goes out. Reset lights a fresh candle.':'Click the upper water source or the fire to pour. You can also splash it with Water.');
       if(thirsty)text('toy-hint',pressureMessage);
       if(birds && state.tool==='poke')text('toy-hint','Grab the pipe’s top and slide it up for a lower note, down for a higher one.');
-      if(cave)text('toy-hint','Watch the smoke at the mouth. Close it to trap the air. Instruments has a steady-pressure comparison.');
+      if(cave)text('toy-hint','Gray tracer smoke makes the airflow visible. Close the mouth to trap the air.');
       if(cannon)text('toy-hint',wind?'Grab the slime. Stop the fan to compare its wake.':'Tap the back. Drag the slime back into the swirl.');
       if(balloon)text('toy-hint','Drag the skin to fling it. Click it to pop and release the water.');
       if(state.scene==='air-hose')text('toy-hint','Stop the declared air source and watch the remaining gas.');
@@ -793,6 +821,7 @@
     });
     readout.observe(document.getElementById('toy-readout'), { childList: true });
     if (typeof ResizeObserver !== 'undefined') new ResizeObserver(function () { controlsHeight(); toy.resize(); fitPanel(); syncMachineControls(); }).observe(shell);
+    if(caveIndicator && typeof ResizeObserver !== 'undefined')new ResizeObserver(function(){toy.resize();syncMachineControls();}).observe(caveIndicator);
     window.addEventListener('resize', fitPanel);
     window.addEventListener('scroll', fitPanel, { passive: true });
     // Reading the existing sample never requests another GPU snapshot.

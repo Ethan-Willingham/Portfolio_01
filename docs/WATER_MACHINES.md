@@ -37,6 +37,19 @@ its pressure. Closing the real mouth valve traps its existing charge. Reopening
 uses that charge, with no reset. Steady pressure and a closed initial mouth are
 available in Instruments. Pause freezes the weather, gas and tracer clocks.
 
+The cave readout sits beside the simulation at normal screen resolution. Its
+arrow and large text show actual airflow, while one centered pressure gauge
+shows which side is higher and the difference in hPa. Absolute readings remain
+in Instruments. When pressure reverses before the moving air does, the readout
+explains that delay. Closed, still and paused states have explicit text, and
+the gray cloud is labeled tracer smoke. The layout reserves space for the
+readout; a narrow, tall window places it below the cave. It uses the same layout
+on desktop and touch screens at the same viewport size.
+
+The browser regression also checks direction during pressure reversal, readable
+text contrast, semantic status and meter labels, separation from the apparatus,
+shorter landscape heights and narrow desktop layout.
+
 This scene has a separate large scale: one world pixel is one meter, with ten
 meters of section depth. Outside pressure is 101325 Pa plus a 3000 Pa sinusoid
 with a 24-second period. This is accelerated weather, not a measurement of a

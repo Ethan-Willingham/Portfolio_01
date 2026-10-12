@@ -148,10 +148,6 @@
         imageContext.putImageData(pixels,0,0);paintedStep=steps;
       }
       c.save();c.imageSmoothingEnabled=true;c.drawImage(imageCanvas,0,0,world.w,world.h);
-      var offset=spec.chamber.x-120;
-      c.fillStyle=palette.text;c.fillText('Cave '+(pressure/100).toFixed(1)+' hPa',144+offset,160);
-      c.fillText('Outside '+(outside/100).toFixed(1)+' hPa',448+offset,96);
-      c.fillText(area>0 && sourceCells?Math.abs(flow)<1?'Air still':flow>0?'Air out':'Air in':'Mouth closed',512+offset,280);
       c.restore();
     }
     return {tick:tick,stats:stats,draw:draw,destroy:function(){imageCanvas=null;imageContext=null;pixels=null;}};

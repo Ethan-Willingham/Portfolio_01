@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.158'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.159'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -240,6 +240,17 @@
         insetLeft=Math.max(insetLeft,dockBounds.right-viewBounds.left+padding);
       else if(dockStyle.flexDirection==='row' && dockBounds.top>viewBounds.top+cameraHeight*.5)
         insetBottom=Math.max(insetBottom,viewBounds.bottom-dockBounds.top+padding);
+    }
+    // Reserve real space for the cave readout, keeping it sharp and readable
+    // outside the transformed simulation. These breakpoints apply to all inputs.
+    var caveIndicator=document.getElementById('toy-cave-indicator');
+    if(caveIndicator){
+      caveIndicator.hidden=currentScene!=='breathing-cave';
+      if(!caveIndicator.hidden){
+        var caveStyle=getComputedStyle(caveIndicator),caveBounds=caveIndicator.getBoundingClientRect();
+        if(caveStyle.getPropertyValue('--cave-placement').trim()==='bottom')insetBottom+=caveBounds.height+padding;
+        else insetRight+=caveBounds.width+padding;
+      }
     }
     var fitWidth=Math.max(1,cameraWidth-insetLeft-insetRight),fitHeight=Math.max(1,cameraHeight-insetTop-insetBottom);
     baseFitScale=Math.min(fitWidth/worldW,fitHeight/worldH);

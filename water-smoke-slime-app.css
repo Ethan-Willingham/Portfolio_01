@@ -423,3 +423,42 @@ body.toy-app ::selection { background: var(--selection-bg); color: var(--selecti
 @media (prefers-reduced-motion: reduce) {
   .toy-oxygen-legend, .toy-oxygen-probe { transition: none; animation: none; }
 }
+
+/* One readable comparison beside the cave, outside the scaled canvas. */
+.toy-cave-indicator {
+  --cave-placement: side;
+  position: absolute; z-index: 11; right: 16px; top: calc((100% + var(--toy-top-height, 52px)) / 2);
+  transform: translateY(-50%); box-sizing: border-box; width: 272px; padding: 18px;
+  background: var(--bg-raised); color: var(--text); border: 1px solid var(--rule-strong); border-radius: 12px;
+  font: 14px/1.45 var(--font-body); pointer-events: none;
+}
+.toy-cave-indicator[hidden] { display: none; }
+.toy-cave-heading { display: flex; justify-content: space-between; gap: 12px; color: var(--text-dim); font-size: 12px; }
+#toy-cave-paused { color: var(--app-brass); }
+.toy-cave-indicator h2 { margin: 4px 0 10px; color: var(--text-bright); font: 600 23px/1.2 var(--font-body); letter-spacing: -.02em; }
+.toy-cave-direction { display: flex; align-items: center; justify-content: space-between; gap: 14px; color: var(--text-dim); font-size: 12px; }
+.toy-app .toy-shell .toy-cave-direction svg { width: 96px; height: 24px; color: var(--app-brass); stroke-width: 2; }
+.toy-cave-direction .toy-cave-still { display: none; }
+.toy-cave-indicator[data-flow="in"] .toy-cave-arrow { transform: rotate(180deg); transform-origin: 48px 12px; }
+.toy-cave-indicator:is([data-flow="loading"], [data-flow="closed"], [data-flow="still"], [data-flow="paused"]) .toy-cave-arrow { display: none; }
+.toy-cave-indicator:is([data-flow="loading"], [data-flow="closed"], [data-flow="still"], [data-flow="paused"]) .toy-cave-still { display: block; }
+.toy-cave-pressure { margin-top: 16px; }
+.toy-cave-pressure p { margin: 0 0 10px; color: var(--text); font-size: 14px; font-variant-numeric: tabular-nums; }
+.toy-cave-meter { position: relative; height: 8px; background: var(--rule); border-radius: 3px; }
+.toy-cave-meter::after { content: ''; position: absolute; top: -3px; bottom: -3px; left: calc(50% - 1px); width: 2px; background: var(--text-dim); }
+.toy-cave-meter-fill { position: absolute; left: 50%; top: 0; height: 100%; width: var(--pressure-size, 0%); background: var(--app-brass); border-radius: inherit; }
+.toy-cave-meter[data-higher="cave"] .toy-cave-meter-fill { transform: translateX(-100%); }
+.toy-cave-meter[data-higher="equal"] .toy-cave-meter-fill { width: 0; }
+.toy-cave-meter-labels { display: flex; justify-content: space-between; gap: 4px; margin-top: 6px; color: var(--text-dim); font-size: 11px; }
+.toy-cave-context { min-height: 2.9em; margin: 14px 0 0; color: var(--text-dim); font-size: 13px; }
+.toy-cave-tracer { margin: 10px 0 0; padding-top: 10px; border-top: 1px solid var(--rule); color: var(--text-dim); font-size: 12px; }
+@media (max-height: 560px) {
+  .toy-cave-indicator { right: 10px; width: 250px; padding: 14px; }
+  .toy-cave-indicator h2 { font-size: 21px; }
+  .toy-cave-pressure { margin-top: 12px; }
+  .toy-cave-context { margin-top: 10px; }
+}
+@media (max-width: 660px) and (max-aspect-ratio: 7/5) {
+  .toy-cave-indicator { --cave-placement: bottom; top: auto; bottom: 12px; left: 12px; right: 12px; width: auto; transform: none; }
+  .toy-cave-context { min-height: 1.45em; }
+}
