@@ -1792,30 +1792,36 @@
     "id": "slime-submarine",
     "capability": "Water slimes",
     "title": "Slime submarine",
-    "status": "NOT WORKING",
+    "status": "WORKS",
     "pool": false,
-    "cue": "Draft. Drop the slime into water; a carried ballast tank is not connected.",
+    "cue": "Open the valve to flood its carried tank, then close it and drag the loaded skin.",
     "draft": true,
     "world": {
       "w": 720,
       "h": 400
     },
-    "blocker": "Passive gel and native water only; carried ballast water and changing payload mass are absent.",
+    "blocker": "Emptying ballast and calibrated two-way buoyancy remain outside this reduced floodable-tank model.",
     "dependencies": [
       "wss-drafts-bodies",
-      "wss-drafts-creatures"
+      "wss-water-balloons",
+      "wss-machines/water-balloons",
+      "wss-drafts-creatures",
+      "wss-slime-submarine"
     ],
     "behaviorPlan": {
       "seconds": 4,
-      "action": "Use actual Grab to move passive gel into the pool",
-      "key": "Ordinary body-water interaction remains finite; ballast dive is absent.",
-      "statusIfObserved": "NOT WORKING"
+      "action": "Open ballast, close it, then Grab the loaded water skin",
+      "key": "Carried native ballast adds measured mass and dives; blocked valve stays dry.",
+      "statusIfObserved": "WORKS"
     },
     "accepted": true,
     "preview": "cup",
     "scripts": [
       "wss-drafts-bodies",
-      "wss-drafts-creatures"
+      "wss-water-balloons",
+      "wss-machines/water-balloons",
+      "wss-drafts-creatures",
+      "wss-slime-submarine"
     ]
   },
   {

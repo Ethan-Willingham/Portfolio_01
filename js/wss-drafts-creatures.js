@@ -8,7 +8,7 @@
     ['soft-robot-gripper','Water slimes','Soft robot gripper','NOT WORKING',false,'Grab the elastic cup around the block; air actuation is not connected.'],
     ['suction-cup','Water slimes','Suction cup','NOT WORKING',false,'Press the elastic cup against the shelf; vacuum adhesion is not connected.'],
     ['water-rocket','Water slimes','Water rocket','NOT WORKING',false,'A slit releases native water; compressed-air launch is not connected.'],
-    ['slime-submarine','Water slimes','Slime submarine','NOT WORKING',false,'Drop the slime into water; a carried ballast tank is not connected.'],
+    ['slime-submarine','Water slimes','Slime submarine','WORKS',false,'Open the valve to flood its carried water tank, then close it and drag the loaded skin.'],
     ['slime-mail','Smoke','Slime mail','PARTLY',false,'Tap the rear air chamber to push smoke toward the slime in the tube.'],
     ['swim-bladder-fish','Water slimes','Swim-bladder fish','PARTLY',false,'Pump gas into the bladder, then vent it; depth control is unproved.'],
     ['bell-jar-lungs','Water slimes','Bell-jar lungs','PARTLY',false,'Lower the driven diaphragm; the gas slimes sample the jar air pressure.'],
@@ -88,6 +88,7 @@
       d.boundaryNote+=' This open skin has native water and contact reactions, but no enclosed compressed gas or gas-to-water work. It is a launch fixture, not a working rocket.';return d;
     },
     'slime-submarine':function(w,o){
+      if(root.WSSSlimeSubmarine)return root.WSSSlimeSubmarine.make(w,o);
       var d=base('slime-submarine',w,o);d.vessels=[box('basin','Water',rect(112,128,496,256))];d.initial=[water(rect(120,264,480,112))];
       d.slimes=[{x:360,y:216,radius:36}];d.action='Use Grab';d.primary={kind:'creature-fixture'};
       d.boundaryNote+=' The body is passive gel. A moving water ballast container, its valves and changing payload mass are absent; water is not deleted to imitate flooding.';return d;

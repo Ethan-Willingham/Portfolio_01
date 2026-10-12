@@ -12813,14 +12813,14 @@
     // Cup buoyancy uses the actual Verlet microstep. Applying an outer-step
     // position impulse to XPBD multiplies lift by its substep count.
     // Keep the established ordinary-scene coupling unchanged.
-    var couplingH = toyDivers || toyFloatSlider || machineState && (machineState.definition.name === 'cup' || machineState.definition.floatDam)
+    var couplingH = toyDivers || toyFloatSlider || machineState && (machineState.definition.name === 'cup' || machineState.definition.floatDam || machineState.definition.submarine)
       ? JELLO_H * jelloImpulseScale() : JELLO_H;
     var invV = ts / couplingH;
     var applyK = couplingH / ts;
     for (var bi = 0; bi < jelloBodies.length; bi++) {
       var b = jelloBodies[bi];
       // A membrane gets native contact reactions, not solid-body buoyancy.
-      if(b && b.waterBalloon)continue;
+      if(b && b.waterBalloon && !b.ballastBuoyancy)continue;
       if (!b || b.frozen || !isFinite(b.bboxL + b.bboxR + b.bboxT + b.bboxB)) continue;
       var diverContact=b.cartesianDiver,farSurf=Infinity;
       if(diverContact){b._wetCells=diverContact.wetProbeCount;if(!b._wetCells)continue;b.sleeping=false;b.sleepFrames=0;}
@@ -14703,7 +14703,7 @@
       liquidWGPU.toyNativeDomain={minX:0,minY:0,maxX:worldW,maxY:worldH};
       var palette=getComputedStyle(document.documentElement);
       ownBalloon=await window.WSSWaterBalloons.create({liquid:liquidWGPU,body:balloonBody,slit:definition.membrane.slit,skinRing:toyBalloonCurveRing,slitRing:toySlimeFluidRing,skinPath:toySlimeFluidPath,
-        width:worldW,height:worldH,maxParticles:LIQUID_MAX_PARTICLES,colors:{skin:palette.getPropertyValue('--d-emphasis').trim(),edge:palette.getPropertyValue('--d-emphasis').trim()}});
+        countCarried:!!definition.submarine,valveSlit:definition.membrane.valveSlit,width:worldW,height:worldH,maxParticles:LIQUID_MAX_PARTICLES,colors:{skin:palette.getPropertyValue('--d-emphasis').trim(),edge:palette.getPropertyValue('--d-emphasis').trim()}});
       if(request!==machineRequest){ownBalloon.destroy();ownBalloon=null;return null;}
       toyBalloon=ownBalloon;liquidWGPU.setToyMembrane(ownBalloon);model={settings:{density:1}};
     }else if(definition.fire){
@@ -14795,7 +14795,7 @@
       toySauna=ownSauna;
       SmokeFluid.setThermalStyle({glow:.18,waterCooling:3});
     }
-    if(definition.draft && window.WSSDraftRuntime)toyDraftRuntime=await window.WSSDraftRuntime.create({definition:definition,liquid:liquidWGPU,airModel:airModel,nativeBoundary:toyBoundary,SmokeFluid:SmokeFluid,bodies:jelloBodies,setManualValve:setManualValve});
+    if(definition.draft && window.WSSDraftRuntime)toyDraftRuntime=await window.WSSDraftRuntime.create({definition:definition,liquid:liquidWGPU,airModel:airModel,nativeBoundary:toyBoundary,membrane:toyBalloon,SmokeFluid:SmokeFluid,bodies:jelloBodies,setManualValve:setManualValve});
     state.energyInitial=window.WaterMachinesInstruments.waterEnergy(Object.assign({},particleInstrumentSample(),{count:added}),
       {floor:worldH,gravity:250*gravMul*presetGravScale,density:model.settings.density || 1});
     state.energyGravity=250*gravMul*presetGravScale;
@@ -14962,6 +14962,7 @@
       else target(84,200,24,100);
     }
     else if(kind==='smoke-fan' && d.fan)target(d.fan.x,(d.fan.top+d.fan.bottom)*.5,48,d.fan.bottom-d.fan.top);
+    else if(kind==='ballast-valve' && p.target)atRect(p.target,'primary','button');
     else if(kind==='balloon-pop' || kind==='draft-squeeze' || kind==='draft-push' || kind==='creature-gas' || kind==='cork-release')body(0);
     else if(kind==='slime'){
       var slime=d.slimes[p.index || 0];if(slime)target(slime.x,slime.y,slime.radius*2,slime.radius*2);
@@ -15591,7 +15592,7 @@
       buildWaterCells();
     }
     waterLivelinessTick(dt);
-    if(toyBalloon)toyBalloon.couple(jelloStepH>0?jelloStepH:JELLO_H,JELLO_TIMESCALE,SOFT_CONTACT_POINT_MASS);
+    if(toyBalloon)toyBalloon.couple(jelloStepH>0?jelloStepH:JELLO_H,JELLO_TIMESCALE,toyBalloon.body.nativePointMass || SOFT_CONTACT_POINT_MASS);
     if(toyFloatSlider)toyFloatSlider.prepare();
     jelloWaterCoupleTick(dt);
     if (toyFrameNo % 30 === 0) wakeSleepersOnBodies();   // sparse: every WAKE op

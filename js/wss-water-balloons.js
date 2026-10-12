@@ -127,6 +127,7 @@ fn sweep(a:vec2f,b:vec2f,c:vec2f,d:vec2f,v:vec2f,w:vec2f)->vec2f {
  let side=select(1u,2u,inside(pos[i].xy));sides[i]=vec4u(side,side,0u,0u);
  atomicAdd(&sums[select(${LEDGER+1}u,${LEDGER}u,side==2u)],1);
 }
+@compute @workgroup_size(256) fn seal(@builtin(global_invocation_id) id:vec3u){let i=id.x;if(live(i)){sides[i].y=select(1u,2u,inside(pos[i].xy));}}
 @compute @workgroup_size(256) fn snapshot(@builtin(global_invocation_id) id:vec3u){let i=id.x;if(live(i)){before[i]=pos[i];}}
 @compute @workgroup_size(1) fn saveRing(){for(var k=0u;k<n();k++){history[k]=ring(k);}history[${CURVE_CAPACITY}]=vec4f(1.);}
 @compute @workgroup_size(256) fn contact(@builtin(global_invocation_id) id:vec3u){
@@ -168,6 +169,7 @@ fn sweep(a:vec2f,b:vec2f,c:vec2f,d:vec2f,v:vec2f,w:vec2f)->vec2f {
 @compute @workgroup_size(256) fn observe(@builtin(global_invocation_id) id:vec3u){
  let i=id.x;if(!live(i)){return;}let v=pos[i];atomicAdd(&sums[${LEDGER+9}],1);
  if(any(v!=v) || any(abs(v)>vec4f(1e10))){atomicAdd(&sums[${LEDGER+8}],1);return;}
+ if(p.world.w>.5 && n()>=3u && inside(v.xy)){atomicAdd(&sums[${LEDGER+12}],1);}
  if(sides[i].x==2u){
   let contained=n()>=3u && inside(v.xy);if(contained){atomicAdd(&sums[${LEDGER+6}],1);}else{atomicAdd(&sums[${LEDGER+7}],1);}
   atomicAdd(&sums[${LEDGER+10}],i32(round(v.x*16.)));atomicAdd(&sums[${LEDGER+11}],i32(round(v.y*16.)));
@@ -178,7 +180,7 @@ fn sweep(a:vec2f,b:vec2f,c:vec2f,d:vec2f,v:vec2f,w:vec2f)->vec2f {
   async function create(options){
     var L=options.liquid,b=options.body,device=L.device,queue=L.queue,layout=L.getGuestUniformLayout(),U=GPUBufferUsage;
     if(!L.simActive || !b || b.ringN<3)throw Error('Water balloons need native water and a closed elastic ring.');
-    var retired=false,enabled=true,error=null,frame=0,birthGeneration=0,slot=-1,slit=-1,latest=new Int32Array(LEDGER+24),pendingImpulse=[],lastClock=0,maxAge=0,previousControls=null,frameRing=[];
+    var reseal=false,retired=false,enabled=true,error=null,frame=0,birthGeneration=0,slot=-1,slit=-1,latest=new Int32Array(LEDGER+24),pendingImpulse=[],lastClock=0,maxAge=0,previousControls=null,frameRing=[];
     function skinRing(){return options.skinRing ? options.skinRing(b) : bodyRing(b);}
     var buffers=[];
     function buffer(size,usage){var value=device.createBuffer({size:size,usage:usage});buffers.push(value);return value;}
@@ -197,9 +199,9 @@ fn sweep(a:vec2f,b:vec2f,c:vec2f,d:vec2f,v:vec2f,w:vec2f)->vec2f {
     var code=source(layout),module=device.createShaderModule({code:code}),info=await module.getCompilationInfo();
     if(info.messages.some(function(m){return m.type==='error';}))throw Error(info.messages.map(function(m){return m.lineNum+': '+m.message;}).join('; '));
     var pipes={},groups={};
-    for(var name of ['birth','snapshot','saveRing','contact','observe']){
+    for(var name of ['birth','seal','snapshot','saveRing','contact','observe']){
       pipes[name]=await device.createComputePipelineAsync({layout:'auto',compute:{module:module,entryPoint:name}});
-      var used=name==='birth'?[0,1,2,3,4,5,7]:name==='snapshot'?[0,2,3,5]:name==='saveRing'?[0,1,6]:name==='contact'?[0,1,2,3,4,5,6,7,8,9,10]:[0,1,2,3,4,7];
+      var used=name==='seal'?[0,1,2,3,4]:name==='birth'?[0,1,2,3,4,5,7]:name==='snapshot'?[0,2,3,5]:name==='saveRing'?[0,1,6]:name==='contact'?[0,1,2,3,4,5,6,7,8,9,10]:[0,1,2,3,4,7];
       groups[name]=shapes.map(function(shapeBuffer){
         var resources=[params,shapeBuffer,L.buf.pos,L.buf.flag,tags,before,history,sums,L.paramsBuf,L.buf.terrainMask,L.buf.affine];
         return device.createBindGroup({layout:pipes[name].getBindGroupLayout(0),entries:used.map(function(binding){return {binding:binding,resource:{buffer:resources[binding]}};})});
@@ -226,12 +228,13 @@ fn sweep(a:vec2f,b:vec2f,c:vec2f,d:vec2f,v:vec2f,w:vec2f)->vec2f {
           queue.writeBuffer(shapes[q],0,shape);
         }
         previousControls=frameRing.controls ? Array.from(frameRing.controls) : null;
-        var values=new Float32Array([state.count,Math.max(0,slot),state.h,frame,enabled?1:0,slit,.002,count,options.width,options.height,state.clock,L.getSimParam('TIMESCALE')]);
-        queue.writeBuffer(params,0,values);enc.clearBuffer(sums,(LEDGER+5)*4,7*4);
+        var values=new Float32Array([state.count,Math.max(0,slot),state.h,frame,enabled?1:0,slit,.002,count,options.width,options.height,state.clock,options.countCarried?1:0]);
+        queue.writeBuffer(params,0,values);enc.clearBuffer(sums,(LEDGER+5)*4,8*4);
         queue.writeBuffer(sums,(LEDGER+16)*4,new Float32Array([state.clock,frame,L.getSimParam('TIMESCALE'),0]));
       },
       beforeSubstep:function(enc,state){
         encode(enc,'birth',state.substep,state.count);
+        if(reseal){encode(enc,'seal',state.substep,state.count);reseal=false;}
         encode(enc,'contact',state.substep,state.count);encode(enc,'saveRing',state.substep,state.count);
         encode(enc,'snapshot',state.substep,state.count);
       },
@@ -261,10 +264,11 @@ fn sweep(a:vec2f,b:vec2f,c:vec2f,d:vec2f,v:vec2f,w:vec2f)->vec2f {
           b.sleeping=false;b.sleepFrames=0;
         });
       },
+      setSlit:function(value){if(!value && slit>=0)reseal=true;slit=value?options.valveSlit===undefined?5:options.valveSlit:-1;return slit;},
       pop:function(){if(!enabled)return false;enabled=false;b.waterBalloon=false;pendingImpulse.length=0;return true;},
       resetBirth:function(){birthGeneration++;queue.writeBuffer(tags,0,new Uint32Array(options.maxParticles*4));queue.writeBuffer(sums,0,new Int32Array(LEDGER+24));latest=new Int32Array(LEDGER+24);previousControls=null;pendingImpulse.length=0;lastClock=L.simulationClock;maxAge=0;},
       stats:function(){var birthInside=latest[LEDGER+0];return {popped:!enabled,slitEdge:slit,birthInside:birthInside,birthOutside:latest[LEDGER+1],
-        inside:latest[LEDGER+6],outside:latest[LEDGER+7],retainedFraction:birthInside?latest[LEDGER+6]/birthInside:null,contacts:latest[LEDGER+2],slitCrossings:latest[LEDGER+3],
+        inside:latest[LEDGER+6],carriedInside:latest[LEDGER+12],outside:latest[LEDGER+7],retainedFraction:birthInside?latest[LEDGER+6]/birthInside:null,contacts:latest[LEDGER+2],slitCrossings:latest[LEDGER+3],
         terrainBlocked:latest[LEDGER+4],sideViolations:latest[LEDGER+5],nonfinite:latest[LEDGER+8],waterCount:latest[LEDGER+9],
         waterCenterX:birthInside?latest[LEDGER+10]/16/birthInside:null,waterCenterY:birthInside?latest[LEDGER+11]/16/birthInside:null,
         contactClock:lastClock,contactFrame:new Float32Array(latest.buffer,(LEDGER+16)*4,4)[1],contactAgeSimulationSeconds:Math.max(0,L.simulationClock-lastClock),
