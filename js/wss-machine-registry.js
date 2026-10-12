@@ -1521,6 +1521,72 @@
     }
   },
   {
+    "id": "water-hammer",
+    "capability": "Valves and logic",
+    "title": "Water hammer",
+    "cue": "Draft. Close the downstream cut; the pressure-wave model is incomplete, draft.",
+    "status": "PARTLY",
+    "draft": true,
+    "accepted": true,
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "pool": false,
+    "preview": "cup",
+    "scripts": [
+      "wss-drafts-pressure"
+    ],
+    "loaderDependencies": [
+      "wss-boundaries",
+      "wss-hands",
+      "wss-native",
+      "wss-sound",
+      "wss-drafts-pressure"
+    ],
+    "blocker": "Fast physical valve dynamics and resolved liquid-acoustic propagation are not established.",
+    "behaviorPlan": {
+      "seed": 17,
+      "seconds": 6,
+      "key": "Visitor closes an actual stationary boundary in moving native water; optional real gas chamber is the comparison.",
+      "action": "Use existing machinePrimary once after a short observation. Steam toggles the actual heater; cave and ram use real manual valves; Venturi/trompe/water-hammer/Torricelli use physical caps. Clock primary pours real water, skip for closed inventory check.",
+      "statusIfObserved": "PARTLY"
+    }
+  },
+  {
+    "id": "ctesibius-clock",
+    "capability": "Valves and logic",
+    "title": "Ctesibius' float clock",
+    "cue": "Draft. The float follows accumulating water below a finite header, draft.",
+    "status": "PARTLY",
+    "draft": true,
+    "accepted": true,
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "pool": false,
+    "preview": "cup",
+    "scripts": [
+      "wss-drafts-pressure"
+    ],
+    "loaderDependencies": [
+      "wss-boundaries",
+      "wss-hands",
+      "wss-native",
+      "wss-sound",
+      "wss-drafts-pressure"
+    ],
+    "blocker": "No constant-head regulator, geared hand or calibrated seconds; ordinary one-way body coupling remains approximate.",
+    "behaviorPlan": {
+      "seed": 17,
+      "seconds": 6,
+      "key": "An actual elastic slime rises with retained native water and a static position ruler, with no timer moving it.",
+      "action": "Use existing machinePrimary once after a short observation. Steam toggles the actual heater; cave and ram use real manual valves; Venturi/trompe/water-hammer/Torricelli use physical caps. Clock primary pours real water, skip for closed inventory check.",
+      "statusIfObserved": "PARTLY"
+    }
+  },
+  {
     "id": "fountain-rider",
     "capability": "Water slimes",
     "title": "Fountain rider",
@@ -1795,6 +1861,340 @@
     ]
   },
   {
+    "id": "swim-bladder-fish",
+    "capability": "Water slimes",
+    "title": "Swim-bladder fish",
+    "status": "PARTLY",
+    "pool": false,
+    "cue": "Draft. Pump gas into the bladder, then vent it; depth control is unproved.",
+    "draft": true,
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "blocker": "Declared bladder gas supply/vent and pressure-volume law are connected; useful depth control is unproved.",
+    "dependencies": [
+      "wss-cartesian-divers",
+      "wss-machines/cartesian-divers",
+      "wss-drafts-creatures"
+    ],
+    "behaviorPlan": {
+      "seconds": 8,
+      "actionAtSeconds": 2,
+      "action": "machinePrimary admits 25 percent of original room-reference body gas, next press vents it",
+      "key": "Gas amount changes while ballast mass and water count stay fixed; native external pressure sets target area. WORKS requires actual reversible depth change.",
+      "probes": [
+        "divers gasAmount and ballastMass",
+        "targetArea and actual area",
+        "native parcel count",
+        "body depth"
+      ],
+      "statusIfObserved": "WORKS"
+    },
+    "accepted": true,
+    "preview": "cup",
+    "scripts": [
+      "wss-cartesian-divers",
+      "wss-machines/cartesian-divers",
+      "wss-drafts-creatures"
+    ]
+  },
+  {
+    "id": "bell-jar-lungs",
+    "capability": "Water slimes",
+    "title": "Bell-jar lungs",
+    "status": "PARTLY",
+    "pool": false,
+    "cue": "Draft. Lower the driven diaphragm; the gas slimes sample the jar air pressure.",
+    "draft": true,
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "blocker": "Real expanding native air chamber and surrounding-air sampling are connected; lung expansion is unproved.",
+    "dependencies": [
+      "wss-cartesian-divers",
+      "wss-machines/cartesian-divers",
+      "wss-drafts-creatures"
+    ],
+    "behaviorPlan": {
+      "seconds": 6,
+      "actionAtSeconds": 1,
+      "action": "machinePrimary lowers the real driven diaphragm, next press raises it",
+      "key": "Dry gas probes read kind 2 native air pressure. WORKS requires surrounding pressure decrease with diaphragm descent and actual gas-body expansion, then reversal.",
+      "probes": [
+        "divers stroke",
+        "pressureKind",
+        "absolutePressure",
+        "actual area",
+        "fixed gasAmount and mass",
+        "separate water cup conserved"
+      ],
+      "statusIfObserved": "WORKS"
+    },
+    "accepted": true,
+    "preview": "cup",
+    "scripts": [
+      "wss-cartesian-divers",
+      "wss-machines/cartesian-divers",
+      "wss-drafts-creatures"
+    ]
+  },
+  {
+    "id": "vacuum-slime",
+    "capability": "Water slimes",
+    "title": "Vacuum slime",
+    "status": "PARTLY",
+    "pool": false,
+    "cue": "Draft. Expand the jar with a driven piston; gas-slime swelling is unproved.",
+    "draft": true,
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "blocker": "Real expanding air chamber and ideal gas slime are connected; vacuum swelling is unproved.",
+    "dependencies": [
+      "wss-cartesian-divers",
+      "wss-machines/cartesian-divers",
+      "wss-drafts-creatures"
+    ],
+    "behaviorPlan": {
+      "seconds": 6,
+      "actionAtSeconds": 1,
+      "action": "machinePrimary lowers the real pressure-boundary piston",
+      "key": "WORKS requires native external air pressure decrease and actual body expansion with unchanged gas amount and mass. Zero gravity, no prescribed growth.",
+      "probes": [
+        "divers stroke",
+        "pressureKind",
+        "absolutePressure",
+        "actual area",
+        "separate water cup conserved"
+      ],
+      "statusIfObserved": "WORKS"
+    },
+    "accepted": true,
+    "preview": "cup",
+    "scripts": [
+      "wss-cartesian-divers",
+      "wss-machines/cartesian-divers",
+      "wss-drafts-creatures"
+    ]
+  },
+  {
+    "id": "pitcher-pump",
+    "capability": "Water slimes",
+    "title": "Pitcher pump",
+    "status": "PARTLY",
+    "pool": false,
+    "cue": "Draft. Drive the primed piston down and back; two real check valves route the water.",
+    "draft": true,
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "blocker": "Primed water, a driven piston and actual pressure-operated check valves are connected; useful delivery is unproved.",
+    "dependencies": [
+      "wss-cartesian-divers",
+      "wss-machines/cartesian-divers",
+      "wss-drafts-creatures"
+    ],
+    "behaviorPlan": {
+      "seconds": 8,
+      "actionAtSeconds": 1,
+      "action": "machinePrimary lowers driven piston, then raises it after the down stroke",
+      "key": "WORKS requires actual receiver water increase and directional check operation without births or removals. Self-priming is not implemented.",
+      "probes": [
+        "divers stroke",
+        "inlet/outlet open flags",
+        "native water in receiver",
+        "native parcel count"
+      ],
+      "statusIfObserved": "WORKS"
+    },
+    "accepted": true,
+    "preview": "cup",
+    "scripts": [
+      "wss-cartesian-divers",
+      "wss-machines/cartesian-divers",
+      "wss-drafts-creatures"
+    ]
+  },
+  {
+    "id": "super-soaker",
+    "capability": "Water slimes",
+    "title": "Super Soaker",
+    "status": "PARTLY",
+    "pool": false,
+    "cue": "Draft. Open the nozzle of the water tank under its declared driven piston.",
+    "draft": true,
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "blocker": "Driven compression boundary and physical outlet gate are connected; useful spray is unproved.",
+    "dependencies": [
+      "wss-cartesian-divers",
+      "wss-machines/cartesian-divers",
+      "wss-drafts-creatures"
+    ],
+    "behaviorPlan": {
+      "seconds": 6,
+      "actionAtSeconds": 2,
+      "action": "machinePrimary opens the real nozzle gate after the declared piston starts compressing",
+      "key": "WORKS requires native water leaving the nozzle with positive horizontal speed. No water or velocity is added by the trigger.",
+      "probes": [
+        "divers stroke",
+        "trigger valve flag",
+        "native nozzle water positions/velocity",
+        "native parcel count"
+      ],
+      "statusIfObserved": "WORKS"
+    },
+    "accepted": true,
+    "preview": "cup",
+    "scripts": [
+      "wss-cartesian-divers",
+      "wss-machines/cartesian-divers",
+      "wss-drafts-creatures"
+    ]
+  },
+  {
+    "id": "champagne-cork",
+    "capability": "Water slimes",
+    "title": "Champagne cork",
+    "status": "NOT WORKING",
+    "pool": false,
+    "cue": "Draft. A rear air pulse meets the cork; stored bottle gas is not connected.",
+    "draft": true,
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "blocker": "A real air-pulse pressure traction meets the cork; stored compressible bottle gas and fermentation are absent.",
+    "dependencies": [
+      "wss-smoke-cannon",
+      "wss-machines/smoke-ring-cannon",
+      "wss-drafts-creatures"
+    ],
+    "behaviorPlan": {
+      "seconds": 6,
+      "actionAtSeconds": 2,
+      "action": "machinePrimary gives one declared rear chamber air pulse",
+      "key": "Observe actual projection pressure traction and finite cork. Stored bottle gas is absent, so keep NOT WORKING regardless of pulse displacement.",
+      "probes": [
+        "smoke field finite",
+        "slimeDX",
+        "peakEdgeLoad"
+      ],
+      "statusIfObserved": "NOT WORKING"
+    },
+    "accepted": true,
+    "preview": "cup",
+    "scripts": [
+      "wss-smoke-cannon",
+      "wss-machines/smoke-ring-cannon",
+      "wss-drafts-creatures"
+    ]
+  },
+  {
+    "id": "pressure-cuff",
+    "capability": "Water slimes",
+    "title": "Pressure cuff",
+    "status": "NOT WORKING",
+    "pool": false,
+    "cue": "Draft. Grab the elastic cuff; a flowing vessel and pressure reading are not connected.",
+    "draft": true,
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "blocker": "Real elastic cuff only; internal flowing vessel, inflation chamber and blood-pressure measurement are absent.",
+    "dependencies": [
+      "wss-drafts-bodies",
+      "wss-drafts-creatures"
+    ],
+    "behaviorPlan": {
+      "seconds": 4,
+      "action": "Actual Grab deforms the cuff",
+      "key": "Fixture remains finite; no circulation or pressure-reading claim.",
+      "statusIfObserved": "NOT WORKING"
+    },
+    "accepted": true,
+    "preview": "cup",
+    "scripts": [
+      "wss-drafts-bodies",
+      "wss-drafts-creatures"
+    ]
+  },
+  {
+    "id": "snorkel-limit",
+    "capability": "Water slimes",
+    "title": "Snorkel limit",
+    "status": "NOT WORKING",
+    "pool": false,
+    "cue": "Draft. Water surrounds the lung slime; its airway and breathing effort are not connected.",
+    "draft": true,
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "blocker": "Physical snorkel and passive gel only; internal lung airway and breathing work are absent.",
+    "dependencies": [
+      "wss-drafts-creatures"
+    ],
+    "behaviorPlan": {
+      "seconds": 4,
+      "action": "Actual Grab moves lung fixture into native water",
+      "key": "Fixture remains finite; passive buoyancy does not establish breathing limit.",
+      "statusIfObserved": "NOT WORKING"
+    },
+    "accepted": true,
+    "preview": "cup",
+    "scripts": [
+      "wss-drafts-creatures"
+    ]
+  },
+  {
+    "id": "slime-sipper",
+    "capability": "Water slimes",
+    "title": "Slime sipper",
+    "status": "PARTLY",
+    "pool": false,
+    "cue": "Draft. Water can cross a real slit; active suction and drinking are not connected.",
+    "draft": true,
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "blocker": "Native two-sided slit skin is connected; active suction, uptake and reliable refill are absent.",
+    "dependencies": [
+      "wss-water-balloons",
+      "wss-machines/water-balloons",
+      "wss-drafts-bodies",
+      "wss-drafts-creatures"
+    ],
+    "behaviorPlan": {
+      "seconds": 6,
+      "actionAtSeconds": 2,
+      "action": "machinePrimary gives actual gel nodes one balanced hand squeeze",
+      "key": "Real water can cross only the missing skin interval; closed portions keep birth side. No absorbed water or active drinking claim.",
+      "probes": [
+        "balloon stats",
+        "slitCrossings",
+        "native parcel count"
+      ],
+      "statusIfObserved": "PARTLY"
+    },
+    "accepted": true,
+    "preview": "cup",
+    "scripts": [
+      "wss-water-balloons",
+      "wss-machines/water-balloons",
+      "wss-drafts-bodies",
+      "wss-drafts-creatures"
+    ]
+  },
+  {
     "id": "upside-down-tank",
     "capability": "Bubbles",
     "title": "Upside-down tank",
@@ -1994,6 +2394,411 @@
       "wss-drafts-fluid-machines",
       "wss-drafts-bodies"
     ]
+  },
+  {
+    "id": "cup-synchronization",
+    "title": "Coupled self-flushing cups",
+    "capability": "Valves and logic",
+    "status": "PARTLY",
+    "cue": "Draft. Two finite cups share a basin; sustained oscillation and synchronization are unproved.",
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "pool": false,
+    "draft": true,
+    "accepted": true,
+    "scripts": [
+      "wss-drafts-networks"
+    ],
+    "preview": "cup"
+  },
+  {
+    "id": "intermittent-fountain",
+    "title": "Intermittent fountain",
+    "capability": "Valves and logic",
+    "status": "PARTLY",
+    "cue": "Draft. A finite feed cup connects to a fountain tube; autonomous repeated jets are unfinished.",
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "pool": false,
+    "draft": true,
+    "accepted": true,
+    "scripts": [
+      "wss-drafts-networks"
+    ],
+    "preview": "cup"
+  },
+  {
+    "id": "binary-staircase",
+    "title": "Binary staircase",
+    "capability": "Valves and logic",
+    "status": "PARTLY",
+    "cue": "Draft. Three threshold vessels are laid out; reliable binary storage and carry are unfinished.",
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "pool": false,
+    "draft": true,
+    "accepted": true,
+    "scripts": [
+      "wss-drafts-networks"
+    ],
+    "preview": "cup"
+  },
+  {
+    "id": "mariotte-bottle",
+    "title": "Mariotte constant bottle",
+    "capability": "Valves and logic",
+    "status": "PARTLY",
+    "cue": "Draft. Compare a submerged air intake with an open jar; constant head is unproved in this layout.",
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "pool": false,
+    "draft": true,
+    "accepted": true,
+    "scripts": [
+      "wss-drafts-networks"
+    ],
+    "preview": "cup"
+  },
+  {
+    "id": "banu-musa-fountain",
+    "title": "Banu Musa changing fountain",
+    "capability": "Valves and logic",
+    "status": "PARTLY",
+    "cue": "Draft. A real valve changes the available jet routes; autonomous switching is unfinished.",
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "pool": false,
+    "draft": true,
+    "accepted": true,
+    "scripts": [
+      "wss-drafts-networks"
+    ],
+    "preview": "cup"
+  },
+  {
+    "id": "bottle-glass-pitch",
+    "title": "Bottles and glasses",
+    "capability": "Sound",
+    "status": "PARTLY",
+    "cue": "Draft. Change the real air pipe length; the distinct vibrating-glass model is missing.",
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "pool": false,
+    "draft": true,
+    "accepted": true,
+    "scripts": [
+      "wss-steam",
+      "wss-singing-pipe",
+      "wss-machines/singing-pipe",
+      "wss-drafts-networks"
+    ],
+    "preview": "cup"
+  },
+  {
+    "id": "fountain-music",
+    "title": "Playable fountain show",
+    "capability": "Sound",
+    "status": "PARTLY",
+    "cue": "Draft. Operate the real powered jet; musical routing and the keyboard are unfinished.",
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "pool": true,
+    "draft": true,
+    "accepted": true,
+    "scripts": [
+      "wss-drafts-networks"
+    ],
+    "preview": "cup"
+  },
+  {
+    "id": "galileo-well",
+    "title": "Galileo's suction well",
+    "capability": "Valves and logic",
+    "status": "PARTLY",
+    "cue": "Draft. A real well and suction tube are present; the air pump and scale comparison are missing.",
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "pool": false,
+    "draft": true,
+    "accepted": true,
+    "scripts": [
+      "wss-drafts-networks"
+    ],
+    "preview": "cup"
+  },
+  {
+    "id": "vacuum-siphon",
+    "title": "Siphon in a vacuum",
+    "capability": "Valves and logic",
+    "status": "PARTLY",
+    "cue": "Draft. The native siphon runs at room pressure; a true external-vacuum model is missing.",
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "pool": false,
+    "draft": true,
+    "accepted": true,
+    "scripts": [
+      "wss-drafts-networks"
+    ],
+    "preview": "cup"
+  },
+  {
+    "id": "bramah-press",
+    "title": "Bramah's hydraulic press",
+    "capability": "Floating things",
+    "status": "PARTLY",
+    "cue": "Draft. Two guided pistons sit above communicating water; sealed piston-force transmission is unfinished.",
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "pool": false,
+    "draft": true,
+    "accepted": true,
+    "scripts": [
+      "wss-drafts-bodies",
+      "wss-drafts-networks"
+    ],
+    "preview": "cup"
+  },
+  {
+    "id": "hero-vending",
+    "title": "Hero's vending machine",
+    "capability": "Floating things",
+    "status": "PARTLY",
+    "cue": "Draft. A falling coin and hinged lever sit beside a real manual valve; coin-to-valve coupling is unfinished.",
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "pool": false,
+    "draft": true,
+    "accepted": true,
+    "scripts": [
+      "wss-drafts-bodies",
+      "wss-drafts-networks"
+    ],
+    "preview": "cup"
+  },
+  {
+    "id": "hero-drinking-animal",
+    "title": "Hero's drinking animal",
+    "capability": "Valves and logic",
+    "status": "PARTLY",
+    "cue": "Draft. A real straw reaches the animal-shaped slime; mouth suction and storage are unfinished.",
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "pool": false,
+    "draft": true,
+    "accepted": true,
+    "scripts": [
+      "wss-drafts-networks"
+    ],
+    "preview": "cup"
+  },
+  {
+    "id": "jazari-peacock",
+    "title": "Al-Jazari's peacock washer",
+    "capability": "Floating things",
+    "status": "PARTLY",
+    "cue": "Draft. A real valve serves a finite washing bowl; the peacock mechanism and automatic draining are unfinished.",
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "pool": false,
+    "draft": true,
+    "accepted": true,
+    "scripts": [
+      "wss-drafts-bodies",
+      "wss-drafts-networks"
+    ],
+    "preview": "cup"
+  },
+  {
+    "id": "moniac",
+    "title": "MONIAC water economy",
+    "capability": "Valves and logic",
+    "status": "PARTLY",
+    "cue": "Draft. Communicating reservoirs move real water; economic feedback valves and calibrated multipliers are unfinished.",
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "pool": false,
+    "draft": true,
+    "accepted": true,
+    "scripts": [
+      "wss-drafts-networks"
+    ],
+    "preview": "cup"
+  },
+  {
+    "id": "lukyanov-integrator",
+    "title": "Lukyanov water integrator",
+    "capability": "Valves and logic",
+    "status": "PARTLY",
+    "cue": "Draft. Unequal water levels communicate through physical tubes; calibrated integration resistances are unfinished.",
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "pool": false,
+    "draft": true,
+    "accepted": true,
+    "scripts": [
+      "wss-drafts-networks"
+    ],
+    "preview": "cup"
+  },
+  {
+    "id": "marly-machine",
+    "title": "Machine de Marly",
+    "capability": "Floating things",
+    "status": "PARTLY",
+    "cue": "Draft. A declared motor turns the real rotor; river-driven torque and the lifting pump are unfinished.",
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "pool": false,
+    "draft": true,
+    "accepted": true,
+    "scripts": [
+      "wss-drafts-bodies",
+      "wss-drafts-networks"
+    ],
+    "preview": "cup"
+  },
+  {
+    "id": "parts-budget-puzzles",
+    "title": "Parts-budget puzzles",
+    "capability": "World",
+    "status": "PARTLY",
+    "cue": "Draft. Use Build to repair the physical tank link; a limited parts inventory and puzzle scoring are unfinished.",
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "pool": false,
+    "draft": true,
+    "accepted": true,
+    "scripts": [
+      "wss-drafts-networks"
+    ],
+    "preview": "cup"
+  },
+  {
+    "id": "pneumatica-campaign",
+    "title": "Pneumatica campaign",
+    "capability": "World",
+    "status": "PARTLY",
+    "cue": "Draft. Build the missing link to the receiver; campaign progression is unfinished.",
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "pool": false,
+    "draft": true,
+    "accepted": true,
+    "scripts": [
+      "wss-drafts-networks"
+    ],
+    "preview": "cup"
+  },
+  {
+    "id": "garden-automation",
+    "title": "Automate the garden",
+    "capability": "World",
+    "status": "PARTLY",
+    "cue": "Draft. A finite supply reaches a planter; soil uptake, sensing and automated routing are unfinished.",
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "pool": false,
+    "draft": true,
+    "accepted": true,
+    "scripts": [
+      "wss-drafts-networks"
+    ],
+    "preview": "cup"
+  },
+  {
+    "id": "escape-the-jar",
+    "title": "Escape the jar",
+    "capability": "World",
+    "status": "PARTLY",
+    "cue": "Draft. Grab the real slime and try to leave the open jar; objective tracking is unfinished.",
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "pool": false,
+    "draft": true,
+    "accepted": true,
+    "scripts": [
+      "wss-drafts-networks"
+    ],
+    "preview": "cup"
+  },
+  {
+    "id": "fire-brigade",
+    "title": "Fire brigade",
+    "capability": "World",
+    "status": "PARTLY",
+    "cue": "Draft. Put out the real fire; multiple fires and a finite rescue-water objective are unfinished.",
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "pool": false,
+    "draft": true,
+    "accepted": true,
+    "scripts": [
+      "wss-fire",
+      "wss-machines/douse-fire",
+      "wss-drafts-networks"
+    ],
+    "preview": "cup"
+  },
+  {
+    "id": "water-chain-reaction",
+    "title": "Water chain reaction",
+    "capability": "World",
+    "status": "PARTLY",
+    "cue": "Draft. One real pour reaches a stepped tank network; automatic trigger gates are unfinished.",
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "pool": false,
+    "draft": true,
+    "accepted": true,
+    "scripts": [
+      "wss-drafts-networks"
+    ],
+    "preview": "cup"
   }
 ];
   var lab = new URLSearchParams(location.search).get('lab') === '1';
@@ -2115,18 +2920,9 @@
       button.setAttribute('aria-pressed','false');
       button.appendChild(preview(e.preview));
       var copy=document.createElement('span');copy.className='toy-scene-copy';
-      var name=document.createElement('span');name.className='toy-scene-name';name.textContent=e.title;
-      var cue=document.createElement('span');cue.className='toy-scene-cue';
-      // The status tag carries the draft state, so the cue drops its draft markers.
-      cue.textContent=e.draft ? String(e.cue||'').replace(/^Draft\.\s*/,'').replace(/,\s*draft\.$/,'.') : e.cue;
-      copy.appendChild(name);
-      if(e.draft){
-        var status=document.createElement('span');status.className='toy-scene-status';
-        status.dataset.status=/^(WORKS|PARTLY)$/.test(e.status) ? e.status : 'NOT WORKING';
-        status.textContent={'WORKS':'Working','PARTLY':'Partly working'}[e.status]||'Not working yet';
-        copy.appendChild(status);
-      }
-      copy.appendChild(cue);button.appendChild(copy);list.appendChild(button);
+      var name=document.createElement('span');name.className='toy-scene-name';name.textContent=e.title+(e.draft?' ['+({'WORKS':'Working','PARTLY':'Partly working','NOT WORKING':'Not working yet'}[e.status]||'Not working yet')+']':'');
+      var cue=document.createElement('span');cue.className='toy-scene-cue';cue.textContent=e.cue;
+      copy.appendChild(name);copy.appendChild(cue);button.appendChild(copy);list.appendChild(button);
     }
     ['Fire','Smoke','Sand','Water slimes','Floating things','Steam','Oil and water','Ice','Bubbles','Valves and logic','Sound','Waves','World'].forEach(function(group){var choices=entries.filter(function(e){return e.accepted && e.capability===group;});if(choices.length){heading(group);choices.forEach(machine);}});
     heading('Earlier water machines');entries.filter(function(e){return e.accepted && !e.capability;}).forEach(machine);
