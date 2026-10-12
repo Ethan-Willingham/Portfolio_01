@@ -370,7 +370,9 @@ fn finishWall(){
       constrain:[0,1,2,5,6,9,10],saveCollision:[0,1,3,5,6,9,11,12],impacts:[0,1,3,5,6,9,10,11,12]};
     if(options.hands)Object.assign(bindings,{stageWall:[0,1,5,6,11,12,14,15,16],applyWall:[0,1,2,3,4,5,9,15,16],finishWall:[0,6,14,15,16]});
     if(burst){resources[17]=burst.buffer;bindings.constrain.push(17);}
-    var module=device.createShaderModule({label:'toy.native.boundaries',code:burst ? global.WSSBurstDisk.variant(SOURCE) : SOURCE}), pipes={}, groups={};
+    // Bound water belongs to the uptake companion, never to the reusable reserve.
+    var nativeSource=options.boundStorage ? SOURCE.replaceAll('slots[i].x!=0u','slots[i].x==1u') : SOURCE;
+    var module=device.createShaderModule({label:'toy.native.boundaries',code:burst ? global.WSSBurstDisk.variant(nativeSource) : nativeSource}), pipes={}, groups={};
     Object.keys(bindings).forEach(function(name){
       if(bindings[name].filter(function(b){return b!==0 && b!==12 && b!==14;}).length>10)throw new Error('Native stage exceeds ten storage bindings.');
       var entries=bindings[name].map(function(b){return {binding:b,visibility:GPUShaderStage.COMPUTE,

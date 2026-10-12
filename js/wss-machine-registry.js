@@ -540,21 +540,22 @@
     "id": "thirsty-slime",
     "capability": "Water slimes",
     "title": "Thirsty slime",
-    "cue": "Draft. Water wets the slime; drinking is not connected yet.",
-    "status": "PARTLY",
+    "cue": "Drag the slime into the falling water. It drinks on contact and stops when full.",
+    "status": "WORKS",
     "draft": true,
     "world": {
       "w": 720,
       "h": 400
     },
     "pool": true,
-    "blocker": "No water uptake or swelling operator exists; water stays native.",
+    "blocker": "Toy contact absorption and elastic swelling; no calibrated hydrogel model.",
     "accepted": true,
     "preview": "cup",
     "scripts": [
       "wss-water-balloons",
       "wss-machines/water-balloons",
-      "wss-drafts-bodies"
+      "wss-drafts-bodies",
+      "wss-thirsty-slime"
     ]
   },
   {

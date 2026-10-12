@@ -4,7 +4,7 @@
   var entries=[
     {id:'water-balloon-fight',capability:'Water slimes',title:'Water-balloon fight',cue:'Draft. Fling the balloon at the slimes, then pop it.',status:'PARTLY',draft:true,world:{w:720,h:400},pool:false},
     {id:'squid-jet',capability:'Water slimes',title:'Squid jet',cue:'Draft. Squeeze the slit skin and watch the released water.',status:'PARTLY',draft:true,world:{w:720,h:400},pool:false},
-    {id:'thirsty-slime',capability:'Water slimes',title:'Thirsty slime',cue:'Draft. Water wets the slime; drinking is not connected yet.',status:'PARTLY',draft:true,world:{w:720,h:400},pool:true},
+    {id:'thirsty-slime',capability:'Water slimes',title:'Thirsty slime',cue:'Drag the slime into the falling water. It drinks on contact and stops when full.',status:'WORKS',draft:true,world:{w:720,h:400},pool:true},
     {id:'floating-block',capability:'Floating things',title:'Floating block',cue:'Draft. Grab the stiff block and drop it into water.',status:'PARTLY',draft:true,world:{w:720,h:400},pool:false},
     {id:'lorenz-wheel',capability:'Floating things',title:'Lorenz waterwheel',cue:'Draft. A declared motor turns this rotor; water drive is unfinished.',status:'PARTLY',draft:true,world:{w:720,h:400},pool:true},
     {id:'shishi-odoshi',capability:'Floating things',title:'Shishi-odoshi',cue:'Draft. Water pours onto a hinged trough; repeating cycles are unfinished.',status:'PARTLY',draft:true,world:{w:720,h:400},pool:true},
@@ -58,8 +58,18 @@
       measure:{source:basin,receiver:basin},boundaryNote:'Draft. The marked tap and collector are declared native sources and drains. No water is moved outside the shared solver.',
       energyBudgetStatus:'The tap adds declared supply work. Ordinary gel-water buoyancy and drag remain one-way, and this draft does not claim closed mechanical energy or momentum.'};
     if(id==='thirsty-slime'){
-      d.slimes=[{x:360,y:272,radius:36}];d.initial=[{kind:'rect',rect:{x:120,y:344,width:480,height:24}}];
-      d.boundaryNote+=' The passive gel can get wet, but no water uptake or swelling operator is installed. Native water is not deleted to imitate drinking.';
+      basin={x:192,y:224,width:336,height:160};
+      d.vessels=[{id:'basin',label:'',rect:basin,sealed:false}];d.measure={source:basin,receiver:basin};
+      d.viewBounds={x:184,y:128,width:352,height:272};
+      d.slimes=[{x:360,y:320,radius:30}];d.initial=[];
+      d.boundaries.tap.y=96;d.boundaries.tap.rate=900;
+      d.boundaries.tap.enabled=!(options && options.tapEnabled===false);
+      d.setup=d.boundaries.tap.enabled?'tap-on':'tap-off';d.action=d.boundaries.tap.enabled?'Stop water':'Start water';
+      d.setups=[{id:'tap-on',label:'Water running',options:{tapEnabled:true}},{id:'tap-off',label:'Water off',options:{tapEnabled:false}}];
+      d.boundaries.drain={x:200,y:368,width:320,height:8};d.boundaries.boundStorage=true;
+      d.thirsty=true;d.quietApparatus=true;d.caption=entry.cue;d.readingLabel='Drinking slime';
+      d.boundaryNote='Contact transfers native water into the slime’s bound storage. Each absorbed parcel adds 1.5625 square pixels to its elastic rest area, up to three times its dry area. Bound slots cannot return to the tap. Unabsorbed runoff recirculates through the tray.';
+      d.energyBudgetStatus='This is a toy absorption model. The tap supplies lifting work. Elastic swelling, water drag and momentum exchange are approximate; no calibrated hydrogel or closed energy claim.';
     }else if(id==='floating-block'){
       d.vessels=[{id:'basin',label:'Water',rect:{x:112,y:128,width:496,height:256},sealed:false}];
       d.initial=[{kind:'rect',rect:{x:120,y:264,width:480,height:104}}];d.slimes=[{x:352,y:224,radius:24,shape:'cube'}];

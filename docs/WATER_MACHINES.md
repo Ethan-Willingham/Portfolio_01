@@ -986,3 +986,40 @@ evaporated all 700 admitted parcels and warmed the guest to its relaxed state.
 Repeated pours produced the hot reaction. Pause and changing scenes passed
 without runtime or GPU errors. The finite-stone heat residual stayed below one
 joule. Run `node tools/test-water-sauna.cjs` for that short interaction check.
+
+## Thirsty slime
+
+Toy v5.152 connects contact absorption and elastic swelling. Drag the slime
+into the falling water. Its fullness rises only when native water reaches its
+skin. At capacity the slime stops drinking, and further water runs over it.
+Click the source to stop or restart its flow. Restart restores the selected
+setup; the Water off comparison begins with a dry slime and no supplied water.
+
+The contact pass runs after each native water substep. A parcel inside the
+boundary ring or within six world pixels of it transfers to bound ownership
+(state 2), with frozen native guards. These slots remain allocated and cannot
+be admitted at the inlet or recycled by the collector. The native boundary
+variant is selected only by this scene's boundStorage option; other scenes
+retain their existing shader. Instruments counts flowing, bound and reserve
+slots separately. Their sum is the original allocation.
+
+Each confirmed bound parcel adds 1.5625 square pixels to the elastic rest area,
+up to three times the dry area. Springs, the health mesh and material highlights
+follow the enlarged rest geometry. The ordinary elastic and world-contact
+solvers move the visible skin. A readback can precede the next host physics
+frame; grownParcels records the cohort already applied to the rest shape.
+This is a toy absorption model, with approximate drag, swelling work and
+momentum exchange. It is not a calibrated hydrogel model.
+
+The normal view has a smaller tray, a shorter fall, an instruction and a
+fullness bar. The return diagram appears in Instruments. Disabled pressure
+readings and controls are hidden in this scene, and its live state reports
+Thirsty, Drinking or Full. The shared Sluice engines are unchanged.
+
+Run node tools/test-thirsty-slime.mjs for the owned Chrome for Testing check.
+Desktop mouse and emulated landscape touch both pass dry and off-stream
+controls, actual uptake, visible growth, exact saturation, native ownership,
+pause, restart and scene cleanup without runtime or GPU errors. The recorded
+slime grows from about 2,472 to 7,414 square pixels of rest area, absorbing
+3,163 parcels. Screenshots and measurements go to /tmp/thirsty-slime-review.
+These checks do not establish real-device performance or biological accuracy.
