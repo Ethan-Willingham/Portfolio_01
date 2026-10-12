@@ -31,6 +31,7 @@ function create(options){
   var key=JSON.stringify(caps);if(key!==lastCaps){N.setCaps(caps);lastCaps=key;updates++;}
  }
  var controller={body:body,ready:true,
+  setStaticCaps:function(value){if(retired)return false;fixed=root.WSSBoundaries.normalizeCaps(value);sync();return true;},
   prepare:function(){if(retired)return;body.sleeping=false;body.sleepFrames=0;},project:project,sync:sync,
   stats:function(){var p=pose(),rigid=0,finite=true;for(var i=0;i<body.n;i++){
    rigid=Math.max(rigid,Math.abs(body.px[i]-cx-qx[i]),Math.abs(body.py[i]-p.y-qy[i]));finite=finite&&Number.isFinite(body.px[i]+body.py[i]+body.ox[i]+body.oy[i]);}
