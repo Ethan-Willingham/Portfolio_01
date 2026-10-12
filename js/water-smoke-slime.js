@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.160'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.161.1'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -443,6 +443,7 @@
     wallsBakedVersion = wallsVersion;
     wallsCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
     wallsCtx.clearRect(0, 0, worldW, worldH);
+    if(machineState && machineState.definition.drum)return;
     var palette=getComputedStyle(document.documentElement);
     var glass=glassWalls && airModel && airModel.enabled;
     var hourglass=machineState && machineState.definition.hourglass;
@@ -14907,7 +14908,10 @@
       target(piston.x+piston.width*.5,piston.y+stroke+piston.height*.5,piston.width,piston.height);
     }else if(kind==='smoke-push'){
       var drum=d.drum;
-      if(drum)target(drum.x+8,(drum.top+drum.bottom)*.5,64,drum.bottom-drum.top+16);
+      if(drum){
+        var skinTarget=toyCannon && toyCannon.controlTarget ? toyCannon.controlTarget() : {x:drum.x,y:(drum.top+drum.bottom)*.5,width:64,height:drum.bottom-drum.top+16};
+        target(skinTarget.x,skinTarget.y,skinTarget.width,skinTarget.height);
+      }
       else target(84,200,24,100);
     }
     else if(kind==='smoke-fan' && d.fan)target(d.fan.x,(d.fan.top+d.fan.bottom)*.5,48,d.fan.bottom-d.fan.top);

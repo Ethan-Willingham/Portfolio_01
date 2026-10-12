@@ -1,42 +1,46 @@
 # Smoke-ring drum
 
 The `smoke-ring-cannon` scene uses a physical rear membrane. Clicking or tapping
-the skin adds velocity to its 37 material nodes. Fixed ends, tension, damping,
+adds velocity to its 37 material nodes. Fixed endpoints, tension, damping,
 backing stops and the previous air-pressure sample determine its motion.
-The visible skin follows those same nodes. It has no animation curve.
+The casing, clamps and skin are drawn at the same coordinates as their physical
+boundaries. The skin has no animation curve.
 
-Each membrane segment enters the shared smoke solver as an immersed moving
-solid. The opt-in `SOLID_PROJECTION` mode reflects normal velocity at static
-and moving walls, applies Neumann pressure boundaries, and uses red/black SOR
-with relaxation 1.85. The cannon uses a 128-cell short axis and 128 pairs of
-pressure iterations. The pressure gradient includes the central difference's
-one-half factor; pressure readback uses the corresponding `dx² / dt` scale.
+The membrane's measured swept area sets a forward chamber-flow target during
+compression. A bounded velocity penalty supplies the chamber flow that the
+immersed-boundary-only calculation failed to resolve. Its response scales with
+elapsed time. Outward refill uses the moving skin and pressure solver, without
+an additional reversed jet. Each skin segment also remains an immersed moving
+solid, and current pressure loads the skin and the existing elastic slime.
+
+The cannon uses the original smoke projection with a 224-cell short axis and
+32 pressure iterations. The optional sealed `SOLID_PROJECTION` experiment is
+off in this scene. The previous sealed calculation, narrow mouth and weak dye
+charge produced a small front with a long tail instead of the earlier clear
+ring. The repaired chamber restores the 64-pixel opening and smoke charge.
 
 Smoke dye is passive and replenished inside the chamber on accepted strikes.
-No strike injects fluid velocity, vorticity or a smoke shape. The membrane
-displaces air through the 32-pixel opening, and fluid advection carries the
-rolling front. Pressure also loads the existing elastic slime.
+The fluid solver generates the rolling front. No ring shape, prescribed vortex,
+travel path or shot animation is supplied. Freezing the membrane prevents the
+compression flow, even when its strike velocity has been set.
 
-This remains an approximate two-dimensional incompressible section. It shows
-the counter-rotating pair that cuts through a three-dimensional smoke ring.
-It does not simulate a three-dimensional drum, acoustic sound, calibrated
-pressure or a closed energy budget. Pressure feedback lags one step, moving
-air velocity is bounded at the grid resolution, and the collocated projection
-and subsequent advection leave numerical divergence and dissipation.
-
-The default `SOLID_PROJECTION = 0` retains the previous game and other-scene
-smoke path. Leaving the drum restores its saved configuration and forces a
-buffer rebuild at the previous simulation resolution.
+This is an approximate two-dimensional incompressible section. It shows the
+counter-rotating pair through a three-dimensional smoke ring. The chamber
+velocity penalty's work is not balanced against the membrane energy ledger;
+pressure feedback lags one step, and the fluid has numerical dissipation.
+This is not a converged sealed moving-wall solve, calibrated pressure,
+three-dimensional drum acoustics or a closed energy budget. Leaving the drum
+restores saved configuration and simulation resolution.
 
 Verification:
 
-- `node tools/test-smoke-drum.mjs` checks real mouse, touch and Enter input,
-  rolling-front transport, opposite circulation, still-air comparisons with
-  an unstruck membrane and a disconnected moving boundary, restarts, layout
-  and console errors. Screenshots go to `/tmp/smoke-drum-review`.
-- `BASE_REF=origin/main node tools/perf/smoke-equivalence.cjs` compares the
-  default shared solver with the upstream version. Before publication,
-  49 checkpoints were byte-identical across WebGL 1 and 2, manual filtering,
-  shading, static and moving masks, scrolling, clearing and resizing.
-- `node tools/toy-engine-sync.mjs --check` verifies that the toy's engine
-  matches the canonical game fragment. Rebuild Sluice after fragment changes.
+- `node tools/test-smoke-drum.mjs` checks mouse, touch and Enter input,
+  a strong detached front, opposite circulation, fixed endpoint attachment,
+  unstruck and frozen-head comparisons, restarts, layout and console errors.
+  Screenshots go to `/tmp/smoke-drum-review`.
+- Visual comparison with the pre-drum cannon checks the front after 0.4, 1
+  and 2 simulation seconds. Inspect the rendered ring as well as measurements;
+  rotating smoke alone did not catch the previous regression.
+- `node tools/toy-engine-sync.mjs --check` verifies that the toy's embedded
+  shared engine matches the canonical game fragment. This repair changes the
+  scene adapter and presentation, not that shared engine.

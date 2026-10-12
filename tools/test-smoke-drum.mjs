@@ -74,7 +74,6 @@ try {
   await new Promise((resolve, reject) => { server.once('error', reject); server.listen(port, '127.0.0.1', resolve); });
   chrome = spawn(`${process.env.HOME}/.local/bin/agent-chrome-for-testing`, [
     '--headless=new', '--enable-unsafe-webgpu', '--use-angle=metal', '--disable-gpu-sandbox', '--no-first-run',
-    '--disable-gpu-vsync', '--disable-frame-rate-limit',
     `--user-data-dir=${profile}`, `--remote-debugging-port=${debug}`, 'about:blank'
   ], { stdio: 'ignore' });
   let endpoint;
@@ -102,6 +101,10 @@ try {
   assert.deepEqual(errors,[]);
   assert.equal(first.pushes,0);assert.ok(first.membrane.displacement.every(x=>Math.abs(x)<.001));
   assert.ok(await evaluate('!document.querySelector(".toy-foot")'));
+  const attachments=await evaluate('(()=>{const d=__toy.machineState().definition,h=d.drum;return d.solids.filter(w=>w.width>w.height).map(w=>h.x-h.thickness/2>=w.x && h.x+h.thickness/2<=w.x+w.width && (h.top===w.y+w.height || h.bottom===w.y));})()');
+  assert.deepEqual(attachments,[true,true],'Both physical endpoints meet the casing');
+  const joins=await inside('(()=>{const sx=instrumentsCanvas.width/worldW,sy=instrumentsCanvas.height/worldH;return [124,276].map(y=>instrumentsCtx.getImageData(Math.round(88*sx),Math.round(y*sy),1,1).data[3]);})()');
+  assert.ok(joins.every(alpha=>alpha>=200),'Both rendered clamps visibly join the casing');
   const still=await inside(`(()=>{for(let f=0;f<90;f++)smokeFrame(1/60);return toyCannon.stats(jelloBodies);})()`);
   assert.ok(still.travelDye<.01,'No moving skin means no smoke travels across the room');
   // Input is the real hit target, not a call to the firing API.
@@ -115,14 +118,16 @@ try {
     snapshots.push(result);await screenshot('strike-'+frames);
   }
   console.log('COUPLED',JSON.stringify(snapshots.map(s=>({...s,membrane:{centerX:s.membrane.centerX}}))));
-  assert.ok(snapshots.some(s=>s.travelDye>1),'The membrane sends smoke beyond the mouth');
+  assert.ok(snapshots.some(s=>s.travelDye>90 && s.dyeCenterX>350),'A substantial front detaches and travels across the room');
+  assert.ok(snapshots.some(s=>Math.abs(s.upperCirculation)>200 && Math.abs(s.lowerCirculation)>200),'The shot retains the earlier strong rolling front');
+  assert.ok(snapshots.every(s=>s.membrane.displacement[0]===0 && s.membrane.displacement.at(-1)===0),'The head stays pinned to the casing');
   assert.ok(snapshots.some(s=>s.upperCirculation*s.lowerCirculation<0),'Opening sheds a counter-rotating pair');
   assert.ok(snapshots.every(s=>s.membrane.displacement.every(Number.isFinite)));
-  // Disabling only the moving boundary retains the struck membrane. No jet
-  // impulse or drawn smoke path can make the comparison move.
+  // Freeze the struck skin. The velocity alone must not launch a shot;
+  // chamber compression requires actual measured displacement.
   await evaluate('__toy.machine("smoke-ring-cannon")');await inside('stopLoop();userPaused=true;');
-  const uncoupled=await inside(`(()=>{toyCannon.movingBodies=function(b){return b;};toyCannon.push();for(let f=0;f<180;f++)smokeFrame(1/60);return toyCannon.stats(jelloBodies);})()`);
-  console.log('UNCOUPLED',JSON.stringify({travelDye:uncoupled.travelDye,pushes:uncoupled.pushes}));assert.ok(uncoupled.travelDye<.01);
+  const uncoupled=await inside(`(()=>{toyCannon.prepare=function(){};toyCannon.push();for(let f=0;f<180;f++)smokeFrame(1/60);return toyCannon.stats(jelloBodies);})()`);
+  console.log('FROZEN HEAD',JSON.stringify({travelDye:uncoupled.travelDye,pushes:uncoupled.pushes}));assert.ok(uncoupled.travelDye<.01);
   await evaluate('__toy.machine("smoke-ring-cannon",{noPush:true})');await inside('stopLoop();userPaused=true;');
   assert.equal(await evaluate('__toy.machinePrimary()'),false);
   const noPush=await inside(`(()=>{for(let f=0;f<120;f++)smokeFrame(1/60);return toyCannon.stats(jelloBodies);})()`);
@@ -142,4 +147,17 @@ try {
   await send('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13,text:'\r',unmodifiedText:'\r'});await send('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});
   assert.equal(await evaluate('__toy.smokeCannon().stats(__toy.bodies()).pushes'),1,'Enter activates the physical drum');
   console.log('LAYOUTS',JSON.stringify(layouts));assert.deepEqual(errors,[]);
+  // Exercise the ordinary animation loop too. The earlier regression passed
+  // a weak circulation check without producing a clear detached ring.
+  await navigate(1440,900,query);
+  const liveHit=await evaluate('(()=>{const b=document.querySelector(".toy-scene-action[data-control=primary]").getBoundingClientRect();return{x:b.x+b.width/2,y:b.y+b.height/2};})()');
+  await send('Input.dispatchMouseEvent',{type:'mousePressed',button:'left',clickCount:1,...liveHit});
+  await send('Input.dispatchMouseEvent',{type:'mouseReleased',button:'left',clickCount:1,...liveHit});
+  await sleep(2000);await screenshot('live-ring');
+  const live=await evaluate('__toy.smokeCannon().stats(__toy.bodies())');
+  assert.equal(live.pushes,1);assert.ok(live.travelDye>90&&live.dyeCenterX>330,'The real-time shot rolls clear of the chamber');
+  await inside('stopLoop();userPaused=true;');
+  const repeats=await inside(`(()=>{let accepted=0,max=0;for(let f=0;f<720;f++){if(f%60===0)accepted+=toyCannon.push()?1:0;smokeAwakeT=15;smokeFrame(1/60);updateJello(1/60);const st=toyCannon.stats(jelloBodies);max=Math.max(max,...st.membrane.displacement.map(Math.abs));}return{accepted,max,pushes:toyCannon.stats(jelloBodies).pushes};})()`);
+  console.log('LIVE AND REPEATED',JSON.stringify({center:live.dyeCenterX,travelDye:live.travelDye,...repeats}));
+  assert.equal(repeats.accepted,12);assert.ok(repeats.max<100);assert.deepEqual(errors,[]);
 } finally {await cleanup();}
