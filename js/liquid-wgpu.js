@@ -9053,7 +9053,8 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
     // bind. Dense layout lands at 9 storage buffers (the GPU path already
     // requires 9 via P2G), sparse at 10 (already required).
     uEntries.push({ binding: 12, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } });
-    if (instance.curveBoundary) uEntries.push({binding:13,visibility:GPUShaderStage.COMPUTE,buffer:{type:'uniform'}});
+    if (instance.curveBoundary) uEntries.push.apply(uEntries,instance.curveBoundary.uniformLayouts ? instance.curveBoundary.uniformLayouts(13) :
+      [{binding:13,visibility:GPUShaderStage.COMPUTE,buffer:{type:'uniform'}}]);
     var uBgl = dev.createBindGroupLayout({
       label: 'liquid.gridUpdateBGL',
       entries: uEntries
@@ -9161,7 +9162,8 @@ fn fs(i : DOut) -> @location(0) vec4<f32> {
         uBgEntries.push({ binding: 11, resource: { buffer: instance.buf.blockList } });
       }
       uBgEntries.push({ binding: 12, resource: { buffer: instance.buf.terrainMask } });
-      if (instance.curveBoundary) uBgEntries.push({binding:13,resource:{buffer:instance.curveBoundary.buffers[gbs]}});
+      if (instance.curveBoundary) uBgEntries.push.apply(uBgEntries,instance.curveBoundary.uniformBindings ? instance.curveBoundary.uniformBindings(13,gbs) :
+        [{binding:13,resource:{buffer:instance.curveBoundary.buffers[gbs]}}]);
       instance.gridUpdateBGs.push(dev.createBindGroup({
         label: 'liquid.gridUpdateBG.' + gbs,
         layout: uBgl,
@@ -9772,8 +9774,9 @@ struct P2GParams {
     var bgl = dev.createBindGroupLayout({label:'liquid.collideBGL',entries:bglEntries});
     var layout = dev.createPipelineLayout({ bindGroupLayouts: [bgl] });
     if (instance.curveBoundary) {
-      var curveBGL=dev.createBindGroupLayout({label:'liquid.curveCollisionBGL',entries:bglEntries.concat([
-        {binding:15,visibility:GPUShaderStage.COMPUTE,buffer:{type:'uniform'}}])});
+      var curveBGL=dev.createBindGroupLayout({label:'liquid.curveCollisionBGL',entries:bglEntries.concat(
+        instance.curveBoundary.uniformLayouts ? instance.curveBoundary.uniformLayouts(15) :
+        [{binding:15,visibility:GPUShaderStage.COMPUTE,buffer:{type:'uniform'}}])});
       var curveCode=instance.curveBoundary.specialize(WGSL_GAME_PARAMS+WGSL_COLLIDE_PRELUDE+
         WGSL_GUEST_GEOMETRY+WGSL_SIM_PARAMS+simBind(6)+WGSL_COLLIDE,15);
       instance.curveCollision=dev.createComputePipeline({label:'liquid.curveCollision',
@@ -9783,7 +9786,8 @@ struct P2GParams {
         var resources=[instance.paramsBuf,instance.buf.pos,instance.buf.aux,instance.buf.flag,
           instance.buf.terrainMask,gameBuffer,instance.simParamsBuf,instance.buf.snowFallbackCount,instance.buf.snowFallbackIndices];
         var entries=resources.map(function(buffer,binding){return {binding:binding,resource:{buffer:buffer}};});
-        entries.push({binding:15,resource:{buffer:instance.curveBoundary.buffers[slot]}});
+        entries.push.apply(entries,instance.curveBoundary.uniformBindings ? instance.curveBoundary.uniformBindings(15,slot) :
+          [{binding:15,resource:{buffer:instance.curveBoundary.buffers[slot]}}]);
         return dev.createBindGroup({layout:curveBGL,entries:entries});
       });
     }
