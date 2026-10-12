@@ -4,6 +4,23 @@ Release: toy v5.57, shared water engine v28.179. The greedy cup, standalone
 siphon and Heron's fountain are in the public scene menu, with published behavior
 measurements. Full quantitative physical acceptance and steady 60 FPS remain unverified.
 
+## Water appearance
+
+The demo uses Sluice's density-sensitive water kernels in ordinary scenes and
+native machines. Underdense parcels shrink into visible droplets; dense pool
+interiors keep their full support. The former native-only `VOLUME_SPLATS` override
+made loose groups keep full-size kernels and look like thick connected strands.
+
+The demo also disables free-space gap filling through the per-instance
+`surfaceGapBridge` render setting. Terrain contact wetting remains active. Both
+the surface and droplet coverage passes use this setting, so separated parcels
+remain visible. The game retains its existing renderer defaults.
+
+`node tools/test-water-demo.mjs` compares the same frozen faucet with the old
+and current finishes, measures separated stream components and dense pool
+coverage, and verifies exact particle-buffer and clock equality. These changes
+do not alter native transport, pressure, viscosity, boundaries or inventory.
+
 ## Chimney inlet
 
 The chimney inlet changes combustion in the running scene. Its clear collision
@@ -449,7 +466,8 @@ the native density response and affine particle state. Closed wall faces remove
 the normal component of the difference between native and provisional velocity;
 the affine state uses the derivative of that same reconstruction. Gas pressure
 uses each measured cavity volume while preserving its carried gas amount.
-Equal-volume interior splats reduce false drawing gaps without moving water.
+Density-sensitive kernels preserve dense interiors and expose separated water
+without moving any parcels.
 There are no timed flow rates, relocated particles or second liquid system.
 
 The cup uses 32 red/black Gauss-Seidel sweeps of the four-face water pressure

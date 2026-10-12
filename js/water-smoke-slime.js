@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.140'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.141'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -1509,7 +1509,9 @@
       airState.ready=true;requestedModel.setEnabled(true);airGeometryVersion=-1;airGeometryTick();
       wallsBakedVersion=-1;
       liquidWGPU.setPressureModel(requestedModel);
-      liquidWGPU.setRenderParam('VOLUME_SPLATS', requestedModel.settings.directGather ? 1 : 0);
+      // Native density uses the same normalization as Sluice. Sparse water
+      // must shrink into droplets instead of keeping full-size body kernels.
+      liquidWGPU.setRenderParam('VOLUME_SPLATS', 0);
       // Replay unconsumed mutations into in-flight snapshots for this mode.
       // Ordinary scenes retain their measured adapter behavior.
       liquidWGPU.liquid.peekOps=function(){return liquidOpsOverflow ? null : liquidOps;};
@@ -1546,6 +1548,7 @@
       hudInset: 0,
       // Every scene draws the current water position without velocity trails.
       dropletStretch: 0,
+      surfaceGapBridge: 0,
       // Helpers download alongside engine boot. Native configuration happens
       // only after they settle, so resolve the factory at that point.
       toyNativeExtension: bootMachine || handsRequested ? function(instance,options){return window.WSSNative.create(instance,options);} : undefined,

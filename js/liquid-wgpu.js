@@ -8024,7 +8024,7 @@ struct RenderParams {
   oilColor      : vec4<f32>,
   surf          : vec4<f32>,   // x = threshold, y = softness, z = splat radius scale, w = on/off
   bathTint      : vec4<f32>,   // v25.57 bath: rgb = hot-water tint, w = strength (0 = off)
-  bridge        : vec4<f32>,   // x = gap-bridge strength, y = tap radius px, z = droplet stretch
+  bridge        : vec4<f32>,   // x = contact strength, y = tap px, z = droplet stretch, w = free-space bridge
 };
 @group(0) @binding(0) var<uniform> rp : RenderParams;
 
@@ -8312,7 +8312,7 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
   // reading the raw field, so bridged pixels take plain water colour.
   // Only the near-threshold band pays the taps.
   var fw = f.r;
-  if (rp.bridge.x > 0.0 && fw > t * 0.08 && fw < t + s) {
+  if (rp.bridge.x > 0.0 && rp.bridge.w > 0.0 && fw > t * 0.08 && fw < t + s) {
     let r = max(rp.bridge.y, 1.0);
     let d = r * 0.7071;
     var nbMax = bridgeTap(in.pos.xy, vec2<f32>(r, 0.0));
@@ -8324,7 +8324,7 @@ fn fs(in : VOut) -> @location(0) vec4<f32> {
     nbMax = max(nbMax, bridgeTap(in.pos.xy, vec2<f32>(d, -d)));
     nbMax = max(nbMax, bridgeTap(in.pos.xy, vec2<f32>(-d, -d)));
     let gate = smoothstep(t * 0.10, t * 0.55, fw);
-    fw = fw + rp.bridge.x * gate * nbMax;
+    fw = fw + rp.bridge.x * rp.bridge.w * gate * nbMax;
   }
   var aWaterEdge = smoothstep(t - s, t + s, fw);
   let aOilEdge   = smoothstep(t - s, t + s, f.b);
@@ -8591,7 +8591,7 @@ fn vs(@builtin(vertex_index)   vid : u32,
   var fCov = field.r;
   let tD = rp.surf.x;
   let sD = max(rp.surf.y, 0.001);
-  if (rp.bridge.x > 0.0 && fCov > tD * 0.08 && fCov < tD + sD) {
+  if (rp.bridge.x > 0.0 && rp.bridge.w > 0.0 && fCov > tD * 0.08 && fCov < tD + sD) {
     let rB = max(rp.bridge.y, 1.0);
     let dB = rB * 0.7071;
     var nbD = 0.0;
@@ -8612,7 +8612,7 @@ fn vs(@builtin(vertex_index)   vid : u32,
     q = clamp(vec2<i32>(floor(vec2<f32>(scrX - dB, scrY - dB) + 0.5)), vec2<i32>(0), dims - vec2<i32>(1));
     nbD = max(nbD, textureLoad(fieldTex, q, 0).r);
     let gateD = smoothstep(tD * 0.10, tD * 0.55, fCov);
-    fCov = fCov + rp.bridge.x * gateD * nbD;
+    fCov = fCov + rp.bridge.x * rp.bridge.w * gateD * nbD;
   }
   let surfaceA = smoothstep(tD - sD, tD + sD, fCov);
   // Fully exposed centres get a full drop. Fade through partially covered
@@ -10837,7 +10837,7 @@ fn machinePointExitClear(a:vec2<f32>,b:vec2<f32>,r:f32)->bool {
     rh[26] = LIQUID_BATH_TINT_B;   rh[27] = LIQUID_BATH_TINT_STR;
     // Gap bridge, contact wetting and render-only droplet stretch (lanes 28-31).
     rh[28] = LIQUID_SURF_BRIDGE;   rh[29] = LIQUID_SURF_BRIDGE_R;
-    rh[30] = instance.dropletStretch; rh[31] = 0;
+    rh[30] = instance.dropletStretch; rh[31] = instance.surfaceGapBridge;
     instance.queue.writeBuffer(instance.renderParamsBuf, 0, rh);
 
     // v24.113 — surface render: splat the particles into the offscreen
@@ -12655,6 +12655,9 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
       // a host can draw compact moving droplets with dropletStretch: 0.
       dropletStretch: typeof opts.dropletStretch === 'number' && isFinite(opts.dropletStretch)
         ? Math.max(0, Math.min(1, opts.dropletStretch)) : 1,
+      // Free-space gap filling is separate from terrain contact wetting.
+      surfaceGapBridge: typeof opts.surfaceGapBridge === 'number' && isFinite(opts.surfaceGapBridge)
+        ? Math.max(0, Math.min(1, opts.surfaceGapBridge)) : 1,
       adapter: null,
       device: null,
       queue: null,
@@ -12992,6 +12995,7 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
             case 'VOLUME_SPLATS':        instance.volumeSplats = v >= 0.5; break;
             case 'DROPLETS':             LIQUID_DROPLETS = v ? 1 : 0; break;   // v25.32 visible strays/spray
             case 'DROPLET_STRETCH':      instance.dropletStretch = Math.max(0, Math.min(1, v)); break;
+            case 'SURFACE_GAP_BRIDGE':   instance.surfaceGapBridge = Math.max(0, Math.min(1, v)); break;
             // v25.57 BATH B1 heat tint (docs/game/BATHHOUSE_PLAN.md): dial
             // the hot-water look for the feel-check; STR 0 kills the tint.
             case 'BATH_TINT_R':          LIQUID_BATH_TINT_R = v; break;

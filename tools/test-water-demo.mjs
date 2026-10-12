@@ -92,7 +92,7 @@ async function checkWaterResolution(label) {
   assert.ok(size.source.every((value, i) => value >= size.displayed[i]*limit-1), label + ': water covers display resolution');
   console.log('WATER RESOLUTION', label, JSON.stringify(size));
 }
-async function waterAlpha(softness, stretch) {
+async function waterAlpha(softness, stretch, regions = {}) {
   return evaluate(`(async () => {
     const engine=__toy.liquid(),device=engine.device;
     // Canvas textures expire after presentation. Copy this exact draw before
@@ -114,7 +114,26 @@ async function waterAlpha(softness, stretch) {
         const alpha=rgba[y*bytesPerRow+x*4+3];area+=alpha/255;if(alpha>20 && alpha<190)fringe++;
         if(alpha>20){left=Math.min(left,x);right=Math.max(right,x);top=Math.min(top,y);bottom=Math.max(bottom,y);}
       }
-      return {fringe,area,width:Math.max(0,right-left+1),height:Math.max(0,bottom-top+1)};
+      const samples={};
+      for(const [name,region] of Object.entries(${JSON.stringify(regions)})){
+        const scale=engine.renderParamsHost[2],x0=Math.max(0,Math.floor(region.x*scale)),y0=Math.max(0,Math.floor(region.y*scale));
+        const width=Math.min(source.width-x0,Math.ceil(region.width*scale)),height=Math.min(source.height-y0,Math.ceil(region.height*scale));
+        const mask=new Uint8Array(width*height),queue=new Int32Array(mask.length);let regionArea=0,components=0;
+        for(let y=0;y<height;y++)for(let x=0;x<width;x++){
+          const alpha=rgba[(y+y0)*bytesPerRow+(x+x0)*4+3];regionArea+=alpha/255;mask[y*width+x]=alpha>64?1:0;
+        }
+        for(let i=0;i<mask.length;i++){
+          if(!mask[i])continue;components++;let head=0,tail=1;queue[0]=i;mask[i]=0;
+          while(head<tail){const p=queue[head++],x=p%width,y=Math.floor(p/width);
+            for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+              if(x+dx<0||x+dx>=width||y+dy<0||y+dy>=height)continue;
+              const q=(y+dy)*width+x+dx;if(mask[q]){mask[q]=0;queue[tail++]=q;}
+            }
+          }
+        }
+        samples[name]={area:regionArea,components,pixels:mask.length};
+      }
+      return {fringe,area,width:Math.max(0,right-left+1),height:Math.max(0,bottom-top+1),samples};
     } finally {buffer.destroy();}
   })()`);
 }
@@ -248,7 +267,9 @@ try {
       await checkWaterResolution(w+'x'+h);
       assert.ok(await evaluate('document.documentElement.scrollWidth <= innerWidth'), 'no horizontal overflow at '+w+'x'+h);
       await evaluate('document.getElementById("toy-fullscreen").click()'); await sleep(300);
-      assert.ok(await evaluate('document.getElementById("toy-viewport").getBoundingClientRect().bottom <= innerHeight && document.querySelector(".toy-foot").getBoundingClientRect().bottom <= innerHeight+1'), 'fullscreen controls remain visible at '+w+'x'+h);
+      assert.ok(await evaluate(`document.getElementById('toy-viewport').getBoundingClientRect().bottom <= innerHeight+1 &&
+        ['toy-pause','toy-fullscreen'].every(id=>{const r=document.getElementById(id).getBoundingClientRect();
+          return r.left>=0 && r.right<=innerWidth+1 && r.top>=0 && r.bottom<=innerHeight+1;})`), 'fullscreen controls remain visible at '+w+'x'+h);
       await checkWaterResolution('fullscreen '+w+'x'+h);
       await screenshot('fullscreen-'+w+'x'+h);
     }
@@ -279,10 +300,24 @@ try {
     for(let i=0;i<200 && !await evaluate('!!__toy.machineState()?.ready');i++)await sleep(100);
     await sleep(2000);await evaluate('__toy.pause(true);__toy.liquid().queue.onSubmittedWorkDone()');
     assert.equal(await evaluate('__toy.liquid().dropletStretch'),0,'the faucet scene disables velocity streaks');
+    assert.equal(await evaluate('__toy.liquid().surfaceGapBridge'),0,'the faucet scene leaves real air gaps visible');
+    assert.equal(await evaluate('__toy.liquid().volumeSplats'),false,'native water uses the same density-sensitive footprint as Sluice');
     const faucetState=await particleState();
     await waterAlpha(.25,1);await screenshot('faucet-stretched');
     await waterAlpha(.25,0);await screenshot('faucet-compact');
     assert.deepEqual(await particleState(),faucetState,'removing faucet streaks preserves exact particle state and clock');
+    const regions=await evaluate(`(()=>{const d=__toy.machineState().definition,tap=d.boundaries.tap,s=d.measure.source,bottom=s.y+s.height-8;
+      return {stream:{x:tap.x-22,y:tap.y+20,width:44,height:110},
+        bulk:{x:s.x+s.width*.65,y:bottom-14,width:s.width*.2,height:6}};})()`);
+    await evaluate(`__toy.liquid().setRenderParam('VOLUME_SPLATS',1);__toy.liquid().setRenderParam('SURFACE_GAP_BRIDGE',1)`);
+    const joined=await waterAlpha(.25,0,regions);await screenshot('faucet-joined');
+    await evaluate(`__toy.liquid().setRenderParam('VOLUME_SPLATS',0);__toy.liquid().setRenderParam('SURFACE_GAP_BRIDGE',0)`);
+    const separated=await waterAlpha(.25,0,regions);await screenshot('faucet-separated');
+    console.log('FAUCET FOOTPRINT',JSON.stringify({joined:joined.samples,separated:separated.samples}));
+    assert.ok(separated.samples.stream.components>joined.samples.stream.components,'separated faucet parcels no longer merge into a few thick strands');
+    assert.ok(separated.samples.stream.area<joined.samples.stream.area*.9,'the faucet loses its exaggerated blob footprint');
+    assert.ok(separated.samples.bulk.area>0 && Math.abs(separated.samples.bulk.area/joined.samples.bulk.area-1)<.01,'genuinely dense pool interiors retain their coverage');
+    assert.deepEqual(await particleState(),faucetState,'repairing visible water support preserves exact native fluid state');
     await navigate(1280,720,'?scene=blank&paused=1',false,2);
     await evaluate('__toy.pause(true)');
     await inside(`addLiquidParticle('water',worldW*.5,worldH*.3,0,400,0);liquidWGPU.update(1/120)`);
