@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.142'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.143'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -1485,7 +1485,6 @@
         liquidWGPU.setSimParam('RETAIN_SUBQUANTUM_REMAINDER',0);
         liquidWGPU.setPressureModel(null);
         liquidWGPU.setRenderParam('VOLUME_SPLATS',0);
-        delete liquidWGPU.liquid.peekOps;
         if(retired){
           liquidWGPU.setSimParam('DBG_FLAGS',0);
           presetApplyWater(PRESET_ACTIVE.water);
@@ -1512,9 +1511,6 @@
       // Native density uses the same normalization as Sluice. Sparse water
       // must shrink into droplets instead of keeping full-size body kernels.
       liquidWGPU.setRenderParam('VOLUME_SPLATS', 0);
-      // Replay unconsumed mutations into in-flight snapshots for this mode.
-      // Ordinary scenes retain their measured adapter behavior.
-      liquidWGPU.liquid.peekOps=function(){return liquidOpsOverflow ? null : liquidOps;};
       applyAirPhysics();
       return airModel;
     }).catch(function(error){
@@ -1559,6 +1555,9 @@
         maxParticles: LIQUID_MAX_PARTICLES,
         getCount: function () { return liquidCount; },
         getMutationSeq: function () { return liquidMutationSeq; },
+        // Pending inlet additions must be included when a mirror resolves
+        // before this frame's mutation log has reached the resident buffers.
+        peekOps: function () { return liquidOpsOverflow ? null : liquidOps; },
         takeOps: function () {
           if (liquidOpsOverflow) {
             liquidOpsOverflow = false;
@@ -1751,6 +1750,48 @@
         (vx || 0) + (Math.random() - 0.5) * 26,
         (vy || 0) + (Math.random() - 0.5) * 26, 0);
     }
+  }
+
+  // A flowing inlet releases parcels throughout elapsed simulation time.
+  // Stagger both their crossing times and their positions across the mouth;
+  // spawning an entire horizontal row at once makes falling water a ladder.
+  // The short ballistic inlet segment fills the distance travelled this tick.
+  // All subsequent motion, breakup and splashes belong to the native solver.
+  function spawnWaterFlow(source, h, rate, radius, vx, vy, limit) {
+    if (waterState !== 'on' || !(h > 0)) return 0;
+    var fraction = source.acc || 0;
+    var total = fraction + rate * h;
+    var n = Math.min(Math.floor(total), Math.max(0, limit - liquidCount));
+    source.acc = total - Math.floor(total);
+    source.age = (source.age || 0) + h;
+    var speed = Math.max(40, Math.hypot(vx, vy));
+    var length = Math.hypot(vx, vy) || 1;
+    var acrossX = vy / length, acrossY = -vx / length;
+    if (!vx && !vy) { acrossX = 1; acrossY = 0; }
+    // At rest spacing, one parcel occupies 1.25 squared world pixels.
+    // Match mouth width to throughput so the inlet starts as cohesive water.
+    var width = Math.min(radius * 2, rate * 1.5625 / speed);
+    var g = 250 * gravMul * presetGravScale, admitted = 0;
+    for (var i = 0; i < n; i++) {
+      var age = Math.max(0, h - (i + 1 - fraction) / rate);
+      source.phase = ((source.phase || 0) + 0.61803398875) % 1;
+      var across = (source.phase - 0.5) * width;
+      var ripple = Math.sin((source.age - age) * 13) * width * 0.055;
+      var x = source.x + acrossX * (across + ripple) + vx * age;
+      var y = source.y + acrossY * (across + ripple) + vy * age + g * age * age * 0.5;
+      // Sweep the inlet segment as well: a thin user-drawn wall must block it.
+      var steps = Math.max(1, Math.ceil((speed * age + g * age * age * 0.5) / (TILE * 0.4)));
+      var blocked = false;
+      for (var s = 0; s <= steps; s++) {
+        var t = age * s / steps;
+        if (tileAt(Math.floor((source.y + acrossY * (across + ripple) + vy * t + g * t * t * 0.5) / TILE),
+          Math.floor((source.x + acrossX * (across + ripple) + vx * t) / TILE)) !== null) { blocked = true; break; }
+      }
+      if (blocked) continue;
+      addLiquidParticle('water', x, y, vx + acrossX * ripple * 2, vy + g * age + acrossY * ripple * 2, 0);
+      admitted++;
+    }
+    return admitted;
   }
 
   // Rest-spacing block fill (1.25 px pitch = the sim's rest density), used
@@ -12729,6 +12770,7 @@
   var lastPaintX = 0, lastPaintY = 0;
   var lastMoveT = 0;
   var slimeGhost = null;         // {x, y} while placing
+  var pointerWaterFlow = { acc: 0 };
   var keyboardCursorVisible=false,keyboardCursorReady=false,keyboardX=0,keyboardY=0;
   var keyboardPointerId=-2,highlightedValve=null;
 
@@ -12759,6 +12801,7 @@
     pointerId = id;
     px = lastPaintX = x; py = lastPaintY = y;
     pvx = 0; pvy = 0; lastMoveT = performance.now();
+    pointerWaterFlow.acc = 0;
     pointerControl=false;pointerClickAction=null;pointerStartX=x;pointerStartY=y;
     if (tool === 'poke') {
       var bodyAction=machineControlTargets().find(function(control){return !control.disabled && control.pointerMode==='tap-body' &&
@@ -12939,9 +12982,12 @@
         paintWalls(px, py, brushR, tool === 'draw');
       }
     } else if (tool === 'water') {
-      var n = Math.max(4, Math.min(22, Math.round(brushR * 0.55)));
-      spawnWaterJet(px, py, Math.max(6, brushR * 0.6),
-        pvx * 0.35, pvy * 0.35 + 150 * gravMul, n);
+      var radius = Math.max(6, brushR * 0.6);
+      pointerWaterFlow.x = px; pointerWaterFlow.y = py;
+      spawnWaterFlow(pointerWaterFlow, dt * 1.55 * timeMul * presetWaterTimeScale,
+        radius * 2 * 150 / 1.5625, radius,
+        Math.max(-450, Math.min(450, pvx * 0.35)), Math.max(-450, Math.min(450, pvy * 0.35)) + 150 * gravMul,
+        LIQUID_MAX_PARTICLES - 8);
     } else if (tool === 'smoke') {
       // Pointer velocity carries the smoke (Pavel-style): world px/s maps
       // to texel/s at ~0.28, and world +y (down) is UV -y (down).
@@ -13683,7 +13729,7 @@
     machineState=null;instrumentSample=null;
     if(airModel)enableAirModel({enabled:false});
     if(airModel)airModel.reset();
-    if(toyFire){toyFire.destroy();toyFire=null;fireSplatAcc=0;firePourPending=0;firePourAcc=0;liquidWGPU.setBathThermal(null);SmokeFluid.setThermalStyle(null);SmokeFluid.setWetField(null);SmokeFluid.setPhysics(null,0);}
+    if(toyFire){toyFire.destroy();toyFire=null;fireSplatAcc=0;firePourPending=0;firePourFlow={acc:0};liquidWGPU.setBathThermal(null);liquidWGPU.setRenderParam('VOLUME_SPLATS',0);SmokeFluid.setThermalStyle(null);SmokeFluid.setWetField(null);SmokeFluid.setPhysics(null,0);}
     if(fireDomainActive){
       if(fireDomainPrevious===undefined)delete liquidWGPU.toyNativeDomain;
       else liquidWGPU.toyNativeDomain=fireDomainPrevious;
@@ -13701,7 +13747,9 @@
 
   var toyFireSmokeDraft=null;
   var toySauna=null;
-  var toyFire=null,fireSplatAcc=0,fireFrameDt=0,fireWaterClock=0,firePourPending=0,firePourAcc=0,firePourClock=0;
+  var FIRE_POUR_PARTICLES = 2400, FIRE_POUR_RATE = 1800;
+  var firePourFlow = { acc: 0 };
+  var toyFire=null,fireSplatAcc=0,fireFrameDt=0,fireWaterClock=0,firePourPending=0,firePourClock=0;
   var toyBalloon=null;
   var toyDivers=null;
   var toyFloatSlider=null;
@@ -14325,6 +14373,9 @@
       toyBalloon=ownBalloon;liquidWGPU.setToyMembrane(ownBalloon);model={settings:{density:1}};
     }else if(definition.fire){
       liquidWGPU.setPressureModel(null);airState.ready=false;airPressureColors=false;
+      // Equal parcel kernels keep a stretched waterfall joined. The native
+      // neighbour gate still separates its spray into compact droplets.
+      liquidWGPU.setRenderParam('VOLUME_SPLATS',1);
       // Fire has no pressure solver or native tap, but its whole vessel must
       // remain in the collision/grid domain between particle mirror updates.
       fireDomainPrevious=liquidWGPU.toyNativeDomain;fireDomainActive=true;
@@ -14465,7 +14516,7 @@
       jelloCount=jelloTotalPoints();definition.action='Popped';machineState.primaryUsed=true;machineOverlayCache=null;return true;
     }
     if(primary.kind==='fire-pour'){
-      var queued=Math.min(700,LIQUID_MAX_PARTICLES-liquidCount-firePourPending);
+      var queued=Math.max(0,Math.min(FIRE_POUR_PARTICLES,LIQUID_MAX_PARTICLES-8-liquidCount-firePourPending));
       firePourPending+=queued;return queued>0;
     }
     if(primary.kind==='heat-toggle'){
@@ -14572,20 +14623,10 @@
     for (var i = 0; i < emitters.length; i++) {
       var em = emitters[i];
       if (em.kind === 'water') {
-        if (waterState !== 'on' || liquidCount > (em.cap || POUR_CAP)) continue;
-        em.acc = (em.acc || 0) + em.rate * dt;
-        // Burst cadence, not per-frame: the GPU module's CPU-mirror readback
-        // discards itself whenever a mutation lands mid-flight, so a
-        // continuous per-frame pour would starve the mirror forever (and the
-        // slime DISSOLVE counts water from that mirror). Every 6th frame
-        // leaves readback-sized quiet gaps and reads as spring gulps.
-        if (toyFrameNo % 6 !== 0) continue;
-        var n = em.acc | 0;
-        if (n > 0) {
-          em.acc -= n;
-          if (n > 60) n = 60;
-          spawnWaterJet(em.x, em.y, 5, em.vx || 0, (em.vy || 120) * Math.max(0.15, gravMul), n);
-        }
+        // The current shared engine remaps append operations through pending
+        // readbacks, so continuous admission no longer needs quiet frames.
+        spawnWaterFlow(em, dt * 1.55 * timeMul * presetWaterTimeScale, em.rate, 8,
+          em.vx || 0, (em.vy === undefined ? 120 : em.vy) * Math.max(0.15, gravMul), em.cap || POUR_CAP);
       } else if (em.kind === 'smoke') {
         if (!smokeActive) continue;
         // Fixed source time and a bounded splat budget, independent of frame rate.
@@ -14942,7 +14983,7 @@
         c.save();c.fillStyle=palette.getPropertyValue('--text-dim').trim();
         c.fillText(toySauna?'Fire':hot.smothered?'Out, wet':hot.airStarved?'Out, no air':hot.burning?'Burning':hot.extinguished?'Out':f.noEmber?'Cooling':'Ember reheating',f.x+48,f.y-12);c.restore();
         if(art && !f.air){art.hearth(c,f.x,f.y,{burning:hot.burning,wet:hot.smothered});
-          if(definition.primary.kind==='fire-pour')art.pail(c,f.pour.x,f.pour.y,{active:hot.wetParcels>0});}}
+          if(definition.primary.kind==='fire-pour')art.pail(c,f.pour.x,f.pour.y,{active:firePourPending>0});}}
       if(toyThermoscope){var heater=definition.thermoscope;
         c.fillText(toyThermoscope.heated?'Heater on':'Cooling',heater.x+88,heater.y-10);
         if(art)art.heater(c,{x:heater.x-16,y:heater.y-8,width:32,height:16},{heated:toyThermoscope.heated});
@@ -15157,23 +15198,19 @@
     if (readoutTick >= 15) { readoutTick = 0; updateReadout(); }
   }
 
-  // A finite declared inlet, with native rest spacing and explicit admission.
-  // Each primary action queues one pour. The water is never relocated later.
+  // Each click queues a finite pail, admitted as a continuous, full stream.
+  // Its inlet samples simulation time; slow motion slows the whole pour.
   function firePourTick(dt){
     if(!toyFire || !machineState || waterState!=='on')return;
     var clock=liquidWGPU.simulationClock;
     var h=liquidCount ? Math.max(0,clock-firePourClock) : dt*Math.max(0,timeMul)*1.55;
-    firePourClock=clock;if(!firePourPending)return;
-    firePourAcc+=h*600;
-    var spout=machineState.definition.fire.pour,n=Math.min(40,firePourPending,Math.floor(firePourAcc));
-    if(n<40 && n!==firePourPending)return;
-    var before=liquidCount;
-    for(var i=0;i<n;i++){
-      var x=spout.x+(i-(n-1)*.5)*1.25,y=spout.y;
-      if(tileAt(Math.floor(y/TILE),Math.floor(x/TILE))===null)addLiquidParticle('water',x,y,0,120,0);
-    }
-    var admitted=liquidCount-before;firePourPending-=admitted;firePourAcc-=n;toyFire.admit(admitted);
-    if(!admitted || liquidCount>=LIQUID_MAX_PARTICLES){firePourPending=0;firePourAcc=0;}
+    firePourClock=clock;if(!firePourPending){firePourFlow.acc=0;return;}
+    var spout=machineState.definition.fire.pour;
+    firePourFlow.x=spout.x;firePourFlow.y=spout.y;
+    var admitted=spawnWaterFlow(firePourFlow,Math.min(h,.05),FIRE_POUR_RATE,12,0,110,
+      Math.min(LIQUID_MAX_PARTICLES-8,liquidCount+firePourPending));
+    firePourPending-=admitted;toyFire.admit(admitted);
+    if(liquidCount>=LIQUID_MAX_PARTICLES-8){firePourPending=0;firePourFlow.acc=0;}
   }
 
   function fireTick(dt){
