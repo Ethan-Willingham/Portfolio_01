@@ -236,7 +236,7 @@ rendering gaps as physical evidence.
 
 ## Entrained air
 
-Toy v5.166 gives compact submerged gas in the small Heron apparatus and its
+Toy v5.167 gives compact submerged gas in the small Heron apparatus and its
 smoke variant the existing bubble transport model. A detached finite gas pocket
 with at most 200 square world pixels of void transfers its exact room-reference
 gas amount to a mobile parcel. Its center must belong to that pocket and its
