@@ -1,0 +1,130 @@
+{
+  "date": "2026-10-12",
+  "hardware": "Apple M1 Pro",
+  "browser": "Chrome for Testing, WebGPU Metal",
+  "viewport": {
+    "width": 1440,
+    "height": 1000,
+    "deviceScaleFactor": 2
+  },
+  "playback": 0.2,
+  "method": "300 paused-loop update/render submissions, waiting for GPU completion per sample after 60 warmup frames. Then 299 actual animation-frame intervals, after 60 warmup frames. Wall times include CPU submission, rendering and GPU completion, not isolated shader timestamps. Each setting was run sequentially; background system load and thermal state were not controlled. Stress configurations hit the host 50 ms input clamp and therefore slow simulation time as frame rate falls.",
+  "source": "tools/test-hourglass.mjs --benchmark; set HOURGLASS_SAND=4, 5 or 6 for density trials. Baseline was measured before changes. Refinement trials were measured during implementation; default and scale 6 were repeated on the integrated v5.161 build.",
+  "results": [
+    {
+      "setting": "previous",
+      "particles": 6785,
+      "diameter": 1.3975424859373686,
+      "opening": 5.0,
+      "completedFrameMs": {
+        "samples": 300,
+        "mean": 6.694666666686535,
+        "p50": 6.5999999940395355,
+        "p95": 9.900000005960464,
+        "p99": 11.799999982118607
+      },
+      "animation": {
+        "frames": 299,
+        "fps": 59.999197335152715,
+        "p95": 16.700000000000728,
+        "p99": 16.800000000000182
+      },
+      "finite": true,
+      "escaped": 0,
+      "transferred": 1254,
+      "consoleErrors": []
+    },
+    {
+      "setting": "default",
+      "particles": 69409,
+      "diameter": 0.4666666666666666,
+      "opening": 1.68,
+      "completedFrameMs": {
+        "samples": 300,
+        "mean": 4.609666666686535,
+        "p50": 4.4000000059604645,
+        "p95": 7.300000011920929,
+        "p99": 9.300000011920929
+      },
+      "animation": {
+        "frames": 299,
+        "fps": 60.000401340477204,
+        "p95": 16.799999999999727,
+        "p99": 16.800000000000182
+      },
+      "finite": true,
+      "escaped": 0,
+      "transferred": 229,
+      "consoleErrors": []
+    },
+    {
+      "setting": "sand=4",
+      "particles": 122938,
+      "diameter": 0.35,
+      "opening": 1.26,
+      "completedFrameMs": {
+        "samples": 300,
+        "mean": 9.8013333333532,
+        "p50": 9.400000005960464,
+        "p95": 14.900000005960464,
+        "p99": 16.600000023841858
+      },
+      "animation": {
+        "frames": 299,
+        "fps": 38.83167313861219,
+        "p95": 58.30000000000018,
+        "p99": 75
+      },
+      "finite": true,
+      "escaped": 0,
+      "transferred": 317,
+      "consoleErrors": []
+    },
+    {
+      "setting": "sand=5",
+      "particles": 192648,
+      "diameter": 0.27999999999999997,
+      "opening": 1.008,
+      "completedFrameMs": {
+        "samples": 300,
+        "mean": 32.79066666642825,
+        "p50": 29.80000001192093,
+        "p95": 61.69999998807907,
+        "p99": 73.80000001192093
+      },
+      "animation": {
+        "frames": 299,
+        "fps": 18.785418996519358,
+        "p95": 66.70000000000073,
+        "p99": 75.10000000000218
+      },
+      "finite": true,
+      "escaped": 0,
+      "transferred": 544,
+      "consoleErrors": []
+    },
+    {
+      "setting": "sand=6",
+      "particles": 277607,
+      "diameter": 0.2333333333333333,
+      "opening": 0.84,
+      "completedFrameMs": {
+        "samples": 300,
+        "mean": 81.20466666668653,
+        "p50": 75.30000001192093,
+        "p95": 143.69999998807907,
+        "p99": 207.59999999403954
+      },
+      "animation": {
+        "frames": 299,
+        "fps": 8.42061388809877,
+        "p95": 183.3000000000029,
+        "p99": 208.29999999999563
+      },
+      "finite": true,
+      "escaped": 0,
+      "transferred": 640,
+      "consoleErrors": []
+    }
+  ]
+}

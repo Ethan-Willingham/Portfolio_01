@@ -132,24 +132,47 @@ measurements go to `/tmp/sand-dam-review`.
 
 ## Hourglass
 
-The hourglass starts at 20% playback speed. Its narrow neck and two bulbs use
-one smooth profile for the inner glass outline and GPU grain contacts. The tile
-box outside that profile is a backstop. The sand finish draws the actual resident
-grain positions with their native contact radius, warm pigment and small edge
-highlights. It does not draw a separate surface or invent a stream.
+The hourglass starts at 20% playback speed. Desktop uses 69,409 physical grains,
+about ten times the previous 6,785. Their diameter is 0.467 world units instead
+of 1.398, and their initial spacing is 1.03 diameters. The throat is 1.68 units
+wide instead of 5. Both the outline and collision walls use the same smooth
+profile. The drawn discs read the actual resident positions and use the contact
+radius; subpixel antialiasing preserves the area of each disc.
 
-This all-grain scene uses ballistic gravity and the existing native compressive
-pair contacts and friction, without the liquid APIC velocity average. Contact
-reconciliation uses the actual slow simulation interval. The native time
-remainder preserves elapsed time at slow playback. A gentle shake adds one
-horizontal impulse to the finite charge. The shared liquid engine and the other
-material scenes keep their existing models.
+This all-grain scene has its own WebGPU dry-contact path. A diameter-sized grid
+uses linked cells with no bucket cap or sampled neighbors. Each small ballistic
+step has three compressive contact iterations, with friction and glass contact.
+Each iteration reads an immutable position snapshot, rebuilds the neighbor grid,
+and clears only occupied cells. The result stays in the native resident buffer,
+so the existing gentle-shake action acts on the real charge. It skips the unused
+liquid grid, hidden water-surface rendering and full-pile CPU readback. There is
+no emitter, refill, prescribed stream or decorative particle population.
 
-This remains a reduced granular demo, without a calibrated sand constitutive
-law. Run `node tools/test-hourglass.mjs` for actual GPU containment and inventory,
-slow-clock accounting, read-only drawing, pause, shake, fullscreen, desktop and
-mobile resize, restart and scene retirement. The harness owns Chrome for Testing
-and writes captures to `/tmp/hourglass-review`.
+The fixed quantum is 1/(240 times the detail scale) seconds. The scene retains
+its time remainder, honors the playback and gravity controls, and restores the
+engine's update, draw and timing methods when retired. This remains a reduced
+granular model, without a calibrated sand constitutive law.
+
+The `sand` URL parameter selects a detail scale from 2 to 6. Desktop defaults to
+3; mobile defaults to 2. Smaller spacing increases the population without
+changing the filled region. Capacity grows only for an hourglass boot requesting
+more than the normal allocation. `?scene=hourglass&sand=4` selects about 123,000
+grains at one-quarter the old diameter. Scales 5 and 6 are stress settings.
+
+Run `node tools/test-hourglass.mjs` for GPU containment, inventory, packing,
+freefall, pair separation, slow-clock accounting, read-only drawing, pause,
+shake, fullscreen, resize, restart and scene retirement. Add `--mobile` for
+mobile startup. Use `--benchmark` to measure 300 completed update-and-render
+workloads followed by 299 animation-frame intervals; the timings include the
+CPU submission and GPU completion wait, and are not isolated GPU timestamps.
+Set `HOURGLASS_SAND=4` (or another scale) to compare density. The harness owns
+Chrome for Testing and writes captures and measurements to
+`/tmp/hourglass-review`. The M1 Pro trial results are recorded in
+`docs/hourglass-benchmark-2026-10-12.json`. These desktop measurements do not
+predict phone speed. The 69,409-grain default held 60 fps; the 122,938-grain
+trial reached 39 fps, and the 192,648 and 277,607 stress runs reached 19 and
+8 fps. Stress settings also hit the host's existing 50 ms frame-input clamp,
+so their simulated time falls behind wall time. They are not faster defaults.
 
 ## Smoke wind tunnel
 

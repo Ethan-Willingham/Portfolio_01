@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.161.1'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.162'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -540,7 +540,8 @@
    * zero (LIQUID_CALM_MAX = 0 in 020-state.js), so "production water feel"
    * is a one-time push of CALM 0 / GRID_VISC 0 / DAMPING 1 / MOTION 1
    * after the device is ready, not a per-frame state machine. ==== */
-  var LIQUID_MAX_PARTICLES = isMobile ? 40000 : 100000;
+  var hourglassScale=Math.max(2,Math.min(6,Number(bootParams.get('sand'))||(isMobile?2:3)));
+  var LIQUID_MAX_PARTICLES = Math.max(isMobile ? 40000 : 100000,bootScene==='hourglass'?Math.ceil(8000*hourglassScale*hourglassScale):0);
   var LIQUID_DENSITY_REST = 4;              // mirrors the module's 1/PDELTA^2
   var LIQUID_OPS_MAX = 300000;
   var LIQUID_MACHINE_OPS_MAX = 900000;
@@ -14534,6 +14535,7 @@
     machineBuilder=null;handsController=null;handsSelection=null;valveSeats=null;manualValves.clear();instrumentSample=null;instrumentPending=false;instrumentNextAt=0;
     var module=nativeMachineScene(name) ? await machineRegistry.load(name) : window.WaterMachinesScenes;
     if(request!==machineRequest)return null;
+    if(name==='hourglass')options.grainScale=hourglassScale;
     var definition=nativeMachineScene(name) ? module.make(roomCore ? {w:roomCore.w,h:roomCore.h,tile:TILE} : {w:worldW,h:worldH,tile:TILE},options) : module.make(name,{w:worldW,h:worldH,tile:TILE},options);
     if(roomCore)shiftIntoRoom(definition,roomX);
     currentScene=name;fitStage();
@@ -14568,7 +14570,7 @@
     // gravity keeps increasing its tangential velocity on every step.
     var seedRadius=liquidWGPU.cellSize*.5*.85+.0625;
     function seedClear(x,y){
-      if(definition.seedContains && !definition.seedContains(x,y,1.8))return false;
+      if(definition.seedContains && !definition.seedContains(x,y,definition.seedInset || 1.8))return false;
       if(sliderBody){var sliderNear=jelloNearestOnRing(sliderBody,x,y);if(jelloPointInRing(sliderBody,x,y)||Math.hypot(sliderNear.x-x,sliderNear.y-y)<3)return false;}
       if(definition.divers && diverBodies.some(function(b){var near=jelloNearestOnRing(b,x,y);return jelloPointInRing(b,x,y) || Math.hypot(near.x-x,near.y-y)<3;}))return false;
       for(var row=Math.floor((y-seedRadius)/TILE);row<=Math.floor((y+seedRadius)/TILE);row++){
@@ -14584,7 +14586,8 @@
     for(var y=TILE+pitch*.5;y<worldH-TILE;y+=pitch)for(var x=TILE+pitch*.5;x<worldW-TILE;x+=pitch){
       if(tileAt(Math.floor(y/TILE),Math.floor(x/TILE))!==null)continue;
       if(!definition.initial.some(function(shape){return window.WaterMachinesScenes.contains(shape,x,y);}))continue;
-      var px=x+(random()-.5)*.12,py=y+(random()-.5)*.12;
+      var jitter=definition.seedJitter===undefined?.12:definition.seedJitter;
+      var px=x+(random()-.5)*jitter,py=y+(random()-.5)*jitter;
       if(balloonSeedRing && ((!definition.membrane.seedBoth && !window.WSSWaterBalloons.geometry.contains(balloonSeedRing,px,py)) || window.WSSWaterBalloons.geometry.nearest(balloonSeedRing,px,py).distance<3))continue;
       if(!seedClear(px,py) || definition.seedClear && !definition.seedClear(px,py))continue;
       requested++;
