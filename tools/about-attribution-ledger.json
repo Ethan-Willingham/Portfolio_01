@@ -3148,24 +3148,30 @@
       "models": {
         "gpt-6.1-sol": {
           "sluice": {
-            "edits": 20,
-            "tokens": 15331,
+            "edits": 21,
+            "tokens": 15594,
             "first": "2026-10-05",
-            "last": "2026-10-05"
+            "last": "2026-10-09"
           },
           "water-smoke-slime": {
-            "edits": 49,
-            "tokens": 41916,
+            "edits": 147,
+            "tokens": 142691,
             "first": "2026-10-05",
-            "last": "2026-10-05"
+            "last": "2026-10-11"
           }
         },
         "gpt-6-astra": {
           "water-smoke-slime": {
-            "edits": 3,
-            "tokens": 2812,
+            "edits": 17,
+            "tokens": 13779,
             "first": "2026-10-06",
-            "last": "2026-10-06"
+            "last": "2026-10-11"
+          },
+          "sluice": {
+            "edits": 1,
+            "tokens": 585,
+            "first": "2026-10-08",
+            "last": "2026-10-08"
           }
         }
       }
@@ -3370,10 +3376,10 @@
       "models": {
         "gpt-6-astra": {
           "slop": {
-            "edits": 1,
-            "tokens": 1069,
+            "edits": 11,
+            "tokens": 14387,
             "first": "2026-10-07",
-            "last": "2026-10-07"
+            "last": "2026-10-08"
           }
         }
       }
@@ -3396,8 +3402,8 @@
       "models": {
         "gpt-6-astra": {
           "slop": {
-            "edits": 11,
-            "tokens": 32274,
+            "edits": 12,
+            "tokens": 33313,
             "first": "2026-10-07",
             "last": "2026-10-07"
           }
@@ -3413,6 +3419,439 @@
             "tokens": 33759,
             "first": "2026-10-06",
             "last": "2026-10-07"
+          }
+        }
+      }
+    },
+    "codex:ea4068bd2dff78f7": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "daylight-globe": {
+            "edits": 13,
+            "tokens": 25946,
+            "first": "2026-10-08",
+            "last": "2026-10-09"
+          }
+        },
+        "gpt-6-astra": {
+          "daylight-globe": {
+            "edits": 7,
+            "tokens": 4371,
+            "first": "2026-10-09",
+            "last": "2026-10-09"
+          }
+        }
+      }
+    },
+    "codex:55b9833f94974f4f": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 1,
+            "tokens": 243,
+            "first": "2026-10-08",
+            "last": "2026-10-08"
+          }
+        }
+      }
+    },
+    "codex:0be1ecbf508225fa": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 1,
+            "tokens": 329,
+            "first": "2026-10-08",
+            "last": "2026-10-08"
+          }
+        }
+      }
+    },
+    "codex:687f23602aab0c03": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 2,
+            "tokens": 2934,
+            "first": "2026-10-08",
+            "last": "2026-10-08"
+          }
+        }
+      }
+    },
+    "codex:33998ae7e0403e00": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "daylight-globe": {
+            "edits": 2,
+            "tokens": 1408,
+            "first": "2026-10-09",
+            "last": "2026-10-09"
+          }
+        }
+      }
+    },
+    "codex:1ef8336c03ec6323": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "daylight-globe": {
+            "edits": 1,
+            "tokens": 872,
+            "first": "2026-10-09",
+            "last": "2026-10-09"
+          }
+        }
+      }
+    },
+    "codex:49e2ddb47b9e0021": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "spongebob-fight": {
+            "edits": 12,
+            "tokens": 16315,
+            "first": "2026-10-09",
+            "last": "2026-10-10"
+          }
+        }
+      }
+    },
+    "codex:65c56c734ee644b6": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "spongebob-fight": {
+            "edits": 15,
+            "tokens": 28517,
+            "first": "2026-10-09",
+            "last": "2026-10-09"
+          }
+        }
+      }
+    },
+    "codex:73aeafd85a893b22": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "let-me-llm-that-for-you": {
+            "edits": 6,
+            "tokens": 19087,
+            "first": "2026-10-10",
+            "last": "2026-10-10"
+          }
+        }
+      }
+    },
+    "codex:2a23d65ed0abd536": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "sluice": {
+            "edits": 1,
+            "tokens": 1095,
+            "first": "2026-10-10",
+            "last": "2026-10-10"
+          }
+        }
+      }
+    },
+    "codex:d1c33613d3c5ccaa": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "sluice": {
+            "edits": 1,
+            "tokens": 837,
+            "first": "2026-10-10",
+            "last": "2026-10-10"
+          }
+        }
+      }
+    },
+    "codex:42e6c3f3fcd9d22b": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "water-smoke-slime": {
+            "edits": 19,
+            "tokens": 25768,
+            "first": "2026-10-10",
+            "last": "2026-10-11"
+          }
+        }
+      }
+    },
+    "codex:a5e9895a15b1b065": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "water-smoke-slime": {
+            "edits": 1,
+            "tokens": 3130,
+            "first": "2026-10-10",
+            "last": "2026-10-10"
+          }
+        }
+      }
+    },
+    "codex:6a59ffab79c9b35c": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "sluice": {
+            "edits": 6,
+            "tokens": 12791,
+            "first": "2026-10-10",
+            "last": "2026-10-11"
+          },
+          "water-smoke-slime": {
+            "edits": 7,
+            "tokens": 8613,
+            "first": "2026-10-10",
+            "last": "2026-10-11"
+          }
+        }
+      }
+    },
+    "codex:dcbed06ca41b8aa8": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 1,
+            "tokens": 4982,
+            "first": "2026-10-11",
+            "last": "2026-10-11"
+          }
+        }
+      }
+    },
+    "codex:5da9a52601e07523": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "sluice": {
+            "edits": 4,
+            "tokens": 8963,
+            "first": "2026-10-11",
+            "last": "2026-10-11"
+          },
+          "water-smoke-slime": {
+            "edits": 8,
+            "tokens": 10232,
+            "first": "2026-10-11",
+            "last": "2026-10-11"
+          }
+        }
+      }
+    },
+    "codex:e4e0ee576463d836": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "sluice": {
+            "edits": 1,
+            "tokens": 1567,
+            "first": "2026-10-11",
+            "last": "2026-10-11"
+          },
+          "water-smoke-slime": {
+            "edits": 12,
+            "tokens": 17101,
+            "first": "2026-10-11",
+            "last": "2026-10-11"
+          }
+        }
+      }
+    },
+    "codex:a503190f56da149d": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "water-smoke-slime": {
+            "edits": 12,
+            "tokens": 25644,
+            "first": "2026-10-11",
+            "last": "2026-10-11"
+          },
+          "sluice": {
+            "edits": 4,
+            "tokens": 4382,
+            "first": "2026-10-11",
+            "last": "2026-10-11"
+          }
+        }
+      }
+    },
+    "codex:4e4ea9a5d2b2b2ec": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "water-smoke-slime": {
+            "edits": 1,
+            "tokens": 1684,
+            "first": "2026-10-12",
+            "last": "2026-10-12"
+          }
+        }
+      }
+    },
+    "codex:9e0527acaa4438f8": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "water-smoke-slime": {
+            "edits": 9,
+            "tokens": 16598,
+            "first": "2026-10-11",
+            "last": "2026-10-11"
+          }
+        }
+      }
+    },
+    "codex:cd8d78e2b9789f37": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "water-smoke-slime": {
+            "edits": 2,
+            "tokens": 1645,
+            "first": "2026-10-11",
+            "last": "2026-10-11"
+          }
+        }
+      }
+    },
+    "codex:7c239f3023914353": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "water-smoke-slime": {
+            "edits": 5,
+            "tokens": 4299,
+            "first": "2026-10-11",
+            "last": "2026-10-11"
+          },
+          "sluice": {
+            "edits": 1,
+            "tokens": 1788,
+            "first": "2026-10-11",
+            "last": "2026-10-11"
+          }
+        }
+      }
+    },
+    "codex:aec9229cece5ad20": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "water-smoke-slime": {
+            "edits": 21,
+            "tokens": 26916,
+            "first": "2026-10-11",
+            "last": "2026-10-11"
+          },
+          "sluice": {
+            "edits": 8,
+            "tokens": 8302,
+            "first": "2026-10-11",
+            "last": "2026-10-11"
+          }
+        }
+      }
+    },
+    "codex:ee622fc101eba7ca": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "water-smoke-slime": {
+            "edits": 1,
+            "tokens": 1691,
+            "first": "2026-10-11",
+            "last": "2026-10-11"
+          }
+        }
+      }
+    },
+    "codex:4e3c24b0d5946490": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "water-smoke-slime": {
+            "edits": 4,
+            "tokens": 9899,
+            "first": "2026-10-11",
+            "last": "2026-10-11"
+          },
+          "sluice": {
+            "edits": 4,
+            "tokens": 2655,
+            "first": "2026-10-11",
+            "last": "2026-10-11"
+          }
+        }
+      }
+    },
+    "codex:269cc1cf3147fd90": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "water-smoke-slime": {
+            "edits": 1,
+            "tokens": 996,
+            "first": "2026-10-11",
+            "last": "2026-10-11"
+          }
+        }
+      }
+    },
+    "codex:fe14350aff0cad7f": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "water-smoke-slime": {
+            "edits": 5,
+            "tokens": 4086,
+            "first": "2026-10-11",
+            "last": "2026-10-11"
+          }
+        }
+      }
+    },
+    "codex:edbfd5892bcf3d39": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "water-smoke-slime": {
+            "edits": 6,
+            "tokens": 8534,
+            "first": "2026-10-11",
+            "last": "2026-10-11"
+          }
+        }
+      }
+    },
+    "codex:024e47e878a29ba0": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "water-smoke-slime": {
+            "edits": 14,
+            "tokens": 15578,
+            "first": "2026-10-11",
+            "last": "2026-10-11"
+          },
+          "sluice": {
+            "edits": 1,
+            "tokens": 1646,
+            "first": "2026-10-11",
+            "last": "2026-10-11"
           }
         }
       }
