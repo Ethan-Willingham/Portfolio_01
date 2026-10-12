@@ -15504,7 +15504,9 @@
       c.scale(1/fitScale,1/fitScale);
       var stockFountainValve=machineState && machineState.definition.name==='heron' && machineState.definition.parts.some(function(p){return p.buildId===part.id;});
       var thermalWall=machineState && machineState.definition.thermal && machineState.definition.thermal.mode==='freeze' && machineState.definition.parts.some(function(p){return p.id==='fracture'&&p.buildId===part.id;});
-      var label=thermalWall?'Pipe wall: '+(part.open?'fractured':'intact'):(stockFountainValve ? 'Valve' : part.id)+': '+(part.open ? 'Open' : 'Closed');
+      var suctionValve=machineState && machineState.definition.suction && machineState.definition.parts.find(function(p){return p.buildId===part.id;});
+      var valveName=suctionValve ? suctionValve.id==='delivery'?'Outlet':'Primer' : stockFountainValve?'Valve':part.id;
+      var label=thermalWall?'Pipe wall: '+(part.open?'fractured':'intact'):valveName+': '+(part.open ? 'Open' : 'Closed');
       var labelWidth=c.measureText(label).width+8,labelHeight=18;
       // Keep a visible marker's identity inside the cropped view at any zoom.
       // Offscreen markers retain their geometry and await a view change.

@@ -6,13 +6,13 @@ function r(x,y,width,height){return{x:x,y:y,width:width,height:height};}
 root.WSSMachines['suction-siphon']={make:function(w,o){
  o=o||{};if(w.w!==720 || w.h!==480 || w.tile!==8)throw Error('Suction hose needs a 720 by 480 world.');
  var d=root.WSSMachines['cartesian-divers'].make({w:720,h:400,tile:8},{seed:o.seed,squeezed:true});
- var source=r(40,176,256,208),receiver=r(448,416,256,56),pump=r(528,240,160,200);
+ var source=r(40,176,256,208),receiver=r(448,312,256,160),pump=r(528,240,160,200);
  d.name='suction-siphon';d.title='Suction-started hose';d.draft=true;delete d.source;
  d.vessels=[{id:'source',label:'Source water',rect:source,sealed:false},{id:'receiver',label:'Receiving bowl',rect:receiver,sealed:false},{id:'pump',label:'Air-pump cylinder',rect:pump,sealed:true}];
  d.pipes=[{points:[{x:232,y:352},{x:304,y:352},{x:304,y:192},{x:504,y:192},{x:504,y:392}],bore:24},
   {points:[{x:504,y:392},{x:552,y:392}],bore:16}];
  d.parts=[{id:'delivery',type:'valve',rect:r(496,400,32,16),direction:'down',open:false},{id:'primer-port',type:'valve',rect:r(528,392,8,16),direction:'right',open:true}];
- d.vents=[r(672,368,24,24),r(496,400,32,16)];if(o.vented)d.vents.push(r(328,176,32,16));d.slimes=[];d.solids=[r(40,376,256,16),r(448,456,256,16)];
+ d.vents=[r(672,368,24,24),r(496,400,32,16)];if(o.vented)d.vents.push(r(328,176,32,16));d.slimes=[];d.solids=[r(40,376,256,16),r(440,456,272,16),r(440,312,16,160),r(696,312,16,160)];
  d.initial=[{kind:'rect',rect:r(48,216,240,160)}];d.boundaries=null;
  d.divers={squeezed:false,vented:!!o.vented,axis:'x',piston:r(552,248,16,184),stroke:96,speed:48,dragRate:2,viscosity:.6,pistonLabel:'Hand-driven air piston',pistonLabelY:232,labels:{on:'Pull pump handle',off:'Press pump handle'}};
  var units=root.WaterMachinesInstruments.scale({width:w.w,density:1}),vaporPsi=Math.pow(10,5.40221-1838.675/(293.15-31.737))*100000/6894.757293168;
