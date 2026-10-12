@@ -1701,60 +1701,76 @@
     "id": "soft-robot-gripper",
     "capability": "Water slimes",
     "title": "Soft robot gripper",
-    "status": "NOT WORKING",
+    "status": "WORKS",
     "pool": false,
-    "cue": "Draft. Grab the elastic cup around the block; air actuation is not connected.",
+    "cue": "Remove the support to test the grip. Withdraw the pistons to let go.",
     "draft": true,
     "world": {
       "w": 720,
       "h": 400
     },
-    "blocker": "Real elastic cup and rigid payload only; pressurized channel actuation is absent.",
+    "blocker": "",
     "dependencies": [
       "wss-drafts-bodies",
-      "wss-drafts-creatures"
+      "wss-drafts-creatures",
+      "wss-cartesian-divers",
+      "wss-machines/cartesian-divers",
+      "wss-air-contact",
+      "wss-water-balloons"
     ],
     "behaviorPlan": {
-      "seconds": 4,
-      "action": "Use actual Grab on the elastic cup",
-      "key": "Cup and rigid payload remain finite; pneumatic grasp is absent.",
-      "statusIfObserved": "NOT WORKING"
+      "seconds": 10,
+      "action": "Let the fingers load, remove the support, then withdraw the actual pistons.",
+      "key": "Sealed pressure carries the unsupported block above y265; piston withdrawal opens the grip and drops it below y340. Open vents fail to carry it. Gas amount is accounted and native body contact stays finite on three seeds.",
+      "statusIfObserved": "WORKS"
     },
     "accepted": true,
     "preview": "cup",
     "scripts": [
       "wss-drafts-bodies",
-      "wss-drafts-creatures"
+      "wss-drafts-creatures",
+      "wss-cartesian-divers",
+      "wss-machines/cartesian-divers",
+      "wss-air-contact",
+      "wss-water-balloons"
     ]
   },
   {
     "id": "suction-cup",
     "capability": "Water slimes",
     "title": "Suction cup",
-    "status": "NOT WORKING",
+    "status": "WORKS",
     "pool": false,
-    "cue": "Draft. Press the elastic cup against the shelf; vacuum adhesion is not connected.",
+    "cue": "Open the vent to release the hanging seal.",
     "draft": true,
     "world": {
       "w": 720,
       "h": 400
     },
-    "blocker": "Cup deformation and terrain contact only; sealed cavity and vacuum adhesion are absent.",
+    "blocker": "",
     "dependencies": [
       "wss-drafts-bodies",
-      "wss-drafts-creatures"
+      "wss-drafts-creatures",
+      "wss-cartesian-divers",
+      "wss-machines/cartesian-divers",
+      "wss-air-contact",
+      "wss-water-balloons"
     ],
     "behaviorPlan": {
-      "seconds": 4,
-      "action": "Use actual Grab to press cup toward shelf",
-      "key": "Ordinary terrain contact remains finite; vacuum adhesion is absent.",
-      "statusIfObserved": "NOT WORKING"
+      "seconds": 7,
+      "action": "Hold the sealed head, then click its real air vent.",
+      "key": "Actual seal stays above y315 while sealed and falls below y340 after venting; an open vent cannot hold it. Finite gas inventories and native bodies stay finite on three seeds.",
+      "statusIfObserved": "WORKS"
     },
     "accepted": true,
     "preview": "cup",
     "scripts": [
       "wss-drafts-bodies",
-      "wss-drafts-creatures"
+      "wss-drafts-creatures",
+      "wss-cartesian-divers",
+      "wss-machines/cartesian-divers",
+      "wss-air-contact",
+      "wss-water-balloons"
     ]
   },
   {
@@ -2149,28 +2165,36 @@
     "id": "snorkel-limit",
     "capability": "Water slimes",
     "title": "Snorkel limit",
-    "status": "NOT WORKING",
+    "status": "WORKS",
     "pool": false,
-    "cue": "Draft. Water surrounds the lung slime; its airway and breathing effort are not connected.",
+    "cue": "The shallow lung breathes. The same effort cannot fill the deeper one.",
     "draft": true,
     "world": {
       "w": 720,
       "h": 400
     },
-    "blocker": "Physical snorkel and passive gel only; internal lung airway and breathing work are absent.",
+    "blocker": "",
     "dependencies": [
-      "wss-drafts-creatures"
+      "wss-drafts-creatures",
+      "wss-cartesian-divers",
+      "wss-machines/cartesian-divers",
+      "wss-water-balloons",
+      "wss-snorkel-limit"
     ],
     "behaviorPlan": {
-      "seconds": 4,
-      "action": "Actual Grab moves lung fixture into native water",
-      "key": "Fixture remains finite; passive buoyancy does not establish breathing limit.",
-      "statusIfObserved": "NOT WORKING"
+      "seconds": 6.5,
+      "action": "Observe both open lung ports and compare physically blocked airways.",
+      "key": "Both actual ports connect to room air. Shallow gas inventory and actual area expand, deeper pressure prevents a useful intake, blocked ports admit no air, and native water count is conserved on three seeds.",
+      "statusIfObserved": "WORKS"
     },
     "accepted": true,
     "preview": "cup",
     "scripts": [
-      "wss-drafts-creatures"
+      "wss-drafts-creatures",
+      "wss-cartesian-divers",
+      "wss-machines/cartesian-divers",
+      "wss-water-balloons",
+      "wss-snorkel-limit"
     ]
   },
   {

@@ -74,10 +74,12 @@
       d.boundaryNote+=' Native water starts on both sides of the skin, keeping each parcel\'s original side. The button gives the gel a balanced inward hand impulse; only native contact reactions can move the body. There is no programmed swim stroke.';return d;
     },
     'soft-robot-gripper':function(w,o){
+      if(root.WSSAirContact)return root.WSSAirContact.gripper(w,o);
       var d=base('soft-robot-gripper',w,o);d.slimes=[{x:360,y:192,radius:28,shape:'draft-trough'},{x:368,y:248,radius:20,shape:'cube'}];d.draftRig=[{body:1,kind:'free'}];
       d.boundaryNote+=' The open cup is a real elastic lattice, and the payload is a rigid-projected lattice. Pressurized channels, closing actuators and a grasping controller are absent.';return d;
     },
     'suction-cup':function(w,o){
+      if(root.WSSAirContact)return root.WSSAirContact.cup(w,o);
       var d=base('suction-cup',w,o);d.solids=[rect(248,272,224,16)];d.slimes=[{x:360,y:232,radius:28,shape:'draft-trough'}];
       d.action='Use Grab';d.primary={kind:'creature-fixture'};
       d.boundaryNote+=' The cup deforms under Grab and terrain contacts. Its rim does not register a sealed pressure cavity, so vacuum traction and adhesion are not implemented.';return d;
@@ -138,6 +140,7 @@
       d.boundaryNote+=' The cuff is a deformable lattice. There is no internal flowing vessel, inflating cuff cavity, circulation source or blood-pressure measurement; this fixture makes no pressure-reading claim.';return d;
     },
     'snorkel-limit':function(w,o){
+      if(root.WSSSnorkelLimit)return root.WSSSnorkelLimit.make(w,o);
       var d=base('snorkel-limit',w,o);d.vessels=[box('tank','Water',rect(144,112,432,272))];d.initial=[water(rect(152,216,416,160))];
       d.pipes=[{points:[{x:360,y:80},{x:360,y:168}],bore:16}];d.slimes=[{x:360,y:184,radius:32}];d.action='Use Grab';d.primary={kind:'creature-fixture'};
       d.boundaryNote+=' The physical snorkel is open to room air but is not joined to an internal lung gas inventory. Respiratory effort and a flexible lung airway are absent. Passive gel buoyancy does not establish a breathing-depth limit.';return d;
