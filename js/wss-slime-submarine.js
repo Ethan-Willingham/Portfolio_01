@@ -18,16 +18,18 @@ function make(w,o){
 var previous=root.WSSDraftRuntime;
 root.WSSDraftRuntime={create:function(c){
  if(!c.definition.submarine)return previous&&previous.create?previous.create(c):null;
- var b=c.bodies[0],m=c.membrane,d=c.definition,L=c.liquid,geom=root.WSSWaterBalloons.geometry,open=false,initialY=b.cy;
- var a=0;for(var k=0;k<b.ringN;k++){var i=b.ring[k],j=b.ring[(k+1)%b.ringN];a+=b.px[i]*b.py[j]-b.px[j]*b.py[i];}a=Math.abs(a)*.5;
+ var b=c.bodies[0],m=c.membrane,d=c.definition,L=c.liquid,open=false,initialY=b.cy,mirrorTime=-Infinity,mirrorUpdated=-Infinity;
+ function skinArea(){var controls=b.surfaceSlime&&b.surfaceSlime.fluidControls;if(controls){var points=root.WSSWaterBalloons.geometry.curveRing(controls),area=0;for(var k=0;k<points.length;k++){var a=points[k],z=points[(k+1)%points.length];area+=a.x*z.y-z.x*a.y;}return Math.abs(area)*.5;}var area=0;for(var k=0;k<b.ringN;k++){var i=b.ring[k],j=b.ring[(k+1)%b.ringN];area+=b.px[i]*b.py[j]-b.px[j]*b.py[i];}return Math.abs(area)*.5;}
+ var a=skinArea();
  var displaced=a*.002/1.5625,dry=displaced*d.submarine.dryDensity,count=0,max=0;
  b.ballastBuoyancy=true;b.fluidDensityRatio=d.submarine.dryDensity;b.nativePointMass=dry/b.n;
  return {primary:function(){if(d.submarine.blocked){d.action='Valve blocked';return true;}open=!open;m.setSlit(open);d.action=open?'Close ballast':'Flood ballast';b.sleeping=false;b.sleepFrames=0;return true;},
- tick:function(){var s=m.stats();count=s.carriedInside||0;max=Math.max(max,count);var total=dry+count*.002;b.fluidDensityRatio=total/displaced;b.nativePointMass=total/b.n;
+ tick:function(){var s=m.stats();count=s.carriedInside||0;max=Math.max(max,count);var total=dry+count*.002;displaced=skinArea()*.002/1.5625;b.fluidDensityRatio=total/displaced;b.nativePointMass=total/b.n;
+  var now=performance.now();if(L.readbackAppliedTime!==mirrorTime){mirrorTime=L.readbackAppliedTime;mirrorUpdated=now;}var mirrorAge=now-mirrorUpdated;
   var bins=new Uint16Array(90*50),arr=L.liquid.arrays,n=L.liquid.getCount(),levels=[];for(var i=0;i<n;i++){var x=arr.x[i],y=arr.y[i];if(x<104||x>616||Math.abs(x-b.cx)<70||y<100||y>376)continue;bins[Math.floor(y/8)*90+Math.floor(x/8)]++;}
   for(var col=13;col<77;col++){if(Math.abs(col*8-b.cx)<70)continue;for(var row=12;row<47;row++)if(bins[row*90+col]>=10){levels.push(row*8);break;}}
-  if(levels.length>6){levels.sort(function(x,y){return x-y;});b.fluidSurfaceY=levels[Math.floor(levels.length/2)];}
-  d.readingLabel=(open?'Ballast open, ':'Ballast closed, ')+count+' carried parcels';d.submarineReading={open:open,blocked:d.submarine.blocked,carried:count,maxCarried:max,dryMass:dry,totalMass:total,density:b.fluidDensityRatio,y:b.cy,dy:b.cy-initialY,waterCount:s.waterCount,nonfinite:s.nonfinite,sideViolations:s.sideViolations};
+  if(Number.isFinite(mirrorTime)&&mirrorAge<=300&&levels.length>6){levels.sort(function(x,y){return x-y;});b.fluidSurfaceY=levels[Math.floor(levels.length/2)];}else delete b.fluidSurfaceY;
+  d.readingLabel=(open?'Ballast open, ':'Ballast closed, ')+count+' carried parcels';d.submarineReading={open:open,blocked:d.submarine.blocked,carried:count,maxCarried:max,dryMass:dry,totalMass:total,density:b.fluidDensityRatio,displacedMass:displaced,mirrorAgeMs:mirrorAge,y:b.cy,dy:b.cy-initialY,waterCount:s.waterCount,nonfinite:s.nonfinite,sideViolations:s.sideViolations};
  },stats:function(){return d.submarineReading;},destroy:function(){delete b.ballastBuoyancy;delete b.fluidDensityRatio;delete b.nativePointMass;delete b.fluidSurfaceY;}};
 }};
 root.WSSMachines['slime-submarine']={make:make};root.WSSSlimeSubmarine={make:make};
