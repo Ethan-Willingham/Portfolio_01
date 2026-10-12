@@ -17,7 +17,7 @@ const server=createServer((req,res)=>{
   }catch{res.writeHead(404).end();}
 });
 const profile=fs.mkdtempSync(path.join(os.tmpdir(),'water-grain-'));
-let child,socket,serial=0;const pending=new Map(),errors=[];
+let child,socket,serial=0;const pending=new Map(),errors=[],audioEvents=[];
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const send=(method,params={})=>new Promise((resolve,reject)=>{
   const id=++serial,timer=setTimeout(()=>{pending.delete(id);reject(Error('Timeout '+method));},30000);
@@ -43,7 +43,7 @@ async function sample(){return evaluate(`(async()=>{
   if(x>=72 && x<=608 && y>=160 && y<=272 && d.sluice.polygons.some(points=>points.every((a,k)=>{const b=points[(k+1)%4],dx=b[0]-a[0],dy=b[1]-a[1];return ((x-a[0])*dy-(y-a[1])*dx)/Math.hypot(dx,dy)<-0.005;})))out.penetrations++;
   if(((f[i]&3)|((f[i]>>4)&4))!==5){out.water++;continue;}
   const gold=((f[i]>>2)&3)===3,r=gold?out.gold:out.sand;out.ids.push([i,f[i]&79]);r.n++;r.x+=x;r.y+=y;r.speed+=Math.hypot(vx,vy);
-  if(x>=d.sluice.tailingsX||y>=288)r.tail++;else if(x>=232)r.bed++;
+  if(x>=d.sluice.tailingsX||y>=d.sluice.tailingsY)r.tail++;else if(x>=232)r.bed++;
   if(d.sluice.pockets.some(q=>x>=q.x&&x<q.x+q.width&&y>=q.y-2&&y<q.y+q.height+2))r.pockets++;
  }
  for(const k of ['sand','gold']){for(const q of ['x','y','speed'])out[k][q]/=Math.max(1,out[k].n);}
@@ -68,7 +68,7 @@ try{
  const target=(await(await fetch('http://127.0.0.1:'+port+'/json/list')).json()).find(x=>x.type==='page');
  socket=new WebSocket(target.webSocketDebuggerUrl);await new Promise(r=>socket.addEventListener('open',r,{once:true}));
  socket.addEventListener('message',e=>{const m=JSON.parse(e.data),p=pending.get(m.id);if(p){clearTimeout(p.timer);pending.delete(m.id);m.error?p.reject(Error(JSON.stringify(m.error))):p.resolve(m.result);}
- else if(m.method==='Runtime.exceptionThrown')errors.push(m.params.exceptionDetails);else if(m.method==='Runtime.consoleAPICalled' && m.params.type==='error')errors.push(m.params.args.map(a=>a.value || a.description));});
+ else if(m.method==='Runtime.exceptionThrown')errors.push(m.params.exceptionDetails);else if(m.method==='Runtime.consoleAPICalled' && m.params.type==='error')errors.push(m.params.args.map(a=>a.value || a.description));else if(m.method?.startsWith('WebAudio.'))audioEvents.push(m);});
  await send('Runtime.enable');await send('Page.enable');await send('Emulation.setDeviceMetricsOverride',{width:1440,height:900,mobile:false,deviceScaleFactor:1});
  const report=[];
  const choices=[['ordinary',{}],['matched',{matched:true}],['plain',{riffles:false}],['seed42',{seed:42}],['seed913',{seed:913}]];
@@ -121,6 +121,13 @@ try{
   assert.equal(await evaluate('__toy.stats().pouring'),false,'restart clears the held source');
   assert.equal((await sample()).n,mobileInitial,'restart restores the finite seed');
   await evaluate('__toy.scene("blank")');for(let i=0;i<300;i++){if(await evaluate('typeof __toy==="object"&&__toy.stats().scene==="blank"&&!__toy.stats().loading'))break;await sleep(100);}assert.equal(await evaluate('__toy.liquid().materialSlip'),undefined,'scene change releases the material companion');
+ }
+ if(!process.env.GOLD_CASES || process.env.GOLD_CASES.split(',').includes('station')){
+  const {checkStation}=await import('./gold-sluice-station-checks.mjs');
+  await checkStation({load,sample,evaluate,send,sleep,dump,audioEvents});
+ }
+ if(process.env.GOLD_CASES?.split(',').includes('audio')){
+  const {checkAudioLifecycle}=await import('./gold-sluice-station-checks.mjs');await checkAudioLifecycle({load,evaluate,sleep,send});
  }
  assert.equal(errors.length,0,JSON.stringify(errors));
  fs.writeFileSync(path.join(dump,'result.json'),JSON.stringify({report,errors},null,2));

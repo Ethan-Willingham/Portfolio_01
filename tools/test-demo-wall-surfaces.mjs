@@ -91,6 +91,7 @@ try{
     const result=await inside(`(()=>{
       var before=walls.slice(),version=wallsVersion,count=liquidCount;
       bakeWalls();bakeSmokeBoundary();
+      var pixelScale=wallsCanvas.width/worldW;
       var pixels=wallsCtx.getImageData(0,0,wallsCanvas.width,wallsCanvas.height).data;
       var missing=0,outside=0,solidPixels=0,airPixels=0,minAlpha=255;
       var polygons=machineState && machineState.definition.sluice ? machineState.definition.sluice.polygons : [];
@@ -99,7 +100,7 @@ try{
         for(var i=0,j=points.length-1;i<points.length;j=i++){
           var a=points[j],b=points[i],dx=b[0]-a[0],dy=b[1]-a[1];
           var t=Math.max(0,Math.min(1,((x-a[0])*dx+(y-a[1])*dy)/(dx*dx+dy*dy)));
-          if(Math.hypot(x-a[0]-dx*t,y-a[1]-dy*t)<1/dpr)near=true;
+          if(Math.hypot(x-a[0]-dx*t,y-a[1]-dy*t)<1/pixelScale)near=true;
           if((a[1]>y)!==(b[1]>y) && x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0])inside=!inside;
         }
         return {inside,near};
@@ -107,10 +108,10 @@ try{
       // Independently classify raster pixel centers against the shared grid.
       // This detects a rounded corner, broad lip, missing border or erased hole.
       for(var y=0;y<wallsCanvas.height;y+=2)for(var x=0;x<wallsCanvas.width;x+=2){
-        var r=Math.floor((y+.5)/dpr/TILE),c=Math.floor((x+.5)/dpr/TILE);
+        var r=Math.floor((y+.5)/pixelScale/TILE),c=Math.floor((x+.5)/pixelScale/TILE);
         var solid=tileAt(r,c)!==null;
         if(machineState && machineState.definition.hourglass && !isBorderCell(r,c))solid=false;
-        var polygonPoints=polygons.map(function(points){return polygonPoint(points,(x+.5)/dpr,(y+.5)/dpr);});
+        var polygonPoints=polygons.map(function(points){return polygonPoint(points,(x+.5)/pixelScale,(y+.5)/pixelScale);});
         if(polygonPoints.some(function(p){return p.near;}))continue;
         if(polygonPoints.some(function(p){return p.inside;}))solid=true;
         var alpha=pixels[(y*wallsCanvas.width+x)*4+3];

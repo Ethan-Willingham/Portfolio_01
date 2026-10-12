@@ -1225,9 +1225,39 @@ Grain pairs use a complete neighbor traversal, snapshot Jacobi updates,
 inverse-mass position correction and equal/opposite normal and Coulomb-friction
 impulses. Water/grain drag uses the same volume-based coefficient for quartz
 and gold. There are no destination forces, capture switches, frozen gold,
-particle removal or hidden refills. The initial supply is finite. The ordinary
-hold-to-pour control adds external water at the upper source and stops on release.
-The tailings tank and water outside it remain in the same simulated world.
+particle removal or hidden refills. The initial supply is finite. The tailings
+tank and water outside it remain in the same simulated world.
+
+The v5.168 wash station adds a live water valve and a 25 to 150 percent flow
+control. An external tank accounts for 18,000 additional water parcels. The
+hopper accounts for 240 grains, 216 quartz and 24 gold, before their admission.
+Holding Feed transfers 30 grains per native simulation second through the
+visible chute. Release cancels the fractional admission credit. Seven outlet
+lanes are independent of material. Both stocks stop exactly at exhaustion.
+Supply clocks follow native time, including quarter-speed playback. Opening
+the valve starts its clock at the current simulation time, without banking
+time spent paused or closed. The original held source remains available.
+
+The console displays remaining gold, washed sand and gold in the tailings from
+the existing native position mirror. These are current locations, not permanent
+recovery awards. Readback latency also applies to these counts. Set up changes
+the next run's actual slope (4 to 11 degrees), bar height (0 to 0.5 inch at the
+existing 30-inch-box scale), density comparison and initial sample. New run and
+the top restart refill supplies; the restart preserves the selected geometry.
+The previous run's counts remain available in Set up.
+
+Inspect magnifies the existing renderers and pans between pockets. Dragging
+that view moves only the camera. Walls and annotations get higher-resolution
+backing canvases at larger scales. Optional procedural wash audio follows the
+native runoff velocities and active inlet; gravel cues follow confirmed hopper
+transfers. It starts muted, pauses with the scene and closes its Web Audio
+context on scene exit. It is presentation, not an acoustic simulation.
+
+W toggles water, holding G feeds, S selects quarter speed and I opens inspection.
+Space pauses and Escape closes setup or inspection. Pointer release outside a
+control, pointer cancellation, keyboard release and focus loss stop held feed.
+Pause and focus loss also close the water valve. Desktop and landscape touch
+use the same controls with targets at least 44 pixels tall.
 
 Instruments counts actual current grain positions. Equal densities changes only
 gold mass. Without riffles removes the bars, retaining the same initial particle
@@ -1237,7 +1267,13 @@ owns its factory, including after another material draft loads.
 Run `node tools/test-gold-sluice.mjs` for the three seeded washes, equal-density
 and removed-riffle controls, finite resident inventory, material identities,
 polygon penetration, eight actual GPU contact fixtures, landscape touch targets,
-held pouring, release, pause, reset and scene changes. The harness owns and closes
+held pouring, release, pause, reset and scene changes. The station checks also
+measure native flow at 25 and 125 percent, verify exact depletion of both stocks,
+check newly admitted material identities and test a steep bed with tall bars.
+They use real pointer, keyboard and landscape touch events at 844 and 667 pixels,
+check camera-only inspection against unchanged GPU samples and verify the Web
+Audio context lifecycle. Use `GOLD_CASES=station node tools/test-gold-sluice.mjs`
+to run just those interaction checks. The harness owns and closes
 Chrome for Testing. Screenshots and measurements default to `/tmp/gold-sluice-review`.
 The default grain rendering and game boot are covered by
 `node tools/test-water-grain-visibility.mjs`.
@@ -1247,7 +1283,7 @@ exploratory drag, the native water filters, pressure limiting and unmeasured
 contact/pressure projection work. It does not predict calibrated recovery
 percentages, grain shape effects, turbulence or full mixture energy conservation.
 
-The final seeded runs (17, 42 and 913) wash out 44, 45 and 42 of 54 quartz
+The v5.154 reference runs (17, 42 and 913) wash out 44, 45 and 42 of 54 quartz
 parcels at about 24.8 native seconds, retaining all 55 gold parcels. Equal
 densities washes out 44 of 55 gold parcels; removing the riffles loses 31 of
 55. Every checkpoint has finite state and zero bed/riffle penetrations. The

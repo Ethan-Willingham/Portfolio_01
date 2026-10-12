@@ -87,6 +87,7 @@
         reversing?'Moving air takes a moment to reverse.':flow==='still'?'Watch the direction change as pressure shifts.':'Air moves toward the lower pressure.');
       return {label:labels[flow],flow:flow};
     }
+    var sluiceControls=window.WSSSluiceControls ? window.WSSSluiceControls.create(toy,shell) : null;
     var sceneHints = {
       falls: 'Drop a slime into the falling water.',
       zerog: 'Pull a slime through the floating water.',
@@ -128,6 +129,7 @@
       var current=toy.machineState(),choices=current && current.definition.setups;
       var choice=choices && choices.find(function(item){return item.id===value;});
       if(current && current.definition.name==='sewer-gas-trap' && choice)return Object.assign({},choice.options,{fanOff:current.definition.draftFireSmoke.fan.enabled===false});
+      if(current && current.definition.sluice){var d=current.definition.sluice;return Object.assign({slope:d.slope,riffleHeight:d.riffleHeight,initialCharge:d.initialCharge,seed:current.seed,matched:false,riffles:true},choice?choice.options:{});}
       return choice ? Object.assign({},choice.options) : {vented:value==='vented',tapEnabled:value!=='tap-off',secondHole:value==='second-hole'};
     }
     var nativeSetupScene=null,controlPointer=null,controlKeyboard=false;
@@ -394,7 +396,7 @@
         var fieldAction=control.pointerMode==='seal' || control.pointerMode==='airflow';
         button.classList.toggle('is-field-action',fieldAction);
         button.classList.toggle('is-inlet-action',control.pointerMode==='airflow');
-        var heldControl=/^(thumb|fire-pour|pour)$/.test(control.kind);
+        var heldControl=/^(thumb|fire-pour|pour|sluice-feed)$/.test(control.kind);
         button.dataset.hold=String(heldControl);
         button.disabled=!!control.disabled;
         button.setAttribute('aria-label',control.label);
@@ -489,6 +491,7 @@
       fitPanel();
     }
     function updateMeasurements() {
+      if(sluiceControls)sluiceControls.update();
       if (oxygenView) oxygenView.update();
       var state = toy.stats(), native=nativeScene(state.scene),machine = /^(siphon|cup|heron)$/.test(state.scene) || native;
       text('toy-fps', state.fps + ' FPS');

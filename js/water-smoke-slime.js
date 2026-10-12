@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.167'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.168'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -233,6 +233,8 @@
     var padding=expanded ? Math.min(16,Math.max(6,Math.min(w,h)*.025)) : 0;
     var insetLeft=padding,insetRight=padding,insetTop=(overlayControls ? topHeight : 0)+padding;
     var insetBottom=(overlayControls ? Math.max(0,shell.clientHeight-h-topHeight) : 0)+padding;
+    var sluiceConsole=shell.querySelector('.sluice-console');
+    if(expanded && sluiceConsole && !sluiceConsole.hidden)insetBottom+=sluiceConsole.getBoundingClientRect().height;
     var dock=shell.querySelector('.toy-dock'),dockStyle=dock && getComputedStyle(dock);
     if(expanded && dockStyle && dockStyle.display!=='none' && /^(absolute|fixed)$/.test(dockStyle.position)){
       var dockBounds=dock.getBoundingClientRect(),viewBounds=viewport.getBoundingClientRect();
@@ -297,8 +299,7 @@
       positionKeyboardCursor(Math.max(minX,Math.min(maxX,keyboardX)),Math.max(minY,Math.min(maxY,keyboardY)));
       px=keyboardX;py=keyboardY;
     }
-    drawMachineOverlay();
-    bakeSmokeBoundary();
+    bakeWalls();drawMachineOverlay();bakeSmokeBoundary();
     return cameraState();
   }
   window.addEventListener('resize', fitStage);
@@ -439,9 +440,13 @@
   }
 
   function bakeWalls() {
+    var wallRatio=machineState && machineState.definition.sluice ? Math.min(3,Math.ceil(dpr*Math.max(1,fitScale))) : dpr;
+    if(wallsCanvas.width!==Math.round(worldW*wallRatio) || wallsCanvas.height!==Math.round(worldH*wallRatio)){
+      wallsCanvas.width=Math.round(worldW*wallRatio);wallsCanvas.height=Math.round(worldH*wallRatio);wallsBakedVersion=-1;
+    }
     if (wallsBakedVersion === wallsVersion) return;
     wallsBakedVersion = wallsVersion;
-    wallsCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    wallsCtx.setTransform(wallRatio, 0, 0, wallRatio, 0, 0);
     wallsCtx.clearRect(0, 0, worldW, worldH);
     var palette=getComputedStyle(document.documentElement);
     var glass=glassWalls && airModel && airModel.enabled;
@@ -14615,6 +14620,7 @@
     if(definition.draftRig)toyDraftRig=window.WSSDraftBodies.createRig(definition,jelloBodies);
     var state=machineState={definition:definition,seed:options.seed || 17,initialParticles:added,ready:false,
       primaryUsed:false,startedAt:null,wallClockStartedAt:null,energyInput:0,inputParticles:0,energyModified:false};
+    if(definition.sluice)state.sluiceRun={flow:100,valve:false,feeding:false,feedAcc:0,fed:0,waterAdded:0,clock:liquidWGPU.simulationClock};
     setSceneChip(name);if(!options.canvasThumb)setTool('poke');bakeWalls();updateReadout();
     // The real initial divers and water can be drawn while their pressure
     // pipelines finish. Uploading the authored state advances no simulation.
@@ -14955,6 +14961,8 @@
     else if(kind==='draft-primary' && d.releaseCap)opening(d.releaseCap);
     else if(kind==='creature-gates' && d.parts && d.parts.length)atRect(d.parts[0].rect);
     else target(source.x+source.width*.5,source.y+12,48,32);
+    if(d.sluice){var feed=d.sluice.feed;controls.push({id:'sluice-feed',x:feed.x,y:feed.y-24,width:48,height:44,
+      label:'Hold to feed paydirt',kind:'sluice-feed',disabled:disabled || machineState.sluiceRun.fed>=d.sluice.hopper,pointerMode:'fixture'});}
     return controls;
   }
   function activateMachineControl(id,held){
@@ -14966,6 +14974,7 @@
       return constructMachine(d.name,{dry:d.primary.dry,fanOff:!!d.draftFireSmoke.fan.enabled,seed:machineState.seed});
     }
     if(control.kind==='thumb')return machineThumb(held!==false);
+    if(control.kind==='sluice-feed')return sluiceControl('feed',held===true);
     if(control.kind==='fire-pour' || control.kind==='pour')return machinePour(held===true);
     return machinePrimary();
   }
@@ -14977,7 +14986,7 @@
     if(!machinePourHeld){machinePourClock=liquidWGPU.simulationClock;machinePourFlow={acc:0};}
     machinePourHeld=true;return true;
   }
-  function releaseMachineControl(){machinePour(false);machineThumb(false);}
+  function releaseMachineControl(){machinePour(false);machineThumb(false);sluiceControl('feed',false);}
 
   function setGravityUI(g) { gravMul = g; applyGravity(); syncSliderUI(); }
 
@@ -15250,13 +15259,13 @@
       instrumentsCanvas.setAttribute('aria-hidden','true');stage.appendChild(instrumentsCanvas);
       instrumentsCtx=instrumentsCanvas.getContext('2d');
     }
-    var overlayDpr=toyThirsty ? Math.min(3,dpr*Math.max(1,fitScale)) : dpr;
+    var overlayDpr=machineState && machineState.definition.sluice ? Math.min(3,Math.ceil(dpr*Math.max(1,fitScale))) : toyThirsty ? Math.min(3,dpr*Math.max(1,fitScale)) : dpr;
     var overlayW=Math.round(worldW*overlayDpr),overlayH=Math.round(worldH*overlayDpr);
     if(instrumentsCanvas.width!==overlayW || instrumentsCanvas.height!==overlayH){instrumentsCanvas.width=overlayW;instrumentsCanvas.height=overlayH;machineOverlayCache=null;}
     instrumentsCanvas.style.width=worldW+'px';instrumentsCanvas.style.height=worldH+'px';
     var burstView=machineState && machineState.definition.boundaries && machineState.definition.boundaries.burstDisk && toyBoundary ? toyBoundary.stats().burstDisk : null;
     var detailAnnotations=!machineState || !machineState.definition.quietApparatus || !document.getElementById('toy-panel-instruments').hidden;
-    var overlayKey=[detailAnnotations,toyThirsty || toyWave || toyDraftRuntime?liquidWGPU.simulationClock:0,wallsVersion,pressureColors,airPressureColors,fitScale,viewPanX,viewPanY,cameraWidth,cameraHeight,currentScene,highlightedValve,handsSelection && handsSelection.index].join(':');
+    var overlayKey=[detailAnnotations,toyThirsty || toyWave || toyDraftRuntime || machineState && machineState.definition.sluice?liquidWGPU.simulationClock:0,wallsVersion,pressureColors,airPressureColors,fitScale,viewPanX,viewPanY,cameraWidth,cameraHeight,currentScene,highlightedValve,handsSelection && handsSelection.index].join(':');
     if(burstView)overlayKey+=':'+burstView.opened+':'+burstView.fault;
     if(toyThermoscope)overlayKey+=':'+toyThermoscope.heated;
     if(toyFire){var overlayHeat=toyFire.stats();overlayKey+=':'+overlayHeat.burning+':'+overlayHeat.airStarved+':'+overlayHeat.extinguished+':'+overlayHeat.smothered;}
@@ -15320,7 +15329,7 @@
     }
     if(machineState){
       var definition=machineState.definition;
-      if(art && definition.primary.kind==='pour' && definition.primary.target)
+      if(art && definition.primary.kind==='pour' && definition.primary.target && !definition.sluice)
         art.sourcePort(c,definition.primary.target.x,definition.primary.target.y);
       if(definition.primary.kind==='slime' && !machineState.primaryUsed){
         var waitingSlime=definition.slimes[definition.primary.index || 0];
@@ -15393,9 +15402,7 @@
         c.restore();
       }
       if(definition.sluice){
-        c.fillStyle=palette.getPropertyValue('--text-dim').trim();c.fillText('Sand',202,156);
-        c.fillStyle=palette.getPropertyValue('--toy-grain-gold').trim();c.fillText('Gold',242,156);
-        c.fillStyle=text;c.fillText('Riffles',350,192);
+        if(window.WSSSluiceControls)window.WSSSluiceControls.draw(c,definition,machineState.sluiceRun,{scale:fitScale,palette:palette,pouring:machinePourHeld});
       }
       definition.marks.forEach(function(mark){
         c.save();c.setLineDash([5,5]);c.beginPath();c.moveTo(mark.x,mark.y);c.lineTo(mark.x+mark.width,mark.y);c.stroke();c.restore();
@@ -15428,7 +15435,7 @@
         if(definition.measure.mouth){var mouth=definition.measure.mouth;c.strokeRect(mouth.x,mouth.y,mouth.width,mouth.height);}
       }
       definition.vessels.forEach(function(v){
-        if(definition.hourglass || definition.quietApparatus || toySauna && v.id==='tub')return;
+        if(definition.hourglass || definition.sluice || definition.quietApparatus || toySauna && v.id==='tub')return;
         var label=v.label || (v.id==='middle' ? 'Source water' : v.id==='bottom' ? 'Receiving water' : v.id==='source' ? 'Higher tank' : v.id==='receiver' ? 'Lower tank' : v.id==='basin' ? 'Basin' : 'Cup');
         if(!toyFire)c.fillText(label,v.rect.x+8,definition.divers?v.rect.y+80:v.rect.y-8);
       });
@@ -15552,6 +15559,7 @@
     presetTick(dt);
     emittersTick(dt);
     machinePourTick(dt);
+    sluiceFeedTick();
     if(toyDivers)toyDivers.tick();
     retireLiquidOrphans();
     if(!(solidSkinLab && currentScene==='smoke-wind-tunnel') && !toyThirsty && !toyBalloon && !toyDivers && !toyFloatSlider && !toyDraftRig)updateLiquidToy(dt);
@@ -15616,25 +15624,77 @@
   }
 
   function sluiceInventory(){
-    var data={sand:{total:0,washed:0},gold:{total:0,washed:0},admitted:Math.max(0,liquidCount-machineState.initialParticles),pouring:machinePourHeld};
-    for(var i=0;i<liquidCount;i++)if(liquidType[i]===5){
-      var r=liquidOrigin[i]===3?data.gold:data.sand;r.total++;
-      if(liquidX[i]>=608 || liquidY[i]>=288)r.washed++;
+    if(!machineState || !machineState.definition.sluice)return null;
+    var d=machineState.definition.sluice,run=machineState.sluiceRun;
+    var data={sand:{total:0,washed:0},gold:{total:0,washed:0},admitted:run.waterAdded,pouring:machinePourHeld || run.valve,
+      flow:run.flow,valve:run.valve,feeding:run.feeding,fed:run.fed,hopper:d.hopper-run.fed,waterRemaining:d.waterSupply-run.waterAdded,
+      waterSupply:d.waterSupply,hopperCapacity:d.hopper,slope:d.slope,riffleHeight:d.riffles?d.riffleHeight:0,
+      clock:Math.max(0,liquidWGPU.simulationClock-(machineState.startedAt || 0)),sampleAge:liquidWGPU.getReadbackAge()};
+    data.sourceClock=machinePourClock;
+    var runoff=0;
+    for(var i=0;i<liquidCount;i++){
+      if(liquidType[i]===5){
+        var r=liquidOrigin[i]===3?data.gold:data.sand;r.total++;
+        if(liquidX[i]>=d.tailingsX || liquidY[i]>=d.tailingsY)r.washed++;
+      }else if(liquidX[i]>580 && liquidX[i]<640 && liquidY[i]<d.tailingsY+24)runoff+=Math.max(0,liquidVY[i]);
     }
+    data.runoff=Math.min(2,Math.sqrt(runoff/60000));
     return data;
+  }
+
+  function sluiceControl(key,value){
+    if(!machineState || !machineState.definition.sluice)return false;
+    var r=machineState.sluiceRun,d=machineState.definition.sluice;
+    if(key==='flow' && Number.isFinite(value))r.flow=Math.max(25,Math.min(150,value));
+    if(key==='valve'){
+      var open=!!value && machineState.ready && r.waterAdded<d.waterSupply;
+      if(open!==r.valve){machinePourClock=liquidWGPU.simulationClock;machinePourFlow={acc:0};}
+      r.valve=open;
+    }
+    if(key==='feed'){
+      var feeding=!!value && machineState.ready && r.fed<d.hopper;
+      if(feeding!==r.feeding)r.clock=liquidWGPU.simulationClock;
+      r.feeding=feeding;
+      if(!r.feeding)r.feedAcc=0;
+    }
+    machineOverlayCache=null;
+    if(userPaused)drawMachineOverlay();
+    return true;
+  }
+
+  function sluiceFeedTick(){
+    if(!machineState || !machineState.sluiceRun)return;
+    var r=machineState.sluiceRun,d=machineState.definition.sluice,clock=liquidWGPU.simulationClock;
+    var h=Math.min(.05,Math.max(0,clock-r.clock));r.clock=clock;
+    if(!r.feeding || !machineState.ready)return;
+    r.feedAcc+=h*d.feedRate;
+    while(r.feedAcc>=1 && r.fed<d.hopper){
+      // A counted external hopper releases one grain through its outlet.
+      // Seven lanes and a ten-grain mix visit every lane for each material.
+      var lane=(r.fed*3)%7,x=d.feed.x+(lane-3)*2.1;
+      var material=r.fed%10===7?'gold':'sand';
+      if(addLiquidParticle(material,x,d.feed.y,0,65,0)<0){r.feeding=false;r.feedAcc=0;break;}
+      r.fed++;r.feedAcc--;
+    }
+    if(r.fed===d.hopper){r.feeding=false;r.feedAcc=0;}
   }
 
   // A held control admits the same full stream. Release leaves no backlog;
   // water already in flight keeps falling through the native solver.
   function machinePourTick(dt){
-    if(!machinePourHeld || !machineState || waterState!=='on')return;
+    if(!machineState || waterState!=='on')return;
+    var run=machineState.sluiceRun,sluice=machineState.definition.sluice;
+    if(!machinePourHeld && !(run && run.valve)){machinePourClock=liquidWGPU.simulationClock;return;}
     var clock=liquidWGPU.simulationClock;
     var h=liquidCount ? Math.max(0,clock-machinePourClock) : dt*Math.max(0,timeMul)*1.55;
     machinePourClock=clock;
     var definition=machineState.definition;
     var spout=definition.primary.kind==='fire-pour' ? definition.fire.pour : definition.primary.target;
     machinePourFlow.x=spout.x;machinePourFlow.y=spout.y;
-    var admitted=spawnWaterFlow(machinePourFlow,Math.min(h,.05),MACHINE_POUR_RATE,12,0,110,LIQUID_MAX_PARTICLES-8);
+    var cap=LIQUID_MAX_PARTICLES-8,rate=MACHINE_POUR_RATE;
+    if(run){rate*=run.flow/100;cap=Math.min(cap,liquidCount+sluice.waterSupply-run.waterAdded);}
+    var admitted=spawnWaterFlow(machinePourFlow,Math.min(h,.05),rate,12,0,110,cap);
+    if(run){run.waterAdded+=admitted;if(run.waterAdded>=sluice.waterSupply || liquidCount>=LIQUID_MAX_PARTICLES-8){run.valve=false;machinePour(false);}}
     if(toyFire)toyFire.admit(admitted);
   }
 
@@ -15990,6 +16050,7 @@
       setCamera: setCamera,
       pause: function (paused) {
         userPaused = !!paused;
+        if(userPaused)sluiceControl('valve',false);
         if(userPaused)releaseMachineControl();
         if (userPaused && pointerDown) {
           slimeGhost = null;
@@ -16032,6 +16093,8 @@
       sandDamStats:sandDamInventory,
       activateMachineControl: activateMachineControl,
       releaseMachineControl: releaseMachineControl,
+      sluice: sluiceInventory,
+      sluiceControl: sluiceControl,
       machineThumb:machineThumb,
       nativeBoundary:function(){return toyBoundary;},
       fire:function(){return toyFire;},
