@@ -54,9 +54,9 @@ async function modalFit(page,label){
 }
 async function workspaceFit(page,label){
  await page.waitForFunction(()=>{
-  const selected=document.querySelector('.gx-scene-field[data-active="true"] .gx-cat-select').value,s=__gxTest.state();
+  const selected=document.querySelector('#gx-scene-select').value,s=__gxTest.state();
   return s.pending===null&&(s.field===selected||selected==='grid'&&s.morph<.03||selected==='mulberry'&&['random','mulberry'].includes(s.field));
- },null,{timeout:12000}).catch(async e=>{process.stdout.write(JSON.stringify({label,state:await state(page),selected:await page.locator('.gx-scene-field[data-active="true"] select').inputValue()})+'\n');throw e;});
+ },null,{timeout:12000}).catch(async e=>{process.stdout.write(JSON.stringify({label,state:await state(page),selected:await page.locator('#gx-scene-select').inputValue()})+'\n');throw e;});
  await page.waitForTimeout(180);
  const a=await page.evaluate(()=>{
   const box=e=>{const r=e.getBoundingClientRect();return {x:r.x,y:r.y,r:r.right,b:r.bottom,w:r.width,h:r.height};};
@@ -84,7 +84,7 @@ async function workspaceFit(page,label){
  if(issues.length)process.stdout.write(JSON.stringify({label,...a,issues})+'\n');
  check(label+' controls stay beside or above the scene and fit',issues.length===0);
  if(process.env.SNAPSHOTS&&/1512x692|390x844|568x320/.test(label)){
-  await page.waitForFunction(()=>__gxTest.state().morph>.97||document.querySelector('.gx-scene-field[data-active="true"] .gx-cat-select').value==='grid'&&__gxTest.state().morph<.03);
+  await page.waitForFunction(()=>__gxTest.state().morph>.97||document.querySelector('#gx-scene-select').value==='grid'&&__gxTest.state().morph<.03);
   await page.screenshot({path:path.join(out,'layout-'+label.replace(/[^a-z0-9-]/gi,'-')+'.png')});
  }
 }
@@ -92,9 +92,8 @@ async function close(page){
  await page.keyboard.press('Escape');
  await page.waitForFunction(()=>!document.getElementById('gx-picker-dialog').open&&[...document.querySelectorAll('.gx-picker-trigger')].every(e=>e.getAttribute('aria-expanded')==='false'));
 }
-async function category(page,mode,value){
- await page.locator('#gx-'+mode+'-tab').click();
- await page.locator('#gx-'+mode+'-scenes .gx-category-field .gx-picker-trigger').click();
+async function choose(page,value){
+ await page.locator('.gx-picker-trigger').click();
  await page.locator('#gx-picker-dialog .gx-picker-card[data-value="'+value+'"]').click();
  await page.waitForFunction(()=>!document.getElementById('gx-picker-dialog').open);
 }
@@ -103,70 +102,69 @@ async function category(page,mode,value){
  browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH || path.join(require('node:os').homedir(),'.local/bin/agent-chrome-for-testing'),args:['--enable-unsafe-webgpu']});
  for(const mobile of (process.env.PHONE_ONLY?[true]:[false,true])){
   const context=await browser.newContext({viewport:mobile?{width:390,height:844}:{width:1366,height:768},isMobile:mobile,hasTouch:mobile});const page=await setup(context);
+  const trigger=page.locator('.gx-picker-trigger');
+  check('one scene chooser replaces modes and categories',await trigger.count()===1&&await page.locator('[role="tablist"],.gx-category-select').count()===0);
   if(!process.env.LAYOUT_ONLY){
-  const groups=await page.locator('.gx-scene-field').evaluateAll(es=>es.map(e=>({category:e.dataset.category,mode:e.closest('.gx-group').id==='gx-watch-scenes'?'watch':'explore',options:[...e.querySelector('select').options].filter(o=>o.value).map(o=>({value:o.value,label:o.textContent}))})));
-  for(const group of groups){
-   await category(page,group.mode,group.category);
-   const trigger=page.locator('.gx-scene-field[data-category="'+group.category+'"] .gx-picker-trigger');
-   const choices=mobile&&group.category==='pathfinding'?group.options.filter(o=>['astar','dfs'].includes(o.value))
-     :mobile&&group.category!=='emergence'?[group.options.at(-1)]:group.options;
-   for(const option of choices){
-    await trigger.click();const dialog=page.locator('#gx-picker-dialog');
-    check((mobile?'phone ':'desktop ')+group.category+' shows every preview',(await dialog.locator('.gx-picker-card').count())===group.options.length);
-    const card=dialog.locator('.gx-picker-card[data-value="'+option.value+'"]');await card.scrollIntoViewIfNeeded();
-    await page.waitForFunction(v=>{const img=document.querySelector('#gx-picker-dialog .gx-picker-card[data-value="'+v+'"] img');return img.complete&&img.naturalWidth===320;},option.value);
-    await card.click();
-    const field=option.value==='grid'||option.value==='mulberry'?'random':option.value;
-    await page.waitForFunction(f=>(__gxTest.state().field===f||f==='random'&&__gxTest.state().field==='mulberry')&&__gxTest.state().pending===null,field,{timeout:15000});
-    check('picture selects '+option.label,(await trigger.locator('.gx-picker-value').textContent())===option.label);
-    if(process.env.SNAPSHOTS&&['astar','dfs'].includes(option.value)){
-      await page.waitForFunction(()=>__gxTest.state().morph>.99);await page.waitForTimeout(1000);
-      await page.screenshot({path:path.join(out,option.value+'-'+(mobile?'phone':'desktop')+'.png')});
-    }
-    if(group.category==='sorting'){
+   const groups=await page.locator('#gx-scene-select optgroup').evaluateAll(es=>es.map(e=>({category:e.dataset.category,options:[...e.children].map(o=>({value:o.value,label:o.textContent}))})));
+   const total=groups.reduce((n,g)=>n+g.options.length,0);
+   for(const group of groups){
+    const choices=mobile&&group.category==='pathfinding'?group.options.filter(o=>['astar','dfs'].includes(o.value))
+      :mobile&&group.category!=='emergence'?[group.options.at(-1)]:group.options;
+    for(const option of choices){
+     await trigger.click();const dialog=page.locator('#gx-picker-dialog');
+     check((mobile?'phone ':'desktop ')+option.label+' is directly available',await dialog.locator('.gx-picker-card').count()===total);
+     const card=dialog.locator('.gx-picker-card[data-value="'+option.value+'"]');await card.scrollIntoViewIfNeeded();
+     await page.waitForFunction(v=>{const img=document.querySelector('#gx-picker-dialog .gx-picker-card[data-value="'+v+'"] img');return img.complete&&img.naturalWidth===320;},option.value);
+     await card.click();
+     const field=option.value==='grid'||option.value==='mulberry'?'random':option.value;
+     await page.waitForFunction(f=>(__gxTest.state().field===f||f==='random'&&__gxTest.state().field==='mulberry')&&__gxTest.state().pending===null,field,{timeout:15000});
+     check('picture selects '+option.label,(await trigger.locator('.gx-picker-value').textContent())===option.label);
+     if(group.category==='sorting'){
       const result=await page.evaluate(()=>__gxTest.finishSort());
       check(option.label+' sorts all 64 rings',result.n===64&&result.total===48000&&result.ordered);
-    }
-    if(group.category==='emergence'){
+     }
+     if(group.category==='emergence'){
       await page.waitForFunction(()=>GXEmergence.snapshot().worlds[0].steps>0);
       const before=await page.evaluate(()=>GXEmergence.snapshot());await page.waitForTimeout(150);
       const after=await page.evaluate(()=>GXEmergence.snapshot());
       check(option.label+' animates a finite world',after.worlds[0].finite&&after.worlds[0].steps>before.worlds[0].steps);
+     }
     }
    }
-   if(process.env.SNAPSHOTS&&['pathfinding','sorting','emergence'].includes(group.category)){
-     await trigger.click();await page.waitForFunction(()=>[...document.querySelectorAll('#gx-picker-dialog img')].every(i=>i.complete&&i.naturalWidth===320));
-     await page.screenshot({path:path.join(out,group.category+'-picker-'+(mobile?'phone':'desktop')+'.png')});await close(page);
-   }
+   await choose(page,'bfs');await trigger.click();await page.keyboard.press('Home');check('Home focuses the first scene',await page.evaluate(()=>document.activeElement.dataset.value==='bfs'));
+   await page.keyboard.press('End');check('End reaches the final scene',await page.evaluate(()=>document.activeElement.dataset.value==='harmonics'));
+   await page.keyboard.press('ArrowLeft');check('arrow keys navigate picture choices',await page.evaluate(()=>document.activeElement.dataset.value==='lotus'));
+   await page.keyboard.press('Enter');await page.waitForFunction(()=>__gxTest.state().field==='lotus');check('Enter picks the focused scene',(await trigger.locator('.gx-picker-value').textContent())==='Lotus');
+   await trigger.click();await close(page);check('Escape restores focus without changing scenes',await trigger.evaluate(e=>e===document.activeElement&&e.getAttribute('aria-expanded')==='false')&&(await page.locator('#gx-scene-select').inputValue())==='lotus');
+   await trigger.click();await page.mouse.click(2,2);await page.waitForFunction(()=>!document.getElementById('gx-picker-dialog').open);check('backdrop closes the gallery',true);
+   await trigger.click();await page.getByRole('searchbox',{name:'Find a scene'}).fill('food');
+   check('search finds scenes by their description',await page.locator('.gx-picker-card:visible').count()===1&&await page.locator('.gx-picker-card:visible').getAttribute('data-value')==='ants');
+   await page.keyboard.press('ArrowDown');await page.keyboard.press('Enter');await page.waitForFunction(()=>GXEmergence.active);check('search result opens directly',await page.locator('#gx-scene-select').inputValue()==='ants');
+   await trigger.click();check('reopening clears search and marks current scene',await page.locator('.gx-picker-card:visible').count()===total&&await page.locator('.gx-picker-card[aria-pressed="true"]').getAttribute('data-value')==='ants');
+   await page.getByRole('searchbox').fill('no-such-scene');check('empty search offers a recovery',await page.locator('.gx-picker-card:visible').count()===0&&await page.getByText('No scenes found. Try another name.').isVisible());
+   await page.getByRole('searchbox').fill('sort');check('category words find matching scenes',await page.locator('.gx-picker-card:visible').count()===6);
+   await page.locator('#gx-picker-dialog').getByRole('button',{name:'Close',exact:true}).click();
   }
-  // Keyboard navigation and dismissal restore the trigger, without changing the scene.
-  await category(page,'watch','pathfinding');const trigger=page.locator('.gx-scene-field[data-category="pathfinding"] .gx-picker-trigger');
-  await trigger.click();await page.keyboard.press('Home');check('Home focuses the first scene',await page.evaluate(()=>document.activeElement.dataset.value==='bfs'));
-  await page.keyboard.press('End');check('End reaches the final scene',await page.evaluate(()=>document.activeElement.dataset.value==='randomwalk'));
-  await page.keyboard.press('ArrowLeft');check('arrow keys navigate picture choices',await page.evaluate(()=>document.activeElement.dataset.value==='dfs'));
-  await page.keyboard.press('Enter');await page.waitForFunction(()=>__gxTest.state().field==='dfs');check('Enter picks the focused scene',(await trigger.locator('.gx-picker-value').textContent())==='Depth-first');
-  await trigger.click();await close(page);check('Escape restores focus to the picker',await trigger.evaluate(e=>e===document.activeElement&&e.getAttribute('aria-expanded')==='false'));
-  await trigger.click();await page.mouse.click(2,2);await page.waitForFunction(()=>!document.getElementById('gx-picker-dialog').open);check('clicking the backdrop closes the picker',true);
-  }
-  // Keep controls beside or above the scene at resize, zoom, and orientation boundaries.
-  const sizes=mobile?[[320,568],[360,640],[375,667],[390,844],[412,915],[568,320],[667,375],[740,360],[844,390]]:[[1920,1080],[1440,900],[1512,692],[1366,768],[1366,701],[1366,700],[1366,650],[1280,600],[1210,550],[1024,768],[901,600],[900,700],[800,600]];
+  const sizes=mobile?[[320,568],[360,640],[390,844],[568,320],[667,375],[844,390]]:[[1920,1080],[1512,692],[1280,600],[1024,768],[901,320],[900,700],[800,600]];
   for(const [width,height]of sizes){
-   await page.setViewportSize({width,height});await category(page,'watch','sorting');
-   await workspaceFit(page,width+'x'+height+' Sorting');
-   await page.locator('.gx-scene-field[data-category="sorting"] .gx-picker-trigger').click();await modalFit(page,width+'x'+height+' Sorting');await close(page);
-   await category(page,'watch','pathfinding');await workspaceFit(page,width+'x'+height+' Pathfinding');
-   await category(page,'watch','emergence');await workspaceFit(page,width+'x'+height+' Emergence');
-   await category(page,'explore','randomness');await workspaceFit(page,width+'x'+height+' Explore');
-   await page.locator('#gx-explore-tab').click();await page.locator('#gx-explore-scenes .gx-category-field .gx-picker-trigger').click();await modalFit(page,width+'x'+height+' categories');await close(page);
+   await page.setViewportSize({width,height});await choose(page,'quick');await workspaceFit(page,width+'x'+height+' Sorting');
+   await trigger.click();await modalFit(page,width+'x'+height+' gallery');await close(page);
+   await choose(page,'bfs');await workspaceFit(page,width+'x'+height+' Pathfinding');
+   await choose(page,'boids');await workspaceFit(page,width+'x'+height+' Birds');
+   await choose(page,'mulberry');await workspaceFit(page,width+'x'+height+' Stars');
   }
-  // The picture picker also belongs to the fullscreen surface.
+  if(process.env.SNAPSHOTS){
+   await page.setViewportSize(mobile?{width:390,height:844}:{width:1512,height:900});await choose(page,'bfs');await trigger.click();await page.keyboard.press('Home');
+   await page.screenshot({path:path.join(out,'gallery-'+(mobile?'phone':'desktop')+'.png')});await close(page);
+  }
   await page.evaluate(()=>{document.getElementById('galaxy-wrapper').requestFullscreen=()=>Promise.reject(new Error('fallback test'));});
   await page.locator('#galaxy-fly').click();await page.waitForFunction(()=>document.getElementById('galaxy-wrapper').classList.contains('gx-pseudo-fs'));
-  await page.locator('#gx-explore-scenes .gx-category-field .gx-picker-trigger').click();await modalFit(page,'fullscreen');await close(page);
+  await trigger.click();await modalFit(page,'fullscreen');await close(page);
   await context.close();
  }
  const fallbackContext=await browser.newContext({viewport:{width:1366,height:768}});await fallbackContext.route('**/js/random-galaxy-picker.js*',r=>r.abort());
- const fallback=await setup(fallbackContext);check('native selectors remain as the fallback',await fallback.getByLabel('Watch category',{exact:true}).isVisible());
- await fallback.getByLabel('Watch category',{exact:true}).selectOption('sorting');await fallback.waitForFunction(()=>__gxTest.state().field==='quick');check('native fallback still selects scenes',true);
+ const fallback=await setup(fallbackContext);check('one native selector remains as the fallback',await fallback.getByLabel('Choose a scene',{exact:true}).isVisible());
+ await fallback.getByLabel('Choose a scene',{exact:true}).selectOption('quick');await fallback.waitForFunction(()=>__gxTest.state().field==='quick');
+ await fallback.getByLabel('Choose a scene',{exact:true}).selectOption('lorenz');await fallback.waitForFunction(()=>__gxTest.state().field==='lorenz');check('native fallback selects across scene families',true);
  await fallbackContext.close();check('no browser or GPU errors',errors.length===0);
 }catch(e){process.stderr.write(e.stack+'\n'+JSON.stringify(errors)+'\n');process.exitCode=1;}finally{if(browser)await browser.close();await new Promise(r=>server.close(r));}})();

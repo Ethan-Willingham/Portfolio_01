@@ -25,7 +25,7 @@
 (function () {
   'use strict';
 
-  var VERSION = 'v1.77';
+  var VERSION = 'v1.78';
 
   /* ---- Analytics helper (safe no-op if gtag is missing) ---- */
   function track(name, params) {
@@ -7280,7 +7280,7 @@
     }
     window.GXCAM = { grab: captureCam, dump: function () { var t = camDump(); try { console.log(t); } catch (e) {} return t; }, clear: function () { camCaptures = {}; }, all: function () { return camCaptures; } };
 
-    // Finite Watch scenes orbit their centre; Explore scenes steer through space.
+    // Finite scenes orbit their centre; point clouds steer through space.
     canvas.addEventListener('pointerdown', function (e) {
       if (e.pointerType === 'touch' && isOrbitField(currentField)) {
         touchPointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
@@ -7360,7 +7360,7 @@
     canvas.addEventListener('pointerup', endDrag);
     canvas.addEventListener('pointercancel', endDrag);
 
-    // Watch zooms around the object; Explore changes the cruise speed.
+    // Orbit scenes zoom around the object; point clouds change the cruise speed.
     canvas.addEventListener('wheel', function (e) {
       if (!isOrbitField(currentField) && !focused()) return;
       e.preventDefault();
@@ -7431,13 +7431,7 @@
       bumpBlurb();
     }
 
-    // Two scene families, with the last choice remembered separately for each.
-    var modeScenes = { watch: 'bfs', explore: 'mulberry' };
-    var categoryScenes = { pathfinding: 'bfs', sorting: 'quick', emergence: 'boids', randomness: 'mulberry', attractors: 'lorenz', fractals: 'sierpinski', numbers: 'collatz', geometry: 'hopf' };
-    var categoryEl = document.getElementById('gx-explore-category');
-    var watchCategoryEl = document.getElementById('gx-watch-category');
-    if (categoryEl) categoryEl.addEventListener('change', function () { selectScene(categoryScenes[this.value]); });
-    if (watchCategoryEl) watchCategoryEl.addEventListener('change', function () { selectScene(categoryScenes[this.value]); });
+    var sceneSelect = document.getElementById('gx-scene-select');
     var infoDialog = document.getElementById('gx-info-dialog');
     document.getElementById('gx-info-open').addEventListener('click', function () {
       document.getElementById('gx-info-title').textContent = document.getElementById('gx-current-name').textContent;
@@ -7494,34 +7488,6 @@
       lotus: 'Repeated curves form a geometric flower.',
       harmonics: 'Overlapping waves build a geometric pattern.'
     };
-    function showMode(mode) {
-      if (!wrapperEl) return;
-      wrapperEl.setAttribute('data-mode', mode);
-      var tabs = wrapperEl.querySelectorAll('.gx-mode');
-      for (var t = 0; t < tabs.length; t++) {
-        var active = tabs[t].getAttribute('data-mode') === mode;
-        tabs[t].setAttribute('aria-selected', active ? 'true' : 'false');
-        tabs[t].tabIndex = active ? 0 : -1;
-      }
-      document.getElementById('gx-watch-scenes').hidden = mode !== 'watch';
-      document.getElementById('gx-explore-scenes').hidden = mode !== 'explore';
-    }
-    if (wrapperEl) {
-      var tabs = wrapperEl.querySelectorAll('.gx-mode');
-      for (var t = 0; t < tabs.length; t++) {
-        tabs[t].addEventListener('click', function () {
-          selectScene(modeScenes[this.getAttribute('data-mode')]);
-        });
-        tabs[t].addEventListener('keydown', function (e) {
-          if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight' && e.key !== 'Home' && e.key !== 'End') return;
-          e.preventDefault();
-          var mode = e.key === 'Home' ? 'watch' : e.key === 'End' ? 'explore'
-            : this.getAttribute('data-mode') === 'watch' ? 'explore' : 'watch';
-          selectScene(modeScenes[mode]);
-          document.getElementById('gx-' + mode + '-tab').focus();
-        });
-      }
-    }
     var revealEl = document.getElementById('galaxy-reveal');
     var revealTimer = null;
     function showReveal(text) {
@@ -7539,32 +7505,12 @@
       // Leaving a sort scene for anything else: ramp the sort audio down so its note
       // tails do not ring into the next scene. No-op when audio is idle or staying in sort.
       if (isSortField(currentField) && !isSortField(scene)) sortAudioSilence();
-      if (wrapperEl) {
-        // Reflect the active scene in the category dropdowns: the owning
-        // category shows the scene and gets the lit style; the others reset to
-        // their category-name placeholder.
-        var sels = wrapperEl.querySelectorAll('.gx-cat-select');
-        for (var i = 0; i < sels.length; i++) {
-          var s = sels[i], has = false, j;
-          for (j = 0; j < s.options.length; j++) { if (s.options[j].value === scene) { has = true; break; } }
-          s.value = has ? scene : '';
-          s.classList.toggle('gx-cat-select--active', has);
-          s.closest('.gx-scene-field').setAttribute('data-active', String(has));
-          if (has) {
-            var mode = s.closest('.gx-group').id === 'gx-watch-scenes' ? 'watch' : 'explore';
-            modeScenes[mode] = scene;
-            var category = s.closest('.gx-scene-field').getAttribute('data-category');
-            categoryScenes[category] = scene;
-            var picker = mode === 'watch' ? watchCategoryEl : categoryEl;
-            if (picker) picker.value = category;
-            showMode(mode);
-            wrapperEl.setAttribute('data-scene', scene);
-            document.getElementById('gx-current-name').textContent = scene === 'bfs' ? 'Breadth-first search'
-              : scene === 'dfs' ? 'Depth-first search' : scene === 'astar' ? 'A* search' : SORT_NAMES[scene] || s.options[j].textContent;
-            document.getElementById('gx-current-summary').textContent = sceneGuide[scene]
-              || 'Values are rings. Watch the scrambled sizes move into order.';
-          }
-        }
+      if (wrapperEl && sceneSelect) {
+        sceneSelect.value = scene;
+        wrapperEl.setAttribute('data-scene', scene);
+        var option = sceneSelect.selectedOptions[0];
+        document.getElementById('gx-current-name').textContent = SORT_NAMES[scene] || (option && option.textContent) || scene;
+        document.getElementById('gx-current-summary').textContent = sceneGuide[scene] || '';
         if (window.GXPicker) window.GXPicker.sync();
       }
       if (scene === 'grid') {
@@ -7776,18 +7722,12 @@
       }
       bumpBlurb();
     }
-    if (wrapperEl) {
-      var csels = wrapperEl.querySelectorAll('.gx-cat-select');
-      for (var sw = 0; sw < csels.length; sw++) {
-        csels[sw].addEventListener('change', function () {
-          var scene = this.value;
-          if (!scene) return;                 // the category-name placeholder
-          selectScene(scene);
-          try { canvas.focus({ preventScroll: true }); } catch (e) {}
-          track('galaxy_scene', { scene: scene });
-        });
-      }
-      if (window.GXPicker) window.GXPicker.init(wrapperEl, categoryScenes);
+    if (sceneSelect) {
+      sceneSelect.addEventListener('change', function () {
+        selectScene(this.value);
+        track('galaxy_scene', { scene: this.value });
+      });
+      if (window.GXPicker) window.GXPicker.init(wrapperEl);
     }
 
     var reseedBtn = document.getElementById('galaxy-reseed');

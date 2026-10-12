@@ -33,12 +33,12 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="random-galaxy.css?v=1.77">
+  <link rel="stylesheet" href="random-galaxy.css?v=1.78">
 </head>
 <body class="gx-page">
   <div class="site-wrapper">
     <main>
-      <section class="demo-wrapper gx-app" id="galaxy-wrapper" data-mode="watch" aria-labelledby="gx-title" aria-busy="true">
+      <section class="demo-wrapper gx-app" id="galaxy-wrapper" aria-labelledby="gx-title" aria-busy="true">
         <header class="gx-appbar">
           <h1 id="gx-title"><span>Obi Juan Algorithm</span><span class="gx-purpose"><span class="gx-title-sep">: </span>Watch Algorithms and Explore Math</span></h1>
           <div class="gx-topright">
@@ -54,112 +54,63 @@
         </header>
         <div class="gx-workspace">
           <aside class="pillbar gx-panel" aria-label="Scene picker">
-            <div class="gx-modes" role="tablist" aria-label="What would you like to do?">
-              <button type="button" class="gx-mode" id="gx-watch-tab" role="tab" aria-selected="true" aria-controls="gx-watch-scenes" data-mode="watch"><span class="gx-mode-action">Watch</span> <span class="gx-mode-topic">algorithms</span></button>
-              <button type="button" class="gx-mode" id="gx-explore-tab" role="tab" aria-selected="false" aria-controls="gx-explore-scenes" data-mode="explore" tabindex="-1"><span class="gx-mode-action">Explore</span> <span class="gx-mode-topic">math</span></button>
-            </div>
             <div class="gx-controls">
-              <div class="gx-group" id="gx-watch-scenes" role="tabpanel" aria-labelledby="gx-watch-tab">
-                <div class="gx-group-row">
-                  <label class="gx-category-field"><span>Category</span>
-                    <select class="gx-category-select" id="gx-watch-category" aria-label="Watch category">
-                      <option value="pathfinding">Pathfinding</option>
-                      <option value="sorting">Sorting</option>
-                      <option value="emergence">Emergence</option>
-                    </select>
-                  </label>
-                <label class="gx-scene-field" data-category="pathfinding" data-active="true"><span>Algorithm</span>
-                  <select class="gx-cat-select gx-cat-select--active" aria-label="Pathfinding scene">
-                  <option value="" disabled>Choose pathfinding</option>
-                  <option value="bfs" selected>Breadth-first</option>
-                  <option value="bidir">Bidirectional</option>
+              <label class="gx-scene-field" for="gx-scene-select"><span>Choose a scene</span></label>
+              <select class="gx-scene-select" id="gx-scene-select">
+                <optgroup label="Find a path" data-category="pathfinding">
+                  <option value="bfs" selected>Breadth-first search</option>
+                  <option value="bidir">Bidirectional search</option>
                   <option value="dijkstra">Dijkstra</option>
-                  <option value="astar">A*</option>
+                  <option value="astar">A* search</option>
                   <option value="wavefront">Many starts</option>
                   <option value="randomflood">Noisy Flood</option>
-                  <option value="dfs">Depth-first</option>
+                  <option value="dfs">Depth-first search</option>
                   <option value="randomwalk">Random walk</option>
-                  </select>
-                </label>
-                <label class="gx-scene-field" data-category="sorting"><span>Algorithm</span>
-                  <select class="gx-cat-select" aria-label="Sorting scene">
-                  <option value="" disabled selected>Choose sorting</option>
-                  <option value="bubble">Bubble</option>
-                  <option value="insertion">Insertion</option>
+                </optgroup>
+                <optgroup label="Put things in order" data-category="sorting">
+                  <option value="bubble">Bubble sort</option>
+                  <option value="insertion">Insertion sort</option>
                   <option value="quick">Quicksort</option>
                   <option value="heap">Heapsort</option>
-                  <option value="bitonic">Bitonic</option>
-                  <option value="pancake">Pancake</option>
-                  </select>
-                </label>
-                <label class="gx-scene-field" data-category="emergence"><span>Simulation</span>
-                  <select class="gx-cat-select" aria-label="Emergence scene">
-                  <option value="" disabled selected>Choose emergence</option>
+                  <option value="bitonic">Bitonic sort</option>
+                  <option value="pancake">Pancake sort</option>
+                </optgroup>
+                <optgroup label="Birds and ants" data-category="emergence">
                   <option value="boids">Bird flocks</option>
                   <option value="ants">Ant colony</option>
-                  </select>
-                </label>
-                </div>
-              </div>
-              <div class="gx-group" id="gx-explore-scenes" role="tabpanel" aria-labelledby="gx-explore-tab" hidden>
-                <div class="gx-group-row">
-                  <label class="gx-category-field"><span>Category</span>
-                    <select class="gx-category-select" id="gx-explore-category" aria-label="Explore category">
-                      <option value="randomness">Randomness</option>
-                      <option value="attractors">Attractors</option>
-                      <option value="fractals">Fractals</option>
-                      <option value="numbers">Numbers</option>
-                      <option value="geometry">Geometry</option>
-                    </select>
-                  </label>
-                <label class="gx-scene-field" data-category="randomness"><span>Structure</span>
-                  <select class="gx-cat-select" aria-label="Randomness scene">
-                  <option value="" disabled selected>Choose randomness</option>
+                </optgroup>
+                <optgroup label="Randomness" data-category="randomness">
                   <option value="mulberry">Random stars</option>
                   <option value="grid">Perfect grid</option>
-                  </select>
-                </label>
-                <label class="gx-scene-field" data-category="attractors"><span>Structure</span>
-                  <select class="gx-cat-select" aria-label="Attractor scene">
-                  <option value="" disabled selected>Choose attractors</option>
-                  <option value="thomas">Thomas</option>
-                  <option value="lorenz">Lorenz</option>
-                  <option value="aizawa">Aizawa</option>
-                  <option value="dadras">Dadras</option>
-                  <option value="clifford">Clifford</option>
-                  </select>
-                </label>
-                <label class="gx-scene-field" data-category="fractals"><span>Structure</span>
-                  <select class="gx-cat-select" aria-label="Fractal scene">
-                  <option value="" disabled selected>Choose fractals</option>
+                </optgroup>
+                <optgroup label="Chaotic trails" data-category="attractors">
+                  <option value="thomas">Thomas attractor</option>
+                  <option value="lorenz">Lorenz attractor</option>
+                  <option value="aizawa">Aizawa attractor</option>
+                  <option value="dadras">Dadras attractor</option>
+                  <option value="clifford">Clifford attractor</option>
+                </optgroup>
+                <optgroup label="Fractals" data-category="fractals">
                   <option value="sierpinski">Sierpinski</option>
                   <option value="jerusalem">Jerusalem cube</option>
                   <option value="vicsek">Vicsek</option>
-                  </select>
-                </label>
-                <label class="gx-scene-field" data-category="numbers"><span>Structure</span>
-                  <select class="gx-cat-select" aria-label="Number scene">
-                  <option value="" disabled selected>Choose numbers</option>
+                </optgroup>
+                <optgroup label="Number patterns" data-category="numbers">
                   <option value="primes3d">Primes</option>
                   <option value="gprimes">Gauss primes</option>
                   <option value="collatz">Collatz</option>
                   <option value="pi">Pi</option>
                   <option value="recaman">Recaman</option>
-                  </select>
-                </label>
-                <label class="gx-scene-field" data-category="geometry"><span>Structure</span>
-                  <select class="gx-cat-select" aria-label="Sacred geometry scene">
-                  <option value="" disabled selected>Choose geometry</option>
+                </optgroup>
+                <optgroup label="Geometry" data-category="geometry">
                   <option value="metatron">Metatron</option>
                   <option value="hopf">Hopf</option>
                   <option value="lotus">Lotus</option>
                   <option value="harmonics">Harmonics</option>
-                  </select>
-                </label>
-                </div>
-              </div>
+                </optgroup>
+              </select>
             </div>
-            <div id="gx-scene-runtime" class="gx-scene-runtime" aria-label="Algorithm controls"></div>
+            <div id="gx-scene-runtime" class="gx-scene-runtime" aria-label="Scene controls"></div>
           </aside>
           <div class="gx-view">
             <div class="demo-canvas-wrapper">
@@ -190,7 +141,7 @@
           <div class="gx-info-body">
             <p class="gx-desc" id="galaxy-blurb"></p>
             <div id="gx-info-stats" class="gx-info-stats"></div>
-            <p class="gx-about">Watch a search, sort a cone of rings, or change the rules in an emergence world. Each scene runs live. Open the Lab in Emergence to place obstacles, inspect a neighbor, or compare one changed rule.</p>
+            <p class="gx-about">Choose any scene from the gallery. Each one runs live. Drag to move the view; the controls beside it apply to that scene.</p>
             <a href="/" class="gx-info-home">Home</a>
           </div>
         </dialog>
@@ -198,9 +149,9 @@
     </main>
   </div>
   <script src="js/main.js"></script>
-  <script src="js/random-galaxy-picker.js?v=1.77"></script>
-  <script src="js/random-galaxy-emergence-models.js?v=1.77"></script>
-  <script src="js/random-galaxy-emergence.js?v=1.77"></script>
-  <script src="js/random-galaxy.js?v=1.77"></script>
+  <script src="js/random-galaxy-picker.js?v=1.78"></script>
+  <script src="js/random-galaxy-emergence-models.js?v=1.78"></script>
+  <script src="js/random-galaxy-emergence.js?v=1.78"></script>
+  <script src="js/random-galaxy.js?v=1.78"></script>
 </body>
 </html>

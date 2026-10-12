@@ -77,7 +77,7 @@
     $('em-presets').replaceChildren();
     for(const [key,label]of defs[id].presets){
       const btn=document.createElement('button');btn.type='button';btn.dataset.preset=key;
-      const image=document.createElement('img');image.src='assets/galaxy-previews/'+id+'-'+key+'.svg?v=1.77';image.alt='';image.width=160;image.height=100;
+      const image=document.createElement('img');image.src='assets/galaxy-previews/'+id+'-'+key+'.svg?v=1.78';image.alt='';image.width=160;image.height=100;
       const name=document.createElement('span');name.textContent=label;btn.append(image,name);btn.addEventListener('click',()=>choosePreset(key));$('em-presets').appendChild(btn);
     }
   }
@@ -282,15 +282,12 @@
   function fallback(){
     // Browsers without WebGPU can still run the Emergence demos.
     // This loop is used only when the main WebGPU app cannot start.
-    const select=root.querySelector('.gx-scene-field[data-category="emergence"] select');
-    const category=$('gx-watch-category');let request=null,last=0,visible=true,focused=document.hasFocus();
+    const select=$('gx-scene-select');let request=null,last=0,visible=true,focused=document.hasFocus();
     $('galaxy-status').style.display='none';root.setAttribute('aria-busy','false');
-    $('gx-explore-tab').disabled=true;$('gx-explore-tab').title='Explore needs WebGPU in this browser';
-    for(const option of category.options)option.disabled=option.value!=='emergence';category.value='emergence';
-    root.querySelectorAll('.gx-scene-field').forEach(el=>el.dataset.active=String(el.dataset.category==='emergence'));
-    function choose(next){select.value=next;select.classList.add('gx-cat-select--active');root.dataset.scene=next;root.dataset.mode='watch';$('gx-current-name').textContent=defs[next].name;$('gx-current-summary').textContent=defs[next].summary;window.GXEmergence.activate(next);window.GXPicker?.sync();}
-    select.addEventListener('change',()=>choose(select.value));$('gx-watch-tab').addEventListener('click',()=>choose(select.value));
-    window.GXPicker?.init(root,{pathfinding:'bfs',sorting:'quick',emergence:pendingConfig?.id||'boids',randomness:'mulberry',attractors:'lorenz',fractals:'sierpinski',numbers:'collatz',geometry:'hopf'});choose(pendingConfig?.id||'boids');
+    for(const option of select.options)option.disabled=!Object.hasOwn(defs,option.value);
+    function choose(next){select.value=next;root.dataset.scene=next;$('gx-current-name').textContent=defs[next].name;$('gx-current-summary').textContent=defs[next].summary;window.GXEmergence.activate(next);window.GXPicker?.sync();}
+    select.addEventListener('change',()=>choose(select.value));
+    choose(pendingConfig?.id||'boids');window.GXPicker?.init(root);
     $('gx-info-open').addEventListener('click',()=>{ $('gx-info-title').textContent=defs[id].name;$('galaxy-blurb').textContent=defs[id].about;$('gx-info-dialog').showModal();});
     $('gx-info-close').addEventListener('click',()=>$('gx-info-dialog').close());
     for(const key of ['galaxy-hide','galaxy-show'])$(key).addEventListener('click',()=>root.classList.toggle('gx-clean'));
