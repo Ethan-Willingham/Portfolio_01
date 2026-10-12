@@ -241,6 +241,7 @@
           <div class="toy-panel-head"><h2 id="toy-heading-about">About</h2><button class="toy-icon" data-close aria-label="Close About"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
           <div class="toy-about-body">
             <p>Three physics engines from <a href="/grand-motherload.html">Sluice</a>, my mining game, share one box. Draw a wall and the water, smoke and slime all collide with it. Choose a machine from the menu at the top, or grab a slime and pull.</p>
+            <p>October 12 update: the twelve unfinished machines now have working mechanisms and comparison setups. Watch ice melt, flood the submarine, vent the suction cup, or withdraw the gripper pistons. Instruments explains each model’s approximations.</p>
             <dl>
               <div><dt>Water</dt><dd>Particles carry the liquid. A temporary grid exchanges their momentum and applies pressure. The MLS-MPM solver runs on WebGPU, adapted from <a href="https://oimo.io/works/water/">saharan’s water demo</a>.</dd></div>
               <div><dt>Air</dt><dd>The water machines add a pressure solve. Room air sets zero gauge pressure, and each sealed pocket has one pressure at a fixed temperature, compressing as water takes its space. <a href="https://orionquest.github.io/papers/MMTFBIF/paper.html">Aanjaneya, Patkar and Fedkiw’s bubble model</a> describes this approximation.</dd></div>
