@@ -6,6 +6,8 @@
     var toy = window.__toy;
     var shell = document.getElementById('toy');
     if (!toy || !shell || !document.getElementById('toy-fallback').hidden) return;
+    // The app page is always full-window; its fullscreen button uses the browser's fullscreen.
+    var appMode = document.body.classList.contains('toy-app');
     var bar = document.getElementById('toy-bar');
     var pauseButton = document.getElementById('toy-pause');
     var resumeButton = document.getElementById('toy-resume');
@@ -102,7 +104,10 @@
       if (button.classList.contains('is-on') !== active) button.classList.toggle('is-on', active);
     }
     function controlsHeight() {
-      var dock=shell.querySelector('.toy-dock'),position=getComputedStyle(dock).position;
+      var dock=shell.querySelector('.toy-dock'),dockStyle=getComputedStyle(dock),position=dockStyle.position;
+      // A vertical tool rail gets its own gutter, so it never covers the apparatus.
+      var rail=appMode && dockStyle.display!=='none' && position==='absolute' && dockStyle.flexDirection==='column';
+      if(shell.classList.contains('has-rail')!==rail){shell.classList.toggle('has-rail',rail);toy.resize();}
       var height = Math.ceil((position==='absolute' || position==='fixed' ? 0 : dock.getBoundingClientRect().height) + shell.querySelector('.toy-foot').getBoundingClientRect().height);
       shell.style.setProperty('--toy-top-height',shell.querySelector('.toy-top').getBoundingClientRect().height+'px');
       var value = height + 'px';
@@ -647,14 +652,24 @@
 
     function expanded() { return document.fullscreenElement === shell || shell.classList.contains('is-expanded'); }
     function syncFullscreen() {
-      var active = expanded();
+      var active = appMode ? document.fullscreenElement === shell : expanded();
       fullButton.setAttribute('aria-label', active ? 'Exit fullscreen' : 'Enter fullscreen');
       fullButton.title = active ? 'Exit fullscreen (Esc)' : 'Fullscreen (F)';
-      document.body.classList.toggle('toy-expanded', active);
+      document.body.classList.toggle('toy-expanded', appMode || active);
       toy.resize();
     }
+    // Phones without element fullscreen already see the whole window.
+    if (appMode && !(document.fullscreenEnabled && shell.requestFullscreen)) fullButton.hidden = true;
     async function toggleFullscreen() {
       closePanel(false);
+      if (appMode) {
+        try {
+          if (document.fullscreenElement) await document.exitFullscreen();
+          else if (!fullButton.hidden) await shell.requestFullscreen();
+        } catch (error) {}
+        syncFullscreen();
+        return;
+      }
       if (document.fullscreenElement === shell) {
         await document.exitFullscreen();
       } else if (shell.classList.contains('is-expanded')) {
@@ -681,7 +696,7 @@
       if (event.key === 'Escape') {
         if (openPanel) { event.preventDefault(); closePanel(true); }
         else if (picker.open) { event.preventDefault(); picker.open = false; pickerSummary.focus({ preventScroll: true }); }
-        else if (shell.classList.contains('is-expanded')) { shell.classList.remove('is-expanded'); syncFullscreen(); fullButton.focus(); }
+        else if (!appMode && shell.classList.contains('is-expanded')) { shell.classList.remove('is-expanded'); syncFullscreen(); fullButton.focus(); }
         return;
       }
       if (event.repeat || event.ctrlKey || event.metaKey || event.altKey || /INPUT|TEXTAREA|SELECT|BUTTON|A/.test(event.target.tagName) || event.target.isContentEditable) return;

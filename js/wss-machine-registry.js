@@ -2115,9 +2115,18 @@
       button.setAttribute('aria-pressed','false');
       button.appendChild(preview(e.preview));
       var copy=document.createElement('span');copy.className='toy-scene-copy';
-      var name=document.createElement('span');name.className='toy-scene-name';name.textContent=e.title+(e.draft?' ['+({'WORKS':'Working','PARTLY':'Partly working','NOT WORKING':'Not working yet'}[e.status]||'Not working yet')+']':'');
-      var cue=document.createElement('span');cue.className='toy-scene-cue';cue.textContent=e.cue;
-      copy.appendChild(name);copy.appendChild(cue);button.appendChild(copy);list.appendChild(button);
+      var name=document.createElement('span');name.className='toy-scene-name';name.textContent=e.title;
+      var cue=document.createElement('span');cue.className='toy-scene-cue';
+      // The status tag carries the draft state, so the cue drops its draft markers.
+      cue.textContent=e.draft ? String(e.cue||'').replace(/^Draft\.\s*/,'').replace(/,\s*draft\.$/,'.') : e.cue;
+      copy.appendChild(name);
+      if(e.draft){
+        var status=document.createElement('span');status.className='toy-scene-status';
+        status.dataset.status=/^(WORKS|PARTLY)$/.test(e.status) ? e.status : 'NOT WORKING';
+        status.textContent={'WORKS':'Working','PARTLY':'Partly working'}[e.status]||'Not working yet';
+        copy.appendChild(status);
+      }
+      copy.appendChild(cue);button.appendChild(copy);list.appendChild(button);
     }
     ['Fire','Smoke','Sand','Water slimes','Floating things','Steam','Oil and water','Ice','Bubbles','Valves and logic','Sound','Waves','World'].forEach(function(group){var choices=entries.filter(function(e){return e.accepted && e.capability===group;});if(choices.length){heading(group);choices.forEach(machine);}});
     heading('Earlier water machines');entries.filter(function(e){return e.accepted && !e.capability;}).forEach(machine);

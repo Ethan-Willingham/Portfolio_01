@@ -5,7 +5,7 @@
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-1NS9QT1HEM');</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#303931">
+  <meta name="theme-color" content="#0b0c0e">
   <title>Water, Smoke, and Slime</title>
   <meta name="description" content="Stretch squishy gel, pour waterfalls, and stir smoke. Three interacting physics engines from Sluice, running in your browser.">
   <meta property="og:title" content="Water, Smoke, and Slime">
@@ -21,375 +21,200 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-  <link rel="preload" href="/assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/assets/fonts/segoe_ui_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/assets/fonts/commit_mono_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/water-smoke-slime.css?v=v5.129">
+  <link rel="stylesheet" href="/water-smoke-slime-app.css?v=v5.130">
 </head>
-<body class="physics-page">
-  <div class="site-wrapper toy-page">
-    <header class="toy-header">
-      <div><p class="toy-kicker">A physics sandbox from Sluice</p><h1>Water, Smoke, and Slime</h1></div>
-      <nav aria-label="Site"><a href="/">Home</a><a href="#how-it-works">How it works</a><a href="#water-machines-progress">Progress</a><a href="/grand-motherload.html">Play Sluice</a></nav>
-    </header>
-    <p class="toy-intro">Grab a slime and stretch it. Try the greedy cup, siphon or fountain, stir the smoke, or choose Build to draw a container.</p>
-
-    <section class="toy-shell" id="toy" aria-label="Physics playground">
-      <div class="toy-bar" id="toy-bar">
-        <div class="toy-top" data-toy-controls>
-          <details class="toy-scene-picker" id="toy-scene-picker">
-            <summary aria-controls="toy-scene-list"><span id="toy-scene-label">Cascade</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 10 4 4 4-4"/></svg></summary>
-            <div class="toy-scene-list toy-scenes" id="toy-scene-list" role="group" aria-label="Scenes">
-              <p>Water machines</p>
-              <button class="toy-chip" data-scene="cup" aria-pressed="false">Greedy cup</button>
-              <button class="toy-chip" data-scene="siphon" aria-pressed="false">Siphon</button>
-              <button class="toy-chip" data-scene="heron" aria-pressed="false">Heron's fountain</button>
-              <p>Original scenes</p>
-              <button class="toy-chip is-on" data-scene="falls" aria-pressed="true">Cascade</button>
-              <button class="toy-chip" data-scene="zerog" aria-pressed="false">Drift</button>
-              <button class="toy-chip" data-scene="chimney" aria-pressed="false">Plumes</button>
-              <button class="toy-chip" data-scene="rig" aria-pressed="false">Rig exhaust</button>
-              <button class="toy-chip" data-scene="spa" aria-pressed="false">Spring</button>
-              <button class="toy-chip" data-scene="blank" aria-pressed="false">Empty</button>
-            </div>
-          </details>
-          <div class="toy-playback" role="group" aria-label="Playback">
-            <button class="toy-chip toy-sound" id="toy-sound" aria-pressed="false" hidden>Sound off</button>
-            <button class="toy-instruments-button" id="toy-instruments-open" data-panel="instruments" aria-expanded="false" aria-controls="toy-panel-instruments" hidden>Instruments</button>
-            <button class="toy-icon" id="toy-pause" aria-label="Pause" title="Pause (Space)" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg></button>
-            <button class="toy-icon" id="toy-restart" aria-label="Restart scene" title="Restart scene"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10a8 8 0 1 1 1.6 7M4 4v6h6"/></svg></button>
-            <button class="toy-icon" id="toy-fullscreen" aria-label="Enter fullscreen" title="Fullscreen (F)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4H4v4m12-4h4v4M4 16v4h4m12-4v4h-4"/></svg></button>
+<body class="physics-page toy-app toy-expanded">
+  <section class="toy-shell is-expanded" id="toy" aria-label="Physics playground">
+    <div class="toy-bar" id="toy-bar">
+      <div class="toy-top" data-toy-controls>
+        <h1 class="toy-brand">Water, Smoke, and Slime</h1>
+        <details class="toy-scene-picker" id="toy-scene-picker">
+          <summary aria-controls="toy-scene-list"><span id="toy-scene-label">Cascade</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 10 4 4 4-4"/></svg></summary>
+          <div class="toy-scene-list toy-scenes" id="toy-scene-list" role="group" aria-label="Scenes">
+            <p>Water machines</p>
+            <button class="toy-chip" data-scene="cup" aria-pressed="false">Greedy cup</button>
+            <button class="toy-chip" data-scene="siphon" aria-pressed="false">Siphon</button>
+            <button class="toy-chip" data-scene="heron" aria-pressed="false">Heron's fountain</button>
+            <p>Original scenes</p>
+            <button class="toy-chip is-on" data-scene="falls" aria-pressed="true">Cascade</button>
+            <button class="toy-chip" data-scene="zerog" aria-pressed="false">Drift</button>
+            <button class="toy-chip" data-scene="chimney" aria-pressed="false">Plumes</button>
+            <button class="toy-chip" data-scene="rig" aria-pressed="false">Rig exhaust</button>
+            <button class="toy-chip" data-scene="spa" aria-pressed="false">Spring</button>
+            <button class="toy-chip" data-scene="blank" aria-pressed="false">Empty</button>
           </div>
+        </details>
+        <div class="toy-playback" role="group" aria-label="Playback">
+          <button class="toy-chip toy-sound" id="toy-sound" aria-pressed="false" hidden>Sound off</button>
+          <button class="toy-instruments-button" id="toy-instruments-open" data-panel="instruments" aria-expanded="false" aria-controls="toy-panel-instruments" hidden>Instruments</button>
+          <button class="toy-icon" id="toy-pause" aria-label="Pause" title="Pause (Space)" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg></button>
+          <button class="toy-icon" id="toy-restart" aria-label="Restart scene" title="Restart scene"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10a8 8 0 1 1 1.6 7M4 4v6h6"/></svg></button>
+          <button class="toy-icon" id="toy-about-open" data-panel="about" aria-label="About" title="About" aria-expanded="false" aria-controls="toy-panel-about"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8h.01"/></svg></button>
+          <button class="toy-icon" id="toy-fullscreen" aria-label="Enter fullscreen" title="Fullscreen (F)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4H4v4m12-4h4v4M4 16v4h4m12-4v4h-4"/></svg></button>
         </div>
+      </div>
 
-        <div class="toy-viewport" id="toy-viewport">
-          <div class="toy-stage" id="toy-stage">
-            <canvas id="toy-canvas" aria-hidden="true"></canvas>
-            <div id="toy-input" tabindex="0" role="group" aria-label="Interactive physics canvas" aria-describedby="toy-hint toy-keyboard-help"></div>
-          </div>
-          <button id="toy-resume" class="toy-resume" hidden>Resume</button>
-          <div class="toy-fallback" id="toy-fallback" hidden>
-            <p>The playground couldn’t start. Try a browser with graphics acceleration enabled.</p>
-          </div>
-          <noscript><p class="toy-fallback">Turn on JavaScript to play.</p></noscript>
+      <div class="toy-viewport" id="toy-viewport">
+        <div class="toy-stage" id="toy-stage">
+          <canvas id="toy-canvas" aria-hidden="true"></canvas>
+          <div id="toy-input" tabindex="0" role="group" aria-label="Interactive physics canvas" aria-describedby="toy-hint toy-keyboard-help"></div>
         </div>
+        <button id="toy-resume" class="toy-resume" hidden>Resume</button>
+        <div class="toy-fallback" id="toy-fallback" hidden>
+          <p>The playground couldn’t start. Try a browser with graphics acceleration enabled.</p>
+        </div>
+        <noscript><p class="toy-fallback">Turn on JavaScript to play.</p></noscript>
+        <p class="toy-nowater" id="toy-nowater" role="status" hidden>Water isn’t available in this browser. You can still play with smoke and slime.</p>
+      </div>
 
-        <div class="toy-dock" data-toy-controls>
-          <div class="toy-tools" role="group" aria-label="Tools">
-            <button class="tb is-on" data-tool="poke" title="Grab (6)" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5l12.5 8-5.4 1.4 3 6.1-2.8 1.4-3-6.2-4.3 3.4z"/></svg><span>Grab</span></button>
-            <button class="tb" data-tool="water" title="Water (3)" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2c2.9 3.6 5.8 7 5.8 10.2a5.8 5.8 0 01-11.6 0C6.2 10.2 9.1 6.8 12 3.2z"/></svg><span>Water</span></button>
-            <button class="tb" data-tool="smoke" title="Smoke (4)" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8.5c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2"/><path d="M4 13c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2"/><path d="M4 17.5c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2"/></svg><span>Smoke</span></button>
-            <button class="tb" data-tool="slime" title="Slime (5)" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4.5c4.4 0 7.5 3.2 7.5 7.2 0 4.4-3.4 7.8-7.5 7.8s-7.5-3.4-7.5-7.8c0-4 3.1-7.2 7.5-7.2z"/><path d="M8 8.5c.7-1 1.7-1.5 3-1.5"/></svg><span>Slime</span></button>
-            <button class="tb" data-tool="build" data-panel="build" title="Build" aria-pressed="false" aria-expanded="false" aria-controls="toy-panel-build"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18V6h16v12M8 18V10h8v8"/></svg><span>Build</span></button>
-          </div>
-          <button class="toy-material toy-presets-entry" id="toy-presets-open" aria-expanded="false" aria-controls="toy-panel-water"><span>Water presets</span></button>
-          <button class="toy-icon toy-settings" data-panel="settings" aria-label="Settings" title="Settings" aria-expanded="false" aria-controls="toy-panel-settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h7m4 0h5M4 17h3m4 0h9"/><circle cx="13" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg></button>
+      <div class="toy-dock" data-toy-controls>
+        <div class="toy-tools" role="group" aria-label="Tools">
+          <button class="tb is-on" data-tool="poke" title="Grab (6)" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5l12.5 8-5.4 1.4 3 6.1-2.8 1.4-3-6.2-4.3 3.4z"/></svg><span>Grab</span></button>
+          <button class="tb" data-tool="water" title="Water (3)" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2c2.9 3.6 5.8 7 5.8 10.2a5.8 5.8 0 01-11.6 0C6.2 10.2 9.1 6.8 12 3.2z"/></svg><span>Water</span></button>
+          <button class="tb" data-tool="smoke" title="Smoke (4)" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8.5c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2"/><path d="M4 13c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2"/><path d="M4 17.5c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2"/></svg><span>Smoke</span></button>
+          <button class="tb" data-tool="slime" title="Slime (5)" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4.5c4.4 0 7.5 3.2 7.5 7.2 0 4.4-3.4 7.8-7.5 7.8s-7.5-3.4-7.5-7.8c0-4 3.1-7.2 7.5-7.2z"/><path d="M8 8.5c.7-1 1.7-1.5 3-1.5"/></svg><span>Slime</span></button>
+          <button class="tb" data-tool="build" data-panel="build" title="Build" aria-pressed="false" aria-expanded="false" aria-controls="toy-panel-build"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18V6h16v12M8 18V10h8v8"/></svg><span>Build</span></button>
         </div>
-        <div class="toy-foot" data-toy-controls>
-          <div class="toy-machine-summary" id="toy-machine-summary" hidden>
-            <button class="toy-primary" id="toy-machine-primary" type="button" disabled>Open valve</button>
-            <p id="toy-machine-caption"></p>
-          </div>
-          <div class="toy-machine-metrics" id="toy-machine-metrics" hidden><span><span id="toy-compact-head-label">Head</span> <b id="toy-compact-head">Waiting</b></span><span>Flow <b id="toy-compact-flow">Waiting</b></span><span id="toy-native-reading" hidden></span><button class="toy-chip" id="toy-air-pressure-compact" aria-pressed="true">Air pressure</button><button class="toy-chip" id="toy-machine-view" data-panel="build" aria-expanded="false" aria-controls="toy-panel-build">Zoom and pan</button></div>
-          <p class="toy-machine-diagnostics" id="toy-machine-diagnostics" hidden></p>
-          <p class="toy-pressure-legend" id="toy-pressure-legend" hidden></p>
-          <div class="toy-foot-row"><span id="toy-hint">Drop a slime into the falling water.</span><span class="toy-foot-stats"><span id="toy-fps" title="Rendered frames per second">0 FPS</span><span id="toy-status" role="status">Starting</span></span></div>
-          <p class="toy-build-notice" id="toy-build-notice" role="status" hidden></p>
-          <p class="toy-keyboard-help" id="toy-keyboard-help" hidden>Arrows move. Shift moves farther. Enter starts or finishes. Escape cancels.</p>
+        <button class="toy-material toy-presets-entry" id="toy-presets-open" aria-expanded="false" aria-controls="toy-panel-water"><span>Water presets</span></button>
+        <button class="toy-icon toy-settings" data-panel="settings" aria-label="Settings" title="Settings" aria-expanded="false" aria-controls="toy-panel-settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h7m4 0h5M4 17h3m4 0h9"/><circle cx="13" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg></button>
+      </div>
+      <div class="toy-foot" data-toy-controls>
+        <div class="toy-machine-summary" id="toy-machine-summary" hidden>
+          <button class="toy-primary" id="toy-machine-primary" type="button" disabled>Open valve</button>
+          <p id="toy-machine-caption"></p>
         </div>
+        <div class="toy-machine-metrics" id="toy-machine-metrics" hidden><span><span id="toy-compact-head-label">Head</span> <b id="toy-compact-head">Waiting</b></span><span>Flow <b id="toy-compact-flow">Waiting</b></span><span id="toy-native-reading" hidden></span><button class="toy-chip" id="toy-air-pressure-compact" aria-pressed="true">Air pressure</button><button class="toy-chip" id="toy-machine-view" data-panel="build" aria-expanded="false" aria-controls="toy-panel-build">Zoom and pan</button></div>
+        <p class="toy-machine-diagnostics" id="toy-machine-diagnostics" hidden></p>
+        <p class="toy-pressure-legend" id="toy-pressure-legend" hidden></p>
+        <div class="toy-foot-row"><span id="toy-hint">Drop a slime into the falling water.</span><span class="toy-foot-stats"><span id="toy-fps" title="Rendered frames per second">0 FPS</span><span id="toy-status" role="status">Starting</span></span></div>
+        <p class="toy-build-notice" id="toy-build-notice" role="status" hidden></p>
+        <p class="toy-keyboard-help" id="toy-keyboard-help" hidden>Arrows move. Shift moves farther. Enter starts or finishes. Escape cancels.</p>
+      </div>
 
-        <div class="toy-trays" data-toy-controls>
-          <section class="toy-panel" id="toy-panel-build" aria-labelledby="toy-heading-build" hidden>
-            <div class="toy-panel-head"><h2 id="toy-heading-build">Build</h2><button class="toy-icon" data-close aria-label="Close Build"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
-            <div class="toy-build-tools" role="group" aria-label="Build tools">
-              <button class="toy-chip" data-tool="draw" data-build-tool="draw" title="Draw (1)" aria-pressed="false">Draw</button>
-              <button class="toy-chip" data-tool="erase" data-build-tool="erase" title="Erase (2)" aria-pressed="false">Erase</button>
-              <button class="toy-chip is-on" data-build-tool="pipe" aria-pressed="true">Pipe</button>
-              <button class="toy-chip" data-build-tool="open-vessel" aria-pressed="false">Open vessel</button>
-              <button class="toy-chip" data-build-tool="sealed-vessel" aria-pressed="false">Sealed vessel</button>
-              <button class="toy-chip" data-build-tool="vent" aria-pressed="false">Vent</button>
-              <button class="toy-chip" data-build-tool="seal" aria-pressed="false">Seal</button>
-              <button class="toy-chip" data-build-tool="check" aria-pressed="false">Check valve</button>
-              <button class="toy-chip" data-build-tool="flap" aria-pressed="false">Flap valve</button>
-              <button class="toy-chip" data-build-tool="nozzle" aria-pressed="false">Nozzle</button>
-            </div>
-            <div class="toy-build-options">
-              <label for="toy-build-bore">Pipe bore<select id="toy-build-bore"><option value="16">Narrow</option><option value="24" selected>Medium</option><option value="32">Wide</option></select></label>
-              <label for="toy-build-direction">Direction<select id="toy-build-direction"><option value="up">Up</option><option value="right">Right</option><option value="down">Down</option><option value="left">Left</option></select></label>
-              <label for="toy-build-material">Wall appearance<select id="toy-build-material"><option value="glass">Glass</option><option value="opaque">Opaque</option></select></label>
-              <label for="toy-build-open">Valve starts<select id="toy-build-open"><option value="true">Open</option><option value="false">Closed</option></select></label>
-            </div>
-            <div class="toy-build-actions"><button class="toy-chip" id="toy-build-undo">Undo</button><button class="toy-chip" id="toy-build-redo">Redo</button><button class="toy-chip" id="toy-build-share">Share build</button></div>
-            <div class="toy-build-camera" role="group" aria-label="View controls">
-              <p id="toy-camera-status" role="status">Fitted view</p>
-              <div class="toy-camera-actions"><button class="toy-chip" data-camera="zoom-in">Zoom in</button><button class="toy-chip" data-camera="zoom-out">Zoom out</button><button class="toy-chip" data-camera="reset">Reset view</button></div>
-              <div class="toy-camera-actions"><button class="toy-chip" data-camera="left">Pan left</button><button class="toy-chip" data-camera="right">Pan right</button><button class="toy-chip" data-camera="up">Pan up</button><button class="toy-chip" data-camera="down">Pan down</button></div>
-            </div>
-            <div class="toy-build-valves" id="toy-build-valves" hidden><p>Placed valves</p><div id="toy-build-valve-list" role="group" aria-label="Manual valves"></div></div>
-            <label class="toy-share-link" id="toy-share-wrap" for="toy-share-url" hidden>Build link<input id="toy-share-url" type="text" readonly></label>
-            <p class="toy-panel-note">Drag to place a part. Use Grab to tap a valve. While paused, use Placed valves. Undo changes walls and parts. It doesn’t rewind the water.</p>
-          </section>
-          <section class="toy-panel" id="toy-panel-instruments" aria-labelledby="toy-heading-instruments" hidden>
-            <div class="toy-panel-head"><h2 id="toy-heading-instruments">Instruments</h2><button class="toy-icon" data-close aria-label="Close instruments"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
-            <div class="toy-native-options" id="toy-native-options" hidden><label for="toy-native-setup">Compare a setup<select id="toy-native-setup"></select></label><p id="toy-native-setup-note">Choosing a setup restarts it with the same initial water. Hold starts a freshly filled straw; releasing opens its top.</p><p id="toy-native-boundaries"></p><p id="toy-native-ledger"></p></div>
-            <p class="toy-panel-note" id="toy-material-slip-sources" hidden>Oil density: <a href="https://tsapps.nist.gov/publication/get_pdf.cfm?pub_id=902259">NIST hexadecane data at 68 degrees Fahrenheit</a>. Separate material momentum: <a href="https://math.ucdavis.edu/~jteran/papers/PGKFTJM17.pdf">Tampubolon and colleagues</a>. The simulation uses a reduced version of their model.</p>
-            <p class="toy-panel-note" id="toy-machine-scale"></p>
-            <div class="toy-build-options" id="toy-siphon-options" hidden>
-              <label>Siphon setup<select id="toy-siphon-setup"><option value="filled">Filled tube</option><option value="empty">Empty tube</option><option value="raised">Raised outlet</option></select></label>
-            </div>
-            <p class="toy-panel-note" id="toy-siphon-setup-note" hidden>Changing the setup resets both tanks. Restart scene repeats the selected setup.</p>
-            <div class="toy-build-options" id="toy-heron-options" hidden>
-              <label>Fountain setup<select id="toy-heron-setup"><option value="sealed">Sealed jars</option><option value="vented">Vented lid</option><option value="empty">Empty source jar</option><option value="raised">Raised receiving jar</option></select></label>
-            </div>
-            <p class="toy-panel-note" id="toy-heron-setup-note" hidden>Changing the setup refills the apparatus. Restart repeats the selected setup.</p>
-            <p class="toy-panel-note" id="toy-numerical-status">Waiting for a pressure sample.</p>
+      <div class="toy-trays" data-toy-controls>
+        <section class="toy-panel" id="toy-panel-build" aria-labelledby="toy-heading-build" hidden>
+          <div class="toy-panel-head"><h2 id="toy-heading-build">Build</h2><button class="toy-icon" data-close aria-label="Close Build"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
+          <div class="toy-build-tools" role="group" aria-label="Build tools">
+            <button class="toy-chip" data-tool="draw" data-build-tool="draw" title="Draw (1)" aria-pressed="false">Draw</button>
+            <button class="toy-chip" data-tool="erase" data-build-tool="erase" title="Erase (2)" aria-pressed="false">Erase</button>
+            <button class="toy-chip is-on" data-build-tool="pipe" aria-pressed="true">Pipe</button>
+            <button class="toy-chip" data-build-tool="open-vessel" aria-pressed="false">Open vessel</button>
+            <button class="toy-chip" data-build-tool="sealed-vessel" aria-pressed="false">Sealed vessel</button>
+            <button class="toy-chip" data-build-tool="vent" aria-pressed="false">Vent</button>
+            <button class="toy-chip" data-build-tool="seal" aria-pressed="false">Seal</button>
+            <button class="toy-chip" data-build-tool="check" aria-pressed="false">Check valve</button>
+            <button class="toy-chip" data-build-tool="flap" aria-pressed="false">Flap valve</button>
+            <button class="toy-chip" data-build-tool="nozzle" aria-pressed="false">Nozzle</button>
+          </div>
+          <div class="toy-build-options">
+            <label for="toy-build-bore">Pipe bore<select id="toy-build-bore"><option value="16">Narrow</option><option value="24" selected>Medium</option><option value="32">Wide</option></select></label>
+            <label for="toy-build-direction">Direction<select id="toy-build-direction"><option value="up">Up</option><option value="right">Right</option><option value="down">Down</option><option value="left">Left</option></select></label>
+            <label for="toy-build-material">Wall appearance<select id="toy-build-material"><option value="glass">Glass</option><option value="opaque">Opaque</option></select></label>
+            <label for="toy-build-open">Valve starts<select id="toy-build-open"><option value="true">Open</option><option value="false">Closed</option></select></label>
+          </div>
+          <div class="toy-build-actions"><button class="toy-chip" id="toy-build-undo">Undo</button><button class="toy-chip" id="toy-build-redo">Redo</button><button class="toy-chip" id="toy-build-share">Share build</button></div>
+          <div class="toy-build-camera" role="group" aria-label="View controls">
+            <p id="toy-camera-status" role="status">Fitted view</p>
+            <div class="toy-camera-actions"><button class="toy-chip" data-camera="zoom-in">Zoom in</button><button class="toy-chip" data-camera="zoom-out">Zoom out</button><button class="toy-chip" data-camera="reset">Reset view</button></div>
+            <div class="toy-camera-actions"><button class="toy-chip" data-camera="left">Pan left</button><button class="toy-chip" data-camera="right">Pan right</button><button class="toy-chip" data-camera="up">Pan up</button><button class="toy-chip" data-camera="down">Pan down</button></div>
+          </div>
+          <div class="toy-build-valves" id="toy-build-valves" hidden><p>Placed valves</p><div id="toy-build-valve-list" role="group" aria-label="Manual valves"></div></div>
+          <label class="toy-share-link" id="toy-share-wrap" for="toy-share-url" hidden>Build link<input id="toy-share-url" type="text" readonly></label>
+          <p class="toy-panel-note">Drag to place a part. Use Grab to tap a valve. While paused, use Placed valves. Undo changes walls and parts. It doesn’t rewind the water.</p>
+        </section>
+        <section class="toy-panel" id="toy-panel-instruments" aria-labelledby="toy-heading-instruments" hidden>
+          <div class="toy-panel-head"><h2 id="toy-heading-instruments">Instruments</h2><button class="toy-icon" data-close aria-label="Close instruments"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
+          <div class="toy-native-options" id="toy-native-options" hidden><label for="toy-native-setup">Compare a setup<select id="toy-native-setup"></select></label><p id="toy-native-setup-note">Choosing a setup restarts it with the same initial water. Hold starts a freshly filled straw; releasing opens its top.</p><p id="toy-native-boundaries"></p><p id="toy-native-ledger"></p></div>
+          <p class="toy-panel-note" id="toy-material-slip-sources" hidden>Oil density: <a href="https://tsapps.nist.gov/publication/get_pdf.cfm?pub_id=902259">NIST hexadecane data at 68 degrees Fahrenheit</a>. Separate material momentum: <a href="https://math.ucdavis.edu/~jteran/papers/PGKFTJM17.pdf">Tampubolon and colleagues</a>. The simulation uses a reduced version of their model.</p>
+          <p class="toy-panel-note" id="toy-machine-scale"></p>
+          <div class="toy-build-options" id="toy-siphon-options" hidden>
+            <label>Siphon setup<select id="toy-siphon-setup"><option value="filled">Filled tube</option><option value="empty">Empty tube</option><option value="raised">Raised outlet</option></select></label>
+          </div>
+          <p class="toy-panel-note" id="toy-siphon-setup-note" hidden>Changing the setup resets both tanks. Restart scene repeats the selected setup.</p>
+          <div class="toy-build-options" id="toy-heron-options" hidden>
+            <label>Fountain setup<select id="toy-heron-setup"><option value="sealed">Sealed jars</option><option value="vented">Vented lid</option><option value="empty">Empty source jar</option><option value="raised">Raised receiving jar</option></select></label>
+          </div>
+          <p class="toy-panel-note" id="toy-heron-setup-note" hidden>Changing the setup refills the apparatus. Restart repeats the selected setup.</p>
+          <p class="toy-panel-note" id="toy-numerical-status">Waiting for a pressure sample.</p>
+          <dl class="toy-instrument-values">
+            <div><dt>Pressure, gauge</dt><dd id="toy-i-pressure">Waiting</dd></div><div><dt>Measured speed</dt><dd id="toy-i-speed">Waiting</dd></div><div><dt>Ideal speed</dt><dd id="toy-i-ideal-speed">Waiting</dd></div><div><dt>Flow</dt><dd id="toy-i-flow">Waiting</dd></div><div><dt>Time</dt><dd id="toy-i-clock">Waiting</dd></div><div><dt>Jet rise</dt><dd id="toy-i-jet">Waiting</dd></div><div><dt>Ideal jet rise</dt><dd id="toy-i-ideal-jet">Waiting</dd></div><div><dt>Available air work</dt><dd id="toy-i-air-work">Waiting</dd></div><div><dt>Water potential</dt><dd id="toy-i-water-work">Waiting</dd></div><div><dt>Sample age</dt><dd id="toy-i-age">Waiting</dd></div>
+          </dl>
+          <details class="toy-details"><summary>Energy and model scale</summary>
             <dl class="toy-instrument-values">
-              <div><dt>Pressure, gauge</dt><dd id="toy-i-pressure">Waiting</dd></div><div><dt>Measured speed</dt><dd id="toy-i-speed">Waiting</dd></div><div><dt>Ideal speed</dt><dd id="toy-i-ideal-speed">Waiting</dd></div><div><dt>Flow</dt><dd id="toy-i-flow">Waiting</dd></div><div><dt>Time</dt><dd id="toy-i-clock">Waiting</dd></div><div><dt>Jet rise</dt><dd id="toy-i-jet">Waiting</dd></div><div><dt>Ideal jet rise</dt><dd id="toy-i-ideal-jet">Waiting</dd></div><div><dt>Available air work</dt><dd id="toy-i-air-work">Waiting</dd></div><div><dt>Water potential</dt><dd id="toy-i-water-work">Waiting</dd></div><div><dt>Sample age</dt><dd id="toy-i-age">Waiting</dd></div>
+              <div><dt>Water kinetic energy</dt><dd id="toy-i-kinetic">Waiting</dd></div><div><dt>Water compression</dt><dd id="toy-i-acoustic">Waiting</dd></div><div><dt>Initial water energy</dt><dd id="toy-i-initial-work">Waiting</dd></div><div><dt>Added water energy</dt><dd id="toy-i-input-work">Waiting</dd></div><div><dt>Released water potential</dt><dd id="toy-i-released-work">Waiting</dd></div><div><dt>Energy remainder</dt><dd id="toy-i-energy-residual">Waiting</dd></div><div><dt>Room pressure, absolute</dt><dd id="toy-i-room-pressure">Waiting</dd></div><div><dt>Minimum gauge pressure</dt><dd id="toy-i-minimum-pressure">Waiting</dd></div><div><dt>Sound speed</dt><dd id="toy-i-sound-speed">Waiting</dd></div>
             </dl>
-            <details class="toy-details"><summary>Energy and model scale</summary>
-              <dl class="toy-instrument-values">
-                <div><dt>Water kinetic energy</dt><dd id="toy-i-kinetic">Waiting</dd></div><div><dt>Water compression</dt><dd id="toy-i-acoustic">Waiting</dd></div><div><dt>Initial water energy</dt><dd id="toy-i-initial-work">Waiting</dd></div><div><dt>Added water energy</dt><dd id="toy-i-input-work">Waiting</dd></div><div><dt>Released water potential</dt><dd id="toy-i-released-work">Waiting</dd></div><div><dt>Energy remainder</dt><dd id="toy-i-energy-residual">Waiting</dd></div><div><dt>Room pressure, absolute</dt><dd id="toy-i-room-pressure">Waiting</dd></div><div><dt>Minimum gauge pressure</dt><dd id="toy-i-minimum-pressure">Waiting</dd></div><div><dt>Sound speed</dt><dd id="toy-i-sound-speed">Waiting</dd></div>
-              </dl>
-              <p class="toy-panel-note" id="toy-energy-status"></p>
-            </details>
-            <div class="toy-instrument-actions"><button class="toy-chip is-on" id="toy-air-pressure-toggle" aria-pressed="true">Air pressure</button><button class="toy-chip" id="toy-pressure-toggle" aria-pressed="false">Water pressure</button><button class="toy-chip" id="toy-slow-toggle" aria-pressed="false">Slow motion</button><button class="toy-chip is-on" id="toy-glass-toggle" aria-pressed="true">Glass walls</button></div>
-            <p class="toy-panel-note">Ideal values use the measured head. Room pressure and sound speed are scaled for this model.</p>
-          </section>
-          <section class="toy-panel" id="toy-panel-water" aria-labelledby="toy-heading-water" hidden>
-            <div class="toy-panel-head"><h2 id="toy-heading-water">Water presets</h2><button class="toy-icon" data-close aria-label="Close presets"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
-            <div class="toy-preset-body" data-presets="water"></div>
-            <p class="toy-panel-note" id="toy-machine-material-notice" hidden>Water machines use the default water physics. Your material choice resumes in the original scenes.</p>
-          </section>
-          <section class="toy-panel" id="toy-panel-smoke" aria-labelledby="toy-heading-smoke" hidden>
-            <div class="toy-panel-head"><h2 id="toy-heading-smoke">Smoke presets</h2><button class="toy-icon" data-close aria-label="Close presets"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
-            <div class="toy-preset-body" data-presets="smoke"></div>
-          </section>
-          <section class="toy-panel" id="toy-panel-slime" aria-labelledby="toy-heading-slime" hidden>
-            <div class="toy-panel-head"><h2 id="toy-heading-slime">Slime presets</h2><button class="toy-icon" data-close aria-label="Close presets"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
-            <div class="toy-preset-body" data-presets="slime"></div>
-          </section>
-          <section class="toy-panel" id="toy-panel-settings" aria-labelledby="toy-heading-settings" hidden>
-            <div class="toy-panel-head"><h2 id="toy-heading-settings">Settings</h2><button class="toy-icon" data-close aria-label="Close settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
-            <div class="toy-palettes" role="group" aria-label="Material presets">
-              <button class="toy-material" data-panel="water" aria-expanded="false" aria-controls="toy-panel-water"><i class="toy-swatch toy-swatch--water" aria-hidden="true"></i><span>Water</span></button>
-              <button class="toy-material" data-panel="smoke" aria-expanded="false" aria-controls="toy-panel-smoke"><i class="toy-swatch toy-swatch--smoke" aria-hidden="true"></i><span>Smoke</span></button>
-              <button class="toy-material" data-panel="slime" aria-expanded="false" aria-controls="toy-panel-slime"><i class="toy-swatch toy-swatch--slime" aria-hidden="true"></i><span>Slime</span></button>
-            </div>
-            <div class="toy-sliders">
-          <div class="toy-slider">
-            <label for="toy-grav">Gravity <b id="toy-grav-val">1.00g</b></label>
-            <input id="toy-grav" type="range" min="0" max="200" value="100" step="5" aria-label="Gravity">
+            <p class="toy-panel-note" id="toy-energy-status"></p>
+          </details>
+          <div class="toy-instrument-actions"><button class="toy-chip is-on" id="toy-air-pressure-toggle" aria-pressed="true">Air pressure</button><button class="toy-chip" id="toy-pressure-toggle" aria-pressed="false">Water pressure</button><button class="toy-chip" id="toy-slow-toggle" aria-pressed="false">Slow motion</button><button class="toy-chip is-on" id="toy-glass-toggle" aria-pressed="true">Glass walls</button></div>
+          <p class="toy-panel-note">Ideal values use the measured head. Room pressure and sound speed are scaled for this model.</p>
+        </section>
+        <section class="toy-panel" id="toy-panel-water" aria-labelledby="toy-heading-water" hidden>
+          <div class="toy-panel-head"><h2 id="toy-heading-water">Water presets</h2><button class="toy-icon" data-close aria-label="Close presets"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
+          <div class="toy-preset-body" data-presets="water"></div>
+          <p class="toy-panel-note" id="toy-machine-material-notice" hidden>Water machines use the default water physics. Your material choice resumes in the original scenes.</p>
+        </section>
+        <section class="toy-panel" id="toy-panel-smoke" aria-labelledby="toy-heading-smoke" hidden>
+          <div class="toy-panel-head"><h2 id="toy-heading-smoke">Smoke presets</h2><button class="toy-icon" data-close aria-label="Close presets"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
+          <div class="toy-preset-body" data-presets="smoke"></div>
+        </section>
+        <section class="toy-panel" id="toy-panel-slime" aria-labelledby="toy-heading-slime" hidden>
+          <div class="toy-panel-head"><h2 id="toy-heading-slime">Slime presets</h2><button class="toy-icon" data-close aria-label="Close presets"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
+          <div class="toy-preset-body" data-presets="slime"></div>
+        </section>
+        <section class="toy-panel" id="toy-panel-settings" aria-labelledby="toy-heading-settings" hidden>
+          <div class="toy-panel-head"><h2 id="toy-heading-settings">Settings</h2><button class="toy-icon" data-close aria-label="Close settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
+          <div class="toy-palettes" role="group" aria-label="Material presets">
+            <button class="toy-material" data-panel="water" aria-expanded="false" aria-controls="toy-panel-water"><i class="toy-swatch toy-swatch--water" aria-hidden="true"></i><span>Water</span></button>
+            <button class="toy-material" data-panel="smoke" aria-expanded="false" aria-controls="toy-panel-smoke"><i class="toy-swatch toy-swatch--smoke" aria-hidden="true"></i><span>Smoke</span></button>
+            <button class="toy-material" data-panel="slime" aria-expanded="false" aria-controls="toy-panel-slime"><i class="toy-swatch toy-swatch--slime" aria-hidden="true"></i><span>Slime</span></button>
           </div>
-          <div class="toy-slider">
-            <label for="toy-time">Time <b id="toy-time-val">100%</b></label>
-            <input id="toy-time" type="range" min="5" max="100" value="100" step="5" aria-label="Time scale">
-          </div>
-          <div class="toy-slider">
-            <label for="toy-brush">Brush <b id="toy-brush-val">16px</b></label>
-            <input id="toy-brush" type="range" min="8" max="44" value="16" step="2" aria-label="Brush size">
-          </div>
-          <div class="toy-slider toy-slider--feel">
-            <label for="toy-flow">Water feel <b id="toy-flow-val">fluid</b></label>
-            <input id="toy-flow" type="range" min="0" max="100" value="42" step="1" aria-label="Water liveliness, very calm to very lively" aria-valuetext="fluid">
-          </div>
-            </div>
-            <div class="toy-settings-actions">
-              <button class="toy-chip" id="toy-particles" type="button" aria-pressed="false">Show water particles</button>
-              <button class="toy-chip" id="toy-clear">Empty the box</button>
-            </div>
-            <details class="toy-details"><summary>Engine stats</summary><div class="toy-readout" id="toy-readout">Starting</div></details>
-          </section>
+          <div class="toy-sliders">
+        <div class="toy-slider">
+          <label for="toy-grav">Gravity <b id="toy-grav-val">1.00g</b></label>
+          <input id="toy-grav" type="range" min="0" max="200" value="100" step="5" aria-label="Gravity">
         </div>
+        <div class="toy-slider">
+          <label for="toy-time">Time <b id="toy-time-val">100%</b></label>
+          <input id="toy-time" type="range" min="5" max="100" value="100" step="5" aria-label="Time scale">
+        </div>
+        <div class="toy-slider">
+          <label for="toy-brush">Brush <b id="toy-brush-val">16px</b></label>
+          <input id="toy-brush" type="range" min="8" max="44" value="16" step="2" aria-label="Brush size">
+        </div>
+        <div class="toy-slider toy-slider--feel">
+          <label for="toy-flow">Water feel <b id="toy-flow-val">fluid</b></label>
+          <input id="toy-flow" type="range" min="0" max="100" value="42" step="1" aria-label="Water liveliness, very calm to very lively" aria-valuetext="fluid">
+        </div>
+          </div>
+          <div class="toy-settings-actions">
+            <button class="toy-chip" id="toy-particles" type="button" aria-pressed="false">Show water particles</button>
+            <button class="toy-chip" id="toy-clear">Empty the box</button>
+          </div>
+          <details class="toy-details"><summary>Engine stats</summary><div class="toy-readout" id="toy-readout">Starting</div></details>
+        </section>
+        <section class="toy-panel toy-about" id="toy-panel-about" aria-labelledby="toy-heading-about" hidden>
+          <div class="toy-panel-head"><h2 id="toy-heading-about">About</h2><button class="toy-icon" data-close aria-label="Close About"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
+          <div class="toy-about-body">
+            <p>Three physics engines from <a href="/grand-motherload.html">Sluice</a>, my mining game, share one box. Draw a wall and the water, smoke and slime all collide with it. Choose a machine from the menu at the top, or grab a slime and pull.</p>
+            <dl>
+              <div><dt>Water</dt><dd>Particles carry the liquid. A temporary grid exchanges their momentum and applies pressure. The MLS-MPM solver runs on WebGPU, adapted from <a href="https://oimo.io/works/water/">saharan’s water demo</a>.</dd></div>
+              <div><dt>Air</dt><dd>The water machines add a pressure solve. Room air sets zero gauge pressure, and each sealed pocket has one pressure at a fixed temperature, compressing as water takes its space. <a href="https://orionquest.github.io/papers/MMTFBIF/paper.html">Aanjaneya, Patkar and Fedkiw’s bubble model</a> describes this approximation.</dd></div>
+              <div><dt>Smoke</dt><dd>A WebGL fluid solver moves velocity and dye through a grid, following <a href="https://github.com/PavelDoGreat/WebGL-Fluid-Simulation">Pavel Dobryakov’s work</a>. The visible smoke is dye in that flow.</dd></div>
+              <div><dt>Slime</dt><dd>A mesh of elastic connections holds its volume while it stretches and compresses, solved with <a href="https://mmacklin.com/xpbd.pdf">XPBD</a> on the CPU.</dd></div>
+            </dl>
+            <p>The instruments treat the box as 30 inches wide and 1 inch deep. This is a game simulation tuned for play: the engines trade approximate boundary motion instead of sharing one solver.</p>
+            <p>Water needs WebGPU and smoke needs WebGL; without one, the rest still runs. Space pauses, F toggles fullscreen, and keys 1 to 6 choose tools.</p>
+            <div class="toy-about-links"><a href="https://github.com/Ethan-Willingham/Portfolio_01/blob/main/js/water-smoke-slime.js">Read the source</a><a href="/grand-motherload.html">Play Sluice</a><a href="/">ethanwillingham.com</a></div>
+          </div>
+        </section>
       </div>
-    </section>
-    <p class="toy-nowater" id="toy-nowater" role="status" hidden>Water isn’t available in this browser. You can still play with smoke and slime.</p>
+    </div>
+  </section>
 
-    <main class="post-body toy-prose" id="how-it-works">
-      <section id="water-machines-progress" aria-labelledby="water-machines-progress-title">
-        <h2 id="water-machines-progress-title">Water machines: progress</h2>
-        <p>The picker now includes 70 first-pass drafts, each marked with its current state and what is missing. This is the workshop: try the apparatus before deciding which machines deserve more work. The gentle kettle and water contact around divers and the guided float remain open.</p>
-        <p>Stir the pale oil and blue water, then watch them trade places. The lighter oil rises as the liquids move past each other. All three starting seeds show stronger layering than the equal-density comparison, which still sorts partly. <a href="?scene=material-oil-jar#toy">Try oil and water.</a> <a href="/assets/images/water-machines/oil-and-water-result-2026-10-11.json">Measurements and limits.</a></p>
-        <figure class="u-figure">
-          <picture><source type="image/webp" srcset="/assets/images/water-machines/oil-and-water-2026-10-11.webp"><img class="u-figure-img" src="/assets/images/water-machines/oil-and-water-2026-10-11.webp" width="3024" height="1640" loading="lazy" alt="The actual jar after stirring, with pale oil above a lower blue water body and oil still along its sides."></picture>
-          <figcaption class="u-figure-cap">Each liquid has its own momentum. Some oil remains along the lower walls; Instruments explains the compressible model and its uncalibrated viscosity and interface.</figcaption>
-        </figure>
-        <p>The pipe now has a handle you can slide. Turn on sound, then pull its top upward: extending it from two to four inches lowers the estimated note by about an octave. Falling water pushes air through the pipe; capping its air port silences it on all three starting seeds. <a href="?scene=singing-pipe#toy">Try the sliding pipe.</a> <a href="/assets/images/water-machines/sliding-pipe-result-2026-10-11.json">Measurements and limits.</a></p>
-        <figure class="u-figure">
-          <picture><source type="image/webp" srcset="/assets/images/water-machines/sliding-pipe-2026-10-11.webp"><img class="u-figure-img" src="/assets/images/water-machines/sliding-pipe-2026-10-11.webp" width="1512" height="820" loading="lazy" alt="The actual sliding pipe extended to four inches, with water filling its sealed air chamber and the estimated mode at 829 hertz."></picture>
-          <figcaption class="u-figure-cap">The note follows the drawn pipe length and measured escaping air. Instruments explains the reduced sound model; acoustic load does not feed back into the water or air.</figcaption>
-        </figure>
-        <p>The float now works as a handle for a water inlet. Grab it and pull it down: its linkage opens the inlet and water enters the cistern. Water lifts the unheld float and closes the inlet; pinning it low keeps the inlet open on all three starting seeds. <a href="?scene=float-slider-cistern#toy">Try the float-controlled inlet.</a> <a href="/assets/images/water-machines/float-inlet-result-2026-10-11.json">Measurements and limits.</a></p>
-        <figure class="u-figure">
-          <picture><source type="image/webp" srcset="/assets/images/water-machines/float-inlet-2026-10-11.webp"><img class="u-figure-img" src="/assets/images/water-machines/float-inlet-2026-10-11.webp" width="1512" height="820" loading="lazy" alt="The actual guided float pulled down in its cistern, with the linked inlet open and water entering from the marked supply."></picture>
-          <figcaption class="u-figure-cap">The float keeps its shape on a vertical guide. Its current position moves the inlet shutter; Instruments explains the reduced buoyancy model, powered supply and permanently closed outlet.</figcaption>
-        </figure>
-        <p>Air now rises through the water in bubbles. Stop the hose: new bubbles stop, while the ones already inside keep moving toward the surface. The injected gas clears after Stop on all three test seeds, with gas and water accounted for. Other trapped-air scenes still need work. <a href="?scene=air-hose#toy">Try the air hose.</a> <a href="/assets/images/water-machines/bubbles-result-2026-10-11.json">Measurements and limits.</a></p>
-        <figure class="u-figure">
-          <picture><source type="image/webp" srcset="/assets/images/water-machines/bubbles-native-water-2026-10-11.webp"><img class="u-figure-img" src="/assets/images/water-machines/bubbles-native-water-2026-10-11.webp" width="1512" height="820" loading="lazy" alt="The actual air hose displacing blue native water as gas rises through the glass, with no painted bubble outlines."></picture>
-          <figcaption class="u-figure-cap">Rising gas opens gaps in the native water; circle overlays have been removed. Instruments explains the pressure-volume model, declared hose supply and unresolved wake forces.</figcaption>
-        </figure>
-        <p>The kettle boils and sends vapor through its whistle. Turn off the heater to cool it, or open Instruments and cap the whistle to watch trapped vapor condense back into water. All three starting seeds pass each comparison, with the water and gas accounted for. Sound follows the measured gas escaping and starts off. <a href="?scene=kettle#toy">Try the kettle.</a> <a href="/assets/images/water-machines/kettle-result-2026-10-11.json">Measurements and limits.</a></p>
-        <figure class="u-figure">
-          <picture><source type="image/webp" srcset="/assets/images/water-machines/kettle-2026-10-11.webp"><img class="u-figure-img" src="/assets/images/water-machines/kettle-2026-10-11.webp" width="1512" height="820" loading="lazy" alt="The actual glass kettle, with a marked immersed heater and white tracer rising from its narrow whistle."></picture>
-          <figcaption class="u-figure-cap">The marked heater boils the water, and pressure sends vapor through the narrow whistle. The white plume traces escaping steam; Instruments explains the coarse phase model and pipe-mode sound estimate.</figcaption>
-        </figure>
-        <p>The water balloon now has a smooth curved skin, and its water collides with that same curve. Throwing, landing and popping pass on all three starting seeds; the enlarged phone views show water meeting the lower skin. The oil jar and air hose are live, and fire and divers start without changing your Pause choice. Water now meets the curved skin of the wind tunnel's original slime and the slimes you add. <a href="?scene=smoke-wind-tunnel#toy">Try it.</a> <a href="/assets/images/water-machines/wind-slime-contact-2026-10-11.webp">Enlarged contact view.</a> Pour water onto a slime to see the contact. The existing 64-body allocation passed sampled contact and water-retention checks; that stress test is not a frame-rate guarantee. Floats and divers still leave gaps around their skin. Ordinary underwater air still needs work.</p>
-        <p>The rebuilt kettle still sloshes too much: its open-spout test reaches about 2.8 psi and the surface moves through about 1.2 inches. Sand settles, but the heavy and light grains do not form clear layers. The toilet fails its full-versus-half-tank comparison, and the singing birds have yet to pass their repeating-cycle test. These prototypes remain private while the fixes are tested. <a href="/assets/images/water-machines/owner-fixes-progress-2026-10-11.json">Current measurements and failed tests.</a></p>
-        <p>Squeeze the jar and the three gas slimes shrink and sink in order. Release it and they expand and return to the surface; opening the air vent prevents the squeeze from sinking them. All three starting seeds pass, with every water parcel accounted for. <a href="?scene=cartesian-divers#toy">Try the divers.</a> <a href="/assets/images/water-machines/cartesian-divers-result-2026-10-11.json">Measurements and limits.</a></p>
-        <figure class="u-figure">
-          <picture><source type="image/webp" srcset="/assets/images/water-machines/cartesian-divers-2026-10-11.webp"><img class="u-figure-img" src="/assets/images/water-machines/cartesian-divers-2026-10-11.webp" width="1512" height="820" loading="lazy" alt="Three numbered gas slimes under a driven piston in the actual sealed water jar."></picture>
-          <figcaption class="u-figure-cap">Fixed ballast and measured pressure make the numbered gas slimes sink at different thresholds. The piston supplies the squeeze; the open vent is the real comparison.</figcaption>
-        </figure>
-        <p>A steady fan bends smoke around a supported slime. Grab the slime and the wake changes with its shape; stop the fan to let the air settle. All three starting seeds show changing curls and body sway, while their fan-off comparisons stay still. <a href="?scene=smoke-wind-tunnel#toy">Try the wind tunnel.</a> <a href="/assets/images/water-machines/smoke-wind-tunnel-result-2026-10-11.json">Measurements and limits.</a></p>
-        <figure class="u-figure">
-          <picture><source type="image/webp" srcset="/assets/images/water-machines/smoke-wind-tunnel-2026-10-11.webp"><img class="u-figure-img" src="/assets/images/water-machines/smoke-wind-tunnel-2026-10-11.webp" width="1512" height="820" loading="lazy" alt="Smoke splitting around a green slime attached to a support in the actual wind tunnel."></picture>
-          <figcaption class="u-figure-cap">The fan supplies a steady push. Current smoke pressure bends the elastic slime, whose moving surface changes the flow.</figcaption>
-        </figure>
-        <p>Grab the water balloon and throw it. Its water sloshes inside the smooth elastic skin; Pop removes the skin and the same water spills into the basin. All three starting seeds keep every parcel through throwing and landing. A slit in the side lets the water escape. <a href="?scene=water-balloons#toy">Try the balloon.</a> <a href="/assets/images/water-machines/water-balloons-smooth-skin-result-2026-10-11.json">Smooth-skin contact, containment and pop results.</a></p>
-        <figure class="u-figure">
-          <picture><source type="image/webp" srcset="/assets/images/water-machines/water-balloons-smooth-skin-2026-10-11.webp"><img class="u-figure-img" src="/assets/images/water-machines/water-balloons-smooth-skin-2026-10-11.webp" width="1512" height="820" loading="lazy" alt="Water meeting the curved lower skin of an elastic balloon in a basin."></picture>
-          <figcaption class="u-figure-cap">The smooth skin encloses the native water and changes shape as it moves. Instruments offers a real slit for comparison and explains the two-dimensional elastic model.</figcaption>
-        </figure>
-        <p>Warm the thermoscope's bulb and the water column falls. Turn the heater off and it rises again. All three starting seeds pass both directions. Starting with no heater, or with the upper vent open, leaves the column almost still. <a href="?scene=thermoscope#toy">Try Galileo's thermoscope.</a> <a href="/assets/images/water-machines/thermoscope-result-2026-10-11.json">Measurements and limits.</a></p>
-        <figure class="u-figure">
-          <picture><source type="image/webp" srcset="/assets/images/water-machines/thermoscope-2026-10-11.webp"><img class="u-figure-img" src="/assets/images/water-machines/thermoscope-2026-10-11.webp" width="1512" height="820" loading="lazy" alt="The actual heated thermoscope. A marked heater warms the glass bulb above a basin, and its water column falls below the starting line."></picture>
-          <figcaption class="u-figure-cap">The marked heater warms the air. Instruments shows its temperature and pressure, with an unheated bulb and an open vent for comparison.</figcaption>
-        </figure>
-        <p>Tap the back of the smoke cannon and two curls roll out of its opening toward a slime. Their pressure moves and wobbles the slime; grab it and bring it back into the swirl when it drifts away. <a href="?scene=smoke-ring-cannon#toy">Try the cannon.</a> Three starting seeds pass with a still-air comparison, and repeat taps launch fresh visible smoke. <a href="/assets/images/water-machines/smoke-cannon-result-2026-10-11.json">Measurements and limits.</a></p>
-        <figure class="u-figure">
-          <picture><source type="image/webp" srcset="/assets/images/water-machines/smoke-cannon-2026-10-11.webp"><img class="u-figure-img" src="/assets/images/water-machines/smoke-cannon-2026-10-11.webp" width="1512" height="820" loading="lazy" alt="An actual smoke cannon shot, with two pale curling vortices outside the opening and a green slime in their path."></picture>
-          <figcaption class="u-figure-cap">The flat section shows two rotating halves of a smoke ring. Each back tap supplies smoke in the chamber and pushes the air; the solver carries it through the opening.</figcaption>
-        </figure>
-        <p><time datetime="2026-10-11">Updated October 11, 2026.</time> Pour water onto the fire and its bright plume becomes cool smoke, with a hiss if sound is on. The water drains through the grate, and a declared ember warms the fuel until it catches again. <a href="?scene=douse-fire#toy">Put out the fire.</a> All three starting seeds pass the cooling and relighting checks; pouring beside the fuel leaves it burning. <a href="/assets/images/water-machines/fire-result-2026-10-11.json">Measurements and limits.</a></p>
-        <figure class="u-figure">
-          <picture><source type="image/webp" srcset="/assets/images/water-machines/fire-2026-10-11.webp"><img class="u-figure-img" src="/assets/images/water-machines/fire-2026-10-11.webp" width="1512" height="820" loading="lazy" alt="The actual fire scene, with a curling orange and white fluid flame above an open grate and a water spout overhead."></picture>
-          <figcaption class="u-figure-cap">The flame's color follows the smoke solver's temperature. Instruments shows the fuel, ember and coarse water-heating model; combustion chemistry and fire-driven boiling are still pending.</figcaption>
-        </figure>
-        <p><time datetime="2026-10-10">Updated October 10, 2026.</time> The straw has two open ends. Hold its top and the air above the water drops below room pressure. Across three starting seeds, the held straw keeps 97.4% of its water for sixty simulation seconds. Releasing the top or opening a second upper hole drains it completely. <a href="?scene=thumb-straw#toy">Try the straw</a> or read the <a href="/assets/images/water-machines/slice-workshop-progress-2026-10-10.json">measurements and remaining work.</a> Landscape phone layout and frame times were checked in browser emulation.</p>
-        <figure class="u-figure">
-          <picture><source type="image/webp" srcset="/assets/images/water-machines/straw-release-2026-10-10.webp"><img class="u-figure-img" src="/assets/images/water-machines/straw-release-2026-10-10.webp" width="1440" height="680" loading="lazy" alt="Two rows of actual straw frames. Water stays in the held straw, then falls through its open lower end after the top is released."></picture>
-          <figcaption class="u-figure-cap">Actual water after releasing the top. The first row advances in steps of one thirtieth of a simulation second. The second follows a separate release through thirty simulation seconds.</figcaption>
-        </figure>
-        <p>Punch a hole beside the straw’s trapped air and its water falls. Open Build, then choose Hole punch; Undo restores one cell if the water has a clear adjacent exit. All three starting seeds pass the drain and wet Undo checks. The accepted cup and straw have these tools by default; the original <a href="?scene=cup&amp;hands=1#toy">cup</a>, <a href="?scene=siphon&amp;hands=1#toy">siphon</a> and <a href="?scene=heron&amp;hands=1#toy">Heron fountain</a> can try them too. <a href="/assets/images/water-machines/hands-result-2026-10-10.json">Measurements and limits.</a></p>
-        <figure class="u-figure">
-          <picture><source type="image/webp" srcset="/assets/images/water-machines/hands-stage-2026-10-10.webp"><img class="u-figure-img" src="/assets/images/water-machines/hands-stage-2026-10-10.webp" width="720" height="1104" loading="lazy" alt="Actual straw frames. Water stays under the held top, then falls after a hole opens beside the trapped air."></picture>
-          <figcaption class="u-figure-cap">The upper two rows show the held straw. In the lower two, a side hole lets room air in and the water falls. <a href="/assets/images/water-machines/hands-result-2026-10-10.json">Actual frame times.</a></figcaption>
-        </figure>
-        <p>The cup fills, drains and begins filling again three times on each of three starting seeds. Opening its roof keeps the water high and replaces the deep drains with overflow. Closing the tap below the crest produces no outlet flow in sixty simulation seconds. The cup also completes 1,802 simulation seconds with a fixed water inventory and no recorded finite-state or wall failures. <a href="?scene=self-flushing-cup#toy">Try the cup.</a> Its powered return lifts collected water back to the tap; Instruments shows stored water, refused requests and external work. The <a href="/assets/images/water-machines/slice-workshop-progress-2026-10-10.json">measurements</a> include the tube positions at each confirmed break and the longer run, with its readback-age limits.</p>
-        <figure class="u-figure">
-          <picture><source type="image/webp" srcset="/assets/images/water-machines/cup-cycle-2026-10-10.webp"><img class="u-figure-img" src="/assets/images/water-machines/cup-cycle-2026-10-10.webp" width="1600" height="320" loading="lazy" alt="Actual cup frames showing the bowl filling, draining and refilling. A second row follows its flowing drain at one thirtieth of a simulation second per frame."></picture>
-          <figcaption class="u-figure-cap">An actual cup cycle followed by refilling. The lower row samples discharge at one thirtieth of a simulation second per frame. <a href="/assets/images/water-machines/cup-cycle-evidence-2026-10-10.json">Frame record.</a></figcaption>
-        </figure>
-        <p>Tantalus keeps the water below a fixed mouth line while the slime stays on its shelf. The cup drains and begins filling again three times on each of three starting seeds, with no recorded water entering that marker; the longer run reaches six hundred simulation seconds. Opening the crest keeps the water high, wets the marker and replaces the deep drains with overflow. Closing the tap below the crest produces no outlet flow in sixty simulation seconds. Its powered return lifts collected water back to the tap, and Instruments records the external work. <a href="?scene=tantalus#toy">Try Tantalus.</a> <a href="/assets/images/water-machines/tantalus-result-2026-10-10.json">Measurements and limits.</a></p>
-        <figure class="u-figure">
-          <picture><source type="image/webp" srcset="/assets/images/water-machines/tantalus-cycle-2026-10-10.webp"><img class="u-figure-img" src="/assets/images/water-machines/tantalus-cycle-2026-10-10.webp" width="1600" height="320" loading="lazy" alt="Actual Tantalus frames follow filling, discharge, a gap in the rising water column and refilling, beside an unfrozen slime on its shelf."></picture>
-          <figcaption class="u-figure-cap">Actual Tantalus frames follow filling, discharge, a gap in the rising water column and refilling. The lower row samples discharge at one thirtieth of a simulation second per frame.</figcaption>
-        </figure>
-        <p>The Roman siphon sends water down a filled pipe and back up into the lower reservoir. Closing the intake stops new water entering the pipe; reopening it resumes the transfer. Raising the receiving water to the same starting level leaves almost no net transfer after the initial settling. These tests use stored water, with no tap or return pump. <a href="?scene=roman-inverted-siphon#toy">Try the Roman siphon.</a> <a href="/assets/images/water-machines/roman-siphon-result-2026-10-10.json">Measurements and limits.</a></p>
-        <figure class="u-figure">
-          <picture><source type="image/webp" srcset="/assets/images/water-machines/roman-siphon-cycle-2026-10-10.webp"><img class="u-figure-img" src="/assets/images/water-machines/roman-siphon-cycle-2026-10-10.webp" width="1600" height="320" loading="lazy" alt="Actual Roman siphon frames show transfer through the valley pipe, a closed intake, and resumed flow after reopening."></picture>
-          <figcaption class="u-figure-cap">Actual frames follow transfer, intake closure, the held cap and resumed flow. The lower row samples the closed intake at one thirtieth of a simulation second per frame.</figcaption>
-        </figure>
-        <p>Water pressure breaks the burst disk open, and the water falls into the lower basin. A stronger disk holds under the same load on three starting seeds. Once a disk opens, closing the intake stops new water entering the pipe; reopening the intake resumes the discharge. The model uses a fixed membrane with no fragments or fracture energy. <a href="?scene=burst-disk#toy">Try the burst disk.</a> <a href="/assets/images/water-machines/burst-disk-result-2026-10-10.json">Measurements and limits.</a></p>
-        <figure class="u-figure">
-          <picture><source type="image/webp" srcset="/assets/images/water-machines/burst-disk-cycle-2026-10-10.webp"><img class="u-figure-img" src="/assets/images/water-machines/burst-disk-cycle-2026-10-10.webp" width="1600" height="320" loading="lazy" alt="Actual frames show a burst disk opening under water pressure, then the intake closing and reopening while water falls into the lower basin."></picture>
-          <figcaption class="u-figure-cap">The upper row follows discharge, intake closure and resumed flow. The lower row follows the opening disk at one thirtieth of a simulation second per frame.</figcaption>
-        </figure>
-        <p>Sound starts with a click and follows the energy water loses at the collector. Hiding the tab or pausing clears the sounds; a fresh page still needs a click. The tones aren't calibrated bubble or glass sounds. The <a href="/assets/images/water-machines/slice-workshop-progress-2026-10-10.json">test record</a> includes the actual event timing and audio replay.</p>
-        <p><time datetime="2026-10-09">Updated October 9, 2026.</time> The water solver now checks closed walls even where its pressure grid calls a partly filled cell air. The missed check let water cross a floor before collision pushed it back. Moving walls keep their own normal speed. Three cup runs deliver 101.8%, 98.4%, 98.8% of the initially estimated drainable water; all six hold controls pass and every particle is conserved. Some water below that estimate also drains.</p>
-        <p>A private tank test now tracks the volume carried by each moving water particle through 49 steps, without collision rollback. A separate air-volume calculation keeps the tank's gas amount fixed. The new pressure force has also been applied in one actual particle step. That gas repair is still experimental. The published model can still lose small pockets, and sustained 60 FPS and phone performance remain unproved. <a href="https://github.com/Ethan-Willingham/Portfolio_01/releases/download/water-machines-evidence-2026-10-09/native-water-volume-and-wall-recordings-2026-10-09.zip">Native recordings</a>, <a href="/assets/images/water-machines/native-water-volume-and-wall-progress-2026-10-09.json">cup tests and remaining limits.</a></p>
-        <p>In that closed tank, a simpler pressure calculation reaches the same result without rebuilding the water outline at every iteration. Its recorded CPU time falls from 52.6 seconds to 14.8 seconds, still too slow for live use. This applies to one connected air pocket; the general bubble repair remains unfinished. <a href="/assets/images/water-machines/one-pocket-pressure-reduction-2026-10-09.json">Equivalent results and independent checks.</a></p>
-        <p>Air pressure now appears inside the sealed pockets. Gold means pressure above the room, rose means below; the small labels show the difference in psi. Room air and water stay clear. Use Air pressure beside the flow readout to hide or restore it. Water pressure remains available in Instruments.</p>
-        <details class="toy-method"><summary>Earlier results and test records</summary>
-          <p>Paused startup now keeps the animation loop stopped while the engines load. A smaller tank test reproduces the same disappearing-air fault with 2,048 particles, giving the repair a simpler case to work against. The particle-motion calculation now passes a separate derivative check; keeping air volume and pressure forces consistent through collisions is still unfinished. <a href="/assets/images/water-machines/native-baffle-and-startup-progress-2026-10-09.json">Smaller tank recording and startup checks.</a></p>
-        <p>A recording catches a small pocket losing its stored gas inside the fountain’s nozzle. Its cell changes from air to water at the 45% water threshold, while still estimating 54.5% air. That change erases the pocket’s gas history. Keeping gas ownership and pressure coupled to the moving water remains unfinished. <a href="/assets/images/water-machines/native-air-ownership-loss-2026-10-09.json">Native recording, raw buffers and limits.</a></p>
-        <p>Slow motion now keeps the water moving. At low speeds, the engine was discarding the partial steps it needed to advance. The fix restores movement in all three machines and turns off when you return to an ordinary scene. Normal-speed particle and render comparisons match exactly across three speeds and three seeds; smoke also matches. <a href="/assets/images/water-machines/slow-motion-and-drag-trial-2026-10-09.json">Slow-motion checks and comparison records.</a></p>
-        <p>The performance revision remains private. It shortens the GPU queue and keeps the simulation advancing while you drag a slime, but a full cup run drains 94.47% of its estimated drainable water, below the existing 95% target. It averages about 56 updates per second in that run. Better responsiveness alone does not pass the cup test, and steady 60 FPS and phone performance remain unproved.</p>
-        <p>Another private performance revision skips unused GPU lanes. All 24 small pressure comparisons match exactly through three steps, but a paired cup trial averages 1.69 ms per air pass before and 1.70 ms after. It did not get faster, so it stays out of the release. <a href="/assets/images/water-machines/compact-pressure-dispatch-trial-2026-10-09.json">Pressure comparisons and paired timing records.</a></p>
-        <p>Two more speed revisions stay out of the release. One matches all 24 small pressure comparisons but increases GPU air-pass time from 1.70 to 3.05 ms. A CPU revision reduces boundary-update time by 10.1% in its first cup trial, then increases it by 15.3% in the repeat. Neither gives a repeatable gain. <a href="/assets/images/water-machines/pressure-performance-followup-trial-2026-10-09.json">Further paired trials and rejected revisions.</a></p>
-        <p>The next speed revision fails before timing. It matches eleven small pressure checkpoints, then changes some pressure and grid-velocity values in a numerical edge case, even though the cached coefficients match. It fails the comparison with the release and stays out. <a href="/assets/images/water-machines/stencil-weight-cache-trial-2026-10-09.json">Failed cache comparison and raw records.</a></p>
-        <p>A narrower cache matches the released pressure calculation in 72 small GPU comparisons and detects six deliberately stale-cache faults. Four Retina cup runs give conflicting speed results: one pair slows by 47%, while the other speeds up by 46%. The pooled calculation is faster, but the improvement does not hold across both pairs, so the change stays private. <a href="/assets/images/water-machines/stencil-face-cache-trial-2026-10-09.json">Pressure comparisons and speed records.</a></p>
-        <p>A private water-step revision passes all nine cup drainage and hold tests. On three seeds, it delivers 100.5%, 100.4% and 96.8% of the initially estimated drainable amount, with no rim spills and no lost particles. The first two also drain some water below that estimate. A version that reduces the work in crowded water matches the short tests, but its longer trials deliver 100.7%, 99.6% and 93.7%. The last misses the 95% target. Its two playback trials average 45.4 and 53 FPS. Both revisions remain experimental. The released timing fix changes slow motion; these particle revisions have not shipped. <a href="/assets/images/water-machines/native-overlap-scalability-trial-2026-10-09.json">Cup checks, ordering tests and frame measurements.</a></p>
-        <p>One six-second Retina browser check records 59 to 60 FPS for the fountain and siphon, and 35 to 60 for the cup. These short runs do not establish steady 60 FPS or phone performance. The default particle and pressure buffer hashes match the prior release in three scenes, on three seeds, at three checkpoints. <a href="/assets/images/water-machines/air-pressure-view-result-2026-10-09.json">Air-view checks and native comparisons.</a></p>
-        <p>The pressure image and apparatus labels are reused between measurement samples. Paused scenes get an initial sample, and pressure controls update the picture while paused. A further boundary cache reduced CPU work, but paired browser runs did not get faster, so that change stays out of the release.</p>
-        <p>A trial gas equation and vapor boundary pass 90 behavior and accounting checks across fifteen fountain runs, with no negative-volume events. Small pockets still lose stored gas, and pressure and air-boundary errors remain. A smaller GPU test now reproduces one cause: relabeling a cell as water can discard its gas while more than half its accessible space remains empty. <a href="/assets/images/water-machines/heron-cavity-trial-2026-10-09.json">Cavity trial and remaining limits.</a></p>
-        <p>A private fix retains that gas in eighteen small-pocket tests. In 96 further checks, its pressure, water flow and gas volume agree with an independent calculation. These tests prescribe the water entering one pocket; they do not establish natural bubble motion. Larger pockets, the reverse classification change and the shape of the water/air boundary still need work, so the fix stays out of the published scenes. <a href="/assets/images/water-machines/single-air-pocket-trial-2026-10-09.json">Small-pocket checks and limits.</a></p>
-        <p>A second test gives the same water and air volumes two different cell labels. The old rule changed the calculated water inertia with the label. A private revision uses the known shape of that water instead; all 96 paired GPU comparisons give identical pressure, motion and gas volume. The test still prescribes the water's shape. <a href="/assets/images/water-machines/declared-plane-pressure-trial-2026-10-09.json">Pressure comparisons, precision correction and limits.</a></p>
-        <p>Following the particles in a CPU calculation exposes another fault: that proposed fix can change air volume even as the time step approaches zero. A different pressure and particle-transfer calculation passes 124 CPU checks for volume and energy. Its alternative interpolation remains experimental. <a href="/assets/images/water-machines/continuation-progress-trial-2026-10-09.json">Particle calculations and remaining limits.</a></p>
-        <p>Continuing the pressure solve clears the seven accuracy failures in its first native trial. All 36 small planar setups now pass the per-step pressure, volume and energy checks through eight GPU particle steps. All five unsupported-input checks still reject correctly. An error bound derived from the starting conditions remains unproved in 31 cases, and general bubble motion is unproved, so the model stays private. <a href="/assets/images/water-machines/native-particle-newton-trial-2026-10-09.json">Longer solve, original failures and remaining limits.</a></p>
-        <p>Heron's fountain now lifts water from its sealed source jar and throws it into the basin. <a href="?scene=heron#toy">Open the fountain</a> and choose Open valve. Instruments lets you compare sealed jars with a vented lid, an empty source or a raised receiving jar. Restart repeats the selected setup.</p>
-        <p>The basin drains into the lower jar and compresses its air. A dry tube connects that air to the source jar, pushing its water up the nozzle. Falling basin water supplies the energy, as in the <a href="https://www.jsme-fed.org/experiment-e/2014_4/005.html">physical fountain experiment</a>. The nozzle starts dry, and every drop stays in the particle solver.</p>
-        <p>Five behaviors were checked with three different starting particle positions. The fountain emits 82.2%, 83.1% and 82.2% of the original source water through its rising tube and nozzle within one simulation minute. Between 98.2% and 99.3% of that water returns to the basin. Raising the receiving jar lowers the early jet by 18% to 25%. An empty source and a vented lid emit no nozzle water. Opening a hole during a running jet stops later nozzle crossings after a short tail. All water particles are conserved. <a href="/assets/images/water-machines/heron-result-2026-10-09.json">Fountain measurements, controls and limits.</a></p>
-        <figure class="u-figure">
-          <picture><source type="image/webp" srcset="/assets/images/water-machines/heron-flow-2026-10-09.webp"><img class="u-figure-img" src="/assets/images/water-machines/heron-flow-2026-10-09.png" width="912" height="540" loading="lazy" alt="A jet rises from the nozzle above the basin and falls into it. The source jar on the left has drained toward its intake while water collects in the lower sealed jar."></picture>
-          <figcaption class="u-figure-cap">Twenty simulation seconds after construction, fifteen after opening the valve. The same source particles pass through the rising tube and nozzle.</figcaption>
-        </figure>
-        <p>The fountain's room pressure now corresponds to <a href="https://www.nist.gov/pml/special-publication-811/nist-guide-si-appendix-b-conversion-factors/nist-guide-si-appendix-b8">one standard atmosphere</a>, about 14.7 psi, at the declared 30-inch scale. The earlier setting corresponded to about 0.39 psi and made the air too easy to compress. A separate sealed-jar test now preserves its gas amount as incoming water raises its pressure, on all three seeds.</p>
-        <p>Jet height remains far below the lossless prediction. Water below the intake stays in the source, and sloshing produces small later spurts after the main flow ends. Small air pockets can lose stored gas; four runs also report a transient pocket with nonpositive volume. The accounting includes those losses, but pressure, air boundaries and energy closure remain diagnostic. The fountain fits with its controls on a 14-inch MacBook screen. One Retina browser check shows a median of 49 FPS, ranging from 35 to 60; steady 60 FPS is unverified.</p>
-        <p>The siphon carries water from the higher tank, over the bend and into the lower tank. <a href="?scene=siphon#toy">Open the siphon</a> and choose Open valve. Closing the valve holds the water column; reopening it resumes the flow. Instruments lets you compare the filled tube with an empty tube or a raised outlet. Restart repeats the selected setup.</p>
-        <p>Six behaviors were checked with three different starting particle positions. The filled siphon delivers 51.4%, 50.7% and 50.3% of the original source water within two simulation minutes. Higher positive head, the height difference driving the water, produces 36% to 40% more speed in the comparison. The ideal calculation predicts about 47% more. <a href="/assets/images/water-machines/siphon-result-2026-10-09.json">Siphon measurements, checks and limits.</a></p>
-        <p>The two water levels approach the same height as the lower tank fills. Tests count the original source water only after it crosses both the bend and the outlet, excluding the water that starts inside the tube. An empty tube and an outlet above the source surface transfer no source water. Lowering the model's pressure capacity breaks the column; restoring it leaves the air gap in place. A fresh filled setup supplies the water needed to start again.</p>
-        <figure class="u-figure">
-          <picture><source type="image/webp" srcset="/assets/images/water-machines/siphon-flow-2026-10-09.webp"><img class="u-figure-img" src="/assets/images/water-machines/siphon-flow-2026-10-09.png" width="912" height="540" loading="lazy" alt="Water fills the siphon's rising leg, crosses its horizontal bend and descends into the lower tank. The source tank has fallen below its initial fill line."></picture>
-          <figcaption class="u-figure-cap">Twenty-five simulation seconds after construction, fifteen after opening the valve. Source water is reaching the lower tank.</figcaption>
-        </figure>
-        <p>The siphon uses the cup's pressure transfer and keeps its physical dimensions when the browser is resized. Both machines fit with their controls on a 14-inch MacBook screen. Small forward and backward motions remain near equal water levels. One interrupted run misses the final ten-second speed target, though all three change the receiver's source-water inventory by less than 0.5% over their final minute. Pressure and air-volume checks still fail during working flow. Measured initial speed is about a quarter of the ideal calculation, so absolute flow speed is not calibrated.</p>
-        <p>The cup's giant slime starts as a ball and follows a drag with Grab. A smaller slime mesh and fewer pressure passes reduce the work per frame; water also draws at the size displayed on screen. The footer shows live FPS. <a href="?scene=cup#toy">Open the cup</a> and choose Drop the slime to start the drain.</p>
-        <p>Average frame time fell from about 31 to 21 milliseconds in a Retina browser comparison. Across three tests with different starting particle positions, the current version delivers 96.4%, 99.4% and 99.7% of the water above the intake to the lower tank within three simulation minutes. All particles are conserved. <a href="/assets/images/water-machines/cup-responsive-result-2026-10-08.json">Current measurements and limits.</a></p>
-        <p>The pipe walls exposed a fault in how pressure changes particle motion. Water could still move toward a closed wall, crowd against it and leave gaps in the column. The repaired transfer keeps that motion parallel to the wall. Air pressure also uses the measured size of each cavity, correcting a volume estimate that had drifted away from the actual gap.</p>
-        <figure class="u-figure">
-          <picture><source type="image/webp" srcset="/assets/images/water-machines/cup-release-flow-2026-10-09.webp"><img class="u-figure-img" src="/assets/images/water-machines/cup-release-flow-2026-10-09.png" width="1118" height="662" loading="lazy" alt="A large slime displaces water in the cup. A continuous water column crosses the bend and descends through the stem into the lower tank."></picture>
-          <figcaption class="u-figure-cap">The previous version, fifteen simulation seconds after the drop. The same water particles travel through the tube.</figcaption>
-        </figure>
-        <figure class="u-figure">
-          <picture><source type="image/webp" srcset="/assets/images/water-machines/cup-release-result-2026-10-09.webp"><img class="u-figure-img" src="/assets/images/water-machines/cup-release-result-2026-10-09.png" width="1118" height="662" loading="lazy" alt="The cup has drained to a shallow layer beneath the slime shelf. The tube is mostly empty and the lower tank holds the transferred water."></picture>
-          <figcaption class="u-figure-cap">The previous version at three simulation minutes, after delivering 97.4% of its initially drainable water. Water below the intake remains in the cup. <a href="/assets/images/water-machines/cup-release-result-2026-10-09.json">Previous measurements.</a></figcaption>
-        </figure>
-        <p>All three cups hold before the drop. Lowering the fill or raising the bend prevents drainage after the same drop, in three tests each. The counts exclude the water that starts inside the tube and require passage through both the bend and the outlet. The cup keeps the same physical dimensions when the browser is resized.</p>
-        <p>Pressure and air-volume checks still fail during these runs. Five particles splashed over the rim in one run and are excluded from its delivery count. Contact corrections and local crowding remain, and smooth playback on every device is unverified. All three current runs exceed the 95% delivery target. The pressure model is still diagnostic.</p>
-        <details class="toy-method"><summary>See the water drawing comparison</summary>
-          <p>These two frames use the same frozen particles from the earlier outlet-bend trial. The remaining large gaps are real empty space; changing the drawing does not move water into them.</p>
-          <figure class="u-figure">
-            <picture><source type="image/webp" srcset="/assets/images/water-machines/cup-surface-before-2026-10-08.webp"><img class="u-figure-img" src="/assets/images/water-machines/cup-surface-before-2026-10-08.png" width="911" height="540" loading="lazy" alt="The previous drawing shows many thin black streaks through water in the receiving tank."></picture>
-            <figcaption class="u-figure-cap">Previous drawing: slightly dilute particles shrink sharply.</figcaption>
-          </figure>
-          <figure class="u-figure">
-            <picture><source type="image/webp" srcset="/assets/images/water-machines/cup-surface-after-2026-10-08.webp"><img class="u-figure-img" src="/assets/images/water-machines/cup-surface-after-2026-10-08.png" width="911" height="540" loading="lazy" alt="The revised drawing shows the same receiving-tank water as a more continuous body, while retaining the actual gaps in the pipe and cup."></picture>
-            <figcaption class="u-figure-cap">Revised drawing: equal interior size, with isolated drops still drawn small.</figcaption>
-          </figure>
-        </details>
-        <p>The greedy cup, siphon and fountain are available in the scene picker. The cup's <a href="/assets/images/water-machines/cup-long-result-2026-10-08.json">previous long run</a> reached 92.7% after 1,000 simulation seconds.</p>
-        </details>
-      </section>
-      <div class="toy-experiments" aria-label="Things to try">
-        <button data-try="slime"><span>Stretch the gel</span>Grab near an edge and pull. The rest follows through its springs.</button>
-        <button data-try="water"><span>Break a dam</span>Open the cascade, choose Build, then Erase, and cut through a basin.</button>
-        <button data-try="smoke"><span>Split a plume</span>Open Plumes and drag a slime through the rising smoke.</button>
-      </div>
-      <h2>Three engines, one box</h2>
-      <p>The water flows around the same walls that hold the gel and deflect the smoke. Draw a wall and all three simulations see it. These are the engines from <a href="/grand-motherload.html">Sluice</a>, my mining game, with the slime creatures reduced to their squishy material.</p>
-      <h2>Pipes and trapped air</h2>
-      <p>The cup uses the existing water particles. Drop the slime into the upper vessel and watch the lower tank fill. Instruments shows measured head, flow and sample age; pressure readings remain diagnostic.</p>
-      <dl class="toy-machine-notes">
-        <div><dt>Greedy cup</dt><dd>The low inlet leads up over a bend and down through the cup’s base. Below the bend, the cup holds its water. A rising level can flood that route and start a siphon, which drains until the inlet admits air. <a href="https://lecdem.physics.umd.edu/f/f4/1753-f4-33.html">The University of Maryland’s apparatus</a> shows the tube inside the central shaft.</dd></div>
-      </dl>
-      <details class="toy-method"><summary>How the simulation works</summary>
-        <dl>
-          <div><dt>Water</dt><dd>Particles carry the liquid. A temporary grid exchanges their momentum and applies pressure, then sends them on their way. The MLS-MPM solver runs on WebGPU, adapted from <a href="https://oimo.io/works/water/">saharan’s water demo</a>.</dd></div>
-          <div><dt>Air</dt><dd>Machine mode adds a pressure solve while keeping the water particles. Room air sets zero gauge pressure. Each connected sealed pocket has one pressure at a fixed temperature in the earlier water machines, and compresses as water takes its space. <a href="https://orionquest.github.io/papers/MMTFBIF/paper.html">Aanjaneya, Patkar and Fedkiw’s bubble model</a> describes this uniform, isothermal approximation. Room pressure and sound speed are scaled for this toy; Instruments lists their current values. A pressure floor limits the modeled drop below room pressure, and column separation is still being tested. The thermoscope also uses the current smoke temperature averaged over each pocket to model heating and cooling, following the <a href="https://www.grc.nasa.gov/www/k-12/BGP/eqstat.html">ideal gas law</a>. Compression heating, water heat exchange and dissolved gas are omitted.</dd></div>
-          <div><dt>Smoke</dt><dd>A WebGL fluid solver moves velocity and dye through a grid, following <a href="https://github.com/PavelDoGreat/WebGL-Fluid-Simulation">Pavel Dobryakov’s work</a>. The visible smoke is dye in that flow.</dd></div>
-          <div><dt>Slime</dt><dd>A mesh of elastic connections holds its volume while stretching and compressing. Sluice’s current material, skin contacts, and spring grip use <a href="https://mmacklin.com/xpbd.pdf">XPBD</a> on the CPU. Highlights attach to the deforming mesh. There are no creature brains or eyes here.</dd></div>
-        </dl>
-        <p>The instrument scale makes the box 30 inches wide and 1 inch deep. Its clock converts simulation time to seconds using Earth gravity. The energy display includes sampled water motion, height, pressure compression and available air work; its remainder includes numerical losses and sample error. Work done by a slime is not yet measured.</p>
-        <p>This is a game simulation tuned for interaction. The water, smoke, and gel exchange approximate boundary motion; they aren’t one unified physical solver.</p>
-        <!-- Accuracy, machine acceptance and comparative performance figures remain pending measured evidence. -->
-      </details>
-      <p class="toy-compat">Water needs WebGPU. Smoke needs WebGL. If either is unavailable, the other materials still work. The simulation pauses when you leave the tab or scroll it out of view.</p>
-      <div class="toy-links"><a href="https://github.com/Ethan-Willingham/Portfolio_01/blob/main/js/water-smoke-slime.js">Read the source</a><a href="/grand-motherload.html">Play Sluice</a><span>In progress</span></div>
-    </main>
-
-    <footer class="site-footer"><div class="site-footer-inner"><a href="/">&copy; 2026 Ethan Willingham</a></div></footer>
-  </div>
   <!-- Shared water engine; the stamp follows GAME_VERSION. -->
   <script src="/js/liquid-wgpu.js?v=v28.196"></script>
   <script src="/js/liquid-material-slip-wgpu.js?v=v28.191"></script>
@@ -402,9 +227,9 @@
   <script src="/js/water-machines-scenes.js?v=v5.41"></script>
   <script src="/js/water-machines-instruments.js?v=v5.41"></script>
   <script src="/js/water-machines-pressure-view.js?v=v5.57"></script>
-  <script src="/js/wss-machine-registry.js?v=v5.129"></script>
-  <script src="/js/water-smoke-slime.js?v=v5.129"></script>
-  <script src="/js/water-smoke-slime-ui.js?v=v5.99"></script>
+  <script src="/js/wss-machine-registry.js?v=v5.130"></script>
+  <script src="/js/water-smoke-slime.js?v=v5.130"></script>
+  <script src="/js/water-smoke-slime-ui.js?v=v5.130"></script>
   <script src="/js/smoke-presets-ui.js?v=4"></script>
 </body>
 </html>
