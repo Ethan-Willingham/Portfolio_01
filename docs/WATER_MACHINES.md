@@ -40,25 +40,29 @@ Testing and saves screenshots and measurements to `/tmp/sewer-trap-review`.
 
 ## Breathing cave
 
-The cave now breathes as a declared outside pressure cycle rises and falls.
+The cave breathes as a declared outside pressure cycle rises and falls.
 Its entrance has inertia and quadratic pressure loss. The chamber holds a
 finite ideal-gas mass at fixed temperature; actual signed mass transfer changes
 its pressure. Closing the real mouth valve traps its existing charge. Reopening
 uses that charge, with no reset. Steady pressure and a closed initial mouth are
-available in Instruments. Pause freezes the weather, gas and tracer clocks.
+available in Instruments. Pause freezes the weather, gas and arrow motion.
 
-The cave readout sits beside the simulation at normal screen resolution. Its
-arrow and large text show actual airflow, while one centered pressure gauge
-shows which side is higher and the difference in hPa. Absolute readings remain
-in Instruments. When pressure reverses before the moving air does, the readout
-explains that delay. Closed, still and paused states have explicit text, and
-the gray cloud is labeled tracer smoke. The layout reserves space for the
-readout; a narrow, tall window places it below the cave. It uses the same layout
-on desktop and touch screens at the same viewport size.
+Moving arrowheads show the air directly, replacing the former gray smoke.
+Their positions advance with the current wall-respecting potential velocity
+field, using midpoint integration and collision sweeps. The arrowheads point
+along that field. They represent airflow, with no gas mass or feedback into the
+pressure model. Markers leaving the displayed domain renew on the upstream
+side; this changes no gas inventory or flow. Closing the mouth stops all marker
+motion. Reduced motion shows stationary arrows at fixed sample points while
+the physical model continues to run.
 
-The browser regression also checks direction during pressure reversal, readable
-text contrast, semantic status and meter labels, separation from the apparatus,
-shorter landscape heights and narrow desktop layout.
+The readout sits beside the simulation at normal screen resolution. Its
+large text shows actual airflow, while one centered pressure gauge shows which
+side is higher and the difference in hPa. Absolute readings remain in Instruments.
+When pressure reverses before the moving air does, the readout explains that
+delay. Closed, still and paused states have explicit text. The layout reserves
+space for the readout; a narrow, tall window places it below the cave. It uses
+the same layout on desktop and touch screens at the same viewport size.
 
 This scene has a separate large scale: one world pixel is one meter, with ten
 meters of section depth. Outside pressure is 101325 Pa plus a 3000 Pa sinusoid
@@ -70,24 +74,22 @@ A backward Euler entrance solve couples neck momentum, pressure loss and the
 isothermal gas equation. A finite-volume potential field distributes the
 resulting compression or expansion through the actual clear cells. Solid faces
 carry no flux; outside cells are reservoir boundaries. Preconditioned conjugate
-gradients rebuilds that field only when the collision geometry changes. A finite
-initial mist moves by conservative upwind transport with CFL substeps. It gets
-no velocity splats, replenishment, buoyancy or scheduled direction changes.
-
-The smoke tracer and gas model are specific to this apparatus. The shared
-WebGL smoke, native water and Sluice source are unchanged. This is a reduced
-isothermal and potential-flow approximation; acoustic propagation, turbulence,
-thermal exchange and a closed energy budget remain unresolved. Closing the
-ideal stationary valve does not model the work of a moving shutter.
+gradients rebuilds that field only when the collision geometry changes. The
+shared WebGL smoke, native water and Sluice source are unchanged. This is a
+reduced isothermal and potential-flow approximation; acoustic propagation,
+turbulence, thermal exchange and a closed energy budget remain unresolved.
+Closing the ideal stationary valve does not model a moving shutter's work.
 
 Run `node tools/test-breathing-cave.cjs` for independent EOS and entrance-momentum
-checks, actual mouth flux, finite gas and tracer inventories, closure/reopening,
-steady/closed controls and frame-size checks. Run
+checks, sampled mouth velocity versus gas transfer, arrow coupling, closure and
+reopening, steady/closed controls and frame-size checks. Run
 `DUMP=/tmp/breathing-cave-review node tools/test-breathing-cave.mjs` for owned
-Chrome for Testing playback at desktop and landscape mobile sizes, actual mouse
-and touch operation, pause and the steady-pressure comparison. Screenshots and
-measurements go to that directory. The ordinary smoke scene also boots in that
-browser regression.
+Chrome for Testing playback at desktop and landscape mobile sizes, mouse and
+touch operation, pause, reduced motion and the steady-pressure comparison. The
+browser regression also checks direction during pressure reversal, readable
+text contrast, semantic status and meter labels, separation from the apparatus,
+shorter landscape heights and narrow desktop layout. Screenshots and
+measurements go to that directory. The ordinary smoke scene also boots.
 
 ## Water appearance
 

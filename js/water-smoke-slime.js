@@ -15322,7 +15322,7 @@
           c.ellipse(waitingSlime.x,waitingSlime.y,waitingSlime.radius*.72,waitingSlime.radius*.68,0,Math.PI*1.12,Math.PI*1.52);c.stroke();c.restore();
         }
       }
-      if(toyBreathingCave)toyBreathingCave.draw(c,{accent:accent,text:text});
+      if(toyBreathingCave)toyBreathingCave.draw(c,{accent:accent,text:text,air:palette.getPropertyValue('--app-brass').trim(),scale:fitScale});
       if(toyThirsty){
         var drink=toyThirsty.stats(),tray=definition.vessels[0].rect;
         c.save();c.textAlign='center';c.font=(14/fitScale)+'px \"Segoe UI\", sans-serif';

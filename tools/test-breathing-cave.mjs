@@ -61,7 +61,7 @@ async function indicatorCheck(name){
   const a=luminance(ui.color),b=luminance(ui.background);const contrast=(Math.max(a,b)+.05)/(Math.min(a,b)+.05);
   check(name+' indicator is readable, within view and clear of the apparatus',!ui.hidden && ui.panel.left>=0 && ui.panel.right<=ui.width && ui.panel.top>=ui.topEnd && ui.panel.bottom<=ui.height && ui.fontSize>=20 && contrast>=4.5 &&
     (ui.placement==='side'?ui.stage.right<ui.panel.left:ui.stage.bottom<ui.panel.top));
-  check(name+' has semantic pressure, status and tracer labels',ui.meterRole==='meter' && ui.meterText===ui.pressure && ui.role==='status' && ui.tracer.includes('tracer smoke'));
+  check(name+' has semantic pressure, status and arrow labels',ui.meterRole==='meter' && ui.meterText===ui.pressure && ui.role==='status' && ui.tracer.includes('Arrows show moving air'));
   console.log(name+' indicator',JSON.stringify(ui));return ui;
 }
 async function clickMouth(touch){
@@ -96,22 +96,22 @@ try{
     await until('!!window.__toy && !!__toy.breathingCave() && __toy.machineState()?.ready && !__toy.stats().loading');
     const prefix=viewport.mobile?'mobile':'desktop';
     check('scene reports live pressure instead of waiting',await ev('document.getElementById("toy-status").textContent!=="Waiting for pressure"'));
-    await until('__toy.breathingCave().stats().speedMetersPerSecond < -5');const inhaled=await record(prefix+'-in');const inUI=await indicatorCheck(prefix+'-in');check('arrow follows air entering the cave',inUI.flow==='in');
+    await until('__toy.breathingCave().stats().speedMetersPerSecond < -5');const inhaled=await record(prefix+'-in');const inUI=await indicatorCheck(prefix+'-in');check('arrow follows air entering the cave',inUI.flow==='in');if(process.env.PREVIEW_ONLY==='1')continue;
     await until('__toy.breathingCave().stats().speedMetersPerSecond > 5');await record(prefix+'-out');
     await until('__toy.breathingCave().stats().seconds>16');const exhaled=await record(prefix+'-exhaling');const outUI=await indicatorCheck(prefix+'-out');check('arrow follows actual outgoing flow during pressure reversal',outUI.flow==='out' && outUI.context.includes('reverse'));
-    check('computed airflow carries the finite smoke out of the chamber',exhaled.smokeInChamber<inhaled.smokeInChamber);
+    check('arrows travel with the computed air through the actual entrance',exhaled.markerDistance>inhaled.markerDistance && exhaled.markerInwardCrossings>0 && exhaled.markerOutwardCrossings>0);
     await ev('__toy.pause(true)');const clock=await ev('__toy.breathingCave().stats().seconds');await delay(400);
-    check('pause freezes gas and smoke',await ev('__toy.breathingCave().stats().seconds')===clock);check('pause is explicit in the indicator',(await indicatorCheck(prefix+'-paused')).paused);
+    check('pause freezes gas and arrows',await ev('__toy.breathingCave().stats().seconds')===clock);check('pause is explicit in the indicator',(await indicatorCheck(prefix+'-paused')).paused);
     await clickMouth(viewport.mobile);
     const closed=await ev('__toy.breathingCave().stats()');check('actual entrance is closed',!closed.mouthOpen);
     await ev('__toy.pause(false)');await until('__toy.breathingCave().stats().seconds>'+String(clock+2));
     const held=await record(prefix+'-closed');check('closed mouth is explicit in the indicator',(await indicatorCheck(prefix+'-closed')).flow==='closed');
-    check('closed mouth retains actual finite gas and smoke',held.massKg===closed.massKg && held.smokeAmount===closed.smokeAmount && held.flowM3PerSecond===0);
+    check('closed mouth retains the finite gas and stops every arrow',held.massKg===closed.massKg && held.markerDistance===closed.markerDistance && held.flowM3PerSecond===0);
     await clickMouth(viewport.mobile);await until('Math.abs(__toy.breathingCave().stats().speedMetersPerSecond)>5');await record(prefix+'-reopened');
     await ev('__toy.pause(true)');
     await ev('document.getElementById("toy-native-setup").value="steady";document.getElementById("toy-native-setup").dispatchEvent(new Event("change",{bubbles:true}))');await until('__toy.machineState()?.ready && !__toy.stats().loading');
     await ev('__toy.pause(false)');await until('__toy.breathingCave().stats().seconds>2');const steady=await record(prefix+'-steady');const steadyUI=await indicatorCheck(prefix+'-steady');check('steady pressure reads as balanced and still',steadyUI.pressure==='Pressures are balanced' && steadyUI.flow==='still');
-    check('steady pressure produces no airflow',steady.flowM3PerSecond===0 && steady.massKg===steady.initialMassKg && steady.smokeAmount===steady.initialSmokeAmount);
+    check('steady pressure produces no airflow',steady.flowM3PerSecond===0 && steady.massKg===steady.initialMassKg && steady.markerDistance===0 && steady.movingMarkers===0);
     check('steady comparison is available in Instruments',await ev('Array.from(document.querySelectorAll("#toy-native-setup option")).some(o=>o.value==="steady")'));
     if(viewport.mobile){await call('Emulation.setDeviceMetricsOverride',{...viewport,height:350,deviceScaleFactor:1});await delay(400);await indicatorCheck('mobile-short');await record('mobile-short');}
     await ev('document.getElementById("toy-instruments-open").click()');await delay(200);await record(prefix+'-instruments');
@@ -120,6 +120,10 @@ try{
   await ev('__toy.machine("breathing-cave",{})');await until('__toy.machineState()?.ready && !__toy.stats().loading');
   check('a pressure draft cannot overwrite the working cave module',await ev('!!__toy.breathingCave() && !!__toy.machineState().definition.cave'));
   await call('Emulation.setDeviceMetricsOverride',{width:600,height:800,mobile:false,deviceScaleFactor:1});await delay(400);await indicatorCheck('narrow-desktop');await record('narrow-desktop');
+  await call('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'reduce'}]});
+  await ev('__toy.pause(false)');await until('__toy.breathingCave().stats().seconds>2');await record('reduced-motion');
+  check('reduced motion uses static direction arrows without freezing the air model',await ev('__toy.breathingCave().stats().visualMotion==="direction-only" && __toy.breathingCave().stats().admittedKg>0'));
+  await call('Emulation.setEmulatedMedia',{features:[]});
   // The ordinary smoke scene still boots the unchanged WebGL solver.
   await call('Page.navigate',{url:'http://127.0.0.1:'+port+'/archive/water-smoke-slime/water-smoke-slime.html?scene=chimney'});
   await until('!!window.__toy && __toy.stats().smoke && !__toy.stats().loading');

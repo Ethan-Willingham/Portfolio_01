@@ -1350,7 +1350,7 @@
     "id": "breathing-cave",
     "capability": "Smoke",
     "title": "Breathing cave",
-    "cue": "Changing outside pressure moves smoke in and out. Close the mouth to trap the cave air.",
+    "cue": "Follow the arrows as outside pressure moves air in and out. Close the mouth to trap the cave air.",
     "status": "WORKS",
     "draft": false,
     "accepted": true,
@@ -1372,7 +1372,7 @@
     "behaviorPlan": {
       "seed": 17,
       "seconds": 48,
-      "key": "Pressure-driven airflow reverses through the real cave mouth, with conserved finite air and smoke.",
+      "key": "Pressure-driven airflow reverses through the real cave mouth, with conserved finite air and wall-respecting flow arrows.",
       "action": "Close and reopen the entrance; compare steady pressure and a closed initial mouth.",
       "statusIfObserved": "WORKS"
     }

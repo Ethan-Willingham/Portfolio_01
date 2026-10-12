@@ -1,4 +1,4 @@
-/* Finite gas inventory, neck inertia and conservative passive smoke transport. */
+/* Finite gas inventory, neck inertia and visible airflow arrows. */
 (function(root){
   'use strict';
   function create(definition,world){
@@ -6,11 +6,14 @@
     var solid=new Uint8Array(n),room=new Uint8Array(n),connected=new Uint8Array(n),source=new Uint8Array(n);
     var phi=new Float64Array(n),diag=new Float64Array(n),rhs=new Float64Array(n),residual=new Float64Array(n),
       direction=new Float64Array(n),product=new Float64Array(n),preconditioned=new Float64Array(n);
-    var dye=new Float64Array(n),next=new Float64Array(n),fx=new Float64Array(n),fy=new Float64Array(n);
+    var fx=new Float64Array(n),fy=new Float64Array(n),flowPerDepth=0;
     var version=-1,sourceCells=0,volume=0,area=0,mass=0,initialMass=0,admitted=0,escaped=0,
       seconds=0,speed=0,flow=0,outside=spec.ambientPa,pressure=outside,maxResidual=0,steps=0,unitMouthFlux=0;
-    var smokeInitial=0,smokeEscaped=0,fieldResidual=0,fieldIterations=0,error=null,initialized=false;
-    var imageCanvas=null,imageContext=null,pixels=null,paintedStep=-1;
+    var fieldResidual=0,fieldIterations=0,error=null,initialized=false,clip=null;
+    var markers=[],markerDistance=0,markerInwardCrossings=0,markerOutwardCrossings=0,markerResets=0;
+    var randomState=(definition.seed || 17)>>>0;
+    var reducedMotion=root.matchMedia?root.matchMedia('(prefers-reduced-motion: reduce)'):null;
+    function random(){randomState=(Math.imul(randomState,1664525)+1013904223)>>>0;return randomState/4294967296;}
     function inChamber(x,y){var r=spec.chamber;return x>=r.x && x<r.x+r.width && y>=r.y && y<r.y+r.height;}
     function neighbors(i,visit){
       var x=i%w,y=Math.floor(i/w);
@@ -23,7 +26,7 @@
       }
     }
     function rebuild(){
-      version=world.version();paintedStep=-1;sourceCells=0;phi.fill(0);room.fill(0);connected.fill(0);source.fill(0);rhs.fill(0);diag.fill(0);
+      version=world.version();clip=null;sourceCells=0;phi.fill(0);room.fill(0);connected.fill(0);source.fill(0);rhs.fill(0);diag.fill(0);
       var queue=new Int32Array(n),head=0,tail=0;
       for(var i=0;i<n;i++){
         var x=(i%w+.5)*h,y=(Math.floor(i/w)+.5)*h;solid[i]=world.solidAt(x,y)?1:0;
@@ -44,7 +47,7 @@
       for(var gy=g.y+h*.5;gy<g.y+g.height;gy+=h)if(!world.solidAt(g.x+g.width*.5,gy))clear++;
       area=clear*h*spec.depth;
       if(!initialized){mass=initialMass=spec.ambientPa*volume/(spec.gasConstant*spec.temperature);initialized=true;}
-      fx.fill(0);fy.fill(0);unitMouthFlux=0;
+      fx.fill(0);fy.fill(0);unitMouthFlux=0;flowPerDepth=0;
       if(!sourceCells || !(area>0)){flow=0;speed=0;return;}
       for(var c=0;c<n;c++)if(!solid[c] && !room[c] && connected[c]){
         neighbors(c,function(j){if(!solid[j])diag[c]++;});rhs[c]=source[c]/sourceCells;
@@ -75,27 +78,57 @@
       for(var mouthRow=Math.floor(g.y/h);mouthRow<Math.ceil((g.y+g.height)/h);mouthRow++)unitMouthFlux+=fx[mouthRow*w+mouthCol]*h;
     }
     rebuild();
-    for(var i=0;i<n;i++)if(!solid[i]){
-      var x=(i%w+.5)*h,y=(Math.floor(i/w)+.5)*h;
-      if(inChamber(x,y) || x>=464 && x<600 && y>=208 && y<240){
-        // A finite initial mist. Structure is initial tracer, never velocity.
-        dye[i]=.025+.28*Math.exp(-((x-240)*(x-240)+(y-224)*(y-224))/2100)+
-          .5*Math.exp(-((x-444)*(x-444)+(y-220)*(y-220))/1000)+
-          .26*Math.exp(-((x-566)*(x-566)+(y-220)*(y-220))/500);
-      }
-      smokeInitial+=dye[i]*h*h;
+    function addMarker(x,y){
+      if(world.solidAt(x,y))return;
+      markers.push({id:markers.length,x:x,y:y,homeX:x,homeY:y});
     }
-    function transport(dt,q){
-      next.set(dye);
-      function exchange(a,b,face){
-        var flux=dt*q*face/h*(face*q>=0?dye[a]:dye[b]);
-        if(!room[a])next[a]-=flux;else smokeEscaped-=flux*h*h;
-        if(!room[b])next[b]+=flux;else smokeEscaped+=flux*h*h;
+    var chamber=spec.chamber,gate=spec.gate,mouth=definition.pipes[0].points.slice(-1)[0];
+    for(var row=0,y=chamber.y+24;y<chamber.y+chamber.height-16;y+=48,row++)
+      for(var x=chamber.x+24+(row%2)*12;x<chamber.x+chamber.width-16;x+=48)addMarker(x,y);
+    for(var x=chamber.x+chamber.width-8;x<=mouth.x+48;x+=24)
+      for(var y=gate.y+8;y<gate.y+gate.height;y+=16)addMarker(x,y);
+    for(var x=mouth.x+24;x<Math.min(world.w-24,mouth.x+112);x+=32)
+      for(var y=gate.y+gate.height*.5-64;y<=gate.y+gate.height*.5+64;y+=32)addMarker(x,y);
+    function interpolate(values,x,y){
+      var col=Math.floor(x),row=Math.floor(y),a=x-col,b=y-row,sum=0;
+      for(var dy=0;dy<2;dy++)for(var dx=0;dx<2;dx++){
+        var cx=col+dx,cy=row+dy;
+        if(cx>=0 && cy>=0 && cx<w && cy<rows)sum+=values[cy*w+cx]*(dx?a:1-a)*(dy?b:1-b);
       }
-      for(var i=0;i<n;i++)if(!solid[i] && connected[i]){
-        if(fx[i])exchange(i,i+1,fx[i]);if(fy[i])exchange(i,i+w,fy[i]);
+      return sum;
+    }
+    function sampleVelocity(x,y){
+      if(x<0 || y<0 || x>=world.w || y>=world.h || world.solidAt(x,y))return {vx:0,vy:0};
+      return {vx:interpolate(fx,x/h-1,y/h-.5)*flowPerDepth,vy:interpolate(fy,x/h-.5,y/h-1)*flowPerDepth};
+    }
+    function resetMarker(marker){
+      // Display markers have no gas mass. Renewing one never changes air
+      // inventory, pressure, velocity or the next marker's trajectory.
+      for(var attempt=0;attempt<20;attempt++){
+        var x=flowPerDepth>=0?chamber.x+24+random()*(chamber.width-48):mouth.x+16+random()*64;
+        var y=flowPerDepth>=0?chamber.y+24+random()*(chamber.height-48):gate.y+gate.height*.5+(random()-.5)*64;
+        if(x<world.w-16 && !world.solidAt(x,y)){marker.x=x;marker.y=y;markerResets++;return;}
       }
-      var swap=dye;dye=next;next=swap;
+      marker.x=marker.homeX;marker.y=marker.homeY;
+    }
+    function moveMarkers(dt){
+      if(flowPerDepth===0)return;
+      var mouthPlane=gate.x+gate.width;
+      markers.forEach(function(marker){
+        if(world.solidAt(marker.x,marker.y))return;
+        var first=sampleVelocity(marker.x,marker.y);
+        var middle=sampleVelocity(marker.x+first.vx*dt*.5,marker.y+first.vy*dt*.5);
+        var nx=marker.x+middle.vx*dt,ny=marker.y+middle.vy*dt;
+        if(nx<24 || ny<24 || nx>=world.w-24 || ny>=world.h-24){resetMarker(marker);return;}
+        // Sweep against the same collision cells used by the potential field.
+        var travel=Math.hypot(nx-marker.x,ny-marker.y),checks=Math.max(1,Math.ceil(travel/(h*.4)));
+        for(var i=1;i<=checks;i++)if(world.solidAt(marker.x+(nx-marker.x)*i/checks,marker.y+(ny-marker.y)*i/checks))return;
+        if(ny>=gate.y && ny<gate.y+gate.height){
+          if(marker.x<=mouthPlane && nx>mouthPlane)markerOutwardCrossings++;
+          if(marker.x>mouthPlane && nx<=mouthPlane)markerInwardCrossings++;
+        }
+        markerDistance+=travel;marker.x=nx;marker.y=ny;
+      });
     }
     function tick(dt){
       if(version!==world.version())rebuild();
@@ -117,40 +150,59 @@
           pressure=spec.ambientPa+(mass-initialMass)*rt/volume;flow=area*speed;
           // The chamber's density is uniform. Its compression/expansion
           // divergence carries precisely the computed mass crossing its neck.
-          var q=(transferred/step)/(mass/volume)/spec.depth;
-          var maxRate=0;
-          for(var i=0;i<n;i++)maxRate=Math.max(maxRate,(Math.abs(fx[i])+Math.abs(fy[i])+(i%w?Math.abs(fx[i-1]):0)+(i>=w?Math.abs(fy[i-w]):0))*Math.abs(q)/h);
-          var parts=Math.max(1,Math.ceil(step*maxRate/.8));
-          for(var sub=0;sub<parts;sub++)transport(step/parts,q);
-        }else{flow=0;speed=0;}
+          flowPerDepth=(transferred/step)/(mass/volume)/spec.depth;
+          moveMarkers(step);
+        }else{flow=0;speed=0;flowPerDepth=0;}
         maxResidual=Math.max(maxResidual,Math.abs(mass-initialMass-admitted+escaped));steps++;
         if(!(mass>0) || !Number.isFinite(mass+speed)){error='The cave gas state is invalid.';return;}
       }
     }
     function stats(){
       if(version!==world.version())rebuild();
-      var smoke=0,chamberSmoke=0,minimum=Infinity;
-      for(var i=0;i<n;i++){smoke+=dye[i]*h*h;if(inChamber((i%w+.5)*h,(Math.floor(i/w)+.5)*h))chamberSmoke+=dye[i]*h*h;minimum=Math.min(minimum,dye[i]);}
+      var moving=0,nonfinite=0;
+      markers.forEach(function(marker){
+        if(!Number.isFinite(marker.x+marker.y)){nonfinite++;return;}
+        var velocity=sampleVelocity(marker.x,marker.y);if(Math.hypot(velocity.vx,velocity.vy)>.01)moving++;
+      });
       return {seconds:seconds,pressurePa:pressure,outsidePressurePa:outside,gaugePressurePa:pressure-outside,
         massKg:mass,initialMassKg:initialMass,admittedKg:admitted,escapedKg:escaped,
         massResidualKg:mass-initialMass-admitted+escaped,maxMassResidualKg:maxResidual,
         flowM3PerSecond:flow,speedMetersPerSecond:speed,volumeM3:volume,mouthAreaM2:area,
-        mouthOpen:area>0 && sourceCells>0,smokeInChamber:chamberSmoke,smokeAmount:smoke,initialSmokeAmount:smokeInitial,smokeEscaped:smokeEscaped,
-        smokeResidual:smoke-smokeInitial+smokeEscaped,minimumSmoke:minimum,
+        mouthOpen:area>0 && sourceCells>0,markerCount:markers.length,movingMarkers:moving,
+        markerDistance:markerDistance,markerInwardCrossings:markerInwardCrossings,markerOutwardCrossings:markerOutwardCrossings,
+        markerResets:markerResets,nonfiniteMarkers:nonfinite,visualMotion:reducedMotion && reducedMotion.matches?'direction-only':'moving-arrows',
         fieldResidual:fieldResidual,unitMouthFlux:unitMouthFlux,fieldIterations:fieldIterations,steps:steps,error:error};
     }
     function draw(c,palette){
       if(version!==world.version())rebuild();
-      if(!imageCanvas){imageCanvas=document.createElement('canvas');imageCanvas.width=w;imageCanvas.height=rows;imageContext=imageCanvas.getContext('2d');pixels=imageContext.createImageData(w,rows);}
-      if(paintedStep!==steps || version!==world.version()){
-        var color=palette.text.match(/[0-9a-f]{2}/gi).map(function(v){return parseInt(v,16);});
-        for(var i=0;i<n;i++){var at=i*4;pixels.data[at]=color[0];pixels.data[at+1]=color[1];pixels.data[at+2]=color[2];pixels.data[at+3]=solid[i]?0:Math.round(255*(1-Math.exp(-dye[i]*2.8)));}
-        imageContext.putImageData(pixels,0,0);paintedStep=steps;
+      if(!clip){
+        clip=new Path2D();
+        for(var row=0;row<rows;row++)for(var col=0;col<w;){
+          if(solid[row*w+col]){col++;continue;}
+          var start=col;while(col<w && !solid[row*w+col])col++;
+          clip.rect(start*h,row*h,(col-start)*h,h);
+        }
       }
-      c.save();c.imageSmoothingEnabled=true;c.drawImage(imageCanvas,0,0,world.w,world.h);
+      var scale=palette.scale || 1,size=13/scale,head=4/scale,staticView=reducedMotion && reducedMotion.matches;
+      c.save();c.clip(clip);c.strokeStyle=c.fillStyle=palette.air || palette.accent;c.lineWidth=1.6/scale;c.lineCap='round';
+      markers.forEach(function(marker){
+        var x=staticView?marker.homeX:marker.x,y=staticView?marker.homeY:marker.y;
+        if(world.solidAt(x,y))return;
+        var velocity=sampleVelocity(x,y),magnitude=Math.hypot(velocity.vx,velocity.vy);
+        if(magnitude<.01){
+          c.globalAlpha=.2;c.beginPath();c.arc(x,y,1.5/scale,0,Math.PI*2);c.fill();return;
+        }
+        var dx=velocity.vx/magnitude,dy=velocity.vy/magnitude;
+        c.globalAlpha=.7;c.beginPath();c.moveTo(x-dx*size,y-dy*size);c.lineTo(x,y);c.stroke();
+        c.globalAlpha=1;c.beginPath();c.moveTo(x,y);
+        c.lineTo(x-dx*head*1.6-dy*head,y-dy*head*1.6+dx*head);
+        c.lineTo(x-dx*head*1.6+dy*head,y-dy*head*1.6-dx*head);c.closePath();c.fill();
+      });
       c.restore();
     }
-    return {tick:tick,stats:stats,draw:draw,destroy:function(){imageCanvas=null;imageContext=null;pixels=null;}};
+    return {tick:tick,stats:stats,draw:draw,sampleVelocity:sampleVelocity,
+      markers:function(){return markers.map(function(marker){return Object.assign({},marker);});},
+      destroy:function(){clip=null;markers.length=0;}};
   }
   root.WSSBreathingCave={create:create};
 })(typeof window!=='undefined'?window:globalThis);
