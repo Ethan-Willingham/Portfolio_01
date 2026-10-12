@@ -2,7 +2,7 @@
 (function(root){
   'use strict';
   var entries=[
-    {id:'candle-in-jar',capability:'Fire',title:'Candle in a jar',cue:'Lift the lid and release the hot smoke, draft.',status:'PARTLY',blocker:'The flame does not consume oxygen or go out when the jar is sealed.',draft:true,world:{w:720,h:400},pool:false},
+    {id:'candle-in-jar',capability:'Fire',title:'Candle in a jar',cue:'Keep the lid closed and the candle uses up its air. Lift it while the flame is still burning to let fresh air in.',status:'PARTLY',blocker:'Oxygen is a well-mixed chamber inventory; spatial gas chemistry and pressure are approximate.',draft:true,world:{w:720,h:400},pool:false},
     {id:'chimney-draw',capability:'Fire',title:'Chimney draft',cue:'Close the inlet to starve the flame. Reopen it to revive the fire.',status:'PARTLY',blocker:'Air supply uses a mixed firebox charge, not resolved combustion chemistry.',draft:true,world:{w:720,h:400},pool:false},
     {id:'slime-sauna',capability:'Fire',title:'Slime sauna',cue:'Pour over the hot stones beside the bathing slime, draft.',status:'PARTLY',blocker:'Water warms, but steam and slime temperature are not connected.',draft:true,world:{w:720,h:400},pool:false},
     {id:'heron-air-smoke',capability:'Smoke',title:"The air in Heron's fountain",cue:'Pour into the basin and follow the smoke in the air link, draft.',status:'PARTLY',blocker:'Smoke traces a separate flow field, not the native compressible gas inventory.',draft:true,world:{w:720,h:400},pool:false},
@@ -26,6 +26,10 @@
       var jar=rect(232,64,248,312),lid=rect(232,64,248,8),opened=options.opened===true;
       d.vessels=[{id:'jar',label:'Jar',rect:jar,sealed:true}];d.solids=[rect(344,312,32,56)];if(opened)d.vents.push(lid);
       fire(d,360,296,{x:360,y:112});d.action=opened?'Replace lid':'Lift lid';d.primary={kind:'draft-wall-toggle'};
+      var metresPerPixel=.762/world.w;
+      d.fire.noEmber=true;d.fire.air={volumeLitres:((jar.width-16)*(jar.height-16)-32*56)*metresPerPixel*metresPerPixel*.0254*1000,
+        consumptionLitresPerSecond:.008,extinctionFraction:.16,openExchangePerSecond:1.5};
+      d.energyBudgetStatus='The sealed jar has a finite, well-mixed oxygen inventory. Burning consumes it; an open lid exchanges air with the room. The flame weakens near the tuned cutoff and stays out after extinction until reset. There is no reheating ember. Spatial oxygen transport, combustion products and gas pressure are approximate; the source heat ledger retains the existing lumped model.';
       q.gate={rect:lid,opened:opened,openLabel:'Replace lid',closedLabel:'Lift lid'};q.labels=[{x:252,y:48,text:'Glass lid'},{x:302,y:366,text:'Candle'}];q.probes=[{id:'jar',x:360,y:192},{id:'above-lid',x:360,y:40}];
     }else if(id==='chimney-draw'){
       var inlet=rect(216,312,8,48),closed=options.closed===true;
@@ -62,7 +66,7 @@
   }
   function create(definition,fluid,world){
     var q=definition.draftFireSmoke,savedPhysics=fluid.getPhysics(),saved={},clock=0,fanImpulse=0;
-    ['wind_x','CURL','VELOCITY_DISSIPATION','DENSITY_DISSIPATION'].forEach(function(k){saved[k]=fluid.config[k];});
+    ['wind_x','CURL','VELOCITY_DISSIPATION','DENSITY_DISSIPATION','OPTICAL_DENSITY','OPTICAL_BRIGHTNESS'].forEach(function(k){saved[k]=fluid.config[k];});
     fluid.config.wind_x=0;fluid.config.CURL=0;fluid.config.DENSITY_DISSIPATION=.025;
     if(!definition.fire){fluid.setPhysics({HEAT:0,COOLING:0,BUOYANCY:0,WEIGHT:0},0);fluid.setThermalStyle({glow:0});}
     function tracer(x,y,amount){
@@ -79,7 +83,7 @@
       }
     }
     function ventilation(){
-      if(q.kind!=='chimney-draw')return 1;
+      if(q.kind!=='chimney-draw' && q.kind!=='candle-in-jar')return 1;
       var r=q.gate.rect,clear=0,total=0,tile=world.tile;
       for(var y=r.y+tile*.5;y<r.y+r.height;y+=tile)for(var x=r.x+tile*.5;x<r.x+r.width;x+=tile){
         total++;if(!world.solidAt(x,y))clear++;

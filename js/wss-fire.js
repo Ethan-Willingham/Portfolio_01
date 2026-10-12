@@ -5,7 +5,7 @@
   var WGSL=`
 const CAPACITY=20.;
 const EMBER_CONDUCTANCE=4.;
-struct Params { hot:vec4f, world:vec4f, step:vec4f };
+struct Params { hot:vec4f, world:vec4f, step:vec4f, air:vec4f };
 @group(0) @binding(0) var<uniform> p:Params;
 @group(0) @binding(1) var<storage,read> pos:array<vec4f>;
 @group(0) @binding(2) var<storage,read> flag:array<u32>;
@@ -24,8 +24,7 @@ fn touching(i:u32)->bool {let d=max(max(p.hot.xy-pos[i].xy,pos[i].xy-p.hot.zw),v
  // The fixed-temperature ember supplies declared heat only while dry.
  let ember=select(p.step.w*CAPACITY*max(0.,800.-state[0])*(1.-exp(-EMBER_CONDUCTANCE*dt/CAPACITY)),0.,wet>0.);
  state[0]+=ember/CAPACITY;state[12]+=ember;
- // The chimney has a finite, mixed air charge. Only its actual clear inlet
- // replenishes that charge. Other fire scenes retain their original source.
+ // Preserve the chimney's revivable, normalized mixed air charge.
  var combustion=1.;
  if(p.world.z>0.5){
   let fresh=min(1.-state[19],2.*p.world.w*(1.-state[19])*dt);
@@ -33,13 +32,30 @@ fn touching(i:u32)->bool {let d=max(max(p.hot.xy-pos[i].xy,pos[i].xy-p.hot.zw),v
   combustion=clamp((state[19]-0.14)/0.6,0.,1.);
   if(combustion<0.04){combustion=0.;}
  }
- let burning=wet==0. && state[0]>=350. && combustion>0.;
- state[20]=select(0.,combustion,burning);state[23]=p.world.w;
- if(p.world.z>0.5){let used=min(state[19],0.6*state[20]*dt);state[19]-=used;state[22]+=used;}
+ // Optional well-mixed chamber: the lid exchanges air, burning consumes it.
+ // Extinction latches until reset, so opening a cold candle cannot relight it.
+ let finiteAir=p.air.x>0.;
+ if(finiteAir){
+  let supplied=(.209-state[19])*(1.-exp(-p.air.z*dt));
+  state[19]+=supplied;state[21]+=supplied;
+  if(was>0.5 && (wet>0. || state[0]<350. || state[19]<=p.air.w+.000001)){state[22]=1.;}
+ }
+ let burning=wet==0. && state[0]>=350. && combustion>0. && (!finiteAir || (state[22]<.5 && state[19]>p.air.w+.000001));
+ var strength=select(0.,combustion,burning);
+ if(finiteAir && burning){
+  strength=clamp((state[19]-p.air.w)/.025,.3,1.);
+  let used=min(max(0.,state[19]-p.air.w),p.air.y*strength*dt/p.air.x);
+  state[19]-=used;state[20]+=used;
+ }
+ if(finiteAir){state[23]=strength;}
+ else{
+  state[20]=strength;state[23]=p.world.w;
+  if(p.world.z>0.5){let used=min(state[19],0.6*strength*dt);state[19]-=used;state[22]+=used;}
+ }
  if(was>0.5 && !burning && (p.world.z<0.5 || wet>0.)){state[3]=state[2];state[18]+=1.;}
  if(was<0.5 && burning){state[14]+=1.;}
  state[1]=select(0.,1.,burning);
- let input=6000.*dt*state[20];state[0]+=input/CAPACITY;state[4]+=input;
+ let input=6000.*strength*dt;state[0]+=input/CAPACITY;state[4]+=input;
  let loss=CAPACITY*(state[0]-20.)*(1.-exp(-5.*dt/CAPACITY));state[0]-=loss/CAPACITY;state[5]+=loss;
  state[9]=0.;state[10]=f32(atomicLoad(&sums[2]))/64.;
  if(wet>0.){
@@ -61,12 +77,14 @@ fn touching(i:u32)->bool {let d=max(max(p.hot.xy-pos[i].xy,pos[i].xy-p.hot.zw),v
   async function create(options){
     var L=options.liquid,device=L.device,queue=L.queue,n=options.maxParticles,width=options.width,height=options.height,hot=options.source;
     if(!L.simActive)throw Error('Fire needs the native water solver.');
+    var air=options.air || null,exchange=0;
     var sumCount=219+128*72,stateSize=24*4,bytes=stateSize+sumCount*4;
     function buffer(size,usage){return device.createBuffer({size:size,usage:usage});}
-    var U=GPUBufferUsage,params=buffer(48,U.UNIFORM|U.COPY_DST),temps=buffer(n*4,U.STORAGE|U.COPY_SRC),
+    var U=GPUBufferUsage,params=buffer(64,U.UNIFORM|U.COPY_DST),temps=buffer(n*4,U.STORAGE|U.COPY_SRC),
       sums=buffer(sumCount*4,U.STORAGE|U.COPY_DST|U.COPY_SRC),state=buffer(stateSize,U.STORAGE|U.COPY_DST|U.COPY_SRC),
       read=buffer(bytes,U.MAP_READ|U.COPY_DST),initial=new Float32Array(24),reset=new Uint32Array(sumCount);
-    initial[0]=900;initial[1]=1;initial[3]=-1;initial[16]=17600;initial[19]=1;initial[20]=1;initial[23]=1;queue.writeBuffer(state,0,initial);
+    // Slots 19 to 23 hold either the candle oxygen ledger or chimney air charge.
+    initial[0]=900;initial[1]=1;initial[3]=-1;initial[16]=17600;initial[19]=air?.209:1;initial[20]=air?0:1;initial[23]=1;queue.writeBuffer(state,0,initial);
     for(var k=0;k<72;k++)reset[5+k*3]=0xffffffff;
     var module=device.createShaderModule({code:WGSL}),info=await module.getCompilationInfo();
     if(info.messages.some(function(m){return m.type==='error';}))throw Error(info.messages.map(function(m){return m.message;}).join('; '));
@@ -82,7 +100,8 @@ fn touching(i:u32)->bool {let d=max(max(p.hot.xy-pos[i].xy,pos[i].xy-p.hot.zw),v
     function tick(dt,water){
       if(retired || !(dt>0) || error)return;dt=Math.min(.1,dt);
       var supply=options.ventilation ? Math.max(0,Math.min(1,Number.isFinite(water.airSupply)?water.airSupply:0)) : 1;
-      var clock=water.clock,count=water.count,values=new Float32Array([hot.x,hot.y,hot.x+hot.width,hot.y+hot.height,width,height,options.ventilation?1:0,supply,dt,count,clock,options.noEmber?0:1]);
+      var clock=water.clock,count=water.count,values=new Float32Array([hot.x,hot.y,hot.x+hot.width,hot.y+hot.height,width,height,options.ventilation?1:0,supply,dt,count,clock,options.noEmber?0:1,
+        air?air.volumeLitres:0,air?air.consumptionLitresPerSecond:0,exchange,air?air.extinctionFraction:0]);
       queue.writeBuffer(params,0,values);queue.writeBuffer(sums,0,reset);
       var enc=device.createCommandEncoder({label:'toy.fire.native-contact'});
       for(var key of ['contact','source','deposit']){var pass=enc.beginComputePass();pass.setPipeline(pipelines[key]);pass.setBindGroup(0,groups[key]);pass.dispatchWorkgroups(key==='source'?1:Math.max(1,Math.ceil(count/64)));pass.end();}
@@ -92,7 +111,7 @@ fn touching(i:u32)->bool {let d=max(max(p.hot.xy-pos[i].xy,pos[i].xy-p.hot.zw),v
       read.mapAsync(GPUMapMode.READ).then(function(){
         if(retired){read.unmap();return;}
         var bytesView=read.getMappedRange(),s=new Float32Array(bytesView,0,24).slice(),a=new Uint32Array(bytesView,stateSize,sumCount);
-        if(s[18]>latest[18])events.push({kind:'quench',energy:Math.max(0,s[7]-latest[7]),clock:s[17]});
+        if(s[18]>latest[18] && s[13]>.5)events.push({kind:'quench',energy:Math.max(0,s[7]-latest[7]),clock:s[17]});
         latest=s;receivedClock=s[17];maxDelay=Math.max(maxDelay,L.simulationClock-s[17]);
         var total=0,present=0;
         for(var j=0;j<72;j++){var countCell=a[3+j*3],temperature=20+(countCell?a[4+j*3]/64/countCell:0),at=8+j*4;field[at]=temperature;field[at+1]=countCell;field[at+2]=countCell?a[5+j*3]/64:height;total+=temperature*countCell;present+=countCell;}
@@ -104,13 +123,18 @@ fn touching(i:u32)->bool {let d=max(max(p.hot.xy-pos[i].xy,pos[i].xy-p.hot.zw),v
     }
     function stats(){return {burning:latest[1]>.5,sourceC:latest[0],ignitionC:350,elapsed:latest[2],quenchedAt:latest[3]<0?null:latest[3],
       wetParcels:latest[8],smothered:latest[13]>.5,relights:latest[14],quenchEvents:latest[18],poured:poured,waterMeanC:field[5],sourceCapacity:20,waterParcelCapacity:2,
-      burnFraction:latest[20],airStarved:!!options.ventilation && latest[19]<.17,airFraction:options.ventilation?latest[19]:null,
-      inletOpenFraction:options.ventilation?latest[23]:null,airAdded:latest[21],airConsumed:latest[22],
+      burnFraction:air?latest[23]:latest[20],airStarved:!!options.ventilation && latest[19]<.17,airFraction:options.ventilation?latest[19]:null,
+      inletOpenFraction:options.ventilation?latest[23]:null,airAdded:options.ventilation?latest[21]:0,airConsumed:options.ventilation?latest[22]:0,
+      burnStrength:air?latest[23]:latest[20],oxygenFraction:air?latest[19]:null,oxygenLitres:air?latest[19]*air.volumeLitres:null,
+      oxygenConsumedLitres:air?latest[20]*air.volumeLitres:null,oxygenSuppliedLitres:air?latest[21]*air.volumeLitres:null,
+      oxygenResidualLitres:air?(.209+latest[21]-latest[20]-latest[19])*air.volumeLitres:null,
+      extinguished:!!air && latest[22]>.5,oxygenStarved:!!air && latest[19]<=air.extinctionFraction+.000001,airExchangePerSecond:exchange,
       heatInputJ:latest[4],ambientLossJ:latest[5],waterHeatJ:latest[6],sourceToWaterJ:latest[7],emberInputJ:latest[12],
       initialHeatJ:latest[16],sourceHeatJ:20*(latest[0]-20),heatResidualJ:latest[16]+latest[4]+latest[12]-latest[5]-latest[6]-20*(latest[0]-20),
       contactClock:receivedClock,contactAgeSimulationSeconds:Math.max(0,L.simulationClock-receivedClock),maxContactAgeSimulationSeconds:maxDelay,pending:pending,error:error,
-      approximation:'Current GPU water contact smothers lumped hot fuel. The small fuel has 8.20 foot-pounds per degree Fahrenheit of heat capacity. A declared 1,472 degree Fahrenheit ember reheats dry fuel by conduction; its heat input is recorded. Equal source loss and parcel gain use sensible heat with a 203 degree Fahrenheit ceiling. Native water responds to a coarse thermal field. Advected smoke temperature and room cooling approximate open air. Sealed-pocket heat, boiling and combustion chemistry are pending.'};}
+      approximation:air?'The candle consumes a finite, well-mixed oxygen supply. Lifting the lid exchanges air with the room; a low-oxygen flame weakens and goes out. Extinction persists until reset, with no reheating ember. Chamber volume follows the apparatus scale; oxygen consumption, the cutoff and open-lid exchange are tuned for play. Gas chemistry, pressure and spatial oxygen transport are not solved. Water contact and sensible heat use the existing lumped source.':'Current GPU water contact smothers lumped hot fuel. The small fuel has 8.20 foot-pounds per degree Fahrenheit of heat capacity. A declared 1,472 degree Fahrenheit ember reheats dry fuel by conduction; its heat input is recorded. Equal source loss and parcel gain use sensible heat with a 203 degree Fahrenheit ceiling. Native water responds to a coarse thermal field. Advected smoke temperature and room cooling approximate open air. Sealed-pocket heat, boiling and combustion chemistry are pending.'};}
     return {tick:tick,stats:stats,field:function(){return field;},wetField:function(){return {pixels:mask,width:128,height:72};},admit:function(n){poured+=n;},
+      setAirExchange:function(rate){exchange=Math.max(0,Number(rate)||0);},
       events:function(){return events.splice(0);},destroy:function(){retired=true;for(var b of [params,temps,sums,state,read])try{b.destroy();}catch(e){}}};
   }
   root.WSSFire={create:create};

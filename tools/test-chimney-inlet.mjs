@@ -53,7 +53,7 @@ async function capture(name){
       plumeHeat+=Math.max(0,heat.kelvin[row*180+col]-293.15);cells++;
     }
     return {fire:T.fire().stats(),draft:T.fireSmokeDraft().stats(true),plumeHeat:plumeHeat/cells,
-      action:document.getElementById('toy-machine-primary').textContent,stats:T.stats()};
+      action:document.querySelector('.toy-scene-action[data-control="primary"]').getAttribute('aria-label'),stats:T.stats()};
   })()`);
   assert.equal(report.fire.error,null,'native fire stays healthy');
   assert.equal(report.draft.error,null,'actual smoke field stays finite');
@@ -65,7 +65,7 @@ async function capture(name){
   return report;
 }
 async function clickInlet(){
-  const point=await evaluate(`(()=>{const r=document.getElementById('toy-machine-primary').getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2};})()`);
+  const point=await evaluate(`(()=>{const r=document.querySelector('.toy-scene-action[data-control="primary"]').getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2};})()`);
   await send('Input.dispatchMouseEvent',{type:'mousePressed',button:'left',clickCount:1,...point});
   await send('Input.dispatchMouseEvent',{type:'mouseReleased',button:'left',clickCount:1,...point});
 }

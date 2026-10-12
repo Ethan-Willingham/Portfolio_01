@@ -325,9 +325,9 @@
     "id": "candle-in-jar",
     "capability": "Fire",
     "title": "Candle in a jar",
-    "cue": "Draft. Lift the lid and release the hot smoke, draft.",
+    "cue": "Keep the lid closed and the candle uses up its air. Lift it while the flame is still burning to let fresh air in.",
     "status": "PARTLY",
-    "blocker": "The flame does not consume oxygen or go out when the jar is sealed.",
+    "blocker": "Oxygen is a well-mixed chamber inventory; spatial gas chemistry and pressure are approximate.",
     "draft": true,
     "world": {
       "w": 720,
@@ -345,10 +345,10 @@
       "wss-fire"
     ],
     "behaviorPlan": {
-      "seconds": 6,
+      "seconds": 30,
       "actionAtSeconds": 2,
       "action": "machinePrimary lifts the physical lid",
-      "key": "Hot smoke stays inside then escapes above the lid; oxygen extinction remains absent.",
+      "key": "Opening the lid supplies fresh air; a sealed control consumes oxygen and stays out after extinction until reset.",
       "probes": [
         "jar",
         "above-lid"
