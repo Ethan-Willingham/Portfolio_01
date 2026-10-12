@@ -472,7 +472,7 @@
       document.getElementById('toy-machine-material-notice').hidden = !air.enabled;
       document.getElementById('toy-machine-summary').hidden = !machine;
       document.getElementById('toy-machine-metrics').hidden = !machine || fire || cannon || balloon || slip;
-      if(fire)text('toy-hint',candle?'Lift the lid before the flame goes out. Reset lights a fresh candle.':'Click the water jug or the hearth to pour. You can also splash it with Water.');
+      if(fire)text('toy-hint',liveMachine.definition.sauna ? 'Click the water jug or the stones to make steam. Let the room cool between pours.' : candle?'Lift the lid before the flame goes out. Reset lights a fresh candle.':'Click the water jug or the hearth to pour. You can also splash it with Water.');
       if(birds && state.tool==='poke')text('toy-hint','Grab the pipe’s top and slide it up for a lower note, down for a higher one.');
       if(cannon)text('toy-hint',wind?'Grab the slime. Stop the fan to compare its wake.':'Tap the back. Drag the slime back into the swirl.');
       if(balloon)text('toy-hint','Drag the skin to fling it. Click it to pop and release the water.');

@@ -4,7 +4,7 @@
   var entries=[
     {id:'candle-in-jar',capability:'Fire',title:'Candle in a jar',cue:'Keep the lid closed and the candle uses up its air. Lift it while the flame is still burning to let fresh air in.',status:'PARTLY',blocker:'Oxygen is a well-mixed chamber inventory; spatial gas chemistry and pressure are approximate.',draft:true,world:{w:720,h:400},pool:false},
     {id:'chimney-draw',capability:'Fire',title:'Chimney draft',cue:'Close the inlet to starve the flame. Reopen it to revive the fire.',status:'PARTLY',blocker:'Air supply uses a mixed firebox charge, not resolved combustion chemistry.',draft:true,world:{w:720,h:400},pool:false},
-    {id:'slime-sauna',capability:'Fire',title:'Slime sauna',cue:'Pour over the hot stones beside the bathing slime, draft.',status:'PARTLY',blocker:'Water warms, but steam and slime temperature are not connected.',draft:true,world:{w:720,h:400},pool:false},
+    {id:'slime-sauna',capability:'Fire',title:'Slime sauna',cue:'Pour onto the stones to make steam. Watch the slime warm up; let the room cool between pours.',status:'WORKS',blocker:'Vented room mixing and guest comfort use an approximate thermal model.',draft:true,world:{w:720,h:400},pool:false},
     {id:'heron-air-smoke',capability:'Smoke',title:"The air in Heron's fountain",cue:'Pour into the basin and follow the smoke in the air link, draft.',status:'PARTLY',blocker:'Smoke traces a separate flow field, not the native compressible gas inventory.',draft:true,world:{w:720,h:400},pool:false},
     {id:'sewer-gas-trap',capability:'Smoke',title:'Sewer gas trap',cue:'Compare the water seal with a dry trap, draft.',status:'PARTLY',blocker:'The smoke feels water occupancy; smoke pressure does not move the water seal.',draft:true,world:{w:720,h:400},pool:false}
   ];
@@ -42,9 +42,13 @@
       q.tracers=[{x:192,y:328},{x:192,y:344},{x:232,y:332}];q.probes=[{id:'inlet',x:224,y:332},{id:'flue',x:360,y:112}];
     }else if(id==='slime-sauna'){
       d.vessels=[{id:'room',label:'Sauna',rect:rect(96,40,528,344),sealed:true},{id:'tub',label:'Bath',rect:rect(408,288,160,88),sealed:false}];
-      d.vents=[rect(616,72,8,32)];d.solids=[rect(224,328,16,8),rect(280,328,16,8)];d.slimes=[{x:488,y:248,radius:24}];
-      d.initial=[{kind:'rect',vessel:'tub',rect:rect(416,312,144,48)}];fire(d,256,312,{x:256,y:120});
-      q.labels=[{x:174,y:368,text:'Hot stones'},{x:452,y:278,text:'Bathing slime'}];q.probes=[{id:'warm-room',x:360,y:128}];
+      d.vents=[rect(616,72,8,32)];d.solids=[rect(224,304,64,8),rect(224,336,8,24),rect(280,336,8,24)];d.slimes=[{x:488,y:248,radius:24}];
+      d.initial=[{kind:'rect',vessel:'tub',rect:rect(416,312,144,48)}];fire(d,256,344,{x:256,y:120});
+      d.sauna={stones:rect(224,296,64,8),room:d.vessels[0].rect,bath:d.vessels[1].rect,vent:d.vents[0],initialC:340,capacity:750};
+      d.caption=entries[2].cue;
+      d.boundaryNote='Water poured from the spout lands on a hot stone shelf above the fire. Native water evaporates only after paying sensible and latent heat. White steam rises through the room and escapes at the upper vent. The bathing slime relaxes as it warms and becomes restless when too hot.';
+      d.energyBudgetStatus='The stones store finite heat and receive 2,200 watts while the fire burns. Contacting native water uses its rest-area mass, sensible heat and latent heat at room-pressure boiling. Evaporated parcels remain inactive in their native slots. An approximate mixed room retains twenty percent of their enthalpy and cools through the vent; guest comfort, condensation and gas pressure are not resolved.';
+      q.labels=[];q.probes=[{id:'warm-room',x:360,y:128}];
     }else if(id==='heron-air-smoke'){
       d=root.WaterMachinesScenes.make('heron',world,options);var e=entries[3];
       d.name=id;d.title=e.title;d.draft=true;d.status=e.status;d.blocker=e.blocker;d.caption=e.cue;d.boundaries=null;

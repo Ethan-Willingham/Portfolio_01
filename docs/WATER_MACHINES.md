@@ -827,3 +827,30 @@ The unchanged 38-iteration solution reduces potential plus correction inertia fr
 The first independent directional audit fails at a 1e-5 perturbation, where energy and contour reconstruction roundoff are amplified by division. Its failed source and stderr remain preserved. A declared five-step sweep checks both directions at initial and final states; three of its 20 checks remain failed. All four checks at 1e-3 agree within 6.06e-7 relative error. A fresh full audit changes only the perturbation to 1e-3, retains the original 2e-5 tolerance and passes. The solver source and result are unchanged.
 
 This reduction assumes one connected gas pocket and a fixed domain. General multiple-pocket ownership, gas topology, contacts, a coupled runtime pressure replacement and repeated actual force application remain unfinished. The separate geometry audit is excluded from the solve cost, and 14.8 seconds is still far from live use. Sources, freezes, original failure, all sweep records, complete accepted corrections and audit: assets/images/water-machines/one-pocket-pressure-reduction-2026-10-09.json. The previous native recording is referenced by its exact public evidence hash.
+
+
+## Slime sauna
+
+The stone shelf sits above a small fire. Pour water onto the shelf to make white
+steam. The stones have finite stored heat, lose heat to contacting water and
+reheat while the fire burns. A native water parcel leaves the liquid only after
+receiving its sensible and latent heat at room-pressure boiling. Its inactive
+slot records escaped vapor, so pouring repeatedly does not duplicate water.
+
+The room and bath warm gradually. The slime blushes and gently moves when
+relaxed, then becomes restless when too hot. Temperature labels show the stones,
+room and guest. Stop pouring to let the vented room cool. Grabbing a slime
+suppresses its automatic motion; carrying it outside the sauna cools it.
+
+The white plume uses the existing air solver. Room mixing, bath temperature and
+guest comfort are approximate: twenty percent of vapor enthalpy heats a mixed
+room, with finite cooling and temperature relaxation. This open sauna does not
+resolve steam pressure, condensation or a calibrated biological model. The
+shared liquid engine and Sluice are unchanged.
+
+Validation stays small: JavaScript syntax checks and one owned Chrome for
+Testing interaction check. One pour
+evaporated all 700 admitted parcels and warmed the guest to its relaxed state.
+Repeated pours produced the hot reaction. Pause and changing scenes passed
+without runtime or GPU errors. The finite-stone heat residual stayed below one
+joule. Run `node tools/test-water-sauna.cjs` for that short interaction check.

@@ -411,9 +411,9 @@
     "id": "slime-sauna",
     "capability": "Fire",
     "title": "Slime sauna",
-    "cue": "Draft. Pour over the hot stones beside the bathing slime, draft.",
-    "status": "PARTLY",
-    "blocker": "Water warms, but steam and slime temperature are not connected.",
+    "cue": "Pour onto the stones to make steam. Watch the slime warm up; let the room cool between pours.",
+    "status": "WORKS",
+    "blocker": "Vented room mixing and guest comfort use an approximate thermal model.",
     "draft": true,
     "world": {
       "w": 720,
@@ -428,17 +428,18 @@
       "wss-native",
       "wss-sound",
       "wss-drafts-fire-smoke",
-      "wss-fire"
+      "wss-fire",
+      "wss-sauna"
     ],
     "behaviorPlan": {
       "seconds": 6,
       "actionAtSeconds": 1,
       "action": "machinePrimary queues the declared 700-parcel water pour",
-      "key": "Water reaches the hot patch, source loses heat and the bathing slime/water remain finite; steam absent.",
+      "key": "Native water evaporates on the stones, a white plume rises, and the guest warms and reacts.",
       "probes": [
         "warm-room"
       ],
-      "statusIfObserved": "PARTLY"
+      "statusIfObserved": "WORKS"
     },
     "scripts": [
       "wss-boundaries",
@@ -446,7 +447,8 @@
       "wss-native",
       "wss-sound",
       "wss-drafts-fire-smoke",
-      "wss-fire"
+      "wss-fire",
+      "wss-sauna"
     ]
   },
   {

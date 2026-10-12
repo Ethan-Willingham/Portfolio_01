@@ -86,7 +86,8 @@ fn touching(i:u32)->bool {let d=max(max(p.hot.xy-pos[i].xy,pos[i].xy-p.hot.zw),v
     // Slots 19 to 23 hold either the candle oxygen ledger or chimney air charge.
     initial[0]=900;initial[1]=1;initial[3]=-1;initial[16]=17600;initial[19]=air?.209:1;initial[20]=air?0:1;initial[23]=1;queue.writeBuffer(state,0,initial);
     for(var k=0;k<72;k++)reset[5+k*3]=0xffffffff;
-    var module=device.createShaderModule({code:WGSL}),info=await module.getCompilationInfo();
+    var shader=options.excludeFrozen ? WGSL.replace('(flag[i]&128u)==0u','(flag[i]&160u)==0u') : WGSL;
+    var module=device.createShaderModule({code:shader}),info=await module.getCompilationInfo();
     if(info.messages.some(function(m){return m.type==='error';}))throw Error(info.messages.map(function(m){return m.message;}).join('; '));
     var pipelines={},groups={};
     for(var name of ['contact','source','deposit']){
