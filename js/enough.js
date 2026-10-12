@@ -12,9 +12,7 @@ const groups=[
  ['lift','Lift',['protein','sets']],
  ['rest','Rest',['sleep']],
  ['eat','Eat',['fruit-veg','fiber']],
- ['money','Money',['income','savings']],
- ['work','Work',['work']],
- ['harm','Alcohol and smoking',['alcohol','smoking']]
+ ['money','Money',['income','savings']]
 ];
 const xLabels={'steps-younger':'Steps/day','steps-older':'Steps/day',steps:'Steps/day',exercise:'Exercise, minutes/week',protein:'Protein, g/lb/day',sets:'Sets/muscle/week',sleep:'Sleep, hours/night','fruit-veg':'Fruit and veg, servings/day',fiber:'Fiber, grams/day',income:'Household income, $/year',savings:'Take-home pay saved, %',work:'Work, hours/week',alcohol:'US drinks/week (groups)',smoking:'Cigarettes/day'};
 const outcomeScales={
@@ -202,36 +200,13 @@ for(const [area,title,ids]of groups){
  $('enough-groups').append(section);
 }
 $('enough-loading')?.remove();
-const overviewIds=['steps','exercise','protein'];
-const overviewBox=$('overview-chart'),overviewStates=new Map();
-const openingCopy={
- steps:{name:'Walking'},
- exercise:{name:'Exercise',default:150,amount:d=>fmt(d)+' minutes/week',result:exerciseRisk,baseline:'Shading: 95% confidence interval.'},
- protein:{name:'Protein',default:.8,amount:d=>fmt(d,2)+' g/lb/day',result:v=>'About '+fmt(v,1)+' lb modeled lean-mass change',baseline:'Across lifting-trial groups. Lean mass includes water.'}
-};
-for(const id of overviewIds){
- const c=curves.get(id),copy=openingCopy[id],panel=document.createElement('div');panel.className='overview-panel';panel.id='overview-'+id;panel.style.setProperty('--area',`var(--en-${c.view.area})`);
- panel.innerHTML=`<div class="overview-plot"></div><p class="overview-reading" id="overview-readout-${id}"></p><p class="overview-baseline" id="overview-baseline-${id}">${esc(copy.baseline||'')}</p>`;
- overviewBox.append(panel);const plot=panel.querySelector('.overview-plot'),output=panel.querySelector('.overview-reading'),[min,max]=c.view.range,step=id==='steps'?100:id==='protein'?.01:1;let dose=copy.default;
- if(id==='steps'){overviewStates.set(id,{panel,...bindWalking(plot,output,panel.querySelector('.overview-baseline'))});continue;}
- const update=()=>{plot.innerHTML=chart(c,plot.clientWidth,dose,true);output.innerHTML=`<span>${esc(copy.amount(dose))}</span><strong>${esc(copy.result(M.outcome(c,dose),dose))}</strong>`;plot.setAttribute('aria-valuenow',dose);plot.setAttribute('aria-valuetext',readout(c,dose));};
- const set=value=>{dose=value<=min?min:value>=max?max:Number((Math.round(value/step)*step).toFixed(4));dose=M.clamp(dose,min,max);update();};
- interactive(plot,{min,max,step,name:'Opening chart: '+c.question,description:'overview-baseline-'+id,get:()=>dose,set,fromPointer:e=>doseFromPointer(c,plot,e)});
- overviewStates.set(id,{panel,update});
-}
-let opening=overviewIds.includes(params.get('curve'))?params.get('curve'):'steps';
-function overview(){
- for(const [id,state]of overviewStates){state.panel.hidden=id!==opening;if(id===opening)state.update();}
- for(const button of document.querySelectorAll('[data-opening-curve]')){const selected=button.dataset.openingCurve===opening;button.setAttribute('aria-pressed',selected);button.setAttribute('aria-controls','overview-'+button.dataset.openingCurve);}
-}
-for(const button of document.querySelectorAll('[data-opening-curve]'))button.addEventListener('click',()=>{opening=button.dataset.openingCurve;overview();});
 const painting=params.get('painting');if(['homer','chardin'].includes(painting)){
  $('hero-painting').src='assets/enough/'+painting+'.jpg';$('hero-picture').querySelector('source').srcset='assets/enough/'+painting+'.webp';
  $('hero-painting').alt=painting==='homer'?'Four people sail a small boat in Winslow Homer’s Breezing Up.':'Fruit, a jug and a glass on a table, painted by Chardin.';
  $('painting-credit').innerHTML=painting==='homer'?'Winslow Homer, <a href="https://www.nga.gov/artworks/30228-breezing-fair-wind">Breezing Up (A Fair Wind)</a>, 1873 to 1876. National Gallery of Art, 1943.13.1. Public domain.':'Jean Simeon Chardin, <a href="https://www.nga.gov/artworks/12202-fruit-jug-and-glass">Fruit, Jug, and a Glass</a>, c. 1726/1728. National Gallery of Art, 1943.7.4. Public domain.';
 }
 if(params.get('colors')==='quiet')for(const area of ['move','lift','rest','eat','money','work'])document.querySelector('.enough-shell').style.setProperty('--en-'+area,'var(--accent)');
-let timer;window.addEventListener('resize',()=>{clearTimeout(timer);timer=setTimeout(()=>{overview();for(const s of states.values())s.update();},60);});
-overviewBox.classList.add('en-initial');overview();for(const s of states.values())s.update();
+let timer;window.addEventListener('resize',()=>{clearTimeout(timer);timer=setTimeout(()=>{for(const s of states.values())s.update();},60);});
+for(const s of states.values())s.update();
 const hash=decodeURIComponent(location.hash.slice(1)),target=hash==='steps-longer'?'steps':hash;if(states.has(target))requestAnimationFrame(()=>$(target)?.scrollIntoView());
 })();
