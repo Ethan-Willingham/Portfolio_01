@@ -1385,6 +1385,76 @@
     }
   },
   {
+    "id": "savery-pump",
+    "capability": "Steam",
+    "title": "Savery's steam pump",
+    "cue": "Draft. Heat and cool the chamber using its two real manual valves, draft.",
+    "status": "PARTLY",
+    "draft": true,
+    "accepted": true,
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "pool": false,
+    "preview": "cup",
+    "scripts": [
+      "wss-drafts-pressure",
+      "wss-steam"
+    ],
+    "loaderDependencies": [
+      "wss-boundaries",
+      "wss-hands",
+      "wss-native",
+      "wss-sound",
+      "wss-drafts-pressure",
+      "wss-steam"
+    ],
+    "blocker": "Sustained vapor support, vacuum refill and an automatic check cycle are not established.",
+    "behaviorPlan": {
+      "seed": 17,
+      "seconds": 6,
+      "key": "Finite phase pressure can displace actual water through the rising delivery tube; manual inlet and delivery gates remain real.",
+      "action": "Use existing machinePrimary once after a short observation. Steam toggles the actual heater; cave and ram use real manual valves; Venturi/trompe/water-hammer/Torricelli use physical caps. Clock primary pours real water, skip for closed inventory check.",
+      "statusIfObserved": "PARTLY"
+    }
+  },
+  {
+    "id": "pulsometer",
+    "capability": "Steam",
+    "title": "Pulsometer",
+    "cue": "Draft. Two heated chambers share a delivery tube; automatic alternation is missing, draft.",
+    "status": "PARTLY",
+    "draft": true,
+    "accepted": true,
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "pool": false,
+    "preview": "cup",
+    "scripts": [
+      "wss-drafts-pressure",
+      "wss-steam"
+    ],
+    "loaderDependencies": [
+      "wss-boundaries",
+      "wss-hands",
+      "wss-native",
+      "wss-sound",
+      "wss-drafts-pressure",
+      "wss-steam"
+    ],
+    "blocker": "No steam shuttle or pressure-switch mechanism alternates the chambers.",
+    "behaviorPlan": {
+      "seed": 17,
+      "seconds": 6,
+      "key": "One real wide heater shares declared power across actual wet donors in both separate chambers.",
+      "action": "Use existing machinePrimary once after a short observation. Steam toggles the actual heater; cave and ram use real manual valves; Venturi/trompe/water-hammer/Torricelli use physical caps. Clock primary pours real water, skip for closed inventory check.",
+      "statusIfObserved": "PARTLY"
+    }
+  },
+  {
     "id": "fountain-rider",
     "capability": "Water slimes",
     "title": "Fountain rider",
