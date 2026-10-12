@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.136'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.137'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -154,19 +154,20 @@
   var portrait = window.innerHeight > window.innerWidth * 1.15;
   var worldW = sharedBuildData ? sharedBuildData.width*sharedBuildData.tile : fixedMachineRequested ? machineSize(bootScene).w : Math.round(availW);
   function controlRowHeight(element){
+    if(!element)return 0;
     var style=getComputedStyle(element);
     return style.position==='absolute' || style.position==='fixed' ? 0 : element.getBoundingClientRect().height;
   }
   function stageRoom() {
     var h = window.innerHeight - (viewport.getBoundingClientRect().top + window.scrollY) - 16;
-    ['.toy-dock', '.toy-foot'].forEach(function (selector) {
+    ['.toy-dock'].forEach(function (selector) {
       h -= controlRowHeight(document.querySelector(selector));
     });
     return Math.max(80, h);
   }
   function displayStageRoom(){
     var h=window.innerHeight-Math.max(0,viewport.getBoundingClientRect().top)-16;
-    ['.toy-dock','.toy-foot'].forEach(function(selector){h-=controlRowHeight(document.querySelector(selector));});
+    ['.toy-dock'].forEach(function(selector){h-=controlRowHeight(document.querySelector(selector));});
     return Math.max(80,h);
   }
   var availableHeight = stageRoom();
@@ -181,14 +182,14 @@
     if(fixedMachineRequested && roomScene(bootScene)){
       // Size the room for the tallest framing, where the authored height
       // fills the space between the bars; shorter framings need less.
-      var roomBase=machineSize(bootScene),roomFit=Math.max(.2,(window.innerHeight-appTop-90-16)/roomBase.h);
+      var roomBase=machineSize(bootScene),roomFit=Math.max(.2,(window.innerHeight-appTop-32)/roomBase.h);
       var roomNeed=Math.ceil((window.innerWidth/roomFit+64)/16)*16;
       roomCore={w:roomBase.w,h:roomBase.h};
       worldW=Math.max(roomBase.w,Math.min(roomBase.w*(isMobile ? 1.6 : 2),roomNeed));
       roomX=(worldW-roomBase.w)/2;worldH=roomBase.h;appFill=true;
     }else if(!fixedMachineRequested){
       // Same pixel budget as before, in the window's own proportions.
-      var appW=viewport.clientWidth || window.innerWidth,appH=window.innerHeight-appTop-controlRowHeight(document.querySelector('.toy-foot'));
+      var appW=viewport.clientWidth || window.innerWidth,appH=window.innerHeight-appTop;
       var appK=Math.min(1,Math.sqrt(1120*672/(appW*Math.max(1,appH))));
       worldW=Math.round(appW*appK);worldH=Math.max(300,Math.round(appH*appK));appFill=true;
     }
@@ -214,7 +215,7 @@
     if (expanded) {
       h = shell.clientHeight;
       topHeight = shell.querySelector('.toy-top').getBoundingClientRect().height;
-      ['.toy-top', '.toy-dock', '.toy-foot'].forEach(function (selector) {
+      ['.toy-top', '.toy-dock'].forEach(function (selector) {
         h -= controlRowHeight(shell.querySelector(selector));
       });
       h = Math.max(1, h);
@@ -223,27 +224,33 @@
     // Use the page position so scrolling the article does not resize the apparatus.
     var room = fixedMachineScene(currentScene) ? Math.max(80, stageRoom()) : displayStageRoom();
     baseFitScale = Math.min(w / worldW, (expanded ? h : room) / worldH);
-    // A window-shaped world covers its window; rounding must not leave a sliver.
-    if(appFill && !roomCore && expanded && Math.max(w/worldW,h/worldH)<=baseFitScale*1.03)baseFitScale=Math.max(w/worldW,h/worldH);
-    var overlayControls=expanded && nativeMachineScene(currentScene);
-    var frame=overlayControls && machineState && machineState.definition.name===currentScene ? machineState.definition.viewBounds : null;
-    // Leave room for the bottom wall stroke above the overlaid controls.
-    if(overlayControls)baseFitScale=Math.min(w/worldW,Math.max(1,h-16)/(frame ? frame.height : worldH));
-    var railInset=roomCore ? (parseFloat(getComputedStyle(shell).getPropertyValue('--toy-rail-right')) || 0)+8 : 0;
-    if(overlayControls && roomCore)baseFitScale=Math.min(Math.max(1,w-2*railInset)/(frame ? frame.width : roomCore.w),Math.max(1,h-16)/(frame ? frame.height : worldH));
+    var overlayControls=expanded && getComputedStyle(viewport).position==='absolute';
     cameraWidth=w;cameraHeight=expanded ? (overlayControls ? shell.clientHeight : h) : Math.round(worldH*baseFitScale);
+    viewport.style.height = cameraHeight+'px';
+    // Frame the entire simulation, including the air above an apparatus.
+    // Fitting only viewBounds cropped rising flames, spray and floating gel.
+    // The stage shares one transform across every renderer and input layer.
+    var padding=expanded ? Math.min(16,Math.max(6,Math.min(w,h)*.025)) : 0;
+    var insetLeft=padding,insetRight=padding,insetTop=(overlayControls ? topHeight : 0)+padding;
+    var insetBottom=(overlayControls ? Math.max(0,shell.clientHeight-h-topHeight) : 0)+padding;
+    var dock=shell.querySelector('.toy-dock'),dockStyle=dock && getComputedStyle(dock);
+    if(expanded && dockStyle && dockStyle.display!=='none' && /^(absolute|fixed)$/.test(dockStyle.position)){
+      var dockBounds=dock.getBoundingClientRect(),viewBounds=viewport.getBoundingClientRect();
+      if(dockStyle.flexDirection==='column' && dockBounds.right>viewBounds.left && dockBounds.left<viewBounds.left+w*.5)
+        insetLeft=Math.max(insetLeft,dockBounds.right-viewBounds.left+padding);
+      else if(dockStyle.flexDirection==='row' && dockBounds.top>viewBounds.top+cameraHeight*.5)
+        insetBottom=Math.max(insetBottom,viewBounds.bottom-dockBounds.top+padding);
+    }
+    var fitWidth=Math.max(1,cameraWidth-insetLeft-insetRight),fitHeight=Math.max(1,cameraHeight-insetTop-insetBottom);
+    baseFitScale=Math.min(fitWidth/worldW,fitHeight/worldH);
     fitScale=baseFitScale*viewZoom;
-    cameraMaxPanX=Math.max(0,(worldW*fitScale-cameraWidth)*.5);
-    cameraMaxPanY=Math.max(0,(worldH*fitScale-cameraHeight)*.5);
+    cameraMaxPanX=Math.max(0,(worldW*fitScale-fitWidth)*.5);
+    cameraMaxPanY=Math.max(0,(worldH*fitScale-fitHeight)*.5);
     viewPanX=Math.max(-cameraMaxPanX,Math.min(cameraMaxPanX,viewPanX));
     viewPanY=Math.max(-cameraMaxPanY,Math.min(cameraMaxPanY,viewPanY));
     stage.style.transform = fitScale === 1 ? 'none' : 'scale(' + fitScale + ')';
-    stage.style.left = (roomCore && overlayControls ? cameraWidth*.5-(frame ? frame.x+frame.width*.5 : worldW*.5)*fitScale : (cameraWidth-worldW*fitScale)*.5)+viewPanX+'px';
-    var stageTop=frame ? topHeight+(h-frame.height*fitScale)*.5-frame.y*fitScale : overlayControls ? topHeight+(h-worldH*fitScale)*.5 : expanded || viewZoom!==1 ? (cameraHeight-worldH*fitScale)*.5 : 0;
-    // A framed apparatus can start above the viewport; clamping the entire
-    // world to zero would push its lower tank back underneath the footer.
-    stage.style.top=stageTop+viewPanY+'px';
-    viewport.style.height = cameraHeight+'px';
+    stage.style.left=(insetLeft+(fitWidth-worldW*fitScale)*.5)+viewPanX+'px';
+    stage.style.top=(insetTop+(fitHeight-worldH*fitScale)*.5)+viewPanY+'px';
     var bounds=stage.getBoundingClientRect(),projection=[bounds.left,bounds.top,bounds.width,bounds.height];
     // A captured construction stroke uses screen-to-world coordinates. A
     // toolbar-height, fullscreen or scroll change must not add a new bend.
@@ -3311,6 +3318,18 @@
     smokeCanvas.width = Math.max(64, Math.round(worldW * pxScale));
     smokeCanvas.height = Math.max(64, Math.round(worldH * pxScale));
     smokeCanvas.style.cssText = 'position:absolute;left:0;top:0;pointer-events:none;z-index:5;';
+    // Let smoke disappear into clear air before the edge of the glass.
+    // This only feathers its display; heat, airflow and wet contact retain
+    // their full simulation domain and continue to use the same solver.
+    var edge=Math.min(16,Math.max(8,Math.min(worldW,worldH)*.025));
+    var topFade=Math.min(120,Math.max(64,worldH*.24)),clearTop=Math.min(32,Math.max(16,worldH*.06));
+    var hEdge=edge/worldW,vEdge=edge/worldH,topEdge=topFade/worldH,clearEdge=clearTop/worldH;
+    var fadeSVG='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+worldW+' '+worldH+'" preserveAspectRatio="none"><defs>'+
+      '<linearGradient id="h"><stop stop-color="white" stop-opacity="0"/><stop offset="'+hEdge+'" stop-color="white"/><stop offset="'+(1-hEdge)+'" stop-color="white"/><stop offset="1" stop-color="white" stop-opacity="0"/></linearGradient>'+
+      '<linearGradient id="v" x1="0" y1="0" x2="0" y2="1"><stop stop-color="white" stop-opacity="0"/><stop offset="'+clearEdge+'" stop-color="white" stop-opacity="0"/><stop offset="'+(clearEdge+(topEdge-clearEdge)*.3)+'" stop-color="white" stop-opacity=".16"/><stop offset="'+(clearEdge+(topEdge-clearEdge)*.7)+'" stop-color="white" stop-opacity=".78"/><stop offset="'+topEdge+'" stop-color="white"/><stop offset="'+(1-vEdge)+'" stop-color="white"/><stop offset="1" stop-color="white" stop-opacity="0"/></linearGradient>'+
+      '<mask id="edge"><rect width="100%" height="100%" fill="url(#h)"/></mask></defs><rect width="100%" height="100%" fill="url(#v)" mask="url(#edge)"/></svg>';
+    smokeCanvas.style.maskImage='url("data:image/svg+xml,'+encodeURIComponent(fadeSVG)+'")';
+    smokeCanvas.style.webkitMaskImage=smokeCanvas.style.maskImage;
     stage.appendChild(smokeCanvas);
     smokeObH = Math.max(64, Math.round(smokeObW * worldH / worldW));
     var shortAxis = Math.min(worldW, worldH);
@@ -12699,6 +12718,7 @@
   var pointerControl = false;
   var pointerThumb = false;
   var pointerPipe = false,pipeGrabOffset=0;
+  var pointerClickAction=null,pointerStartX=0,pointerStartY=0;
   var pointerId = -1;
   var px = 0, py = 0;            // current world position
   var pvx = 0, pvy = 0;          // smoothed world velocity, px/s
@@ -12735,8 +12755,11 @@
     pointerId = id;
     px = lastPaintX = x; py = lastPaintY = y;
     pvx = 0; pvy = 0; lastMoveT = performance.now();
-    pointerControl=false;
+    pointerControl=false;pointerClickAction=null;pointerStartX=x;pointerStartY=y;
     if (tool === 'poke') {
+      var bodyAction=machineControlTargets().find(function(control){return !control.disabled && control.pointerMode==='tap-body' &&
+        Math.abs(x-control.x)<=control.width*.5 && Math.abs(y-control.y)<=control.height*.5;});
+      if(bodyAction)pointerClickAction=bodyAction.id;
       if(machineState && machineState.definition.birds && toySteam && window.WSSSingingPipe.hit(machineState.definition,px,py,fitScale)){
         pointerControl=true;pointerPipe=true;pipeGrabOffset=py-window.WSSSingingPipe.geometry(machineState.definition).tipY;return;
       }
@@ -12782,6 +12805,7 @@
       pvy = pvy * 0.5 + ((y - py) / mdt) * 0.5;
     }
     px = x; py = y;
+    if(pointerDown && Math.hypot(x-pointerStartX,y-pointerStartY)*fitScale>6)pointerClickAction=null;
     if(pointerPipe && pointerDown && toySteam){window.WSSSingingPipe.extend(machineState.definition,toySteam,py-pipeGrabOffset);machineOverlayCache=null;drawMachineOverlay();}
     if(buildGesture && pointerDown)extendBuildGesture(px,py);
     if (grabBody && pointerDown) jelloGrabTick(px, py);
@@ -12797,6 +12821,7 @@
 
   function releasePointer(e,cancelled) {
     if (!pointerDown || e.pointerId !== pointerId) return;
+    var clickAction=!cancelled ? pointerClickAction : null;pointerClickAction=null;
     if(pointerThumb){pointerThumb=false;machineThumb(false);}
     pointerPipe=false;
     pointerDown = false;
@@ -12808,6 +12833,7 @@
       slimeGhost = null;
     }
     jelloGrabEnd();
+    if(clickAction)activateMachineControl(clickAction);
     pokeGuest = null;
     pvx = 0; pvy = 0;
     updateKeyboardHelp();
@@ -14466,6 +14492,66 @@
     machineState.primaryUsed=true;return true;
   }
 
+  // All controls sit on the apparatus. The presentation layer uses the same
+  // world targets for accessible buttons and native pointer interactions.
+  function machineControlTargets(){
+    if(!machineState || !machineState.definition.primary)return [];
+    var d=machineState.definition,p=d.primary,kind=p.kind;
+    if(kind==='creature-fixture')return [];
+    var disabled=!machineState.ready || machineLoading || handsPending ||
+      ((kind==='balloon-pop' || kind==='slime') && machineState.primaryUsed);
+    var label=d.birds && toySound ? toySound.stats().enabled?'Mute sound':'Turn on sound' : d.action || 'Use apparatus';
+    var controls=[];
+    function target(x,y,width,height,id,mode){
+      if(!Number.isFinite(x) || !Number.isFinite(y))return;
+      controls.push({id:id || 'primary',x:x,y:y,width:width || 32,height:height || 32,
+        label:label,kind:kind,disabled:!!disabled,pointerMode:mode || 'fixture'});
+    }
+    function atRect(r,id,mode){if(r)target(r.x+r.width*.5,r.y+r.height*.5,r.width,r.height,id,mode);}
+    function opening(o){if(o)target(o.axis==='x'?o.at:(o.start+o.end)*.5,o.axis==='x'?(o.start+o.end)*.5:o.at,
+      o.axis==='x'?24:o.end-o.start,o.axis==='x'?o.end-o.start:24);}
+    function body(index){
+      var b=toyBalloon && (kind==='balloon-pop' || kind==='draft-squeeze') ? toyBalloon.body : jelloBodies[index || 0];
+      var spec=d.slimes && d.slimes[index || 0],radius=spec && spec.radius || 32;
+      target(b?b.cx:spec?spec.x:worldW*.5,b?b.cy:spec?spec.y:worldH*.5,radius*1.5,radius*1.5,'primary','tap-body');
+    }
+    var source=d.measure && d.measure.source || d.vessels && d.vessels[0] && d.vessels[0].rect || d.viewBounds || {x:0,y:0,width:worldW,height:worldH};
+    if(kind==='valve'){
+      var part=(d.parts || []).find(function(item){return item.id===p.id;});if(part)atRect(part.rect);
+    }else if(kind==='cap' || kind==='interlocked-cap' || kind==='thumb')opening(p.opening);
+    else if(kind==='fire-pour' && d.fire){
+      target(d.fire.pour.x-13,d.fire.pour.y-15,46,46);
+      target(d.fire.x,d.fire.y,64,32,'fire-source');
+    }else if(kind==='heat-toggle' && d.thermoscope)target(d.thermoscope.x,d.thermoscope.y,48,32);
+    else if(kind==='steam-heat-toggle' && d.steam)atRect(d.steam.heater);
+    else if(kind==='pipe-sound' && d.steam)target(d.steam.vent.x,d.steam.vent.y,32,32);
+    else if((kind==='tap' || kind==='slider-supply') && d.boundaries && d.boundaries.tap)target(d.boundaries.tap.x,d.boundaries.tap.y,36,36);
+    else if(kind==='bubble-toggle' && d.bubbles)target(d.bubbles.hose.x,d.bubbles.hose.y,40,32);
+    else if(kind==='diver-squeeze' && d.divers){
+      var piston=d.divers.piston,stroke=toyDivers?toyDivers.stats().stroke:0;
+      target(piston.x+piston.width*.5,piston.y+stroke+piston.height*.5,piston.width,piston.height);
+    }else if(kind==='smoke-push')target(84,200,24,100);
+    else if(kind==='smoke-fan' && d.fan)target(d.fan.x,(d.fan.top+d.fan.bottom)*.5,48,d.fan.bottom-d.fan.top);
+    else if(kind==='balloon-pop' || kind==='draft-squeeze' || kind==='draft-push' || kind==='creature-gas')body(0);
+    else if(kind==='slime'){
+      var slime=d.slimes[p.index || 0];if(slime)target(slime.x,slime.y,slime.radius*2,slime.radius*2);
+    }else if(kind==='material-jolt')target(source.x+source.width*.5,source.y+source.height-8,source.width,24);
+    else if(kind==='wave-motor' && d.wave)target(d.wave.rect.x+d.wave.rect.width*.5,d.wave.rect.y+12,d.wave.rect.width,24);
+    else if(kind==='draft-motor')body(0);
+    else if(kind==='draft-wall-toggle' && d.draftFireSmoke)atRect(d.draftFireSmoke.gate.rect);
+    else if(kind==='pour')target(p.target.x-13,p.target.y-15,46,46);
+    else if(kind==='draft-primary' && d.releaseCap)opening(d.releaseCap);
+    else if(kind==='creature-gates' && d.parts && d.parts.length)atRect(d.parts[0].rect);
+    else target(source.x+source.width*.5,source.y+12,48,32);
+    return controls;
+  }
+  function activateMachineControl(id,held){
+    var control=machineControlTargets().find(function(item){return item.id===id;});
+    if(!control || control.disabled)return false;
+    if(control.kind==='thumb')return machineThumb(held!==false);
+    return machinePrimary();
+  }
+
   function setGravityUI(g) { gravMul = g; applyGravity(); syncSliderUI(); }
 
   function emittersTick(dt) {
@@ -14799,7 +14885,8 @@
       }
       c.drawImage(pressureViewCanvas,0,0,worldW,worldH);
     }
-    c.lineWidth=1;c.strokeStyle=accent;c.fillStyle=text;c.font='14px "Commit Mono", monospace';
+    var art=window.WSSApparatusArt;
+    c.lineWidth=1;c.strokeStyle=accent;c.fillStyle=text;c.font=(12/fitScale)+'px "Commit Mono", monospace';
     if(handsRequested && tool==='build' && handsSelection){
       var selected=handsSelection;c.save();c.lineWidth=2/fitScale;c.strokeRect(selected.x,selected.y,selected.width,selected.height);
       c.setLineDash([3/fitScale,3/fitScale]);var hit=22/fitScale;
@@ -14807,6 +14894,18 @@
     }
     if(machineState){
       var definition=machineState.definition;
+      if(art && definition.primary.kind==='pour' && definition.primary.target)
+        art.pail(c,definition.primary.target.x,definition.primary.target.y);
+      if(definition.primary.kind==='slime' && !machineState.primaryUsed){
+        var waitingSlime=definition.slimes[definition.primary.index || 0];
+        if(waitingSlime){
+          c.save();c.fillStyle='#9ec79a';c.globalAlpha=.28;
+          c.beginPath();c.ellipse(waitingSlime.x,waitingSlime.y,waitingSlime.radius,waitingSlime.radius*.92,0,0,Math.PI*2);c.fill();
+          c.globalAlpha=.65;c.strokeStyle='#9ec79a';c.lineWidth=1/fitScale;c.stroke();
+          c.globalAlpha=.5;c.strokeStyle='#e8e2d6';c.beginPath();
+          c.ellipse(waitingSlime.x,waitingSlime.y,waitingSlime.radius*.72,waitingSlime.radius*.68,0,Math.PI*1.12,Math.PI*1.52);c.stroke();c.restore();
+        }
+      }
       if(toyCannon && toyCannon.draw)toyCannon.draw(c);
       if(toyFireSmokeDraft)toyFireSmokeDraft.draw(c);
       if(toyFloatSlider)toyFloatSlider.draw(c);
@@ -14816,24 +14915,23 @@
       if(toyWave)toyWave.draw(c,{accent:accent,text:text});
       if(toySteam && !definition.birds){var steamDefinition=definition.steam,steamHeat=toySteam.stats();
         c.fillText(steamHeat.heated?'Heater on':'Cooling',steamDefinition.heater.x-44,steamDefinition.heater.y+28);
-        c.strokeRect(steamDefinition.heater.x,steamDefinition.heater.y,steamDefinition.heater.width,steamDefinition.heater.height);
+        if(art)art.heater(c,steamDefinition.heater,{heated:steamHeat.heated});
         if(!steamDefinition.hideWhistleDrawing){
         c.fillText(steamHeat.vaporParcels+' vapor parcels',288,184);
         c.beginPath();c.moveTo(412,152);c.lineTo(412,112);c.moveTo(420,152);c.lineTo(420,112);c.stroke();
         c.fillText(steamDefinition.capped?'Capped':'Whistle',356,100);if(steamDefinition.capped)c.fillRect(412,110,8,2);
         }
-        if(steamHeat.heated){c.globalAlpha=.35;c.fillStyle=accent;c.fillRect(steamDefinition.heater.x,steamDefinition.heater.y,steamDefinition.heater.width,steamDefinition.heater.height);c.globalAlpha=1;c.fillStyle=text;}
       }
-      if(toyFire){var f=definition.fire,hot=toyFire.stats();c.fillText(hot.smothered?'Out, wet':hot.airStarved?'Out, no air':hot.burning?'Burning':'Ember reheating',f.x+48,f.y-12);
-        c.fillText('Ember',f.x-80,f.y+36);c.strokeRect(f.x-36,f.y+16,16,8);
-        c.fillText('Pour',f.pour.x-14,f.pour.y-16);c.strokeRect(f.pour.x-8,f.pour.y-4,16,8);}
+      if(toyFire){var f=definition.fire,hot=toyFire.stats();
+        c.save();c.fillStyle=palette.getPropertyValue('--text-dim').trim();
+        c.fillText(hot.smothered?'Out, wet':hot.airStarved?'Out, no air':hot.burning?'Burning':'Ember reheating',f.x+48,f.y-12);c.restore();
+        if(art){art.hearth(c,f.x,f.y,{burning:hot.burning,wet:hot.smothered});art.pail(c,f.pour.x,f.pour.y,{active:hot.wetParcels>0});}}
       if(toyThermoscope){var heater=definition.thermoscope;
         c.fillText(toyThermoscope.heated?'Heater on':'Cooling',heater.x+88,heater.y-10);
-        c.strokeRect(heater.x-16,heater.y-8,32,16);
-        if(toyThermoscope.heated){c.globalAlpha=.35;c.fillStyle=accent;c.fillRect(heater.x-16,heater.y-8,32,16);c.globalAlpha=1;c.fillStyle=text;}
+        if(art)art.heater(c,{x:heater.x-16,y:heater.y-8,width:32,height:16},{heated:toyThermoscope.heated});
         if(definition.setup==='vented')c.fillText('Open vent',heater.x+104,100);
       }
-      if(toyBubbles){var hose=definition.bubbles.hose;c.beginPath();c.moveTo(hose.x,384);c.lineTo(hose.x,hose.y+4);c.stroke();c.strokeRect(hose.x-4,hose.y-4,8,8);c.fillText('Air hose',hose.x+12,hose.y+4);}
+      if(toyBubbles){var hose=definition.bubbles.hose;if(art)art.hose(c,hose.x,hose.y,{bottom:384,active:toyBubbles.stats().injecting});}
       definition.marks.forEach(function(mark){
         c.save();c.setLineDash([5,5]);c.beginPath();c.moveTo(mark.x,mark.y);c.lineTo(mark.x+mark.width,mark.y);c.stroke();c.restore();
         if(mark.id==='trigger')c.fillText('Fill line',mark.x+8,mark.y-7);
@@ -14841,7 +14939,7 @@
       });
       if(definition.boundaries){
         var b=definition.boundaries;
-        if(b.tap){c.strokeRect(b.tap.x-b.tap.width*.5,b.tap.y-3,b.tap.width,6);c.fillText('Tap',b.tap.x+14,b.tap.y);}
+        if(b.tap && art)art.tap(c,b.tap,{enabled:!toyBoundary || toyBoundary.stats().tapEnabled});
         if(b.drain){
           c.setLineDash([3,3]);c.strokeRect(b.drain.x,b.drain.y,b.drain.width,b.drain.height);
           if(b.tap){c.beginPath();c.moveTo(56,b.drain.y);c.lineTo(56,b.tap.y);c.lineTo(b.tap.x-b.tap.width*.5,b.tap.y);c.stroke();c.fillText('Powered return',64,b.tap.y-10);}
@@ -14852,8 +14950,7 @@
           c.fillText(machineState.thumbHeld ? 'Top held' : 'Top open',o.end+14,o.at+4);
         }
         if(definition.primary.kind==='cap'){
-          var cap=definition.primary,o=cap.opening;c.lineWidth=cap.closed ? 4 : 1;c.beginPath();
-          if(o.axis==='x'){c.moveTo(o.at,o.start);c.lineTo(o.at,o.end);}else{c.moveTo(o.start,o.at);c.lineTo(o.end,o.at);}c.stroke();c.lineWidth=1;
+          var cap=definition.primary,o=cap.opening;if(art)art.opening(c,o,{closed:cap.closed});
           c.fillText(cap.label+(cap.closed ? ' closed' : ' open'),o.axis==='x' ? o.at+14 : o.end+14,o.axis==='x' ? o.start-8 : o.at+4);
         }
         if(b.burstDisk){
@@ -14867,7 +14964,7 @@
       }
       definition.vessels.forEach(function(v){
         var label=v.label || (v.id==='middle' ? 'Source water' : v.id==='bottom' ? 'Receiving water' : v.id==='source' ? 'Higher tank' : v.id==='receiver' ? 'Lower tank' : v.id==='basin' ? 'Basin' : 'Cup');
-        c.fillText(label,v.rect.x+8,definition.divers?v.rect.y+80:v.rect.y-8);
+        if(!toyFire)c.fillText(label,v.rect.x+8,definition.divers?v.rect.y+80:v.rect.y-8);
       });
     }
     var labelBoxes=[],stageBounds=stage.getBoundingClientRect(),viewBounds=viewport.getBoundingClientRect();
@@ -15438,6 +15535,8 @@
       machine: constructMachine,
       machineState: function () { return machineState; },
       machinePrimary: machinePrimary,
+      machineControls: machineControlTargets,
+      activateMachineControl: activateMachineControl,
       machineThumb:machineThumb,
       nativeBoundary:function(){return toyBoundary;},
       fire:function(){return toyFire;},

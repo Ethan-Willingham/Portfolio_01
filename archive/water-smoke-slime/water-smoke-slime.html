@@ -25,7 +25,7 @@
   <link rel="preload" href="/assets/fonts/commit_mono_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/water-smoke-slime.css?v=v5.132">
-  <link rel="stylesheet" href="/water-smoke-slime-app.css?v=v5.134.1">
+  <link rel="stylesheet" href="/water-smoke-slime-app.css?v=v5.137">
 </head>
 <body class="physics-page toy-app toy-expanded">
   <section class="toy-shell is-expanded" id="toy" aria-label="Physics playground">
@@ -48,6 +48,7 @@
             <button class="toy-chip" data-scene="blank" aria-pressed="false">Empty</button>
           </div>
         </details>
+        <div class="toy-live-readout" aria-label="Simulation status"><span id="toy-fps" title="Rendered frames per second">0 FPS</span><span id="toy-status" role="status">Starting</span></div>
         <div class="toy-playback" role="group" aria-label="Playback">
           <button class="toy-chip toy-sound" id="toy-sound" aria-pressed="false" hidden>Sound off</button>
           <button class="toy-instruments-button" id="toy-instruments-open" data-panel="instruments" aria-expanded="false" aria-controls="toy-panel-instruments" hidden>Instruments</button>
@@ -63,6 +64,7 @@
           <canvas id="toy-canvas" aria-hidden="true"></canvas>
           <div id="toy-input" tabindex="0" role="group" aria-label="Interactive physics canvas" aria-describedby="toy-hint toy-keyboard-help"></div>
         </div>
+        <div class="toy-scene-actions" id="toy-scene-actions" role="group" aria-label="Apparatus controls"></div>
         <button id="toy-resume" class="toy-resume" hidden>Resume</button>
         <div class="toy-fallback" id="toy-fallback" hidden>
           <p>The playground couldn’t start. Try a browser with graphics acceleration enabled.</p>
@@ -82,22 +84,15 @@
         <button class="toy-material toy-presets-entry" id="toy-presets-open" aria-expanded="false" aria-controls="toy-panel-water"><span>Water presets</span></button>
         <button class="toy-icon toy-settings" data-panel="settings" aria-label="Settings" title="Settings" aria-expanded="false" aria-controls="toy-panel-settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h7m4 0h5M4 17h3m4 0h9"/><circle cx="13" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg></button>
       </div>
-      <div class="toy-foot" data-toy-controls>
-        <div class="toy-machine-summary" id="toy-machine-summary" hidden>
-          <button class="toy-primary" id="toy-machine-primary" type="button" disabled>Open valve</button>
-          <p id="toy-machine-caption"></p>
-        </div>
-        <div class="toy-machine-metrics" id="toy-machine-metrics" hidden><span><span id="toy-compact-head-label">Head</span> <b id="toy-compact-head">Waiting</b></span><span>Flow <b id="toy-compact-flow">Waiting</b></span><span id="toy-native-reading" hidden></span><button class="toy-chip" id="toy-air-pressure-compact" aria-pressed="true">Air pressure</button><button class="toy-chip" id="toy-machine-view" data-panel="build" aria-expanded="false" aria-controls="toy-panel-build">Zoom and pan</button></div>
-        <p class="toy-machine-diagnostics" id="toy-machine-diagnostics" hidden></p>
-        <p class="toy-pressure-legend" id="toy-pressure-legend" hidden></p>
-        <div class="toy-foot-row"><span id="toy-hint">Drop a slime into the falling water.</span><span class="toy-foot-stats"><span id="toy-fps" title="Rendered frames per second">0 FPS</span><span id="toy-status" role="status">Starting</span></span></div>
-        <p class="toy-build-notice" id="toy-build-notice" role="status" hidden></p>
-        <p class="toy-keyboard-help" id="toy-keyboard-help" hidden>Arrows move. Shift moves farther. Enter starts or finishes. Escape cancels.</p>
+      <div class="toy-accessibility toy-sr-only">
+        <span id="toy-hint">Drop a slime into the falling water.</span>
+        <p id="toy-keyboard-help">Arrows move. Shift moves farther. Enter starts or finishes. Escape cancels.</p>
       </div>
 
       <div class="toy-trays" data-toy-controls>
         <section class="toy-panel" id="toy-panel-build" aria-labelledby="toy-heading-build" hidden>
           <div class="toy-panel-head"><h2 id="toy-heading-build">Build</h2><button class="toy-icon" data-close aria-label="Close Build"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
+          <p class="toy-build-notice" id="toy-build-notice" role="status" hidden></p>
           <div class="toy-build-tools" role="group" aria-label="Build tools">
             <button class="toy-chip" data-tool="draw" data-build-tool="draw" title="Draw (1)" aria-pressed="false">Draw</button>
             <button class="toy-chip" data-tool="erase" data-build-tool="erase" title="Erase (2)" aria-pressed="false">Erase</button>
@@ -128,6 +123,12 @@
         </section>
         <section class="toy-panel" id="toy-panel-instruments" aria-labelledby="toy-heading-instruments" hidden>
           <div class="toy-panel-head"><h2 id="toy-heading-instruments">Instruments</h2><button class="toy-icon" data-close aria-label="Close instruments"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
+        <div class="toy-machine-summary" id="toy-machine-summary" hidden>
+          <p id="toy-machine-caption"></p>
+        </div>
+        <div class="toy-machine-metrics" id="toy-machine-metrics" hidden><span><span id="toy-compact-head-label">Head</span> <b id="toy-compact-head">Waiting</b></span><span>Flow <b id="toy-compact-flow">Waiting</b></span><span id="toy-native-reading" hidden></span><button class="toy-chip" id="toy-air-pressure-compact" aria-pressed="true">Air pressure</button><button class="toy-chip" id="toy-machine-view" data-panel="build" aria-expanded="false" aria-controls="toy-panel-build">Zoom and pan</button></div>
+        <p class="toy-machine-diagnostics" id="toy-machine-diagnostics" hidden></p>
+        <p class="toy-pressure-legend" id="toy-pressure-legend" hidden></p>
           <div class="toy-native-options" id="toy-native-options" hidden><label for="toy-native-setup">Compare a setup<select id="toy-native-setup"></select></label><p id="toy-native-setup-note">Choosing a setup restarts it with the same initial water. Hold starts a freshly filled straw; releasing opens its top.</p><p id="toy-native-boundaries"></p><p id="toy-native-ledger"></p></div>
           <p class="toy-panel-note" id="toy-material-slip-sources" hidden>Oil density: <a href="https://tsapps.nist.gov/publication/get_pdf.cfm?pub_id=902259">NIST hexadecane data at 68 degrees Fahrenheit</a>. Separate material momentum: <a href="https://math.ucdavis.edu/~jteran/papers/PGKFTJM17.pdf">Tampubolon and colleagues</a>. The simulation uses a reduced version of their model.</p>
           <p class="toy-panel-note" id="toy-machine-scale"></p>
@@ -228,8 +229,9 @@
   <script src="/js/water-machines-instruments.js?v=v5.41"></script>
   <script src="/js/water-machines-pressure-view.js?v=v5.57"></script>
   <script src="/js/wss-machine-registry.js?v=v5.136"></script>
-  <script src="/js/water-smoke-slime.js?v=v5.136"></script>
-  <script src="/js/water-smoke-slime-ui.js?v=v5.134"></script>
+  <script src="/js/wss-apparatus-art.js?v=v5.137"></script>
+  <script src="/js/water-smoke-slime.js?v=v5.137"></script>
+  <script src="/js/water-smoke-slime-ui.js?v=v5.137"></script>
   <script src="/js/smoke-presets-ui.js?v=4"></script>
 </body>
 </html>

@@ -46,7 +46,6 @@
     var glassWalls = true;
     var slowMotion = false;
     var valveSignature = null;
-    var phoneLayout = window.matchMedia('(max-width: 520px)');
     var handsNote=null;
     if(toy.buildState && toy.buildState().handsLab){
       var punch=document.createElement('button');punch.className='toy-chip';punch.dataset.buildTool='punch';
@@ -56,13 +55,9 @@
       document.querySelector('#toy-panel-build .toy-build-tools').after(handsNote);
     }
     var playback = shell.querySelector('.toy-playback');
-    function placePlayback() {
-      shell.querySelector(phoneLayout.matches ? '.toy-foot' : '.toy-top').appendChild(playback);
-      toy.resize();
-    }
-    // Leave the entire scene visible on phones, including the upper inlets.
-    phoneLayout.addEventListener('change', placePlayback);
-    placePlayback();
+    var actionLayer = document.getElementById('toy-scene-actions');
+    var actionButtons = new Map();
+    var activeThumbButton = null;
     var sceneHints = {
       falls: 'Drop a slime into the falling water.',
       zerog: 'Pull a slime through the floating water.',
@@ -75,7 +70,7 @@
       heron: 'Open the valve to start. Compare the jars in Instruments.',
       'self-flushing-cup':'Watch the fill line. Instruments has the tap-off and vented comparisons.',
       tantalus:'Watch the fixed mouth line while the cup fills and drains.',
-      'thumb-straw':'Hold the button to seal a freshly filled straw. Release to open its top.'
+      'thumb-straw':'Hold the straw’s top to seal it. Release to open it.'
     };
     var hints = {
       poke: 'Grab near a slime’s edge to stretch it. Drag empty space to stir.',
@@ -126,7 +121,7 @@
       if(shell.classList.contains('has-rail')!==rail || shell.style.getPropertyValue('--toy-rail-right')!==railRight){
         shell.classList.toggle('has-rail',rail);shell.style.setProperty('--toy-rail-right',railRight);toy.resize();
       }
-      var height = Math.ceil((position==='absolute' || position==='fixed' ? 0 : dock.getBoundingClientRect().height) + shell.querySelector('.toy-foot').getBoundingClientRect().height);
+      var height = Math.ceil((position==='absolute' || position==='fixed' ? 0 : dock.getBoundingClientRect().height));
       shell.style.setProperty('--toy-top-height',shell.querySelector('.toy-top').getBoundingClientRect().height+'px');
       var value = height + 'px';
       if (shell.style.getPropertyValue('--toy-controls-height') !== value) {
@@ -295,39 +290,78 @@
       sync();
       if(shared)document.getElementById('toy-share-wrap').scrollIntoView({block:'nearest',inline:'nearest',behavior:'instant'});
     });
-    document.getElementById('toy-machine-primary').addEventListener('click', function () {
-      if(toy.stats().scene==='thumb-straw')return;
-      try { toy.machinePrimary(); }
-      catch (error) { notice = error.message; }
-      updateMeasurements();
-    });
-    var primaryButton=document.getElementById('toy-machine-primary');
     function releaseThumb(){
       var holding=thumbKeyboard || thumbPointer!==null;
       thumbKeyboard=false;thumbPointer=null;
       if(holding && toy.machineThumb)toy.machineThumb(false);
-      primaryButton.setAttribute('aria-pressed','false');
+      if(activeThumbButton)activeThumbButton.setAttribute('aria-pressed','false');
+      activeThumbButton=null;
     }
-    function holdThumb(){
-      primaryButton.setAttribute('aria-pressed','true');
-      toy.machineThumb(true).catch(function(error){notice=error.message;releaseThumb();});
+    function holdThumb(button){
+      activeThumbButton=button;button.setAttribute('aria-pressed','true');
+      Promise.resolve(toy.activateMachineControl(button.dataset.control,true)).catch(function(error){notice=error.message;releaseThumb();});
     }
-    primaryButton.addEventListener('pointerdown',function(event){
-      if(toy.stats().scene!=='thumb-straw' || primaryButton.disabled || event.button!==0)return;
-      event.preventDefault();thumbPointer=event.pointerId;
-      primaryButton.setPointerCapture(event.pointerId);holdThumb();
-    });
-    primaryButton.addEventListener('pointerup',releaseThumb);
-    primaryButton.addEventListener('pointercancel',releaseThumb);
-    primaryButton.addEventListener('lostpointercapture',releaseThumb);
-    primaryButton.addEventListener('keydown',function(event){
-      if(toy.stats().scene!=='thumb-straw' || ![' ','Enter'].includes(event.key))return;
-      event.preventDefault();if(!event.repeat && !thumbKeyboard){thumbKeyboard=true;holdThumb();}
-    });
-    primaryButton.addEventListener('keyup',function(event){if([' ','Enter'].includes(event.key))releaseThumb();});
-    primaryButton.addEventListener('blur',releaseThumb);
+    function activateControl(button){
+      try {
+        Promise.resolve(toy.activateMachineControl(button.dataset.control)).then(updateMeasurements).catch(function(error){notice=error.message;updateMeasurements();});
+      } catch(error){notice=error.message;updateMeasurements();}
+    }
+    function createActionButton(control){
+      var button=document.createElement('button');
+      button.type='button';button.className='toy-scene-action';button.dataset.control=control.id;
+      var label=document.createElement('span');label.className='toy-scene-action-label';button.appendChild(label);
+      button.addEventListener('click',function(){if(button.dataset.hold!=='true')activateControl(button);});
+      button.addEventListener('blur',releaseThumb);
+      button.addEventListener('pointerdown',function(event){
+        if(button.dataset.hold!=='true' || button.disabled || event.button!==0)return;
+        event.preventDefault();thumbPointer=event.pointerId;button.setPointerCapture(event.pointerId);holdThumb(button);
+      });
+      ['pointerup','pointercancel','lostpointercapture'].forEach(function(name){button.addEventListener(name,releaseThumb);});
+      button.addEventListener('keydown',function(event){
+        if(button.dataset.hold!=='true' || ![' ','Enter'].includes(event.key))return;
+        event.preventDefault();if(!event.repeat && !thumbKeyboard){thumbKeyboard=true;holdThumb(button);}
+      });
+      button.addEventListener('keyup',function(event){if(button.dataset.hold==='true' && [' ','Enter'].includes(event.key)){event.preventDefault();releaseThumb();}});
+      actionLayer.appendChild(button);return button;
+    }
+    function syncMachineControls(){
+      if(!toy.machineControls || !actionLayer)return;
+      var state=toy.stats();
+      // Holding refills the straw asynchronously. Keep its captured target
+      // alive until construction finishes or the user releases it.
+      if(activeThumbButton && state.loading)return;
+      var controls=toy.machineControls();
+      var viewport=document.getElementById('toy-viewport'),view=viewport.getBoundingClientRect(),stage=document.getElementById('toy-stage').getBoundingClientRect(),scale=toy.camera().scale;
+      var liveKeys=new Set();
+      controls.forEach(function(control){
+        var key=state.scene+':'+control.id;liveKeys.add(key);
+        var button=actionButtons.get(key);
+        if(!button){button=createActionButton(control);actionButtons.set(key,button);}
+        var width=Math.max(44,control.width*scale),height=Math.max(44,control.height*scale);
+        var centerX=stage.left-view.left+control.x*scale,centerY=stage.top-view.top+control.y*scale;
+        var topHeight=shell.querySelector('.toy-top').getBoundingClientRect().bottom-view.top;
+        button.hidden=control.disabled || state.tool!=='poke' || centerX<0 || centerX>view.width || centerY<topHeight || centerY>view.height;
+        var left=Math.max(0,Math.min(view.width-width,centerX-width*.5));
+        var top=Math.max(topHeight,Math.min(view.height-height,centerY-height*.5));
+        button.style.left=left+'px';button.style.top=top+'px';button.style.width=width+'px';button.style.height=height+'px';
+        button.classList.toggle('is-body-action',control.pointerMode==='tap-body');
+        button.dataset.hold=String(control.kind==='thumb');
+        button.disabled=!!control.disabled;
+        button.setAttribute('aria-label',control.label);
+        var label=button.firstElementChild;if(label.textContent!==control.label)label.textContent=control.label;
+        var labelWidth=label.offsetWidth,labelHeight=label.offsetHeight,labelCenter=left+width*.5;
+        var fittedCenter=Math.max(8+labelWidth*.5,Math.min(view.width-8-labelWidth*.5,labelCenter));
+        button.style.setProperty('--action-label-shift',(fittedCenter-labelCenter)+'px');
+        button.classList.toggle('is-label-above',top+height+4+labelHeight>view.height-8);
+        if(control.kind==='thumb')button.setAttribute('aria-pressed',String(thumbPointer!==null || thumbKeyboard || !!(toy.machineState() && toy.machineState().thumbHeld)));
+        else button.removeAttribute('aria-pressed');
+      });
+      actionButtons.forEach(function(button,key){if(!liveKeys.has(key)){if(activeThumbButton===button)releaseThumb();button.remove();actionButtons.delete(key);}});
+    }
     window.addEventListener('blur',releaseThumb);
     document.addEventListener('visibilitychange',function(){if(document.hidden)releaseThumb();});
+    document.getElementById('toy-pause').addEventListener('click',releaseThumb);
+    window.addEventListener('resize',syncMachineControls);
     document.getElementById('toy-native-setup').addEventListener('change',async function(){
       var scene=toy.stats().scene,value=this.value;this.disabled=true;releaseThumb();
       try{await toy.machine(scene,nativeSetupOptions(value));}
@@ -437,10 +471,10 @@
       document.getElementById('toy-machine-material-notice').hidden = !air.enabled;
       document.getElementById('toy-machine-summary').hidden = !machine;
       document.getElementById('toy-machine-metrics').hidden = !machine || fire || cannon || balloon || slip;
-      if(fire)text('toy-hint','Pour from the spout, or use Water to splash the source.');
+      if(fire)text('toy-hint','Click the water jug or the hearth to pour. You can also splash it with Water.');
       if(birds && state.tool==='poke')text('toy-hint','Grab the pipe’s top and slide it up for a lower note, down for a higher one.');
       if(cannon)text('toy-hint',wind?'Grab the slime. Stop the fan to compare its wake.':'Tap the back. Drag the slime back into the swirl.');
-      if(balloon)text('toy-hint','Grab the skin and fling it. Pop releases the water.');
+      if(balloon)text('toy-hint','Drag the skin to fling it. Click it to pop and release the water.');
       if(state.scene==='air-hose')text('toy-hint','Stop the declared air source and watch the remaining gas.');
       if(divers)text('toy-hint','Squeeze and release. Grab a diver to move it.');
       if(slip)text('toy-hint','Stir once. Compare the same jar with matched material densities in Instruments.');
@@ -459,10 +493,6 @@
       if (!contextual && openPanel && openPanel.id === 'toy-panel-instruments') closePanel(false);
       if (machine) {
         text('toy-machine-caption', sample.caption || (liveMachine && liveMachine.definition.caption) || 'The apparatus is being assembled. Measurements will appear when it is ready.');
-        text('toy-machine-primary',birds ? toy.soundStats().enabled ? 'Mute sound' : 'Turn on sound' : (liveMachine && liveMachine.definition.action) || sample.action || 'Starting');
-        var ready = liveMachine ? liveMachine.ready : sample.ready;
-        var holdingThumb=state.scene==='thumb-straw' && (thumbPointer!==null || thumbKeyboard);
-        document.getElementById('toy-machine-primary').disabled = (!ready && !holdingThumb) || !!fatal || ((state.scene === 'cup' || balloon) && liveMachine && liveMachine.primaryUsed);
       }
       text('toy-compact-head-label',divers ? 'Under 1' : state.scene==='thumb-straw' || thermal || steam ? 'Air' : state.scene==='tantalus' ? 'Water to mouth' : 'Head');
       text('toy-compact-head', number(state.scene==='thumb-straw' || thermal || steam || divers ? sample.gasPressurePsi : state.scene==='tantalus' ? sample.mouthDistanceInches : sample.headInches, state.scene==='thumb-straw' || thermal || steam || divers ? 'psi' : 'in'));
@@ -492,7 +522,7 @@
       var soundButton=document.getElementById('toy-sound'),sound=toy.soundStats ? toy.soundStats() : {enabled:false};
       soundButton.hidden=slip || birds || divers || balloon || bubbles || !native && !fire;pressed(soundButton,!!sound.enabled);soundButton.textContent=sound.enabled ? 'Sound on' : 'Sound off';
       soundButton.title=birds?'Airflow powers the tone. Grab the pipe top to change its estimated mode.':steam?'A pipe-mode whistle powered by escaping gas. Enable sound with this button.':fire?'A synthesized hiss from water cooling the source. Enable sound with this button.':'Synthesized water impacts. Enable sound with this button.';
-      if(state.scene==='thumb-straw'){primaryButton.setAttribute('aria-pressed',String(thumbPointer!==null || thumbKeyboard || !!(liveMachine && liveMachine.thumbHeld)));}else primaryButton.removeAttribute('aria-pressed');
+      syncMachineControls();
       text('toy-compact-flow', number(sample.flowCubicInchesPerSecond, 'in³/s'));
       document.getElementById('toy-compact-flow').parentElement.hidden=divers || steam || bubbles;
       document.getElementById('toy-machine-metrics').classList.toggle('is-stale', stale);
@@ -622,6 +652,7 @@
     }
 
     function pause(value) {
+      if(value)releaseThumb();
       toy.pause(value);
       sync();
     }
@@ -736,7 +767,7 @@
       if (status.textContent !== label) sync();
     });
     readout.observe(document.getElementById('toy-readout'), { childList: true });
-    if (typeof ResizeObserver !== 'undefined') new ResizeObserver(function () { controlsHeight(); toy.resize(); fitPanel(); }).observe(shell);
+    if (typeof ResizeObserver !== 'undefined') new ResizeObserver(function () { controlsHeight(); toy.resize(); fitPanel(); syncMachineControls(); }).observe(shell);
     window.addEventListener('resize', fitPanel);
     window.addEventListener('scroll', fitPanel, { passive: true });
     // Reading the existing sample never requests another GPU snapshot.
