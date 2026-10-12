@@ -329,6 +329,7 @@ body.toy-app ::selection { background: var(--selection-bg); color: var(--selecti
   background: transparent; opacity: 1;
 }
 .toy-app .toy-shell .toy-scene-action.is-field-action { border-radius: 0; }
+.toy-app .toy-shell .toy-scene-action.is-field-action:hover:not(:focus-visible) { outline: 0; }
 .toy-scene-action.is-field-action .toy-scene-action-label {
   border: 0; background: transparent; padding: 4px 0; opacity: 1;
   color: var(--text-dim); font-family: var(--font-mono); pointer-events: auto;
