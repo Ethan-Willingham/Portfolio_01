@@ -62,9 +62,8 @@
       // Seed only the pipe's interior below its waterline. A rectangular fill
       // also placed water in the open space above the inner wall of the bend.
       d.initial=dry?[]:[{kind:'pipe',points:d.pipes[0].points,bore:48,exclude:[{kind:'rect',rect:rect(0,0,720,236)}]}];
-      q.fan={x:144,top:168,bottom:200,spacing:8,acceleration:2800};
+      q.fan={x:144,top:168,bottom:200,spacing:8,acceleration:2800,enabled:options.fanOff!==true};
       q.tracers=[{x:152,y:176},{x:152,y:184},{x:152,y:192}];q.labels=[{x:88,y:144,text:'Sewer gas'},{x:464,y:144,text:'Into the room'},{x:296,y:364,text:dry?'Empty bend':'Water seal'}];
-      q.labels.push({x:344,y:108,text:dry?'Dry trap: smoke passes into the room':'Water stops the smoke at the bend',align:'center'});
       q.probes=[{id:'sewer',x:208,y:184},{id:'above-water',x:256,y:252},{id:'bend',x:344,y:304},{id:'room-outlet',x:560,y:184},{id:'room-plume',x:640,y:184}];
       q.regions=[{id:'room',rect:rect(616,120,88,160)}];
       d.boundaryNote='The pale smoke traces air pushed in from the left. Water in the bend blocks its path. Dry out trap removes the water; Refill trap restores the seal. Each switch starts a fresh comparison.';
@@ -93,8 +92,11 @@
     function prepare(dt){
       if(!(dt>0))return;clock+=dt;
       if(q.fan){var scale=fluid.config.SIM_RESOLUTION/world.h;
-        for(var y=q.fan.top;y<=q.fan.bottom;y+=q.fan.spacing){tracer(q.fan.x+8,y,dt*(trap?8:2));fluid.splatVelocity(q.fan.x/world.w,1-y/world.h,q.fan.acceleration*dt*scale,0,trap?.10:.035);}
-        fanImpulse+=q.fan.acceleration*dt;
+        for(var y=q.fan.top;y<=q.fan.bottom;y+=q.fan.spacing){
+          tracer(q.fan.x+8,y,dt*(trap?8:2));
+          if(q.fan.enabled!==false)fluid.splatVelocity(q.fan.x/world.w,1-y/world.h,q.fan.acceleration*dt*scale,0,trap?.10:.035);
+        }
+        if(q.fan.enabled!==false)fanImpulse+=q.fan.acceleration*dt;
       }
     }
     function ventilation(){
@@ -106,7 +108,7 @@
       return total?clear/total:0;
     }
     function stats(sample){
-      var report={kind:q.kind,seconds:clock,status:definition.status,blocker:definition.blocker,fanImpulse:fanImpulse,inletOpenFraction:q.kind==='chimney-draw'?ventilation():null,probes:[],regions:[],error:null};
+      var report={kind:q.kind,seconds:clock,status:definition.status,blocker:definition.blocker,fanEnabled:!!(q.fan && q.fan.enabled!==false),fanImpulse:fanImpulse,inletOpenFraction:q.kind==='chimney-draw'?ventilation():null,probes:[],regions:[],error:null};
       if(!sample)return report;var field=fluid.sampleFlow(world.w,world.h);if(!field){report.error='Current smoke flow sample is unavailable.';return report;}
       for(var i=0;i<field.values.length;i++)if(!Number.isFinite(field.values[i])){report.error='Smoke flow contains a non-finite value.';return report;}
       q.probes.forEach(function(p){var col=Math.max(0,Math.min(field.width-1,Math.floor(p.x/world.w*field.width))),row=Math.max(0,Math.min(field.height-1,Math.floor((1-p.y/world.h)*field.height))),at=(row*field.width+col)*4;
@@ -121,8 +123,20 @@
         report.regions.push({id:region.id,maxDye:peak,meanDye:count?sum/count:0});
       });return report;
     }
-    return {prepare:prepare,stats:stats,ventilation:ventilation,draw:function(c){c.save();q.labels.forEach(function(label){c.textAlign=label.align || 'left';c.fillText(label.text,label.x,label.y);});
-      if(trap){c.beginPath();c.moveTo(80,184);c.lineTo(104,184);c.moveTo(98,178);c.lineTo(104,184);c.lineTo(98,190);c.stroke();}
+    return {prepare:prepare,stats:stats,ventilation:ventilation,
+      toggleFan:function(){if(!trap)return false;q.fan.enabled=!q.fan.enabled;return true;},
+      draw:function(c){c.save();q.labels.forEach(function(label){c.textAlign=label.align || 'left';c.fillText(label.text,label.x,label.y);});
+      if(trap){
+        var unit=parseFloat(c.font)/12;c.textAlign='center';
+        c.fillText(q.fan.enabled?'Fan drives air; smoke follows.':'Fan off: no new push.',344,108);
+        c.fillText(definition.setup==='dry'?'Dry bend: smoke can pass.':'Wet bend blocks smoke.',344,108+18*unit);
+        // The fan symbol identifies the declared force source. Its drawing
+        // supplies no velocity; prepare() is the only fan momentum source.
+        c.save();c.translate(80,184);c.lineWidth=unit;c.beginPath();c.arc(0,0,12*unit,0,Math.PI*2);c.stroke();
+        c.rotate(q.fan.enabled?clock*4:0);
+        for(var blade=0;blade<3;blade++){c.rotate(Math.PI*2/3);c.beginPath();c.moveTo(0,0);c.quadraticCurveTo(10*unit,-8*unit,9*unit,0);c.stroke();}
+        c.restore();
+      }
       c.restore();},
       destroy:function(){var resized=fluid.config.SIM_RESOLUTION!==saved.SIM_RESOLUTION;
         Object.keys(saved).forEach(function(k){fluid.config[k]=saved[k];});fluid.setPhysics(savedPhysics,0);

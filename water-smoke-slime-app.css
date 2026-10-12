@@ -328,6 +328,9 @@ body.toy-app ::selection { background: var(--selection-bg); color: var(--selecti
   position: static; display: block; width: auto; transform: none; padding: 0 10px; border: 0;
   background: transparent; opacity: 1;
 }
+.toy-scene-action.is-fan-action .toy-scene-action-label { opacity: 1; }
+.toy-app #toy-trap-physics h3 { margin: 18px 0 8px; font: 600 14px/1.4 var(--font-body); color: var(--text); }
+.toy-app #toy-trap-physics .toy-panel-note { color: var(--text-dim); }
 .toy-app .toy-live-readout { display: flex; align-items: center; gap: 10px; margin-left: 8px; font: 11px/1.3 var(--font-mono); white-space: nowrap; }
 .toy-app .toy-live-readout #toy-status { gap: 5px; }
 .toy-app .toy-shell .toy-machine-summary { flex-direction: column; align-items: flex-start; gap: 0; margin: 0 0 14px; }

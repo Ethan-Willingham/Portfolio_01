@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.159'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.160'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -14803,7 +14803,7 @@
       machineBuilder.begin('Move draft opening');machineBuilder.vent(gate.rect,gate.opened);machineBuilder.commit();
       definition.action=gate.opened?gate.openLabel:gate.closedLabel;machineOverlayCache=null;bakeWalls();return true;
     }
-    if(primary.kind==='draft-trap-setup')return constructMachine(definition.name,{dry:!primary.dry,seed:machineState.seed});
+    if(primary.kind==='draft-trap-setup')return constructMachine(definition.name,{dry:!primary.dry,fanOff:definition.draftFireSmoke.fan.enabled===false,seed:machineState.seed});
     if(primary.kind==='material-jolt' && toyMaterialSlip){
       var direction=definition.primary.direction || 1;definition.primary.direction=-direction;
       machineState.lastMaterialImpulse=toyMaterialSlip.jolt(direction*(primary.speed===undefined?80:primary.speed));return true;
@@ -14918,7 +14918,11 @@
     else if(kind==='wave-motor' && d.wave)target(d.wave.rect.x+d.wave.rect.width*.5,d.wave.rect.y+12,d.wave.rect.width,24);
     else if(kind==='draft-motor')body(0);
     else if(kind==='draft-wall-toggle' && d.draftFireSmoke)atRect(d.draftFireSmoke.gate.rect);
-    else if(kind==='draft-trap-setup')target(344,64,128,32,'primary','button');
+    else if(kind==='draft-trap-setup'){
+      target(344,64,128,32,'primary','button');
+      label=d.draftFireSmoke.fan.enabled?'Stop fan':'Start fan';
+      target(80,184,36,36,'trap-fan','fan');
+    }
     else if(kind==='pour')target(p.target.x,p.target.y,44,44);
     else if(kind==='draft-primary' && d.releaseCap)opening(d.releaseCap);
     else if(kind==='creature-gates' && d.parts && d.parts.length)atRect(d.parts[0].rect);
@@ -14929,6 +14933,7 @@
     if(held===false)return releaseMachineControl();
     var control=machineControlTargets().find(function(item){return item.id===id;});
     if(!control || control.disabled)return false;
+    if(id==='trap-fan' && toyFireSmokeDraft){var changed=toyFireSmokeDraft.toggleFan();machineOverlayCache=null;drawMachineOverlay();return changed;}
     if(control.kind==='thumb')return machineThumb(held!==false);
     if(control.kind==='fire-pour' || control.kind==='pour')return machinePour(held===true);
     return machinePrimary();

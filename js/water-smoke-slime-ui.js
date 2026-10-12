@@ -127,6 +127,7 @@
     function nativeSetupOptions(value) {
       var current=toy.machineState(),choices=current && current.definition.setups;
       var choice=choices && choices.find(function(item){return item.id===value;});
+      if(current && current.definition.name==='sewer-gas-trap' && choice)return Object.assign({},choice.options,{fanOff:current.definition.draftFireSmoke.fan.enabled===false});
       return choice ? Object.assign({},choice.options) : {vented:value==='vented',tapEnabled:value!=='tap-off',secondHole:value==='second-hole'};
     }
     var nativeSetupScene=null,controlPointer=null,controlKeyboard=false;
@@ -372,7 +373,7 @@
         var key=state.scene+':'+control.id;liveKeys.add(key);
         var button=actionButtons.get(key);
         if(!button){button=createActionButton(control);actionButtons.set(key,button);}
-        var width=Math.max(44,control.width*scale),height=Math.max(44,control.height*scale);
+        var width=Math.max(control.pointerMode==='button'?140:44,control.width*scale),height=Math.max(44,control.height*scale);
         var centerX=stage.left-view.left+control.x*scale,centerY=stage.top-view.top+control.y*scale;
         var topHeight=shell.querySelector('.toy-top').getBoundingClientRect().bottom-view.top;
         button.hidden=control.disabled || state.tool!=='poke' || centerX<0 || centerX>view.width || centerY<topHeight || centerY>view.height;
@@ -381,6 +382,7 @@
         button.style.left=left+'px';button.style.top=top+'px';button.style.width=width+'px';button.style.height=height+'px';
         button.classList.toggle('is-body-action',control.pointerMode==='tap-body');
         button.classList.toggle('is-button-action',control.pointerMode==='button');
+        button.classList.toggle('is-fan-action',control.pointerMode==='fan');
         var heldControl=/^(thumb|fire-pour|pour)$/.test(control.kind);
         button.dataset.hold=String(heldControl);
         button.disabled=!!control.disabled;
@@ -485,6 +487,7 @@
       var caveView=syncCaveIndicator(caveReading,state);
       var fire=!!(liveMachine && liveMachine.definition.fire);
       var trap=state.scene==='sewer-gas-trap';
+      document.getElementById('toy-trap-physics').hidden=!trap;
       var candle=fire && !!liveMachine.definition.fire.air;
       var slip=!!(liveMachine && liveMachine.definition.materialSlip),sluice=!!(liveMachine && liveMachine.definition.sluice);
       var steam=!!(liveMachine && liveMachine.definition.steam);
@@ -510,13 +513,19 @@
       if(balloon){pressureLabel=state.paused?'Paused':'Live';pressureMessage='Drag, fling and pop. Instruments explains the elastic skin.';}
       if(slip){pressureLabel=state.paused?'Paused':state.scene==='material-oil-jar'||sluice?'Live':'Prototype';pressureMessage='Instruments has the matched-density comparison and model limits.';}
       if(steam){pressureLabel=state.paused?'Paused':'Diagnostic';pressureMessage=birds?'Grab the pipe’s top to change its note. Instruments has the comparisons and acoustic limits.':'The white plume traces escaping vapor. Instruments explains the thermal model.';}
-      if(trap){pressureLabel=state.paused?'Paused':liveMachine && liveMachine.definition.setup==='dry'?'Trap dry':'Water seal';pressureMessage=liveMachine && liveMachine.definition.caption || 'Starting the smoke comparison.';text('toy-hint',pressureMessage);}
-      document.getElementById('toy-machine-diagnostics').hidden=!contextual || fire || balloon || thirsty;
+      if(trap){
+        var trapFan=liveMachine && liveMachine.definition.draftFireSmoke.fan.enabled;
+        pressureLabel=state.paused?'Paused':liveMachine && liveMachine.definition.setup==='dry'?'Trap dry':'Water seal';
+        if(!trapFan && !state.paused)pressureLabel+=', fan off';
+        pressureMessage=(trapFan?'A simulated fan pushes air from the left. Smoke follows that air. ':'The fan is off. Moving air keeps coasting; the smoke source stays on. ')+(liveMachine && liveMachine.definition.caption || 'Starting the comparison.');
+        text('toy-hint',pressureMessage);
+      }
+      document.getElementById('toy-machine-diagnostics').hidden=!contextual || fire || balloon || thirsty || trap;
       text('toy-machine-diagnostics',contextual ? pressureMessage : '');
       if(contextual)text('toy-status',state.loading ? 'Starting machine' : fire ? state.paused?'Paused':'Live' : pressureLabel || (state.paused ? 'Paused' : 'Live'));
-      document.getElementById('toy-machine-scale').hidden=thirsty;
+      document.getElementById('toy-machine-scale').hidden=thirsty || trap;
       document.getElementById('toy-machine-material-notice').hidden = !air.enabled;
-      document.getElementById('toy-machine-summary').hidden = !machine;
+      document.getElementById('toy-machine-summary').hidden = !machine || trap;
       document.getElementById('toy-machine-metrics').hidden = !machine || fire || cannon || balloon || slip || cave || trap || thirsty;
       if(fire)text('toy-hint',liveMachine.definition.sauna ? 'Click the water source or the stones to make steam. Let the room cool between pours.' : candle?'Lift the lid before the flame goes out. Reset lights a fresh candle.':'Click the upper water source or the fire to pour. You can also splash it with Water.');
       if(thirsty)text('toy-hint',pressureMessage);
@@ -539,6 +548,9 @@
       document.getElementById('toy-heron-setup-note').hidden=!heron;
       if(heron && liveMachine && liveMachine.ready && !fountainSelect.disabled)fountainSelect.value=liveMachine.definition.setup || 'sealed';
       document.getElementById('toy-instruments-open').hidden = !contextual;
+      document.getElementById('toy-instruments-open').textContent=trap?'How it works':'Instruments';
+      document.getElementById('toy-heading-instruments').textContent=trap?'How it works':'Instruments';
+      document.getElementById('toy-numerical-status').hidden=trap;
       if (!contextual && openPanel && openPanel.id === 'toy-panel-instruments') closePanel(false);
       if (machine) {
         text('toy-machine-caption', sample.caption || (liveMachine && liveMachine.definition.caption) || 'The apparatus is being assembled. Measurements will appear when it is ready.');

@@ -13,6 +13,16 @@ seeded only inside the pipe below its waterline, preventing the accidental pool
 above the inner wall. The main view names the wet or dry state, with no pressure
 readings to wait for.
 
+The inlet has a visible fan and Stop fan / Start fan control. Stopping leaves
+the existing air and smoke in place, with no new fan impulse; smoke injection
+continues with zero momentum. The fan setting survives wet/dry switches. Main
+labels identify the force source and the water seal. How it works explains the
+calculated airflow, the passive smoke tracer and the missing air-to-water
+pressure response, with links to both source files. The browser regression
+compares the driven dry trap with the same fresh dry setup and its fan off:
+the latter has zero airflow and no smoke in the room. Starting its fan then
+advects that existing tracer through the pipe.
+
 This scene enables the shared smoke solver's solid pressure boundaries and an
 optional liquid barrier derived from the current native water density field.
 Advection clips its backtrace at water and walls instead of sampling through

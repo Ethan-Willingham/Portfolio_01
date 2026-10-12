@@ -72,7 +72,24 @@ const server=http.createServer((req,res)=>{
     await advance(24);sealed(await capture('desktop-wet-long'));
     await page.getByRole('button',{name:'Dry out trap',exact:true}).click();
     await page.waitForFunction(()=>__toy.machineState()?.ready&&__toy.machineState().definition.setup==='dry');
-    await advance(12);dry(await capture('desktop-dry'));
+    await advance(12);const driven=await capture('desktop-dry');dry(driven);
+    await page.getByRole('button',{name:'Stop fan',exact:true}).click();
+    const stoppedImpulse=await page.evaluate(()=>__toy.fireSmokeDraft().stats(false).fanImpulse);
+    await advance(4);const coasting=await capture('desktop-fan-stopped');
+    assert.equal(coasting.smoke.fanEnabled,false);assert.equal(coasting.smoke.fanImpulse,stoppedImpulse,'stopping adds no more fan momentum');
+    assert(coasting.smoke.seconds>driven.smoke.seconds+3,'stopping the fan does not pause or restart the air');
+    assert(coasting.smoke.regions[0].maxDye>0,'existing smoke survives the fan switch');
+    await page.getByRole('button',{name:'Start fan',exact:true}).click();
+    await advance(2);const restarted=await capture('desktop-fan-restarted');
+    assert(restarted.smoke.fanEnabled && restarted.smoke.fanImpulse>coasting.smoke.fanImpulse);
+    // Paired fresh control: only the fan drive changes. Zero-momentum smoke
+    // cannot traverse an empty trap without an airflow source.
+    await page.evaluate(()=>__toy.machine('sewer-gas-trap',{dry:true,fanOff:true}));
+    await advance(12);const still=await capture('fresh-dry-no-fan');
+    assert.equal(still.smoke.fanImpulse,0);assert.equal(still.smoke.regions[0].maxDye,0);
+    assert(still.smoke.probes.every(p=>Math.abs(p.vx)+Math.abs(p.vy)<1e-6),'smoke injection supplies no hidden velocity');
+    await page.getByRole('button',{name:'Start fan',exact:true}).click();
+    await advance(12);dry(await capture('same-dry-fan-started'));
     await page.getByRole('button',{name:'Refill trap',exact:true}).click();
     await page.waitForFunction(()=>__toy.machineState()?.ready&&__toy.machineState().definition.setup==='wet');
     await advance(8);sealed(await capture('desktop-refilled'));
@@ -103,16 +120,22 @@ const server=http.createServer((req,res)=>{
     await mobile.getByRole('button',{name:'Refill trap',exact:true}).tap();
     await mobile.waitForFunction(()=>__toy.machineState()?.ready&&__toy.machineState().definition.setup==='wet');
     await advance(8);sealed(await capture('mobile-refilled'));
-    await mobile.getByRole('button',{name:'Instruments',exact:true}).tap();
+    await mobile.getByRole('button',{name:'Stop fan',exact:true}).tap();
+    assert.equal(await mobile.evaluate(()=>__toy.fireSmokeDraft().stats(false).fanEnabled),false);
+    await mobile.getByRole('button',{name:'Start fan',exact:true}).tap();
+    assert.equal(await mobile.evaluate(()=>__toy.fireSmokeDraft().stats(false).fanEnabled),true);
+    await mobile.getByRole('button',{name:'How it works',exact:true}).tap();
     const visibleText=await mobile.locator('#toy-panel-instruments').innerText();
     assert(!visibleText.includes('Waiting') && !visibleText.includes('straw'),'instruments describe this smoke comparison');
+    assert(visibleText.includes('no preset route') && visibleText.includes('cannot push the water seal'),'explanation names both the calculation and its limit');
+    await mobile.screenshot({path:path.join(output,'mobile-physics-explanation.png')});
     // Leaving the trap restores its smoke options for other draft scenes.
     await mobile.evaluate(()=>__toy.machine('candle-in-jar'));
     await mobile.waitForFunction(()=>__toy.machineState()?.ready&&__toy.machineState().definition.name==='candle-in-jar');
     await mobile.waitForTimeout(1000);
     assert.equal(await mobile.evaluate(()=>__toy.instruments().error||null),null);
     assert.equal(await page.evaluate(()=>window.__trapGpuError||null),null);assert.deepEqual(errors,[]);
-    console.log('PASS: water blocks smoke; dry trap emits smoke into the room; desktop, touch, keyboard, pause and refill verified.');
+    console.log('PASS: wet/dry transport, fan force/coasting, a matched fan-off control, desktop, touch, keyboard, pause and explanation verified.');
   }finally{
     fs.writeFileSync(path.join(output,'measurements.json'),JSON.stringify({reports,errors},null,2));
     if(browser)await browser.close();await new Promise(resolve=>server.close(resolve));
