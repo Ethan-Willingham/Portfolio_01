@@ -59,6 +59,21 @@ and current finishes, measures separated stream components and dense pool
 coverage, and verifies exact particle-buffer and clock equality. These changes
 do not alter native transport, pressure, viscosity, boundaries or inventory.
 
+## Sand dam setup
+
+The sand dam uses one continuous trough, a broad bank of loose native grains,
+and two visible retaining lips. The lips sit below the initial waterline. The
+bank starts with about seven times the former sand inventory, water only on
+its upstream side, and a dry downstream side. Its pour target sits over the
+upstream pool. Grains may settle and spread; nothing restores their positions
+or assigns the water a route.
+
+Run `node tools/test-sand-dam.mjs` for real WebGPU desktop and landscape mobile
+settling, upstream retention, floor containment, conserved material inventories,
+and the actual pour button. An empty-bank control keeps the same retaining lips
+and initial water, checking that the lips alone let water pass. Captures and
+measurements go to `/tmp/sand-dam-review`.
+
 ## Chimney inlet
 
 The chimney inlet changes combustion in the running scene. Its clear collision

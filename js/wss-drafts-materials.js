@@ -41,11 +41,21 @@ register('air-lift-pump','Bubbles','Air-lift pump','Send bubbles up the riser to
  d.initial=[initial(rect(168,232,224,144)),initial(rect(432,240,16,96))];d.settings=pressure();d.primary={kind:'bubble-toggle'};d.action=o.inject===false?'Start the air':'Stop the air';
  d.bubbles={inject:o.inject!==false,hose:{x:440,y:320},rateArea:195,parcelArea:65,dragCoefficient:1,gravity:250};d.measure={source:source,receiver:receiver};return d;
 },['wss-bubbles']);
-register('sand-dam','Sand','Sand dam','Pour water against the loose grain barrier.','PARTLY',function(w,o){
- var d=base('sand-dam','Sand dam','Water meets a loose sand barrier; watch for seepage or washed-out grains.',w,o),source=rect(64,80,232,304),channel=rect(280,248,384,136);
- d.vessels=[box('source','Water',source),box('channel','Sand barrier',channel)];d.pipes=[{points:[{x:280,y:336},{x:320,y:336}],bore:64}];
- d.initial=[initial(rect(72,184,216,192)),initial(rect(288,336,368,40)),initial(rect(336,272,48,104))];d.materialSlip=slip();
- d.materialAt=function(x,y){return x>=336&&x<384&&y>=272?'sand':'water';};d.primary={kind:'pour',target:{x:176,y:112}};d.action='Pour more water';d.measure={source:source,receiver:channel};return d;
+register('sand-dam','Sand','Sand dam','Pour water against the broad sand bank.','PARTLY',function(w,o){
+ var d=base('sand-dam','Sand dam','Pour against a broad sand bank. Watch the wet edge and loose grains as it settles.',w,o),trough=rect(64,144,600,240);
+ // One continuous floor avoids the former overlapping vessel walls and
+ // low outlet. Short, visible retaining lips keep the loose bank together.
+ // Both lips sit below the starting waterline, leaving the sand to stop it.
+ d.vessels=[box('channel','Sand bank',trough)];d.materialSlip=slip();
+ d.solids=[rect(248,312,16,64),rect(472,312,16,64)];
+ var bank=[];
+ for(var y=168;y<376;y+=8){
+  var spread=Math.min(104,y-168),r=rect(352-spread,y,32+spread*2,8);bank.push(r);d.initial.push(initial(r));
+  if(y>=296)d.initial.push(initial(rect(72,y,Math.min(248,r.x)-72,8)));
+ }
+ d.materialAt=function(x,y){return bank.some(function(r){return x>=r.x&&x<r.x+r.width&&y>=r.y&&y<r.y+r.height;})?'sand':'water';};
+ d.primary={kind:'pour',target:{x:144,y:240}};d.action='Pour more water';
+ d.measure={source:rect(72,144,208,232),receiver:rect(536,144,120,232)};return d;
 });
 register('gold-sluice-box','Sand','Gold sluice box','Pour water through the riffled channel.','PARTLY',function(w,o){
  var d=base('gold-sluice-box','Gold sluice box','Dense grain proxies meet real riffles; sorting gold from sand is not implemented.',w,o),source=rect(64,64,160,320),channel=rect(216,240,456,144);
