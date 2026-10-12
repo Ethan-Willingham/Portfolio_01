@@ -1350,6 +1350,41 @@
     }
   },
   {
+    "id": "breathing-cave",
+    "capability": "Smoke",
+    "title": "Breathing cave",
+    "cue": "Draft. Smoke marks the cave; weather pressure is not connected yet, draft.",
+    "status": "NOT WORKING",
+    "draft": true,
+    "accepted": true,
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "pool": false,
+    "preview": "cup",
+    "scripts": [
+      "wss-drafts-pressure",
+      "wss-drafts-fire-smoke"
+    ],
+    "loaderDependencies": [
+      "wss-boundaries",
+      "wss-hands",
+      "wss-native",
+      "wss-sound",
+      "wss-drafts-pressure",
+      "wss-drafts-fire-smoke"
+    ],
+    "blocker": "Changing room pressure preserving trapped native gas is absent; the smoke is a separate passive field.",
+    "behaviorPlan": {
+      "seed": 17,
+      "seconds": 6,
+      "key": "Actual cave and mouth with zero-momentum smoke tracer. This is a progress screenshot, not breathing.",
+      "action": "Use existing machinePrimary once after a short observation. Steam toggles the actual heater; cave and ram use real manual valves; Venturi/trompe/water-hammer/Torricelli use physical caps. Clock primary pours real water, skip for closed inventory check.",
+      "statusIfObserved": "PARTLY"
+    }
+  },
+  {
     "id": "fountain-rider",
     "capability": "Water slimes",
     "title": "Fountain rider",
@@ -1418,6 +1453,410 @@
     "scripts": [
       "wss-drafts-bodies",
       "wss-drafts-creatures"
+    ]
+  },
+  {
+    "id": "jellyfish",
+    "capability": "Water slimes",
+    "title": "Jellyfish",
+    "status": "PARTLY",
+    "pool": false,
+    "cue": "Draft. Squeeze the submerged skin by hand; swimming is unproved.",
+    "draft": true,
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "blocker": "Both native water birth sides and a balanced hand squeeze are connected; swimming is unproved.",
+    "dependencies": [
+      "wss-water-balloons",
+      "wss-machines/water-balloons",
+      "wss-drafts-bodies",
+      "wss-drafts-creatures"
+    ],
+    "behaviorPlan": {
+      "seconds": 6,
+      "actionAtSeconds": 2,
+      "action": "machinePrimary gives gel nodes a balanced inward hand impulse",
+      "key": "Native water remains on original sides, skin deforms and contact reaction stays finite. Swimming remains unproved.",
+      "probes": [
+        "balloon stats",
+        "native parcel count",
+        "body position"
+      ],
+      "statusIfObserved": "PARTLY"
+    },
+    "accepted": true,
+    "preview": "cup",
+    "scripts": [
+      "wss-water-balloons",
+      "wss-machines/water-balloons",
+      "wss-drafts-bodies",
+      "wss-drafts-creatures"
+    ]
+  },
+  {
+    "id": "soft-robot-gripper",
+    "capability": "Water slimes",
+    "title": "Soft robot gripper",
+    "status": "NOT WORKING",
+    "pool": false,
+    "cue": "Draft. Grab the elastic cup around the block; air actuation is not connected.",
+    "draft": true,
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "blocker": "Real elastic cup and rigid payload only; pressurized channel actuation is absent.",
+    "dependencies": [
+      "wss-drafts-bodies",
+      "wss-drafts-creatures"
+    ],
+    "behaviorPlan": {
+      "seconds": 4,
+      "action": "Use actual Grab on the elastic cup",
+      "key": "Cup and rigid payload remain finite; pneumatic grasp is absent.",
+      "statusIfObserved": "NOT WORKING"
+    },
+    "accepted": true,
+    "preview": "cup",
+    "scripts": [
+      "wss-drafts-bodies",
+      "wss-drafts-creatures"
+    ]
+  },
+  {
+    "id": "suction-cup",
+    "capability": "Water slimes",
+    "title": "Suction cup",
+    "status": "NOT WORKING",
+    "pool": false,
+    "cue": "Draft. Press the elastic cup against the shelf; vacuum adhesion is not connected.",
+    "draft": true,
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "blocker": "Cup deformation and terrain contact only; sealed cavity and vacuum adhesion are absent.",
+    "dependencies": [
+      "wss-drafts-bodies",
+      "wss-drafts-creatures"
+    ],
+    "behaviorPlan": {
+      "seconds": 4,
+      "action": "Use actual Grab to press cup toward shelf",
+      "key": "Ordinary terrain contact remains finite; vacuum adhesion is absent.",
+      "statusIfObserved": "NOT WORKING"
+    },
+    "accepted": true,
+    "preview": "cup",
+    "scripts": [
+      "wss-drafts-bodies",
+      "wss-drafts-creatures"
+    ]
+  },
+  {
+    "id": "water-rocket",
+    "capability": "Water slimes",
+    "title": "Water rocket",
+    "status": "NOT WORKING",
+    "pool": false,
+    "cue": "Draft. A slit releases native water; compressed-air launch is not connected.",
+    "draft": true,
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "blocker": "Slit membrane releases real water; compressed gas and gas-to-water launch work are absent.",
+    "dependencies": [
+      "wss-water-balloons",
+      "wss-machines/water-balloons",
+      "wss-drafts-bodies",
+      "wss-drafts-creatures"
+    ],
+    "behaviorPlan": {
+      "seconds": 6,
+      "actionAtSeconds": 2,
+      "action": "machinePrimary applies balanced hand squeeze to open skin",
+      "key": "Real slit releases native water; no compressed gas or launch claim.",
+      "statusIfObserved": "NOT WORKING"
+    },
+    "accepted": true,
+    "preview": "cup",
+    "scripts": [
+      "wss-water-balloons",
+      "wss-machines/water-balloons",
+      "wss-drafts-bodies",
+      "wss-drafts-creatures"
+    ]
+  },
+  {
+    "id": "slime-submarine",
+    "capability": "Water slimes",
+    "title": "Slime submarine",
+    "status": "NOT WORKING",
+    "pool": false,
+    "cue": "Draft. Drop the slime into water; a carried ballast tank is not connected.",
+    "draft": true,
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "blocker": "Passive gel and native water only; carried ballast water and changing payload mass are absent.",
+    "dependencies": [
+      "wss-drafts-bodies",
+      "wss-drafts-creatures"
+    ],
+    "behaviorPlan": {
+      "seconds": 4,
+      "action": "Use actual Grab to move passive gel into the pool",
+      "key": "Ordinary body-water interaction remains finite; ballast dive is absent.",
+      "statusIfObserved": "NOT WORKING"
+    },
+    "accepted": true,
+    "preview": "cup",
+    "scripts": [
+      "wss-drafts-bodies",
+      "wss-drafts-creatures"
+    ]
+  },
+  {
+    "id": "slime-mail",
+    "capability": "Water slimes",
+    "title": "Slime mail",
+    "status": "PARTLY",
+    "pool": false,
+    "cue": "Draft. Tap the rear air chamber to push smoke toward the slime in the tube.",
+    "draft": true,
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "blocker": "Actual smoke projection pressure in a long duct is connected; mail delivery is unproved.",
+    "dependencies": [
+      "wss-smoke-cannon",
+      "wss-machines/smoke-ring-cannon",
+      "wss-drafts-creatures"
+    ],
+    "behaviorPlan": {
+      "seconds": 6,
+      "actionAtSeconds": 2,
+      "action": "machinePrimary supplies one declared rear air impulse",
+      "key": "Actual smoke and pressure meet the gel parcel within physical duct; only call WORKS if it reaches the outlet.",
+      "probes": [
+        "smoke field finite",
+        "slimeDX",
+        "projection pressure load"
+      ],
+      "statusIfObserved": "WORKS"
+    },
+    "accepted": true,
+    "preview": "cup",
+    "scripts": [
+      "wss-smoke-cannon",
+      "wss-machines/smoke-ring-cannon",
+      "wss-drafts-creatures"
+    ]
+  },
+  {
+    "id": "upside-down-tank",
+    "capability": "Bubbles",
+    "title": "Upside-down tank",
+    "cue": "Draft. Open the bottom and watch water and air exchange places.",
+    "status": "PARTLY",
+    "draft": true,
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "pool": false,
+    "dependencies": [
+      "wss-drafts-fluid-machines"
+    ],
+    "accepted": true,
+    "preview": "cup",
+    "scripts": [
+      "wss-drafts-fluid-machines"
+    ]
+  },
+  {
+    "id": "tesla-valve",
+    "capability": "Valves and logic",
+    "title": "Tesla valve",
+    "cue": "Draft. Pour into the high tank and watch the return loops.",
+    "status": "PARTLY",
+    "draft": true,
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "pool": false,
+    "dependencies": [
+      "wss-drafts-fluid-machines"
+    ],
+    "accepted": true,
+    "preview": "cup",
+    "scripts": [
+      "wss-drafts-fluid-machines"
+    ]
+  },
+  {
+    "id": "hydraulic-jump",
+    "capability": "Waves",
+    "title": "Hydraulic jump",
+    "cue": "Draft. Open the gate from the high reservoir into the shallow channel.",
+    "status": "PARTLY",
+    "draft": true,
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "pool": false,
+    "dependencies": [
+      "wss-drafts-fluid-machines"
+    ],
+    "accepted": true,
+    "preview": "cup",
+    "scripts": [
+      "wss-drafts-fluid-machines"
+    ]
+  },
+  {
+    "id": "self-watering-planter",
+    "capability": "Water slimes",
+    "title": "Self-watering planter",
+    "cue": "Draft. Pour water beside the loose substrate.",
+    "status": "NOT WORKING",
+    "draft": true,
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "pool": false,
+    "dependencies": [
+      "wss-drafts-fluid-machines",
+      "liquid-material-slip-wgpu"
+    ],
+    "accepted": true,
+    "preview": "cup",
+    "scripts": [
+      "wss-drafts-fluid-machines",
+      "liquid-material-slip-wgpu"
+    ]
+  },
+  {
+    "id": "glacial-flood",
+    "capability": "Ice",
+    "title": "Glacial flood",
+    "cue": "Draft. Grab the floating barrier stand-in at the lake outlet.",
+    "status": "NOT WORKING",
+    "draft": true,
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "pool": false,
+    "dependencies": [
+      "wss-drafts-fluid-machines",
+      "wss-drafts-bodies"
+    ],
+    "accepted": true,
+    "preview": "cup",
+    "scripts": [
+      "wss-drafts-fluid-machines",
+      "wss-drafts-bodies"
+    ]
+  },
+  {
+    "id": "cold-geyser",
+    "capability": "Bubbles",
+    "title": "Cold geyser",
+    "cue": "Draft. Release the cap over the carbonated well.",
+    "status": "PARTLY",
+    "draft": true,
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "pool": false,
+    "dependencies": [
+      "wss-drafts-fluid-machines",
+      "wss-drafts-fizz"
+    ],
+    "accepted": true,
+    "preview": "cup",
+    "scripts": [
+      "wss-drafts-fluid-machines",
+      "wss-drafts-fizz"
+    ]
+  },
+  {
+    "id": "tesla-pump",
+    "capability": "Valves and logic",
+    "title": "Tesla pump",
+    "cue": "Draft. Grab the piston and drive water toward the asymmetric loops.",
+    "status": "NOT WORKING",
+    "draft": true,
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "pool": false,
+    "dependencies": [
+      "wss-drafts-fluid-machines",
+      "wss-drafts-bodies"
+    ],
+    "accepted": true,
+    "preview": "cup",
+    "scripts": [
+      "wss-drafts-fluid-machines",
+      "wss-drafts-bodies"
+    ]
+  },
+  {
+    "id": "spray-bottle",
+    "capability": "Valves and logic",
+    "title": "Spray bottle",
+    "cue": "Draft. Press the guided piston above two actual check valves.",
+    "status": "PARTLY",
+    "draft": true,
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "pool": false,
+    "dependencies": [
+      "wss-drafts-fluid-machines",
+      "wss-drafts-bodies"
+    ],
+    "accepted": true,
+    "preview": "cup",
+    "scripts": [
+      "wss-drafts-fluid-machines",
+      "wss-drafts-bodies"
+    ]
+  },
+  {
+    "id": "suction-siphon",
+    "capability": "Valves and logic",
+    "title": "Suction-primed siphon",
+    "cue": "Draft. Grab the air-pump piston above a dry siphon.",
+    "status": "NOT WORKING",
+    "draft": true,
+    "world": {
+      "w": 720,
+      "h": 400
+    },
+    "pool": false,
+    "dependencies": [
+      "wss-drafts-fluid-machines",
+      "wss-drafts-bodies"
+    ],
+    "accepted": true,
+    "preview": "cup",
+    "scripts": [
+      "wss-drafts-fluid-machines",
+      "wss-drafts-bodies"
     ]
   }
 ];
