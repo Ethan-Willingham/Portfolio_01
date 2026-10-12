@@ -87,7 +87,7 @@ struct Grid { count:u32, w:u32, h:u32, ox:u32, oy:u32, cells:u32, dt:f32, inv:f3
 @group(0) @binding(10) var<storage,read_write> affine:array<vec4f>;
 fn n()->u32 {return u32(p.mode.w);}
 fn ring(k:u32)->vec4f {return g.data[k];}
-fn hole(k:u32)->bool {let u=g.data[${CURVE_CAPACITY}u+k].x;return p.mode.y>=0. && u>=p.mode.y/20.-.0000001 && u<(p.mode.y+1.)/20.-.0000001;}
+fn hole(k:u32)->bool {let u=g.data[${CURVE_CAPACITY}u+k].x;return (p.mode.y>=0. && u>=p.mode.y/20.-.0000001 && u<(p.mode.y+1.)/20.-.0000001) || (p.world.z>=0. && u>=p.world.z/20.-.0000001 && u<(p.world.z+1.)/20.-.0000001);}
 fn live(i:u32)->bool {return i<u32(p.step.x) && (flag[i]&128u)==0u && (flag[i]&3u)==0u;}
 fn inside(v:vec2f)->bool {
  var result=false;let count=n();var j=count-1u;
@@ -180,7 +180,7 @@ fn sweep(a:vec2f,b:vec2f,c:vec2f,d:vec2f,v:vec2f,w:vec2f)->vec2f {
   async function create(options){
     var L=options.liquid,b=options.body,device=L.device,queue=L.queue,layout=L.getGuestUniformLayout(),U=GPUBufferUsage;
     if(!L.simActive || !b || b.ringN<3)throw Error('Water balloons need native water and a closed elastic ring.');
-    var reseal=false,retired=false,enabled=true,error=null,frame=0,birthGeneration=0,slot=-1,slit=-1,latest=new Int32Array(LEDGER+24),pendingImpulse=[],lastClock=0,maxAge=0,previousControls=null,frameRing=[];
+    var secondary=-1,reseal=false,retired=false,enabled=true,error=null,frame=0,birthGeneration=0,slot=-1,slit=-1,latest=new Int32Array(LEDGER+24),pendingImpulse=[],lastClock=0,maxAge=0,previousControls=null,frameRing=[];
     function skinRing(){return options.skinRing ? options.skinRing(b) : bodyRing(b);}
     var buffers=[];
     function buffer(size,usage){var value=device.createBuffer({size:size,usage:usage});buffers.push(value);return value;}
@@ -228,7 +228,7 @@ fn sweep(a:vec2f,b:vec2f,c:vec2f,d:vec2f,v:vec2f,w:vec2f)->vec2f {
           queue.writeBuffer(shapes[q],0,shape);
         }
         previousControls=frameRing.controls ? Array.from(frameRing.controls) : null;
-        var values=new Float32Array([state.count,Math.max(0,slot),state.h,frame,enabled?1:0,slit,.002,count,options.width,options.height,state.clock,options.countCarried?1:0]);
+        var values=new Float32Array([state.count,Math.max(0,slot),state.h,frame,enabled?1:0,slit,.002,count,options.width,options.height,secondary,options.countCarried?1:0]);
         queue.writeBuffer(params,0,values);enc.clearBuffer(sums,(LEDGER+5)*4,8*4);
         queue.writeBuffer(sums,(LEDGER+16)*4,new Float32Array([state.clock,frame,L.getSimParam('TIMESCALE'),0]));
       },
@@ -264,6 +264,7 @@ fn sweep(a:vec2f,b:vec2f,c:vec2f,d:vec2f,v:vec2f,w:vec2f)->vec2f {
           b.sleeping=false;b.sleepFrames=0;
         });
       },
+      setStaticSlit:function(value){secondary=value;},
       setSlit:function(value,edge){if(!value && slit>=0)reseal=true;slit=value?edge===undefined?options.valveSlit===undefined?5:options.valveSlit:edge:-1;return slit;},
       pop:function(){if(!enabled)return false;enabled=false;b.waterBalloon=false;pendingImpulse.length=0;return true;},
       resetBirth:function(){birthGeneration++;queue.writeBuffer(tags,0,new Uint32Array(options.maxParticles*4));queue.writeBuffer(sums,0,new Int32Array(LEDGER+24));latest=new Int32Array(LEDGER+24);previousControls=null;pendingImpulse.length=0;lastClock=L.simulationClock;maxAge=0;},
@@ -274,7 +275,7 @@ fn sweep(a:vec2f,b:vec2f,c:vec2f,d:vec2f,v:vec2f,w:vec2f)->vec2f {
         contactClock:lastClock,contactFrame:new Float32Array(latest.buffer,(LEDGER+16)*4,4)[1],contactAgeSimulationSeconds:Math.max(0,L.simulationClock-lastClock),
         maxContactAgeSimulationSeconds:maxAge,curvePoints:frameRing.length,curveErrorWorldPixels:CURVE_ERROR,frame:frame,pending:reads.some(function(r){return r.busy;}),error:error};},
       draw:function(ctx,body){
-        if(options.skinPath){ctx.save();ctx.fillStyle=options.colors.skin;ctx.globalAlpha=.08;ctx.fill(options.skinPath(body,-1));ctx.globalAlpha=1;ctx.lineWidth=2;ctx.strokeStyle=options.colors.edge;ctx.lineJoin='round';ctx.lineCap='round';ctx.stroke(options.skinPath(body,slit));ctx.restore();return;}
+        if(options.skinPath){ctx.save();ctx.fillStyle=options.colors.skin;ctx.globalAlpha=.08;ctx.fill(options.skinPath(body,-1));ctx.globalAlpha=1;ctx.lineWidth=2;ctx.strokeStyle=options.colors.edge;ctx.lineJoin='round';ctx.lineCap='round';ctx.stroke(options.skinPath(body,secondary>=0?[slit,secondary]:slit));ctx.restore();return;}
         var points=bodyRing(body);ctx.save();ctx.beginPath();ctx.moveTo(points[0].x,points[0].y);
         points.slice(1).forEach(function(v){ctx.lineTo(v.x,v.y);});ctx.closePath();ctx.fillStyle=options.colors.skin;ctx.globalAlpha=.08;ctx.fill();ctx.globalAlpha=1;
         ctx.lineWidth=2;ctx.strokeStyle=options.colors.edge;

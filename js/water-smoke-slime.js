@@ -1103,12 +1103,12 @@
   }
   function toySlimeFluidPath(body,slit) {
     var g=toySlimeFluidGuest(body);if(!g)return null;
-    var m=body.surfaceSlime;if(!(slit>=0 && slit<g.pts.length/4))return m.fluidPath;
-    var controls=m.fluidControls,n=controls.length/2,from=slit*n/(g.pts.length/4),to=(slit+1)*n/(g.pts.length/4),path=new Path2D(),last=null;
+    var m=body.surfaceSlime,slits=(Array.isArray(slit)?slit:[slit]).filter(function(k){return k>=0 && k<g.pts.length/4;});if(!slits.length)return m.fluidPath;
+    var controls=m.fluidControls,n=controls.length/2,cuts=slits.map(function(k){return [k*n/(g.pts.length/4),(k+1)*n/(g.pts.length/4)];}),path=new Path2D(),last=null;
     for(var i=0;i<n;i++){
       var prev=(i+n-1)%n,next=(i+1)%n,ax=(controls[prev*2]+controls[i*2])*.5,ay=(controls[prev*2+1]+controls[i*2+1])*.5,
         bx=controls[i*2],by=controls[i*2+1],cx=(bx+controls[next*2])*.5,cy=(by+controls[next*2+1])*.5;
-      var intervals=to<=i || from>=i+1 ? [[0,1]] : [[0,Math.max(0,from-i)],[Math.min(1,to-i),1]];
+      var intervals=[[0,1]];cuts.forEach(function(cut){var from=cut[0]-i,to=cut[1]-i;intervals=intervals.flatMap(function(span){if(to<=span[0] || from>=span[1])return [span];return [[span[0],Math.max(span[0],from)],[Math.min(span[1],to),span[1]]];});});
       intervals.forEach(function(span){var lo=span[0],hi=span[1];if(hi<=lo){last=null;return;}
         var u=1-lo,v=1-hi,x=u*u*ax+2*u*lo*bx+lo*lo*cx,y=u*u*ay+2*u*lo*by+lo*lo*cy,
           ex=v*v*ax+2*v*hi*bx+hi*hi*cx,ey=v*v*ay+2*v*hi*by+hi*hi*cy;
@@ -1304,6 +1304,7 @@
   // machine request. Ordinary scenes do not allocate its GPU resources.
   function airGeometryTick() {
     if (!airModel || !airModel.enabled) return;
+    if(toyDraftRuntime && toyDraftRuntime.geometry && toyDraftRuntime.geometry(airModel))return;
     var materialGuests=!!(toyWave || toyDivers || toyFloatSlider || airModel.preserveMaterialState || machineState && machineState.definition.name==='cup');
     var boundaryGuests=materialGuests ? buildGuests() : null;
     var hasBodies=materialGuests ? !!(boundaryGuests && boundaryGuests.some(function(g){return g.pts && g.pts.length>=12;})) : !!jelloBodies.length;
@@ -14577,7 +14578,7 @@
       balloonBody.waterBalloon=true;balloonSeedRing=toySlimeFluidRing(balloonBody);
     }
     if(definition.slider){var sliderSpec=definition.slimes[0];sliderBody=spawnSlimeAt(sliderSpec.x,sliderSpec.y,sliderSpec.radius,true);if(!sliderBody)throw Error('The guided float could not be created.');}
-    if(definition.divers)definition.slimes.forEach(function(s){var b=spawnSlimeAt(s.x,s.y,s.radius,true);if(!b)throw Error('The gas diver could not be created.');diverBodies.push(b);});
+    if(definition.divers && !definition.divers.noBodies)definition.slimes.forEach(function(s){var b=spawnSlimeAt(s.x,s.y,s.radius,true);if(!b)throw Error('The gas diver could not be created.');diverBodies.push(b);});
     ensureBuilder();
     machineBuilder.begin('Construct '+definition.title);
     definition.vessels.forEach(function(v){machineBuilder.vessel(v.rect,v.sealed);});
@@ -14699,14 +14700,15 @@
       oilRGB.concat([.95]).forEach(function(v,i){liquidWGPU.setRenderParam(['OIL_R','OIL_G','OIL_B','OIL_ALPHA'][i],v);});
       model={settings:{density:1}};
     }else if(definition.membrane){
-      liquidWGPU.setPressureModel(null);airState.ready=false;airPressureColors=false;
+      if(definition.membrane.pressure)model=await enableAirModel(pressureSettings);
+      else {liquidWGPU.setPressureModel(null);airState.ready=false;}airPressureColors=false;
       fireDomainPrevious=liquidWGPU.toyNativeDomain;fireDomainActive=true;
       liquidWGPU.toyNativeDomain={minX:0,minY:0,maxX:worldW,maxY:worldH};
       var palette=getComputedStyle(document.documentElement);
       ownBalloon=await window.WSSWaterBalloons.create({liquid:liquidWGPU,body:balloonBody,slit:definition.membrane.slit,skinRing:toyBalloonCurveRing,slitRing:toySlimeFluidRing,skinPath:toySlimeFluidPath,
-        countCarried:!!definition.submarine,valveSlit:definition.membrane.valveSlit,width:worldW,height:worldH,maxParticles:LIQUID_MAX_PARTICLES,colors:{skin:palette.getPropertyValue('--d-emphasis').trim(),edge:palette.getPropertyValue('--d-emphasis').trim()}});
+        countCarried:!!(definition.submarine || definition.rocket),valveSlit:definition.membrane.valveSlit,width:worldW,height:worldH,maxParticles:LIQUID_MAX_PARTICLES,colors:{skin:palette.getPropertyValue('--d-emphasis').trim(),edge:palette.getPropertyValue('--d-emphasis').trim()}});
       if(request!==machineRequest){ownBalloon.destroy();ownBalloon=null;return null;}
-      toyBalloon=ownBalloon;liquidWGPU.setToyMembrane(ownBalloon);model={settings:{density:1}};
+      toyBalloon=ownBalloon;liquidWGPU.setToyMembrane(ownBalloon);if(!definition.membrane.pressure)model={settings:{density:1}};
     }else if(definition.fire){
       liquidWGPU.setPressureModel(null);airState.ready=false;airPressureColors=false;
       // Fire water uses the same position-based body and spray reconstruction.
@@ -14796,7 +14798,7 @@
       toySauna=ownSauna;
       SmokeFluid.setThermalStyle({glow:.18,waterCooling:3});
     }
-    if(definition.draft && window.WSSDraftRuntime)toyDraftRuntime=await window.WSSDraftRuntime.create({definition:definition,liquid:liquidWGPU,airModel:airModel,nativeBoundary:toyBoundary,membrane:toyBalloon,SmokeFluid:SmokeFluid,bodies:jelloBodies,setManualValve:setManualValve});
+    if(definition.draft && window.WSSDraftRuntime)toyDraftRuntime=await window.WSSDraftRuntime.create({definition:definition,liquid:liquidWGPU,airModel:airModel,nativeBoundary:toyBoundary,membrane:toyBalloon,divers:toyDivers,skinRing:toyBalloonCurveRing,terrain:function(x,y){return tileAt(Math.floor(y/TILE),Math.floor(x/TILE))!==null;},terrainVersion:function(){return wallsVersion;},SmokeFluid:SmokeFluid,bodies:jelloBodies,setManualValve:setManualValve});
     state.energyInitial=window.WaterMachinesInstruments.waterEnergy(Object.assign({},particleInstrumentSample(),{count:added}),
       {floor:worldH,gravity:250*gravMul*presetGravScale,density:model.settings.density || 1});
     state.energyGravity=250*gravMul*presetGravScale;
@@ -14964,8 +14966,8 @@
     }
     else if(kind==='smoke-fan' && d.fan)target(d.fan.x,(d.fan.top+d.fan.bottom)*.5,48,d.fan.bottom-d.fan.top);
     else if(kind==='tesla-motor' && d.divers){atRect({x:d.divers.piston.x-32,y:d.divers.pistonRodEndY||112,width:d.divers.piston.width+64,height:28},'primary','button');}
-    else if((kind==='ballast-valve' || kind==='cuff-pump') && p.target)atRect(p.target,'primary','button');
-    else if(kind==='balloon-pop' || kind==='draft-squeeze' || kind==='draft-push' || kind==='creature-gas' || kind==='cork-release' || kind==='cuff-pump')body(0);
+    else if((kind==='ballast-valve' || kind==='cuff-pump' || kind==='rocket-release') && p.target)atRect(p.target,'primary','button');
+    else if(kind==='balloon-pop' || kind==='draft-squeeze' || kind==='draft-push' || kind==='creature-gas' || kind==='cork-release' || kind==='ballast-valve' || kind==='cuff-pump' || kind==='rocket-release')body(0);
     else if(kind==='slime'){
       var slime=d.slimes[p.index || 0];if(slime)target(slime.x,slime.y,slime.radius*2,slime.radius*2);
     }else if(kind==='material-jolt')target(p.target?p.target.x:source.x+source.width*.5,p.target?p.target.y:source.y+source.height-8,p.target?172:source.width,24);

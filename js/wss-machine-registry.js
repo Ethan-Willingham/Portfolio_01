@@ -1757,27 +1757,30 @@
     "id": "water-rocket",
     "capability": "Water slimes",
     "title": "Water rocket",
-    "status": "NOT WORKING",
+    "status": "WORKS",
     "pool": false,
-    "cue": "Draft. A slit releases native water; compressed-air launch is not connected.",
+    "cue": "A native piston compresses trapped air. Release the nozzle to launch the carried water tank.",
     "draft": true,
     "world": {
       "w": 720,
       "h": 400
     },
-    "blocker": "Slit membrane releases real water; compressed gas and gas-to-water launch work are absent.",
+    "blocker": "",
     "dependencies": [
       "wss-water-balloons",
       "wss-machines/water-balloons",
       "wss-drafts-bodies",
-      "wss-drafts-creatures"
+      "wss-cartesian-divers",
+      "wss-machines/cartesian-divers",
+      "wss-drafts-creatures",
+      "wss-water-rocket"
     ],
     "behaviorPlan": {
       "seconds": 6,
       "actionAtSeconds": 2,
-      "action": "machinePrimary applies balanced hand squeeze to open skin",
-      "key": "Real slit releases native water; no compressed gas or launch claim.",
-      "statusIfObserved": "NOT WORKING"
+      "action": "Release the charged native-pressure water tank",
+      "key": "Initial free launch rises in three seeds; the uncompressed control falls. Native water is conserved.",
+      "statusIfObserved": "WORKS"
     },
     "accepted": true,
     "preview": "cup",
@@ -1785,7 +1788,10 @@
       "wss-water-balloons",
       "wss-machines/water-balloons",
       "wss-drafts-bodies",
-      "wss-drafts-creatures"
+      "wss-cartesian-divers",
+      "wss-machines/cartesian-divers",
+      "wss-drafts-creatures",
+      "wss-water-rocket"
     ]
   },
   {

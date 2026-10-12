@@ -7,7 +7,7 @@
     ['jellyfish','Water slimes','Jellyfish','PARTLY',false,'Squeeze the submerged skin by hand; swimming is unproved.'],
     ['soft-robot-gripper','Water slimes','Soft robot gripper','NOT WORKING',false,'Grab the elastic cup around the block; air actuation is not connected.'],
     ['suction-cup','Water slimes','Suction cup','NOT WORKING',false,'Press the elastic cup against the shelf; vacuum adhesion is not connected.'],
-    ['water-rocket','Water slimes','Water rocket','NOT WORKING',false,'A slit releases native water; compressed-air launch is not connected.'],
+    ['water-rocket','Water slimes','Water rocket','WORKS',false,'A native piston compresses trapped air. Release the nozzle to launch the carried water tank.'],
     ['slime-submarine','Water slimes','Slime submarine','WORKS',false,'Open the valve to flood its carried water tank, then close it and drag the loaded skin.'],
     ['slime-mail','Smoke','Slime mail','PARTLY',false,'Tap the rear air chamber to push smoke toward the slime in the tube.'],
     ['swim-bladder-fish','Water slimes','Swim-bladder fish','PARTLY',false,'Pump gas into the bladder, then vent it; depth control is unproved.'],
@@ -83,6 +83,7 @@
       d.boundaryNote+=' The cup deforms under Grab and terrain contacts. Its rim does not register a sealed pressure cavity, so vacuum traction and adhesion are not implemented.';return d;
     },
     'water-rocket':function(w,o){
+      if(root.WSSWaterRocket)return root.WSSWaterRocket.make(w,o);
       var d=skin('water-rocket',w,o,true);d.slimes=[{x:360,y:192,radius:56}];d.initial=[water(rect(312,176,96,64))];
       d.action='Squeeze skin';d.primary={kind:'draft-squeeze'};
       d.boundaryNote+=' This open skin has native water and contact reactions, but no enclosed compressed gas or gas-to-water work. It is a launch fixture, not a working rocket.';return d;
