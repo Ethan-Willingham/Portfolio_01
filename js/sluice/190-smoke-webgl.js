@@ -56,6 +56,7 @@
       VELOCITY_DISSIPATION: 0.4,
       PRESSURE: 0.8,
       PRESSURE_ITERATIONS: 25,
+      SOLID_PROJECTION: 0, // Opt-in sealed pressure boundaries for the drum.
       CURL: 26,
       SPLAT_RADIUS: 0.22,
       SHADING: true,
@@ -254,7 +255,7 @@
       'varying vec2 vR;\n' +
       'varying vec2 vT;\n' +
       'varying vec2 vB;\n' +
-      'uniform vec2 texelSize;\n' +
+      'uniform highp vec2 texelSize;\n' +
       'void main () {\n' +
       '  vUv = aPosition * 0.5 + 0.5;\n' +
       '  vL = vUv - vec2(texelSize.x, 0.0);\n' +
@@ -371,6 +372,21 @@
       '  gl_FragColor = result;\n' +
       '}\n';
   
+    // Reflected solid velocities and Neumann pressure boundaries are opt-in.
+    // The default preserves the game's existing smoke projection.
+    var SOLID_BOUNDARY_GLSL =
+      'uniform sampler2D uMoving;\n' +
+      'uniform float useMoving;\n' +
+      'uniform float solidProjection;\n' +
+      'uniform highp vec2 texelSize;\n' +
+      'vec3 solidAt(vec2 uv) {\n' +
+      '  if (any(lessThan(uv, vec2(0.0))) || any(greaterThan(uv, vec2(1.0)))) return vec3(0.0, 0.0, 1.0);\n' +
+      '  if (useObstacle > 0.5 && texture2D(uObstacle, uv).a > 0.5) return vec3(0.0, 0.0, 1.0);\n' +
+      '  vec4 body = texture2D(uMoving, uv);\n' +
+      '  if (useMoving > 0.5 && body.a > 0.5) return vec3(body.xy / texelSize, 1.0);\n' +
+      '  return vec3(0.0);\n' +
+      '}\n';
+
     var DIVERGENCE_FS = '\n' +
       'precision mediump float;\n' +
       'precision mediump sampler2D;\n' +
@@ -380,6 +396,9 @@
       'varying highp vec2 vT;\n' +
       'varying highp vec2 vB;\n' +
       'uniform sampler2D uVelocity;\n' +
+      'uniform sampler2D uObstacle;\n' +
+      'uniform float useObstacle;\n' +
+      SOLID_BOUNDARY_GLSL +
       'void main () {\n' +
       '  float L = texture2D(uVelocity, vL).x;\n' +
       '  float R = texture2D(uVelocity, vR).x;\n' +
@@ -390,6 +409,14 @@
       '  if (vR.x > 1.0) { R = -C.x; }\n' +
       '  if (vT.y > 1.0) { T = -C.y; }\n' +
       '  if (vB.y < 0.0) { B = -C.y; }\n' +
+      '  if (solidProjection > 0.5) {\n' +
+      '    if (solidAt(vUv).z > 0.5) { gl_FragColor = vec4(0.0); return; }\n' +
+      '    vec3 l = solidAt(vL), r = solidAt(vR), t = solidAt(vT), b = solidAt(vB);\n' +
+      '    if (l.z > 0.5) L = 2.0 * l.x - C.x;\n' +
+      '    if (r.z > 0.5) R = 2.0 * r.x - C.x;\n' +
+      '    if (t.z > 0.5) T = 2.0 * t.y - C.y;\n' +
+      '    if (b.z > 0.5) B = 2.0 * b.y - C.y;\n' +
+      '  }\n' +
       '  float div = 0.5 * (R - L + T - B);\n' +
       '  gl_FragColor = vec4(div, 0.0, 0.0, 1.0);\n' +
       '}\n';
@@ -494,6 +521,10 @@
       'varying highp vec2 vB;\n' +
       'uniform sampler2D uPressure;\n' +
       'uniform sampler2D uDivergence;\n' +
+      'uniform float solidPhase;\n' +
+      'uniform sampler2D uObstacle;\n' +
+      'uniform float useObstacle;\n' +
+      SOLID_BOUNDARY_GLSL +
       'void main () {\n' +
       '  float L = texture2D(uPressure, vL).x;\n' +
       '  float R = texture2D(uPressure, vR).x;\n' +
@@ -502,6 +533,15 @@
       '  float C = texture2D(uPressure, vUv).x;\n' +
       '  float divergence = texture2D(uDivergence, vUv).x;\n' +
       '  float pressure = (L + R + B + T - divergence) * 0.25;\n' +
+      '  if (solidProjection > 0.5) {\n' +
+      '    if (solidAt(vUv).z > 0.5) { gl_FragColor = vec4(0.0); return; }\n' +
+      '    float phase = mod(floor(vUv.x / texelSize.x) + floor(vUv.y / texelSize.y), 2.0);\n' +
+      '    if (abs(phase - solidPhase) > 0.5) { gl_FragColor = vec4(C, 0.0, 0.0, 1.0); return; }\n' +
+      '    vec4 walls = vec4(solidAt(vL).z, solidAt(vR).z, solidAt(vB).z, solidAt(vT).z);\n' +
+      '    float count = 4.0 - dot(walls, vec4(1.0));\n' +
+      '    pressure = (dot(vec4(L, R, B, T), vec4(1.0) - walls) - divergence) / max(count, 1.0);\n' +
+      '    pressure = mix(C, pressure, 1.85);\n' +
+      '  }\n' +
       '  gl_FragColor = vec4(pressure, 0.0, 0.0, 1.0);\n' +
       '}\n';
   
@@ -517,7 +557,12 @@
       'uniform sampler2D uVelocity;\n' +
       'uniform sampler2D uObstacle;\n' +
       'uniform float useObstacle;\n' +
+      SOLID_BOUNDARY_GLSL +
       'void main () {\n' +
+      '  if (solidProjection > 0.5) {\n' +
+      '    vec3 boundary = solidAt(vUv);\n' +
+      '    if (boundary.z > 0.5) { gl_FragColor = vec4(boundary.xy, 0.0, 1.0); return; }\n' +
+      '  }\n' +
       '  if (useObstacle > 0.5 && texture2D(uObstacle, vUv).a > 0.5) {\n' +
       '    gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);\n' +
       '    return;\n' +
@@ -526,8 +571,15 @@
       '  float R = texture2D(uPressure, vR).x;\n' +
       '  float T = texture2D(uPressure, vT).x;\n' +
       '  float B = texture2D(uPressure, vB).x;\n' +
+      '  if (solidProjection > 0.5) {\n' +
+      '    float center = texture2D(uPressure, vUv).x;\n' +
+      '    if (solidAt(vL).z > 0.5) L = center;\n' +
+      '    if (solidAt(vR).z > 0.5) R = center;\n' +
+      '    if (solidAt(vT).z > 0.5) T = center;\n' +
+      '    if (solidAt(vB).z > 0.5) B = center;\n' +
+      '  }\n' +
       '  vec2 velocity = texture2D(uVelocity, vUv).xy;\n' +
-      '  velocity.xy -= vec2(R - L, T - B);\n' +
+      '  velocity.xy -= vec2(R - L, T - B) * (solidProjection > 0.5 ? 0.5 : 1.0);\n' +
       '  velocity = min(max(velocity, -1000.0), 1000.0);\n' +
       '  gl_FragColor = vec4(velocity, 0.0, 1.0);\n' +
       '}\n';
@@ -843,6 +895,14 @@
       'varying vec2 vVelocity;',
       'void main() { gl_FragColor = vec4(vVelocity, 0.0, 1.0); }'
     ].join('\n');
+    function bindSolidProjection(program, obstacleUnit, movingUnit) {
+      uniform1f(program.uniforms.solidProjection, config.SOLID_PROJECTION || 0);
+      if (!config.SOLID_PROJECTION) return;
+      uniform1i(program.uniforms.uObstacle, attachObstacle(obstacleUnit));
+      uniform1f(program.uniforms.useObstacle, obstacleSrcCanvas ? 1 : 0);
+      uniform1i(program.uniforms.uMoving, movingActive ? movingBoundary.attach(movingUnit) : attachObstacle(movingUnit));
+      uniform1f(program.uniforms.useMoving, movingActive ? 1 : 0);
+    }
     function setMovingBodies (bodies, originX, originY, domainW, domainH, dt, w, h, skipGuests) {
       if (!ready || dt <= 0) return;
       var needed = 0;
@@ -1156,6 +1216,7 @@
       velocity.swap();
   
       divergenceProgram.bind();
+      bindSolidProjection(divergenceProgram, 2, 3);
       uniform2f(divergenceProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
       uniform1i(divergenceProgram.uniforms.uVelocity, velocity.read.attach(0));
       blit(divergence);
@@ -1167,6 +1228,7 @@
       pressure.swap();
   
       pressureProgram.bind();
+      bindSolidProjection(pressureProgram, 2, 3);
       uniform2f(pressureProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
       uniform1i(pressureProgram.uniforms.uDivergence, divergence.attach(0));
       // The Jacobi passes share one sampler unit and viewport. Only the
@@ -1175,13 +1237,19 @@
       gl.activeTexture(gl.TEXTURE1);
       gl.viewport(0, 0, pressure.width, pressure.height);
       for (var i = 0; i < config.PRESSURE_ITERATIONS; i++) {
-        gl.bindTexture(gl.TEXTURE_2D, pressure.read.texture);
-        gl.bindFramebuffer(gl.FRAMEBUFFER, pressure.write.fbo);
-        gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
-        pressure.swap();
+        // Red/black SOR carries a drum stroke across the long chamber while
+        // the legacy path retains one Jacobi pass per iteration.
+        for (var phase = 0; phase < (config.SOLID_PROJECTION ? 2 : 1); phase++) {
+          if (config.SOLID_PROJECTION) uniform1f(pressureProgram.uniforms.solidPhase, phase);
+          gl.bindTexture(gl.TEXTURE_2D, pressure.read.texture);
+          gl.bindFramebuffer(gl.FRAMEBUFFER, pressure.write.fbo);
+          gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
+          pressure.swap();
+        }
       }
   
       gradientSubtractProgram.bind();
+      bindSolidProjection(gradientSubtractProgram, 2, 3);
       uniform2f(gradientSubtractProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
       uniform1i(gradientSubtractProgram.uniforms.uPressure, pressure.read.attach(0));
       uniform1i(gradientSubtractProgram.uniforms.uVelocity, velocity.read.attach(1));
@@ -1364,8 +1432,10 @@
       uniform1i(flowProgram.uniforms.uPressure, pressure.read.attach(1));
       uniform1i(flowProgram.uniforms.uDye, dye.read.attach(2));
       var dx = domainW / velocity.width;
-      // Projection uses a two-cell pressure difference without the usual 1/2.
-      uniform3f(flowProgram.uniforms.scale, dx, domainH / velocity.height, 2 * dx * dx / lastStepDt);
+      // Legacy projection omits the central gradient's 1/2. Sealed boundaries
+      // use that factor, so their pressure conversion omits the legacy 2.
+      uniform3f(flowProgram.uniforms.scale, dx, domainH / velocity.height,
+        (config.SOLID_PROJECTION ? 1 : 2) * dx * dx / lastStepDt);
       blit(flowSample);
       gl.readPixels(0, 0, flowSample.width, flowSample.height, gl.RGBA, gl.FLOAT, flowValues);
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -1435,9 +1505,9 @@
       }
     }
   
-    function resize (w, h) {
+    function resize (w, h, force) {
       if (!ready) return;
-      if (canvas.width === w && canvas.height === h) return;
+      if (canvas.width === w && canvas.height === h && !force) return;
       canvas.width = w;
       canvas.height = h;
       initFramebuffers();
