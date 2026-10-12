@@ -105,8 +105,9 @@
     function gasContext() {
       if (!ready || !ext.isWebGL2) return null;
       ensureObstacleTexture();
-      return {gl:gl,velocity:velocity,dye:dye,obstacle:obstacleTexture,wet:wetTexture,
-        wetActive:wetActive,draw:blit,canvas:canvas};
+      return {gl:gl,velocity:velocity,dye:dye,obstacle:obstacleTexture,obstacleRevision:obstacleRevision,wet:wetTexture,
+        wetActive:wetActive,liquid:liquidTexture,liquidActive:liquidActive,liquidScale:[liquidScaleX,liquidScaleY],liquidSampleAge:liquidSampleAge,
+        moving:movingBoundary,movingActive:movingActive,draw:blit,canvas:canvas};
     }
     function setGasTransport(callback,owner) {
       if(!owner || gasTransport===owner)gasTransport=callback || null;
@@ -122,6 +123,7 @@
     var blit;
     var blitQuadVBO = null;  // v10.88 — exposed so other helpers can restore the buffer state
     var obstacleTexture = null;
+    var obstacleRevision = 0;
     var obstacleSrcCanvas = null;
     var obstacleWidth = 0, obstacleHeight = 0;
     var movingBoundary = null, movingActive = false;
@@ -129,7 +131,7 @@
     var movingPositionLoc = -1, movingVelocityLoc = -1;
     var movingVerts = new Float32Array(0);
     var movingHistory = new WeakMap();
-    var liquidTexture = null, liquidActive = false;
+    var liquidTexture = null, liquidActive = false, liquidSampleAge = 0;
     var liquidFieldW = 0, liquidFieldH = 0;
     var liquidScaleX = 0, liquidScaleY = 0;
     var liquidField = new Float32Array(0), liquidPixels = new Uint8Array(0);
@@ -908,6 +910,7 @@
 
     function paintObstacleQuads (verts, vertCount, w, h) {
       if (!ready) return;
+      obstacleRevision++;
       ensureObstacleFB(w, h);
       obstacleSrcCanvas = obstacleFB;  // truthy = obstacle enabled
       gl.bindFramebuffer(gl.FRAMEBUFFER, obstacleFB.fbo);
@@ -1056,8 +1059,9 @@
     // Quadratic weights follow sub-cell motion without hard occupancy switches.
     // RGB carries velocity and air coupling, alpha is display-only coverage.
     // The compact RGBA8 upload needs no GPU readback or new fullscreen pass.
-    function setLiquidField (x, y, vx, vy, count, originX, originY, domainW, domainH, restDensity, frozen) {
+    function setLiquidField (x, y, vx, vy, count, originX, originY, domainW, domainH, restDensity, frozen, sampleAge) {
       liquidActive = false;
+      liquidSampleAge = isFinite(sampleAge) ? Math.max(0,sampleAge) : 0;
       if (!ready || !count || domainW <= 0 || domainH <= 0) return;
       var w = Math.max(2, Math.min(256, Math.ceil(domainW / 5)));
       var h = Math.max(2, Math.min(192, Math.ceil(domainH / 5)));
@@ -1249,6 +1253,9 @@
       if (!ready) return;
       if (dt <= 0) return;
       lastStepDt = dt;
+      // Reacting apparatus owns one physical momentum/scalar step. Its
+      // projected faces must not be stirred or advected again by a preset.
+      if (gasTransport && gasTransport.ownsMomentum) { gasTransport(dt,gasContext());return; }
       // Compile outlet variants only for an instance that requests them.
       // Ordinary smoke keeps its existing shader operations and GPU fields.
       var divProgram = divergenceProgram, pProgram = pressureProgram, gradProgram = gradientSubtractProgram;
@@ -1421,6 +1428,7 @@
     // smoke shaders treat alpha > 0.5 as solid.
     function setObstacleAlpha (srcCanvas) {
       if (!ready) return;
+      obstacleRevision++;
       obstacleSrcCanvas = srcCanvas || null;
       if (!srcCanvas) return;
       ensureObstacleTexture();
@@ -1437,6 +1445,7 @@
     }
   
     function clearObstacle () {
+      obstacleRevision++;
       obstacleSrcCanvas = null;
     }
 

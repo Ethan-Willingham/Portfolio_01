@@ -12,7 +12,7 @@ import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const output = path.resolve(process.env.DUMP || '/tmp/oxygen-transport-review');
 const phase = process.env.PHASE || 'all';
-assert.ok(['all', 'fixtures', 'candle', 'chimney', 'other', 'mobile'].includes(phase), 'known test phase');
+assert.ok(['all', 'fixtures', 'candle', 'chimney', 'other', 'mobile', 'remainder'].includes(phase), 'known test phase');
 const sourceSHA256 = Object.fromEntries(['js/wss-oxygen.js', 'js/wss-fire.js', 'js/sluice/190-smoke-webgl.js', 'js/wss-drafts-fire-smoke.js', 'js/wss-drafts-materials.js', 'js/wss-sauna.js', 'js/wss-oxygen-view.js'].map(file => [file, createHash('sha256').update(fs.readFileSync(path.join(root, file))).digest('hex')]));
 const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'oxygen-browser-'));
 fs.mkdirSync(output, { recursive: true });
@@ -43,10 +43,15 @@ async function evaluate(expression) {
 }
 async function until(expression, label, timeout = 90000) {
   const deadline = Date.now() + timeout;
+  let nextProgress = Date.now() + 60000;
   while (Date.now() < deadline) {
     if (await evaluate(expression)) return;
     const failure = await evaluate('window.__toy?.buildState?.().error || window.__toy?.oxygen?.()?.stats().error || null');
     if (failure) throw Error(label + ': ' + failure);
+    if (timeout >= 180000 && Date.now() >= nextProgress) {
+      console.log('Waiting ' + label, JSON.stringify(await evaluate('(()=>{const s=__toy.oxygen()?.stats();return s?{seconds:s.seconds,physicalSeconds:s.physicalSeconds,incoming:s.incomingOxygenFraction,heatReleaseW:s.heatReleaseW,oxygenConsumedKg:s.oxygenConsumedKg,extinguished:s.extinguished,fps:__toy.stats().fps}:null;})()')));
+      nextProgress = Date.now() + 60000;
+    }
     await delay(100);
   }
   throw Error('Timed out: ' + label + '; ' + JSON.stringify(await evaluate('({host:window.__toy?.stats(), build:window.__toy?.buildState?.(), oxygen:window.__toy?.oxygen?.()?.stats(), fire:window.__toy?.fire?.()?.stats()})')));
@@ -100,7 +105,8 @@ async function measure(name, screenshot = false) {
       minimum = Math.min(minimum, s.oxygen[i]); maximum = Math.max(maximum, s.oxygen[i]);
       if (s.solid[i]) solidCells++; else speed = Math.max(speed, Math.hypot(s.vx[i], s.vy[i]));
       if (!s.solid[i]) {
-        const x = i % s.width, y = Math.floor(i / s.width), sx = s.width / s.worldWidth, sy = s.height / s.worldHeight;
+        const x = i % s.width, y = Math.floor(i / s.width), secondsScale=s.secondsPerSimulationSecond || 1,
+          sx = s.width / s.worldWidth / secondsScale, sy = s.height / s.worldHeight / secondsScale;
         const outgoing = Math.max(s.vx[i], 0) * sx + Math.max(-s.vy[i], 0) * sy +
           (x > 0 ? Math.max(-s.vx[i - 1], 0) * sx : 0) +
           (y + 1 < s.height ? Math.max(s.vy[i + s.width], 0) * sy : 0);
@@ -167,7 +173,7 @@ async function cameraInventory() {
   return evaluate(`(async () => {
     const oxygen = __toy.oxygen(); oxygen.capture(); const s = oxygen.snapshot(), stats = oxygen.stats();
     async function digest(array) { return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', array))).map(v => v.toString(16).padStart(2, '0')).join(''); }
-    const hashes = await Promise.all([s.oxygen, s.oxygenMassKg, s.carrierVolumeM3, s.vx, s.vy, s.solid].map(digest));
+    const hashes = await Promise.all([s.oxygen, s.oxygenMassKg, s.carrierVolumeM3, s.vx, s.vy, s.solid, s.temperatureK, s.projectionPotential].filter(Boolean).map(digest));
     return {domain:__toy.smoke().domain,width:s.width,height:s.height,seconds:stats.seconds,
       consumed:stats.oxygenConsumedKg,inventory:stats.oxygenInventoryKg,hashes};
   })()`);
@@ -238,7 +244,7 @@ function solverFixture(kind) {
   }
   try {
     model = WSSOxygen.create({ fluid, width:W, height:H, scaleWidth:W, resolution:height,
-      source:{x:16,y:28,width:8,height:8}, maxPowerW:1000, fuelMassKg:1 });
+      source:{x:16,y:28,width:8,height:8}, maxPowerW:1000, fuelMassKg:1, prescribedFlow:true });
     model.prepare({ sourceC:900, smothered:false }); step(20);
     const reacted = sample(); model.setBurnerEnabled(false); step(60); const moved = sample();
     return { kind, reacted, moved, glError:gl.getError() };
@@ -347,7 +353,7 @@ try {
   assert.ok(openCandle.oxygen.oxygenConsumedKg > 0 && openCandle.oxygen.heatReleaseW > 1, 'open candle consumes transported oxygen and releases heat');
 
   await scene('candle-in-jar');
-  await until('__toy.oxygen().stats().extinguished', 'sealed candle oxygen starvation and finite wick cooling', 180000);
+  await until('__toy.oxygen().stats().extinguished', 'sealed candle oxygen starvation and finite wick cooling', 600000);
   const extinguished = await measure('desktop-candle-extinguished', true);
   assert.ok(extinguished.oxygen.oxygenConsumedKg > 0 && !extinguished.fire.burning, 'sealed oxygen depletion eventually stops the real candle reaction');
   assert.ok(extinguished.oxygen.incomingOxygenFraction < .18 && extinguished.oxygen.fuelRemainingKg > .001, 'sealed candle goes out after incoming oxygen depletion while wax remains');
@@ -359,14 +365,16 @@ try {
   assert.equal(openedCold.fire.burning, false, 'candle stays out after the lid is lifted');
   await scene('candle-in-jar', { opened:true });
   const openTarget = extinguishedAt + 5;
-  await until(`__toy.oxygen().stats().seconds >= ${openTarget}`, 'open control at the observed sealed extinction age', 180000);
+  await until(`__toy.oxygen().stats().seconds >= ${openTarget}`, 'open control at the observed sealed extinction age', 600000);
   const sustained = await measure('desktop-candle-open-control-sustained');
   assert.ok(sustained.fire.burning && !sustained.oxygen.extinguished && sustained.oxygen.heatReleaseW > 1, 'real ventilation sustains the open control beyond the sealed candle extinction age');
   assert.ok(sustained.oxygen.incomingOxygenFraction > extinguished.oxygen.incomingOxygenFraction, 'ventilation maintains more incoming oxygen at the observed sealed extinction age');
   }
 
-  if (phase === 'all' || phase === 'chimney') {
-  await scene('chimney-draw'); await advance(10);
+  if (phase === 'all' || phase === 'chimney' || phase === 'remainder') {
+  await scene('chimney-draw');
+  const initiallyOpen = await evaluate('__toy.oxygen().stats()');
+  await advance(10);
   const open = await measure('desktop-chimney-open');
   await pauseSettled();
   const beforeClose = await evaluate('Array.from(__toy.oxygen().snapshot().oxygen)');
@@ -375,16 +383,26 @@ try {
   await overlay(true); await evaluate('__toy.pause(false)'); await advance(15);
   const closed = await measure('desktop-chimney-closed-overlay', true);
   assert.ok(closed.oxygen.localOxygenFraction < open.oxygen.localOxygenFraction, 'closed inlet reduces local transported oxygen');
-  assert.ok(closed.oxygen.heatReleaseW < open.oxygen.heatReleaseW, 'oxygen-limited reaction reduces heat release');
   assert.equal(closed.fire.quenchEvents, 0, 'oxygen restriction does not fake water quenching');
   await primary(); await advance(15);
   const reopened = await measure('desktop-chimney-reopened-overlay', true);
   assert.ok(reopened.oxygen.localOxygenFraction > closed.oxygen.localOxygenFraction, 'reopening transports fresh oxygen back to the fire');
-  assert.ok(reopened.oxygen.heatReleaseW > closed.oxygen.heatReleaseW, 'reopening sustains the hot fuel reaction');
+  function intervalPower(before, after) {
+    const elapsed = after.physicalSeconds - before.physicalSeconds;
+    assert.ok(Number.isFinite(elapsed) && elapsed > 0, 'reaction window has a real physical duration');
+    return (after.oxygenConsumedKg - before.oxygenConsumedKg) * 13.1e6 / elapsed;
+  }
+  const averages = { openW:intervalPower(initiallyOpen, open.oxygen), closedW:intervalPower(open.oxygen, closed.oxygen), reopenedW:intervalPower(closed.oxygen, reopened.oxygen) };
+  reports.push({ name:'chimney-interval-chemical-power', ...averages, closedInstantaneousW:closed.oxygen.heatReleaseW, reopenedInstantaneousW:reopened.oxygen.heatReleaseW });
+  console.log('chimney physical interval power', JSON.stringify(averages));
+  assert.ok(averages.closedW < averages.openW, 'oxygen restriction reduces integrated chemical heat per physical second');
+  assert.ok(averages.reopenedW > averages.closedW, 'reopening increases integrated chemical heat per physical second');
+  assert.ok(closed.oxygen.incomingOxygenFraction < open.oxygen.incomingOxygenFraction && reopened.oxygen.incomingOxygenFraction > closed.oxygen.incomingOxygenFraction, 'real ventilation changes incoming oxygen in the expected direction');
+  assert.ok(reopened.fire.burning && reopened.oxygen.heatReleaseW > 0, 'reopening sustains the hot fuel reaction');
   await overlay(false);
   }
 
-  if (phase === 'all' || phase === 'other') {
+  if (phase === 'all' || phase === 'other' || phase === 'remainder') {
   for (const id of ['douse-fire', 'fire-brigade', 'slime-sauna', 'oil-slick-fire']) {
     await directBoot(id); await advance(2);
     const burner = await measure('desktop-' + id);
@@ -405,7 +423,7 @@ try {
   }
   }
 
-  if (phase === 'all' || phase === 'mobile') {
+  if (phase === 'all' || phase === 'mobile' || phase === 'remainder') {
   await send('Emulation.setDeviceMetricsOverride', { width:844, height:390, deviceScaleFactor:2, mobile:true });
   await send('Emulation.setTouchEmulationEnabled', { enabled:true });
   await scene('chimney-draw'); await advance(4); await pauseSettled(); await overlay(true);

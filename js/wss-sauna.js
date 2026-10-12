@@ -97,7 +97,7 @@ fn contactEnthalpy()->f32{
     var guestStates=new WeakMap(),sampleAcc=0,field=null;
     function tick(dt,water,fire){
       if(retired || error || !(dt>0))return;
-      dt=Math.min(.1,dt);clock+=dt;
+      dt=Math.min(.1,dt*options.oxygen.constants.secondsPerSimulationSecond);clock+=dt;
       var r=spec.stones;
       queue.writeBuffer(params,0,new Float32Array([dt,water.count,0,water.clock,r.x,r.y,r.x+r.width,r.y+r.height,spec.capacity,BOIL,CP,LATENT,fuel.capacity,4,0,0]));
       queue.writeBuffer(sums,0,new Uint32Array(8));
@@ -125,9 +125,10 @@ fn contactEnthalpy()->f32{
       var dose=Math.min(48,steamCredit);
       if(dose>0){
         steamCredit-=dose;var old=fluid.getPhysics();
-        fluid.setPhysics({HEAT:.45,COOLING:.18,BUOYANCY:140},0);
+        fluid.setPhysics({HEAT:0,COOLING:0,BUOYANCY:0},0);
         var x=r.x+r.width*.5,y=r.y-7;
-        fluid.splat(x/options.width,1-y/options.height,0,18,{r:dose*.055,g:dose*.053,b:dose*.05},.038);
+        fluid.splat(x/options.width,1-y/options.height,0,0,{r:dose*.055,g:dose*.053,b:dose*.05},.038);
+        options.oxygen.addGasHeat({x:r.x,y:r.y-12,width:r.width,height:8},dose*BOIL*.20);
         fluid.setPhysics(old,0);steamSamples++;
       }
       // Sample only four times per simulated second, using a tiny target.

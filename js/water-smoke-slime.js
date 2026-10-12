@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.170'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.171'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -508,18 +508,22 @@
   function smokeBoundaryThickness() {
     return Math.min(smokeDomain.w,smokeDomain.h)/Math.max(16,smokeEngine.config.SIM_RESOLUTION)*2;
   }
+  function reactingAirScene() {
+    return !!toyOxygen || !!(machineState && machineState.definition.fire) ||
+      ['candle-in-jar','chimney-draw','slime-sauna','douse-fire','fire-brigade','oil-slick-fire'].indexOf(currentScene)>=0;
+  }
   function bakeSmokeBoundary() {
     var width=viewport.clientWidth,height=viewport.clientHeight;
     var left=parseFloat(stage.style.left)||0,top=parseFloat(stage.style.top)||0;
     var open=smokeActive && !!SmokeFluid.config.OPEN_RIGHT;
-    var edge=smokeActive ? smokeBoundaryThickness() : 0;
+    var edge=smokeActive && !reactingAirScene() ? smokeBoundaryThickness() : 0;
     var key=[width,height,left,top,fitScale,smokeActive,open,edge,smokeDomain.x,smokeDomain.y,smokeDomain.w,smokeDomain.h].join(':');
     if(key===smokeBoundaryKey)return;
     smokeBoundaryKey=key;
     smokeBoundaryCanvas.width=Math.max(1,Math.round(width*dpr));
     smokeBoundaryCanvas.height=Math.max(1,Math.round(height*dpr));
     smokeBoundaryCtx.setTransform(dpr,0,0,dpr,0,0);
-    if(!smokeActive)return;
+    if(!smokeActive || !edge)return;
     var x=left+smokeDomain.x*fitScale,y=top+smokeDomain.y*fitScale;
     var w=smokeDomain.w*fitScale,h=smokeDomain.h*fitScale,t=edge*fitScale;
     var shell=new Path2D();
@@ -1926,8 +1930,9 @@
     function gasContext() {
       if (!ready || !ext.isWebGL2) return null;
       ensureObstacleTexture();
-      return {gl:gl,velocity:velocity,dye:dye,obstacle:obstacleTexture,wet:wetTexture,
-        wetActive:wetActive,draw:blit,canvas:canvas};
+      return {gl:gl,velocity:velocity,dye:dye,obstacle:obstacleTexture,obstacleRevision:obstacleRevision,wet:wetTexture,
+        wetActive:wetActive,liquid:liquidTexture,liquidActive:liquidActive,liquidScale:[liquidScaleX,liquidScaleY],liquidSampleAge:liquidSampleAge,
+        moving:movingBoundary,movingActive:movingActive,draw:blit,canvas:canvas};
     }
     function setGasTransport(callback,owner) {
       if(!owner || gasTransport===owner)gasTransport=callback || null;
@@ -1943,6 +1948,7 @@
     var blit;
     var blitQuadVBO = null;  // v10.88 — exposed so other helpers can restore the buffer state
     var obstacleTexture = null;
+    var obstacleRevision = 0;
     var obstacleSrcCanvas = null;
     var obstacleWidth = 0, obstacleHeight = 0;
     var movingBoundary = null, movingActive = false;
@@ -1950,7 +1956,7 @@
     var movingPositionLoc = -1, movingVelocityLoc = -1;
     var movingVerts = new Float32Array(0);
     var movingHistory = new WeakMap();
-    var liquidTexture = null, liquidActive = false;
+    var liquidTexture = null, liquidActive = false, liquidSampleAge = 0;
     var liquidFieldW = 0, liquidFieldH = 0;
     var liquidScaleX = 0, liquidScaleY = 0;
     var liquidField = new Float32Array(0), liquidPixels = new Uint8Array(0);
@@ -2729,6 +2735,7 @@
 
     function paintObstacleQuads (verts, vertCount, w, h) {
       if (!ready) return;
+      obstacleRevision++;
       ensureObstacleFB(w, h);
       obstacleSrcCanvas = obstacleFB;  // truthy = obstacle enabled
       gl.bindFramebuffer(gl.FRAMEBUFFER, obstacleFB.fbo);
@@ -2877,8 +2884,9 @@
     // Quadratic weights follow sub-cell motion without hard occupancy switches.
     // RGB carries velocity and air coupling, alpha is display-only coverage.
     // The compact RGBA8 upload needs no GPU readback or new fullscreen pass.
-    function setLiquidField (x, y, vx, vy, count, originX, originY, domainW, domainH, restDensity, frozen) {
+    function setLiquidField (x, y, vx, vy, count, originX, originY, domainW, domainH, restDensity, frozen, sampleAge) {
       liquidActive = false;
+      liquidSampleAge = isFinite(sampleAge) ? Math.max(0,sampleAge) : 0;
       if (!ready || !count || domainW <= 0 || domainH <= 0) return;
       var w = Math.max(2, Math.min(256, Math.ceil(domainW / 5)));
       var h = Math.max(2, Math.min(192, Math.ceil(domainH / 5)));
@@ -3070,6 +3078,9 @@
       if (!ready) return;
       if (dt <= 0) return;
       lastStepDt = dt;
+      // Reacting apparatus owns one physical momentum/scalar step. Its
+      // projected faces must not be stirred or advected again by a preset.
+      if (gasTransport && gasTransport.ownsMomentum) { gasTransport(dt,gasContext());return; }
       // Compile outlet variants only for an instance that requests them.
       // Ordinary smoke keeps its existing shader operations and GPU fields.
       var divProgram = divergenceProgram, pProgram = pressureProgram, gradProgram = gradientSubtractProgram;
@@ -3242,6 +3253,7 @@
     // smoke shaders treat alpha > 0.5 as solid.
     function setObstacleAlpha (srcCanvas) {
       if (!ready) return;
+      obstacleRevision++;
       obstacleSrcCanvas = srcCanvas || null;
       if (!srcCanvas) return;
       ensureObstacleTexture();
@@ -3258,6 +3270,7 @@
     }
   
     function clearObstacle () {
+      obstacleRevision++;
       obstacleSrcCanvas = null;
     }
 
@@ -3571,7 +3584,7 @@
       smokeEngine.heatSource({x:p.x,y:p.y-rect.height*worldH/smokeDomain.h,width:rect.width*worldW/smokeDomain.w,height:rect.height*worldH/smokeDomain.h},heat,color);
     },
     setMovingBodies:function(bodies,x,y,w,h,dt,obW,obH){smokeEngine.setMovingBodies(bodies,smokeDomain.x,smokeDomain.y,smokeDomain.w,smokeDomain.h,dt,obW,obH);},
-    setLiquidField:function(x,y,vx,vy,count,ox,oy,w,h,density,frozen){smokeEngine.setLiquidField(x,y,vx,vy,count,smokeDomain.x,smokeDomain.y,smokeDomain.w,smokeDomain.h,density,frozen);},
+    setLiquidField:function(x,y,vx,vy,count,ox,oy,w,h,density,frozen){smokeEngine.setLiquidField(x,y,vx,vy,count,smokeDomain.x,smokeDomain.y,smokeDomain.w,smokeDomain.h,density,frozen,liquidWGPU?liquidWGPU.getReadbackAge():0);},
     setWetField:function(field){
       if(!field){smokeEngine.setWetField(null);return;}
       var w=field.width,h=field.height;
@@ -3680,10 +3693,13 @@
     // Two simulation cells form the closed edge walls. An open outlet has
     // no obstacle cells, so advection and pressure can carry smoke offscreen.
     var edge=smokeBoundaryThickness();
-    rect(smokeDomain.x,smokeDomain.y,smokeDomain.x+smokeDomain.w,smokeDomain.y+edge);
-    rect(smokeDomain.x,smokeDomain.y+smokeDomain.h-edge,smokeDomain.x+smokeDomain.w,smokeDomain.y+smokeDomain.h);
-    rect(smokeDomain.x,smokeDomain.y,smokeDomain.x+edge,smokeDomain.y+smokeDomain.h);
-    if(!SmokeFluid.config.OPEN_RIGHT)rect(smokeDomain.x+smokeDomain.w-edge,smokeDomain.y,smokeDomain.x+smokeDomain.w,smokeDomain.y+smokeDomain.h);
+    var reacting=!!toyOxygen || !!(machineState && machineState.definition.fire) || currentScene==='oil-slick-fire';
+    if(!reacting){
+      rect(smokeDomain.x,smokeDomain.y,smokeDomain.x+smokeDomain.w,smokeDomain.y+edge);
+      rect(smokeDomain.x,smokeDomain.y+smokeDomain.h-edge,smokeDomain.x+smokeDomain.w,smokeDomain.y+smokeDomain.h);
+      rect(smokeDomain.x,smokeDomain.y,smokeDomain.x+edge,smokeDomain.y+smokeDomain.h);
+      if(!SmokeFluid.config.OPEN_RIGHT)rect(smokeDomain.x+smokeDomain.w-edge,smokeDomain.y,smokeDomain.x+smokeDomain.w,smokeDomain.y+smokeDomain.h);
+    }
     // Static wall runs are cached until the visitor edits the terrain.
     for (var r = 1; r < gridH-1; r++) {
       var off = r * gridW;
@@ -14708,7 +14724,7 @@
       toyFire=ownFire;toyOxygen=ownOxygen;
       if(window.WSSSound && !toySound)toySound=window.WSSSound.create();
       SmokeFluid.setThermalStyle({glow:1,waterCooling:24});
-      SmokeFluid.setPhysics({HEAT:0,COOLING:.15,BUOYANCY:350},0);
+      SmokeFluid.setPhysics({HEAT:0,COOLING:0,BUOYANCY:0},0);
       smokeAwakeT=SMOKE_IDLE_HOLD;model={settings:{density:1}};
     }else if(definition.cave || definition.draftFireSmoke && !definition.draftFireSmoke.pressure){
       liquidWGPU.setPressureModel(null);airState.ready=false;airPressureColors=false;fireDomainPrevious=liquidWGPU.toyNativeDomain;fireDomainActive=true;liquidWGPU.toyNativeDomain={minX:0,minY:0,maxX:worldW,maxY:worldH};model={settings:{density:1}};
@@ -14774,7 +14790,7 @@
       toyFireSmokeDraft=window.WSSFireSmokeDrafts.create(definition,SmokeFluid,{w:worldW,h:worldH,tile:TILE,solidAt:function(x,y){return tileAt(Math.floor(y/TILE),Math.floor(x/TILE))!==null;}});smokeAwakeT=SMOKE_IDLE_HOLD;
     }
     if(definition.sauna){
-      ownSauna=await window.WSSSauna.create({definition:definition,liquid:liquidWGPU,fluid:SmokeFluid,fire:toyFire,bodies:jelloBodies,width:worldW,height:worldH,maxParticles:LIQUID_MAX_PARTICLES});
+      ownSauna=await window.WSSSauna.create({definition:definition,liquid:liquidWGPU,fluid:SmokeFluid,fire:toyFire,oxygen:toyOxygen,bodies:jelloBodies,width:worldW,height:worldH,maxParticles:LIQUID_MAX_PARTICLES});
       if(request!==machineRequest){ownSauna.destroy();ownSauna=null;return null;}
       toySauna=ownSauna;
       SmokeFluid.setThermalStyle({glow:.18,waterCooling:3});
@@ -15719,7 +15735,7 @@
     toyFire.events().forEach(function(event){if(toySound)toySound.hiss(event.energy,f.x,event.clock);});
     if(toyOxygen)toyOxygen.prepare(heat);
     // The reacting-air pass deposits only heat and exhaust from consumed oxygen.
-    SmokeFluid.setPhysics({HEAT:0,COOLING:toySauna?.18:.15,BUOYANCY:toySauna?140:350},0);
+    SmokeFluid.setPhysics({HEAT:0,COOLING:0,BUOYANCY:0,WEIGHT:0,VISCOSITY:0,EDGE_SPIN:0},0);
     SmokeFluid.setThermalStyle({glow:toySauna?.15:1,waterCooling:24});
   }
 

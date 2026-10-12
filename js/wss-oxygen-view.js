@@ -6,6 +6,7 @@
   // The site's categorical coral, gold and sage. Depleted air is warmer.
   var COLORS = [[0, 185, 121, 109], [.08, 217, 151, 140], [.15, 223, 194, 136], [AMBIENT, 158, 199, 154]];
   var LEVELS = [.05, .10, .15, .19];
+  var VECTOR_SECONDS = .25, TRAIL_SECONDS = .45, VISIBLE_DEVICE_PIXELS = .75;
   var EDGES = [[], [3, 0], [0, 1], [3, 1], [1, 2], [3, 0, 1, 2], [0, 2], [3, 2], [2, 3], [0, 2], [0, 1, 2, 3], [1, 2], [1, 3], [0, 1], [3, 0], []];
   function clamp(value, low, high) { return Math.max(low, Math.min(high, value)); }
   function percentage(value) { return Number.isFinite(value) ? (100 * value).toFixed(2) + '%' : 'Waiting'; }
@@ -40,6 +41,9 @@
     var enabled = false, contours = true, flow = true, disposed = false;
     var pixelRatio = 1, worldWidth = 1, worldHeight = 1;
     var raf = 0, lastFrame = 0, lastSampleWall = 0, lastSampleSeconds = 0, simulationRate = 1;
+    var sampledRevision = null, displayedSeconds = null, trailClock = 0, devicePixelsPerWorld = 1;
+    var visibleTraces = 0, visibleArrows = 0;
+    var centeredVX = null, centeredVY = null;
     var cursor = null, traces = [], traceSequence = 0;
     var bindings = [];
     function listen(target, name, callback, options) {
@@ -75,6 +79,61 @@
       }
       return weight > 0 ? total / weight : null;
     }
+    function cacheCenteredVelocity() {
+      if (snapshot.cellVx && snapshot.cellVy) { centeredVX = snapshot.cellVx; centeredVY = snapshot.cellVy; return; }
+      centeredVX = centeredVY = null;
+      if (!snapshot.vx || !snapshot.vy) return;
+      if (snapshot.velocityLayout === 'cell-center') { centeredVX = snapshot.vx; centeredVY = snapshot.vy; return; }
+      // Backward-compatible snapshots store right/top MAC face components.
+      // Average opposing open faces once per capture, before interpolation.
+      var width = snapshot.width, height = snapshot.height, solid = snapshot.solid;
+      centeredVX = new Float32Array(width * height); centeredVY = new Float32Array(width * height);
+      for (var y = 0; y < height; y++) for (var x = 0; x < width; x++) {
+        var index = y * width + x; if (solid && solid[index]) continue;
+        var right = solid && x + 1 < width && solid[index + 1] ? 0 : snapshot.vx[index];
+        var left = solid && x > 0 && solid[index - 1] ? 0 : x > 0 ? snapshot.vx[index - 1] : snapshot.leftBoundaryVx ? snapshot.leftBoundaryVx[y] : snapshot.vx[index];
+        var top = solid && y > 0 && solid[index - width] ? 0 : snapshot.vy[index];
+        var bottom = solid && y + 1 < height && solid[index + width] ? 0 : y + 1 < height ? snapshot.vy[index + width] : snapshot.bottomBoundaryVy ? snapshot.bottomBoundaryVy[x] : snapshot.vy[index];
+        centeredVX[index] = (left + right) * .5; centeredVY[index] = (top + bottom) * .5;
+      }
+    }
+    function secondsPerSimulationSecond() {
+      return snapshot && snapshot.secondsPerSimulationSecond > 0 ? snapshot.secondsPerSimulationSecond : 1;
+    }
+    function flowVelocity(x, y) {
+      if (!snapshot || !airAt(x, y)) return null;
+      var vx = sample(centeredVX, x, y), vy = sample(centeredVY, x, y);
+      if (vx === null || vy === null) return null;
+      if (snapshot.velocityUnits === 'm/s') {
+        if (!(snapshot.metresPerPixel > 0)) return null;
+        // Render against snapshot.seconds, which is the native simulation
+        // clock. Convert SI velocity to pixels per native second exactly once.
+        var scale = secondsPerSimulationSecond() / snapshot.metresPerPixel;
+        vx *= scale; vy *= scale;
+      }
+      return { vx: vx, vy: vy };
+    }
+    function physicalFlowVelocity(x, y) {
+      if (!snapshot || !airAt(x, y)) return null;
+      if (snapshot.cellVxMetresPerSecond && snapshot.cellVyMetresPerSecond) {
+        var vx = sample(snapshot.cellVxMetresPerSecond, x, y), vy = sample(snapshot.cellVyMetresPerSecond, x, y);
+        return vx === null || vy === null ? null : { vx: vx, vy: vy, units: 'm/s' };
+      }
+      var value = flowVelocity(x, y);
+      if (!value || !(snapshot.metresPerPixel > 0)) return null;
+      var scale = snapshot.metresPerPixel / secondsPerSimulationSecond();
+      return { vx: value.vx * scale, vy: value.vy * scale, units: 'm/s' };
+    }
+    function openSegment(x0, y0, x1, y1) {
+      var steps = Math.max(1, Math.ceil(Math.max(Math.abs(x1 - x0) / worldWidth * snapshot.width, Math.abs(y1 - y0) / worldHeight * snapshot.height) * 2));
+      for (var i = 1; i <= steps; i++) if (!airAt(x0 + (x1 - x0) * i / steps, y0 + (y1 - y0) * i / steps)) return false;
+      return true;
+    }
+    function visibility(displacement) {
+      // Suppress unresolved strokes instead of giving numerical drift a
+      // minimum arrow length. This threshold is in display pixels, not speed.
+      return clamp((displacement * devicePixelsPerWorld - VISIBLE_DEVICE_PIXELS) / 1.5, 0, 1);
+    }
     function color(value, pixels, offset) {
       var fraction = clamp(Number.isFinite(value) ? value : AMBIENT, 0, AMBIENT);
       var high = 1;
@@ -87,6 +146,7 @@
     }
     function dimensions() {
       var camera = toy.camera ? toy.camera() : { scale: 1 };
+      devicePixelsPerWorld = Math.max(.001, (window.devicePixelRatio || 1) * (camera.scale || 1));
       var desired = clamp((window.devicePixelRatio || 1) * (camera.scale || 1), 1, 2.5);
       // Bound both memory and fill cost while retaining crisp contour lines on Retina.
       desired = Math.min(desired, Math.sqrt(2600000 / (worldWidth * worldHeight)));
@@ -158,51 +218,67 @@
         var x = (traceSequence * .61803398875 % 1) * worldWidth;
         var y = (traceSequence * .75487766625 % 1) * worldHeight;
         if (!airAt(x, y)) continue;
-        trace.x = x; trace.y = y; trace.life = 2 + traceSequence % 5; trace.age = 0; trace.points = [[x, y]];
+        trace.x = x; trace.y = y; trace.life = 2 + traceSequence % 5; trace.age = 0; trace.points = [[x, y, trailClock]];
         return;
       }
       trace.life = 0; trace.points = [];
     }
     function drawFlow(ctx, dt) {
-      if (!snapshot.vx || !snapshot.vy || !flow) return;
-      ctx.strokeStyle = 'rgba(245,241,234,.4)'; ctx.fillStyle = 'rgba(245,241,234,.65)';
+      visibleTraces = visibleArrows = 0;
+      if ((!snapshot.cellVx || !snapshot.cellVy) && (!snapshot.vx || !snapshot.vy) || !flow) return;
+      ctx.strokeStyle = 'rgb(245,241,234)'; ctx.fillStyle = 'rgb(245,241,234)';
       ctx.lineWidth = 1 / pixelRatio; ctx.lineCap = 'round';
       if (reducedMotion.matches) {
-        // Reduced motion retains still vectors and the full concentration field.
+        // Each still vector represents a quarter native simulation second.
+        // Both its shaft and its head shrink to zero with the velocity.
         var spacing = Math.max(30, worldWidth / 28);
         for (var y = spacing * .5; y < worldHeight; y += spacing) for (var x = spacing * .5; x < worldWidth; x += spacing) {
-          var vx = sample(snapshot.vx, x, y), vy = sample(snapshot.vy, x, y);
-          if (vx === null || vy === null) continue;
-          var speed = Math.hypot(vx, vy); if (speed < 1) continue;
-          var length = Math.min(spacing * .38, 3 + Math.log1p(speed) * 1.7), ux = vx / speed, uy = vy / speed;
+          var velocity = flowVelocity(x, y); if (!velocity) continue;
+          var speed = Math.hypot(velocity.vx, velocity.vy), length = speed * VECTOR_SECONDS;
+          var alpha = visibility(length); if (!alpha || !speed) continue;
+          var ux = velocity.vx / speed, uy = velocity.vy / speed;
           var endX = x + ux * length, endY = y + uy * length;
-          if (!airAt(endX, endY)) continue;
+          if (!openSegment(x, y, endX, endY)) continue;
+          var head = Math.min(length * .28, 3 / devicePixelsPerWorld);
+          ctx.globalAlpha = .4 * alpha;
           ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(endX, endY);
-          ctx.moveTo(endX - ux * 3 - uy * 2, endY - uy * 3 + ux * 2); ctx.lineTo(endX, endY); ctx.lineTo(endX - ux * 3 + uy * 2, endY - uy * 3 - ux * 2); ctx.stroke();
+          ctx.moveTo(endX - ux * head - uy * head * .6, endY - uy * head + ux * head * .6); ctx.lineTo(endX, endY); ctx.lineTo(endX - ux * head + uy * head * .6, endY - uy * head - ux * head * .6); ctx.stroke();
+          visibleArrows++;
         }
+        ctx.globalAlpha = 1;
         return;
       }
       var count = clamp(Math.round(worldWidth * worldHeight / 6500), 32, 100);
       while (traces.length < count) { var trace = {}; reseed(trace); traces.push(trace); }
       for (var i = 0; i < traces.length; i++) {
         var tracer = traces[i]; if (!(tracer.life > 0) || tracer.age > tracer.life || !airAt(tracer.x, tracer.y)) reseed(tracer);
-        var vx = sample(snapshot.vx, tracer.x, tracer.y), vy = sample(snapshot.vy, tracer.x, tracer.y);
-        if (vx === null || vy === null) continue;
+        var velocity = flowVelocity(tracer.x, tracer.y);
+        if (!velocity) continue;
         if (dt > 0) {
           // Midpoint integration follows the velocity sample, including curved wakes.
-          var middleX = tracer.x + vx * dt * .5, middleY = tracer.y + vy * dt * .5;
-          var middleVX = sample(snapshot.vx, middleX, middleY), middleVY = sample(snapshot.vy, middleX, middleY);
-          var endX = tracer.x + (middleVX === null ? vx : middleVX) * dt;
-          var endY = tracer.y + (middleVY === null ? vy : middleVY) * dt;
-          if (!airAt(middleX, middleY) || !airAt(endX, endY)) { reseed(tracer); continue; }
+          var middleX = tracer.x + velocity.vx * dt * .5, middleY = tracer.y + velocity.vy * dt * .5;
+          var midpoint = flowVelocity(middleX, middleY) || velocity;
+          var endX = tracer.x + midpoint.vx * dt, endY = tracer.y + midpoint.vy * dt;
+          if (!openSegment(tracer.x, tracer.y, endX, endY)) { reseed(tracer); continue; }
           tracer.x = endX; tracer.y = endY; tracer.age += dt;
-          tracer.points.push([endX, endY]); if (tracer.points.length > 9) tracer.points.shift();
+          tracer.points.push([endX, endY, trailClock]);
         }
-        if (Math.hypot(vx, vy) < 1 || tracer.points.length < 2) continue;
-        ctx.beginPath(); ctx.moveTo(tracer.points[0][0], tracer.points[0][1]);
-        for (var p = 1; p < tracer.points.length; p++) ctx.lineTo(tracer.points[p][0], tracer.points[p][1]);
-        ctx.stroke(); ctx.beginPath(); ctx.arc(tracer.x, tracer.y, 1.05 / pixelRatio, 0, Math.PI * 2); ctx.fill();
+        while (tracer.points.length > 1 && tracer.points[1][2] < trailClock - TRAIL_SECONDS) tracer.points.shift();
+        if (tracer.points.length < 2) continue;
+        var displacement = 0;
+        for (var p = 1; p < tracer.points.length; p++) displacement += Math.hypot(tracer.points[p][0] - tracer.points[p - 1][0], tracer.points[p][1] - tracer.points[p - 1][1]);
+        var alpha = visibility(displacement); if (!alpha) continue;
+        visibleTraces++;
+        for (var p = 1; p < tracer.points.length; p++) {
+          var point = tracer.points[p], previous = tracer.points[p - 1];
+          var fade = clamp(1 - (trailClock - point[2]) / TRAIL_SECONDS, 0, 1);
+          if (!fade) continue;
+          ctx.globalAlpha = .4 * alpha * fade; ctx.beginPath(); ctx.moveTo(previous[0], previous[1]); ctx.lineTo(point[0], point[1]); ctx.stroke();
+        }
+        var lastPoint = tracer.points[tracer.points.length - 1], headFade = clamp(1 - (trailClock - lastPoint[2]) / TRAIL_SECONDS, 0, 1);
+        ctx.globalAlpha = .65 * alpha * headFade; ctx.beginPath(); ctx.arc(tracer.x, tracer.y, 1.05 / pixelRatio, 0, Math.PI * 2); ctx.fill();
       }
+      ctx.globalAlpha = 1;
     }
     function updateProbe() {
       if (!cursor || !snapshot || !enabled || !controller) { probe.hidden = true; return; }
@@ -235,17 +311,27 @@
       if (disposed || !enabled || !controller || document.hidden) return;
       raf = requestAnimationFrame(frame);
       if (now - lastFrame < 1000 / 30) return;
-      var state = toy.stats(), dt = state.paused || state.loading || now - lastSampleWall > 1000 ? 0 : Math.min(.05, Math.max(0, (now - lastFrame) / 1000)) * simulationRate;
+      var state = toy.stats(), wallStep = Math.min(.05, Math.max(0, (now - lastFrame) / 1000));
       lastFrame = now;
       var current = controller.snapshot();
       if (!current || !current.oxygen || current.oxygen.length !== current.width * current.height) return;
-      if (current.revision !== renderedRevision || renderedController !== controller) {
+      if (current.revision !== sampledRevision) {
         var sampleDelta = current.seconds - lastSampleSeconds, wallDelta = (now - lastSampleWall) / 1000;
-        if (wallDelta > .02 && wallDelta < 2 && sampleDelta >= 0) simulationRate = clamp(sampleDelta / wallDelta, 0, 2);
-        lastSampleSeconds = current.seconds; lastSampleWall = now; snapshot = current;
+        if (wallDelta > .02 && wallDelta < 2 && sampleDelta > 0) simulationRate = clamp(sampleDelta / wallDelta, 0, 2);
+        if (displayedSeconds === null || sampleDelta > .5 || current.seconds < displayedSeconds || current.seconds - displayedSeconds > Math.max(.5, sampleDelta * 2)) {
+          displayedSeconds = current.seconds; traces = [];
+        }
+        lastSampleSeconds = current.seconds; lastSampleWall = now; sampledRevision = current.revision; snapshot = current;
         worldWidth = current.worldWidth; worldHeight = current.worldHeight;
-        dimensions(); rebuild(); readings();
-      } else if (dimensions()) rebuild();
+        cacheCenteredVelocity(); readings();
+      }
+      if (dimensions() || current.revision !== renderedRevision || renderedController !== controller) rebuild();
+      // Advance only through elapsed time confirmed by the solver. A stale
+      // sample cannot keep the traces moving into unmeasured future time.
+      var active = !state.paused && !state.loading;
+      var dt = active ? Math.min(wallStep * simulationRate, Math.max(0, snapshot.seconds - displayedSeconds)) : 0;
+      displayedSeconds += dt;
+      if (active) trailClock += wallStep;
       context.setTransform(1, 0, 0, 1, 0, 0); context.clearRect(0, 0, canvas.width, canvas.height); context.drawImage(baseCanvas, 0, 0);
       context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
       drawFlow(context, dt); updateProbe();
@@ -264,7 +350,8 @@
       var next = typeof toy.oxygen === 'function' ? toy.oxygen() : null;
       if (controller !== next) {
         controller = next; snapshot = null; renderedRevision = null; renderedController = null; traces = []; cursor = null;
-        lastSampleWall = 0; lastSampleSeconds = 0; simulationRate = 1;
+        lastSampleWall = 0; lastSampleSeconds = 0; simulationRate = 1; sampledRevision = null; displayedSeconds = null; trailClock = 0;
+        centeredVX = centeredVY = null;
         context.setTransform(1, 0, 0, 1, 0, 0); context.clearRect(0, 0, canvas.width, canvas.height);
       }
       toggleButton.hidden = instruments.hidden = instrumentsButton.hidden = !controller;
@@ -288,7 +375,7 @@
     listen(reducedMotion, 'change', function () { traces = []; readings(); start(); });
     function destroy() {
       disposed = true; if (raf) cancelAnimationFrame(raf); raf = 0;
-      bindings.forEach(function (remove) { remove(); }); bindings = []; traces = []; snapshot = controller = null;
+      bindings.forEach(function (remove) { remove(); }); bindings = []; traces = []; snapshot = controller = centeredVX = centeredVY = null;
       canvas.hidden = panel.hidden = probe.hidden = true; shell.classList.remove('has-oxygen-overlay');
       fieldCanvas.width = maskCanvas.width = baseCanvas.width = 1;
     }
@@ -296,7 +383,10 @@
     update();
     return { toggle: toggle, enabled: function () { return enabled; }, available: function () { return !!controller; }, update: update, destroy: destroy,
       probe: function (x, y) { return snapshot ? sample(snapshot.oxygen, x, y) : null; },
-      inspect: function () { return { enabled: enabled, available: !!controller, revision: renderedRevision, contours: contours, flow: flow, reducedMotion: reducedMotion.matches, width: canvas.width, height: canvas.height }; } };
+      flowAt: function (x, y) { return flowVelocity(x, y); },
+      physicalFlowAt: function (x, y) { return physicalFlowVelocity(x, y); },
+      inspect: function () { return { enabled: enabled, available: !!controller, revision: renderedRevision, contours: contours, flow: flow, reducedMotion: reducedMotion.matches, width: canvas.width, height: canvas.height,
+        displayedSeconds: displayedSeconds, visibleTraces: visibleTraces, visibleArrows: visibleArrows }; } };
   }
   window.WSSOxygenView = { create: create };
 })();

@@ -77,7 +77,7 @@ fn touching(i:u32)->bool {let d=max(max(p.hot.xy-pos[i].xy,pos[i].xy-p.hot.zw),v
     var pending=false,retired=false,error=null,latest=initial,mask=new Uint8Array(128*72*4),field=new Float32Array(296),poured=0,receivedClock=0,maxDelay=0,events=[];
     field.set([0,0,width/12,height/6,1,20,0,0]);for(k=0;k<72;k++)field[8+k*4]=20;
     function tick(dt,water){
-      if(retired || !(dt>0) || error)return;dt=Math.min(.1,dt);
+      if(retired || !(dt>0) || error)return;dt=Math.min(.1,dt*(oxygen?oxygen.constants.secondsPerSimulationSecond:1));
       var gas=oxygen?oxygen.stats():null,credit=oxygen?oxygen.takeHeat():0;
       var strength=gas&&Number.isFinite(gas.heatReleaseW)?Math.min(1,gas.heatReleaseW/gas.maxPowerW):1;
       var clock=water.clock,count=water.count,values=new Float32Array([hot.x,hot.y,hot.x+hot.width,hot.y+hot.height,width,height,oxygen?1:0,gas&&gas.localOxygenFraction||.209,dt,count,clock,options.noEmber?0:1,

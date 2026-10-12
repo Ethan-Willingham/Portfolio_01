@@ -115,7 +115,7 @@ function burnerRuntime(context){
   var clock=L.simulationClock;S.setThermalStyle({glow:1,waterCooling:24});
   return {oxygen:oxygen,tick:function(){var now=L.simulationClock,h=Math.max(0,now-clock);clock=now;if(!h)return;model.tick(h,{count:L.uploadedCount,clock:now});
    var heat=model.stats();S.setWetField(model.wetField());
-   oxygen.prepare(heat);S.setPhysics({HEAT:0,COOLING:.15,BUOYANCY:350},0);
+   oxygen.prepare(heat);S.setPhysics({HEAT:0,COOLING:0,BUOYANCY:0,WEIGHT:0,VISCOSITY:0,EDGE_SPIN:0},0);
   },stats:function(){return Object.assign({blocker:'The declared burner has its own fuel; oil consumption is not implemented.'},model.stats());},
   destroy:function(){oxygen.destroy();model.destroy();S.setWetField(null);S.setPhysics(null,0);S.setThermalStyle(null);}};
  });

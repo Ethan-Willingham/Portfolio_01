@@ -279,16 +279,49 @@ Chimney draft, Slime sauna, Douse a fire, Fire brigade and the declared burner i
 Oil slick fire. Thermoscope, kettle and steam apparatus use declared heaters;
 their heaters do not consume oxygen. Passive smoke tracers do not burn fuel.
 
-Oxygen, carrier gas and exhaust are transported on a floating-point GPU grid.
-The grid uses the smoke solver's current velocity and actual wall mask. A
-wall-aware face projection removes flow through blocked faces before smoke and
-species transport. Each interior face shares one conservative donor flux.
-Molecular mixing uses 0.000020 square metres per second at the declared scale.
-Species substeps follow the current maximum outgoing face rate, reduced on the
-GPU, so transport stays within its CFL bound without slowing the airflow.
-No cell inside a jar, firebox or inlet receives a replenishment term. External
-room boundary cells represent the atmosphere; their admitted and exported oxygen
-is recorded. Building a wall removes displaced gas and records it separately.
+Toy v5.171 gives these scenes their own physical airflow. The older model
+inherited artistic vorticity from smoke presets and put an invisible ceiling
+around the entire scene. An open fire could therefore stir the whole drawing.
+The reacting solver now owns momentum, oxygen and gas enthalpy together. Smoke
+presets change appearance; their wind, curl and heat controls do not force air.
+
+Velocity lives on staggered faces in metres per physical second. Momentum is
+advected with staggered interpolation and molecular viscosity of 0.000015
+square metres per second. Hot air rises under bounded thermal-density buoyancy
+using 9.80665 metres per second squared and a 293.15-kelvin ambient temperature.
+One wall-aware pressure projection supplies the faces used by every scalar.
+Cached multigrid-preconditioned conjugate gradients solve the pressure operator
+in double precision. Coarse operators retain the fine grid's actual wall and
+outlet links. Closed components have explicit pressure gauges and compatibility
+checks. The uploaded pressure must pass the actual GPU face-divergence limit of
+0.08 per physical second. Iterations, elapsed solve time, CPU residual and GPU
+convergence are exposed separately.
+Its pressure potential is in square metres per second, not pascals.
+
+The scene perimeter is open atmosphere. Incoming faces carry 20.9% oxygen and
+20-degree-Celsius air; outgoing faces export their actual oxygen and heat.
+Ambient pressure is imposed at exterior faces. Only drawn apparatus walls
+block flow. A sealed jar therefore remains sealed while its surrounding room
+can vent. There is no interior reservoir strip or invisible outer wall.
+Native water and moving bodies affect nearby momentum once, before projection;
+water samples older than 0.2 physical seconds stop forcing the air.
+
+The native water clock uses 250 world pixels per simulation second squared.
+The instrument scale maps those ticks to physical seconds. Air, fuel and stone
+heat now use that same mapping, and native boundary velocities are converted
+once. Cached snapshots retain both clocks and both velocity units.
+
+Oxygen, carrier gas, exhaust and enthalpy use conservative face fluxes. Oxygen
+is recovered from carrier and the oxygen-equivalent spent tracer. This conserved
+mixture basis keeps untouched ambient gas at 20.9% without clipping or adding
+oxygen, while reaction and exterior exchange remain separately measured. Oxygen
+mixing uses 0.000020 square metres per second and thermal diffusion uses
+0.000022 square metres per second. Heat uses symmetric harmonic face capacities,
+so a newly opened cell conducts only through the gas actually reaching it.
+Scalar substeps bound combined advection and conductive loss. Boundary exchange,
+reaction, displaced gas and
+conductive heat losses have separate ledgers. Building a wall records its
+displaced gas rather than calling it burned oxygen.
 Combustion scenes retain their physical world coordinates while the camera
 crops the drawing. Panning, zooming and toolbar resize do not reset oxygen.
 
@@ -302,7 +335,7 @@ outputs. Actual heat follows consumed oxygen at 13.1 megajoules per kilogram,
 the common oxygen-consumption calorimetry approximation described by
 [NIST](https://nvlpubs.nist.gov/nistpubs/sp958-lide/280-282.pdf).
 
-Thirty percent of chemical heat enters the advected gas temperature; the rest
+Thirty percent of chemical heat enters the advected gas enthalpy; the rest
 is credited exactly once to the fuel's native sensible-heat sensor. The source
 has finite stored heat, room losses and actual water contact. The former
 fixed-temperature ember and mixed air counter are removed from these scenes.
@@ -315,20 +348,42 @@ permits inflow and outflow. There is no required three-second extinction.
 
 Oxygen in the top bar, or the O key, enables a read-only overlay. Smooth shading,
 measured contours, flow paths and a pointer probe show the same field that feeds
-the reaction. Instruments reports local oxygen, consumed mass and heat output.
-The overlay requests no additional GPU sampling and never changes the solver.
+the reaction. Flow uses centered velocities and measured elapsed simulation
+time. Still air has no moving trails. Old trails fade when flow stops, and
+arrows scale with actual displacement without a minimum length. Instruments
+reports local oxygen, consumed mass and heat output. The overlay requests no
+additional GPU sampling and never changes the solver.
 
-This is a low-Mach reacting-flow approximation. The exhaust field is an
+This is a two-dimensional incompressible, reference-density approximation with
+bounded thermal buoyancy. The exhaust field is an
 oxygen-equivalent product tracer, not separate carbon dioxide and water species.
 Source kinetics, fuel shapes and heat partition are simplified. Thermal gas
 expansion, detailed chemistry and experimental validation remain outside this
-model. The numerical oxygen ledger includes reaction, external exchange and
-geometry edits; its residual is reported rather than hidden by normalization.
+model. Water and slime coupling remains approximate rather than a resolved
+three-phase moving interface. The numerical oxygen ledger includes reaction,
+external exchange and geometry edits; its residual is reported rather than
+hidden by normalization.
 
+The pressure discretization follows the staggered-grid construction in
+[Bridson's fluid simulation notes](https://www.cs.ubc.ca/~rbridson/fluidsimulation/fluids_notes.pdf).
+Full low-Mach thermodynamics would additionally need background pressure and
+thermal expansion in each sealed component, as distinguished in the
+[NIST governing equations](https://github.com/firemodels/fds/blob/master/Manuals/FDS_Technical_Reference_Guide/Equation_Chapter.tex).
+
+Run `node tools/test-fire-airflow.mjs` for still ambient air, localized rising
+heat, cooling after a source stops, hot lid changes, native pour wakes, pressure energy,
+resolution and timestep comparisons, and independence from decorative presets.
 Run `node tools/test-oxygen-transport.mjs` for production-shader transport,
 wall isolation, reaction accounting, ordinary browser combustion and overlays.
 The harness owns and closes Chrome for Testing. Visual captures stay outside
 the repository.
+
+The pressure loops use an embedded, import-free WebAssembly accelerator with
+the same JavaScript fallback. Both evaluate the same float64 operations. Its
+editable source is `tools/air-pressure-kernel.c`. Rebuild and verify it with
+`node tools/build-air-pressure-kernel.mjs --linker /path/to/wasm-ld --check
+--embed js/wss-oxygen.js` (a WebAssembly-capable Clang is required). The helper
+does not install a compiler. Momentum and scalar transport remain on the GPU.
 
 ## Air pressure view
 
