@@ -1032,3 +1032,47 @@ pause, restart and scene cleanup without runtime or GPU errors. The recorded
 slime grows from about 2,472 to 7,414 square pixels of rest area, absorbing
 3,163 parcels. Screenshots and measurements go to /tmp/thirsty-slime-review.
 These checks do not establish real-device performance or biological accuracy.
+
+
+## Gold sluice box
+
+The gold scene has an open, continuous downhill bed and six raised riffles.
+The drawn polygons are the collision polygons. Water, quartz and gold keep
+separate APIC momentum, shared compressive pressure and common gravity.
+Density ratios are 1, 2.65 and 19.3. The fourth phase uses the native grain
+material with preserved origin tag 3; that tag selects mass and pigment only.
+
+Grain pairs use a complete neighbor traversal, snapshot Jacobi updates,
+inverse-mass position correction and equal/opposite normal and Coulomb-friction
+impulses. Water/grain drag uses the same volume-based coefficient for quartz
+and gold. There are no destination forces, capture switches, frozen gold,
+particle removal or hidden refills. The initial supply is finite. The ordinary
+hold-to-pour control adds external water at the upper source and stops on release.
+The tailings tank and water outside it remain in the same simulated world.
+
+Instruments counts actual current grain positions. Equal densities changes only
+gold mass. Without riffles removes the bars, retaining the same initial particle
+population. Both comparisons restart the apparatus. The dedicated scene module
+owns its factory, including after another material draft loads.
+
+Run `node tools/test-gold-sluice.mjs` for the three seeded washes, equal-density
+and removed-riffle controls, finite resident inventory, material identities,
+polygon penetration, eight actual GPU contact fixtures, landscape touch targets,
+held pouring, release, pause, reset and scene changes. The harness owns and closes
+Chrome for Testing. Screenshots and measurements default to `/tmp/gold-sluice-review`.
+The default grain rendering and game boot are covered by
+`node tools/test-water-grain-visibility.mjs`.
+
+These are behavior and contact-operator checks. The reduced 2D model retains
+exploratory drag, the native water filters, pressure limiting and unmeasured
+contact/pressure projection work. It does not predict calibrated recovery
+percentages, grain shape effects, turbulence or full mixture energy conservation.
+
+The final seeded runs (17, 42 and 913) wash out 44, 45 and 42 of 54 quartz
+parcels at about 24.8 native seconds, retaining all 55 gold parcels. Equal
+densities washes out 44 of 55 gold parcels; removing the riffles loses 31 of
+55. Every checkpoint has finite state and zero bed/riffle penetrations. The
+held source admits 9,615 measured water parcels before the test releases it,
+then admits no further water. These are recorded examples, not fixed recovery
+percentages or deterministic trajectories. The ordinary three-phase shader
+remains byte-identical; the shared rendering and Sluice boot regression passes.

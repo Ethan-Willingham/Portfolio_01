@@ -8026,6 +8026,8 @@ struct RenderParams {
   bathTint      : vec4<f32>,   // v25.57 bath: rgb = hot-water tint, w = strength (0 = off)
   bridge        : vec4<f32>,   // x = contact strength, y = tap px, z = droplet stretch, w = free-space bridge
   reconstruction : vec4<f32>, // x = reconstruct water from current positions
+  sandColor     : vec4<f32>,   // opt-in mineral grains, a = enabled
+  goldColor     : vec4<f32>,
 };
 @group(0) @binding(0) var<uniform> rp : RenderParams;
 
@@ -8114,7 +8116,7 @@ fn vs(@builtin(vertex_index)   vid : u32,
     let xy = (p.xy - vec2<f32>(rp.camX, rp.camY)) * rp.dpws + c * (3.2 * rp.dpws);
     out.pos = vec4<f32>(xy.x / (rp.canvasW * 0.5) - 1.0, 1.0 - xy.y / (rp.canvasH * 0.5), 0.0, 1.0);
     out.uv = c; out.weight = vec3<f32>(0.0); out.heat = 0.0;
-    out.pigment = vec4<f32>(0.0); out.snow = 0.34;
+    out.pigment = vec4<f32>(0.0); out.snow = select(0.34,0.0,rp.sandColor.a>0.5);
     return out;
   }
   // v24.155 — density-scaled size RESTORED (v24.154 removed it and the
@@ -8642,7 +8644,8 @@ fn particleVertex(vid : u32, iid : u32, grainPass : bool) -> VOut {
     let s01 = textureLoad(snowTex,clamp(si+vec2<i32>(0,1),slo,shi),0).r;
     let s11 = textureLoad(snowTex,clamp(si+vec2<i32>(1,1),slo,shi),0).r;
     let mass = mix(mix(s00,s10,sf.x),mix(s01,s11,sf.x),sf.y);
-    let snowAlpha = 1.0 - smoothstep(0.62,1.30,mass);
+    let snowAlpha = select(1.0 - smoothstep(0.62,1.30,mass),1.0,rp.sandColor.a>0.5);
+    if(rp.sandColor.a>0.5){out.color=select(rp.sandColor.rgb,rp.goldColor.rgb,((fl>>2u)&3u)==3u);}
     // A grain inside the pile surface has zero alpha; under premultiplied
     // over its fragments would leave every pixel unchanged, so emit none.
     if (snowAlpha <= 0.0) { return out; }
@@ -10503,10 +10506,10 @@ fn machinePointExitClear(a:vec2<f32>,b:vec2<f32>,r:f32)->bool {
     // reconstruction, 36 f32 lanes. Older shaders read only their prefix.
     instance.renderParamsBuf = dev.createBuffer({
       label: 'liquid.renderParams',
-      size: 144,
+      size: 176,
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
     });
-    instance.renderParamsHost = new Float32Array(36);
+    instance.renderParamsHost = new Float32Array(44);   // reconstruction plus opt-in grain pigments
 
     // --- render bind group layout: uniform + 3 read-only particle bufs --
     var renderEntries = [
@@ -11016,6 +11019,8 @@ fn machinePointExitClear(a:vec2<f32>,b:vec2<f32>,r:f32)->bool {
     rh[28] = LIQUID_SURF_BRIDGE;   rh[29] = LIQUID_SURF_BRIDGE_R;
     rh[30] = instance.dropletStretch; rh[31] = instance.surfaceGapBridge;
     rh[32] = instance.surfaceFromPositions ? 1 : 0;
+    rh.fill(0,36,44);
+    if(instance.materialSlip && instance.materialSlip.grainColors)rh.set(instance.materialSlip.grainColors,36);
     instance.queue.writeBuffer(instance.renderParamsBuf, 0, rh);
 
     // v24.113 — surface render: splat the particles into the offscreen
@@ -12433,7 +12438,14 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
         if (toyMembrane) toyMembrane.afterSubstep(frameEncoder,
           {h:instance.stepDt,substep:ss,count:count});
         if (hasSnow && materialSlip) materialSlip.beforeGrains(frameEncoder);
-        if (hasSnow) for (var grainStep = 0; grainStep < grainSteps; grainStep++) {
+        if(hasSnow && materialSlip && materialSlip.encodeGrainContacts){
+          runCollide(instance,ss,true,null,true);
+          for(var mixedContact=0;mixedContact<4;mixedContact++){
+            buildGrid(instance,true,true);
+            materialSlip.encodeGrainContacts(frameEncoder);
+            runCollide(instance,ss,true,null,true);
+          }
+        }else if (hasSnow) for (var grainStep = 0; grainStep < grainSteps; grainStep++) {
           // Terrain, rig and bowl stay on every pass; resident skins are
           // projected once, after the tick's final contact.
           // Slip G2P already advanced grains and saved their sweep origin.

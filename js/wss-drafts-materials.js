@@ -63,13 +63,6 @@ register('sand-dam','Sand','Sand dam','Pour water against the broad sand bank.',
  d.primary={kind:'pour',target:{x:144,y:240}};d.action='Pour more water';
  d.measure={source:rect(72,144,208,232),receiver:rect(536,144,120,232)};return d;
 });
-register('gold-sluice-box','Sand','Gold sluice box','Pour water through the riffled channel.','PARTLY',function(w,o){
- var d=base('gold-sluice-box','Gold sluice box','Dense grain proxies meet real riffles; sorting gold from sand is not implemented.',w,o),source=rect(64,64,160,320),channel=rect(216,240,456,144);
- d.vessels=[box('source','Water and dense grains',source),box('channel','Riffles',channel)];d.pipes=[{points:[{x:208,y:304},{x:240,y:304}],bore:64}];
- for(var x=224;x<664;x+=8){var floor=Math.floor((344+(x-224)*32/440)/8)*8;d.solids.push(rect(x,floor,8,384-floor));if((x-272)%72===0)d.solids.push(rect(x,floor-16,8,16));}
- d.initial=[initial(rect(72,112,144,264)),initial(rect(224,312,440,48))];d.materialSlip=slip([1,.7733,19.3]);d.materialAt=function(x,y){return x>=128&&x<208&&y>=120&&y<176?'sand':'water';};
- d.primary={kind:'pour',target:{x:160,y:88}};d.action='Pour water';d.measure={source:source,receiver:channel};return d;
-});
 register('hero-jug','Oil','Hero\'s wine-or-water jug','Switch the real outlet gates between two liquids.','PARTLY',function(w,o){
  var d=base('hero-jug','Hero\'s wine-or-water jug','A manual outlet selector chooses water or an oil proxy for wine; the air-vent mechanism is missing.',w,o),water=rect(128,64,192,184),oil=rect(400,64,192,184),cup=rect(288,312,144,72);
  d.vessels=[box('water','Water',water),box('oil','Oil proxy for wine',oil),box('cup','Receiving cup',cup)];d.pipes=[{points:[{x:288,y:224},{x:288,y:288},{x:360,y:288}],bore:32},{points:[{x:432,y:224},{x:432,y:288},{x:360,y:288}],bore:32}];

@@ -994,19 +994,11 @@
     "id": "gold-sluice-box",
     "capability": "Sand",
     "title": "Gold sluice box",
-    "cue": "Draft. Pour water through the riffled channel.",
-    "status": "PARTLY",
-    "draft": true,
-    "world": {
-      "w": 720,
-      "h": 400
-    },
-    "pool": false,
+    "cue": "Wash pale sand downhill and leave gold at the riffles.",
     "accepted": true,
-    "preview": "cup",
-    "scripts": [
-      "wss-drafts-materials"
-    ]
+    "world": {"w": 720, "h": 400},
+    "pool": false,
+    "preview": "cup"
   },
   {
     "id": "hero-jug",

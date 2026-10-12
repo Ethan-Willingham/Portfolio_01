@@ -255,6 +255,144 @@ fn jolt(@builtin(global_invocation_id) id:vec3<u32>){
  pos[i].z+=cfg.world.z;
 }
 `;
+// The drawn downhill bed and these collision polygons have identical vertices.
+// Grid traction and swept particle contacts use outward polygon normals,
+// including the sloped floor. There is no tile staircase underneath the bed.
+var BED_GEOMETRY=/* wgsl */ `
+fn bedY(x:f32)->f32{return cfg.bed.y+(x-cfg.bed.x)*(cfg.bed.w-cfg.bed.y)/(cfg.bed.z-cfg.bed.x);}
+fn bedVertex(k:u32,e:u32)->vec2<f32>{
+ var x0=cfg.bed.x;var x1=cfg.bed.z;var rise=0.0;var depth=cfg.bedOther.x;
+ if(k>0u){x0=cfg.riffles.x+f32(k-1u)*cfg.riffles.y;x1=x0+cfg.riffles.z;rise=cfg.riffles.w;depth=0.0;}
+ if(e==0u){return vec2<f32>(x0,bedY(x0)-rise);}
+ if(e==1u){return vec2<f32>(x1,bedY(x1)-rise);}
+ if(e==2u){return vec2<f32>(x1,bedY(x1)+depth);}
+ return vec2<f32>(x0,bedY(x0)+depth);
+}
+struct BedDistance {distance:f32,normal:vec2<f32>};
+fn bedDistance(k:u32,p:vec2<f32>)->BedDistance{
+ var inside=true;var best=1e20;var normal=vec2<f32>(0.0,-1.0);var faceNormal=normal;
+ for(var e=0u;e<4u;e++){
+  let a=bedVertex(k,e);let b=bedVertex(k,(e+1u)%4u);let edge=b-a;let outward=normalize(vec2<f32>(edge.y,-edge.x));
+  if(dot(p-a,outward)>0.0){inside=false;}
+  let q=a+edge*clamp(dot(p-a,edge)/dot(edge,edge),0.0,1.0);let delta=p-q;let distance=length(delta);
+  if(distance<best){best=distance;faceNormal=outward;normal=select(outward,delta/max(distance,1e-10),distance>1e-8);}
+ }
+ if(inside){return BedDistance(-best,faceNormal);}return BedDistance(best,normal);
+}
+fn bedSolid(p:vec2<f32>)->bool{
+ for(var k=0u;k<=u32(cfg.bedOther.y);k++){if(bedDistance(k,p).distance<=0.0){return true;}}return false;
+}
+fn bedGridVelocity(input:vec2<f32>,p:vec2<f32>)->vec2<f32>{
+ var v=input;
+ for(var k=0u;k<=u32(cfg.bedOther.y);k++){
+  let d=bedDistance(k,p);if(d.distance<0.0){return vec2<f32>(0.0);}
+  if(d.distance<cfg.constants.y){v-=d.normal*min(0.0,dot(v,d.normal));}
+ }return v;
+}
+`;
+var BED_COLLIDE=/* wgsl */ `
+fn resolveBed(i:u32,grainOnly:bool){
+ if(i>=gp.count||!live(i)){return;}let a=phase(flags[i]);if(grainOnly&&a<2u){return;}
+ let radius=select(0.42,2.5/sqrt(3.2)*0.5,a>=2u);let start=aux[i].zw;let state=pos[i];
+ let delta=state.xy-start;let steps=max(1u,u32(ceil(length(delta)/(radius*0.5))));
+ var p=start;var v=state.zw;
+ for(var step=0u;step<steps;step++){
+  // Continue the unblocked tangential displacement after a collision.
+  var motion=delta/f32(steps);
+  for(var k=0u;k<=u32(cfg.bedOther.y);k++){
+   let d=bedDistance(k,p+motion);
+   if(d.distance<radius){
+    motion+=d.normal*(radius-d.distance);
+    let inward=min(0.0,dot(v,d.normal));v-=d.normal*inward;
+    if(a>=2u){let tangent=v-d.normal*dot(v,d.normal);let speed=length(tangent);
+     if(speed>1e-8){v-=tangent/speed*min(speed,-inward*0.35);}}
+   }
+  }p+=motion;
+ }
+ pos[i]=vec4<f32>(p,v);aux[i].zw=p;
+}
+@compute @workgroup_size(256)
+fn bedCollide(@builtin(global_invocation_id) id:vec3<u32>){resolveBed(id.x,false);}
+@compute @workgroup_size(256)
+fn bedGrains(@builtin(global_invocation_id) id:vec3<u32>){resolveBed(id.x,true);}
+`;
+// A fourth momentum field is opt-in. The existing three-phase shader remains
+// byte-identical for jars and the other material scenes. Both grain classes use
+// native grain geometry; the preserved origin bits carry their mass identity.
+function sluiceSource(){
+ var code=SOURCE
+  .replace('constants:vec4<f32>','constants:vec4<f32>,extraDrag:vec4<f32>,bed:vec4<f32>,riffles:vec4<f32>,bedOther:vec4<f32>')
+  .replace('array<Species,3>','array<Species,4>')
+  .replaceAll('a<3u','a<4u').replaceAll('b<3u','b<4u')
+  .replaceAll('*3u+a','*4u+a').replaceAll('array<f32,3>','array<f32,4>')
+  .replaceAll('array<vec2<f32>,3>','array<vec2<f32>,4>')
+  .replace('if(a==2u)','if(a>=2u)')
+  .replace('return select(select(0u,1u,material==1u),2u,material==5u);',
+   'if(material==5u){return select(2u,3u,((fl>>2u)&3u)==3u);}return select(0u,1u,material==1u);')
+  .replace('gp.dt*cfg.drag[pair]','gp.dt*pairDrag(pair)*(m[a]/cfg.density[a])*(m[b]/cfg.density[b])*(1.0/m[a]+1.0/m[b])');
+
+ code=code.replace('velocities[node]=vec4<f32>(boundaryVelocity(state.xy,b,inside,left,right,up,down,lip),state.zw);', 'velocities[node]=vec4<f32>(bedGridVelocity(boundaryVelocity(state.xy,b,inside,left,right,up,down,lip),vec2<f32>((f32(gx)+0.5)*cfg.constants.y,(f32(gy)+0.5)*cfg.constants.y)),state.zw);');
+ return BED_GEOMETRY+code.replace('fn encodeFx', 'fn pairDrag(pair:u32)->f32{if(pair<3u){return cfg.drag[pair];}return cfg.extraDrag[pair-3u];}\nfn encodeFx')+BED_COLLIDE;
+}
+// All contacting pairs are visited, without neighbor sampling. Snapshot
+// Jacobi updates use the same pair degree and opposite impulse on both ends.
+// Terrain sweeps follow each iteration in the native host.
+var CONTACT_SOURCE=/* wgsl */ `
+struct Grid {count:u32,w:u32,h:u32,ox:u32,oy:u32,cells:u32,dt:f32,inv:f32,
+ cols:f32,tile:f32,rows:f32,pad:f32,tc:u32,tr:u32,tw:u32,th:u32,region:vec4<f32>};
+struct Config {density:vec4<f32>,drag:vec4<f32>,world:vec4<f32>,constants:vec4<f32>,extraDrag:vec4<f32>};
+@group(0) @binding(0) var<uniform> gp:Grid;
+@group(0) @binding(1) var<uniform> cfg:Config;
+@group(0) @binding(2) var<storage,read_write> pos:array<vec4<f32>>;
+@group(0) @binding(3) var<storage,read> before:array<vec4<f32>>;
+@group(0) @binding(4) var<storage,read> flags:array<u32>;
+@group(0) @binding(5) var<storage,read_write> degree:array<u32>;
+@group(0) @binding(6) var<storage,read> counts:array<u32>;
+@group(0) @binding(7) var<storage,read> starts:array<u32>;
+@group(0) @binding(8) var<storage,read> sorted:array<u32>;
+@group(0) @binding(9) var<storage,read_write> aux:array<vec4<f32>>;
+fn grain(i:u32)->bool{return ((flags[i]&3u)|((flags[i]>>4u)&4u))==5u&&(flags[i]&32u)==0u;}
+fn mass(i:u32)->f32{return cfg.density[select(2u,3u,((flags[i]>>2u)&3u)==3u)];}
+fn cell(p:vec2<f32>)->vec2<i32>{return vec2<i32>(floor(p*gp.inv))-vec2<i32>(bitcast<i32>(gp.ox),bitcast<i32>(gp.oy));}
+const DIAMETER:f32=2.5/1.7888543819998317;
+@compute @workgroup_size(256)
+fn degrees(@builtin(global_invocation_id) id:vec3<u32>){
+ let i=id.x;if(i>=gp.count){return;}degree[i]=0u;if(!grain(i)){return;}
+ let p=before[i].xy;let c=cell(p);var n=0u;
+ for(var y=-1;y<=1;y++){for(var x=-1;x<=1;x++){
+  let q=c+vec2<i32>(x,y);if(any(q<vec2<i32>(0))||q.x>=i32(gp.w)||q.y>=i32(gp.h)){continue;}
+  let k=u32(q.y)*gp.w+u32(q.x);
+  for(var slot=starts[k];slot<starts[k]+counts[k];slot++){
+   let j=sorted[slot];if(j==i||!grain(j)){continue;}
+   if(distance(p,before[j].xy)<DIAMETER){n++;}
+  }
+ }}degree[i]=n;
+}
+@compute @workgroup_size(256)
+fn contacts(@builtin(global_invocation_id) id:vec3<u32>){
+ let i=id.x;if(i>=gp.count||!grain(i)){return;}let p=before[i];let c=cell(p.xy);
+ let invMass=1.0/mass(i);var shift=vec2<f32>(0.0);var dv=vec2<f32>(0.0);
+ for(var y=-1;y<=1;y++){for(var x=-1;x<=1;x++){
+  let q=c+vec2<i32>(x,y);if(any(q<vec2<i32>(0))||q.x>=i32(gp.w)||q.y>=i32(gp.h)){continue;}
+  let k=u32(q.y)*gp.w+u32(q.x);
+  for(var slot=starts[k];slot<starts[k]+counts[k];slot++){
+   let j=sorted[slot];if(j==i||!grain(j)){continue;}let other=before[j];let delta=p.xy-other.xy;
+   let d=length(delta);if(d>=DIAMETER){continue;}
+   var normal=vec2<f32>(1.0,0.0);
+   if(d>1e-8){normal=delta/d;}else{normal.x=select(-1.0,1.0,i<j);}
+   let invOther=1.0/mass(j);let pairScale=1.0/f32(max(1u,max(degree[i],degree[j])));
+   let inverse=1.0/(invMass+invOther);let relative=p.zw-other.zw;
+   let closing=min(0.0,dot(relative,normal));let jn=-closing*inverse;
+   let tangent=relative-normal*dot(relative,normal);let speed=length(tangent);
+   var impulse=normal*jn;
+   if(speed>1e-8){impulse-=tangent/speed*min(speed*inverse,0.35*jn);}
+   dv+=impulse*(invMass*pairScale);
+   shift+=normal*((DIAMETER-d)*inverse*invMass*pairScale);
+  }
+ }}
+ pos[i]=vec4<f32>(p.xy+shift,p.zw+dv);aux[i].zw=p.xy;
+}
+`;
 function dragPair(ma,mb,va,vb,h,rate){
  if(!(ma>0&&mb>0))return [va.slice(),vb.slice()];
  var sum=ma+mb,mean=va.map(function(v,i){return (ma*v+mb*vb[i])/sum;}),rel=va.map(function(v,i){return (v-vb[i])/(1+h*rate);});
@@ -263,31 +401,50 @@ function dragPair(ma,mb,va,vb,h,rate){
 function create(instance,options){
  var opts=options||{},device=instance.device,queue=instance.queue;
  var width=+opts.width,height=+opts.height,density=opts.density||[1,0.7733,2.65],drag=opts.drag||[4,4,4];
- if(!Number.isFinite(width)||!Number.isFinite(height)||width<=0||height<=0||!density.every(function(d){return d>0&&Number.isFinite(d);})||density.length!==3||drag.length!==3||!drag.every(function(d){return d>=0&&Number.isFinite(d);}))throw Error('Invalid material-slip physical parameters.');
+ var phases=opts.separateGold?4:3,pairs=phases*(phases-1)/2;
+ if(!Number.isFinite(width)||!Number.isFinite(height)||width<=0||height<=0||!density.every(function(d){return d>0&&Number.isFinite(d);})||density.length!==phases||drag.length!==pairs||!drag.every(function(d){return d>=0&&Number.isFinite(d);}))throw Error('Invalid material-slip physical parameters.');
  if(!opts.cellSize||!opts.restDensity||!opts.fixedScale)throw Error('The native grid constants are required.');
  // Complete native world plus its padded 16-cell blocks, not a particle cap.
  // Native bounds include both endpoints before their 16-cell margin and block rounding.
  var capacity=Math.min(2097152,Math.ceil((Math.ceil(width/opts.cellSize)+33)/16)*16*Math.ceil((Math.ceil(height/opts.cellSize)+33)/16)*16);
  var buffers=[],destroyed=false;
  function buffer(name,size,usage){var b=device.createBuffer({label:'liquid.slip.'+name,size:size,usage:usage});buffers.push(b);return b;}
- var config=buffer('config',64,GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST),packed=buffer('momentum',capacity*48,GPUBufferUsage.STORAGE),velocity=buffer('velocity',capacity*48,GPUBufferUsage.STORAGE),snapshot=buffer('resolved',capacity*48,GPUBufferUsage.STORAGE);
+ var config=buffer('config',phases===4?128:64,GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST),packed=buffer('momentum',capacity*(phases*12+12),GPUBufferUsage.STORAGE),velocity=buffer('velocity',capacity*phases*16,GPUBufferUsage.STORAGE),snapshot=buffer('resolved',capacity*phases*16,GPUBufferUsage.STORAGE);
  var contactAffine=buffer('contactAffine',instance.maxParticles*16,GPUBufferUsage.COPY_SRC|GPUBufferUsage.COPY_DST);
- queue.writeBuffer(config,0,new Float32Array([density[0],density[1],density[2],0,drag[0],drag[1],drag[2],0,width,height,0,opts.gridMaxCells,opts.restDensity,opts.cellSize,opts.fixedScale,capacity]));
- var module=device.createShaderModule({label:'liquid.materialSlip',code:SOURCE}),resources=[instance.paramsBuf,config,instance.buf.pos,instance.buf.affine,instance.buf.aux,instance.buf.flag,packed,velocity,instance.buf.cellMass,instance.buf.cellOilMass,instance.simParamsBuf,instance.buf.terrainMask,snapshot];
+ queue.writeBuffer(config,0,new Float32Array([density[0],density[1],density[2],density[3]||0,drag[0],drag[1],drag[2],0,width,height,0,opts.gridMaxCells,opts.restDensity,opts.cellSize,opts.fixedScale,capacity]));
+ if(phases===4){
+  if(!opts.bed)throw Error('A mixed-grain sluice requires its physical bed.');
+  queue.writeBuffer(config,64,new Float32Array([drag[3],drag[4],drag[5],0].concat(opts.bed.line,opts.bed.riffles,[opts.bed.thickness,opts.bed.count,0,0])));
+ }
+ var module=device.createShaderModule({label:'liquid.materialSlip',code:phases===4?sluiceSource():SOURCE}),resources=[instance.paramsBuf,config,instance.buf.pos,instance.buf.affine,instance.buf.aux,instance.buf.flag,packed,velocity,instance.buf.cellMass,instance.buf.cellOilMass,instance.simParamsBuf,instance.buf.terrainMask,snapshot];
  var bindings={clearCells:[0,1,6,7],scatter:[0,1,2,3,5,6,8,9],stress:[0,1,2,4,5,6,8,10],solve:[0,1,6,10,12],stabilizeGrid:[0,7,10,12],gridBoundary:[0,1,7,10,11],gather:[0,1,2,3,4,5,7,10],jolt:[0,1,2,5]},pipes={},groups={};
+ if(phases===4){bindings.bedCollide=[0,1,2,4,5];bindings.bedGrains=[0,1,2,4,5];}
  Object.keys(bindings).forEach(function(name){
   var entries=bindings[name].map(function(binding){return {binding:binding,visibility:GPUShaderStage.COMPUTE,buffer:{type:binding===0||binding===1||binding===10?'uniform':binding===5||binding===11?'read-only-storage':'storage'}};});
   var layout=device.createBindGroupLayout({label:'liquid.slip.'+name,entries:entries});
   pipes[name]=device.createComputePipeline({layout:device.createPipelineLayout({bindGroupLayouts:[layout]}),compute:{module:module,entryPoint:name}});
   groups[name]=device.createBindGroup({layout:layout,entries:bindings[name].map(function(binding){return {binding:binding,resource:{buffer:resources[binding]}};})});
  });
+ var contactPipes={},contactGroups={},contactModule=null,contactBefore=null;
+ if(opts.grainContacts){
+  if(phases!==4)throw Error('Mixed grain contacts require four phases.');
+  contactBefore=buffer('grainBefore',instance.maxParticles*16,GPUBufferUsage.STORAGE|GPUBufferUsage.COPY_DST);
+  var degrees=buffer('grainDegrees',instance.maxParticles*4,GPUBufferUsage.STORAGE);
+  contactModule=device.createShaderModule({label:'liquid.slip.grainContacts',code:CONTACT_SOURCE});
+  var cr=[instance.paramsBuf,config,instance.buf.pos,contactBefore,instance.buf.flag,degrees,instance.buf.cellCount,instance.buf.cellStart,instance.buf.sortedIdx,instance.buf.aux];
+  [['degrees',[0,3,4,5,6,7,8]],['contacts',[0,1,2,3,4,5,6,7,8,9]]].forEach(function(row){
+   var layout=device.createBindGroupLayout({entries:row[1].map(function(b){return {binding:b,visibility:GPUShaderStage.COMPUTE,buffer:{type:b<2?'uniform':b===2||b===5||b===9?'storage':'read-only-storage'}};})});
+   contactPipes[row[0]]=device.createComputePipeline({layout:device.createPipelineLayout({bindGroupLayouts:[layout]}),compute:{module:contactModule,entryPoint:row[0]}});
+   contactGroups[row[0]]=device.createBindGroup({layout:layout,entries:row[1].map(function(b){return {binding:b,resource:{buffer:cr[b]}};})});
+  });
+ }
  var model={ready:false,error:null,capacity:capacity,
-  readyPromise:module.getCompilationInfo().then(function(info){var errors=info.messages.filter(function(m){return m.type==='error';});if(errors.length)throw Error(errors.map(function(m){return m.lineNum+': '+m.message;}).join('\n'));if(destroyed)throw Error('Material slip was retired during compilation.');model.ready=true;return model;}).catch(function(error){model.error=error.message;throw error;}),
+  readyPromise:Promise.all([module.getCompilationInfo(),contactModule?contactModule.getCompilationInfo():Promise.resolve({messages:[]})]).then(function(infos){var errors=infos.flatMap(function(info){return info.messages;}).filter(function(m){return m.type==='error';});if(errors.length)throw Error(errors.map(function(m){return m.lineNum+': '+m.message;}).join('\n'));if(destroyed)throw Error('Material slip was retired during compilation.');model.ready=true;return model;}).catch(function(error){model.error=error.message;throw error;}),
   encode:function(encoder){
    if(!model.ready||destroyed)throw Error('Material slip is not ready.');
    if(instance.grid.cells>capacity)throw Error('Material-slip grid exceeds its declared world allocation.');
    var pass=encoder.beginComputePass({label:'liquid.materialSlip.step'});
-   ['clearCells','scatter','stress','solve','stabilizeGrid','gridBoundary','gather'].forEach(function(name){pass.setPipeline(pipes[name]);pass.setBindGroup(0,groups[name]);pass.dispatchWorkgroups(Math.ceil((name==='clearCells'||name==='solve'||name==='stabilizeGrid'||name==='gridBoundary'?instance.grid.cells:instance.uploadedCount)/256));});pass.end();
+   ['clearCells','scatter','stress','solve','stabilizeGrid','gridBoundary','gather'].concat(phases===4?['bedCollide']:[]).forEach(function(name){pass.setPipeline(pipes[name]);pass.setBindGroup(0,groups[name]);pass.dispatchWorkgroups(Math.ceil((name==='clearCells'||name==='solve'||name==='stabilizeGrid'||name==='gridBoundary'?instance.grid.cells:instance.uploadedCount)/256));});pass.end();
   },
   jolt:function(speed){
    if(!model.ready||destroyed||!Number.isFinite(speed)||Math.abs(speed)>100)throw Error('Invalid declared jar impulse.');
@@ -300,10 +457,16 @@ function create(instance,options){
   // native position/velocity constraints or their validated spatial search.
   beforeGrains:function(encoder){encoder.copyBufferToBuffer(instance.buf.affine,0,contactAffine,0,instance.uploadedCount*16);},
   afterGrains:function(encoder){encoder.copyBufferToBuffer(contactAffine,0,instance.buf.affine,0,instance.uploadedCount*16);},
-  stats:function(){return {enabled:!destroyed,ready:model.ready,error:model.error,densities:density.slice(),dragRates:drag.slice(),commonGravity:instance.simParamsHost[0],referenceArea:opts.cellSize*opts.cellSize/opts.restDensity,gridCapacity:capacity,method:'Separate APIC phase momentum, shared compressive volume stress, implicit equal/opposite drag. No calibrated oil viscosity, surface tension or Drucker-Prager sand law.'};},
+  stats:function(){return {grainClasses:phases===4?['quartz','gold']:['grain'],mixedGrainContacts:!!opts.grainContacts,enabled:!destroyed,ready:model.ready,error:model.error,densities:density.slice(),dragRates:drag.slice(),commonGravity:instance.simParamsHost[0],referenceArea:opts.cellSize*opts.cellSize/opts.restDensity,gridCapacity:capacity,method:'Separate APIC phase momentum, shared compressive volume stress, implicit equal/opposite drag. '+(opts.grainContacts?'Mass-weighted grain contacts and Coulomb friction. ':'')+'No calibrated viscosity, permeability, surface tension or Drucker-Prager sand law.'};},
   destroy:function(){if(destroyed)return;destroyed=true;model.ready=false;if(instance.materialSlip===model)delete instance.materialSlip;instance.needsDenseClear=true;buffers.forEach(function(b){b.destroy();});}
  };
+ if(opts.grainContacts)model.encodeGrainContacts=function(encoder){
+  encoder.copyBufferToBuffer(instance.buf.pos,0,contactBefore,0,instance.uploadedCount*16);
+  var pass=encoder.beginComputePass({label:'liquid.slip.mixedGrainContacts'});
+  ['degrees','contacts'].forEach(function(name){pass.setPipeline(contactPipes[name]);pass.setBindGroup(0,contactGroups[name]);pass.dispatchWorkgroups(Math.ceil(instance.uploadedCount/256));});pass.setPipeline(pipes.bedGrains);pass.setBindGroup(0,groups.bedGrains);pass.dispatchWorkgroups(Math.ceil(instance.uploadedCount/256));pass.end();
+ };
+ model.grainColors=opts.grainColors||null;
  return model;
 }
-root.LiquidMaterialSlipWGPU={create:create,source:SOURCE,dragPair:dragPair};
+root.LiquidMaterialSlipWGPU={create:create,source:SOURCE,sluiceSource:sluiceSource,contactSource:CONTACT_SOURCE,dragPair:dragPair};
 })(typeof window!=='undefined'?window:globalThis);

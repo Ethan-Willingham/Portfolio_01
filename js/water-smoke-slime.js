@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.153'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.154'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -509,7 +509,8 @@
     wallsBakedVersion = wallsVersion;
     wallsCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
     wallsCtx.clearRect(0, 0, worldW, worldH);
-    var glassDetail=glassWalls && machineState && /^(thermoscope|roman-inverted-siphon)$/.test(machineState.definition.name);
+    var sluiceWalls=machineState && machineState.definition.sluice;
+    var glassDetail=sluiceWalls || glassWalls && machineState && /^(thermoscope|roman-inverted-siphon)$/.test(machineState.definition.name);
     if(machineState && machineState.definition.hourglass)return;
     var path = wallOutline(glassDetail);
     var palette = getComputedStyle(document.documentElement);
@@ -547,10 +548,17 @@
     // A narrow front lip covers the staircase in the fluid mask.
     // The bulk water and slime renderers retain their full detail.
     wallsCtx.strokeStyle = fill;
-    wallsCtx.lineWidth = TILE * 1.5;
+    wallsCtx.lineWidth = sluiceWalls ? 1 : TILE * 1.5;
     wallsCtx.lineJoin = 'round';
     wallsCtx.stroke(path);
     wallsCtx.fill(path);
+    if(sluiceWalls){
+      wallsCtx.shadowBlur=0;wallsCtx.shadowOffsetY=0;
+      sluiceWalls.polygons.forEach(function(vertices){
+        wallsCtx.beginPath();vertices.forEach(function(p,i){if(i)wallsCtx.lineTo(p[0],p[1]);else wallsCtx.moveTo(p[0],p[1]);});
+        wallsCtx.closePath();wallsCtx.fill();wallsCtx.strokeStyle=palette.getPropertyValue('--rule-strong').trim();wallsCtx.lineWidth=1;wallsCtx.stroke();
+      });
+    }
     wallsCtx.shadowBlur = 0;
     wallsCtx.shadowOffsetY = 0;
     wallsCtx.save();
@@ -612,8 +620,8 @@
     if (liquidCount >= LIQUID_MAX_PARTICLES) return -1;
     var id = liquidCount++;
     liquidMutationSeq++;
-    liquidType[id] = type === 'oil' ? 1 : type === 'sand' ? 5 : 0;
-    liquidOrigin[id] = origin || 0;
+    liquidType[id] = type === 'oil' ? 1 : type === 'sand' || type === 'gold' ? 5 : 0;
+    liquidOrigin[id] = type==='gold'?3:origin || 0;
     liquidX[id] = x;
     liquidY[id] = y;
     liquidVX[id] = vx || 0;
@@ -14302,7 +14310,7 @@
         numericalStatus:'Two-sided native water contacts and a smooth quadratic skin. Contact frame '+membrane.contactFrame+'.',
         energyBudgetStatus:machineState.definition.energyBudgetStatus,error:membrane.error || buildError};return;
     }
-    if(toyMaterialSlip && machineState){machineState.readings={ready:true,caption:machineState.definition.caption,action:machineState.definition.action,particleCount:liquidCount,materialSlip:toyMaterialSlip.stats(),numericalStatus:toyMaterialSlip.stats().method,energyBudgetStatus:machineState.definition.energyBudgetStatus,error:buildError || liquidWGPU.materialStateError};return;}
+    if(toyMaterialSlip && machineState){machineState.readings={ready:true,caption:machineState.definition.caption,action:machineState.definition.action,particleCount:liquidCount,materialSlip:toyMaterialSlip.stats(),sluice:machineState.definition.sluice?sluiceInventory():null,numericalStatus:toyMaterialSlip.stats().method,energyBudgetStatus:machineState.definition.energyBudgetStatus,error:buildError || liquidWGPU.materialStateError};return;}
     if(toyFire && machineState){var heat=toyFire.stats();machineState.readings={ready:true,caption:machineState.definition.caption,action:machineState.definition.action,particleCount:liquidCount,fire:heat,mirrorAgeSimulationMs:liquidWGPU.getReadbackAge()*1000,inputWaterWorkFootPounds:(machineState.energyInput || 0)/1.3558179483314,energyBudgetStatus:machineState.definition.energyBudgetStatus,error:buildError || airState.error};return;}
     if(toyCannon && machineState && machineState.ready){
       machineState.readings={ready:true,caption:machineState.definition.caption,action:machineState.definition.action,
@@ -14591,7 +14599,7 @@
       if(!definition.initial.some(function(shape){return window.WaterMachinesScenes.contains(shape,x,y);}))continue;
       var px=x+(random()-.5)*.12,py=y+(random()-.5)*.12;
       if(balloonSeedRing && ((!definition.membrane.seedBoth && !window.WSSWaterBalloons.geometry.contains(balloonSeedRing,px,py)) || window.WSSWaterBalloons.geometry.nearest(balloonSeedRing,px,py).distance<3))continue;
-      if(!seedClear(px,py))continue;
+      if(!seedClear(px,py) || definition.seedClear && !definition.seedClear(px,py))continue;
       requested++;
       var seedMaterial=definition.materialSlip ? definition.materialAt(x,y) : 'water';
       if(addLiquidParticle(seedMaterial,px,py,0,0,0)>=0)added++;
@@ -14654,7 +14662,13 @@
       fireDomainPrevious=liquidWGPU.toyNativeDomain;fireDomainActive=true;
       liquidWGPU.toyNativeDomain={minX:0,minY:0,maxX:worldW,maxY:worldH};
       liquidWGPU.prepareMaterialState({reset:true});
-      ownSlip=await liquidWGPU.configureMaterialSlip(Object.assign({width:worldW,height:worldH},definition.materialSlip));
+      var slipOptions=Object.assign({width:worldW,height:worldH},definition.materialSlip);
+      if(definition.sluice){
+        var grainStyle=getComputedStyle(document.documentElement);
+        function grainColor(token){var hex=grainStyle.getPropertyValue(token).trim();return [1,3,5].map(function(i){return parseInt(hex.slice(i,i+2),16)/255;});}
+        slipOptions.grainColors=grainColor('--text-dim').concat([1],grainColor('--toy-grain-gold'),[1]);
+      }
+      ownSlip=await liquidWGPU.configureMaterialSlip(slipOptions);
       if(request!==machineRequest){ownSlip.destroy();return null;}
       toyMaterialSlip=ownSlip;
       materialOilLook=Array.from(liquidWGPU.renderParamsHost.slice(16,20));
@@ -15331,6 +15345,11 @@
         if(definition.setup==='vented')c.fillText('Open vent',heater.x+104,100);
       }
       if(toyBubbles){var hose=definition.bubbles.hose;if(art)art.airPort(c,hose.x,hose.y,{bottom:384,active:toyBubbles.stats().injecting});}
+      if(definition.sluice){
+        c.fillStyle=palette.getPropertyValue('--text-dim').trim();c.fillText('Sand',202,156);
+        c.fillStyle=palette.getPropertyValue('--toy-grain-gold').trim();c.fillText('Gold',242,156);
+        c.fillStyle=text;c.fillText('Riffles',350,192);
+      }
       definition.marks.forEach(function(mark){
         c.save();c.setLineDash([5,5]);c.beginPath();c.moveTo(mark.x,mark.y);c.lineTo(mark.x+mark.width,mark.y);c.stroke();c.restore();
         if(mark.id==='trigger')c.fillText('Fill line',mark.x+8,mark.y-7);
@@ -15538,6 +15557,15 @@
 
     readoutTick++;
     if (readoutTick >= 15) { readoutTick = 0; updateReadout(); }
+  }
+
+  function sluiceInventory(){
+    var data={sand:{total:0,washed:0},gold:{total:0,washed:0},admitted:Math.max(0,liquidCount-machineState.initialParticles),pouring:machinePourHeld};
+    for(var i=0;i<liquidCount;i++)if(liquidType[i]===5){
+      var r=liquidOrigin[i]===3?data.gold:data.sand;r.total++;
+      if(liquidX[i]>=608 || liquidY[i]>=288)r.washed++;
+    }
+    return data;
   }
 
   // A held control admits the same full stream. Release leaves no backlog;

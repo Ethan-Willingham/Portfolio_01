@@ -1,3 +1,4 @@
+:root { --toy-grain-gold: #dfc288; }
 /* Water, Smoke, and Slime as a full-screen app.
    Loaded after water-smoke-slime.css, so this file owns layout and color.
    The canvas reads --accent, --text, --bg and --bg-raised from :root for
