@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.132'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.133'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -216,6 +216,7 @@
       return Math.abs(value-buildViewProjection[index])>.01;
     }))cancelHeldInput();
     buildViewProjection=projection;
+    if (userPaused && waterState === 'on') drawLiquidToy();
   }
   function cameraState(){
     return {zoom:viewZoom,panX:viewPanX,panY:viewPanY,scale:fitScale,baseScale:baseFitScale,
@@ -1528,9 +1529,12 @@
         },
         world: { COLS: COLS, TILE: TILE, TOTAL_ROWS: TOTAL_ROWS },
         getView: function () {
-          // A fitted cup should render at its displayed pixel density, rather
-          // than shading a full-width Retina target before shrinking it.
-          var waterDpr = dpr * (fixedMachineScene(currentScene) ? Math.min(1, fitScale) : 1);
+          // Follow display density and magnification, including camera zoom.
+          // Fitted machines still shade only their displayed size. Standard
+          // displays get a little supersampling for narrow water ribbons.
+          var waterDpr = Math.max(1.5, Math.min(window.devicePixelRatio || 1, 3)) *
+            (fixedMachineScene(currentScene) ? fitScale : Math.max(1, fitScale));
+          waterDpr = Math.min(waterDpr, 4096 / Math.max(worldW, worldH));
           return {
             camX: 0, camY: 0,
             dpr: waterDpr, worldScale: 1,
@@ -13078,7 +13082,7 @@
   // js/liquid-wgpu.js; boot-tuned values from the readyPromise block above).
   var WATER_LEVER_DEFAULTS = {
     AERATION_COEFF: 5, AERATION_THRESHOLD: 0.55, AERATION_DAMP: 0.988,
-    SURFACE_SOFT: 0.8, WATER_PARTICLE_SIZE: 1.8, DROPLETS: 1,
+    WATER_PARTICLE_SIZE: 1.8, DROPLETS: 1,
     MAX_VEL: 600, PRESSURE_MAX_DV: 10, BURST_DAMP: 0.985,
     BURST_GATE_LO: 100, BURST_GATE_HI: 300, BOUNCE_WATER: 0.18,
     PRESSURE_STIFF: 5
@@ -13086,7 +13090,9 @@
   var WATER_COLOR_DEFAULTS = {
     WATER_R: 0.13, WATER_G: 0.34, WATER_B: 0.52, WATER_ALPHA: 0.86,
     WATER_FOAM_R: 0.66, WATER_FOAM_G: 0.78, WATER_FOAM_B: 0.82,
-    SURFACE_THRESH: 1.8, SURFACE_RSCALE: 0.9
+    // A narrow antialiased edge replaces the broad translucent fringe.
+    // Changing away from Pearl also restores this surface softness.
+    SURFACE_THRESH: 1.8, SURFACE_RSCALE: 0.9, SURFACE_SOFT: 0.25
   };
   function pushSim(map) { if (liquidWGPU && liquidWGPU.setSimParam) for (var k in map) liquidWGPU.setSimParam(k, map[k]); }
   function pushRender(map) { if (liquidWGPU && liquidWGPU.setRenderParam) for (var k in map) liquidWGPU.setRenderParam(k, map[k]); }

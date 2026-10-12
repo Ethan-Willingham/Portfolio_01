@@ -119,6 +119,10 @@ fn spectrum(hue: f32) -> vec3f {
       draw:function (clock) {
         if (!engine.renderActive) { result.setEnabled(false); return; }
         if (!enabled || !result.ready) return;
+        // The source follows display density and fullscreen scaling. Keep
+        // textureLoad's pixel coordinates identical in the finishing pass.
+        if (layer.width !== engine.renderCanvas.width) layer.width = engine.renderCanvas.width;
+        if (layer.height !== engine.renderCanvas.height) layer.height = engine.renderCanvas.height;
         var simulationClock = engine.simulationClock;
         var dt = initialized ? Math.max(0,Math.min(.05,simulationClock-lastClock)) : 0;
         lastClock = simulationClock;
@@ -149,7 +153,8 @@ fn spectrum(hue: f32) -> vec3f {
       uniform = device.createBuffer({ size:32,usage:GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
       sampler = device.createSampler({ magFilter:'linear',minFilter:'linear' });
       function field(label) {
-        return device.createTexture({ label:label,size:[Math.ceil(size.width/3),Math.ceil(size.height/3)],
+        // Finer transported coordinates preserve small curls and ribbons.
+        return device.createTexture({ label:label,size:[Math.ceil(size.width/1.5),Math.ceil(size.height/1.5)],
           format:'rgba16float',usage:GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING });
       }
       flowTexture = field('demo.rainbowFlow'); dyeTextures = [field('demo.rainbowA'),field('demo.rainbowB')];

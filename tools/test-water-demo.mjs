@@ -70,8 +70,8 @@ async function screenshot(name) {
   const r = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
   fs.writeFileSync(path.join(dump, name + '.png'), Buffer.from(r.data, 'base64'));
 }
-async function navigate(width, height, query = '', mobile = false) {
-  await send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile });
+async function navigate(width, height, query = '?scene=falls', mobile = false, deviceScaleFactor = 1) {
+  await send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor, mobile });
   await send('Page.navigate', { url: `http://127.0.0.1:${port}/archive/water-smoke-slime/water-smoke-slime.html${query}` });
   for (let i = 0; i < 120; i++) {
     if (await evaluate('!!window.__toy && __toy.stats().waterState !== "booting"')) break;
@@ -79,6 +79,41 @@ async function navigate(width, height, query = '', mobile = false) {
   }
   await sleep(1000);
   console.log('BOOT', width, height, JSON.stringify(await evaluate('__toy.stats()')));
+}
+async function checkWaterResolution(label) {
+  const size = await evaluate(`(() => {
+    const source = __toy.liquid().renderCanvas, finish = document.getElementById('toy-rainbow-water');
+    const bounds = document.getElementById('toy-stage').getBoundingClientRect();
+    return { source:[source.width,source.height],finish:[finish.width,finish.height],
+      displayed:[bounds.width*devicePixelRatio,bounds.height*devicePixelRatio] };
+  })()`);
+  assert.deepEqual(size.finish, size.source, label + ': rainbow samples the matching source pixels');
+  const limit = Math.min(1,4096/Math.max(...size.displayed));
+  assert.ok(size.source.every((value, i) => value >= size.displayed[i]*limit-1), label + ': water covers display resolution');
+  console.log('WATER RESOLUTION', label, JSON.stringify(size));
+}
+async function waterAlpha(softness) {
+  return evaluate(`(async () => {
+    const engine=__toy.liquid(),device=engine.device;
+    // Canvas textures expire after presentation. Copy this exact draw before
+    // yielding, rather than sampling a subsequently cleared canvas image.
+    engine.renderCtx.configure({device,format:engine.renderFormat,alphaMode:'premultiplied',
+      usage:GPUTextureUsage.RENDER_ATTACHMENT|GPUTextureUsage.TEXTURE_BINDING|GPUTextureUsage.COPY_SRC});
+    engine.setRenderParam('SURFACE_SOFT',${softness});engine.draw();
+    const source=engine.renderCanvas,bytesPerRow=Math.ceil(source.width*4/256)*256;
+    const buffer=device.createBuffer({size:bytesPerRow*source.height,usage:GPUBufferUsage.COPY_DST|GPUBufferUsage.MAP_READ});
+    try {
+      const encoder=device.createCommandEncoder();
+      encoder.copyTextureToBuffer({texture:engine.renderCtx.getCurrentTexture()},
+        {buffer,bytesPerRow},[source.width,source.height]);
+      device.queue.submit([encoder.finish()]);await buffer.mapAsync(GPUMapMode.READ);
+      const rgba=new Uint8Array(buffer.getMappedRange());let fringe=0,area=0;
+      for(let y=0;y<source.height;y++)for(let x=0;x<source.width;x++){
+        const alpha=rgba[y*bytesPerRow+x*4+3];area+=alpha/255;if(alpha>20 && alpha<190)fringe++;
+      }
+      return {fringe,area};
+    } finally {buffer.destroy();}
+  })()`);
 }
 try {
   await new Promise((resolve, reject) => { server.once('error', reject); server.listen(port, '127.0.0.1', resolve); });
@@ -111,8 +146,19 @@ try {
     assert.ok(await evaluate('__toy.stats().waterState === "on" && __toy.stats().smoke'), 'water and smoke boot on hardware graphics');
     assert.ok(await evaluate('__toy.stats().waterLook === "rainbow" && __toy.stats().rainbow.ready && __toy.stats().rainbow.active && __toy.stats().rainbow.frames > 0'), 'rainbow transport and finish render on the GPU by default');
     assert.ok(await evaluate('!document.getElementById("toy-rainbow-water").hidden && LiquidWGPU.last.renderCanvas.hidden'), 'the rainbow finish replaces the raw water layer');
+    await checkWaterResolution('desktop');
     await evaluate(`document.querySelector('[data-preset="waterLook:default"]').click()`); await sleep(200);
     assert.ok(await evaluate('!__toy.stats().rainbow.active && document.getElementById("toy-rainbow-water").hidden && !LiquidWGPU.last.renderCanvas.hidden'), 'normal water restores its original canvas');
+    await evaluate('__toy.pause(true)');
+    await evaluate(`__toy.liquid().setRenderParam('DROPLETS',0)`);
+    const broadEdge = await waterAlpha(.8), sharpEdge = await waterAlpha(.25);
+    console.log('WATER EDGE', JSON.stringify({broad:broadEdge,sharp:sharpEdge}));
+    assert.ok(sharpEdge.area > 0 && sharpEdge.fringe < broadEdge.fringe*.8, 'the frozen water surface has a narrower translucent fringe');
+    assert.ok(Math.abs(sharpEdge.area/broadEdge.area-1)<.05, 'sharpening preserves the visible body of water');
+    await evaluate(`__toy.liquid().setRenderParam('DROPLETS',1)`);
+    await evaluate(`__toy.set('waterLook','pearl');__toy.set('waterLook','default');__toy.liquid().draw()`);
+    assert.equal(await evaluate('__toy.liquid().renderParamsHost[21]'), .25, 'switching away from Pearl restores the sharper edge');
+    await evaluate('__toy.pause(false)');
     await evaluate(`document.querySelector('[data-preset="waterLook:rainbow"]').click()`); await sleep(300);
     assert.ok(await evaluate('__toy.stats().rainbow.active && !document.getElementById("toy-rainbow-water").hidden'), 'rainbow can be selected again');
     const pool = await evaluate(`(() => {
@@ -180,13 +226,37 @@ try {
     console.log('WALL GRIP', JSON.stringify(wallGrip));
     assert.ok(wallGrip.inside===0 && wallGrip.right<=wallGrip.wall+1 && wallGrip.minimum>0, 'pulling against a drawn wall keeps the gel outside terrain');
     for (const [w,h,mobile] of [[390,844,true],[844,390,true],[1280,720,false]]) {
-      await navigate(w,h,'',mobile); await screenshot(w+'x'+h);
+      await navigate(w,h,'?scene=falls',mobile); await screenshot(w+'x'+h);
+      await checkWaterResolution(w+'x'+h);
       assert.ok(await evaluate('document.documentElement.scrollWidth <= innerWidth'), 'no horizontal overflow at '+w+'x'+h);
       await evaluate('document.getElementById("toy-fullscreen").click()'); await sleep(300);
       assert.ok(await evaluate('document.getElementById("toy-viewport").getBoundingClientRect().bottom <= innerHeight && document.querySelector(".toy-foot").getBoundingClientRect().bottom <= innerHeight+1'), 'fullscreen controls remain visible at '+w+'x'+h);
+      await checkWaterResolution('fullscreen '+w+'x'+h);
       await screenshot('fullscreen-'+w+'x'+h);
     }
     await evaluate('document.getElementById("toy-fullscreen").click()');
+    for (const density of [2,3]) {
+      await navigate(1280,900,'?scene=falls',false,density);
+      await checkWaterResolution('DPR '+density);
+      await evaluate('__toy.pause(true);document.getElementById("toy").classList.add("is-expanded");__toy.resize()');
+      await checkWaterResolution('paused fullscreen DPR '+density);
+      await screenshot('retina-'+density);
+      await evaluate('__toy.pause(false)');
+    }
+    for (const [height,density] of [[820,2],[700,3]]) {
+      await navigate(1512,height,'?scene=self-flushing-cup&paused=1',false,density);
+      for(let i=0;i<200 && !await evaluate('!!__toy.machineState()?.ready');i++)await sleep(100);
+      assert.ok(await evaluate('!!__toy.machineState()?.ready'), 'the published cup is ready');
+      await evaluate(`__toy.set('waterLook','rainbow')`);
+      await inside('drawLiquidToy()');
+      await checkWaterResolution('fitted cup '+height+' DPR '+density);
+      const count = await evaluate('__toy.stats().water');
+      await evaluate('__toy.setCamera({zoom:2})');
+      await checkWaterResolution('zoomed paused cup '+height+' DPR '+density);
+      assert.equal(await evaluate('__toy.stats().water'),count,'camera zoom preserves water inventory');
+      assert.ok(await evaluate('__toy.stats().paused'),'camera zoom preserves manual pause');
+      await screenshot('cup-zoom-'+height);
+    }
     await inside('liquidWGPU.renderActive = false; updateLiquidToy(1/60);');
     assert.ok(await evaluate('__toy.stats().waterState === "off" && !__toy.stats().rainbow.active && document.getElementById("toy-rainbow-water").hidden'), 'a water backend failure also hides the rainbow finish');
     await send('Page.addScriptToEvaluateOnNewDocument', { source: `
