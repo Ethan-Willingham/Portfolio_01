@@ -10,8 +10,10 @@
     fluid.config.OPTICAL_DENSITY=1;fluid.config.OPTICAL_BRIGHTNESS=.55;fluid.config.OPTICAL_ABSORPTION=12;
     fluid.config.DENSITY_DISSIPATION=.12;
     var body=bodies[0],support=definition.support,fan=definition.fan,tracer=definition.tracer,node=-1,nearest=Infinity;
-    for(var k=0;k<body.ringN;k++){
-      var i=body.ring[k],distance=Math.hypot(body.px[i]-support.x,body.py[i]-support.y);
+    // Support an interior material point so the whole body cannot swing up
+    // around an edge tether while its skin still deforms in the airflow.
+    for(var i=0;i<body.n;i++){
+      var distance=Math.hypot(body.px[i]-support.x,body.py[i]-support.y);
       if(distance<nearest){nearest=distance;node=i;}
     }
     // The spring is born stress-free at the chosen material point.

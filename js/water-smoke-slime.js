@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.138'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.139'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -13954,7 +13954,7 @@
     if(toyCannon && machineState && machineState.ready){
       machineState.readings={ready:true,caption:machineState.definition.caption,action:machineState.definition.action,
         smokeCannon:toyCannon.stats(jelloBodies),particleCount:liquidCount,sampleAgeMs:0,
-        scaleText:'The box is 30 inches wide and 1 inch deep. '+(machineState.definition.name==='smoke-wind-tunnel'?'One material point has a compliant support; gravity is zero.':'The slime floats in zero gravity.'),
+        scaleText:'The box is 30 inches wide and 1 inch deep. '+(machineState.definition.name==='smoke-wind-tunnel'?'The central material point has a damped compliant support; gravity is zero.':'The slime floats in zero gravity.'),
         numericalStatus:'Current smoke pressure drives the slime. This is a two-dimensional section.',
         energyBudgetStatus:machineState.definition.energyBudgetStatus,error:buildError};return;
     }
