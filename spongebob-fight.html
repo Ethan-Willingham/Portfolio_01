@@ -20,11 +20,11 @@
   <meta name="twitter:image" content="https://ethanwillingham.com/assets/spongebob/characters/bubble-buddy.webp">
   <link rel="preload" href="assets/fonts/segoe_ui_bold.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <link rel="stylesheet" href="spongebob-fight.css?v=3">
+  <link rel="stylesheet" href="spongebob-fight.css?v=4">
 </head>
 <body>
   <div class="sb-app-shell">
-    <header class="sb-app-header"><div class="sb-app-title"><h1>Bikini Bottom Showdown</h1></div></header>
+    <header class="sb-app-header"><div class="sb-app-title"><h1>Bikini Bottom Showdown</h1><button class="sb-text-button" id="sb-view-results" type="button" hidden>Skip to results</button></div></header>
     <main class="sb-app-main">
       <section class="sb-fight" id="sb-fight" aria-label="SpongeBob fight vote" aria-busy="true">
         <div class="sb-empty" id="sb-load-state" role="status"><p>Finding the first matchup...</p><button class="sb-button" id="sb-load-retry" type="button" hidden>Try again</button></div>
@@ -35,14 +35,26 @@
         </div>
         <div class="sb-vote-state" id="sb-vote-state" hidden><p id="sb-vote-status" role="status" aria-live="polite" aria-atomic="true"></p><p class="sb-note" id="sb-vote-total" hidden></p><button class="sb-button" id="sb-vote-retry" type="button" hidden>Try again</button></div>
         <div class="sb-round-actions" id="sb-round-actions" hidden><button class="sb-button sb-primary" id="sb-next" type="button" hidden>Next matchup</button><button class="sb-text-button" id="sb-refresh" type="button" hidden>Refresh results</button></div>
-        <div class="sb-empty sb-complete" id="sb-complete" hidden><h2>Round complete</h2><button class="sb-button sb-primary" id="sb-restart" type="button">Play another round</button></div>
+        <section class="sb-complete" id="sb-complete" aria-labelledby="sb-results-title" hidden>
+          <header class="sb-summary-header">
+            <h2 id="sb-results-title" tabindex="-1">Your results</h2>
+            <p class="sb-comparison" id="sb-comparison"></p>
+            <p class="sb-summary-note" id="sb-comparison-note"></p>
+          </header>
+          <ol class="sb-results-list" id="sb-results-list" aria-label="All matchup results"></ol>
+          <div class="sb-summary-actions">
+            <p class="sb-summary-note" id="sb-summary-status" role="status" aria-live="polite"></p>
+            <button class="sb-button" id="sb-summary-refresh" type="button">Refresh results</button>
+            <button class="sb-button sb-primary" id="sb-restart" type="button">Play another round</button>
+          </div>
+        </section>
         <noscript><p class="sb-empty">Turn on JavaScript to show the characters and save your vote.</p></noscript>
       </section>
     </main>
     <footer class="sb-app-footer"><a href="/">&copy; 2026 Ethan Willingham</a></footer>
   </div>
   <script src="js/spongebob-shared.js?v=7"></script>
-  <script src="js/spongebob-votes.js?v=2"></script>
-  <script src="js/spongebob-fight.js?v=5"></script>
+  <script src="js/spongebob-votes.js?v=3"></script>
+  <script src="js/spongebob-fight.js?v=6"></script>
 </body>
 </html>

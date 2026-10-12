@@ -4,7 +4,7 @@
   const endpoint = String(window.SPONGEBOB_VOTES_ENDPOINT || 'https://spongebob-votes-ethan.snugbay4.chatgpt.site').replace(/\/$/, '');
   let identity;
 
-  // A round belongs to this page load. Keep its ID stable only for safe retries.
+  // New voting rounds get a fresh ID. Completed rounds can be read by their saved ID.
   function startRound() {
     identity = crypto.randomUUID();
   }
@@ -24,7 +24,8 @@
         result.counts[sorted[0]] + result.counts[sorted[1]] !== result.total ||
         sorted.some(id => Math.abs(result.percentages[id] - (result.total ? result.counts[id] / result.total * 100 : 0)) > 0.051) ||
         (result.winner !== null && !sorted.includes(result.winner)) ||
-        result.alreadyVoted !== Boolean(result.winner)) {
+        result.alreadyVoted !== Boolean(result.winner) ||
+        (result.winner !== null && result.counts[result.winner] < 1)) {
       throw new Error('The shared vote response could not be verified. Try again.');
     }
     return result;
@@ -65,7 +66,7 @@
     endpoint,
     startRound,
     getVoterId,
-    get: pair => request(pair),
+    get: (pair, voterId) => request(pair, { voterId }),
     vote: ({ pair, winner, voterId }) => {
       if (!pair.includes(winner)) return Promise.reject(new Error('Choose one of these two characters.'));
       return request(pair, { winner, voterId });

@@ -77,7 +77,8 @@ const server = http.createServer(async (request, response) => {
   const url = new URL(request.url, base || 'http://127.0.0.1');
   if (url.pathname === '/v1/votes') {
     try {
-      if (failure === 'get' && request.method === 'GET' || failure === 'post' && request.method === 'POST') { response.writeHead(503).end(); return; }
+      if (failure === 'get' && request.method === 'GET' || failure === 'post' && request.method === 'POST' ||
+          failure === 'partial' && request.method === 'GET' && url.searchParams.get('a') === 'spongebob-squarepants') { response.writeHead(503).end(); return; }
       const chunks = []; for await (const chunk of request) chunks.push(chunk);
       const body = Buffer.concat(chunks);
       const result = await worker.fetch(new Request(url, {
@@ -106,6 +107,23 @@ async function fightReady(page) {
 async function voteFor(page, name) {
   await page.getByRole('button', { name: 'Choose ' + name + ' to win', exact: true }).click();
   await page.locator('#sb-next').waitFor({ state: 'visible' });
+}
+async function summaryReady(page) {
+  await page.waitForFunction(() => !document.getElementById('sb-complete').hidden && document.getElementById('sb-results-list').getAttribute('aria-busy') === 'false');
+}
+async function checkSummary(page, pairs) {
+  await summaryReady(page);
+  assert.equal(await page.locator('.sb-summary-row').count(), pairs.length);
+  assert.equal(await page.locator('.sb-your-pick').count(), pairs.length, 'every chosen winner is marked');
+  for (let index = 0; index < pairs.length; index++) {
+    const row = page.locator('.sb-summary-row').nth(index);
+    const sorted = [...pairs[index]].sort();
+    const counts = pairs[index].map(id => sqlite.prepare('SELECT COUNT(*) AS n FROM matchup_votes WHERE pair_a = ? AND pair_b = ? AND winner = ?').get(...sorted, id).n);
+    const total = counts[0] + counts[1], left = Math.round(counts[0] / total * 100);
+    assert.deepEqual(await row.locator('.sb-summary-count').allTextContents(), counts.map((count, side) => count.toLocaleString() + (count === 1 ? ' vote' : ' votes') + ' · ' + (side === 0 ? left : 100 - left) + '%'), 'both exact counts and percentages appear for every pair');
+    assert.equal(await row.locator('.is-chosen .sb-summary-name').textContent(), castById.get(pairs[index][0]).name + 'Your pick', 'the selected side is marked');
+  }
+  await noOverflow(page);
 }
 async function noOverflow(page) {
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth), true, 'no horizontal overflow');
@@ -164,6 +182,8 @@ async function consumeRound(page, pairs, { touch = false, viewport } = {}) {
   assert.equal(await page.locator('#sb-complete').isVisible(), true, 'the round ends after exactly its configured pairs');
   assert.equal(await page.locator('#sb-matchup').isVisible(), false, 'no extra pair appears');
   assert.equal(seen.size, pairs.length * 2);
+  await checkSummary(page, pairs);
+  if (viewport) await capture(page, '/tmp/spongebob-phone-' + viewport.width + 'x' + viewport.height + '-complete.png');
 }
 (async () => {
   try {
@@ -184,12 +204,13 @@ async function consumeRound(page, pairs, { touch = false, viewport } = {}) {
     assert.equal(await page.locator('#sb-next').isVisible(), false, 'unanswered pairs cannot advance');
     await voteFor(page, 'Patrick Star');
     assert.match(await page.locator('#sb-vote-total').textContent(), /^1 vote/);
-    assert.match(await page.locator('#sb-vote-status').textContent(), /100%/);
+    assert.match(await page.locator('#sb-vote-status').textContent(), /first to vote/, 'the first vote does not imply agreement from anyone else');
     const second = await context();
     await second.page.goto(share); await fightReady(second.page); await voteFor(second.page, 'SpongeBob SquarePants');
     assert.match(await second.page.locator('#sb-vote-total').textContent(), /^2 votes/);
     assert.equal(await second.page.locator('#sb-result-left').textContent(), '50%');
     assert.equal(await second.page.locator('#sb-result-right').textContent(), '50%');
+    assert.match(await second.page.locator('#sb-vote-status').textContent(), /0% of other votes agree/, 'comparison leaves out the current round');
     await page.locator('#sb-refresh').click(); await page.waitForFunction(() => document.getElementById('sb-vote-total').textContent.startsWith('2 votes'));
     const repeated = await page.evaluate(() => SpongeBobVotes.vote({ pair: ['patrick-star', 'spongebob-squarepants'], winner: 'spongebob-squarepants' }));
     assert.equal(repeated.total, 2); assert.equal(repeated.winner, 'patrick-star', 'first vote sticks for reversed pair');
@@ -203,6 +224,12 @@ async function consumeRound(page, pairs, { touch = false, viewport } = {}) {
     assert.equal(await page.locator('#sb-vote-state').isVisible(), false, 'a reload does not reveal a previous vote');
     assert.equal(await page.locator('#sb-result-left').isVisible(), false);
     assert.equal(await page.locator('#sb-next').isVisible(), false);
+    assert.equal(await page.locator('#sb-view-results').textContent(), 'Skip to your results', 'completion is remembered even before the last Next click');
+    await page.locator('#sb-view-results').click(); await summaryReady(page);
+    assert.equal(await page.locator('.sb-agreement').textContent(), '0%');
+    assert.equal(await page.locator('.is-chosen .sb-summary-name').textContent(), 'Patrick StarYour pick');
+    assert.equal(sqlite.prepare('SELECT COUNT(*) AS n FROM matchup_votes').get().n, 2, 'revisiting results never submits a vote');
+    await page.locator('#sb-restart').click(); await fightReady(page);
     await voteFor(page, 'SpongeBob SquarePants');
     assert.match(await page.locator('#sb-vote-status').textContent(), /^You chose SpongeBob SquarePants/);
     assert.match(await page.locator('#sb-vote-total').textContent(), /^3 votes/, 'new rounds add responses while preserving community totals');
@@ -222,6 +249,69 @@ async function consumeRound(page, pairs, { touch = false, viewport } = {}) {
     assert.match(await outage.page.locator('#sb-vote-total').textContent(), /^4 votes/, 'retry confirms exactly one saved vote');
     assert.equal(sqlite.prepare('SELECT COUNT(*) AS n FROM matchup_votes').get().n, 4);
     await readablePhoneLayout(outage.page); await outage.context.close();
+    const zero = await context();
+    await zero.page.goto(base + '/spongebob-fight.html#roster=sandy-cheeks,squidward-tentacles'); await fightReady(zero.page);
+    await zero.page.locator('#sb-view-results').click(); await summaryReady(zero.page);
+    assert.deepEqual(await zero.page.locator('.sb-summary-count').allTextContents(), ['0 votes · 0%', '0 votes · 0%'], 'unvoted results show real zero counts');
+    assert.equal(await zero.page.locator('.sb-your-pick, .sb-agreement').count(), 0, 'skipping without saved choices never invents a personal comparison');
+    await zero.page.locator('#sb-restart').click(); await fightReady(zero.page); await zero.context.close();
+    const comparisonPairs = [['spongebob-squarepants', 'sandy-cheeks'], ['patrick-star', 'squidward-tentacles']];
+    for (const [index, choices] of [[0, [0, 0, 0, 1]], [1, [0, 1]]]) {
+      for (const side of choices) {
+        const response = await page.request.post(base + '/v1/votes', { headers: { Origin: base }, data: { pair: comparisonPairs[index], winner: comparisonPairs[index][side], voterId: crypto.randomUUID() } });
+        assert.equal(response.status(), 200);
+      }
+    }
+    const comparison = await context();
+    const comparisonURL = base + '/spongebob-fight.html#' + new URLSearchParams({ roster: comparisonPairs.flat().join(','), matchups: JSON.stringify(comparisonPairs) });
+    await comparison.page.goto(comparisonURL); await consumeRound(comparison.page, comparisonPairs);
+    assert.equal(await comparison.page.locator('.sb-agreement').textContent(), '63%', 'average gives each matchup equal weight: 75% and 50%, excluding own votes');
+    const savedState = await comparison.context.storageState();
+    const savedRows = sqlite.prepare('SELECT COUNT(*) AS n FROM matchup_votes').get().n;
+    await comparison.context.close();
+    const returning = await context({ width: 375, height: 667 }, { storageState: savedState });
+    await returning.page.goto(comparisonURL); await fightReady(returning.page);
+    failure = 'partial';
+    await returning.page.locator('#sb-view-results').click(); await summaryReady(returning.page);
+    assert.equal(await returning.page.locator('.sb-agreement').count(), 0, 'a partial outage does not show an incomplete average');
+    assert.equal(await returning.page.getByText('Votes unavailable', { exact: true }).count(), 2);
+    assert.equal(await returning.page.locator('.sb-your-pick').count(), 2, 'your choices stay visible during an outage');
+    await noOverflow(returning.page);
+    failure = null; await returning.page.locator('#sb-summary-refresh').click(); await summaryReady(returning.page);
+    assert.equal(await returning.page.locator('.sb-agreement').textContent(), '63%', 'completed choices survive closing and reopening the browser');
+    assert.equal(sqlite.prepare('SELECT COUNT(*) AS n FROM matchup_votes').get().n, savedRows);
+    const extraVote = await page.request.post(base + '/v1/votes', { headers: { Origin: base }, data: { pair: comparisonPairs[1], winner: comparisonPairs[1][1], voterId: crypto.randomUUID() } });
+    assert.equal(extraVote.status(), 200);
+    await returning.page.locator('#sb-summary-refresh').click(); await summaryReady(returning.page);
+    assert.equal(await returning.page.locator('.sb-agreement').textContent(), '54%', 'refresh compares saved picks with new community votes');
+    assert.deepEqual(await returning.page.locator('.sb-summary-row').nth(1).locator('.sb-summary-count').allTextContents(), ['2 votes · 50%', '2 votes · 50%']);
+    assert.equal(sqlite.prepare('SELECT COUNT(*) AS n FROM matchup_votes').get().n, savedRows + 1, 'only the other person added a vote');
+    await capture(returning.page, '/tmp/spongebob-showdown-comparison.png');
+    let releaseReads, readsStarted, pendingReads = 0;
+    const pauseReads = new Promise(resolve => { releaseReads = resolve; });
+    const bothReadsStarted = new Promise(resolve => { readsStarted = resolve; });
+    const delayRead = async route => {
+      if (++pendingReads === comparisonPairs.length) readsStarted();
+      await pauseReads;
+      await route.continue();
+    };
+    await returning.context.route('**/v1/votes?*', delayRead);
+    await returning.page.locator('#sb-summary-refresh').click();
+    await bothReadsStarted;
+    await returning.page.locator('#sb-restart').click();
+    releaseReads();
+    await fightReady(returning.page);
+    await returning.context.unroute('**/v1/votes?*', delayRead);
+    assert.equal(await returning.page.locator('#sb-complete').isVisible(), false, 'late results cannot reopen the summary after starting a new round');
+    assert.equal(await returning.page.locator('#sb-result-left').isVisible(), false);
+    await returning.page.goto(base + '/spongebob-fight.html'); await fightReady(returning.page);
+    assert.equal(await returning.page.locator('#sb-view-results').textContent(), 'Skip to results', 'different lineups do not inherit unrelated saved choices');
+    await returning.page.evaluate(() => {
+      localStorage.setItem('spongebob-results-v1:' + JSON.stringify(['patrick-star', 'spongebob-squarepants']), '{bad json');
+    });
+    await returning.page.goto(share); await fightReady(returning.page);
+    assert.equal(await returning.page.locator('#sb-view-results').textContent(), 'Skip to results', 'corrupt storage does not prevent voting');
+    await returning.context.close();
     await page.goto(base + '/spongebob-fight.html'); await fightReady(page);
     const decoded = await page.evaluate(async ids => {
       const data = await SpongeBob.load();
@@ -230,6 +320,7 @@ async function consumeRound(page, pairs, { touch = false, viewport } = {}) {
     for (const portrait of decoded) { assert.equal(portrait.image, portraitOverrides[portrait.id].image); assert.ok(portrait.width > 0 && portrait.height > 0); }
     await capture(page, '/tmp/spongebob-showdown-desktop.png');
     await consumeRound(page, requestedPairs);
+    assert.match(await page.locator('#sb-comparison').textContent(), /No other votes/, 'one response per matchup cannot be compared with itself');
     await capture(page, '/tmp/spongebob-showdown-complete.png');
     const completedRoundId = await page.evaluate(() => SpongeBobVotes.getVoterId());
     await page.locator('#sb-restart').click(); await fightReady(page);
@@ -273,7 +364,7 @@ async function consumeRound(page, pairs, { touch = false, viewport } = {}) {
     assert.ok(!fs.readFileSync(path.join(root, 'archive.html'), 'utf8').includes('spongebob-picker.html'));
     assert.ok(!JSON.parse(fs.readFileSync(path.join(root, 'search-index.json'))).posts.some(post => post.url === 'spongebob-picker.html'));
     assert.deepEqual(errors, [], 'no browser script errors');
-    console.log('PASS: ten exact pairs with no repeats; touch voting/results/large Next across eight phone viewports and both orientations; no Skip/menu/captions/picker; 95 clean portraits; real isolated vote totals, fresh reloads and replays, ignored legacy storage, duplicate prevention within a round and safe retry.');
+    console.log('PASS: exact counts and percentages after votes and across the complete round; average comparison excludes own votes; results shortcut, saved choices across browser visits, zero votes, partial outage/retry and corrupt or unavailable storage; touch voting and complete results across eight phone viewports; duplicate prevention and safe retry.');
   } finally {
     await browser?.close(); await new Promise(resolve => server.close(resolve)); sqlite.close();
   }
