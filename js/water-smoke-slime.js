@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.133'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.134'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -140,6 +140,16 @@
   function nativeMachineScene(name){return !!(machineRegistry && machineRegistry.lookup(name));}
   function fixedMachineScene(name){return name==='cup' || name==='siphon' || name==='heron' || nativeMachineScene(name);}
   function machineSize(name){var entry=machineRegistry && machineRegistry.lookup(name);return entry ? entry.world : machineWorld;}
+  // The app page fills the window. Original scenes take the window's shape.
+  // A room-safe machine keeps its authored size, scale and coordinates, and
+  // the world gains open room at both sides, so smoke and spray reach the
+  // screen edges. Room-safe means every position the machine uses comes from
+  // its definition (points and rects with x and y) or from the world size it
+  // is handed; a module with fixed positions in its own code is not room-safe.
+  // ?room=0 restores the authored world for comparisons.
+  var appPage=document.body.classList.contains('toy-app') && bootParams.get('room')!=='0';
+  var ROOM_SAFE={'douse-fire':1,'fire-brigade':1,'candle-in-jar':1,'chimney-draw':1,'slime-sauna':1};
+  function roomScene(name){var entry=machineRegistry && machineRegistry.lookup(name);return !!(entry && (entry.room===true || ROOM_SAFE[name]));}
   var fixedMachineRequested = fixedMachineScene(bootScene);
   var portrait = window.innerHeight > window.innerWidth * 1.15;
   var worldW = sharedBuildData ? sharedBuildData.width*sharedBuildData.tile : fixedMachineRequested ? machineSize(bootScene).w : Math.round(availW);
@@ -165,6 +175,27 @@
     : Math.round(Math.max(320, Math.min(worldW * 0.60, availableHeight)));
   if(sharedBuildData)worldH=sharedBuildData.height*sharedBuildData.tile;
   else if(fixedMachineRequested)worldH=machineSize(bootScene).h;
+  var roomCore=null,roomX=0,appFill=false;
+  if(appPage && !sharedBuildData && !portrait){
+    var appTop=document.querySelector('.toy-top').getBoundingClientRect().height;
+    if(fixedMachineRequested && roomScene(bootScene)){
+      // Size the room for the tallest framing, where the authored height
+      // fills the space between the bars; shorter framings need less.
+      var roomBase=machineSize(bootScene),roomFit=Math.max(.2,(window.innerHeight-appTop-90-16)/roomBase.h);
+      var roomNeed=Math.ceil((window.innerWidth/roomFit+64)/16)*16;
+      roomCore={w:roomBase.w,h:roomBase.h};
+      worldW=Math.max(roomBase.w,Math.min(roomBase.w*(isMobile ? 1.6 : 2),roomNeed));
+      roomX=(worldW-roomBase.w)/2;worldH=roomBase.h;appFill=true;
+    }else if(!fixedMachineRequested){
+      // Same pixel budget as before, in the window's own proportions.
+      var appW=viewport.clientWidth || window.innerWidth,appH=window.innerHeight-appTop-controlRowHeight(document.querySelector('.toy-foot'));
+      var appK=Math.min(1,Math.sqrt(1120*672/(appW*Math.max(1,appH))));
+      worldW=Math.round(appW*appK);worldH=Math.max(300,Math.round(appH*appK));appFill=true;
+    }
+  }
+  // Physical units follow the authored machine, never the added room.
+  var scaleWidth=roomCore ? roomCore.w : worldW;
+  if(appFill)document.getElementById('toy').classList.add('has-room');
 
   stage.style.width = worldW + 'px';
   stage.style.height = worldH + 'px';
@@ -192,10 +223,14 @@
     // Use the page position so scrolling the article does not resize the apparatus.
     var room = fixedMachineScene(currentScene) ? Math.max(80, stageRoom()) : displayStageRoom();
     baseFitScale = Math.min(w / worldW, (expanded ? h : room) / worldH);
+    // A window-shaped world covers its window; rounding must not leave a sliver.
+    if(appFill && !roomCore && expanded && Math.max(w/worldW,h/worldH)<=baseFitScale*1.03)baseFitScale=Math.max(w/worldW,h/worldH);
     var overlayControls=expanded && nativeMachineScene(currentScene);
     var frame=overlayControls && machineState && machineState.definition.name===currentScene ? machineState.definition.viewBounds : null;
     // Leave room for the bottom wall stroke above the overlaid controls.
     if(overlayControls)baseFitScale=Math.min(w/worldW,Math.max(1,h-16)/(frame ? frame.height : worldH));
+    var railInset=roomCore ? (parseFloat(getComputedStyle(shell).getPropertyValue('--toy-rail-right')) || 0)+8 : 0;
+    if(overlayControls && roomCore)baseFitScale=Math.min(Math.max(1,w-2*railInset)/(frame ? frame.width : roomCore.w),Math.max(1,h-16)/(frame ? frame.height : worldH));
     cameraWidth=w;cameraHeight=expanded ? (overlayControls ? shell.clientHeight : h) : Math.round(worldH*baseFitScale);
     fitScale=baseFitScale*viewZoom;
     cameraMaxPanX=Math.max(0,(worldW*fitScale-cameraWidth)*.5);
@@ -203,7 +238,7 @@
     viewPanX=Math.max(-cameraMaxPanX,Math.min(cameraMaxPanX,viewPanX));
     viewPanY=Math.max(-cameraMaxPanY,Math.min(cameraMaxPanY,viewPanY));
     stage.style.transform = fitScale === 1 ? 'none' : 'scale(' + fitScale + ')';
-    stage.style.left = (cameraWidth-worldW*fitScale)*.5+viewPanX+'px';
+    stage.style.left = (roomCore && overlayControls ? cameraWidth*.5-(frame ? frame.x+frame.width*.5 : worldW*.5)*fitScale : (cameraWidth-worldW*fitScale)*.5)+viewPanX+'px';
     var stageTop=frame ? topHeight+(h-frame.height*fitScale)*.5-frame.y*fitScale : overlayControls ? topHeight+(h-worldH*fitScale)*.5 : expanded || viewZoom!==1 ? (cameraHeight-worldH*fitScale)*.5 : 0;
     // A framed apparatus can start above the viewport; clamping the entire
     // world to zero would push its lower tank back underneath the footer.
@@ -13869,14 +13904,14 @@
       if(steamState.definition.birds)steamStats.birds=window.WSSSingingPipe.metrics(steamState.definition,steamStats);
       var steamProbePoint=steamState.definition.measure.gasProbe || {x:360,y:200};
       var steamProbe=instrumentSample && window.WaterMachinesInstruments.cell(instrumentSample,steamProbePoint.x,steamProbePoint.y);
-      var steamUnits=window.WaterMachinesInstruments.scale({width:worldW,density:1});
+      var steamUnits=window.WaterMachinesInstruments.scale({width:scaleWidth,density:1});
       steamState.readings={ready:true,caption:steamState.definition.caption,action:steamState.definition.action,steam:steamStats,
         birds:steamStats.birds,boundary:toyBoundary?toyBoundary.stats():null,particleCount:steamStats.liquidParcels,simulationSeconds:liquidWGPU.simulationClock-steamState.startedAt,
         gasPressurePsi:steamProbe && steamProbe.pressure!==null ? steamUnits.psi(steamProbe.pressure) : null,
         sampleAgeMs:instrumentSample ? Math.max(0,liquidWGPU.simulationClock-instrumentSample.simulationTime)*1000 : null,
         numericalStatus:steamStats.birds?steamStats.birds.approximation:steamStats.approximation,energyBudgetStatus:steamState.definition.energyBudgetStatus,error:steamStats.error || buildError};
       if(airModel && !instrumentPending && now>=instrumentNextAt){var steamAir=airModel;instrumentPending=true;instrumentNextAt=now+150;
-        steamAir.capture().then(function(snapshot){if(steamAir===airModel && steamState===machineState){instrumentSample=snapshot;var units=window.WaterMachinesInstruments.scale({width:worldW,density:1});
+        steamAir.capture().then(function(snapshot){if(steamAir===airModel && steamState===machineState){instrumentSample=snapshot;var units=window.WaterMachinesInstruments.scale({width:scaleWidth,density:1});
           var probe=window.WaterMachinesInstruments.cell(snapshot,steamProbePoint.x,steamProbePoint.y);steamState.readings.gasPressurePsi=probe?units.psi(probe.pressure):null;}}).catch(function(error){buildError=error.message;}).finally(function(){instrumentPending=false;});}
       return;
     }
@@ -13932,17 +13967,17 @@
   function measureMachine(state,snapshot){
     var I=window.WaterMachinesInstruments;if(!I)return;
     var definition=state.definition,m=definition.measure;
-    if(toyBubbles){var bubbleStats=toyBubbles.stats(),bubbleUnits=I.scale({width:worldW,density:airModel.settings.density});state.readings={ready:true,
+    if(toyBubbles){var bubbleStats=toyBubbles.stats(),bubbleUnits=I.scale({width:scaleWidth,density:airModel.settings.density});state.readings={ready:true,
       caption:definition.caption,action:definition.action,bubbles:bubbleStats,particleCount:liquidCount,
       sampleAgeMs:bubbleUnits.seconds(bubbleStats.captureAgeSimulationSeconds)*1000,energyBudgetStatus:definition.energyBudgetStatus,
       roomAbsolutePressurePsi:bubbleUnits.psi(airModel.settings.atmospherePressure),numericalStatus:I.numericalStatus(snapshot),ledger:snapshot.ledger,convergence:snapshot.convergence,error:bubbleStats.error || buildError || airState.error};return;}
-    if(toyDivers){var diverUnits=I.scale({width:worldW,density:airModel.settings.density}),diverStats=toyDivers.stats();state.readings={ready:true,caption:definition.caption,action:definition.action,
+    if(toyDivers){var diverUnits=I.scale({width:scaleWidth,density:airModel.settings.density}),diverStats=toyDivers.stats();state.readings={ready:true,caption:definition.caption,action:definition.action,
       divers:diverStats,particleCount:liquidCount,gasPressurePsi:diverStats.bodies.length?diverUnits.psi(diverStats.bodies[0].absolutePressure-airModel.settings.atmospherePressure):null,
       sampleAgeMs:diverUnits.seconds(diverStats.ageSimulationSeconds)*1000,pressureAgeSimulationMs:diverStats.ageSimulationSeconds*1000,
       roomAbsolutePressurePsi:diverUnits.psi(airModel.settings.atmospherePressure),energyBudgetStatus:definition.energyBudgetStatus,
       numericalStatus:I.numericalStatus(snapshot),ledger:snapshot.ledger,convergence:snapshot.convergence,error:diverStats.error || buildError || airState.error};return;}
     if(toyBoundary && state.definition.boundaries){measureNativeMachine(state,snapshot);if(toyFloatSlider){state.readings.floatSlider=toyFloatSlider.stats();state.readings.numericalStatus=state.readings.floatSlider.model;}return;}
-    var units=I.scale({width:worldW,density:airModel.settings.density || 1});
+    var units=I.scale({width:scaleWidth,density:airModel.settings.density || 1});
     var vesselOptions={tile:TILE,floor:worldH};
     if(definition.name==='heron'){
       if(!state.pipeTiles){
@@ -14035,7 +14070,7 @@
   }
   function measureNativeMachine(state,snapshot){
     var I=window.WaterMachinesInstruments,definition=state.definition,m=definition.measure;
-    var units=I.scale({width:worldW,density:airModel.settings.density || 1}),particles=particleInstrumentSample();
+    var units=I.scale({width:scaleWidth,density:airModel.settings.density || 1}),particles=particleInstrumentSample();
     var source=I.vessel(particles,m.source,{tile:TILE,floor:worldH});
     var receiver=I.vessel(particles,m.receiver,{tile:TILE,floor:worldH});
     var flow=I.particleSection(particles,definition.meters[0],{thickness:snapshot.cellSize});
@@ -14097,6 +14132,19 @@
     if(!thumbWanted){if(toyBoundary && toyBoundary.ready)toyBoundary.setCaps([]);machineState.thumbHeld=false;}
     machineOverlayCache=null;return thumbWanted;
   }
+  // Moves every authored point and rectangle sideways into the room. Shared
+  // objects (one rect used as a vessel and a measurement) move once.
+  function shiftIntoRoom(definition,dx){
+    var seen=new WeakSet();
+    (function walk(o){
+      if(!o || typeof o!=='object' || seen.has(o))return;seen.add(o);
+      if(Array.isArray(o)){o.forEach(walk);return;}
+      if(typeof o.x==='number' && typeof o.y==='number')o.x+=dx;
+      Object.keys(o).forEach(function(k){if(o[k] && typeof o[k]==='object')walk(o[k]);});
+    })(definition);
+    if(typeof definition.materialAt==='function'){var at=definition.materialAt;definition.materialAt=function(x,y){return at(x-dx,y);};}
+    return definition;
+  }
   async function constructMachine(name,options){
     if(handsPending)throw new Error('Wait for the wall restoration to finish.');
     options=options || {};
@@ -14110,7 +14158,8 @@
     machineBuilder=null;handsController=null;handsSelection=null;valveSeats=null;manualValves.clear();instrumentSample=null;instrumentPending=false;instrumentNextAt=0;
     var module=nativeMachineScene(name) ? await machineRegistry.load(name) : window.WaterMachinesScenes;
     if(request!==machineRequest)return null;
-    var definition=nativeMachineScene(name) ? module.make({w:worldW,h:worldH,tile:TILE},options) : module.make(name,{w:worldW,h:worldH,tile:TILE},options);
+    var definition=nativeMachineScene(name) ? module.make(roomCore ? {w:roomCore.w,h:roomCore.h,tile:TILE} : {w:worldW,h:worldH,tile:TILE},options) : module.make(name,{w:worldW,h:worldH,tile:TILE},options);
+    if(roomCore)shiftIntoRoom(definition,roomX);
     currentScene=name;fitStage();
     if(definition.draft && definition.draftGravity!==undefined)setGravityUI(definition.draftGravity);
     var balloonBody=null,balloonSeedRing=null,diverBodies=[],sliderBody=null;
@@ -14215,7 +14264,7 @@
     }
     var pressureSettings=Object.assign({},definition.settings,options.pressure || {},{resetMaterial:true});
     if(definition.settings.roomPressurePsi!==undefined && !(options.pressure && options.pressure.atmospherePressure!==undefined)){
-      pressureSettings.atmospherePressure=window.WaterMachinesInstruments.scale({width:worldW,density:pressureSettings.density || 1}).pressureFromPsi(definition.settings.roomPressurePsi);
+      pressureSettings.atmospherePressure=window.WaterMachinesInstruments.scale({width:scaleWidth,density:pressureSettings.density || 1}).pressureFromPsi(definition.settings.roomPressurePsi);
     }
     var model;
     if(definition.materialSlip){
@@ -14497,7 +14546,7 @@
     if(handsPending){buildError='Wait for the wall restoration to finish.';return;}
     var size=machineSize(name);
     if(toyBootReady && (wallEditorRequested(name)!==handsRequested || (handsRequested && toyBoundary && !fixedMachineScene(name)) ||
-        (fixedMachineScene(name) && (worldW!==size.w || worldH!==size.h)) || nativeMachineScene(name)!==!!bootMachine || (bootMachine && name!==bootMachine.id))){
+        (fixedMachineScene(name) && ((roomCore ? roomCore.w : worldW)!==size.w || (roomCore ? roomCore.h : worldH)!==size.h || (appPage && roomScene(name))!==!!roomCore)) || nativeMachineScene(name)!==!!bootMachine || (bootMachine && name!==bootMachine.id))){
       handsController=null;handsSelection=null;handsThumbRelease=false;
       thumbWanted=false;if(toySound)toySound.setActive(false);
       // Engine domains are fixed at boot. Scene selection already replaces
@@ -14719,7 +14768,7 @@
         var pc=pressureViewCanvas.getContext('2d');pc.setTransform(pw/worldW,0,0,ph/worldH,0,0);pc.clearRect(0,0,worldW,worldH);
         var snapshot=instrumentSample,dx=snapshot.cellSize,I=window.WaterMachinesInstruments;
         var kinds=new Uint32Array(snapshot.cells.buffer,snapshot.cells.byteOffset,snapshot.cells.length);
-        var negative=palette.getPropertyValue('--emphasis').trim(),units=I.scale({width:worldW,density:airModel.settings.density});
+        var negative=palette.getPropertyValue('--emphasis').trim(),units=I.scale({width:scaleWidth,density:airModel.settings.density});
         if(pressureColors)for(var i=0;i<snapshot.width*snapshot.height;i++){
           var p=snapshot.pressure[i*4];if(kinds[i*8+3]!==1 || !Number.isFinite(p))continue;
           pc.globalAlpha=Math.min(.58,.08+Math.abs(p)/80000*.5);
@@ -15299,7 +15348,8 @@
   try {
     window.__toy = {
       version: TOY_VERSION,
-      world: function () { return { w: worldW, h: worldH, tile: TILE, cols: gridW, rows: gridH }; },
+      world: function () { return { w: worldW, h: worldH, tile: TILE, cols: gridW, rows: gridH, scaleWidth: scaleWidth }; },
+      room: function () { return roomCore ? { x: roomX, y: 0, w: worldW, h: worldH, core: { w: roomCore.w, h: roomCore.h } } : null; },
       stats: function () {
         return {
           water: toyBoundary ? toyBoundary.stats().present : liquidCount, allocation:liquidCount, boundary:toyBoundary ? toyBoundary.stats() : null, slimes: jelloBodies.length, jelloPoints: jelloCount,

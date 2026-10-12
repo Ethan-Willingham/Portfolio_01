@@ -22,6 +22,19 @@
     var lastTool = null;
     var picker = document.getElementById('toy-scene-picker');
     var pickerSummary = picker.querySelector('summary');
+    // A draft's state reads as a small tag beside its name. The list builder
+    // writes it as a bracketed suffix, and the cue's draft markers repeat it.
+    var draftStates = { 'Working': 'WORKS', 'Partly working': 'PARTLY', 'Not working yet': 'NOT WORKING' };
+    picker.querySelectorAll('.toy-scene-name').forEach(function (name) {
+      var match = /^(.*) \[(Working|Partly working|Not working yet)\]$/.exec(name.textContent);
+      if (!match) return;
+      name.textContent = match[1];
+      var tag = document.createElement('span');
+      tag.className = 'toy-scene-status'; tag.dataset.status = draftStates[match[2]]; tag.textContent = match[2];
+      name.after(tag);
+      var cue = name.parentElement.querySelector('.toy-scene-cue');
+      if (cue) cue.textContent = cue.textContent.replace(/^Draft\.\s*/, '').replace(/,\s*draft\.$/, '.');
+    });
     var sceneLabel = document.getElementById('toy-scene-label');
     var lastScene = null;
     var buildKind = 'pipe';
@@ -107,7 +120,12 @@
       var dock=shell.querySelector('.toy-dock'),dockStyle=getComputedStyle(dock),position=dockStyle.position;
       // A vertical tool rail gets its own gutter, so it never covers the apparatus.
       var rail=appMode && dockStyle.display!=='none' && position==='absolute' && dockStyle.flexDirection==='column';
-      if(shell.classList.contains('has-rail')!==rail){shell.classList.toggle('has-rail',rail);toy.resize();}
+      // A world that fills the window runs under the rail; the host keeps a
+      // machine's frame clear of the rail's right edge instead.
+      var railRight=rail ? Math.ceil(dock.getBoundingClientRect().right)+'px' : '0px';
+      if(shell.classList.contains('has-rail')!==rail || shell.style.getPropertyValue('--toy-rail-right')!==railRight){
+        shell.classList.toggle('has-rail',rail);shell.style.setProperty('--toy-rail-right',railRight);toy.resize();
+      }
       var height = Math.ceil((position==='absolute' || position==='fixed' ? 0 : dock.getBoundingClientRect().height) + shell.querySelector('.toy-foot').getBoundingClientRect().height);
       shell.style.setProperty('--toy-top-height',shell.querySelector('.toy-top').getBoundingClientRect().height+'px');
       var value = height + 'px';
@@ -501,7 +519,7 @@
       ['toy-air-pressure-toggle','toy-air-pressure-compact'].forEach(function(id){pressed(document.getElementById(id),airPressureColors);});
       legend.hidden = fire || cannon || balloon || slip || !(pressureColors || airPressureColors) || !contextual;
       if (!legend.hidden) {
-        var cap = window.WaterMachinesInstruments && toy.world ? window.WaterMachinesInstruments.scale({ width: toy.world().w }).psi(80000) : null;
+        var cap = window.WaterMachinesInstruments && toy.world ? window.WaterMachinesInstruments.scale({ width: toy.world().scaleWidth || toy.world().w }).psi(80000) : null;
         text('toy-pressure-legend', airPressureColors ? 'Air: gold above room pressure, rose below. Labels show gauge psi; room air is 0. Readings are diagnostic.' :
           'Water: rose below room pressure, gold above. Full color at ' + (Number.isFinite(cap) ? '±' + number(cap, 'psi') : 'the model limit') + '.');
       }
@@ -578,7 +596,7 @@
         document.querySelector('#toy-panel-build .toy-build-options').hidden=true;
         document.getElementById('toy-build-share').hidden=true;
         ['undo','redo'].forEach(function(name){document.getElementById('toy-build-'+name).disabled=!builderState.handsReady || builderState.pending;});
-        var edit=builderState.wallEdit,world=toy.world(),width=30*8/world.w;
+        var edit=builderState.wallEdit,world=toy.world(),width=30*8/(world.scaleWidth || world.w);
         handsNote.textContent='Hole punch opens one '+width.toFixed(2)+'-inch cell. Undo needs a clear adjacent exit; old walls, held caps and slime bounds block the move. '+
           (edit && Number.isFinite(edit.workJoules) ? 'Last edit: '+edit.displaced+' parcels, '+(edit.workJoules/1.3558179483314).toFixed(5)+' ft lb of signed parcel work.' : 'Signed parcel work appears here after Undo.')+
           (!builderState.handsReady ? ' Choose a cup, siphon, fountain or native machine.' : ' Existing valves can open here; closing them and other wall drawing use the original scene.');

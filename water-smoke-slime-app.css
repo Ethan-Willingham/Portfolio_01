@@ -85,6 +85,15 @@ body.toy-app ::selection { background: var(--selection-bg); color: var(--selecti
 .toy-app .toy-shell .toy-sound,
 .toy-app .toy-shell .toy-instruments-button { min-height: 36px; padding: 6px 12px; border-color: var(--rule-strong); }
 
+/* A scene's own controls (the exhaust picker) float over the canvas, so the
+   bar keeps the height the world was sized for. */
+.toy-app .toy-top .toy-rig-controls {
+  position: absolute; top: calc(100% + 10px); left: 50%; transform: translateX(-50%);
+  flex: none; width: max-content; max-width: calc(100% - 24px); padding: 4px 6px 4px 10px; gap: 6px;
+  border: 1px solid var(--rule); border-radius: 12px; background: rgb(19 20 23 / 0.94);
+  box-shadow: 0 10px 30px rgb(0 0 0 / 0.35);
+}
+
 /* Scene menu: a grid of every machine, grouped. */
 .toy-app .toy-scene-picker .toy-scene-list {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); align-content: start;
@@ -131,8 +140,9 @@ body.toy-app ::selection { background: var(--selection-bg); color: var(--selecti
   font-size: 12px; text-align: center;
 }
 
-/* The tool rail keeps a gutter of its own; the apparatus centers in the rest. */
-.toy-app .toy-shell.has-rail .toy-viewport { margin-left: var(--app-rail); }
+/* Machines drawn at their authored size keep a gutter for the tool rail. A
+   world that fills the window (class has-room) runs underneath it instead. */
+.toy-app .toy-shell.has-rail:not(.has-room) .toy-viewport { margin-left: var(--app-rail); }
 
 /* Tools float beside the canvas as one vertical toolbar. */
 .toy-app .toy-shell .toy-dock {
