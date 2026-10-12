@@ -2,7 +2,7 @@
  * The finish reads the resident particle buffer; it never moves a grain. */
 (function(root){
 'use strict';
-var G={cx:360,top:56,bottom:344,shoulder:80,upper:108,neckTop:190,neckBottom:210,lower:292,heel:320,wide:104,end:80,neck:4.5,radius:2.5/Math.sqrt(3.2)*.5};
+var G={cx:360,top:56,bottom:344,shoulder:80,upper:108,neckTop:190,neckBottom:210,lower:292,heel:320,wide:104,end:80,neck:2.5,radius:2.5/Math.sqrt(3.2)*.5};
 function smooth(t){return t*t*(3-2*t);}
 function halfWidth(y){
  if(y<G.top || y>G.bottom)return G.end;
