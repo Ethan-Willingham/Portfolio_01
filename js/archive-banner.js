@@ -17,12 +17,11 @@
   if (document.querySelector(".arc-banner")) return; // never double-insert
   var compact = document.currentScript && document.currentScript.hasAttribute('data-compact');
 
-  // Recounted 2026-10-04 from search-index.json: 24 archived posts
-  // and 43 in-progress posts, out of 80 indexed posts in all.
-  // Sacred Books and Philosophy are on In Progress; Career posts stand alone.
-  var ARCHIVED = 67;
-  var TOTAL = 80;
-  var PCT = Math.round((ARCHIVED / TOTAL) * 100); // 84
+  // Recounted 2026-10-11 from search-index.json: 24 archived posts
+  // and 52 in-progress posts, out of 87 indexed posts in all.
+  var ARCHIVED = 76;
+  var TOTAL = 87;
+  var PCT = Math.round((ARCHIVED / TOTAL) * 100); // 87
 
   var css =
     ".arc-banner{font-family:var(--font-body,'Segoe UI',system-ui,sans-serif);" +

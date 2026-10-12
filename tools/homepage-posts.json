@@ -47,7 +47,8 @@
     "alt": "A man and three boys sailing a small boat in Winslow Homer's Breezing Up (A Fair Wind).",
     "keywords": "customers software adoption retention implementation customer success work sale",
     "title": "The Work After the Sale",
-    "desc": "The software is live, but a supervisor still copies orders into a spreadsheet. Customer success starts by finding that gap and helping the customer get the result they bought."
+    "desc": "The software is live, but a supervisor still copies orders into a spreadsheet. Customer success starts by finding that gap and helping the customer get the result they bought.",
+    "inProgress": true
   },
   {
     "href": "the-other-side.html",
@@ -60,7 +61,8 @@
     "alt": "Saturn seen from its shadow, a dark globe rimmed with sunlight inside luminous gold and blue rings.",
     "credit": "NASA/JPL-Caltech/SSI, The Day the Earth Smiled (PIA17172), Cassini, 19 July 2013. https://science.nasa.gov/photojournal/the-day-the-earth-smiled/",
     "desc": "A cup needs both clay and empty space. My reading of the Tao Te Ching starts with that dependence, then asks what it might mean for the self.",
-    "keywords": "tao te ching self named nameless clay cup empty space philosophy essay"
+    "keywords": "tao te ching self named nameless clay cup empty space philosophy essay",
+    "inProgress": true
   },
   {
     "href": "warehouse.html",
@@ -72,7 +74,8 @@
     "alt": "Rows of stacked shipping containers with blue, turquoise, red, and yellow doors.",
     "keywords": "warehouse WMS operations inventory fulfillment supply chain logistics software",
     "title": "The Brain Behind the Warehouse",
-    "desc": "Stock on a shelf may already belong to another order. Warehouse software tracks what's available and directs each move, from receiving a delivery to putting a parcel on a truck."
+    "desc": "Stock on a shelf may already belong to another order. Warehouse software tracks what's available and directs each move, from receiving a delivery to putting a parcel on a truck.",
+    "inProgress": true
   },
   {
     "href": "all-in.html",
@@ -84,7 +87,8 @@
     "alt": "Two oarsmen racing across calm water in Thomas Eakins's The Biglin Brothers Racing.",
     "keywords": "management managing professionals leadership people work trust teams responsibility",
     "title": "All In: Managing Professionals",
-    "desc": "People can meet every requirement and still hold back their best work. Managing professionals means making room for judgment while staying clear about responsibility and the problems you need solved."
+    "desc": "People can meet every requirement and still hold back their best work. Managing professionals means making room for judgment while staying clear about responsibility and the problems you need solved.",
+    "inProgress": true
   },
   {
     "href": "daylight-globe.html",

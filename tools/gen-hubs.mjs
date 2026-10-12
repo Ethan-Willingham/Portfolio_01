@@ -204,7 +204,7 @@ function updateHomepage() {
   const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const currentCards = html.match(/<li class="article-list-item[\s\S]*?<\/li>/g) || [];
   const cards = currentCards.filter((li) => !removed.has((li.match(/href="([^"]+)"/) || [])[1]));
-  for (const p of STANDALONE_POSTS) {
+  for (const p of STANDALONE_POSTS.filter((post) => !post.inProgress)) {
     const image = p.image || `assets/thumbs/${p.thumb}`;
     const candidates = p.imageSrcset || image;
     const sizes = p.imageSizes ? ` sizes="${esc(p.imageSizes)}"` : '';
