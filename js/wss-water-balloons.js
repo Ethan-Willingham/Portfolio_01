@@ -264,7 +264,7 @@ fn sweep(a:vec2f,b:vec2f,c:vec2f,d:vec2f,v:vec2f,w:vec2f)->vec2f {
           b.sleeping=false;b.sleepFrames=0;
         });
       },
-      setSlit:function(value){if(!value && slit>=0)reseal=true;slit=value?options.valveSlit===undefined?5:options.valveSlit:-1;return slit;},
+      setSlit:function(value,edge){if(!value && slit>=0)reseal=true;slit=value?edge===undefined?options.valveSlit===undefined?5:options.valveSlit:edge:-1;return slit;},
       pop:function(){if(!enabled)return false;enabled=false;b.waterBalloon=false;pendingImpulse.length=0;return true;},
       resetBirth:function(){birthGeneration++;queue.writeBuffer(tags,0,new Uint32Array(options.maxParticles*4));queue.writeBuffer(sums,0,new Int32Array(LEDGER+24));latest=new Int32Array(LEDGER+24);previousControls=null;pendingImpulse.length=0;lastClock=L.simulationClock;maxAge=0;},
       stats:function(){var birthInside=latest[LEDGER+0];return {popped:!enabled,slitEdge:slit,birthInside:birthInside,birthOutside:latest[LEDGER+1],
