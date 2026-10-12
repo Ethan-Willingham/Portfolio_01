@@ -83,18 +83,19 @@ register('oil-slick-fire','Oil','Burning oil slick','Pour water over the burner 
  d.vessels=[box('jar','Oil slick and water',jar)];d.initial=[initial(rect(256,264,208,104))];d.materialSlip=slip();d.materialAt=function(x,y){return y<280?'oil':'water';};
  d.solids=[rect(336,256,8,8),rect(376,256,8,8)];d.materialsDraft='oil-slick-fire';d.draftBurner={source:rect(352,248,16,16),x:360,y:248};d.primary={kind:'pour',target:{x:360,y:112}};d.action='Pour water';d.measure={source:jar,receiver:jar};return d;
 },['wss-fire']);
-register('soda-mentos','Bubbles','Soda and Mentos','Watch real fizz below the bottle mouth.','PARTLY',function(w,o){
+register('soda-mentos','Bubbles','Soda and Mentos','Open the cap over the rough tablet.','PARTLY',function(w,o){
  var d=base('soda-mentos','Soda and Mentos','A held rough tablet makes real finite CO2 bubbles; eruption is not working yet.',w,o),bottle=rect(304,112,112,240),candy=rect(352,328,16,16);
  d.viewBounds=rect(176,0,368,400);d.vessels=[box('basin','Spill basin',rect(200,112,320,280)),box('bottle','Soda',bottle)];d.solids=[rect(304,112,40,56),rect(376,112,40,56),candy];
- d.initial=[initial(rect(312,176,96,168))];d.settings=pressure();d.boundaries={pool:false,tap:null,drain:null,caps:[],reservoirY:392};d.materialsDraft='soda-mentos';
+ d.initial=[initial(rect(312,176,96,168))];d.settings=pressure();d.releaseCap={axis:'y',at:112,start:344,end:376};d.boundaries={pool:false,tap:null,drain:null,caps:[d.releaseCap],reservoirY:392};d.materialsDraft='soda-mentos';
  d.draftFizz={inject:false,hose:{x:360,y:320},rateArea:0,parcelArea:26,dragCoefficient:1,gravity:250,fizz:{mentos:true,candy:candy,carbonationVolumes:o.flat?0:3.5}};
- d.primary={kind:'pour',target:{x:360,y:88}};d.action='Pour flat water';d.measure={source:bottle,receiver:bottle};
- d.boundaryNote='Draft. The rough tablet is held at the bottom. Initially dissolved CO2 is a finite authored inventory. Gas follows the preserved native Henry transfer; no air hose, prescribed jet or replenishment is present. New poured water begins flat.';return d;
+ d.primary={kind:'draft-primary'};d.action='Open bottle cap';d.measure={source:bottle,receiver:bottle};
+ d.caption='Draft. Open the cap above the held rough tablet. Finite dissolved CO2 can make real bubbles; eruption is not working yet.';
+ d.boundaryNote='Draft. The rough tablet is held at the bottom. Initially dissolved CO2 is a finite authored inventory. Gas follows the preserved native Henry transfer; no air hose, prescribed jet or replenishment is present. The button only opens or closes a real native cut across the bottle mouth, without changing the water population.';return d;
 },['wss-drafts-fizz']);
 function fizzRuntime(context){
  var L=context.liquid,A=context.airModel || root.__toy.airModel(),boundary=context.nativeBoundary || root.__toy.nativeBoundary(),d=context.definition;
  return root.WSSDraftFizzBubbles.create(Object.assign({},d.draftFizz,{liquid:L,air:A,boundary:boundary,width:720,height:400,maxParticles:L.maxParticles})).then(function(model){
-  L.setToyMembrane(model);return {stats:model.stats,draw:function(c){var palette=getComputedStyle(document.documentElement);model.draw(c,{edge:palette.getPropertyValue('--accent').trim(),fill:palette.getPropertyValue('--accent').trim()});},destroy:model.destroy};
+  var closed=true;L.setToyMembrane(model);return {primary:function(){closed=!closed;boundary.setCaps(closed?[d.releaseCap]:[]);d.action=closed?'Open bottle cap':'Close bottle cap';return true;},stats:function(){return Object.assign({capClosed:closed},model.stats());},draw:function(c){var palette=getComputedStyle(document.documentElement);model.draw(c,{edge:palette.getPropertyValue('--accent').trim(),fill:palette.getPropertyValue('--accent').trim()});},destroy:model.destroy};
  });
 }
 function burnerRuntime(context){

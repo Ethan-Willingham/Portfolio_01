@@ -444,7 +444,7 @@ fn finishWall(){
       for(var i=0;i<t.tiles;i++)if(solidTiles[i])mask[i>>5]|=1<<(i&31);
       queue.writeBuffer(instance.buf.terrainMask,0,mask,0,words);instance.terrainMaskWords=words;
     }
-    var extension={ledgerBuffer:ledger,ready:false,inFlight:false,error:null,grid:grid,maxSubsteps:options.maxSubsteps,
+    var extension={ledgerBuffer:ledger,slotsBuffer:slotBuffer,ready:false,inFlight:false,error:null,grid:grid,maxSubsteps:options.maxSubsteps,
       readyPromise:Promise.all([module.getCompilationInfo()].concat(Object.keys(grid).map(function(k){return grid[k].module.getCompilationInfo();})).concat(burst ? [burst.readyPromise.then(function(){return {messages:[]};})] : [])).then(function(infos){
         var errors=infos.flatMap(function(info){return info.messages.filter(function(m){return m.type==='error';});});
         if(errors.length)throw new Error(errors.map(function(m){return m.lineNum+': '+m.message;}).join('\n'));return extension;

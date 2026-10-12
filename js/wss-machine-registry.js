@@ -57,7 +57,8 @@
     {"id":"interlayer-slime","capability":"Oil and water","title":"Slime between oil and water","cue":"Draft. Drop and grab a slime above the two liquids.","status":"PARTLY","draft":true,"world":{"w":720,"h":400},"pool":false,"accepted":true,"preview":"cup","scripts":["wss-drafts-materials"]},
     {"id":"melting-ice","capability":"Ice","title":"Floating ice that melts","cue":"Draft. Watch lightweight grain proxies move in water.","status":"NOT WORKING","draft":true,"world":{"w":720,"h":400},"pool":false,"accepted":true,"preview":"cup","scripts":["wss-drafts-materials"]},
     {"id":"frozen-pipe","capability":"Ice","title":"Frozen pipe","cue":"Draft. Remove a real manual plug from the water pipe.","status":"NOT WORKING","draft":true,"world":{"w":720,"h":400},"pool":false,"accepted":true,"preview":"cup","scripts":["wss-drafts-materials"]},
-    {"id":"oil-slick-fire","capability":"Oil and water","title":"Burning oil slick","cue":"Draft. Pour water over the burner beside the slick.","status":"PARTLY","draft":true,"world":{"w":720,"h":400},"pool":false,"accepted":true,"preview":"cup","scripts":["wss-drafts-materials","wss-fire"]}
+    {"id":"oil-slick-fire","capability":"Oil and water","title":"Burning oil slick","cue":"Draft. Pour water over the burner beside the slick.","status":"PARTLY","draft":true,"world":{"w":720,"h":400},"pool":false,"accepted":true,"preview":"cup","scripts":["wss-drafts-materials","wss-fire"]},
+    {"id":"soda-mentos","capability":"Bubbles","title":"Soda and Mentos","cue":"Draft. Watch real fizz below the bottle mouth.","status":"PARTLY","draft":true,"world":{"w":720,"h":400},"pool":false,"accepted":true,"preview":"cup","scripts":["wss-drafts-materials","wss-drafts-fizz"]}
   ];
   var lab = new URLSearchParams(location.search).get('lab') === '1';
   var loaded = {};
