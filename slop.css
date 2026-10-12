@@ -14,7 +14,8 @@ html:has(.slop-page) { height: 100%; overflow: hidden; overscroll-behavior: none
 .slop-skip:focus { transform: none; }
 .slop-glass { background: var(--slop-glass); border: 1px solid color-mix(in srgb, var(--rule) 85%, transparent); box-shadow: 0 3px 18px color-mix(in srgb, var(--bg-raised) 17%, transparent); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); }
 
-.slop-stage { position: fixed; inset: 0; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; cursor: grab; outline-offset: -5px !important; background: var(--bg); }
+.slop-stage { position: fixed; inset: 0; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; cursor: grab; background: var(--bg); }
+.slop-page .slop-stage:focus-visible { outline: none; }
 .slop-stage.is-dragging, .slop-stage.is-dragging * { cursor: grabbing !important; }
 .slop-wall { position: absolute; top: 0; left: 0; width: 0; height: 0; transform-origin: 0 0; will-change: transform; }
 .slop-card { position: absolute; display: block; padding: 0; width: 336px; height: 336px; border: 0; border-radius: 2px; background: var(--bg-raised); cursor: grab !important; text-align: left; color: var(--text); isolation: isolate; }
