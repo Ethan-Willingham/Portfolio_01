@@ -337,3 +337,6 @@ body.toy-app ::selection { background: var(--selection-bg); color: var(--selecti
   .toy-app .toy-top { flex-wrap: wrap; }
   .toy-app .toy-scene-picker { flex-basis: 100%; max-width: none; }
 }
+@media (hover: hover) {
+  .toy-app .toy-shell .toy-scene-action:hover { outline: 1px solid rgb(212 196 160 / .25); outline-offset: -4px; }
+}

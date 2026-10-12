@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.145'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.146'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -251,6 +251,8 @@
     stage.style.transform = fitScale === 1 ? 'none' : 'scale(' + fitScale + ')';
     stage.style.left=(insetLeft+(fitWidth-worldW*fitScale)*.5)+viewPanX+'px';
     stage.style.top=(insetTop+(fitHeight-worldH*fitScale)*.5)+viewPanY+'px';
+    fitSmokeDomain({left:insetLeft>padding ? insetLeft-padding : 0,top:overlayControls ? topHeight : 0,
+      right:cameraWidth,bottom:cameraHeight-(insetBottom>padding ? insetBottom-padding : 0)});
     var bounds=stage.getBoundingClientRect(),projection=[bounds.left,bounds.top,bounds.width,bounds.height];
     // A captured construction stroke uses screen-to-world coordinates. A
     // toolbar-height, fullscreen or scroll change must not add a new bend.
@@ -3413,6 +3415,133 @@
   var SMOKE_EMITTER_DT = 1 / 30;
   var smokeEmitterSplats = 0;
   var smokeWaterFlowFrames = 0;
+  var smokeDomain={x:0,y:0,w:worldW,h:worldH};
+  var smokeViewport=null,smokePixelScale=1,smokeBoundaryVersion=0,smokePaintedBoundary=-1;
+  var smokeEngine=SmokeFluid;
+  var smokeWetPixels=null,smokeFlowValues=null,smokeTemperatureValues=null;
+  var smokeAuthoredPhysics=smokeEngine.getPhysics();
+  function smokeVelocityScale(){
+    function grid(w,h){var aspect=w/h,res=smokeEngine.config.SIM_RESOLUTION;return aspect>=1 ? {w:Math.round(res*aspect),h:Math.round(res)} : {w:Math.round(res),h:Math.round(res/aspect)};}
+    var old=grid(worldW,worldH),air=grid(smokeDomain.w,smokeDomain.h);
+    return {x:(worldW/old.w)/(smokeDomain.w/air.w),y:(worldH/old.h)/(smokeDomain.h/air.h)};
+  }
+  function smokePhysicalSettings(){
+    var values=Object.assign({},smokeAuthoredPhysics),scale=smokeVelocityScale();
+    values.BUOYANCY*=scale.y;values.WEIGHT*=scale.y;values.EDGE_SPIN*=scale.y;
+    return values;
+  }
+
+  // The air domain is exactly the visible unobstructed rectangle. Its origin
+  // is expressed in the unchanged apparatus coordinates, including the open
+  // air around a letterboxed apparatus. A new view starts a new bounded field.
+  function fitSmokeDomain(rect){
+    if(!smokeCanvas || !smokeActive)return;
+    var scale=Math.max(.0001,fitScale),left=parseFloat(stage.style.left)||0,top=parseFloat(stage.style.top)||0;
+    var next={x:(rect.left-left)/scale,y:(rect.top-top)/scale,w:Math.max(1,rect.right-rect.left)/scale,h:Math.max(1,rect.bottom-rect.top)/scale};
+    var changed=['x','y','w','h'].some(function(key){return Math.abs(next[key]-smokeDomain[key])>.01;});
+    smokeViewport={left:rect.left,top:rect.top,right:rect.right,bottom:rect.bottom};
+    smokeDomain=next;
+    smokeCanvas.style.setProperty('inset','auto','important');
+    smokeCanvas.style.setProperty('left',next.x+'px','important');
+    smokeCanvas.style.setProperty('top',next.y+'px','important');
+    smokeCanvas.style.setProperty('width',next.w+'px','important');
+    smokeCanvas.style.setProperty('height',next.h+'px','important');
+    if(changed){
+      // No field continues behind a resized toolbar, pan or zoom. Existing
+      // engines deliberately reinitialize their fields when the domain moves.
+      smokeEngine.resize(Math.max(64,Math.round(next.w*smokePixelScale)),Math.max(64,Math.round(next.h*smokePixelScale)));
+      smokeEngine.clear();smokeBoundaryVersion++;
+      smokeEngine.setPhysics(smokePhysicalSettings(),0);
+      smokeObH=Math.max(64,Math.round(smokeObW*next.h/next.w));
+      smokeRepaintObstacle();smokeEngine.displayPass();
+    }
+  }
+  function smokeUV(x,y){return {x:(x-smokeDomain.x)/smokeDomain.w,y:1-(y-smokeDomain.y)/smokeDomain.h};}
+  function smokeMappedRadius(radius){
+    // The splat parameter is a squared UV Gaussian, corrected for aspect.
+    return radius*worldH*worldH*Math.max(1,worldW/worldH)/(smokeDomain.h*smokeDomain.h*Math.max(1,smokeDomain.w/smokeDomain.h));
+  }
+  function smokeSample(values,width,height,channels,u,v,target,at){
+    var gx=u*width-.5,gy=v*height-.5,x0=Math.floor(gx),y0=Math.floor(gy),fx=gx-x0,fy=gy-y0;
+    for(var k=0;k<channels;k++){
+      var sum=0;
+      for(var p=0;p<4;p++){
+        var x=Math.max(0,Math.min(width-1,x0+(p&1))),y=Math.max(0,Math.min(height-1,y0+(p>>1)));
+        var weight=((p&1)?fx:1-fx)*((p>>1)?fy:1-fy),i=(y*width+x)*channels;
+        sum+=values[i+k]*weight;
+      }
+      target[at+k]=sum;
+    }
+  }
+  // Helpers retain their authored coordinates and API. Only their boundary
+  // transforms change; native water contact, fuel temperatures and chemistry
+  // remain in the authoritative water/fire modules.
+  SmokeFluid=Object.assign({},smokeEngine,{
+    splat:function(u,v,dx,dy,color,radius){
+      var p=smokeUV(u*worldW,(1-v)*worldH),s=smokeVelocityScale();
+      if(p.x<0 || p.x>1 || p.y<0 || p.y>1)return;
+      smokeEngine.splat(p.x,p.y,dx*s.x,dy*s.y,color,smokeMappedRadius(radius==null ? smokeEngine.config.SPLAT_RADIUS : radius));
+    },
+    splatVelocity:function(u,v,dx,dy,radius){
+      var p=smokeUV(u*worldW,(1-v)*worldH),s=smokeVelocityScale();
+      if(p.x<0 || p.x>1 || p.y<0 || p.y>1)return;
+      smokeEngine.splatVelocity(p.x,p.y,dx*s.x,dy*s.y,smokeMappedRadius(radius==null ? smokeEngine.config.SPLAT_RADIUS : radius));
+    },
+    getPhysics:function(){return Object.assign({},smokeAuthoredPhysics);},
+    setPhysics:function(values,seconds){
+      // Validate authored material controls through the unchanged engine API.
+      smokeEngine.setPhysics(values,5);smokeAuthoredPhysics=smokeEngine.getPhysics();
+      smokeEngine.setPhysics(smokePhysicalSettings(),seconds);return Object.assign({},smokeAuthoredPhysics);
+    },
+    step:function(dt){
+      var cfg=smokeEngine.config,wind=cfg.wind_x,above=cfg.wind_above_y;
+      if(wind!=null)cfg.wind_x=wind*worldW/smokeDomain.w;
+      if(above!=null)cfg.wind_above_y=smokeUV(0,(1-above)*worldH).y;
+      try{smokeEngine.step(dt);}finally{cfg.wind_x=wind;cfg.wind_above_y=above;}
+    },
+    heatSource:function(rect,heat,color){
+      var p=smokeUV(rect.x*worldW,(1-rect.y-rect.height)*worldH);
+      smokeEngine.heatSource({x:p.x,y:p.y-rect.height*worldH/smokeDomain.h,width:rect.width*worldW/smokeDomain.w,height:rect.height*worldH/smokeDomain.h},heat,color);
+    },
+    setMovingBodies:function(bodies,x,y,w,h,dt,obW,obH){smokeEngine.setMovingBodies(bodies,smokeDomain.x,smokeDomain.y,smokeDomain.w,smokeDomain.h,dt,obW,obH);},
+    setLiquidField:function(x,y,vx,vy,count,ox,oy,w,h,density,frozen){smokeEngine.setLiquidField(x,y,vx,vy,count,smokeDomain.x,smokeDomain.y,smokeDomain.w,smokeDomain.h,density,frozen);},
+    setWetField:function(field){
+      if(!field){smokeEngine.setWetField(null);return;}
+      var w=field.width,h=field.height;
+      if(!smokeWetPixels || smokeWetPixels.length!==w*h*4)smokeWetPixels=new Uint8Array(w*h*4);
+      smokeWetPixels.fill(0);
+      for(var y=0;y<h;y++)for(var x=0;x<w;x++){
+        var wx=smokeDomain.x+(x+.5)*smokeDomain.w/w,wy=smokeDomain.y+(h-y-.5)*smokeDomain.h/h;
+        if(wx<0 || wx>=worldW || wy<0 || wy>=worldH)continue;
+        var col=Math.min(w-1,Math.floor(wx/worldW*w)),row=Math.min(h-1,Math.floor((1-wy/worldH)*h));
+        var source=(row*w+col)*4,target=(y*w+x)*4;
+        for(var k=0;k<4;k++)smokeWetPixels[target+k]=field.pixels[source+k];
+      }
+      smokeEngine.setWetField({width:w,height:h,pixels:smokeWetPixels});
+    },
+    sampleFlow:function(w,h){
+      var field=smokeEngine.sampleFlow(smokeDomain.w,smokeDomain.h);if(!field)return null;
+      if(!smokeFlowValues || smokeFlowValues.length!==field.values.length)smokeFlowValues=new Float32Array(field.values.length);
+      for(var y=0;y<field.height;y++)for(var x=0;x<field.width;x++){
+        var uv=smokeUV((x+.5)*w/field.width,(field.height-y-.5)*h/field.height);
+        if(uv.x<0 || uv.x>1 || uv.y<0 || uv.y>1){smokeFlowValues.fill(0,(y*field.width+x)*4,(y*field.width+x+1)*4);continue;}
+        smokeSample(field.values,field.width,field.height,4,uv.x,uv.y,smokeFlowValues,(y*field.width+x)*4);
+      }
+      return {width:field.width,height:field.height,values:smokeFlowValues,dt:field.dt};
+    },
+    sampleTemperature:function(w,h){
+      var field=smokeEngine.sampleTemperature(w,h);if(!field)return null;
+      if(!smokeTemperatureValues || smokeTemperatureValues.length!==w*h)smokeTemperatureValues=new Float32Array(w*h);
+      for(var y=0;y<h;y++)for(var x=0;x<w;x++){
+        var uv=smokeUV((x+.5)*worldW/w,(y+.5)*worldH/h);
+        if(uv.x<0 || uv.x>1 || uv.y<0 || uv.y>1){smokeTemperatureValues[y*w+x]=293.15;continue;}
+        smokeSample(field.kelvin,w,h,1,uv.x,1-uv.y,smokeTemperatureValues,y*w+x);
+        // Round only once and retain the native solver's declared interval.
+        smokeTemperatureValues[y*w+x]=Math.max(Math.fround(293.15),Math.min(Math.fround(1172.6),smokeTemperatureValues[y*w+x]));
+      }
+      return {width:w,height:h,kelvin:smokeTemperatureValues};
+    }
+  });
 
   function bootSmoke() {
     if (typeof WebGLRenderingContext === 'undefined') return;
@@ -3430,21 +3559,13 @@
     var pxScale = isMobile
       ? Math.max(0.7, Math.min(0.9, 0.5 * dprS))
       : Math.max(0.75, Math.min(1.25, 0.6 * dprS));
+    smokePixelScale=pxScale;
     smokeCanvas.width = Math.max(64, Math.round(worldW * pxScale));
     smokeCanvas.height = Math.max(64, Math.round(worldH * pxScale));
     smokeCanvas.style.cssText = 'position:absolute;left:0;top:0;pointer-events:none;z-index:5;';
-    // Let smoke disappear into clear air before the edge of the glass.
-    // This only feathers its display; heat, airflow and wet contact retain
-    // their full simulation domain and continue to use the same solver.
-    var edge=Math.min(16,Math.max(8,Math.min(worldW,worldH)*.025));
-    var topFade=Math.min(120,Math.max(64,worldH*.24)),clearTop=Math.min(32,Math.max(16,worldH*.06));
-    var hEdge=edge/worldW,vEdge=edge/worldH,topEdge=topFade/worldH,clearEdge=clearTop/worldH;
-    var fadeSVG='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+worldW+' '+worldH+'" preserveAspectRatio="none"><defs>'+
-      '<linearGradient id="h"><stop stop-color="white" stop-opacity="0"/><stop offset="'+hEdge+'" stop-color="white"/><stop offset="'+(1-hEdge)+'" stop-color="white"/><stop offset="1" stop-color="white" stop-opacity="0"/></linearGradient>'+
-      '<linearGradient id="v" x1="0" y1="0" x2="0" y2="1"><stop stop-color="white" stop-opacity="0"/><stop offset="'+clearEdge+'" stop-color="white" stop-opacity="0"/><stop offset="'+(clearEdge+(topEdge-clearEdge)*.3)+'" stop-color="white" stop-opacity=".16"/><stop offset="'+(clearEdge+(topEdge-clearEdge)*.7)+'" stop-color="white" stop-opacity=".78"/><stop offset="'+topEdge+'" stop-color="white"/><stop offset="'+(1-vEdge)+'" stop-color="white"/><stop offset="1" stop-color="white" stop-opacity="0"/></linearGradient>'+
-      '<mask id="edge"><rect width="100%" height="100%" fill="url(#h)"/></mask></defs><rect width="100%" height="100%" fill="url(#v)" mask="url(#edge)"/></svg>';
-    smokeCanvas.style.maskImage='url("data:image/svg+xml,'+encodeURIComponent(fadeSVG)+'")';
-    smokeCanvas.style.webkitMaskImage=smokeCanvas.style.maskImage;
+    // Air reaches its real rectangular walls without a CSS fade or mask.
+    // Preserve the existing z-order between apparatus and instrument overlays.
+    stage.style.overflow='visible';
     stage.appendChild(smokeCanvas);
     smokeObH = Math.max(64, Math.round(smokeObW * worldH / worldW));
     var shortAxis = Math.min(worldW, worldH);
@@ -3481,30 +3602,36 @@
     }
     var v = smokeQuadVerts;
     var n = 0;
-    var invW = 1 / worldW, invH = 1 / worldH;
+    var invW = 1 / smokeDomain.w, invH = 1 / smokeDomain.h;
+    function rect(x0,y0,x1,y1){
+      if(n+12>v.length)return;
+      var u0=(x0-smokeDomain.x)*invW*2-1,u1=(x1-smokeDomain.x)*invW*2-1;
+      var t0=1-2*(y0-smokeDomain.y)*invH,t1=1-2*(y1-smokeDomain.y)*invH;
+      v[n++]=u0;v[n++]=t0;v[n++]=u1;v[n++]=t0;v[n++]=u0;v[n++]=t1;
+      v[n++]=u1;v[n++]=t0;v[n++]=u1;v[n++]=t1;v[n++]=u0;v[n++]=t1;
+    }
+    // Two simulation cells form actual impermeable edge walls. Projection
+    // and advection see these same cells; there is no field behind the walls.
+    var edge=Math.min(smokeDomain.w,smokeDomain.h)/Math.max(16,smokeEngine.config.SIM_RESOLUTION)*2;
+    rect(smokeDomain.x,smokeDomain.y,smokeDomain.x+smokeDomain.w,smokeDomain.y+edge);
+    rect(smokeDomain.x,smokeDomain.y+smokeDomain.h-edge,smokeDomain.x+smokeDomain.w,smokeDomain.y+smokeDomain.h);
+    rect(smokeDomain.x,smokeDomain.y,smokeDomain.x+edge,smokeDomain.y+smokeDomain.h);
+    rect(smokeDomain.x+smokeDomain.w-edge,smokeDomain.y,smokeDomain.x+smokeDomain.w,smokeDomain.y+smokeDomain.h);
     // Static wall runs are cached until the visitor edits the terrain.
-    for (var r = 0; r < gridH; r++) {
+    for (var r = 1; r < gridH-1; r++) {
       var off = r * gridW;
-      var c = 0;
-      while (c < gridW) {
+      var c = 1;
+      while (c < gridW-1) {
         if (tileAt(r,c)===null) { c++; continue; }
         var c0 = c;
-        while (c < gridW && tileAt(r,c)!==null) c++;
+        while (c < gridW-1 && tileAt(r,c)!==null) c++;
         if (n + 12 > v.length) break;
-        var u0 = (c0 * TILE) * invW * 2 - 1;
-        var u1 = (c * TILE) * invW * 2 - 1;
-        var t0 = 1 - 2 * (r * TILE) * invH;
-        var t1 = 1 - 2 * ((r + 1) * TILE) * invH;
-        v[n++] = u0; v[n++] = t0;
-        v[n++] = u1; v[n++] = t0;
-        v[n++] = u0; v[n++] = t1;
-        v[n++] = u1; v[n++] = t0;
-        v[n++] = u1; v[n++] = t1;
-        v[n++] = u0; v[n++] = t1;
+        rect(c0*TILE,r*TILE,c*TILE,(r+1)*TILE);
       }
     }
     SmokeFluid.paintObstacleQuads(v, n / 2, smokeObW, smokeObH);
     smokePaintedVersion = wallsVersion;
+    smokePaintedBoundary=smokeBoundaryVersion;
   }
 
   function smokeWaterFlowCouple() {
@@ -3527,7 +3654,7 @@
     }
     smokeWasAwake = true;
     smokeAwakeT -= dt;
-    if (smokePaintedVersion !== wallsVersion) {
+    if (smokePaintedVersion !== wallsVersion || smokePaintedBoundary!==smokeBoundaryVersion) {
       smokeRepaintObstacle();
     }
     if(toyCannon && toyCannon.prepare)toyCannon.prepare(dt*timeMul);
@@ -14650,6 +14777,7 @@
     var disabled=!machineState.ready || machineLoading || handsPending ||
       ((kind==='balloon-pop' || kind==='slime') && machineState.primaryUsed);
     var label=d.birds && toySound ? toySound.stats().enabled?'Mute sound':'Turn on sound' : d.action || 'Use apparatus';
+    if(kind==='fire-pour' || kind==='pour')label='Pour water';
     var controls=[];
     function target(x,y,width,height,id,mode){
       if(!Number.isFinite(x) || !Number.isFinite(y))return;
@@ -14669,8 +14797,8 @@
       var part=(d.parts || []).find(function(item){return item.id===p.id;});if(part)atRect(part.rect);
     }else if(kind==='cap' || kind==='interlocked-cap' || kind==='thumb')opening(p.opening);
     else if(kind==='fire-pour' && d.fire){
-      target(d.fire.pour.x-13,d.fire.pour.y-15,46,46);
-      target(d.fire.x,d.fire.y,64,32,'fire-source');
+      target(d.fire.pour.x,d.fire.pour.y,44,44);
+      target(d.fire.x,d.fire.y,44,44,'fire-source');
       if(d.sauna)atRect(d.sauna.stones,'hot-stones');
     }else if(kind==='heat-toggle' && d.thermoscope)target(d.thermoscope.x,d.thermoscope.y,48,32);
     else if(kind==='steam-heat-toggle' && d.steam)atRect(d.steam.heater);
@@ -14693,7 +14821,7 @@
     else if(kind==='wave-motor' && d.wave)target(d.wave.rect.x+d.wave.rect.width*.5,d.wave.rect.y+12,d.wave.rect.width,24);
     else if(kind==='draft-motor')body(0);
     else if(kind==='draft-wall-toggle' && d.draftFireSmoke)atRect(d.draftFireSmoke.gate.rect);
-    else if(kind==='pour')target(p.target.x-13,p.target.y-15,46,46);
+    else if(kind==='pour')target(p.target.x,p.target.y,44,44);
     else if(kind==='draft-primary' && d.releaseCap)opening(d.releaseCap);
     else if(kind==='creature-gates' && d.parts && d.parts.length)atRect(d.parts[0].rect);
     else target(source.x+source.width*.5,source.y+12,48,32);
@@ -15041,7 +15169,7 @@
     if(machineState){
       var definition=machineState.definition;
       if(art && definition.primary.kind==='pour' && definition.primary.target)
-        art.pail(c,definition.primary.target.x,definition.primary.target.y);
+        art.sourcePort(c,definition.primary.target.x,definition.primary.target.y);
       if(definition.primary.kind==='slime' && !machineState.primaryUsed){
         var waitingSlime=definition.slimes[definition.primary.index || 0];
         if(waitingSlime){
@@ -15073,14 +15201,20 @@
       if(toyFire){var f=definition.fire,hot=toyFire.stats();
         c.save();c.fillStyle=palette.getPropertyValue('--text-dim').trim();
         c.fillText(toySauna?'Fire':hot.smothered?'Out, wet':hot.airStarved?'Out, no air':hot.burning?'Burning':hot.extinguished?'Out':f.noEmber?'Cooling':'Ember reheating',f.x+48,f.y-12);c.restore();
-        if(art && !f.air){art.hearth(c,f.x,f.y,{burning:hot.burning,wet:hot.smothered});
-          if(definition.primary.kind==='fire-pour')art.pail(c,f.pour.x,f.pour.y,{active:firePourPending>0});}}
+        if(art && !f.air){art.heatSource(c,f.x,f.y,{burning:hot.burning,wet:hot.smothered});
+          if(definition.primary.kind==='fire-pour'){
+            art.sourcePort(c,f.pour.x,f.pour.y,{active:firePourPending>0});
+            c.save();c.fillStyle=palette.getPropertyValue('--text-dim').trim();c.textAlign='center';
+            c.strokeStyle=palette.getPropertyValue('--d-canvas-bg').trim();c.lineWidth=3/fitScale;
+            c.strokeText('Pour',f.pour.x,f.pour.y-12/fitScale);
+            c.fillText('Pour',f.pour.x,f.pour.y-12/fitScale);c.restore();
+          }}}
       if(toyThermoscope){var heater=definition.thermoscope;
         c.fillText(toyThermoscope.heated?'Heater on':'Cooling',heater.x+88,heater.y-10);
         if(art)art.heater(c,{x:heater.x-16,y:heater.y-8,width:32,height:16},{heated:toyThermoscope.heated});
         if(definition.setup==='vented')c.fillText('Open vent',heater.x+104,100);
       }
-      if(toyBubbles){var hose=definition.bubbles.hose;if(art)art.hose(c,hose.x,hose.y,{bottom:384,active:toyBubbles.stats().injecting});}
+      if(toyBubbles){var hose=definition.bubbles.hose;if(art)art.airPort(c,hose.x,hose.y,{bottom:384,active:toyBubbles.stats().injecting});}
       definition.marks.forEach(function(mark){
         c.save();c.setLineDash([5,5]);c.beginPath();c.moveTo(mark.x,mark.y);c.lineTo(mark.x+mark.width,mark.y);c.stroke();c.restore();
         if(mark.id==='trigger')c.fillText('Fill line',mark.x+8,mark.y-7);
@@ -15088,7 +15222,7 @@
       });
       if(definition.boundaries){
         var b=definition.boundaries;
-        if(b.tap && art)art.tap(c,b.tap,{enabled:!toyBoundary || toyBoundary.stats().tapEnabled});
+        if(b.tap && art)art.flowControl(c,b.tap,{enabled:!toyBoundary || toyBoundary.stats().tapEnabled});
         if(b.drain){
           c.setLineDash([3,3]);c.strokeRect(b.drain.x,b.drain.y,b.drain.width,b.drain.height);
           if(b.tap){c.beginPath();c.moveTo(56,b.drain.y);c.lineTo(56,b.tap.y);c.lineTo(b.tap.x-b.tap.width*.5,b.tap.y);c.stroke();c.fillText('Powered return',64,b.tap.y-10);}

@@ -19,7 +19,11 @@ const server=createServer((request,response)=>{
     assert(file.startsWith(root+path.sep));
     let bytes=fs.readFileSync(file);
     if(file===path.join(root,'js/water-smoke-slime.js')){
-      const source=bytes.toString(),end=source.lastIndexOf('})();');
+      var source=bytes.toString();
+      // Sample the unchanged solver's outer cells more closely than its
+      // normal 96 by 54 instrument readback. Only this diagnostic FBO grows.
+      if((request.headers.referer || '').includes('boundarycheck=1'))source=source.replace('flowSample = createFBO(96, 54,','flowSample = createFBO(512, 512,').replace('flowValues = new Float32Array(96 * 54 * 4);','flowValues = new Float32Array(512 * 512 * 4);');
+      const end=source.lastIndexOf('})();');
       bytes=source.slice(0,end)+'window.__boundsTest=function(source){return eval(source);};\n'+source.slice(end);
     }
     response.writeHead(200,{'Content-Type':mime[path.extname(file)] || 'application/octet-stream'});response.end(bytes);
@@ -27,7 +31,7 @@ const server=createServer((request,response)=>{
 });
 const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 let browser,socket,sequence=0;
-const pending=new Map(),errors=[],checks=[],disclosures=[];
+const pending=new Map(),errors=[],checks=[],disclosures=[],boundaries=[],thermal={};
 function send(method,params={}){
   return new Promise((resolve,reject)=>{
     const id=++sequence,timer=setTimeout(()=>{pending.delete(id);reject(Error('Timeout '+method));},30000);
@@ -53,12 +57,12 @@ const geometry=`(()=>{const rect=id=>document.getElementById(id).getBoundingClie
   return {scene:currentScene,world:{w:worldW,h:worldH},stage:rect('toy-stage'),viewport:rect('toy-viewport'),
     top:document.querySelector('.toy-top').getBoundingClientRect().toJSON(),
     screen:{width:innerWidth,height:innerHeight,scrollWidth:document.documentElement.scrollWidth,scrollHeight:document.documentElement.scrollHeight}};})()`;
-async function load(scene,width,height,mobile=false){
+async function load(scene,width,height,mobile=false,boundaryCheck=false){
   await send('Emulation.setDeviceMetricsOverride',{width,height,mobile,deviceScaleFactor:1});
-  await send('Page.navigate',{url:'http://127.0.0.1:'+server.address().port+'/archive/water-smoke-slime/water-smoke-slime.html?scene='+scene+'&paused=1'});
+  await send('Page.navigate',{url:'http://127.0.0.1:'+server.address().port+'/archive/water-smoke-slime/water-smoke-slime.html?scene='+scene+'&paused=1'+(boundaryCheck?'&boundarycheck=1':'')});
   for(let i=0;i<180;i++){
     if(await evaluate('!!window.__boundsTest && __toy.stats().waterState!=="booting" && (!WSSMachineRegistry.lookup('+JSON.stringify(scene)+') || __toy.machineState()?.ready)'))break;
-    if(i===179)throw Error('Scene did not boot: '+scene);await delay(100);
+    if(i===179)throw Error('Scene did not boot: '+scene+' '+JSON.stringify(await evaluate('({stats:window.__toy?.stats(),build:window.__toy?.buildState(),air:window.__toy?.airStats(),errors:'+JSON.stringify(errors)+'})')));await delay(100);
   }
   await evaluate('__toy.pause(true);__toy.resize()');await delay(60);
 }
@@ -99,11 +103,30 @@ try{
       await evaluate('__toy.resize()');await delay(40);checkBounds(await inside(geometry));
     }
   }
+  await load('thermoscope',1440,900);
+  await evaluate('__toy.machine("thermoscope",{unheated:true})');
+  await evaluate('__toy.pause(false)');await delay(1800);
+  thermal.unheated=await evaluate('__toy.instruments().thermoscope');
+  assert(thermal.unheated && Number.isFinite(thermal.unheated.temperatureK),'Native thermoscope pocket supplies an actual temperature');
+  await evaluate('__toy.machinePrimary()');
+  for(let attempt=0;attempt<60;attempt++){
+    await delay(100);thermal.heated=await evaluate('__toy.instruments().thermoscope');
+    if(thermal.heated?.temperatureK>thermal.unheated.temperatureK+.2)break;
+  }
+  await evaluate('__toy.pause(true)');
+  assert(thermal.heated?.temperatureK>thermal.unheated.temperatureK+.2,'Mapped heater warms the actual native gas bulb: '+JSON.stringify(thermal));
+  await load('douse-fire',1440,900);await evaluate('__toy.pause(false);__toy.machinePrimary()');
+  for(let attempt=0;attempt<100;attempt++){
+    await delay(100);thermal.fire=await evaluate('__toy.fire().stats()');
+    if(thermal.fire.quenchEvents>0 && thermal.fire.waterHeatJ>0)break;
+  }
+  await evaluate('__toy.pause(true)');
+  assert(thermal.fire.quenchEvents>0 && thermal.fire.waterHeatJ>0,'Real admitted water still quenches the fire and absorbs heat: '+JSON.stringify(thermal.fire));
   await load('douse-fire',1440,900);
   await evaluate('__toy.pause(false)');await delay(3000);await evaluate('__toy.pause(true)');
-  const smoke=await inside('({active:smokeActive,mask:getComputedStyle(smokeCanvas).maskImage,composite:getComputedStyle(smokeCanvas).maskComposite,fire:toyFire.stats()})');
+  const smoke=await inside('({active:smokeActive,mask:getComputedStyle(smokeCanvas).maskImage,domain:smokeDomain,viewport:smokeViewport,fire:toyFire.stats()})');
   assert(smoke.active && smoke.fire.burning,'Actual fire and smoke are active');
-  assert(smoke.mask.includes('data:image/svg+xml'),'Smoke feathers inside its complete domain');
+  assert.equal(smoke.mask,'none','Smoke has no visual mask or fade');
   const frame=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
   fs.writeFileSync(path.join(output,'douse-fire.png'),Buffer.from(frame.data,'base64'));
   for(const [width,height,mobile] of sizes){
@@ -112,6 +135,41 @@ try{
     await checkDisclosure('#toy-instruments-open','#toy-panel-instruments');
     await checkDisclosure('#toy-about-open','#toy-panel-about');
   }
+  // Drive actual dye and outward air velocity into all four real boundaries.
+  // The outer velocity/dye cells must be empty after projection/advection;
+  // interior dye must remain, proving the test did not just clear the field.
+  for(const [width,height,mobile] of [[1440,900,false],[844,390,true],[320,500,true]]){
+    await load('douse-fire',width,height,mobile,true);
+    const result=await inside(`(()=>{
+      var saved=SmokeFluid.getPhysics();SmokeFluid.setPhysics({HEAT:0,COOLING:0,BUOYANCY:0,WEIGHT:0},0);
+      smokeEngine.clear();smokeRepaintObstacle();
+      [[.035,.5,-220,0],[.965,.5,220,0],[.5,.035,0,-220],[.5,.965,0,220]].forEach(function(p){smokeEngine.splat(p[0],p[1],p[2],p[3],{r:1,g:.8,b:.6},.03);});
+      for(var step=0;step<40;step++)SmokeFluid.step(1/120);
+      var field=smokeEngine.sampleFlow(smokeDomain.w,smokeDomain.h),dye=0,normal=0,interior=0,nonfinite=0;
+      for(var y=0;y<field.height;y++)for(var x=0;x<field.width;x++){
+        var i=(y*field.width+x)*4;
+        if(!Number.isFinite(field.values[i]) || !Number.isFinite(field.values[i+1]) || !Number.isFinite(field.values[i+3]))nonfinite++;
+        if(x===0 || x===field.width-1 || y===0 || y===field.height-1){
+          dye=Math.max(dye,Math.abs(field.values[i+3]));
+          if(x===0 || x===field.width-1)normal=Math.max(normal,Math.abs(field.values[i]));
+          if(y===0 || y===field.height-1)normal=Math.max(normal,Math.abs(field.values[i+1]));
+        }else interior=Math.max(interior,field.values[i+3]);
+      }
+      var visible=viewport.getBoundingClientRect(),air=smokeCanvas.getBoundingClientRect();
+      SmokeFluid.setPhysics(saved,0);smokeEngine.displayPass();
+      return {screen:{width:innerWidth,height:innerHeight},domain:smokeDomain,visible:smokeViewport,canvas:air.toJSON(),viewport:visible.toJSON(),dye,normal,interior,nonfinite,sample:{width:field.width,height:field.height},mask:getComputedStyle(smokeCanvas).maskImage};
+    })()`);
+    assert.equal(result.nonfinite,0,'Boundary field remains finite');
+    assert(result.dye<1e-6 && result.normal<1e-6,'No dye or normal flow passes hard boundaries: '+JSON.stringify(result));
+    assert(result.interior>.01,'Actual smoke remains inside the boundaries');
+    assert.equal(result.mask,'none');
+    assert(Math.abs(result.canvas.left-(result.viewport.left+result.visible.left))<.1 && Math.abs(result.canvas.right-(result.viewport.left+result.visible.right))<.1 && Math.abs(result.canvas.top-(result.viewport.top+result.visible.top))<.1 && Math.abs(result.canvas.bottom-(result.viewport.top+result.visible.bottom))<.1,'Smoke domain matches its complete visible rectangle');
+    boundaries.push(result);
+    // A changed camera cannot retain hidden smoke fields.
+    const reset=await inside('setCamera({zoom:2});var f=smokeEngine.sampleFlow(smokeDomain.w,smokeDomain.h),maxDye=0;for(var i=3;i<f.values.length;i+=4)maxDye=Math.max(maxDye,f.values[i]);({maxDye:maxDye,domain:smokeDomain})');
+    assert.equal(reset.maxDye,0,'Zoom resets air to the newly visible physical domain');
+  }
+  await load('douse-fire',1440,900);
   // Every accepted authored world is passed through the real host fitter and
   // its real scene-specific CSS, including the maximum expanded room width.
   // No solver coefficients or apparatus geometry are altered by this sweep.
@@ -132,7 +190,7 @@ try{
     rows.forEach(checkBounds);
   }
   assert.equal(errors.length,0,'No uncaught browser exceptions');
-  fs.writeFileSync(path.join(output,'report.json'),JSON.stringify({pass:true,acceptedScenes:count,sizes,checks,disclosures,smoke,errors},null,2));
+  fs.writeFileSync(path.join(output,'report.json'),JSON.stringify({pass:true,acceptedScenes:count,sizes,checks,disclosures,boundaries,thermal,smoke,errors},null,2));
   console.log('PASS '+checks.length+' bounds checks and '+disclosures.length+' disclosure checks across '+count+' accepted scenes and '+sizes.length+' viewport sizes. '+output);
 }finally{
   try{socket?.close();}catch{}

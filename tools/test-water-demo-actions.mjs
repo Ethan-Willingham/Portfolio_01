@@ -36,9 +36,9 @@ try{
  ws.addEventListener('message',event=>{const m=JSON.parse(event.data);if(m.id){let p=pending.get(m.id);if(p){clearTimeout(p.timer);pending.delete(m.id);m.error?p.reject(Error(JSON.stringify(m.error))):p.resolve(m.result);}}else if(m.method==='Runtime.exceptionThrown')errors.push(m.params.exceptionDetails);else if(m.method==='Runtime.consoleAPICalled'&&m.params.type==='error')errors.push(m.params.args.map(a=>a.value||a.description));});
  await send('Runtime.enable');await send('Page.enable');await send('Emulation.setDeviceMetricsOverride',{width:1180,height:780,deviceScaleFactor:1,mobile:false});
  await load('douse-fire');await ev('__toy.pause(true)');await pause(250);
- const before=await sim('firePourPending');await clickTarget();assert.equal(await sim('firePourPending'),before+2400,'jug click queues real water');
- await clickTarget('fire-source');assert.equal(await sim('firePourPending'),before+4800,'hearth click queues real water');
- await ev('__toy.pause(false)');await until('__toy.fire().stats().poured>0');console.log('FIRE jug and hearth admit native water');
+ const before=await sim('firePourPending');await clickTarget();assert.equal(await sim('firePourPending'),before+2400,'water-source click queues real water');
+ await clickTarget('fire-source');assert.equal(await sim('firePourPending'),before+4800,'fire click queues real water');
+ await ev('__toy.pause(false)');await until('__toy.fire().stats().poured>0');console.log('FIRE water source and fire admit native water');
  await load('thumb-straw');let straw=await target();await mouse('mousePressed',straw.x,straw.y);await until('__toy.machineState()?.thumbHeld===true&&!__toy.stats().loading');
  assert.equal(await ev('document.querySelector(".toy-scene-action").hidden'),false,'held target survives asynchronous refill');
  await mouse('mouseReleased',straw.x,straw.y);await until('__toy.machineState()?.thumbHeld===false');
