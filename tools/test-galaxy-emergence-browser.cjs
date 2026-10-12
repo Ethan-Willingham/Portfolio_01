@@ -52,7 +52,7 @@ async function presets(page,id){
   await new Promise(r=>server.listen(0,'127.0.0.1',r));browser=await chromium.launch({headless:true,executablePath:path.join(require('node:os').homedir(),'.local/bin/agent-chrome-for-testing'),args:['--enable-unsafe-webgpu']});
   for(const phone of [false,true]){
     const context=await browser.newContext({viewport:phone?{width:390,height:844}:{width:1512,height:692},hasTouch:phone,isMobile:phone});const page=await open(context);
-    assert.equal(await page.locator('#gx-scene-select option[value="saturn"]').count(),0);assert.equal(await page.locator('#gx-scene-select optgroup[data-category="emergence"] option').count(),2);
+    assert.equal(await page.locator('#gx-scene-select option[value="saturn"]').count(),0);assert.equal(await page.locator('#gx-scene-select option[value="boids"], #gx-scene-select option[value="ants"]').count(),2);
     for(const id of ['boids','ants']){
       await select(page,id);await presets(page,id);await fit(page);
       const pixels=await page.evaluate(()=>__emPixels());assert.ok(pixels.visible>40&&pixels.count>100,id+' sprites disappeared');

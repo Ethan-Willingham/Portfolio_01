@@ -19,7 +19,7 @@
 
   function image(scene, lazy) {
     var img = document.createElement('img');
-    img.src = 'assets/galaxy-previews/' + scene + '.svg?v=1.78';
+    img.src = 'assets/galaxy-previews/' + scene + '.svg?v=1.79';
     img.alt = ''; img.width = 320; img.height = 200;
     img.decoding = 'async'; img.loading = lazy ? 'lazy' : 'eager';
     return img;
@@ -29,7 +29,7 @@
     var option = select.selectedOptions[0];
     if (!option) return;
     value.textContent = option.textContent;
-    thumbnail.src = 'assets/galaxy-previews/' + option.value + '.svg?v=1.78';
+    thumbnail.src = 'assets/galaxy-previews/' + option.value + '.svg?v=1.79';
     trigger.setAttribute('aria-label', 'Choose a scene: ' + option.textContent);
     cards.forEach(function (card) {
       card.setAttribute('aria-pressed', String(card.dataset.value === select.value));
@@ -86,7 +86,7 @@
       options.forEach(function (option) {
         var card = document.createElement('button'); card.type = 'button'; card.className = 'gx-picker-card';
         card.dataset.value = option.value; card.dataset.group = group.dataset.category;
-        card.dataset.search = [option.textContent, sceneHints[option.value], group.label, group.dataset.category].join(' ').toLowerCase();
+        card.dataset.search = [option.textContent, sceneHints[option.value], group.label, group.dataset.category, option.dataset.keywords || ''].join(' ').toLowerCase();
         card.setAttribute('aria-label', option.textContent);
         card.appendChild(image(option.value, true));
         var name = document.createElement('span'); name.className = 'gx-picker-name'; name.textContent = option.textContent;

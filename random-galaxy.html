@@ -33,7 +33,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="random-galaxy.css?v=1.78">
+  <link rel="stylesheet" href="random-galaxy.css?v=1.79">
 </head>
 <body class="gx-page">
   <div class="site-wrapper">
@@ -57,7 +57,7 @@
             <div class="gx-controls">
               <label class="gx-scene-field" for="gx-scene-select"><span>Choose a scene</span></label>
               <select class="gx-scene-select" id="gx-scene-select">
-                <optgroup label="Find a path" data-category="pathfinding">
+                <optgroup label="Searching" data-category="pathfinding">
                   <option value="bfs" selected>Breadth-first search</option>
                   <option value="bidir">Bidirectional search</option>
                   <option value="dijkstra">Dijkstra</option>
@@ -67,7 +67,7 @@
                   <option value="dfs">Depth-first search</option>
                   <option value="randomwalk">Random walk</option>
                 </optgroup>
-                <optgroup label="Put things in order" data-category="sorting">
+                <optgroup label="Sorting" data-category="sorting">
                   <option value="bubble">Bubble sort</option>
                   <option value="insertion">Insertion sort</option>
                   <option value="quick">Quicksort</option>
@@ -75,38 +75,28 @@
                   <option value="bitonic">Bitonic sort</option>
                   <option value="pancake">Pancake sort</option>
                 </optgroup>
-                <optgroup label="Birds and ants" data-category="emergence">
-                  <option value="boids">Bird flocks</option>
-                  <option value="ants">Ant colony</option>
-                </optgroup>
-                <optgroup label="Randomness" data-category="randomness">
-                  <option value="mulberry">Random stars</option>
-                  <option value="grid">Perfect grid</option>
-                </optgroup>
-                <optgroup label="Chaotic trails" data-category="attractors">
-                  <option value="thomas">Thomas attractor</option>
-                  <option value="lorenz">Lorenz attractor</option>
-                  <option value="aizawa">Aizawa attractor</option>
-                  <option value="dadras">Dadras attractor</option>
-                  <option value="clifford">Clifford attractor</option>
-                </optgroup>
-                <optgroup label="Fractals" data-category="fractals">
-                  <option value="sierpinski">Sierpinski</option>
-                  <option value="jerusalem">Jerusalem cube</option>
-                  <option value="vicsek">Vicsek</option>
-                </optgroup>
-                <optgroup label="Number patterns" data-category="numbers">
-                  <option value="primes3d">Primes</option>
-                  <option value="gprimes">Gauss primes</option>
-                  <option value="collatz">Collatz</option>
-                  <option value="pi">Pi</option>
-                  <option value="recaman">Recaman</option>
-                </optgroup>
-                <optgroup label="Geometry" data-category="geometry">
-                  <option value="metatron">Metatron</option>
-                  <option value="hopf">Hopf</option>
-                  <option value="lotus">Lotus</option>
-                  <option value="harmonics">Harmonics</option>
+                <optgroup label="Patterns" data-category="patterns">
+                  <option data-keywords="birds and ants emergence" value="boids">Bird flocks</option>
+                  <option data-keywords="birds and ants emergence" value="ants">Ant colony</option>
+                  <option data-keywords="randomness randomness" value="mulberry">Random stars</option>
+                  <option data-keywords="randomness randomness" value="grid">Perfect grid</option>
+                  <option data-keywords="chaotic trails attractors" value="thomas">Thomas attractor</option>
+                  <option data-keywords="chaotic trails attractors" value="lorenz">Lorenz attractor</option>
+                  <option data-keywords="chaotic trails attractors" value="aizawa">Aizawa attractor</option>
+                  <option data-keywords="chaotic trails attractors" value="dadras">Dadras attractor</option>
+                  <option data-keywords="chaotic trails attractors" value="clifford">Clifford attractor</option>
+                  <option data-keywords="fractals fractals" value="sierpinski">Sierpinski</option>
+                  <option data-keywords="fractals fractals" value="jerusalem">Jerusalem cube</option>
+                  <option data-keywords="fractals fractals" value="vicsek">Vicsek</option>
+                  <option data-keywords="number patterns numbers" value="primes3d">Primes</option>
+                  <option data-keywords="number patterns numbers" value="gprimes">Gauss primes</option>
+                  <option data-keywords="number patterns numbers" value="collatz">Collatz</option>
+                  <option data-keywords="number patterns numbers" value="pi">Pi</option>
+                  <option data-keywords="number patterns numbers" value="recaman">Recaman</option>
+                  <option data-keywords="geometry geometry" value="metatron">Metatron</option>
+                  <option data-keywords="geometry geometry" value="hopf">Hopf</option>
+                  <option data-keywords="geometry geometry" value="lotus">Lotus</option>
+                  <option data-keywords="geometry geometry" value="harmonics">Harmonics</option>
                 </optgroup>
               </select>
             </div>
@@ -149,9 +139,9 @@
     </main>
   </div>
   <script src="js/main.js"></script>
-  <script src="js/random-galaxy-picker.js?v=1.78"></script>
-  <script src="js/random-galaxy-emergence-models.js?v=1.78"></script>
-  <script src="js/random-galaxy-emergence.js?v=1.78"></script>
-  <script src="js/random-galaxy.js?v=1.78"></script>
+  <script src="js/random-galaxy-picker.js?v=1.79"></script>
+  <script src="js/random-galaxy-emergence-models.js?v=1.79"></script>
+  <script src="js/random-galaxy-emergence.js?v=1.79"></script>
+  <script src="js/random-galaxy.js?v=1.79"></script>
 </body>
 </html>

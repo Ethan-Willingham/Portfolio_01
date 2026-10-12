@@ -109,7 +109,8 @@ async function choose(page,value){
    const total=groups.reduce((n,g)=>n+g.options.length,0);
    for(const group of groups){
     const choices=mobile&&group.category==='pathfinding'?group.options.filter(o=>['astar','dfs'].includes(o.value))
-      :mobile&&group.category!=='emergence'?[group.options.at(-1)]:group.options;
+      :mobile&&group.category==='patterns'?group.options.filter(o=>['boids','ants','grid','lorenz','sierpinski','collatz','harmonics'].includes(o.value))
+      :mobile?[group.options.at(-1)]:group.options;
     for(const option of choices){
      await trigger.click();const dialog=page.locator('#gx-picker-dialog');
      check((mobile?'phone ':'desktop ')+option.label+' is directly available',await dialog.locator('.gx-picker-card').count()===total);
@@ -123,7 +124,7 @@ async function choose(page,value){
       const result=await page.evaluate(()=>__gxTest.finishSort());
       check(option.label+' sorts all 64 rings',result.n===64&&result.total===48000&&result.ordered);
      }
-     if(group.category==='emergence'){
+     if(['boids','ants'].includes(option.value)){
       await page.waitForFunction(()=>GXEmergence.snapshot().worlds[0].steps>0);
       const before=await page.evaluate(()=>GXEmergence.snapshot());await page.waitForTimeout(150);
       const after=await page.evaluate(()=>GXEmergence.snapshot());

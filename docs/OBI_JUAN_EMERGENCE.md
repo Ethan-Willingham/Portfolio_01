@@ -16,7 +16,7 @@ The rectangular habitat fills the canvas with narrow side margins and space for 
 
 ## UI and lifecycle
 
-The shared app has one "Choose a scene" control. It opens a gallery of all 35 scenes, grouped under plain headings such as "Find a path" and "Birds and ants". Every picture starts that scene directly. An optional search matches names, descriptions and group names. There are no Watch/Explore tabs or category/structure pickers. The current scene stays named in the chooser and above the canvas. The grouped native select remains available if the gallery script fails to load; browsers without WebGPU offer the two Emergence scenes.
+The shared app has one "Choose a scene" control. It opens a gallery of all 35 scenes, grouped under exactly three headings: "Searching", "Sorting" and "Patterns". Every picture starts that scene directly. Patterns contains birds, ants, randomness, attractors, fractals, numbers and geometry. An optional search matches names, descriptions, group names and the former topic names. There are no Watch/Explore tabs or category/structure pickers. The current scene stays named in the chooser and above the canvas. The grouped native select remains available if the gallery script fails to load; browsers without WebGPU offer the two Emergence scenes.
 
 `js/random-galaxy-emergence-models.js` exports deterministic pure models for browser and Node. `js/random-galaxy-emergence.js` supplies preset choices, camera interaction, Canvas fields and batched WebGL bird/ant sprites, with shaped Canvas sprites as a fallback. `js/random-galaxy.js` owns the app's frame clock and skips its WebGPU submissions while Emergence is active.
 

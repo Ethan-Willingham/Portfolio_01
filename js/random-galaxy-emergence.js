@@ -77,7 +77,7 @@
     $('em-presets').replaceChildren();
     for(const [key,label]of defs[id].presets){
       const btn=document.createElement('button');btn.type='button';btn.dataset.preset=key;
-      const image=document.createElement('img');image.src='assets/galaxy-previews/'+id+'-'+key+'.svg?v=1.78';image.alt='';image.width=160;image.height=100;
+      const image=document.createElement('img');image.src='assets/galaxy-previews/'+id+'-'+key+'.svg?v=1.79';image.alt='';image.width=160;image.height=100;
       const name=document.createElement('span');name.textContent=label;btn.append(image,name);btn.addEventListener('click',()=>choosePreset(key));$('em-presets').appendChild(btn);
     }
   }
