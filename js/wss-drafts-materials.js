@@ -77,12 +77,14 @@ register('interlayer-slime','Oil','Slime between oil and water','Drop and grab a
  d.slimes=[{x:360,y:104,radius:24}];d.measure={source:jar,receiver:jar};return d;
 });
 register('melting-ice','Ice','Floating ice that melts','Watch lightweight grain proxies move in water.','NOT WORKING',function(w,o){
+ if(root.WSSThermalMachines)return root.WSSThermalMachines.ice(w,o);
  var d=base('melting-ice','Floating ice that melts','Light grains stand in for ice; rigid cubes, freezing and melting are missing.',w,o),jar=rect(208,144,304,240);
  d.viewBounds=rect(168,96,384,296);d.vessels=[box('jar','Ice proxies in water',jar)];d.initial=[initial(rect(216,264,288,112)),initial(rect(320,192,64,56))];
  d.materialSlip=slip([1,.7733,.917]);d.materialAt=function(x,y){return x>=320&&x<384&&y>=192&&y<248?'sand':'water';};d.measure={source:jar,receiver:jar};
  d.boundaryNote='Draft. These are native granular proxies with actual relative mass0.917, not ice cubes. No freezing, latent heat, thermal melting or rigid bond model is implemented.';return d;
 });
 register('frozen-pipe','Ice','Frozen pipe','Remove a real manual plug from the water pipe.','NOT WORKING',function(w,o){
+ if(root.WSSThermalMachines)return root.WSSThermalMachines.pipe(w,o);
  var d=base('frozen-pipe','Frozen pipe','A manual plug blocks real water; freezing expansion and self-bursting are missing.',w,o),source=rect(128,80,184,304),cup=rect(528,312,144,72);
  d.vessels=[box('source','Water head',source),box('cup','Receiving cup',cup)];d.pipes=[{points:[{x:296,y:304},{x:592,y:304}],bore:48}];
  d.parts=[{id:'plug',type:'valve',rect:rect(432,288,16,48),direction:'right',open:false,mass:1}];d.initial=[initial(rect(136,176,168,200)),initial(rect(304,296,120,32))];

@@ -1055,7 +1055,9 @@
     "accepted": true,
     "preview": "cup",
     "scripts": [
-      "wss-drafts-materials"
+      "wss-drafts-materials",
+      "wss-drafts-bodies",
+      "wss-thermal-machines"
     ]
   },
   {
@@ -1073,7 +1075,9 @@
     "accepted": true,
     "preview": "cup",
     "scripts": [
-      "wss-drafts-materials"
+      "wss-drafts-materials",
+      "wss-drafts-bodies",
+      "wss-thermal-machines"
     ]
   },
   {
@@ -2292,7 +2296,7 @@
     "preview": "cup",
     "scripts": [
       "wss-drafts-fluid-machines",
-      "liquid-material-slip-wgpu"
+      "wss-capillary-planter"
     ]
   },
   {

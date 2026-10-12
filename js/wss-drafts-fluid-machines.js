@@ -46,6 +46,7 @@ add('hydraulic-jump','Water','Hydraulic jump','Open the gate from the high reser
  d.boundaryNote+=' The inlet is driven by stored gravitational head, not a prescribed stream speed. The weir and stepped slope are real wall cells.';return d;
 });
 add('self-watering-planter','Water','Self-watering planter','Pour water beside the loose substrate.','NOT WORKING',function(w,o){
+ if(root.WSSCapillaryPlanter)return root.WSSCapillaryPlanter.make(w,o);
  var d=base('self-watering-planter','Self-watering planter',w,o),reservoir=r(112,160,208,224),pot=r(312,96,288,288);
  d.vessels=[vessel('reservoir','Reservoir',reservoir),vessel('pot','Loose substrate',pot)];d.pipes=[{points:[{x:304,y:320},{x:336,y:320}],bore:24}];
  d.initial=[fill(r(120,280,192,96)),fill(r(336,216,240,152))];d.settings={enabled:false};d.boundaries=null;d.materialSlip={density:[1,.7733,2.65],drag:[4,4,4]};
