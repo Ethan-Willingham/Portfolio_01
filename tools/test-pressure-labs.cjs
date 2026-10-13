@@ -61,7 +61,19 @@ test('wide inverted mouth permits faster air-water exchange',()=>{const a=make('
 test('Tesla reverse resistance reduces equal-head flow',()=>{const a=make('tesla-valve'),b=make('tesla-valve',{reverse:true});advance(a,2);advance(b,2);assert(Math.abs(a.edges[0].flow)>Math.abs(b.edges[0].flow)*1.3);});
 test('hydraulic jump joins supercritical and subcritical depth states',()=>{const m=make('hydraulic-jump');m.activate('primary');const s=advance(m,1);assert(Math.max(...s.channel.froude.slice(0,12))>1);assert(Math.min(...s.channel.froude.slice(30))<1);assert(s.channel.depth[38]>s.channel.depth[4]*2);});
 for(const id of ['soda-mentos','cold-geyser'])test(id+' eruption spends dissolved gas and requires carbonation',()=>{const a=make(id),b=make(id,{flat:true}),c=make(id,{mentos:false});for(const m of[a,b,c])m.activate('primary');advance(a,2);advance(b,2);advance(c,2);assert(flow(a,'foam')>.002);assert(flow(b,'foam')===0);assert(flow(a,'foam')>flow(c,'foam')*2);assert(a.state.dissolved<a.state.co2);});
-test('Hero jug selects fluid with air vents',()=>{const a=make('hero-jug'),b=make('hero-jug');b.activate('primary');advance(a,2);advance(b,2);assert(flow(a,'water-outlet')>flow(a,'wine-outlet')*2);assert(flow(b,'wine-outlet')>flow(b,'water-outlet')*2);});
+test('Hero jug uses selected air vents and tracks the actual cup mixture on three fills',()=>{
+ for(const chamberFill of [.72,.78,.84]){
+  const water=make('hero-jug',{chamberFill}),wine=make('hero-jug',{chamberFill}),closed=make('hero-jug',{chamberFill});
+  wine.activate('primary');closed.activate('both');
+  advance(water,3);advance(wine,3);advance(closed,3);
+  assert(flow(water,'water-outlet')>flow(water,'wine-outlet')*5,'water vent favors water');
+  assert(flow(wine,'wine-outlet')>flow(wine,'water-outlet')*5,'wine vent favors wine');
+  assert(water.nodes[2].pigmentWine/water.nodes[2].volume<.2,'water cup carries measured dye');
+  assert(wine.nodes[2].pigmentWine/wine.nodes[2].volume>.8,'wine cup carries measured dye');
+  const before=closed.nodes[2].volume;advance(closed,3);assert(Math.abs(closed.nodes[2].volume-before)<1e-8,'both covered vents stop the sustained pour');
+  wine.activate('empty');assert(wine.nodes[2].volume===0&&wine.nodes[2].pigmentWine===0,'emptying clears both volume and pigment');
+ }
+});
 test('Heron air link transports smoke and drives finite fountain',()=>{const a=make('heron-air-smoke'),b=make('heron-air-smoke');b.air[0].open=false;advance(a,8);advance(b,8);assert(a.air[0].transported>0&&a.nodes[2].smoke>0);assert(flow(a,'fountain')>flow(b,'fountain')*2);});
 test('sewer water seal blocks gas until dry or overpressured',()=>{const wet=make('sewer-gas-trap'),dry=make('sewer-gas-trap'),boost=make('sewer-gas-trap');dry.activate('primary');boost.activate('boost');advance(wet,8);advance(dry,8);advance(boost,8);assert(wet.state.roomSmoke===0);assert(dry.state.roomSmoke>0);assert(boost.state.roomSmoke>0);});
 console.log('All reduced pressure lab checks passed.');
