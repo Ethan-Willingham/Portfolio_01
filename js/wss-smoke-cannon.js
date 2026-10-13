@@ -179,7 +179,7 @@
       for(var i=0;i<drum.nodes;i++){var x=drum.x+skin[i],y=drum.top+i*(drum.bottom-drum.top)/(drum.nodes-1);if(i)c.lineTo(x,y);else c.moveTo(x,y);}
       c.stroke();c.restore();
     }
-    if(!options || options.initial!==false){if(definition.noPush || drum)fill();else push();}
+    if(!options || options.initial!==false){if(definition.name==='slime-mail' && !definition.noPush)push();else if(definition.noPush || drum)fill();else push();}
     return {push:push,prepare:drum ? prepare : null,movingBodies:drum ? movingBodies : null,draw:drum ? draw : null,
       controlTarget:drum ? function(){var lo=0,hi=0;for(var i=1;i<skin.length-1;i++){lo=Math.min(lo,skin[i]);hi=Math.max(hi,skin[i]);}
         return {x:drum.x+(lo+hi)*.5,y:(drum.top+drum.bottom)*.5,width:Math.max(64,hi-lo+32),height:drum.bottom-drum.top+16};} : null,

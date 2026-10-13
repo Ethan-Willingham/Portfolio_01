@@ -194,7 +194,7 @@ try {
     });
   }
   async function check(id) {
-    await load(id);
+    await load(id, id === "slime-mail" ? { seed: Number(process.env.SEED || 17) } : {});
     const initial = await state();
     let samples = [];
     if (args.includes("--probe")) {
@@ -377,13 +377,22 @@ try {
         samples.push(await state());
       }
       assert(
-        Math.abs(passive.bodies[0].x - initial.bodies[0].x) < 10,
-        "A parcel at rest must not follow an assigned delivery path",
+        passive.bodies[0].x > initial.bodies[0].x + 10,
+        "The declared opening strike must start moving the parcel",
       );
       assert(
         samples.at(-1).bodies[0].x > 608,
         "Repeated native air pulses must deliver the parcel through the outlet",
       );
+      await load(id, { seed: Number(process.env.SEED || 17), noPush: true });
+      await advance(4);
+      for (let i = 0; i < 8; i++) {
+        await primary();
+        await advance(2);
+      }
+      const unpushed = await state();
+      assert(unpushed.bodies[0].x < 350, "No-push control must leave the gel parcel in the duct");
+      samples.push(unpushed);
     } else if (id === "pitcher-pump" || id === "spray-bottle") {
       await advance(3);
       const idle = await state();

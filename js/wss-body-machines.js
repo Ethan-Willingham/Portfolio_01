@@ -206,13 +206,13 @@
       d.boundaryNote =
         "The visible nozzle admits native water upward at 440 pixels per simulation second. Lateral guide walls keep the light gel above the stream while the collector recycles runoff through the powered supply. The shared liquid-to-gel buoyancy and drag approximation supplies lift; there is no height target or additional lifting force.";
     } else if (id === "slime-mail") {
-      d.slimes = [{ x: 312, y: 200, radius: 18 }];
+      d.slimes = [{ x: 288, y: 200, radius: 18 }];
       d.setups = [
         { id: "ordinary", label: "Strike the drumhead", options: {} },
         { id: "no-push", label: "No push", options: { noPush: true } },
       ];
       d.caption =
-        "Pulse the rear chamber to send the slime through the delivery tube. Repeated pulses add real air momentum.";
+        "An opening drumhead strike starts the slime moving. Strike it again to send the parcel through the tube.";
     } else if (id === "pitcher-pump" || id === "super-soaker") {
       d.bodyMachine.kind = "pump";
       d.bodyMachine.accumulator = id === "super-soaker";

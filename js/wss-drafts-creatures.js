@@ -9,7 +9,7 @@
     ['suction-cup','Water slimes','Suction cup','NOT WORKING',false,'Press the elastic cup against the shelf; vacuum adhesion is not connected.'],
     ['water-rocket','Water slimes','Water rocket','WORKS',false,'A native piston compresses trapped air. Release the nozzle to launch the carried water tank.'],
     ['slime-submarine','Water slimes','Slime submarine','WORKS',false,'Open the valve to flood its carried water tank, then close it and drag the loaded skin.'],
-    ['slime-mail','Smoke','Slime mail','PARTLY',false,'Tap the rear air chamber to push smoke toward the slime in the tube.'],
+    ['slime-mail','Smoke','Slime mail','WORKS',false,'Strike the rear drumhead until the slime leaves the tube.'],
     ['swim-bladder-fish','Water slimes','Swim-bladder fish','PARTLY',false,'Pump gas into the bladder, then vent it; depth control is unproved.'],
     ['bell-jar-lungs','Water slimes','Bell-jar lungs','PARTLY',false,'Lower the driven diaphragm; the gas slimes sample the jar air pressure.'],
     ['vacuum-slime','Water slimes','Vacuum slime','PARTLY',false,'Expand the jar with a driven piston; gas-slime swelling is unproved.'],
@@ -99,9 +99,9 @@
     },
     'slime-mail':function(w,o){
       var d=root.WSSMachines['smoke-ring-cannon'].make(w,o),e=entries.find(function(e){return e.id==='slime-mail';});
-      d.name=e.id;d.title=e.title;d.draft=true;d.setups=[];delete d.source;d.caption=e.cue;d.draftSmoke=true;
+      d.name=e.id;d.title=e.title;d.draft=true;d.status='WORKS';d.setups=[];delete d.source;d.caption=e.cue;d.draftSmoke=true;
       d.slimes=[{x:320,y:200,radius:20}];d.solids=d.solids.concat([rect(248,160,360,8),rect(248,232,360,8)]);
-      d.boundaryNote+=' The long physical duct surrounds a free gel parcel. The original declared rear air impulse loads the actual gel ring through current smoke projection pressure. No delivery path or additional parcel force is assigned.';return d;
+      d.boundaryNote+=' The long physical duct surrounds a free gel parcel. One declared drumhead strike occurs at startup. Each strike loads the actual gel ring through current smoke projection pressure. No delivery path or additional parcel force is assigned.';return d;
     },
     'swim-bladder-fish':function(w,o){
       if(root.WSSGasBodyLabs)return root.WSSGasBodyLabs.make('swim-bladder-fish',w,o);
