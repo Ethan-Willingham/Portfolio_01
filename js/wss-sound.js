@@ -113,7 +113,7 @@
     var enabled = false, active = true, retired = false, freshBatch = true, enableEpoch = 0;
     var lastFrame = -1, serial = 0, pending = null, log = [], preference = false, lastAckTime = -Infinity, lastError = null;
     var hissBuffer=null,hissVoices=[],thermalLog=[],thermalCount=0;
-    var ventVoice=null,ventLog=[],ventCount=0;
+    var ventVoice=null,ventLog=[],ventCount=0,modalVoices=[],modalLog=[],modalCount=0;
     var counters = { accepted: 0, dropped: 0, stolen: 0, stale: 0, duplicates: 0,
       suppressed: 0, maxVoices: 0, activeVoices: 0, lastHandleMs: 0, maxHandleMs: 0 };
     try { preference = localStorage.getItem(PREFERENCE) === '1'; } catch (_) {}
@@ -128,6 +128,7 @@
       freshBatch = true; lastFrame = -1; pending = null; counters.activeVoices = 0;
       if (master) { master.gain.cancelScheduledValues(context.currentTime); master.gain.setValueAtTime(0, context.currentTime); }
       if (node) node.port.postMessage({ kind: 'active', value: false });
+      modalVoices.forEach(function(v){try{v.source.stop();}catch(e){}});modalVoices.length=0;
       if(ventVoice){ventVoice.gain.gain.cancelScheduledValues(context.currentTime);ventVoice.gain.gain.setValueAtTime(0,context.currentTime);}
     }
     function publishActive() {
@@ -237,7 +238,7 @@
         audible: !!audible(), contextState: context ? context.state : 'absent',
         voiceCapacity: TUNING.voices, queue: pending ? pending.entries.length : 0,
         queueCapacity: TUNING.batch, eventLog: log.slice(), thermalEvents:thermalLog.slice(), thermalVoices:hissVoices.length, thermalCount:thermalCount,
-        ventEvents:ventLog.slice(),ventVoices:ventVoice?1:0,ventCount:ventCount,error: lastError });
+        modalEvents:modalLog.slice(),modalCount:modalCount,modalVoices:modalVoices.length,ventEvents:ventLog.slice(),ventVoices:ventVoice?1:0,ventCount:ventCount,error: lastError });
     }
     function vent(event){
       if(!audible() || !event || !(event.massFlowKgPerSecond>0) || !(event.soundSpeedMPerSecond>0) ||
@@ -252,6 +253,15 @@
       ventVoice.gain.gain.setTargetAtTime(amplitude,now,.008);ventVoice.gain.gain.setTargetAtTime(0,now+.035,.045);
       ventCount++;ventLog.push({kind:'vent',frameId:event.frameId,simulationTime:event.simulationTime,audioTime:now,
         massFlowKgPerSecond:event.massFlowKgPerSecond,kineticPowerWatts:power,frequencyHz:frequency,gain:amplitude});if(ventLog.length>64)ventLog.shift();return true;
+    }
+    // Reduced resonant modes receive finite energy from the apparatus, never a score timer.
+    function resonance(event){
+      if(!audible() || !event || ![event.energyJ,event.frequencyHz,event.x].every(Number.isFinite) || event.energyJ<=0 || event.frequencyHz<40 || event.frequencyHz>context.sampleRate*.45)return false;
+      if(modalVoices.length>=12){var oldest=modalVoices.shift();try{oldest.source.stop();}catch(e){}}
+      var source=context.createOscillator(),gain=context.createGain(),pan=context.createStereoPanner(),now=context.currentTime,decay=Math.max(.03,Math.min(1.5,event.decaySeconds||.18)),amplitude=.028*Math.sqrt(event.energyJ/(event.energyJ+.00001)),voice={source:source};
+      source.type='sine';source.frequency.value=event.frequencyHz;pan.pan.value=Math.max(-.8,Math.min(.8,(event.x/720-.5)*1.6));gain.gain.setValueAtTime(0,now);gain.gain.linearRampToValueAtTime(amplitude,now+.003);gain.gain.exponentialRampToValueAtTime(Math.min(.00001,amplitude*.001),now+decay);
+      source.connect(gain);gain.connect(pan);pan.connect(master);modalVoices.push(voice);source.onended=function(){var i=modalVoices.indexOf(voice);if(i>=0)modalVoices.splice(i,1);source.disconnect();gain.disconnect();pan.disconnect();};source.start();source.stop(now+decay+.01);
+      modalCount++;modalLog.push({kind:event.kind||'mode',frequencyHz:event.frequencyHz,energyJ:event.energyJ,simulationTime:event.simulationTime,gain:amplitude});if(modalLog.length>64)modalLog.shift();return true;
     }
     function hiss(heatJ,x,clock){
       if(!audible() || !(heatJ>0) || !Number.isFinite(heatJ))return false;
@@ -279,7 +289,7 @@
       if(ventVoice){ventVoice.oscillator.stop();ventVoice.oscillator.disconnect();ventVoice.gain.disconnect();ventVoice.pan.disconnect();ventVoice=null;}ventLog.length=0;
     }
     document.addEventListener('visibilitychange', visibility);
-    return { enable: enable, mute: mute, setActive: setActive, consume: consume, hiss:hiss, vent:vent, stats: stats, destroy: destroy };
+    return { enable: enable, mute: mute, setActive: setActive, consume: consume, hiss:hiss, vent:vent, resonance:resonance, stats: stats, destroy: destroy };
   }
   window.WSSSound = Object.freeze({ create: create,ventFrequency:ventFrequency });
 })();

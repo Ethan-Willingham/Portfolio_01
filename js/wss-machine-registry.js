@@ -816,10 +816,10 @@
     "id": "water-organ",
     "capability": "Sound",
     "title": "Water organ",
-    "cue": "Draft. Turn on sound and drag the actual pipe to change its note; multiple voices are unfinished.",
+    "cue": "Falling water expels air through three playable pipes. Turn on sound, then tap C, E or G.",
     "preview": "cup",
-    "status": "PARTLY",
-    "draft": true,
+    "status": "WORKS",
+    "draft": false,
     "accepted": true,
     "world": {
       "w": 720,
@@ -830,7 +830,8 @@
       "wss-steam",
       "wss-singing-pipe",
       "wss-machines/singing-pipe",
-      "wss-drafts-workshop"
+      "wss-drafts-workshop",
+      "wss-acoustic-machines"
     ]
   },
   {
@@ -858,10 +859,10 @@
     "id": "ringing-bubbles",
     "capability": "Sound",
     "title": "Ringing bubbles",
-    "cue": "Draft. Actual air pockets rise through water; a bubble-resonance sound model is unfinished.",
+    "cue": "Inject actual air pockets, turn on sound, then switch bubble size to hear the lower note.",
     "preview": "cup",
-    "status": "PARTLY",
-    "draft": true,
+    "status": "WORKS",
+    "draft": false,
     "accepted": true,
     "world": {
       "w": 720,
@@ -871,7 +872,8 @@
     "scripts": [
       "wss-bubbles",
       "wss-machines/air-hose",
-      "wss-drafts-workshop"
+      "wss-drafts-workshop",
+      "wss-acoustic-machines"
     ]
   },
   {

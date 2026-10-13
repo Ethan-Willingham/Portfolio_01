@@ -310,6 +310,7 @@ fn recordSteam(i:u32,r:u32,support:u32,boil:f32){
         }read.unmap();
       }).catch(function(e){error=e.message;companion.error=error;}).finally(function(){pending=false;});},
       toggle:function(){heated=!heated;return heated;},
+      setPortFraction:function(fraction){if(retired||!Number.isFinite(fraction)||fraction<0||fraction>1)throw Error('Gas-port opening must be between zero and one');area=Math.PI*Math.pow((options.ventDiameterInches||.25)*.0254,2)/4*fraction;options.capped=fraction===0;return area;},
       setWhistleLength:function(inches){
         if(!options.adjustableWhistle || retired || !Number.isFinite(inches))return null;
         options.whistleLengthInches=Math.max(1.5,Math.min(5,inches));

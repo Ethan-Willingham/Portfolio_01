@@ -460,7 +460,7 @@
         var heldControl=/^(thumb|fire-pour|pour|sluice-feed)$/.test(control.kind);
         button.dataset.hold=String(heldControl);
         button.disabled=!!control.disabled;
-        button.setAttribute('aria-label',control.label);
+        button.setAttribute('aria-label',control.ariaLabel || control.label);
         var label=button.firstElementChild;if(label.textContent!==control.label)label.textContent=control.label;
         var labelWidth=label.offsetWidth,labelHeight=label.offsetHeight,labelCenter=left+width*.5;
         var fittedCenter=Math.max(8+labelWidth*.5,Math.min(view.width-8-labelWidth*.5,labelCenter));
@@ -599,6 +599,7 @@
       if(balloon){pressureLabel=state.paused?'Paused':'Live';pressureMessage='Drag, fling and pop. Instruments explains the elastic skin.';}
       if(slip){pressureLabel=state.paused?'Paused':state.scene==='material-oil-jar'||sluice||(window.WSSMachineRegistry&&window.WSSMachineRegistry.lookup(state.scene)?.status==='WORKS')?'Live':'Prototype';pressureMessage='Instruments has the matched-density comparison and model limits.';}
       if(steam){pressureLabel=state.paused?'Paused':'Diagnostic';pressureMessage=birds?'Grab the pipe’s top to change its note. Instruments has the comparisons and acoustic limits.':'The white plume traces escaping vapor. Instruments explains the thermal model.';}
+      if(liveMachine && liveMachine.definition.acoustics){var acousticError=liveMachine.definition.acousticReading && liveMachine.definition.acousticReading.error;pressureLabel=acousticError?'Solver stopped':state.paused?'Paused':liveMachine.ready?'Live':'Starting';pressureMessage=acousticError?'Restart this machine to restore the sound model.':liveMachine.definition.readingLabel || liveMachine.definition.caption;}
       if(nativeReduced){var reducedError=fatal || sample.boundary && sample.boundary.error || sample.draftRuntime && sample.draftRuntime.error;pressureLabel=reducedError?'Solver stopped':state.paused?'Paused':sample.ready?'Live':'Starting';pressureMessage=reducedError?'Restart to restore the native solver.':(liveMachine.definition.gasBodyLab || liveMachine.definition.objective || liveMachine.definition.floatingBlock || liveMachine.definition.wheel || railway || liveMachine.definition.marly || liveMachine.definition.tippingTrough || liveMachine.definition.liftCaissons || liveMachine.definition.pressureScaleLab || liveMachine.definition.teslaValve)?liveMachine.definition.readingLabel:'Instruments has the material model and its comparisons.';}
       if(railway && !reducedError){pressureLabel=state.paused?'Paused':liveMachine.ready?liveMachine.definition.readingLabel:'Starting';pressureMessage=liveMachine.definition.caption;}
       if(marly){pressureLabel=state.paused?'Paused':liveMachine && liveMachine.definition.readingLabel || 'Starting';pressureMessage='Change the river flow or apply the brake. The valves hold the raised water.';}
