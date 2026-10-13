@@ -32,12 +32,19 @@ function make(world,options){
  if(options.initialCharge!==false)initialMaterials.forEach(function(material,i){
   var gx=208+(i%16)*2.1;initialGrains.push({material:material,x:gx,y:floor(gx)-3-Math.floor(i/16)*2.1});
  });
- var tank=rect(end-168,424,272,144);
+ // Separate receivers keep discarded tailings below the normal outlet. During
+ // cleanout the riffles lift and an inserted chute carries the remaining wash
+ // left into the concentrate pan. Its geometry does not touch either pan.
+ var tank=rect(Math.round((end-140)/8)*8,480,208,88),collection=rect(Math.round((end-388)/8)*8,480,208,88);
+ var chuteRight=end+66,chuteTop=floor(end)+18,chuteLeft=end-288,chuteBottom=468;
+ var chute=[[chuteLeft,chuteBottom],[chuteRight,chuteTop],[chuteRight,chuteTop+8],[chuteLeft,chuteBottom+8]];
+ var stop=[[chuteRight-6,chuteTop-48],[chuteRight+2,chuteTop-48],[chuteRight+2,chuteTop+8],[chuteRight-6,chuteTop+8]];
+ var cleanoutParts=[chute,stop],cleanupPolygons=[polygons[0]].concat(cleanoutParts);
  return {name:'gold-sluice-box',title:'Gold sluice box',seed:seed,
   action:'Pour wash water',primary:{kind:'pour',target:{x:120,y:64}},
   setup:matched?'matched-density':plain?'no-riffles':'ordinary',caption:'Feed a little classified paydirt into the wash. Most of it is pale quartz. The darker grains are heavy black sand; gold is sparse. Watch the pockets before adding more.',
   readingLabel:'Quartz, black sand and gold',viewBounds:rect(48,28,end+112-48,548),
-  vessels:[{id:'tailings',label:'Water and washed sediment',rect:tank,sealed:false}],
+  vessels:[{id:'tailings',label:'Water and washed sediment',rect:tank,sealed:false},{id:'concentrate',label:'Concentrate pan',rect:collection,sealed:false}],
   pipes:[],solids:solids,vents:[],parts:[],slimes:[],marks:[],meters:[],
   initial:[{kind:'rect',rect:rect(72,120,128,56)},{kind:'rect',rect:rect(200,160,end-200,256)}],initialGrains:initialGrains,
   seedClear:function(x,y){
@@ -52,8 +59,8 @@ function make(world,options){
    });
   },materialAt:function(){return 'water';},
   materialSlip:{density:[1,matched?2.65:5.2,2.65,matched?2.65:19.3],drag:[600,600,600,4,4,4],separateGold:true,blackSand:true,grainContacts:true,
-   bed:{line:[72,176,end,floor(end)],riffles:[312,96,6,height],count:plain?0:sections.length,thickness:8}},
-  sluice:{polygons:polygons,pockets:pockets,sections:sections,tailingsX:end,tailingsY:424,matched:matched,riffles:!plain,
+   bed:{line:[72,176,end,floor(end)],riffles:[312,96,6,height],count:plain?0:sections.length,thickness:8,cleanupPolygons:cleanoutParts}},
+  sluice:{polygons:polygons,normalPolygons:polygons,cleanupPolygons:cleanupPolygons,pockets:pockets,sections:sections,tailingsX:end,tailingsY:480,tailings:tank,collection:collection,matched:matched,riffles:!plain,
    lengthInches:length,widthInches:10,wallInches:4.5,pixelsPerInch:unit,slope:slope,riffleHeight:height,
    initialCharge:options.initialCharge!==false,waterSupply:36000,hopper:2400,feedRate:120,feed:{x:224,y:140},feedMaterials:feedMaterials,
    mix:{sand:2202,blackSand:192,gold:6},floor:floor},
@@ -61,7 +68,7 @@ function make(world,options){
    {id:'no-riffles',label:'Without riffles',options:{riffles:false}}],
   settings:{},boundaries:null,
   source:length===51?{title:'Keene A52: 51 by 10 by 4.5 inches',url:'https://www.keene.store/?Product_Code=A52&Screen=PROD'}:{title:'Keene A51: 36 by 10 by 4.5 inches',url:'https://www.keene.store/mm5/merchant.mvc?Product_Code=A51&Screen=PROD'},
-  boundaryNote:'A longitudinal section at 24 world pixels per inch. The 51-inch length, 10-inch width and 4.5-inch side height follow the Keene A52; the 36-inch option follows the A51. Width extends out of the page. Riffle spacing and the thickened collision floor are model choices, not a replica of the manufacturer\'s recovery lining. The finite practice hopper holds 2,202 quartz grains, 192 magnetite grains and six gold grains. This is classified, roughly 1.5 mm material; the coarse rocks have already been screened out. The sample is deliberately enriched enough to inspect, not an ore-grade assay. Every admitted particle stays in the world, including the tailings.',
+  boundaryNote:'A longitudinal section at 24 world pixels per inch. The 51-inch length, 10-inch width and 4.5-inch side height follow the Keene A52; the 36-inch option follows the A51. Width extends out of the page. Riffle spacing, the thickened collision floor and the cleanout chute are model choices, not a replica of the manufacturer\'s recovery lining. The finite practice hopper holds 2,202 quartz grains, 192 magnetite grains and six gold grains. This is classified, roughly 1.5 mm material; the coarse rocks have already been screened out. The sample is deliberately enriched enough to inspect, not an ore-grade assay. Cleanout lifts the riffles and inserts a solid return chute over the separate concentrate pan. Water must carry the remaining mixed minerals into it. Every admitted particle stays in the world, including concentrate and tailings.',
   energyBudgetStatus:'Water, quartz, magnetite and gold carry separate APIC momentum under common gravity and shared compressive pressure. Pair drag and grain contact impulses are equal and opposite. Density ratios are 1, 2.65, 5.2 and 19.3. Equal mineral densities changes magnetite and gold to quartz density. All grains use the same native contact diameter. The reduced 2D model does not resolve clay cohesion, irregular gravel, gold-flake shape, full 3D turbulence, recovery matting or calibrated recovery efficiency.',
   measure:{source:rect(72,68,128,116),receiver:tank}};
 }
