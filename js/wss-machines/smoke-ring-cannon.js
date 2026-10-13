@@ -1,4 +1,4 @@
-/* A rear impulse drives smoke through the real opening into the room. */
+/* A tensioned rear membrane drives smoke through the opening into the room. */
 (function(root){
   'use strict';
   function make(world,options){
@@ -11,7 +11,7 @@
       viewBounds:{x:64,y:72,width:600,height:264},setup:options.noPush?'no-push':'ordinary',
       setups:[{id:'ordinary',label:'Push the back',options:{noPush:false}},{id:'no-push',label:'No push',options:{noPush:true}}],
       action:'Strike the drumhead',readingLabel:'Smoke carries the push',primary:{kind:'smoke-push'},
-      drum:{x:88,top:128,bottom:272,thickness:8,nodes:37,mass:.12,tension:1200,damping:1.5,strikeSpeed:1100,maxStroke:64,opening:{x:248,top:168,height:64}},
+      drum:{x:88,top:128,bottom:272,thickness:8,nodes:37,mass:.12,tension:1800,damping:1.5,strikeSpeed:1500,maxStroke:64,opening:{x:248,top:168,height:64}},
       caption:'Strike the flexible back of the chamber. Its moving skin pushes smoky air through the opening; the edges roll into the two rotating halves of a smoke ring in this flat view.',
       source:{title:'BYU Physics, Vortex Cannon',url:'https://physics.byu.edu/faculty/gee/vortexcannon'},
       boundaryNote:'The chamber has a 2 2/3-inch opening and a flexible rear membrane pinned to the casing at both ends. A strike adds momentum to the membrane. Its measured swept area sets the forward chamber flow during compression; the moving skin and pressure solver supply the refill flow. Current pressure on both sides loads the membrane on the next step. Strikes replenish passive smoke dye inside the chamber. The no-push comparison keeps the same membrane and smoke without a strike. No wind, buoyancy, prescribed vortex or motion path drives the ring. The slime is free in zero gravity.',

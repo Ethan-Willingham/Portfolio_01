@@ -19,6 +19,12 @@ off in this scene. The previous sealed calculation, narrow mouth and weak dye
 charge produced a small front with a long tail instead of the earlier clear
 ring. The repaired chamber restores the 64-pixel opening and smoke charge.
 
+The head's tension is 1800 and its strike speed is 1500. This firmer, quicker
+stroke lets the smoke open into the broader curls of the original cannon,
+between its large impulse-driven release and the repair's denser, compact
+front. The smoke charge, opening and flow coupling remain the same; the
+change comes from the membrane's measured motion.
+
 Smoke dye is passive and replenished inside the chamber on accepted strikes.
 The fluid solver generates the rolling front. No ring shape, prescribed vortex,
 travel path or shot animation is supplied. Freezing the membrane prevents the
