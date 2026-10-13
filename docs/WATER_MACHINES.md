@@ -43,6 +43,38 @@ ordinary browser playback, real pointer, keyboard and touch controls, pause,
 slow motion, reset, scene retirement and responsive layouts. The harness owns
 Chrome for Testing and writes captures to `/tmp/water-rocket-review`.
 
+## Water-ballast cliff railway
+
+The upper car fills with native water while both cars wait at their stations.
+Once it holds a working load and the lower car has drained, the station brake
+releases. The heavier car descends and pulls its partner uphill through one
+fixed-length cable. Arrival opens the lower tank's floor gate and moves the
+supply to the new upper station. The cycle repeats while the water supply is on.
+The supply button stops new filling. It does not erase water already in a tank.
+Instruments includes a dry comparison with the same cars, cable and brakes.
+
+Each tank has moving collision walls and a real opening in its floor. The
+renderer uses that same geometry. A GPU census measures live native parcels
+inside each tank; that inventory supplies the water mass in the mechanical
+equation. Both cars share one coordinate, so their distances from the upper
+stations always sum to the rail length. Gravity acts on their mass difference,
+with the inertia of both cars and their water, against bearing drag. Station
+stops dissipate the arriving motion. Filling and draining change the load;
+there is no assigned travel duration or car animation.
+
+This is a reduced ballast-load model with ideal rails, cable and station brakes.
+It does not resolve cable stretch, pulley inertia or every reciprocal impulse
+from sloshing water. The return pump supplies the energy needed to lift water
+back to the upper station. It is not a closed-energy or calibrated railway model.
+The ordinary native-water solver and its contact approximations still apply.
+
+Run `node tools/test-ballast-railway.cjs` for desktop and landscape touch playback.
+The test reads resident GPU particles independently of the ballast census and
+checks repeated trips in both directions, cable length, the dry comparison,
+supply controls, pause, reset and scene retirement. It owns its Chrome for
+Testing process and writes screenshots and measurements to
+`/tmp/ballast-railway-review`.
+
 ## Sewer gas trap
 
 The wet bend blocks pale smoke arriving from the left. Click the water itself

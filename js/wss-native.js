@@ -501,6 +501,17 @@ fn finishWall(){
         if(burst)burst.guardCaps(next);
         caps=next;writeCaps();if(instance.pressureModel && instance.pressureModel.refreshToyCaps)instance.pressureModel.refreshToyCaps();return caps.slice();},
       setTapEnabled:function(value){ints[2]=tap && value ? 1 : 0;queue.writeBuffer(config,0,bytes);return !!ints[2];},
+      // Moving a stopped inlet changes only future admissions. Its local
+      // density atlas follows it; existing water and the supply ledger stay put.
+      setTapPosition:function(x,y){
+        if(destroyed || !tap || ints[2])throw new Error('Stop the inlet before moving it.');
+        if(!Number.isFinite(x) || !Number.isFinite(y) || x-tw*.5<=0 || y-th*.5<=0 || x+tw*.5>=width || y+th*.5>=height)
+          throw new Error('Inlet position is outside the native domain.');
+        tap.x=x;tap.y=y;floats[4]=x;floats[5]=y;
+        floats[24]=Math.floor((x-tw*.5)/cell)-2;floats[25]=Math.floor((y-th*.5)/cell)-2;
+        queue.writeBuffer(config,0,bytes);
+        return {x:x,y:y};
+      },
       syncWallTerrain:syncTerrain,
       restoreWall:async function(cell,bodies){
         if(!options.hands)throw new Error('Safe wall editing was not enabled for this setup.');

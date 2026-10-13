@@ -661,21 +661,18 @@
     "id": "ballast-railway",
     "capability": "Floating things",
     "title": "Water-ballast cliff railway",
-    "cue": "Draft. Carriers slide on rails; ballast and cable coupling are unfinished.",
-    "status": "PARTLY",
+    "cue": "Water fills the upper car. Its weight pulls the other uphill; the lower car drains for the return trip.",
+    "status": "WORKS",
     "draft": true,
     "world": {
       "w": 720,
       "h": 400
     },
     "pool": true,
-    "blocker": "Real rigid carriers and inclined guides exist; water ballast storage and balancing cable are absent.",
     "accepted": true,
     "preview": "cup",
     "scripts": [
-      "wss-water-balloons",
-      "wss-machines/water-balloons",
-      "wss-drafts-bodies"
+      "wss-ballast-railway"
     ]
   },
   {

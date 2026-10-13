@@ -9,7 +9,7 @@
     {id:'lorenz-wheel',capability:'Floating things',title:'Leaky-cup waterwheel',cue:'Water loads the hanging cups and turns the unpowered wheel.',status:'WORKS',draft:true,world:{w:720,h:400},pool:true},
     {id:'shishi-odoshi',capability:'Floating things',title:'Shishi-odoshi',cue:'Draft. Water pours onto a hinged trough; repeating cycles are unfinished.',status:'PARTLY',draft:true,world:{w:720,h:400},pool:true},
     {id:'lift-lock',capability:'Floating things',title:'Peterborough lift lock',cue:'Draft. Open the link between the tanks and watch the guided carriers.',status:'PARTLY',draft:true,world:{w:720,h:400},pool:false},
-    {id:'ballast-railway',capability:'Floating things',title:'Water-ballast cliff railway',cue:'Draft. Carriers slide on rails; ballast and cable coupling are unfinished.',status:'PARTLY',draft:true,world:{w:720,h:400},pool:true}
+    {id:'ballast-railway',capability:'Floating things',title:'Water-ballast cliff railway',cue:'Water fills the upper car. Its weight pulls the other uphill; the lower car drains for the return trip.',status:'WORKS',draft:true,world:{w:720,h:400},pool:true}
   ];
   function balloon(world,options,squid){
     var d=root.WSSMachines['water-balloons'].make(world,{seed:options&&options.seed,slit:squid});
@@ -49,6 +49,10 @@
     body.sleeping=false;body.sleepFrames=0;return true;
   }
   function draft(world,options,id){
+    if(id==='ballast-railway'){
+      if(!root.WSSBallastRailway)throw Error('The railway module has not loaded.');
+      return root.WSSBallastRailway.make(world,options);
+    }
     if(id==='lorenz-wheel' && root.WSSLorenzWheel)return root.WSSLorenzWheel.make(world,options);
     if(id==='floating-block' && root.WSSFloatingBlock)return root.WSSFloatingBlock.make(world,options);
     if(world.w!==720||world.h!==400||(world.tile||8)!==8)throw Error('These drafts need the ordinary toy box.');
@@ -95,11 +99,6 @@
       d.draftRig=[{body:0,kind:'rail',a:{x:208,y:160},b:{x:208,y:320}},{body:1,kind:'rail',a:{x:512,y:160},b:{x:512,y:320}}];
       d.measure={source:d.vessels[0].rect,receiver:d.vessels[1].rect};
       d.boundaryNote='Draft. A real valve joins two fixed native-water tanks. The square carriers have physical vertical guides and ordinary buoyancy. Moving sealed caissons, a common piston and payload load are not connected yet.';
-    }else if(id==='ballast-railway'){
-      d.slimes=[{x:272,y:184,radius:24,shape:'cube'},{x:464,y:256,radius:24,shape:'cube'}];
-      d.draftRig=[{body:0,kind:'rail',a:{x:232,y:144},b:{x:384,y:296}},{body:1,kind:'rail',a:{x:392,y:144},b:{x:544,y:296}}];
-      d.boundaries.tap.x=272;
-      d.boundaryNote+=' The rigid carriers have physical inclined guides and end stops. Gravity can slide them; Grab supplies hand work. Water ballast storage and the common balancing cable are not coupled, and no carrier trajectory is scripted.';
     }
     return d;
   }
