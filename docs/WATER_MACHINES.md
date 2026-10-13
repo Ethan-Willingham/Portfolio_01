@@ -56,10 +56,12 @@ Moving arrowheads show the air directly, replacing the former gray smoke.
 Their positions advance with the current wall-respecting potential velocity
 field, using midpoint integration and collision sweeps. The arrowheads point
 along that field. They represent airflow, with no gas mass or feedback into the
-pressure model. Markers leaving the displayed domain renew on the upstream
-side; this changes no gas inventory or flow. Closing the mouth stops all marker
-motion. Reduced motion shows stationary arrows at fixed sample points while
-the physical model continues to run.
+pressure model. Every marker keeps its identity and position through flow
+reversal and in the outside reservoir, with no upstream reseeding. The glyph
+is centered on a visible tracked point, stays visible at zero speed and retains
+its last direction while stopped. Closing the mouth stops all marker motion.
+Reduced motion shows stationary arrows at fixed sample points while the
+physical model continues to run.
 
 The readout sits beside the simulation at normal screen resolution. Its
 large text shows actual airflow, while one centered pressure gauge shows which
@@ -86,8 +88,9 @@ turbulence, thermal exchange and a closed energy budget remain unresolved.
 Closing the ideal stationary valve does not model a moving shutter's work.
 
 Run `node tools/test-breathing-cave.cjs` for independent EOS and entrance-momentum
-checks, sampled mouth velocity versus gas transfer, arrow coupling, closure and
-reopening, steady/closed controls and frame-size checks. Run
+checks, sampled mouth velocity versus gas transfer, arrow coupling and position
+continuity across ten weather cycles, persistent rendering at reversal, closure
+and reopening, steady/closed controls and frame-size checks. Run
 `DUMP=/tmp/breathing-cave-review node tools/test-breathing-cave.mjs` for owned
 Chrome for Testing playback at desktop and landscape mobile sizes, mouse and
 touch operation, pause, reduced motion and the steady-pressure comparison. The

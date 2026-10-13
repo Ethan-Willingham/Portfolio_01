@@ -5,6 +5,7 @@ require('../js/wss-machines/breathing-cave.js');require('../js/wss-breathing-cav
 function setup(options={}){
   const walls=new Uint8Array(90*50);let version=0,closed=!!options.closed;
   const d=WSSMachines['breathing-cave'].make({w:720,h:400,tile:8},options);
+  if(options.amplitudePa!==undefined)d.cave.amplitudePa=options.amplitudePa;
   const b=B.create({width:90,height:50,tile:8,walls,onChange:()=>version++});
   d.vessels.forEach(v=>b.vessel(v.rect,v.sealed));d.pipes.forEach(p=>b.strokePipe(p.points,p.bore));
   const gate=d.cave.gate;
@@ -17,7 +18,26 @@ function healthy(a){
   assert.equal(a.error,null);assert.ok(a.massKg>0);assert.ok(Math.abs(a.massResidualKg)<1e-6);
   assert.equal(a.nonfiniteMarkers,0);assert.ok(a.markerCount>20);assert.ok(a.fieldResidual<1e-7);if(a.mouthOpen)assert.ok(Math.abs(a.unitMouthFlux-1)<1e-7,'actual entrance carries the integrated chamber flux');
 }
+// Inspect the real painter at rest and across reversal. Every shaft stays
+// centered on the same advected point, at full size and readable opacity.
+global.Path2D=class{rect(){}};
+function visibleArrows(model){
+  const shafts=[],centers=[];let path=[];
+  const context={save(){},restore(){},clip(){},beginPath(){path=[];},
+    moveTo(x,y){path.push([x,y]);},lineTo(x,y){path.push([x,y]);},closePath(){},fill(){},
+    arc(x,y){centers.push([x,y]);},stroke(){shafts.push({path,alpha:this.globalAlpha});}};
+  const markers=model.markers();model.draw(context,{scale:1,accent:'currentColor'});
+  assert.equal(shafts.length,markers.length,'no arrows disappear when air slows or reverses');
+  assert.equal(centers.length,markers.length,'each arrow keeps a visible tracked center');
+  for(let i=0;i<markers.length;i++){
+    const {path,alpha}=shafts[i],m=markers[i];
+    assert.ok(Math.abs(Math.hypot(path[1][0]-path[0][0],path[1][1]-path[0][1])-13)<1e-9,'arrow stays full size');
+    assert.ok(Math.hypot((path[0][0]+path[1][0])/2-m.x,(path[0][1]+path[1][1])/2-m.y)<1e-9,'direction flips about the tracked center');
+    assert.deepEqual(centers[i],[m.x,m.y]);assert.ok(alpha>=.7,'no low-speed fade');
+  }
+}
 const s=setup();const start=s.model.stats();healthy(start);
+visibleArrows(s.model);
 let min=0,max=0;
 for(let i=0;i<48*60;i++){
   const before=s.model.stats();s.model.tick(1/60);const a=s.model.stats();
@@ -38,7 +58,7 @@ for(let i=0;i<48*60;i++){
       const prior=oldMarkers[current.id],v0=s.model.sampleVelocity(prior.x,prior.y);
       const vm=s.model.sampleVelocity(prior.x+v0.vx*dt*.5,prior.y+v0.vy*dt*.5);
       const x=prior.x+vm.vx*dt,y=prior.y+vm.vy*dt;
-      if(s.solidAt(x,y) || x<24 || y<24 || x>=696 || y>=376)continue;
+      if(s.solidAt(x,y))continue;
       assert.ok(Math.hypot(current.x-x,current.y-y)<1e-8,'arrows follow the current physical velocity');checked++;
     }
     assert.ok(checked>20,'marker coupling checked across the chamber and entrance');
@@ -50,8 +70,33 @@ const held=s.model.stats();healthy(held);assert.equal(held.massKg,sealed.massKg)
 assert.equal(held.pressurePa,sealed.pressurePa);assert.notEqual(held.outsidePressurePa,sealed.outsidePressurePa);
 s.close(false);const reopened=run(s,3);healthy(reopened);assert.ok(reopened.massKg!==held.massKg,'reopening transfers the existing charge');
 const steady=setup({steady:true});const quiet=run(steady,48);healthy(quiet);assert.equal(quiet.massKg,quiet.initialMassKg);assert.equal(quiet.flowM3PerSecond,0);assert.equal(quiet.markerDistance,0);assert.equal(quiet.movingMarkers,0);
+visibleArrows(steady.model);
 const shut=setup({closed:true});const trapped=run(shut,48);healthy(trapped);assert.equal(trapped.flowM3PerSecond,0);assert.equal(trapped.massKg,trapped.initialMassKg);
 const coarse=setup(),fine=setup();const a=run(coarse,8,1/30),b=run(fine,8,1/120);healthy(a);healthy(b);
 assert.ok(Math.abs(a.massKg-b.massKg)<1e-5 && Math.abs(a.markerDistance-b.markerDistance)<1e-5,'frame-size independent fixed substeps');
+let reversals=0,maxJump=0,reservoirVisits=0;
+for(const amplitudePa of [3000,12000]){
+  const continuous=setup({amplitudePa});let previousSpeed=0;
+  for(let i=0;i<240*120;i++){
+    const prior=continuous.model.markers(),dt=1/120;
+    continuous.model.tick(dt);const now=continuous.model.stats();healthy(now);
+    const next=continuous.model.markers();assert.equal(next.length,prior.length);
+    for(let j=0;j<next.length;j++){
+      const p=prior[j],m=next[j];assert.equal(m.id,p.id);
+      const v0=continuous.model.sampleVelocity(p.x,p.y),vm=continuous.model.sampleVelocity(p.x+v0.vx*dt*.5,p.y+v0.vy*dt*.5);
+      const distance=Math.hypot(m.x-p.x,m.y-p.y);maxJump=Math.max(maxJump,distance);
+      assert.ok(distance<=Math.hypot(vm.vx,vm.vy)*dt+1e-9,'every movement is bounded by the physical velocity, with no teleport');
+      assert.ok(!continuous.solidAt(m.x,m.y),'marker never crosses a wall');
+      if(m.x>=696 || m.x<24 || m.y<24 || m.y>=376)reservoirVisits++;
+    }
+    if(previousSpeed*now.speedMetersPerSecond<0){visibleArrows(continuous.model);reversals++;}
+    if(Math.abs(now.speedMetersPerSecond)<.01)visibleArrows(continuous.model);
+    previousSpeed=now.speedMetersPerSecond;
+  }
+  visibleArrows(continuous.model);
+}
+assert.ok(reversals>=38,'ten complete cycles per pressure amplitude include repeated inhale/exhale transitions');
+assert.ok(reservoirVisits>0,'stronger weather also covers the old boundary reseeding region');
 console.log(JSON.stringify({minSpeed:min,maxSpeed:max,moving,sealed:held,reopened,steady:quiet},null,2));
-console.log('PASS: reversing pressure drive, independent EOS/momentum, finite gas and velocity-driven arrows, closure/reopening, steady and closed controls, frame-size invariance.');
+console.log(JSON.stringify({reversals,maxJump,reservoirVisits},null,2));
+console.log('PASS: reversing pressure drive, independent EOS/momentum, finite gas and velocity-driven arrows, ten-cycle position/rendering continuity, closure/reopening, steady and closed controls, frame-size invariance.');

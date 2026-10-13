@@ -10,10 +10,8 @@
     var version=-1,sourceCells=0,volume=0,area=0,mass=0,initialMass=0,admitted=0,escaped=0,
       seconds=0,speed=0,flow=0,outside=spec.ambientPa,pressure=outside,maxResidual=0,steps=0,unitMouthFlux=0;
     var fieldResidual=0,fieldIterations=0,error=null,initialized=false,clip=null;
-    var markers=[],markerDistance=0,markerInwardCrossings=0,markerOutwardCrossings=0,markerResets=0;
-    var randomState=(definition.seed || 17)>>>0;
+    var markers=[],markerDistance=0,markerInwardCrossings=0,markerOutwardCrossings=0;
     var reducedMotion=root.matchMedia?root.matchMedia('(prefers-reduced-motion: reduce)'):null;
-    function random(){randomState=(Math.imul(randomState,1664525)+1013904223)>>>0;return randomState/4294967296;}
     function inChamber(x,y){var r=spec.chamber;return x>=r.x && x<r.x+r.width && y>=r.y && y<r.y+r.height;}
     function neighbors(i,visit){
       var x=i%w,y=Math.floor(i/w);
@@ -80,7 +78,9 @@
     rebuild();
     function addMarker(x,y){
       if(world.solidAt(x,y))return;
-      markers.push({id:markers.length,x:x,y:y,homeX:x,homeY:y});
+      var vx=interpolate(fx,x/h-1,y/h-.5),vy=interpolate(fy,x/h-.5,y/h-1),length=Math.hypot(vx,vy);
+      markers.push({id:markers.length,x:x,y:y,homeX:x,homeY:y,
+        dx:length?vx/length:1,dy:length?vy/length:0});
     }
     var chamber=spec.chamber,gate=spec.gate,mouth=definition.pipes[0].points.slice(-1)[0];
     for(var row=0,y=chamber.y+24;y<chamber.y+chamber.height-16;y+=48,row++)
@@ -101,16 +101,6 @@
       if(x<0 || y<0 || x>=world.w || y>=world.h || world.solidAt(x,y))return {vx:0,vy:0};
       return {vx:interpolate(fx,x/h-1,y/h-.5)*flowPerDepth,vy:interpolate(fy,x/h-.5,y/h-1)*flowPerDepth};
     }
-    function resetMarker(marker){
-      // Display markers have no gas mass. Renewing one never changes air
-      // inventory, pressure, velocity or the next marker's trajectory.
-      for(var attempt=0;attempt<20;attempt++){
-        var x=flowPerDepth>=0?chamber.x+24+random()*(chamber.width-48):mouth.x+16+random()*64;
-        var y=flowPerDepth>=0?chamber.y+24+random()*(chamber.height-48):gate.y+gate.height*.5+(random()-.5)*64;
-        if(x<world.w-16 && !world.solidAt(x,y)){marker.x=x;marker.y=y;markerResets++;return;}
-      }
-      marker.x=marker.homeX;marker.y=marker.homeY;
-    }
     function moveMarkers(dt){
       if(flowPerDepth===0)return;
       var mouthPlane=gate.x+gate.width;
@@ -119,7 +109,8 @@
         var first=sampleVelocity(marker.x,marker.y);
         var middle=sampleVelocity(marker.x+first.vx*dt*.5,marker.y+first.vy*dt*.5);
         var nx=marker.x+middle.vx*dt,ny=marker.y+middle.vy*dt;
-        if(nx<24 || ny<24 || nx>=world.w-24 || ny>=world.h-24){resetMarker(marker);return;}
+        // Keep each marker's identity and trajectory, including in the outside
+        // reservoir. The field slows it there; it is never reseeded upstream.
         // Sweep against the same collision cells used by the potential field.
         var travel=Math.hypot(nx-marker.x,ny-marker.y),checks=Math.max(1,Math.ceil(travel/(h*.4)));
         for(var i=1;i<=checks;i++)if(world.solidAt(marker.x+(nx-marker.x)*i/checks,marker.y+(ny-marker.y)*i/checks))return;
@@ -170,7 +161,7 @@
         flowM3PerSecond:flow,speedMetersPerSecond:speed,volumeM3:volume,mouthAreaM2:area,
         mouthOpen:area>0 && sourceCells>0,markerCount:markers.length,movingMarkers:moving,
         markerDistance:markerDistance,markerInwardCrossings:markerInwardCrossings,markerOutwardCrossings:markerOutwardCrossings,
-        markerResets:markerResets,nonfiniteMarkers:nonfinite,visualMotion:reducedMotion && reducedMotion.matches?'direction-only':'moving-arrows',
+        nonfiniteMarkers:nonfinite,visualMotion:reducedMotion && reducedMotion.matches?'direction-only':'moving-arrows',
         fieldResidual:fieldResidual,unitMouthFlux:unitMouthFlux,fieldIterations:fieldIterations,steps:steps,error:error};
     }
     function draw(c,palette){
@@ -189,14 +180,16 @@
         var x=staticView?marker.homeX:marker.x,y=staticView?marker.homeY:marker.y;
         if(world.solidAt(x,y))return;
         var velocity=sampleVelocity(x,y),magnitude=Math.hypot(velocity.vx,velocity.vy);
-        if(magnitude<.01){
-          c.globalAlpha=.2;c.beginPath();c.arc(x,y,1.5/scale,0,Math.PI*2);c.fill();return;
-        }
-        var dx=velocity.vx/magnitude,dy=velocity.vy/magnitude;
-        c.globalAlpha=.7;c.beginPath();c.moveTo(x-dx*size,y-dy*size);c.lineTo(x,y);c.stroke();
-        c.globalAlpha=1;c.beginPath();c.moveTo(x,y);
-        c.lineTo(x-dx*head*1.6-dy*head,y-dy*head*1.6+dx*head);
-        c.lineTo(x-dx*head*1.6+dy*head,y-dy*head*1.6-dx*head);c.closePath();c.fill();
+        // A vector changes direction at zero speed, not position. Keep the
+        // full glyph visible at rest and center it on its advected point.
+        // Retain the last direction only when velocity is exactly zero.
+        if(magnitude>0){marker.dx=velocity.vx/magnitude;marker.dy=velocity.vy/magnitude;}
+        var dx=marker.dx,dy=marker.dy,tipX=x+dx*size*.5,tipY=y+dy*size*.5;
+        c.globalAlpha=.7;c.beginPath();c.moveTo(x-dx*size*.5,y-dy*size*.5);c.lineTo(tipX,tipY);c.stroke();
+        c.globalAlpha=1;c.beginPath();c.moveTo(tipX,tipY);
+        c.lineTo(tipX-dx*head*1.6-dy*head,tipY-dy*head*1.6+dx*head);
+        c.lineTo(tipX-dx*head*1.6+dy*head,tipY-dy*head*1.6-dx*head);c.closePath();c.fill();
+        c.beginPath();c.arc(x,y,1.6/scale,0,Math.PI*2);c.fill();
       });
       c.restore();
     }

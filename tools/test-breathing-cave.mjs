@@ -44,6 +44,36 @@ async function record(name){
   const shot=await call('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
   fs.writeFileSync(path.join(out,name+'.png'),Buffer.from(shot.data,'base64'));return state;
 }
+async function reversalCheck(prefix){
+  await ev('__toy.pause(true)');
+  const sample=await ev(`(()=>{
+    const model=__toy.breathingCave();let steps=0;
+    while(model.stats().speedMetersPerSecond<-.15 && steps++<24*120)model.tick(1/120);
+    steps=0;while(model.stats().speedMetersPerSecond<-.001 && steps++<12000)model.tick(1/12000);
+    const canvas=document.createElement('canvas');canvas.width=720;canvas.height=400;
+    const context=canvas.getContext('2d');let shafts=0,minAlpha=1;
+    const stroke=context.stroke.bind(context);context.stroke=function(){shafts++;minAlpha=Math.min(minAlpha,this.globalAlpha);stroke();};
+    model.draw(context,{scale:1,air:getComputedStyle(document.documentElement).getPropertyValue('--app-brass').trim()});
+    const pixels=context.getImageData(0,0,720,400).data;
+    const markers=model.markers(),visibleCenters=markers.filter(m=>{
+      for(let y=Math.floor(m.y)-1;y<=Math.ceil(m.y)+1;y++)for(let x=Math.floor(m.x)-1;x<=Math.ceil(m.x)+1;x++)if(pixels[(y*720+x)*4+3]>0)return true;
+      return false;
+    }).length;
+    __toy.highlightValve(null);
+    return {count:markers.length,shafts,minAlpha,visibleCenters,speed:model.stats().speedMetersPerSecond};
+  })()`);
+  console.log(prefix+' reversal paint',JSON.stringify(sample));
+  check(prefix+' every arrow stays visible as airflow reaches zero',Math.abs(sample.speed)<.002 && sample.shafts===sample.count && sample.visibleCenters===sample.count && sample.minAlpha>=.69);
+  await record(prefix+'-turning');
+  const continuity=await ev(`(()=>{
+    const model=__toy.breathingCave(),before=model.markers();let steps=0;
+    while(model.stats().speedMetersPerSecond<.001 && steps++<12000)model.tick(1/12000);
+    const after=model.markers();__toy.highlightValve(null);
+    return {same:after.every((m,i)=>m.id===before[i].id),maxDistance:Math.max(...after.map((m,i)=>Math.hypot(m.x-before[i].x,m.y-before[i].y))),speed:model.stats().speedMetersPerSecond};
+  })()`);
+  check(prefix+' arrows reverse at their existing positions',continuity.same && continuity.maxDistance<.02 && continuity.speed>0);
+  await record(prefix+'-reversed');await ev('__toy.pause(false)');
+}
 async function indicatorCheck(name){
   const ui=await ev(`(()=>{
     const panel=document.getElementById('toy-cave-indicator'),meter=document.getElementById('toy-cave-meter');
@@ -97,6 +127,7 @@ try{
     const prefix=viewport.mobile?'mobile':'desktop';
     check('scene reports live pressure instead of waiting',await ev('document.getElementById("toy-status").textContent!=="Waiting for pressure"'));
     await until('__toy.breathingCave().stats().speedMetersPerSecond < -5');const inhaled=await record(prefix+'-in');const inUI=await indicatorCheck(prefix+'-in');check('arrow follows air entering the cave',inUI.flow==='in');if(process.env.PREVIEW_ONLY==='1')continue;
+    await reversalCheck(prefix);
     await until('__toy.breathingCave().stats().speedMetersPerSecond > 5');await record(prefix+'-out');
     await until('__toy.breathingCave().stats().seconds>16');const exhaled=await record(prefix+'-exhaling');const outUI=await indicatorCheck(prefix+'-out');check('arrow follows actual outgoing flow during pressure reversal',outUI.flow==='out' && outUI.context.includes('reverse'));
     check('arrows travel with the computed air through the actual entrance',exhaled.markerDistance>inhaled.markerDistance && exhaled.markerInwardCrossings>0 && exhaled.markerOutwardCrossings>0);
