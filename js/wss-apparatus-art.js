@@ -44,6 +44,11 @@
     begin(c, rect.x, rect.y);
     var width = rect.width, height = Math.max(8, rect.height);
     capsule(c, 0, 0, width, height, Math.min(4, height * .5));
+    if (options.heated && options.glow) {
+      c.save();c.globalAlpha = .18;c.fillStyle = warm;
+      c.beginPath();c.roundRect(1, 1, width - 2, height - 2, Math.min(3, height * .5 - 1));c.fill();c.restore();
+      c.shadowColor = warm;c.shadowBlur = 6;
+    }
     segment(c, 5, height * .5, Math.max(5, width - 10), height * .5,
       options.heated ? warm : faint, 1.1);
     dot(c, width - 5, height * .5, 1.1, options.heated ? warm : faint);

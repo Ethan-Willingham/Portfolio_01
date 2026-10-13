@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.177.1'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.178'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -14744,7 +14744,7 @@
       if(!smokeActive)throw new Error('The thermoscope needs the smoke temperature field.');
       toyThermoscope={heated:definition.thermoscope.heated,sampleClock:null};
       thermoscopeClock=liquidWGPU.simulationClock;thermoscopeDt=0;thermoscopeAcc=0;
-      SmokeFluid.setThermalStyle({glow:.18});
+      SmokeFluid.setThermalStyle({glow:0});
       SmokeFluid.setPhysics({HEAT:0,COOLING:definition.thermoscope.cooling,BUOYANCY:definition.thermoscope.buoyancy},0);
       smokeAwakeT=SMOKE_IDLE_HOLD;airPressureColors=false;
       var initialTemperature=SmokeFluid.sampleTemperature(model.width,model.height);
@@ -15412,7 +15412,7 @@
           }}}
       if(toyThermoscope){var heater=definition.thermoscope;
         c.fillText(toyThermoscope.heated?'Heater on':'Cooling',heater.x+88,heater.y-10);
-        if(art)art.heater(c,{x:heater.x-16,y:heater.y-8,width:32,height:16},{heated:toyThermoscope.heated});
+        if(art)art.heater(c,{x:heater.x-16,y:heater.y-8,width:32,height:16},{heated:toyThermoscope.heated,glow:true});
         if(definition.setup==='vented')c.fillText('Open vent',heater.x+104,100);
       }
       if(toyBubbles){var hose=definition.bubbles.hose;if(art)art.airPort(c,hose.x,hose.y,{bottom:384,active:toyBubbles.stats().injecting});}
@@ -15762,7 +15762,8 @@
     if(!toyThermoscope.heated){thermoscopeAcc=0;return;}
     thermoscopeAcc+=h;
     var n=Math.min(3,Math.floor(thermoscopeAcc/SMOKE_EMITTER_DT));thermoscopeAcc-=n*SMOKE_EMITTER_DT;
-    for(var i=0;i<n;i++)SmokeFluid.heatSource({x:(t.x-t.width*.5)/worldW,y:1-(t.y+t.height*.5)/worldH,width:t.width/worldW,height:t.height/worldH},t.alphaPerSample,{r:.015,g:.011,b:.006});
+    // Warm clear air through the temperature channel, with no smoke tracer.
+    for(var i=0;i<n;i++)SmokeFluid.heatSource({x:(t.x-t.width*.5)/worldW,y:1-(t.y+t.height*.5)/worldH,width:t.width/worldW,height:t.height/worldH},t.alphaPerSample,{r:0,g:0,b:0});
   }
 
   function steamTick(){
