@@ -337,16 +337,21 @@
       activeHeldButton=button;button.setAttribute('aria-pressed','true');
       Promise.resolve(toy.activateMachineControl(button.dataset.control,true)).catch(function(error){notice=error.message;releaseHeldControl();});
     }
-    function activateControl(button){
+    function activateControl(button,event){
       try {
-        Promise.resolve(toy.activateMachineControl(button.dataset.control)).then(updateMeasurements).catch(function(error){notice=error.message;updateMeasurements();});
+        var point;
+        if(event && event.detail>0){
+          var stageBounds=document.getElementById('toy-stage').getBoundingClientRect(),scale=toy.camera().scale;
+          point={x:(event.clientX-stageBounds.left)/scale,y:(event.clientY-stageBounds.top)/scale};
+        }
+        Promise.resolve(toy.activateMachineControl(button.dataset.control,undefined,point)).then(updateMeasurements).catch(function(error){notice=error.message;updateMeasurements();});
       } catch(error){notice=error.message;updateMeasurements();}
     }
     function createActionButton(control){
       var button=document.createElement('button');
       button.type='button';button.className='toy-scene-action';button.dataset.control=control.id;
       var label=document.createElement('span');label.className='toy-scene-action-label';button.appendChild(label);
-      button.addEventListener('click',function(){if(button.dataset.hold!=='true')activateControl(button);});
+      button.addEventListener('click',function(event){if(button.dataset.hold!=='true')activateControl(button,event);});
       button.addEventListener('blur',releaseHeldControl);
       button.addEventListener('pointerdown',function(event){
         if(button.dataset.hold!=='true' || button.disabled || event.button!==0)return;

@@ -60,6 +60,13 @@ async function screenshot(name) {
   const r = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
   fs.writeFileSync(path.join(dump, name + '.png'), Buffer.from(r.data, 'base64'));
 }
+async function worldPoint(x,y){
+  return evaluate(`(()=>{const stage=document.getElementById('toy-stage').getBoundingClientRect(),scale=__toy.camera().scale;return{x:stage.left+${x}*scale,y:stage.top+${y}*scale};})()`);
+}
+async function click(point){
+  await send('Input.dispatchMouseEvent',{type:'mousePressed',button:'left',clickCount:1,...point});
+  await send('Input.dispatchMouseEvent',{type:'mouseReleased',button:'left',clickCount:1,...point});
+}
 async function navigate(width, height, query = '?scene=falls', mobile = false, deviceScaleFactor = 1) {
   await send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor, mobile });
   await send('Page.navigate', { url: `http://127.0.0.1:${port}/archive/water-smoke-slime/water-smoke-slime.html${query}` });
@@ -134,20 +141,54 @@ try {
   assert.equal(await evaluate('__toy.machinePrimary()'),false);
   const noPush=await inside(`(()=>{for(let f=0;f<120;f++)smokeFrame(1/60);return toyCannon.stats(jelloBodies);})()`);
   assert.ok(noPush.travelDye<.01);assert.ok(noPush.membrane.displacement.every(x=>Math.abs(x)<.001));
+  // Real clicks must load the part of the head that was hit, and the changed
+  // membrane motion must reach the smoke rather than just changing the drawing.
+  const positionShots=[];
+  for(const y of [136,164,200,236,264]){
+    await evaluate('__toy.machine("smoke-ring-cannon")');await inside('stopLoop();userPaused=true;');
+    await click(await worldPoint(88,y));
+    const initial=await evaluate('__toy.smokeCannon().stats(__toy.bodies())');
+    const mapped=initial.membrane.strikeY;
+    assert.equal(initial.pushes,1);assert.ok(Math.abs(mapped-y)<1,'The mouse position reaches the drum in world coordinates');
+    const peak=initial.membrane.velocity.indexOf(Math.max(...initial.membrane.velocity));
+    assert.ok(Math.abs(128+peak*4-mapped)<=2.01,'The strike loads nodes nearest the contact point');
+    const samples=[];let last=0;
+    for(const frame of [3,24,120,240]){
+      const st=await inside(`(()=>{for(let f=${last};f<${frame};f++){smokeAwakeT=15;smokeFrame(1/60);updateJello(1/60);}instrumentTick(performance.now());render();return toyCannon.stats(jelloBodies);})()`);
+      samples.push(st);last=frame;await screenshot('position-'+y+'-'+frame);
+    }
+    assert.ok(samples.some(s=>s.travelDye>90 && s.dyeCenterX>330),'Edge hits still release a substantial traveling front');
+    assert.ok(samples.some(s=>s.upperCirculation*s.lowerCirculation<0 && Math.abs(s.upperCirculation)>200 && Math.abs(s.lowerCirculation)>200),'Off-center hits retain both rolling curls');
+    assert.ok(samples.every(s=>s.membrane.displacement[0]===0 && s.membrane.displacement.at(-1)===0 && s.membrane.displacement.every(v=>Number.isFinite(v) && Math.abs(v)<100)));
+    positionShots.push({y,samples});
+  }
+  const upper=positionShots[1].samples,center=positionShots[2].samples,lower=positionShots[3].samples;
+  function flexCenter(s){const a=s.membrane.displacement;return a.reduce((sum,v,i)=>sum+Math.max(0,v)*(128+i*4),0)/a.reduce((sum,v)=>sum+Math.max(0,v),0);}
+  assert.ok(flexCenter(upper[0])<flexCenter(center[0])-12 && flexCenter(lower[0])>flexCenter(center[0])+12,'Off-center hits flex different parts of the actual membrane');
+  assert.ok(upper[0].membrane.flowSkew<-.2 && lower[0].membrane.flowSkew>.2,'Measured uneven compression reaches the chamber flow');
+  assert.ok(Math.abs(center[2].dyeCenterY-200)<4,'Center hits retain the balanced release');
+  assert.ok(Math.abs(upper[2].dyeCenterY-center[2].dyeCenterY)>10 && Math.abs(lower[2].dyeCenterY-center[2].dyeCenterY)>10,'Strike position changes the traveling smoke');
+  console.log('POSITION SHOTS',JSON.stringify(positionShots.map(({y,samples})=>({y,flexY:flexCenter(samples[0]),smokeY:samples[2].dyeCenterY,travelDye:samples[2].travelDye}))));
+  await evaluate('__toy.machine("smoke-ring-cannon")');await inside('stopLoop();userPaused=true;');
+  await evaluate('__toy.setCamera({zoom:1.3,panX:120,panY:-70})');await sleep(100);
+  await click(await worldPoint(88,172));
+  assert.ok(Math.abs((await evaluate('__toy.smokeCannon().stats(__toy.bodies()).membrane.strikeY'))-172)<1,'Zoom and pan preserve the strike location');
   const layouts=[];
   for(const [w,h,mobile] of [[844,390,true],[390,844,true],[720,900,false]]){
     await navigate(w,h,query,mobile);await inside('stopLoop();userPaused=true;');
     const layout=await evaluate(`(()=>{const b=document.querySelector('.toy-scene-action[data-control=primary]').getBoundingClientRect();return{w:innerWidth,h:innerHeight,overflow:document.documentElement.scrollWidth>innerWidth,hit:{x:b.x,y:b.y,w:b.width,h:b.height}};})()`);
     assert.ok(!layout.overflow);assert.ok(layout.hit.w>=44&&layout.hit.h>=44&&layout.hit.x>=0&&layout.hit.y>=0&&layout.hit.x+layout.hit.w<=w&&layout.hit.y+layout.hit.h<=h);
-    const point={x:layout.hit.x+layout.hit.w/2,y:layout.hit.y+layout.hit.h/2};
+    const point=await worldPoint(88,164);
     await send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[point]});await send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await sleep(100);
     assert.equal(await evaluate('__toy.smokeCannon().stats(__toy.bodies()).pushes'),1);
+    assert.ok(Math.abs((await evaluate('__toy.smokeCannon().stats(__toy.bodies()).membrane.strikeY'))-164)<2,'Touch keeps the contact position at every layout');
     await inside(`for(let f=0;f<30;f++)smokeFrame(1/60);render();`);await screenshot('layout-'+w+'x'+h);layouts.push(layout);
   }
   await navigate(1440,900,query);await inside('stopLoop();userPaused=true;');
   await evaluate('document.querySelector(".toy-scene-action[data-control=primary]").focus()');
   await send('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13,text:'\r',unmodifiedText:'\r'});await send('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});
   assert.equal(await evaluate('__toy.smokeCannon().stats(__toy.bodies()).pushes'),1,'Enter activates the physical drum');
+  assert.equal(await evaluate('__toy.smokeCannon().stats(__toy.bodies()).membrane.strikeY'),200,'Keyboard activation uses a center strike');
   console.log('LAYOUTS',JSON.stringify(layouts));assert.deepEqual(errors,[]);
   // Exercise the ordinary animation loop too. The earlier regression passed
   // a weak circulation check without producing a clear detached ring.
@@ -159,7 +200,7 @@ try {
   const live=await evaluate('__toy.smokeCannon().stats(__toy.bodies())');
   assert.equal(live.pushes,1);assert.ok(live.travelDye>90&&live.dyeCenterX>330,'The real-time shot rolls clear of the chamber');
   await inside('stopLoop();userPaused=true;');
-  const repeats=await inside(`(()=>{let accepted=0,max=0;for(let f=0;f<720;f++){if(f%60===0)accepted+=toyCannon.push()?1:0;smokeAwakeT=15;smokeFrame(1/60);updateJello(1/60);const st=toyCannon.stats(jelloBodies);max=Math.max(max,...st.membrane.displacement.map(Math.abs));}return{accepted,max,pushes:toyCannon.stats(jelloBodies).pushes};})()`);
+  const repeats=await inside(`(()=>{let accepted=0,max=0;for(let f=0;f<720;f++){if(f%60===0)accepted+=toyCannon.push([164,200,236][Math.floor(f/60)%3])?1:0;smokeAwakeT=15;smokeFrame(1/60);updateJello(1/60);const st=toyCannon.stats(jelloBodies);max=Math.max(max,...st.membrane.displacement.map(Math.abs));}return{accepted,max,pushes:toyCannon.stats(jelloBodies).pushes};})()`);
   console.log('LIVE AND REPEATED',JSON.stringify({center:live.dyeCenterX,travelDye:live.travelDye,...repeats}));
   assert.equal(repeats.accepted,12);assert.ok(repeats.max<100);assert.deepEqual(errors,[]);
 } finally {await cleanup();}

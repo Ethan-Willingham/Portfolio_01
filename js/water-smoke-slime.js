@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.177'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.177.1'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -14833,7 +14833,7 @@
     }
   }
 
-  function machinePrimary(){
+  function machinePrimary(point){
     if(handsPending)return false;
     if(!machineState || !machineState.ready)return false;
     var definition=machineState.definition,primary=definition.primary;
@@ -14887,7 +14887,7 @@
       definition.action=toyThermoscope.heated?'Cool the bulb':'Warm the bulb';
       machineOverlayCache=null;return true;
     }
-    if(primary.kind==='smoke-push'){smokeAwakeT=SMOKE_IDLE_HOLD;return toyCannon.push();}
+    if(primary.kind==='smoke-push'){smokeAwakeT=SMOKE_IDLE_HOLD;return toyCannon.push(point && point.y);}
     if(primary.kind==='smoke-fan'){smokeAwakeT=SMOKE_IDLE_HOLD;machineOverlayCache=null;return toyCannon.toggle();}
     if(primary.kind==='tap'){
       var enabled=definition.thirsty ? !toyBoundary.stats().tapEnabled : definition.action==='Open tap';
@@ -14995,7 +14995,7 @@
       label:'Hold to feed paydirt',kind:'sluice-feed',disabled:disabled || machineState.sluiceRun.fed>=d.sluice.hopper,pointerMode:'fixture'});}
     return controls;
   }
-  function activateMachineControl(id,held){
+  function activateMachineControl(id,held,point){
     if(held===false)return releaseMachineControl();
     var control=machineControlTargets().find(function(item){return item.id===id;});
     if(!control || control.disabled)return false;
@@ -15006,7 +15006,7 @@
     if(control.kind==='thumb')return machineThumb(held!==false);
     if(control.kind==='sluice-feed')return sluiceControl('feed',held===true);
     if(control.kind==='fire-pour' || control.kind==='pour')return machinePour(held===true);
-    return machinePrimary();
+    return machinePrimary(point);
   }
 
   function machinePour(held){

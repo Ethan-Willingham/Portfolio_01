@@ -9,7 +9,7 @@
     var savedPhysics=fluid.getPhysics();fluid.setPhysics({HEAT:0,COOLING:0,BUOYANCY:0,WEIGHT:0,VISCOSITY:.08,EDGE_SPIN:0},0);
     fluid.config.SOLID_PROJECTION=0;
     if(definition.drum){var canvas=fluid.getCanvas();fluid.config.SIM_RESOLUTION=224;fluid.resize(canvas.width,canvas.height,true);}
-    var drum=definition.drum,skin=null,skinVelocity=null,segments=[],combined=[],strikeEnergy=0,pressureWork=0,dampingLoss=0,displacedArea=0,outletSpeed=0;
+    var drum=definition.drum,skin=null,skinVelocity=null,segments=[],combined=[],strikeEnergy=0,pressureWork=0,dampingLoss=0,displacedArea=0,displacedMoment=0,outletSpeed=0,flowSkew=0,lastStrikeY=null;
     if(drum){
       skin=new Float64Array(drum.nodes);skinVelocity=new Float64Array(drum.nodes);
       for(var edge=0;edge<drum.nodes-1;edge++)segments.push({ringN:4,ring:new Int32Array([0,1,2,3]),px:new Float32Array(4),py:new Float32Array(4)});
@@ -48,14 +48,23 @@
       // This bounded velocity penalty supplies that unresolved chamber flow;
       // projection and advection then form the rolling front. Refill is left
       // to the moving boundary, not an extra reversed jet at the mouth.
-      var area=0;
-      for(var node=1;node<drum.nodes-1;node++)area+=skin[node]*spacing;
+      var area=0,moment=0,height=drum.bottom-drum.top,mid=(drum.top+drum.bottom)*.5;
+      for(var node=1;node<drum.nodes-1;node++){
+        var swept=skin[node]*spacing;
+        area+=swept;moment+=swept*(drum.top+node*spacing-mid);
+      }
       outletSpeed=(area-displacedArea)/(dt*drum.opening.height);displacedArea=area;
       var scale=fluid.config.SIM_RESOLUTION/world.h,follow=1-Math.exp(-48*dt);
-      var plugSpeed=outletSpeed*drum.opening.height/(drum.bottom-drum.top);
+      var plugSpeed=outletSpeed*drum.opening.height/height;
+      // The first moment of swept area retains where the skin compressed.
+      // Its linear velocity profile has the same mean chamber flow. Bound
+      // the slope so both lips still receive a forward pulse; pressure and
+      // advection decide how those unequal shear layers roll up.
+      var slope=12*(moment-displacedMoment)/(dt*height*height*height);displacedMoment=moment;
+      flowSkew=plugSpeed>0 ? Math.max(-.65,Math.min(.65,slope*height*.5/plugSpeed)) : 0;
       if(plugSpeed>0)for(var x=112;x<=224;x+=16)for(var y=drum.top+16;y<=drum.bottom-16;y+=16){
-        var actual=sample(x,y).vx;
-        fluid.splatVelocity(x/world.w,1-y/world.h,Math.max(0,plugSpeed-actual)*scale*follow,0,.065);
+        var actual=sample(x,y).vx,target=plugSpeed*(1+flowSkew*(y-mid)/(height*.5));
+        fluid.splatVelocity(x/world.w,1-y/world.h,Math.max(0,target-actual)*scale*follow,0,.065);
       }
     }
     function movingBodies(bodies){combined.length=0;Array.prototype.push.apply(combined,bodies);Array.prototype.push.apply(combined,segments);return combined;}
@@ -64,15 +73,18 @@
       for(var x=176;x<=224;x+=16)for(var y=176;y<=224;y+=16)
         fluid.splat(x/world.w,1-y/world.h,0,0,color,.11);
     }
-    function push(){
+    function push(strikeY){
       if(definition.noPush)return false;
       if(drum){
         // The visitor hits the skin, not the fluid. Its actual displacement
         // enters the shared immersed-boundary pass before pressure projection.
         if(skinVelocity.some(function(v){return Math.abs(v)>drum.strikeSpeed*.75;}))return false;
+        var spacing=(drum.bottom-drum.top)/(drum.nodes-1),radius=(drum.bottom-drum.top)*.5;
+        lastStrikeY=Number.isFinite(strikeY) ? Math.max(drum.top+spacing,Math.min(drum.bottom-spacing,strikeY)) : (drum.top+drum.bottom)*.5;
         fill();
         for(var j=1;j<drum.nodes-1;j++){
-          var impulse=drum.strikeSpeed*Math.pow(Math.sin(Math.PI*j/(drum.nodes-1)),2);
+          var distance=(drum.top+j*spacing-lastStrikeY)/radius;
+          var impulse=Math.abs(distance)<1 ? drum.strikeSpeed*Math.pow(Math.cos(Math.PI*distance*.5),2) : 0;
           strikeEnergy+=.5*drum.mass*((skinVelocity[j]+impulse)*(skinVelocity[j]+impulse)-skinVelocity[j]*skinVelocity[j]);
           skinVelocity[j]+=impulse;
         }
@@ -125,12 +137,12 @@
       });
     }
     function stats(bodies){
-      var upper=0,lower=0,dye=0,dx=0,dy=0,cx=0,travelDye=0;
+      var upper=0,lower=0,dye=0,dx=0,dy=0,cx=0,cy=0,travelDye=0;
       if(field){var hx=world.w/field.width,hy=world.h/field.height,v=field.values;
         for(var row=1;row<field.height-1;row++)for(var col=1;col<field.width-1;col++){
           var i=(row*field.width+col)*4,x=(col+.5)*hx,y=world.h-(row+.5)*hy;
           if(x<248)continue;
-          var d=Math.max(0,v[i+3]);dye+=d;cx+=d*x;if(x>330)travelDye+=d;
+          var d=Math.max(0,v[i+3]);dye+=d;cx+=d*x;cy+=d*y;if(x>330)travelDye+=d;
           var curl=(v[i+field.width*4]-v[i-field.width*4])/(2*hy)-(v[i+5]-v[i-3])/(2*hx);
           if(y<200)upper+=curl;else lower+=curl;
         }
@@ -139,9 +151,9 @@
       if(b){dx=b.cx-(bodyStart?bodyStart.x:b.cx);dy=b.cy-(bodyStart?bodyStart.y:b.cy);
         for(var k=0;k<b.springN;k++){var a=b.sA[k],c=b.sB[k],r=b.sRest[k];if(r>0)strain=Math.max(strain,Math.abs(Math.hypot(b.px[a]-b.px[c],b.py[a]-b.py[c])/r-1));}}
       return {seconds:clock,pushes:pushes,fieldReady:!!field,upperCirculation:upper,lowerCirculation:lower,
-        outsideDye:dye,travelDye:travelDye,dyeCenterX:dye?cx/dye:null,slimeDX:dx,slimeDY:dy,strain:strain,
+        outsideDye:dye,travelDye:travelDye,dyeCenterX:dye?cx/dye:null,dyeCenterY:dye?cy/dye:null,slimeDX:dx,slimeDY:dy,strain:strain,
         pressureImpulseX:pressureImpulseX,pressureImpulseY:pressureImpulseY,peakEdgeLoad:peakLoad,
-        membrane:drum ? {displacement:Array.from(skin),velocity:Array.from(skinVelocity),centerX:drum.x+skin[(drum.nodes-1)/2],displacedArea:displacedArea,outletSpeed:outletSpeed,
+        membrane:drum ? {displacement:Array.from(skin),velocity:Array.from(skinVelocity),centerX:drum.x+skin[(drum.nodes-1)/2],strikeY:lastStrikeY,displacedArea:displacedArea,outletSpeed:outletSpeed,flowSkew:flowSkew,
           strikeEnergy:strikeEnergy,pressureWork:pressureWork,dampingLoss:dampingLoss,movingSegments:segments.length} : null,
         noPush:definition.noPush,model:drum ? 'Measured membrane swept area drives chamber compression; immersed skin and current pressure feedback; 2D vortex-pair section' : '2D vortex-pair section; current projection pressure traction; no authored path or wobble'};
     }
