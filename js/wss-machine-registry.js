@@ -1315,7 +1315,7 @@
     "id": "moka-pot",
     "capability": "Steam",
     "title": "Moka pot",
-    "cue": "Heat creates vapor pressure in the lower chamber. That pressure pushes water through the resistant coffee bed into the upper cup.",
+    "cue": "Watch the preheated pot brew through its porous bed. Turn the heater off to see the pour slow and stop.",
     "status": "WORKS",
     "draft": true,
     "accepted": true,
