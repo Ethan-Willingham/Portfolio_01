@@ -1278,7 +1278,7 @@
     "id": "pascal-barrel",
     "capability": "Valves and logic",
     "title": "Pascal's barrel",
-    "cue": "The narrow column loads the barrel. The panel opens when pressure exceeds its strength. Add water to raise the head.",
+    "cue": "Watch the barrel panel bend under water pressure and open. Try the stronger panel for a new run.",
     "status": "WORKS",
     "draft": true,
     "accepted": true,
