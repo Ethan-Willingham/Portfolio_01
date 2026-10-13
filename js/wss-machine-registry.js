@@ -1141,9 +1141,9 @@
     "id": "glugging-bottle",
     "capability": "Bubbles",
     "title": "Glugging bottle",
-    "cue": "Draft. Open the air vent and compare the draining bottle, draft.",
-    "status": "PARTLY",
-    "draft": true,
+    "cue": "Watch air and water share the bottle's mouth, then open the side vent for a faster drain.",
+    "status": "WORKS",
+    "draft": false,
     "accepted": true,
     "world": {
       "w": 720,
