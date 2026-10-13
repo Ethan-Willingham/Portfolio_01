@@ -18,7 +18,22 @@ test('Torricelli head is supported by atmospheric pressure',()=>{const m=make('t
 for(const id of ['venturi-aspirator','trompe'])test(id+' air input follows flowing water',()=>{const a=make(id),b=make(id);b.activate('primary');advance(a,4);advance(b,4);assert(a.state.airDrawn>0&&b.state.airDrawn===0);if(id==='trompe')assert(a.state.entrained>0);});
 test('ram waste valve cycles and pumps above the drive reservoir',()=>{const m=make('hydraulic-ram');advance(m,8);assert(m.state.cycles>3);assert(flow(m,'delivery')>.0001);assert(flow(m,'waste')>flow(m,'delivery'));assert(m.state.peak>20000);});
 test('water hammer travels from valve to inlet and air vessel reduces peak',()=>{const a=make('water-hammer',{airChamber:false}),b=make('water-hammer',{airChamber:true});advance(a,1);advance(b,1);a.activate('primary');b.activate('primary');a.tick(.001);const p=a.stats().wave.pressure;assert(p[47]>p[0]*2);advance(a,.1);advance(b,.1);assert(a.state.peak>b.state.peak*1.5);});
-test('regulated clock raises its float from admitted water',()=>{const m=make('ctesibius-clock');const y=m.state.floatY;advance(m,15);assert(m.state.floatY<y-20);assert(Math.abs(m.level(m.nodes[1])-.24)<.01);});
+test('regulated clock holds a steady rise across three finite charges',()=>{
+ for(const supplyFill of [.88,.92,.96]){
+  const m=make('ctesibius-clock',{supplyFill}),control=make('ctesibius-clock',{supplyFill});control.activate('regulator');
+  const rises=[],unregulated=[];
+  for(let section=0;section<6;section++){
+   const before=m.level(m.nodes[2]),controlBefore=control.level(control.nodes[2]);
+   advance(m,4);advance(control,4);
+   rises.push(m.level(m.nodes[2])-before);unregulated.push(control.level(control.nodes[2])-controlBefore);
+  }
+  const steady=rises.slice(1),mean=steady.reduce((a,b)=>a+b,0)/steady.length;
+  assert(steady.every(r=>Math.abs(r/mean-1)<.015),'regulated four-second intervals stay within 1.5%');
+  assert(unregulated.at(-1)<unregulated[0]*.65,'without float regulation the clock slows');
+  assert(Math.abs(m.level(m.nodes[1])-.24)<.01,'regulated header stays at its set level');
+  assert(m.state.floatY<m.state.floatStart-40,'the float moves visibly');
+ }
+});
 test('wide inverted mouth permits faster air-water exchange',()=>{const a=make('upside-down-tank'),b=make('glugging-bottle');a.activate('primary');b.activate('primary');advance(a,3);advance(b,3);assert(flow(a,'mouth')>flow(b,'mouth'));});
 test('Tesla reverse resistance reduces equal-head flow',()=>{const a=make('tesla-valve'),b=make('tesla-valve',{reverse:true});advance(a,2);advance(b,2);assert(Math.abs(a.edges[0].flow)>Math.abs(b.edges[0].flow)*1.3);});
 test('hydraulic jump joins supercritical and subcritical depth states',()=>{const m=make('hydraulic-jump');m.activate('primary');const s=advance(m,1);assert(Math.max(...s.channel.froude.slice(0,12))>1);assert(Math.min(...s.channel.froude.slice(30))<1);assert(s.channel.depth[38]>s.channel.depth[4]*2);});
