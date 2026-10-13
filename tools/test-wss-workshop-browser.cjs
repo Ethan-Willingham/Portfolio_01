@@ -11,6 +11,7 @@ const server=http.createServer((req,res)=>{try{let f=path.resolve(root,'.'+new U
   await page.evaluate(()=>__toy.pause(false));
   if(id==='glass-toilet'){await page.locator('.toy-scene-action[data-control="primary"]').click();}
   if(id==='slime-heart'){let box=await page.locator('.toy-scene-action[data-control="primary"]').boundingBox();await page.mouse.move(box.x+box.width/2,box.y+box.height/2);await page.mouse.down();await page.waitForTimeout(650);await page.mouse.up();}
+  if(id==='singing-birds-owl')await page.locator('.toy-scene-action[data-control="primary"]').click();
   if(id==='tsunami-runup')await page.locator('.toy-scene-action[data-control="workshop-pulse"]').click();
   if(id==='water-organ'){await page.locator('.toy-scene-action[data-control="primary"]').click();await page.locator('.toy-scene-action[data-control="workshop-key-1"]').click();}
   if(id==='ringing-bubbles')await page.locator('.toy-scene-action[data-control="workshop-sound"]').click();
@@ -19,6 +20,7 @@ const server=http.createServer((req,res)=>{try{let f=path.resolve(root,'.'+new U
   if(after.massError!==undefined)assert(Math.abs(after.massError)<1e-9,`${id} water inventory`);
   if(id==='water-organ'){assert.equal(after.audio.enabled,true);assert(after.audio.voices>=2);assert.equal(after.voices.filter(v=>v.active).length,2);}
   if(id==='slime-heart')assert(after.pumped>0);
+  if(id==='singing-birds-owl'){assert(after.audio.enabled);assert(after.audio.voices>=3);assert(after.voices.slice(0,3).every(v=>v.active&&v.flow>0));}
   let time=after.t??after.clock;await page.waitForTimeout(160);assert.equal(await page.evaluate(()=>{let s=__toy.runtime().stats();return s.t??s.clock;}),time,`${id} pause freezes state`);
   await page.screenshot({path:path.join(dump,id+'.png')});results.push({id,before,after});console.log('PASS',id,JSON.stringify({t:after.t,clock:after.clock,samples:after.samples,runup:after.runup,spout:after.spout,bubbleEvents:after.bubbleEvents}));
  }
