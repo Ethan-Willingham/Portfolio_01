@@ -45,23 +45,32 @@ Testing and saves screenshots and measurements to `/tmp/sewer-trap-review`.
 
 ## Breathing cave
 
-The cave breathes as a declared outside pressure cycle rises and falls.
-Its entrance has inertia and quadratic pressure loss. The chamber holds a
-finite ideal-gas mass at fixed temperature; actual signed mass transfer changes
-its pressure. Closing the real mouth valve traps its existing charge. Reopening
-uses that charge, with no reset. Steady pressure and a closed initial mouth are
-available in Instruments. Pause freezes the weather, gas and arrow motion.
+The cave starts with equal pressure and still air. Two visible buttons raise
+inside or outside pressure by 10 hPa per press. Inside inputs add recorded
+ideal-gas mass at fixed temperature. Outside inputs change the surrounding
+reservoir pressure, which then stays fixed until the next input. The pressure
+difference drives an entrance with inertia and quadratic pressure loss.
+Closing the real mouth valve traps its existing charge. Reopening uses that
+charge. Instruments offers equal starting pressures and a closed initial mouth.
+Pause freezes the gas and vane motion; the pressure buttons remain usable.
 
-Moving arrowheads show the air directly, replacing the former gray smoke.
-Their positions advance with the current wall-respecting potential velocity
-field, using midpoint integration and collision sweeps. The arrowheads point
-along that field. They represent airflow, with no gas mass or feedback into the
-pressure model. Every marker keeps its identity and position through flow
-reversal and in the outside reservoir, with no upstream reseeding. The glyph
-is centered on a visible tracked point, stays visible at zero speed and retains
-its last direction while stopped. Closing the mouth stops all marker motion.
-Reduced motion shows stationary arrows at fixed sample points while the
-physical model continues to run.
+The arrow-shaped vanes are pinned diagnostic instruments. A sail 12 cm ahead
+of each pin receives drag from the local air relative to its own rotational
+motion. The [quadratic drag relation](https://www1.grc.nasa.gov/beginners-guide-to-aeronautics/drag-equation/)
+uses local density, an effective sail area of 0.03 square meters and a declared
+drag coefficient of 1.2. Its moment about the pin drives angular momentum.
+Each instrument has 0.006 kg square meters of inertia, bearing drag of
+0.025 Nm seconds and a weak torsion spring of 0.0002 Nm per radian. The spring
+rests a quarter-turn from the outward field direction, so it also supplies a
+physical bias when the flow reverses. These are declared probe parameters.
+
+An implicit angular-velocity solve balances drag torque, bearing drag and spring
+torque. Angle advances only by the resulting angular velocity. The painter
+reads that angle, with no target-angle interpolation or direction-triggered
+half-turn. Pins stay fixed and every vane stays visible. Closing the mouth stops
+airflow while residual vane motion dissipates. The probes have no feedback into
+the air model. Reduced motion draws them at their resting angles while the gas
+and instrument physics continue to run.
 
 The readout sits beside the simulation at normal screen resolution. Its
 large text shows actual airflow, while one centered pressure gauge shows which
@@ -72,13 +81,14 @@ space for the readout; a narrow, tall window places it below the cave. It uses
 the same layout on desktop and touch screens at the same viewport size.
 
 This scene has a separate large scale: one world pixel is one meter, with ten
-meters of section depth. Outside pressure is 101325 Pa plus a 3000 Pa sinusoid
-with a 24-second period. This is accelerated weather, not a measurement of a
-particular cave. The mechanism follows the [National Park Service explanation
+meters of section depth. Both pressures start at 101325 Pa. There is no automatic
+weather cycle. The pressure mechanism follows the [National Park Service explanation
 of Wind Cave](https://www.nps.gov/wica/learn/education/what-causes-the-wind-of-wind-cave.htm).
 
 A backward Euler entrance solve couples neck momentum, pressure loss and the
-isothermal gas equation. A finite-volume potential field distributes the
+isothermal gas equation. Neck inertia and loss use mean entrance density; the
+signed drive selects the upwind gas density for actual mass transfer. A
+finite-volume potential field distributes the
 resulting compression or expansion through the actual clear cells. Solid faces
 carry no flux; outside cells are reservoir boundaries. Preconditioned conjugate
 gradients rebuilds that field only when the collision geometry changes. The
@@ -87,14 +97,16 @@ reduced isothermal and potential-flow approximation; acoustic propagation,
 turbulence, thermal exchange and a closed energy budget remain unresolved.
 Closing the ideal stationary valve does not model a moving shutter's work.
 
-Run `node tools/test-breathing-cave.cjs` for independent EOS and entrance-momentum
-checks, sampled mouth velocity versus gas transfer, arrow coupling and position
-continuity across ten weather cycles, persistent rendering at reversal, closure
-and reopening, steady/closed controls and frame-size checks. Run
+Run `node tools/test-breathing-cave.cjs` for independent EOS, entrance momentum
+and vane force/torque checks, sampled mouth velocity versus gas transfer,
+nineteen reversals driven by test button inputs, fixed pins, continuous angular
+advance, closed-mouth energy dissipation, manual mass accounting and frame-size
+checks. The initial sixty-second control stays exactly still. Run
 `DUMP=/tmp/breathing-cave-review node tools/test-breathing-cave.mjs` for owned
 Chrome for Testing playback at desktop and landscape mobile sizes, mouse and
-touch operation, pause, reduced motion and the steady-pressure comparison. The
-browser regression also checks direction during pressure reversal, readable
+touch operation of both pressure buttons, pause, reduced motion and reset to
+equal pressures. The browser regression also checks normal-playback angular
+continuity and direction during pressure reversal, readable
 text contrast, semantic status and meter labels, separation from the apparatus,
 shorter landscape heights and narrow desktop layout. Screenshots and
 measurements go to that directory. The ordinary smoke scene also boots.

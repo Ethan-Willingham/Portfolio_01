@@ -25,7 +25,7 @@
   <link rel="preload" href="/assets/fonts/commit_mono_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/water-smoke-slime.css?v=v5.173">
-  <link rel="stylesheet" href="/water-smoke-slime-app.css?v=v5.171">
+  <link rel="stylesheet" href="/water-smoke-slime-app.css?v=v5.181">
 </head>
 <body class="physics-page toy-app toy-expanded">
   <section class="toy-shell is-expanded" id="toy" aria-label="Physics playground">
@@ -74,14 +74,17 @@
         <aside class="toy-cave-indicator" id="toy-cave-indicator" aria-label="Cave airflow and pressure" hidden>
           <div class="toy-cave-heading"><span>Airflow</span><span id="toy-cave-paused" hidden>Paused</span></div>
           <h2 id="toy-cave-flow" role="status" aria-live="polite" aria-atomic="true">Starting</h2>
-          <div class="toy-cave-direction" aria-hidden="true"><span>Cave</span><svg viewBox="0 0 96 24"><path class="toy-cave-arrow" d="M8 12h80m-10-9 10 9-10 9"/><path class="toy-cave-still" d="M8 12h80"/></svg><span>Outside</span></div>
+          <div class="toy-cave-controls" aria-label="Raise pressure">
+            <button type="button" data-cave-pressure="inside" aria-label="Increase inside pressure by 10 hectopascals"><span>Inside</span><span>+10 hPa</span></button>
+            <button type="button" data-cave-pressure="outside" aria-label="Increase outside pressure by 10 hectopascals"><span>Outside</span><span>+10 hPa</span></button>
+          </div>
           <div class="toy-cave-pressure">
             <p id="toy-cave-pressure-text">Waiting for pressure</p>
             <div class="toy-cave-meter" id="toy-cave-meter" role="meter" aria-label="Cave pressure relative to outside" aria-valuemin="-60" aria-valuemax="60" aria-valuenow="0" aria-valuetext="Waiting for pressure"><i class="toy-cave-meter-fill"></i></div>
             <div class="toy-cave-meter-labels" aria-hidden="true"><span>Cave higher</span><span>Equal</span><span>Outside higher</span></div>
           </div>
-          <p class="toy-cave-context" id="toy-cave-context">Changing weather drives the airflow.</p>
-          <p class="toy-cave-tracer">Arrows show moving air.</p>
+          <p class="toy-cave-context" id="toy-cave-context">Raise either pressure to start the airflow.</p>
+          <p class="toy-cave-tracer">Vanes turn under airflow torque.</p>
         </aside>
         <aside class="toy-oxygen-legend" id="toy-oxygen-legend" aria-labelledby="toy-oxygen-heading" hidden>
           <div class="toy-oxygen-heading"><h2 id="toy-oxygen-heading">Oxygen</h2><span>by volume</span></div>
@@ -259,7 +262,7 @@
 
   <!-- Shared water engine; the stamp follows GAME_VERSION. -->
   <script src="/js/liquid-wgpu.js?v=v28.208"></script>
-  <script src="/js/liquid-material-slip-wgpu.js?v=v5.180"></script>
+  <script src="/js/liquid-material-slip-wgpu.js?v=v5.181"></script>
   <script src="/js/smoke-presets.js?v=4"></script>
   <script src="/js/water-rainbow.js?v=2"></script>
   <script src="/js/liquid-air-model.js?v=v5.171"></script>
@@ -270,12 +273,12 @@
   <script src="/js/water-machines-scenes.js?v=v5.171"></script>
   <script src="/js/water-machines-instruments.js?v=v5.171"></script>
   <script src="/js/water-machines-pressure-view.js?v=v5.171"></script>
-  <script src="/js/wss-machine-registry.js?v=v5.180"></script>
+  <script src="/js/wss-machine-registry.js?v=v5.181"></script>
   <script src="/js/wss-apparatus-art.js?v=v5.178"></script>
-  <script src="/js/water-smoke-slime.js?v=v5.180"></script>
+  <script src="/js/water-smoke-slime.js?v=v5.181"></script>
   <script src="/js/wss-oxygen-view.js?v=v5.171"></script>
-  <script src="/js/wss-sluice-controls.js?v=v5.180"></script>
-  <script src="/js/water-smoke-slime-ui.js?v=v5.180"></script>
+  <script src="/js/wss-sluice-controls.js?v=v5.181"></script>
+  <script src="/js/water-smoke-slime-ui.js?v=v5.181"></script>
   <script src="/js/smoke-presets-ui.js?v=4"></script>
 </body>
 </html>

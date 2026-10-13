@@ -44,35 +44,11 @@ async function record(name){
   const shot=await call('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
   fs.writeFileSync(path.join(out,name+'.png'),Buffer.from(shot.data,'base64'));return state;
 }
-async function reversalCheck(prefix){
-  await ev('__toy.pause(true)');
-  const sample=await ev(`(()=>{
-    const model=__toy.breathingCave();let steps=0;
-    while(model.stats().speedMetersPerSecond<-.15 && steps++<24*120)model.tick(1/120);
-    steps=0;while(model.stats().speedMetersPerSecond<-.001 && steps++<12000)model.tick(1/12000);
-    const canvas=document.createElement('canvas');canvas.width=720;canvas.height=400;
-    const context=canvas.getContext('2d');let shafts=0,minAlpha=1;
-    const stroke=context.stroke.bind(context);context.stroke=function(){shafts++;minAlpha=Math.min(minAlpha,this.globalAlpha);stroke();};
-    model.draw(context,{scale:1,air:getComputedStyle(document.documentElement).getPropertyValue('--app-brass').trim()});
-    const pixels=context.getImageData(0,0,720,400).data;
-    const markers=model.markers(),visibleCenters=markers.filter(m=>{
-      for(let y=Math.floor(m.y)-1;y<=Math.ceil(m.y)+1;y++)for(let x=Math.floor(m.x)-1;x<=Math.ceil(m.x)+1;x++)if(pixels[(y*720+x)*4+3]>0)return true;
-      return false;
-    }).length;
-    __toy.highlightValve(null);
-    return {count:markers.length,shafts,minAlpha,visibleCenters,speed:model.stats().speedMetersPerSecond};
-  })()`);
-  console.log(prefix+' reversal paint',JSON.stringify(sample));
-  check(prefix+' every arrow stays visible as airflow reaches zero',Math.abs(sample.speed)<.002 && sample.shafts===sample.count && sample.visibleCenters===sample.count && sample.minAlpha>=.69);
-  await record(prefix+'-turning');
-  const continuity=await ev(`(()=>{
-    const model=__toy.breathingCave(),before=model.markers();let steps=0;
-    while(model.stats().speedMetersPerSecond<.001 && steps++<12000)model.tick(1/12000);
-    const after=model.markers();__toy.highlightValve(null);
-    return {same:after.every((m,i)=>m.id===before[i].id),maxDistance:Math.max(...after.map((m,i)=>Math.hypot(m.x-before[i].x,m.y-before[i].y))),speed:model.stats().speedMetersPerSecond};
-  })()`);
-  check(prefix+' arrows reverse at their existing positions',continuity.same && continuity.maxDistance<.02 && continuity.speed>0);
-  await record(prefix+'-reversed');await ev('__toy.pause(false)');
+async function clickPressure(side,touch){
+  const target=await ev(`(()=>{const b=document.querySelector('[data-cave-pressure="${side}"]'),r=b.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2,width:r.width,height:r.height,enabled:!b.disabled,label:b.getAttribute('aria-label')};})()`);
+  check(side+' pressure button is accessible and at least 44 pixels',target.enabled && target.width>=44 && target.height>=44 && target.label.includes('10 hectopascals'));
+  if(touch){await call('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:target.x,y:target.y}]});await call('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});}
+  else{await call('Input.dispatchMouseEvent',{type:'mousePressed',button:'left',clickCount:1,x:target.x,y:target.y});await call('Input.dispatchMouseEvent',{type:'mouseReleased',button:'left',clickCount:1,x:target.x,y:target.y});}
 }
 async function indicatorCheck(name){
   const ui=await ev(`(()=>{
@@ -91,7 +67,7 @@ async function indicatorCheck(name){
   const a=luminance(ui.color),b=luminance(ui.background);const contrast=(Math.max(a,b)+.05)/(Math.min(a,b)+.05);
   check(name+' indicator is readable, within view and clear of the apparatus',!ui.hidden && ui.panel.left>=0 && ui.panel.right<=ui.width && ui.panel.top>=ui.topEnd && ui.panel.bottom<=ui.height && ui.fontSize>=20 && contrast>=4.5 &&
     (ui.placement==='side'?ui.stage.right<ui.panel.left:ui.stage.bottom<ui.panel.top));
-  check(name+' has semantic pressure, status and arrow labels',ui.meterRole==='meter' && ui.meterText===ui.pressure && ui.role==='status' && ui.tracer.includes('Arrows show moving air'));
+  check(name+' has semantic pressure, status and vane labels',ui.meterRole==='meter' && ui.meterText===ui.pressure && ui.role==='status' && ui.tracer.includes('Vanes turn under airflow torque'));
   console.log(name+' indicator',JSON.stringify(ui));return ui;
 }
 async function clickMouth(touch){
@@ -126,24 +102,42 @@ try{
     await until('!!window.__toy && !!__toy.breathingCave() && __toy.machineState()?.ready && !__toy.stats().loading');
     const prefix=viewport.mobile?'mobile':'desktop';
     check('scene reports live pressure instead of waiting',await ev('document.getElementById("toy-status").textContent!=="Waiting for pressure"'));
-    await until('__toy.breathingCave().stats().speedMetersPerSecond < -5');const inhaled=await record(prefix+'-in');const inUI=await indicatorCheck(prefix+'-in');check('arrow follows air entering the cave',inUI.flow==='in');if(process.env.PREVIEW_ONLY==='1')continue;
-    await reversalCheck(prefix);
-    await until('__toy.breathingCave().stats().speedMetersPerSecond > 5');await record(prefix+'-out');
-    await until('__toy.breathingCave().stats().seconds>16');const exhaled=await record(prefix+'-exhaling');const outUI=await indicatorCheck(prefix+'-out');check('arrow follows actual outgoing flow during pressure reversal',outUI.flow==='out' && outUI.context.includes('reverse'));
-    check('arrows travel with the computed air through the actual entrance',exhaled.markerDistance>inhaled.markerDistance && exhaled.markerInwardCrossings>0 && exhaled.markerOutwardCrossings>0);
-    await ev('__toy.pause(true)');const clock=await ev('__toy.breathingCave().stats().seconds');await delay(400);
-    check('pause freezes gas and arrows',await ev('__toy.breathingCave().stats().seconds')===clock);check('pause is explicit in the indicator',(await indicatorCheck(prefix+'-paused')).paused);
+    await until('__toy.breathingCave().stats().seconds>1');const balanced=await record(prefix+'-balanced');
+    check('cave starts balanced with no automatic pressure or rotation',balanced.flowM3PerSecond===0 && balanced.massKg===balanced.initialMassKg && balanced.vaneAngularTravel===0);
+    await indicatorCheck(prefix+'-balanced');
+    await ev(`(()=>{const m=__toy.breathingCave(),tick=m.tick.bind(m);window.rotationAudit={maxFrameAngle:0,samples:0,pinsMoved:0};m.tick=function(dt){const old=m.vanes();tick(dt);m.vanes().forEach((v,i)=>{rotationAudit.maxFrameAngle=Math.max(rotationAudit.maxFrameAngle,Math.abs(v.angle-old[i].angle));if(v.x!==old[i].x || v.y!==old[i].y)rotationAudit.pinsMoved++;});rotationAudit.samples++;};})()`);
+    await ev('__toy.pause(true)');const before=await ev('__toy.breathingCave().stats()');
+    await clickPressure('inside',viewport.mobile);const input=await ev('__toy.breathingCave().stats()');
+    check('inside button adds real mass and exactly 10 hPa without changing outside',input.pumpedKg>0 && Math.abs(input.pressurePa-before.pressurePa-1000)<1e-6 && input.outsidePressurePa===before.outsidePressurePa);
+    await clickPressure('inside',viewport.mobile);await ev('__toy.pause(false)');
+    await until('__toy.breathingCave().stats().speedMetersPerSecond>5');await record(prefix+'-out');
+    check('inside pressure drives outgoing air',(await indicatorCheck(prefix+'-out')).flow==='out');
+    await until('__toy.breathingCave().stats().seconds>3');
+    await ev('__toy.pause(true)');const outsideBefore=await ev('__toy.breathingCave().stats()');
+    for(let i=0;i<4;i++)await clickPressure('outside',viewport.mobile);
+    const outsideInput=await ev('__toy.breathingCave().stats()');
+    check('outside button changes only the reservoir pressure',outsideInput.outsidePressurePa-outsideBefore.outsidePressurePa===4000 && outsideInput.massKg===outsideBefore.massKg);
+    await ev('__toy.pause(false)');await until('document.getElementById("toy-cave-paused").hidden');
+    const reversing=await indicatorCheck(prefix+'-reversing');
+    check('readout explains actual entrance inertia',reversing.flow==='out' && reversing.context.includes('reverse'));
+    await record(prefix+'-reversing');
+    await until('__toy.breathingCave().stats().speedMetersPerSecond < -5');await record(prefix+'-in');
+    check('outside pressure drives incoming air',(await indicatorCheck(prefix+'-in')).flow==='in');if(process.env.PREVIEW_ONLY==='1')continue;
+    const turningStart=await ev('__toy.breathingCave().stats().seconds');await until('__toy.breathingCave().stats().seconds>'+String(turningStart+1.5));await record(prefix+'-turned');
+    const audit=await ev('rotationAudit');check('vanes turn continuously at fixed pins in normal playback',audit.samples>100 && audit.maxFrameAngle<Math.PI/2 && audit.pinsMoved===0);console.log(prefix+' rotation audit',JSON.stringify(audit));
+    await ev('__toy.pause(true)');const clock=await ev('__toy.breathingCave().stats().seconds'),angles=await ev('JSON.stringify(__toy.breathingCave().vanes())');await delay(400);
+    check('pause freezes gas and vane angular momentum',await ev('__toy.breathingCave().stats().seconds')===clock && await ev('JSON.stringify(__toy.breathingCave().vanes())')===angles);check('pause is explicit in the indicator',(await indicatorCheck(prefix+'-paused')).paused);
     await clickMouth(viewport.mobile);
     const closed=await ev('__toy.breathingCave().stats()');check('actual entrance is closed',!closed.mouthOpen);
     await ev('__toy.pause(false)');await until('__toy.breathingCave().stats().seconds>'+String(clock+2));
     const held=await record(prefix+'-closed');check('closed mouth is explicit in the indicator',(await indicatorCheck(prefix+'-closed')).flow==='closed');
-    check('closed mouth retains the finite gas and stops every arrow',held.massKg===closed.massKg && held.markerDistance===closed.markerDistance && held.flowM3PerSecond===0);
+    check('closed mouth retains finite gas and stops airflow',held.massKg===closed.massKg && held.flowM3PerSecond===0);
     await clickMouth(viewport.mobile);await until('Math.abs(__toy.breathingCave().stats().speedMetersPerSecond)>5');await record(prefix+'-reopened');
     await ev('__toy.pause(true)');
-    await ev('document.getElementById("toy-native-setup").value="steady";document.getElementById("toy-native-setup").dispatchEvent(new Event("change",{bubbles:true}))');await until('__toy.machineState()?.ready && !__toy.stats().loading');
+    await ev('document.getElementById("toy-native-setup").value="manual";document.getElementById("toy-native-setup").dispatchEvent(new Event("change",{bubbles:true}))');await until('__toy.machineState()?.ready && !__toy.stats().loading');
     await ev('__toy.pause(false)');await until('__toy.breathingCave().stats().seconds>2');const steady=await record(prefix+'-steady');const steadyUI=await indicatorCheck(prefix+'-steady');check('steady pressure reads as balanced and still',steadyUI.pressure==='Pressures are balanced' && steadyUI.flow==='still');
-    check('steady pressure produces no airflow',steady.flowM3PerSecond===0 && steady.massKg===steady.initialMassKg && steady.markerDistance===0 && steady.movingMarkers===0);
-    check('steady comparison is available in Instruments',await ev('Array.from(document.querySelectorAll("#toy-native-setup option")).some(o=>o.value==="steady")'));
+    check('reset returns to balanced pressure without automatic airflow',steady.flowM3PerSecond===0 && steady.massKg===steady.initialMassKg && steady.vaneAngularTravel===0);
+    check('manual and closed setups are available without weather cycling',await ev('Array.from(document.querySelectorAll("#toy-native-setup option")).map(o=>o.value).join(",")==="manual,closed"'));
     if(viewport.mobile){await call('Emulation.setDeviceMetricsOverride',{...viewport,height:350,deviceScaleFactor:1});await delay(400);await indicatorCheck('mobile-short');await record('mobile-short');}
     await ev('document.getElementById("toy-instruments-open").click()');await delay(200);await record(prefix+'-instruments');
   }
@@ -152,8 +146,8 @@ try{
   check('a pressure draft cannot overwrite the working cave module',await ev('!!__toy.breathingCave() && !!__toy.machineState().definition.cave'));
   await call('Emulation.setDeviceMetricsOverride',{width:600,height:800,mobile:false,deviceScaleFactor:1});await delay(400);await indicatorCheck('narrow-desktop');await record('narrow-desktop');
   await call('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'reduce'}]});
-  await ev('__toy.pause(false)');await until('__toy.breathingCave().stats().seconds>2');await record('reduced-motion');
-  check('reduced motion uses static direction arrows without freezing the air model',await ev('__toy.breathingCave().stats().visualMotion==="direction-only" && __toy.breathingCave().stats().admittedKg>0'));
+  await clickPressure('outside',false);await ev('__toy.pause(false)');await until('__toy.breathingCave().stats().seconds>2');await record('reduced-motion');
+  check('reduced motion keeps the physical model active',await ev('__toy.breathingCave().stats().visualMotion==="static-vanes" && __toy.breathingCave().stats().admittedKg>0 && __toy.breathingCave().stats().vaneAngularTravel>0'));
   await call('Emulation.setEmulatedMedia',{features:[]});
   // The ordinary smoke scene still boots the unchanged WebGL solver.
   await call('Page.navigate',{url:'http://127.0.0.1:'+port+'/archive/water-smoke-slime/water-smoke-slime.html?scene=chimney'});

@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.180'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.181'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -14266,8 +14266,8 @@
     if(toyBreathingCave && machineState && machineState.ready){
       var cave=toyBreathingCave.stats();machineState.readings={ready:true,cave:cave,caption:machineState.definition.caption,action:machineState.definition.action,
         particleCount:0,sampleAgeMs:0,gasPressurePsi:cave.gaugePressurePa/6894.757293168,roomAbsolutePressurePsi:cave.outsidePressurePa/6894.757293168,
-        scaleText:'One world pixel is one meter; the cave section is ten meters deep. Weather is sped up to a 24-second cycle.',
-        numericalStatus:'Finite isothermal air; pressure-driven entrance inertia and loss; conservative smoke transport.',
+        scaleText:'One world pixel is one meter; the cave section is ten meters deep. Each button raises its side by 10 hPa.',
+        numericalStatus:'Finite isothermal air; entrance momentum and pressure loss; drag-driven vane angular momentum.',
         energyBudgetStatus:machineState.definition.energyBudgetStatus,error:cave.error || buildError};return;
     }
     if(toyDraftRuntime && machineState && machineState.ready && (machineState.definition.airContact || machineState.definition.snorkel)){
@@ -16142,6 +16142,12 @@
       oxygen:function(){return toyOxygen || (toyDraftRuntime && toyDraftRuntime.oxygen ? toyDraftRuntime.oxygen : null);},
       fireSmokeDraft:function(){return toyFireSmokeDraft;},
       breathingCave:function(){return toyBreathingCave;},
+      cavePressure:function(side){
+        if(!toyBreathingCave || !machineState || !machineState.ready)return false;
+        var changed=toyBreathingCave.increasePressure(side);
+        if(changed){instrumentTick(performance.now());drawMachineOverlay();updateReadout();}
+        return changed;
+      },
       thermoscope:function(){return toyThermoscope;},
       balloons:function(){return toyBalloon;},
       divers:function(){return toyDivers;},

@@ -1,11 +1,10 @@
-// Independent inventory, momentum/EOS and real-geometry controls.
+// Independent gas inventory, entrance momentum and vane angular momentum.
 const assert=require('node:assert/strict');
 const B=require('../js/water-machines-builder.js');
 require('../js/wss-machines/breathing-cave.js');require('../js/wss-breathing-cave.js');
 function setup(options={}){
   const walls=new Uint8Array(90*50);let version=0,closed=!!options.closed;
   const d=WSSMachines['breathing-cave'].make({w:720,h:400,tile:8},options);
-  if(options.amplitudePa!==undefined)d.cave.amplitudePa=options.amplitudePa;
   const b=B.create({width:90,height:50,tile:8,walls,onChange:()=>version++});
   d.vessels.forEach(v=>b.vessel(v.rect,v.sealed));d.pipes.forEach(p=>b.strokePipe(p.points,p.bore));
   const gate=d.cave.gate;
@@ -14,89 +13,84 @@ function setup(options={}){
   return {model,d,solidAt,close:value=>{closed=value;version++;}};
 }
 function run(s,seconds,dt=1/60){for(let t=0;t<seconds-1e-9;t+=dt)s.model.tick(dt);return s.model.stats();}
+function pump(s,side,count=1){for(let i=0;i<count;i++)assert.equal(s.model.increasePressure(side),true);}
 function healthy(a){
   assert.equal(a.error,null);assert.ok(a.massKg>0);assert.ok(Math.abs(a.massResidualKg)<1e-6);
-  assert.equal(a.nonfiniteMarkers,0);assert.ok(a.markerCount>20);assert.ok(a.fieldResidual<1e-7);if(a.mouthOpen)assert.ok(Math.abs(a.unitMouthFlux-1)<1e-7,'actual entrance carries the integrated chamber flux');
+  assert.equal(a.nonfiniteVanes,0);assert.ok(a.vaneCount>20);assert.ok(a.fieldResidual<1e-7);
+  if(a.mouthOpen)assert.ok(Math.abs(a.unitMouthFlux-1)<1e-7,'actual mouth carries the chamber flux');
 }
-// Inspect the real painter at rest and across reversal. Every shaft stays
-// centered on the same advected point, at full size and readable opacity.
 global.Path2D=class{rect(){}};
-function visibleArrows(model){
+function paintedVanes(model){
   const shafts=[],centers=[];let path=[];
   const context={save(){},restore(){},clip(){},beginPath(){path=[];},
     moveTo(x,y){path.push([x,y]);},lineTo(x,y){path.push([x,y]);},closePath(){},fill(){},
     arc(x,y){centers.push([x,y]);},stroke(){shafts.push({path,alpha:this.globalAlpha});}};
-  const markers=model.markers();model.draw(context,{scale:1,accent:'currentColor'});
-  assert.equal(shafts.length,markers.length,'no arrows disappear when air slows or reverses');
-  assert.equal(centers.length,markers.length,'each arrow keeps a visible tracked center');
-  for(let i=0;i<markers.length;i++){
-    const {path,alpha}=shafts[i],m=markers[i];
-    assert.ok(Math.abs(Math.hypot(path[1][0]-path[0][0],path[1][1]-path[0][1])-13)<1e-9,'arrow stays full size');
-    assert.ok(Math.hypot((path[0][0]+path[1][0])/2-m.x,(path[0][1]+path[1][1])/2-m.y)<1e-9,'direction flips about the tracked center');
-    assert.deepEqual(centers[i],[m.x,m.y]);assert.ok(alpha>=.7,'no low-speed fade');
+  const vanes=model.vanes();model.draw(context,{scale:1,accent:'currentColor'});
+  assert.deepEqual(model.vanes(),vanes,'drawing cannot set or alter physical angles');
+  assert.equal(shafts.length,vanes.length);assert.equal(centers.length,vanes.length);
+  for(let i=0;i<vanes.length;i++){
+    const {path,alpha}=shafts[i],v=vanes[i];
+    assert.ok(Math.hypot(path[1][0]-v.x-6.5*Math.cos(v.angle),path[1][1]-v.y-6.5*Math.sin(v.angle))<1e-9,'painter uses the integrated vane angle');
+    assert.ok(Math.hypot((path[0][0]+path[1][0])/2-v.x,(path[0][1]+path[1][1])/2-v.y)<1e-9,'vane rotates around its fixed pin');
+    assert.deepEqual(centers[i],[v.x,v.y]);assert.ok(alpha>=.7,'vanes stay visible at rest');
   }
 }
-const s=setup();const start=s.model.stats();healthy(start);
-visibleArrows(s.model);
-let min=0,max=0;
-for(let i=0;i<48*60;i++){
-  const before=s.model.stats();s.model.tick(1/60);const a=s.model.stats();
-  min=Math.min(min,a.speedMetersPerSecond);max=Math.max(max,a.speedMetersPerSecond);healthy(a);
-  assert.ok(Math.abs(a.pressurePa-a.massKg*s.d.cave.gasConstant*s.d.cave.temperature/a.volumeM3)<1e-7,'independent ideal-gas inventory EOS');
-  if(i===120){
-    // One exact internal substep checks the discretized entrance momentum.
-    const old=s.model.stats(),oldMarkers=s.model.markers(),dt=1/120;s.model.tick(dt);const n=s.model.stats();
-    const rho=(n.escapedKg>old.escapedKg?old.pressurePa:n.outsidePressurePa)/(s.d.cave.gasConstant*s.d.cave.temperature);
-    const lhs=rho*s.d.cave.neckLength*(n.speedMetersPerSecond-old.speedMetersPerSecond)/dt;
-    const rhs=n.gaugePressurePa-.5*rho*s.d.cave.lossCoefficient*n.speedMetersPerSecond*Math.abs(n.speedMetersPerSecond);
-    assert.ok(Math.abs(lhs-rhs)<1e-6,'entrance momentum uses current pressure and declared loss');
-    const gate=s.d.cave.gate;let fieldFlux=0;
-    for(let y=gate.y+4;y<gate.y+gate.height;y+=8)fieldFlux+=s.model.sampleVelocity(gate.x+gate.width,y).vx*8*s.d.cave.depth;
-    assert.ok(Math.abs(fieldFlux*n.massKg/n.volumeM3-(old.massKg-n.massKg)/dt)<1e-5,'sampled mouth velocity carries the measured gas transfer');
-    let checked=0;
-    for(const current of s.model.markers()){
-      const prior=oldMarkers[current.id],v0=s.model.sampleVelocity(prior.x,prior.y);
-      const vm=s.model.sampleVelocity(prior.x+v0.vx*dt*.5,prior.y+v0.vy*dt*.5);
-      const x=prior.x+vm.vx*dt,y=prior.y+vm.vy*dt;
-      if(s.solidAt(x,y))continue;
-      assert.ok(Math.hypot(current.x-x,current.y-y)<1e-8,'arrows follow the current physical velocity');checked++;
-    }
-    assert.ok(checked>20,'marker coupling checked across the chamber and entrance');
+const idle=setup(),initial=idle.model.stats(),initialVanes=idle.model.vanes();
+const quiet=run(idle,60);healthy(quiet);
+assert.equal(quiet.outsidePressurePa,initial.outsidePressurePa);assert.equal(quiet.massKg,initial.massKg);
+assert.equal(quiet.flowM3PerSecond,0);assert.deepEqual(idle.model.vanes(),initialVanes,'no automatic breathing or turning');paintedVanes(idle.model);
+const s=setup(),beforePump=s.model.stats(),beforeAngles=s.model.vanes();
+pump(s,'inside',3);const pumped=s.model.stats();
+assert.equal(pumped.outsidePressurePa,beforePump.outsidePressurePa);
+assert.ok(Math.abs(pumped.pressurePa-beforePump.pressurePa-3000)<1e-8);
+assert.ok(Math.abs(pumped.pumpedKg-3000*pumped.volumeM3/(s.d.cave.gasConstant*s.d.cave.temperature))<1e-8);
+assert.deepEqual(s.model.vanes(),beforeAngles,'pressure inputs apply no angular impulse or angle change');
+assert.equal(s.model.increasePressure('invalid'),false);
+let min=0,max=0,maxRotationStep=0,reversals=0,previousSpeed=0;
+for(let i=0;i<120*120;i++){
+  // Tests press alternating buttons. Runtime has no clock-driven input.
+  if(i && i%(6*120)===0)pump(s,(i/(6*120))%2?'outside':'inside',6);
+  const old=s.model.stats(),oldVanes=s.model.vanes(),dt=1/120;s.model.tick(dt);const a=s.model.stats();healthy(a);
+  min=Math.min(min,a.speedMetersPerSecond);max=Math.max(max,a.speedMetersPerSecond);
+  if(previousSpeed*a.speedMetersPerSecond<0){reversals++;paintedVanes(s.model);}previousSpeed=a.speedMetersPerSecond;
+  assert.equal(a.outsidePressurePa,old.outsidePressurePa,'outside pressure only changes through a manual input');
+  assert.ok(Math.abs(a.pressurePa-a.massKg*s.d.cave.gasConstant*s.d.cave.temperature/a.volumeM3)<1e-7,'independent ideal-gas EOS');
+  const rho=(old.pressurePa+a.outsidePressurePa)*.5/(s.d.cave.gasConstant*s.d.cave.temperature);
+  const lhs=rho*s.d.cave.neckLength*(a.speedMetersPerSecond-old.speedMetersPerSecond)/dt;
+  const rhs=a.gaugePressurePa-.5*rho*s.d.cave.lossCoefficient*a.speedMetersPerSecond*Math.abs(a.speedMetersPerSecond);
+  assert.ok(Math.abs(lhs-rhs)<1e-6,'entrance momentum balances pressure and declared loss');
+  const gate=s.d.cave.gate;let fieldFlux=0;
+  for(let y=gate.y+4;y<gate.y+gate.height;y+=8)fieldFlux+=s.model.sampleVelocity(gate.x+gate.width,y).vx*8*s.d.cave.depth;
+  assert.ok(Math.abs(fieldFlux*a.massKg/a.volumeM3-(old.massKg-a.massKg)/dt)<1e-5,'mouth velocity carries measured mass transfer');
+  const p=s.d.cave.vane;
+  for(const current of s.model.vanes()){
+    const prior=oldVanes[current.id],velocity=s.model.sampleVelocity(current.x,current.y);
+    const rx=p.arm*Math.cos(prior.angle),ry=p.arm*Math.sin(prior.angle);
+    const ux=velocity.vx+current.omega*ry,uy=velocity.vy-current.omega*rx;
+    const r=s.d.cave.chamber,inside=current.x>=r.x && current.x<r.x+r.width && current.y>=r.y && current.y<r.y+r.height;
+    const density=inside?a.massKg/a.volumeM3:(current.x<s.d.pipes[0].points.at(-1).x?(a.pressurePa+a.outsidePressurePa)/2:a.outsidePressurePa)/(s.d.cave.gasConstant*s.d.cave.temperature);
+    const force=.5*density*p.dragCoefficient*p.area*Math.hypot(ux,uy);
+    const torque=rx*force*uy-ry*force*ux-p.bearingDrag*current.omega-p.spring*(current.angle-current.restAngle);
+    assert.ok(Math.abs(p.inertia*(current.omega-prior.omega)/dt-torque)<1e-9,'independent force and angular-momentum balance');
+    assert.ok(Math.abs(current.angle-prior.angle-current.omega*dt)<1e-12,'angle advances only through angular velocity');
+    assert.equal(current.x,prior.x);assert.equal(current.y,prior.y);
+    maxRotationStep=Math.max(maxRotationStep,Math.abs(current.angle-prior.angle));
   }
 }
-assert.ok(min<-5 && max>5,'weather produces both flow directions');
-const moving=s.model.stats();assert.ok(moving.markerInwardCrossings>0 && moving.markerOutwardCrossings>0,'arrows pass through the real entrance in both directions');s.close(true);s.model.tick(1/60);const sealed=s.model.stats();run(s,24);
-const held=s.model.stats();healthy(held);assert.equal(held.massKg,sealed.massKg);assert.equal(held.markerDistance,sealed.markerDistance);assert.equal(held.flowM3PerSecond,0);
-assert.equal(held.pressurePa,sealed.pressurePa);assert.notEqual(held.outsidePressurePa,sealed.outsidePressurePa);
-s.close(false);const reopened=run(s,3);healthy(reopened);assert.ok(reopened.massKg!==held.massKg,'reopening transfers the existing charge');
-const steady=setup({steady:true});const quiet=run(steady,48);healthy(quiet);assert.equal(quiet.massKg,quiet.initialMassKg);assert.equal(quiet.flowM3PerSecond,0);assert.equal(quiet.markerDistance,0);assert.equal(quiet.movingMarkers,0);
-visibleArrows(steady.model);
-const shut=setup({closed:true});const trapped=run(shut,48);healthy(trapped);assert.equal(trapped.flowM3PerSecond,0);assert.equal(trapped.massKg,trapped.initialMassKg);
-const coarse=setup(),fine=setup();const a=run(coarse,8,1/30),b=run(fine,8,1/120);healthy(a);healthy(b);
-assert.ok(Math.abs(a.massKg-b.massKg)<1e-5 && Math.abs(a.markerDistance-b.markerDistance)<1e-5,'frame-size independent fixed substeps');
-let reversals=0,maxJump=0,reservoirVisits=0;
-for(const amplitudePa of [3000,12000]){
-  const continuous=setup({amplitudePa});let previousSpeed=0;
-  for(let i=0;i<240*120;i++){
-    const prior=continuous.model.markers(),dt=1/120;
-    continuous.model.tick(dt);const now=continuous.model.stats();healthy(now);
-    const next=continuous.model.markers();assert.equal(next.length,prior.length);
-    for(let j=0;j<next.length;j++){
-      const p=prior[j],m=next[j];assert.equal(m.id,p.id);
-      const v0=continuous.model.sampleVelocity(p.x,p.y),vm=continuous.model.sampleVelocity(p.x+v0.vx*dt*.5,p.y+v0.vy*dt*.5);
-      const distance=Math.hypot(m.x-p.x,m.y-p.y);maxJump=Math.max(maxJump,distance);
-      assert.ok(distance<=Math.hypot(vm.vx,vm.vy)*dt+1e-9,'every movement is bounded by the physical velocity, with no teleport');
-      assert.ok(!continuous.solidAt(m.x,m.y),'marker never crosses a wall');
-      if(m.x>=696 || m.x<24 || m.y<24 || m.y>=376)reservoirVisits++;
-    }
-    if(previousSpeed*now.speedMetersPerSecond<0){visibleArrows(continuous.model);reversals++;}
-    if(Math.abs(now.speedMetersPerSecond)<.01)visibleArrows(continuous.model);
-    previousSpeed=now.speedMetersPerSecond;
-  }
-  visibleArrows(continuous.model);
-}
-assert.ok(reversals>=38,'ten complete cycles per pressure amplitude include repeated inhale/exhale transitions');
-assert.ok(reservoirVisits>0,'stronger weather also covers the old boundary reseeding region');
-console.log(JSON.stringify({minSpeed:min,maxSpeed:max,moving,sealed:held,reopened,steady:quiet},null,2));
-console.log(JSON.stringify({reversals,maxJump,reservoirVisits},null,2));
-console.log('PASS: reversing pressure drive, independent EOS/momentum, finite gas and velocity-driven arrows, ten-cycle position/rendering continuity, closure/reopening, steady and closed controls, frame-size invariance.');
+assert.ok(min<-5 && max>5 && reversals>=18,'manual inputs produce repeated physical reversals');
+assert.ok(maxRotationStep<.3,'no instantaneous half-turn '+JSON.stringify({maxRotationStep,min,max,reversals}));
+assert.ok(s.model.stats().vaneAngularTravel>100,'vanes turn under the applied flow');
+s.close(true);s.model.tick(1/120);const sealed=s.model.stats();
+const energy=()=>s.model.vanes().reduce((sum,v)=>sum+.5*s.d.cave.vane.inertia*v.omega*v.omega+.5*s.d.cave.vane.spring*(v.angle-v.restAngle)**2,0);
+let previousEnergy=energy();
+for(let i=0;i<4*120;i++){s.model.tick(1/120);assert.ok(energy()<=previousEnergy+1e-12,'stopped airflow lets vane motion dissipate');previousEnergy=energy();}
+const held=s.model.stats();healthy(held);assert.equal(held.massKg,sealed.massKg);assert.equal(held.flowM3PerSecond,0);
+pump(s,'inside');const charged=s.model.stats();run(s,2);assert.equal(s.model.stats().massKg,charged.massKg,'closed chamber retains pumped air');
+s.close(false);assert.notEqual(run(s,2).massKg,charged.massKg,'reopening transfers the existing charge');
+const shut=setup({closed:true});pump(shut,'outside',3);const trapped=run(shut,20);healthy(trapped);
+assert.equal(trapped.flowM3PerSecond,0);assert.equal(trapped.massKg,trapped.initialMassKg);
+const coarse=setup(),fine=setup();pump(coarse,'outside',3);pump(fine,'outside',3);
+const a=run(coarse,8,1/30),b=run(fine,8,1/120);healthy(a);healthy(b);
+assert.ok(Math.abs(a.massKg-b.massKg)<1e-5 && Math.abs(a.vaneAngularTravel-b.vaneAngularTravel)<1e-5,'fixed-substep frame-size invariance');
+console.log(JSON.stringify({minSpeed:min,maxSpeed:max,reversals,maxRotationStep,quiet,manual:s.model.stats()},null,2));
+console.log('PASS: no automatic forcing; independent gas, entrance and vane momentum; manual pressure; continuous physical rotation; closure and damping; frame-size invariance.');

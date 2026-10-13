@@ -61,12 +61,16 @@
     var actionButtons = new Map();
     var activeHeldButton = null;
     var caveIndicator=document.getElementById('toy-cave-indicator');
+    if(caveIndicator)caveIndicator.querySelectorAll('[data-cave-pressure]').forEach(function(button){
+      button.addEventListener('click',function(){toy.cavePressure(button.dataset.cavePressure);sync();});
+    });
     function syncCaveIndicator(sample,state){
       if(!caveIndicator)return null;
       caveIndicator.hidden=state.scene!=='breathing-cave';
       if(caveIndicator.hidden)return null;
       var ready=sample && !sample.error && Number.isFinite(sample.gaugePressurePa) && Number.isFinite(sample.speedMetersPerSecond);
       var speed=ready?sample.speedMetersPerSecond:0;
+      caveIndicator.querySelectorAll('[data-cave-pressure]').forEach(function(button){button.disabled=!ready;});
       var flow=!ready?'loading':!sample.mouthOpen?'closed':Math.abs(speed)<.2?'still':speed>0?'out':'in';
       var labels={loading:sample && sample.error?'Airflow stopped':'Starting',closed:'Mouth closed',still:'Air nearly still',out:'Air flowing out',in:'Air flowing in'};
       if(ready && flow==='still' && Math.abs(speed)<.001)labels.still='Air still';
@@ -84,7 +88,7 @@
       meter.setAttribute('aria-valuetext',pressureText);
       var reversing=ready && (flow==='out' && delta<-.05 || flow==='in' && delta>.05);
       text('toy-cave-context',!ready?'The cave is starting.':state.paused?'Airflow and pressure are frozen.':flow==='closed'?'The shut entrance traps the cave air.':
-        reversing?'Moving air takes a moment to reverse.':flow==='still'?'Watch the direction change as pressure shifts.':'Air moves toward the lower pressure.');
+        reversing?'Moving air takes a moment to reverse.':flow==='still'?'Raise either pressure to move the air.':'Air moves toward the lower pressure.');
       return {label:labels[flow],flow:flow};
     }
     var sluiceControls=window.WSSSluiceControls ? window.WSSSluiceControls.create(toy,shell) : null;
@@ -559,7 +563,7 @@
       if(fire)text('toy-hint',liveMachine.definition.sauna ? 'Click the water source or the stones to make steam. Let the room cool between pours.' : candle?'Lift the lid before the flame goes out. Reset lights a fresh candle.':'Click the upper water source or the fire to pour. You can also splash it with Water.');
       if(thirsty)text('toy-hint',pressureMessage);
       if(birds && state.tool==='poke')text('toy-hint','Grab the pipe’s top and slide it up for a lower note, down for a higher one.');
-      if(cave)text('toy-hint','Arrows show air moving through the entrance. Close the mouth to stop it.');
+      if(cave)text('toy-hint','Raise inside or outside pressure. The vanes turn with the air; close the mouth to stop the flow.');
       if(cannon)text('toy-hint',wind?'Grab the slime. Stop the fan to compare its wake.':'Tap the back. Drag the slime back into the swirl.');
       if(balloon)text('toy-hint','Drag the skin to fling it. Click it to pop and release the water.');
       if(state.scene==='air-hose')text('toy-hint','Stop the declared air source and watch the remaining gas.');
@@ -604,11 +608,11 @@
       }
       if(native && liveMachine && !setup.disabled){setup.value=liveMachine.definition.setup==='held' ? 'released' : liveMachine.definition.setup;}
       if(native && liveMachine){
-        text('toy-native-setup-note',sluice ? 'Equal mineral densities makes black sand and gold as dense as quartz. Without riffles removes the raised bars. Each setup starts with the same water and grains.' : trap ? 'Switching changes only the water. The existing smoke, air motion and airflow setting stay in place.' : thirsty ? 'Water off starts with a dry slime and no water. Restart restores the selected setup.' : slip ? 'Matched densities repeats the same jar with equal parcel masses. Water and oil keep their different numerical filters.' : cave ? 'Changing a setup resets the cave air and its flow arrows.' : liveMachine && liveMachine.definition.setupNote || 'Choosing a setup restarts it with the same initial water. Hold starts a freshly filled straw; releasing opens its top.');
+        text('toy-native-setup-note',sluice ? 'Equal mineral densities makes black sand and gold as dense as quartz. Without riffles removes the raised bars. Each setup starts with the same water and grains.' : trap ? 'Switching changes only the water. The existing smoke, air motion and airflow setting stay in place.' : thirsty ? 'Water off starts with a dry slime and no water. Restart restores the selected setup.' : slip ? 'Matched densities repeats the same jar with equal parcel masses. Water and oil keep their different numerical filters.' : cave ? 'Changing a setup returns both pressures and the vanes to their starting values.' : liveMachine && liveMachine.definition.setupNote || 'Choosing a setup restarts it with the same initial water. Hold starts a freshly filled straw; releasing opens its top.');
         var b=liveMachine.definition.boundaries || {pool:false};
         text('toy-native-boundaries',liveMachine.definition.boundaryNote || (b.pool ? 'Drained water feeds the tap. The powered return adds energy to lift it. The tap requests '+b.tap.rate+' parcels per simulation second at '+b.tap.vy+' pixels per second downward; each parcel represents 1.5625 square pixels. All '+state.allocation+' allocated slots are either present water or stored reserve.' : 'Only the upper opening is held. The lower end stays open. The side-hole comparison connects the upper air space to the room.'));
         var ledger=sample.boundary, reduced=sample.draftRuntime;
-        text('toy-native-ledger',nativeReduced && ledger && reduced ? 'Native parcels: '+(ledger.present-(reduced.solidParcels || reduced.boundWaterParcels || 0))+' flowing, '+(reduced.solidParcels || reduced.boundWaterParcels || 0)+(liveMachine.definition.thermal?' solid.':' stored at roots.')+' Total '+ledger.count+'.' : sluice && sample.sluice ? 'Quartz washed '+sample.sluice.sand.washed+'/'+sample.sluice.sand.total+'; black sand remaining '+(sample.sluice.blackSand.total-sample.sluice.blackSand.washed)+'/'+sample.sluice.blackSand.total+'; gold remaining '+(sample.sluice.gold.total-sample.sluice.gold.washed)+'/'+sample.sluice.gold.total+'. Water added '+sample.sluice.admitted+'.' : thirsty && sample.thirsty && ledger ? 'Water parcels: '+(ledger.present-sample.thirsty.absorbedParcels)+' flowing, '+sample.thirsty.absorbedParcels+' absorbed, '+ledger.parked+' in reserve. Total '+ledger.count+'. Slime '+Math.round(sample.thirsty.fraction*100)+'% full.' : birds && sample.birds ? 'Whistle dry air: '+number(sample.birds.escapedDryGrains,'grains')+' expelled; '+number(sample.birds.admittedDryGrains,'grains')+' admitted. Native water parcels '+sample.birds.waterParcels+'.' : steam && sample.steam ? 'Water parcels: '+sample.steam.liquidParcels+' liquid, '+sample.steam.vaporParcels+' vapor, '+sample.steam.escapedVaporParcels+' escaped. Heat supplied '+number(sample.steam.heatInputJ/1.3558179483314,'ft·lbf')+'.' : cave && caveReading ? 'Air admitted '+number(caveReading.admittedKg,'kg')+'; expelled '+number(caveReading.escapedKg,'kg')+'; inventory error '+number(caveReading.massResidualKg,'kg')+'.' : b && b.pool && ledger ? 'Present '+ledger.present+'; reserve '+ledger.parked+'. Requested '+ledger.requested+'; admitted '+ledger.admitted+'; collected '+ledger.drained+'; refused '+ledger.shortfall+'. Return work '+number(ledger.externalWork,'J')+'.' : '');
+        text('toy-native-ledger',nativeReduced && ledger && reduced ? 'Native parcels: '+(ledger.present-(reduced.solidParcels || reduced.boundWaterParcels || 0))+' flowing, '+(reduced.solidParcels || reduced.boundWaterParcels || 0)+(liveMachine.definition.thermal?' solid.':' stored at roots.')+' Total '+ledger.count+'.' : sluice && sample.sluice ? 'Quartz washed '+sample.sluice.sand.washed+'/'+sample.sluice.sand.total+'; black sand remaining '+(sample.sluice.blackSand.total-sample.sluice.blackSand.washed)+'/'+sample.sluice.blackSand.total+'; gold remaining '+(sample.sluice.gold.total-sample.sluice.gold.washed)+'/'+sample.sluice.gold.total+'. Water added '+sample.sluice.admitted+'.' : thirsty && sample.thirsty && ledger ? 'Water parcels: '+(ledger.present-sample.thirsty.absorbedParcels)+' flowing, '+sample.thirsty.absorbedParcels+' absorbed, '+ledger.parked+' in reserve. Total '+ledger.count+'. Slime '+Math.round(sample.thirsty.fraction*100)+'% full.' : birds && sample.birds ? 'Whistle dry air: '+number(sample.birds.escapedDryGrains,'grains')+' expelled; '+number(sample.birds.admittedDryGrains,'grains')+' admitted. Native water parcels '+sample.birds.waterParcels+'.' : steam && sample.steam ? 'Water parcels: '+sample.steam.liquidParcels+' liquid, '+sample.steam.vaporParcels+' vapor, '+sample.steam.escapedVaporParcels+' escaped. Heat supplied '+number(sample.steam.heatInputJ/1.3558179483314,'ft·lbf')+'.' : cave && caveReading ? 'Air added '+number(caveReading.pumpedKg,'kg')+'; admitted '+number(caveReading.admittedKg,'kg')+'; expelled '+number(caveReading.escapedKg,'kg')+'; inventory error '+number(caveReading.massResidualKg,'kg')+'.' : b && b.pool && ledger ? 'Present '+ledger.present+'; reserve '+ledger.parked+'. Requested '+ledger.requested+'; admitted '+ledger.admitted+'; collected '+ledger.drained+'; refused '+ledger.shortfall+'. Return work '+number(ledger.externalWork,'J')+'.' : '');
       }
       var soundButton=document.getElementById('toy-sound'),sound=toy.soundStats ? toy.soundStats() : {enabled:false};
       soundButton.hidden=cave || slip || birds || divers || balloon || bubbles || !native && !fire;pressed(soundButton,!!sound.enabled);soundButton.textContent=sound.enabled ? 'Sound on' : 'Sound off';
