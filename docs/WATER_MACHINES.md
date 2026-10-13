@@ -1,8 +1,15 @@
 # Water machines
 
-Release: toy v5.57, shared water engine v28.179. The greedy cup, standalone
-siphon and Heron's fountain are in the public scene menu, with published behavior
-measurements. Full quantitative physical acceptance and steady 60 FPS remain unverified.
+Release: toy v5.191. The 76 scenes formerly labeled Partly working now have
+working controls, visible physical responses, and scene-specific browser checks.
+Twenty-one water-network scenes use finite-volume inventories, head and flow
+relations, and explicit pump work or losses. Twenty-three pressure and material
+scenes use reduced physical models. Fifteen workshop scenes combine native
+solvers with reduced apparatus models, and fifteen soft-body scenes use native
+water and slime behavior. Candle and chimney smoke transport is also verified
+against the native solver. Each reduced scene describes its modeling boundary
+in the scene itself. Full quantitative physical acceptance and steady 60 FPS
+across every device remain unverified.
 
 ## Sewer gas trap
 

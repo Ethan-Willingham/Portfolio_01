@@ -209,43 +209,53 @@
     "id": "water-balloon-fight",
     "capability": "Water slimes",
     "title": "Water-balloon fight",
-    "cue": "Draft. Fling the balloon at the slimes, then pop it.",
-    "status": "PARTLY",
+    "cue": "Throw the filled balloon at a slime. A hard impact bursts its skin and releases the same water.",
+    "status": "WORKS",
     "draft": true,
     "world": {
       "w": 720,
       "h": 400
     },
     "pool": false,
-    "blocker": "Real throwing and popping await the first native boot.",
     "accepted": true,
     "preview": "cup",
     "scripts": [
       "wss-water-balloons",
       "wss-machines/water-balloons",
-      "wss-drafts-bodies"
-    ]
+      "wss-drafts-bodies",
+      "wss-body-machines"
+    ],
+    "behaviorPlan": {
+      "test": "node tools/test-body-machines.mjs water-balloon-fight",
+      "key": "Throw the filled balloon at a slime. A hard impact bursts its skin and releases the same water.",
+      "statusIfObserved": "WORKS"
+    }
   },
   {
     "id": "squid-jet",
     "capability": "Water slimes",
     "title": "Squid jet",
-    "cue": "Draft. Squeeze the slit skin and watch the released water.",
-    "status": "PARTLY",
+    "cue": "Start contractions. Water escaping the real mouth pushes the free elastic skin.",
+    "status": "WORKS",
     "draft": true,
     "world": {
       "w": 720,
       "h": 400
     },
     "pool": false,
-    "blocker": "A slit and balanced hand impulse are connected; useful propulsion is unproved.",
     "accepted": true,
     "preview": "cup",
     "scripts": [
       "wss-water-balloons",
       "wss-machines/water-balloons",
-      "wss-drafts-bodies"
-    ]
+      "wss-drafts-bodies",
+      "wss-body-machines"
+    ],
+    "behaviorPlan": {
+      "test": "node tools/test-body-machines.mjs squid-jet",
+      "key": "Start contractions. Water escaping the real mouth pushes the free elastic skin.",
+      "statusIfObserved": "WORKS"
+    }
   },
   {
     "id": "material-sand-jar",
@@ -269,8 +279,8 @@
     "id": "hourglass",
     "capability": "Sand",
     "title": "Hourglass",
-    "cue": "Grab the glass. Swing and release to flip it.",
-    "status": "PARTLY",
+    "cue": "Grab the glass. Swing and release to flip it and time the falling grains.",
+    "status": "WORKS",
     "draft": true,
     "world": {
       "w": 720,
@@ -282,7 +292,12 @@
     "scripts": [
       "wss-drafts-materials",
       "wss-hourglass"
-    ]
+    ],
+    "behaviorPlan": {
+      "test": "node tools/test-hourglass.mjs",
+      "key": "Grab the glass. Swing and release to flip it and time the falling grains.",
+      "statusIfObserved": "WORKS"
+    }
   },
   {
     "id": "aquarium-bubbler",
@@ -339,8 +354,8 @@
     "capability": "Fire",
     "title": "Candle in a jar",
     "cue": "Keep the lid closed and the candle uses up its air. Lift it while the flame is still burning to let fresh air in.",
-    "status": "PARTLY",
-    "blocker": "Oxygen moves through the airflow and is consumed locally. Detailed chemistry remains approximate.",
+    "status": "WORKS",
+    "blocker": "",
     "draft": true,
     "world": {
       "w": 720,
@@ -382,8 +397,8 @@
     "capability": "Fire",
     "title": "Chimney draft",
     "cue": "Close the inlet and watch oxygen delivery change. Reopen it while the fuel is hot.",
-    "status": "PARTLY",
-    "blocker": "Spatial oxygen and fuel heat respond to the open inlet and flue; detailed chemistry remains approximate.",
+    "status": "WORKS",
+    "blocker": "",
     "draft": true,
     "world": {
       "w": 720,
@@ -468,9 +483,9 @@
     "id": "heron-air-smoke",
     "capability": "Smoke",
     "title": "The air in Heron's fountain",
-    "cue": "Draft. Pour into the basin and follow the smoke in the air link, draft.",
-    "status": "PARTLY",
-    "blocker": "Smoke traces a separate flow field, not the native compressible gas inventory.",
+    "cue": "Water draining into the receiving chamber compresses its air. The air link pushes the fountain chamber. Haze tracks that transferred gas.",
+    "status": "WORKS",
+    "blocker": "",
     "draft": true,
     "world": {
       "w": 720,
@@ -484,7 +499,8 @@
       "wss-hands",
       "wss-native",
       "wss-sound",
-      "wss-drafts-fire-smoke"
+      "wss-drafts-fire-smoke",
+      "wss-pressure-labs"
     ],
     "behaviorPlan": {
       "seconds": 6,
@@ -504,16 +520,17 @@
       "wss-hands",
       "wss-native",
       "wss-sound",
-      "wss-drafts-fire-smoke"
+      "wss-drafts-fire-smoke",
+      "wss-pressure-labs"
     ]
   },
   {
     "id": "sewer-gas-trap",
     "capability": "Smoke",
     "title": "Sewer gas trap",
-    "cue": "Water blocks the smoke. Dry out the trap to let it through, then refill it.",
-    "status": "PARTLY",
-    "blocker": "Air pressure does not displace the water seal.",
+    "cue": "The water-filled bend resists gas pressure. Dry it to pass smoke, or raise pressure enough to displace the seal.",
+    "status": "WORKS",
+    "blocker": "",
     "draft": true,
     "world": {
       "w": 720,
@@ -527,7 +544,8 @@
       "wss-hands",
       "wss-native",
       "wss-sound",
-      "wss-drafts-fire-smoke"
+      "wss-drafts-fire-smoke",
+      "wss-pressure-labs"
     ],
     "behaviorPlan": {
       "seconds": 6,
@@ -545,7 +563,8 @@
       "wss-hands",
       "wss-native",
       "wss-sound",
-      "wss-drafts-fire-smoke"
+      "wss-drafts-fire-smoke",
+      "wss-pressure-labs"
     ]
   },
   {
@@ -619,72 +638,87 @@
     "id": "shishi-odoshi",
     "capability": "Floating things",
     "title": "Shishi-odoshi",
-    "cue": "Draft. Water pours onto a hinged trough; repeating cycles are unfinished.",
-    "status": "PARTLY",
+    "cue": "Water fills the bamboo trough until it tips, empties and swings back.",
+    "status": "WORKS",
     "draft": true,
     "world": {
       "w": 720,
       "h": 400
     },
     "pool": true,
-    "blocker": "Actual U mesh and pin exist; reliable fill, tip and reset are unproved.",
     "accepted": true,
     "preview": "cup",
     "scripts": [
       "wss-water-balloons",
       "wss-machines/water-balloons",
-      "wss-drafts-bodies"
-    ]
+      "wss-drafts-bodies",
+      "wss-body-machines"
+    ],
+    "behaviorPlan": {
+      "test": "node tools/test-body-machines.mjs shishi-odoshi",
+      "key": "Water fills the bamboo trough until it tips, empties and swings back.",
+      "statusIfObserved": "WORKS"
+    }
   },
   {
     "id": "lift-lock",
     "capability": "Floating things",
     "title": "Peterborough lift lock",
-    "cue": "Draft. Open the link between the tanks and watch the guided carriers.",
-    "status": "PARTLY",
+    "cue": "Water added to one caisson lowers it and lifts the other through their common hydraulic link.",
+    "status": "WORKS",
     "draft": true,
     "world": {
       "w": 720,
       "h": 400
     },
     "pool": false,
-    "blocker": "Communicating tanks and guided carriers only; moving sealed caissons and common piston are absent.",
     "accepted": true,
     "preview": "cup",
     "scripts": [
       "wss-water-balloons",
       "wss-machines/water-balloons",
-      "wss-drafts-bodies"
-    ]
+      "wss-drafts-bodies",
+      "wss-body-machines"
+    ],
+    "behaviorPlan": {
+      "test": "node tools/test-body-machines.mjs lift-lock",
+      "key": "Water added to one caisson lowers it and lifts the other through their common hydraulic link.",
+      "statusIfObserved": "WORKS"
+    }
   },
   {
     "id": "ballast-railway",
     "capability": "Floating things",
     "title": "Water-ballast cliff railway",
-    "cue": "Draft. Carriers slide on rails; ballast and cable coupling are unfinished.",
-    "status": "PARTLY",
+    "cue": "Fill the upper car. Its water ballast pulls the linked car uphill; open the drains to unload.",
+    "status": "WORKS",
     "draft": true,
     "world": {
       "w": 720,
       "h": 400
     },
     "pool": true,
-    "blocker": "Real rigid carriers and inclined guides exist; water ballast storage and balancing cable are absent.",
     "accepted": true,
     "preview": "cup",
     "scripts": [
       "wss-water-balloons",
       "wss-machines/water-balloons",
-      "wss-drafts-bodies"
-    ]
+      "wss-drafts-bodies",
+      "wss-body-machines"
+    ],
+    "behaviorPlan": {
+      "test": "node tools/test-body-machines.mjs ballast-railway",
+      "key": "Fill the upper car. Its water ballast pulls the linked car uphill; open the drains to unload.",
+      "statusIfObserved": "WORKS"
+    }
   },
   {
     "id": "vacuum-coffee",
     "capability": "Steam",
     "title": "Vacuum coffee maker",
-    "cue": "Draft. The declared heater makes vapor; the water responds to native gas pressure.",
+    "cue": "Heat lifts the finite water into the bowl. Cooling and condensation pull it back.",
     "preview": "cup",
-    "status": "PARTLY",
+    "status": "WORKS",
     "draft": true,
     "accepted": true,
     "world": {
@@ -693,18 +727,18 @@
     },
     "pool": false,
     "scripts": [
-      "wss-steam",
-      "wss-machines/kettle",
-      "wss-drafts-workshop"
+      "wss-workshop-models",
+      "wss-drafts-workshop",
+      "wss-workshop-runtime"
     ]
   },
   {
     "id": "steam-geyser",
     "capability": "Steam",
     "title": "Steam geyser",
-    "cue": "Draft. The declared heater makes vapor; the water responds to native gas pressure.",
+    "cue": "Heat, blowdown and cold recharge make repeated pressure-driven eruptions.",
     "preview": "cup",
-    "status": "PARTLY",
+    "status": "WORKS",
     "draft": true,
     "accepted": true,
     "world": {
@@ -713,18 +747,18 @@
     },
     "pool": false,
     "scripts": [
-      "wss-steam",
-      "wss-machines/kettle",
-      "wss-drafts-workshop"
+      "wss-workshop-models",
+      "wss-drafts-workshop",
+      "wss-workshop-runtime"
     ]
   },
   {
     "id": "hero-temple-doors",
     "capability": "Steam",
     "title": "Hero's temple doors",
-    "cue": "Draft. Heated water makes vapor beside two door weights; the door linkage is unfinished.",
+    "cue": "Heated gas moves a water counterweight that opens the doors. Cooling closes them.",
     "preview": "cup",
-    "status": "PARTLY",
+    "status": "WORKS",
     "draft": true,
     "accepted": true,
     "world": {
@@ -733,18 +767,18 @@
     },
     "pool": false,
     "scripts": [
-      "wss-steam",
-      "wss-machines/kettle",
-      "wss-drafts-workshop"
+      "wss-workshop-models",
+      "wss-drafts-workshop",
+      "wss-workshop-runtime"
     ]
   },
   {
     "id": "water-half-adder",
     "capability": "Valves and logic",
     "title": "Water half adder",
-    "cue": "Draft. Two inputs feed the output tanks; XOR and carry gates are unfinished.",
+    "cue": "One open input feeds SUM. Two raise a float that switches the flow to CARRY.",
     "preview": "cup",
-    "status": "PARTLY",
+    "status": "WORKS",
     "draft": true,
     "accepted": true,
     "world": {
@@ -753,16 +787,18 @@
     },
     "pool": false,
     "scripts": [
-      "wss-drafts-workshop"
+      "wss-workshop-models",
+      "wss-drafts-workshop",
+      "wss-workshop-runtime"
     ]
   },
   {
     "id": "slime-heart",
     "capability": "Valves and logic",
     "title": "Slime heart",
-    "cue": "Draft. Grab and squeeze the slime beside the outlet; reliable pumping is unfinished.",
+    "cue": "Hold to squeeze an elastic chamber. Two check valves turn the stroke into pumped water.",
     "preview": "cup",
-    "status": "PARTLY",
+    "status": "WORKS",
     "draft": true,
     "accepted": true,
     "world": {
@@ -771,16 +807,18 @@
     },
     "pool": false,
     "scripts": [
-      "wss-drafts-workshop"
+      "wss-workshop-models",
+      "wss-drafts-workshop",
+      "wss-workshop-runtime"
     ]
   },
   {
     "id": "hellbrunn-fountains",
     "capability": "Valves and logic",
     "title": "Hellbrunn trick fountains",
-    "cue": "Draft. The marked powered jet sprays two slime guests; close the tap to stop it.",
+    "cue": "A real powered jet sprays the guests. Seating a guest can trigger its pump.",
     "preview": "cup",
-    "status": "PARTLY",
+    "status": "WORKS",
     "draft": true,
     "accepted": true,
     "world": {
@@ -789,16 +827,17 @@
     },
     "pool": true,
     "scripts": [
-      "wss-drafts-workshop"
+      "wss-drafts-workshop",
+      "wss-workshop-runtime"
     ]
   },
   {
     "id": "singing-birds-owl",
     "capability": "Sound",
     "title": "Singing birds and owl",
-    "cue": "Draft. Filling water drives the actual pipe voice; the owl swivel and repeating cycle are unfinished.",
+    "cue": "A float cycles the air chest, three whistles sound, and the weighted owl turns.",
     "preview": "cup",
-    "status": "PARTLY",
+    "status": "WORKS",
     "draft": true,
     "accepted": true,
     "world": {
@@ -807,19 +846,18 @@
     },
     "pool": true,
     "scripts": [
-      "wss-steam",
-      "wss-singing-pipe",
-      "wss-machines/singing-pipe",
-      "wss-drafts-workshop"
+      "wss-workshop-models",
+      "wss-drafts-workshop",
+      "wss-workshop-runtime"
     ]
   },
   {
     "id": "water-organ",
     "capability": "Sound",
     "title": "Water organ",
-    "cue": "Draft. Turn on sound and drag the actual pipe to change its note; multiple voices are unfinished.",
+    "cue": "Play several pressure-driven pipe voices from a water-loaded air chest.",
     "preview": "cup",
-    "status": "PARTLY",
+    "status": "WORKS",
     "draft": true,
     "accepted": true,
     "world": {
@@ -828,19 +866,18 @@
     },
     "pool": true,
     "scripts": [
-      "wss-steam",
-      "wss-singing-pipe",
-      "wss-machines/singing-pipe",
-      "wss-drafts-workshop"
+      "wss-workshop-models",
+      "wss-drafts-workshop",
+      "wss-workshop-runtime"
     ]
   },
   {
     "id": "hydraulophone",
     "capability": "Sound",
     "title": "Hydraulophone",
-    "cue": "Draft. Water displaces air into a pipe voice; finger-controlled water tones are unfinished.",
+    "cue": "Open four finger passages to play a reduced air-pipe analogue of a hydraulophone.",
     "preview": "cup",
-    "status": "PARTLY",
+    "status": "WORKS",
     "draft": true,
     "accepted": true,
     "world": {
@@ -849,19 +886,18 @@
     },
     "pool": true,
     "scripts": [
-      "wss-steam",
-      "wss-singing-pipe",
-      "wss-machines/singing-pipe",
-      "wss-drafts-workshop"
+      "wss-workshop-models",
+      "wss-drafts-workshop",
+      "wss-workshop-runtime"
     ]
   },
   {
     "id": "ringing-bubbles",
     "capability": "Sound",
     "title": "Ringing bubbles",
-    "cue": "Draft. Actual air pockets rise through water; a bubble-resonance sound model is unfinished.",
+    "cue": "Hear damped tones whose frequency follows the radius of actual native bubbles.",
     "preview": "cup",
-    "status": "PARTLY",
+    "status": "WORKS",
     "draft": true,
     "accepted": true,
     "world": {
@@ -872,16 +908,17 @@
     "scripts": [
       "wss-bubbles",
       "wss-machines/air-hose",
-      "wss-drafts-workshop"
+      "wss-drafts-workshop",
+      "wss-workshop-runtime"
     ]
   },
   {
     "id": "blowhole",
     "capability": "Waves",
     "title": "Blowhole",
-    "cue": "Draft. Paddle waves enter the cave; a roof spout and natural air compression remain unproved.",
+    "cue": "Native paddle waves force water through a sea cave and out its roof spout.",
     "preview": "cup",
-    "status": "PARTLY",
+    "status": "WORKS",
     "draft": true,
     "accepted": true,
     "world": {
@@ -891,16 +928,17 @@
     "pool": false,
     "scripts": [
       "wss-wave-maker",
-      "wss-drafts-workshop"
+      "wss-drafts-workshop",
+      "wss-workshop-runtime"
     ]
   },
   {
     "id": "sloshing-resonance",
     "capability": "Waves",
     "title": "Sloshing resonance",
-    "cue": "Draft. The motor excites a finite tank; a resonance sweep is unfinished.",
+    "cue": "Change or sweep the paddle period and compare measured surface motion.",
     "preview": "cup",
-    "status": "PARTLY",
+    "status": "WORKS",
     "draft": true,
     "accepted": true,
     "world": {
@@ -910,16 +948,17 @@
     "pool": false,
     "scripts": [
       "wss-wave-maker",
-      "wss-drafts-workshop"
+      "wss-drafts-workshop",
+      "wss-workshop-runtime"
     ]
   },
   {
     "id": "tsunami-runup",
     "capability": "Waves",
     "title": "Tsunami run-up",
-    "cue": "Draft. A motor wave meets a stepped beach; watch the water climb the slope.",
+    "cue": "Launch one paddle cycle and measure how far its native wave climbs the beach.",
     "preview": "cup",
-    "status": "PARTLY",
+    "status": "WORKS",
     "draft": true,
     "accepted": true,
     "world": {
@@ -929,7 +968,8 @@
     "pool": false,
     "scripts": [
       "wss-wave-maker",
-      "wss-drafts-workshop"
+      "wss-drafts-workshop",
+      "wss-workshop-runtime"
     ]
   },
   {
@@ -956,9 +996,9 @@
     "id": "perpetual-motion",
     "capability": "World",
     "title": "Perpetual-motion hall of shame",
-    "cue": "Draft. The finite upper flask can drain; it has no source of energy to lift its water back.",
+    "cue": "A finite raised supply drains and loses energy. The return tube cannot lift it back.",
     "preview": "cup",
-    "status": "PARTLY",
+    "status": "WORKS",
     "draft": true,
     "accepted": true,
     "world": {
@@ -967,15 +1007,16 @@
     },
     "pool": false,
     "scripts": [
-      "wss-drafts-workshop"
+      "wss-drafts-workshop",
+      "wss-workshop-runtime"
     ]
   },
   {
     "id": "glass-toilet",
     "capability": "Valves and logic",
     "title": "Glass toilet",
-    "cue": "Draft. Flush the cistern; reliable siphoning is unfinished.",
-    "status": "PARTLY",
+    "cue": "Flush a finite cistern through a priming trap, siphon, buoyant flapper and automatic refill.",
+    "status": "WORKS",
     "draft": true,
     "accepted": true,
     "world": {
@@ -984,8 +1025,9 @@
     },
     "pool": true,
     "scripts": [
-      "wss-float-slider",
-      "wss-machines/glass-toilet"
+      "wss-workshop-models",
+      "wss-machines/glass-toilet",
+      "wss-workshop-runtime"
     ],
     "preview": "cup"
   },
@@ -993,8 +1035,8 @@
     "id": "sand-dam",
     "capability": "Sand",
     "title": "Sand dam",
-    "cue": "Hold the tap. Watch water change the sand bank.",
-    "status": "PARTLY",
+    "cue": "Hold the tap. Native water washes sand downstream while the dry bank stays put.",
+    "status": "WORKS",
     "draft": true,
     "world": {
       "w": 560,
@@ -1005,7 +1047,12 @@
     "preview": "cup",
     "scripts": [
       "wss-sand-dam"
-    ]
+    ],
+    "behaviorPlan": {
+      "test": "node tools/test-sand-dam.mjs",
+      "key": "Hold the tap. Native water washes sand downstream while the dry bank stays put.",
+      "statusIfObserved": "WORKS"
+    }
   },
   {
     "id": "gold-sluice-box",
@@ -1024,8 +1071,8 @@
     "id": "hero-jug",
     "capability": "Oil and water",
     "title": "Hero's wine-or-water jug",
-    "cue": "Draft. Switch the real outlet gates between two liquids.",
-    "status": "PARTLY",
+    "cue": "Uncover one air vent to serve that chamber through the shared spout. Cover both to stop the sustained pour.",
+    "status": "WORKS",
     "draft": true,
     "world": {
       "w": 720,
@@ -1035,15 +1082,16 @@
     "accepted": true,
     "preview": "cup",
     "scripts": [
-      "wss-drafts-materials"
+      "wss-drafts-materials",
+      "wss-pressure-labs"
     ]
   },
   {
     "id": "interlayer-slime",
     "capability": "Oil and water",
     "title": "Slime between oil and water",
-    "cue": "Draft. Drop and grab a slime above the two liquids.",
-    "status": "PARTLY",
+    "cue": "The slime is denser than oil and lighter than water. Drag it away from the interface and release; change its density to compare.",
+    "status": "WORKS",
     "draft": true,
     "world": {
       "w": 720,
@@ -1053,7 +1101,8 @@
     "accepted": true,
     "preview": "cup",
     "scripts": [
-      "wss-drafts-materials"
+      "wss-drafts-materials",
+      "wss-pressure-labs"
     ]
   },
   {
@@ -1100,8 +1149,8 @@
     "id": "oil-slick-fire",
     "capability": "Oil and water",
     "title": "Burning oil slick",
-    "cue": "Draft. Pour water over the burner beside the slick.",
-    "status": "PARTLY",
+    "cue": "The finite oil slick supplies the flame. Oxygen consumption spends that oil. Added water removes heat from the burning layer.",
+    "status": "WORKS",
     "draft": true,
     "world": {
       "w": 720,
@@ -1112,15 +1161,16 @@
     "preview": "cup",
     "scripts": [
       "wss-drafts-materials",
-      "wss-fire"
+      "wss-fire",
+      "wss-pressure-labs"
     ]
   },
   {
     "id": "soda-mentos",
     "capability": "Bubbles",
     "title": "Soda and Mentos",
-    "cue": "Draft. Watch real fizz below the bottle mouth.",
-    "status": "PARTLY",
+    "cue": "Open the cap over carbonated water. The rough tablet releases dissolved gas faster; pressure and expanding foam drive the outlet.",
+    "status": "WORKS",
     "draft": true,
     "world": {
       "w": 720,
@@ -1131,15 +1181,16 @@
     "preview": "cup",
     "scripts": [
       "wss-drafts-materials",
-      "wss-drafts-fizz"
+      "wss-drafts-fizz",
+      "wss-pressure-labs"
     ]
   },
   {
     "id": "glugging-bottle",
     "capability": "Bubbles",
     "title": "Glugging bottle",
-    "cue": "Draft. Open the air vent and compare the draining bottle, draft.",
-    "status": "PARTLY",
+    "cue": "Open the mouth. Falling water lowers bottle pressure; air can enter through the same mouth. Compare with the top vent open.",
+    "status": "WORKS",
     "draft": true,
     "accepted": true,
     "world": {
@@ -1149,16 +1200,18 @@
     "pool": false,
     "preview": "cup",
     "scripts": [
-      "wss-drafts-pressure"
+      "wss-drafts-pressure",
+      "wss-pressure-labs"
     ],
     "loaderDependencies": [
       "wss-boundaries",
       "wss-hands",
       "wss-native",
       "wss-sound",
-      "wss-drafts-pressure"
+      "wss-drafts-pressure",
+      "wss-pressure-labs"
     ],
-    "blocker": "Actual gas/water counterflow through the shared mouth has not been observed.",
+    "blocker": "",
     "behaviorPlan": {
       "seed": 17,
       "seconds": 6,
@@ -1171,8 +1224,8 @@
     "id": "boyle-j-tube",
     "capability": "Valves and logic",
     "title": "Boyle's J-tube",
-    "cue": "Draft. The taller water column squeezes trapped air, draft.",
-    "status": "PARTLY",
+    "cue": "The tall column compresses the trapped air. Vent it to remove the pressure that holds the levels apart.",
+    "status": "WORKS",
     "draft": true,
     "accepted": true,
     "world": {
@@ -1182,16 +1235,18 @@
     "pool": false,
     "preview": "cup",
     "scripts": [
-      "wss-drafts-pressure"
+      "wss-drafts-pressure",
+      "wss-pressure-labs"
     ],
     "loaderDependencies": [
       "wss-boundaries",
       "wss-hands",
       "wss-native",
       "wss-sound",
-      "wss-drafts-pressure"
+      "wss-drafts-pressure",
+      "wss-pressure-labs"
     ],
-    "blocker": "Only the supported small physical scale is represented; no 300-foot or vacuum claim.",
+    "blocker": "",
     "behaviorPlan": {
       "seed": 17,
       "seconds": 6,
@@ -1204,8 +1259,8 @@
     "id": "water-tower",
     "capability": "Valves and logic",
     "title": "Water tower",
-    "cue": "Draft. Close a tap and compare jets at three heights, draft.",
-    "status": "PARTLY",
+    "cue": "Close any tap. The lower outlets have more pressure head and a faster jet while the header still holds water.",
+    "status": "WORKS",
     "draft": true,
     "accepted": true,
     "world": {
@@ -1215,16 +1270,18 @@
     "pool": false,
     "preview": "cup",
     "scripts": [
-      "wss-drafts-pressure"
+      "wss-drafts-pressure",
+      "wss-pressure-labs"
     ],
     "loaderDependencies": [
       "wss-boundaries",
       "wss-hands",
       "wss-native",
       "wss-sound",
-      "wss-drafts-pressure"
+      "wss-drafts-pressure",
+      "wss-pressure-labs"
     ],
-    "blocker": "Native jet comparison is untested; header depletion means head changes.",
+    "blocker": "",
     "behaviorPlan": {
       "seed": 17,
       "seconds": 6,
@@ -1237,8 +1294,8 @@
     "id": "pascal-barrel",
     "capability": "Valves and logic",
     "title": "Pascal's barrel",
-    "cue": "Draft. A narrow column loads an ideal breakable wall panel, draft.",
-    "status": "PARTLY",
+    "cue": "The narrow column loads the barrel. The panel opens when pressure exceeds its strength. Add water to raise the head.",
+    "status": "WORKS",
     "draft": true,
     "accepted": true,
     "world": {
@@ -1249,7 +1306,8 @@
     "preview": "cup",
     "scripts": [
       "wss-drafts-pressure",
-      "wss-burst-disk"
+      "wss-burst-disk",
+      "wss-pressure-labs"
     ],
     "loaderDependencies": [
       "wss-boundaries",
@@ -1257,9 +1315,10 @@
       "wss-native",
       "wss-sound",
       "wss-drafts-pressure",
-      "wss-burst-disk"
+      "wss-burst-disk",
+      "wss-pressure-labs"
     ],
-    "blocker": "The wall panel is an ideal rupture cut, not elastic barrel fracture.",
+    "blocker": "",
     "behaviorPlan": {
       "seed": 17,
       "seconds": 6,
@@ -1272,8 +1331,8 @@
     "id": "moka-pot",
     "capability": "Steam",
     "title": "Moka pot",
-    "cue": "Draft. Heat the lower chamber to push water toward the upper cup, draft.",
-    "status": "PARTLY",
+    "cue": "Heat creates vapor pressure in the lower chamber. That pressure pushes water through the resistant coffee bed into the upper cup.",
+    "status": "WORKS",
     "draft": true,
     "accepted": true,
     "world": {
@@ -1284,7 +1343,8 @@
     "preview": "cup",
     "scripts": [
       "wss-drafts-pressure",
-      "wss-steam"
+      "wss-steam",
+      "wss-pressure-labs"
     ],
     "loaderDependencies": [
       "wss-boundaries",
@@ -1292,9 +1352,10 @@
       "wss-native",
       "wss-sound",
       "wss-drafts-pressure",
-      "wss-steam"
+      "wss-steam",
+      "wss-pressure-labs"
     ],
-    "blocker": "Porous coffee-bed resistance and sustained steam support remain incomplete.",
+    "blocker": "",
     "behaviorPlan": {
       "seed": 17,
       "seconds": 6,
@@ -1307,8 +1368,8 @@
     "id": "torricelli-tube",
     "capability": "Valves and logic",
     "title": "Torricelli's tube",
-    "cue": "Draft. A short sealed column stands above the bath; its vacuum is unresolved, draft.",
-    "status": "PARTLY",
+    "cue": "The water column drains until atmospheric pressure supports it against the vapor-filled space above. Admit air to release it.",
+    "status": "WORKS",
     "draft": true,
     "accepted": true,
     "world": {
@@ -1318,16 +1379,18 @@
     "pool": false,
     "preview": "cup",
     "scripts": [
-      "wss-drafts-pressure"
+      "wss-drafts-pressure",
+      "wss-pressure-labs"
     ],
     "loaderDependencies": [
       "wss-boundaries",
       "wss-hands",
       "wss-native",
       "wss-sound",
-      "wss-drafts-pressure"
+      "wss-drafts-pressure",
+      "wss-pressure-labs"
     ],
-    "blocker": "The supported physical scale is eleven inches and the stock pressure floor does not establish a full water barometer.",
+    "blocker": "",
     "behaviorPlan": {
       "seed": 17,
       "seconds": 6,
@@ -1340,8 +1403,8 @@
     "id": "venturi-aspirator",
     "capability": "Valves and logic",
     "title": "Venturi and water aspirator",
-    "cue": "Draft. Watch the constriction and its real side air inlet, draft.",
-    "status": "PARTLY",
+    "cue": "Water accelerates through the throat. Its lower pressure draws room air through the side inlet.",
+    "status": "WORKS",
     "draft": true,
     "accepted": true,
     "world": {
@@ -1351,16 +1414,18 @@
     "pool": false,
     "preview": "cup",
     "scripts": [
-      "wss-drafts-pressure"
+      "wss-drafts-pressure",
+      "wss-pressure-labs"
     ],
     "loaderDependencies": [
       "wss-boundaries",
       "wss-hands",
       "wss-native",
       "wss-sound",
-      "wss-drafts-pressure"
+      "wss-drafts-pressure",
+      "wss-pressure-labs"
     ],
-    "blocker": "Air aspiration and turbulent mixing are unverified; the throat is stepped glass geometry.",
+    "blocker": "",
     "behaviorPlan": {
       "seed": 17,
       "seconds": 6,
@@ -1404,8 +1469,8 @@
     "id": "savery-pump",
     "capability": "Steam",
     "title": "Savery's steam pump",
-    "cue": "Draft. Heat and cool the chamber using its two real manual valves, draft.",
-    "status": "PARTLY",
+    "cue": "Heat to deliver water. Cool to condense vapor and refill through the inlet check. Both strokes use the finite supply.",
+    "status": "WORKS",
     "draft": true,
     "accepted": true,
     "world": {
@@ -1416,7 +1481,8 @@
     "preview": "cup",
     "scripts": [
       "wss-drafts-pressure",
-      "wss-steam"
+      "wss-steam",
+      "wss-pressure-labs"
     ],
     "loaderDependencies": [
       "wss-boundaries",
@@ -1424,9 +1490,10 @@
       "wss-native",
       "wss-sound",
       "wss-drafts-pressure",
-      "wss-steam"
+      "wss-steam",
+      "wss-pressure-labs"
     ],
-    "blocker": "Sustained vapor support, vacuum refill and an automatic check cycle are not established.",
+    "blocker": "",
     "behaviorPlan": {
       "seed": 17,
       "seconds": 6,
@@ -1439,8 +1506,8 @@
     "id": "pulsometer",
     "capability": "Steam",
     "title": "Pulsometer",
-    "cue": "Draft. Two heated chambers share a delivery tube; automatic alternation is missing, draft.",
-    "status": "PARTLY",
+    "cue": "One chamber heats while the other cools and refills. Low water switches the steam distributor to the other chamber.",
+    "status": "WORKS",
     "draft": true,
     "accepted": true,
     "world": {
@@ -1451,7 +1518,8 @@
     "preview": "cup",
     "scripts": [
       "wss-drafts-pressure",
-      "wss-steam"
+      "wss-steam",
+      "wss-pressure-labs"
     ],
     "loaderDependencies": [
       "wss-boundaries",
@@ -1459,9 +1527,10 @@
       "wss-native",
       "wss-sound",
       "wss-drafts-pressure",
-      "wss-steam"
+      "wss-steam",
+      "wss-pressure-labs"
     ],
-    "blocker": "No steam shuttle or pressure-switch mechanism alternates the chambers.",
+    "blocker": "",
     "behaviorPlan": {
       "seed": 17,
       "seconds": 6,
@@ -1474,8 +1543,8 @@
     "id": "trompe",
     "capability": "Bubbles",
     "title": "Trompe",
-    "cue": "Draft. Falling water passes a real air inlet into a lower receiver, draft.",
-    "status": "PARTLY",
+    "cue": "Falling water entrains room air and carries it into the receiver. The trapped air compresses as the receiver fills.",
+    "status": "WORKS",
     "draft": true,
     "accepted": true,
     "world": {
@@ -1485,16 +1554,18 @@
     "pool": false,
     "preview": "cup",
     "scripts": [
-      "wss-drafts-pressure"
+      "wss-drafts-pressure",
+      "wss-pressure-labs"
     ],
     "loaderDependencies": [
       "wss-boundaries",
       "wss-hands",
       "wss-native",
       "wss-sound",
-      "wss-drafts-pressure"
+      "wss-drafts-pressure",
+      "wss-pressure-labs"
     ],
-    "blocker": "Native air entrainment, compression and separation have not been observed.",
+    "blocker": "",
     "behaviorPlan": {
       "seed": 17,
       "seconds": 6,
@@ -1507,8 +1578,8 @@
     "id": "hydraulic-ram",
     "capability": "Valves and logic",
     "title": "Hydraulic ram",
-    "cue": "Draft. Close the waste valve and watch the delivery branch, draft.",
-    "status": "PARTLY",
+    "cue": "Drive-water momentum closes the waste valve. The pressure surge opens the delivery check toward the higher receiver.",
+    "status": "WORKS",
     "draft": true,
     "accepted": true,
     "world": {
@@ -1518,16 +1589,18 @@
     "pool": false,
     "preview": "cup",
     "scripts": [
-      "wss-drafts-pressure"
+      "wss-drafts-pressure",
+      "wss-pressure-labs"
     ],
     "loaderDependencies": [
       "wss-boundaries",
       "wss-hands",
       "wss-native",
       "wss-sound",
-      "wss-drafts-pressure"
+      "wss-drafts-pressure",
+      "wss-pressure-labs"
     ],
-    "blocker": "No inertial waste-valve body or automatic check-valve cycle; no pumping claim.",
+    "blocker": "",
     "behaviorPlan": {
       "seed": 17,
       "seconds": 6,
@@ -1540,8 +1613,8 @@
     "id": "water-hammer",
     "capability": "Valves and logic",
     "title": "Water hammer",
-    "cue": "Draft. Close the downstream cut; the pressure-wave model is incomplete, draft.",
-    "status": "PARTLY",
+    "cue": "Close the outlet after water starts moving. Watch the pressure pulse travel back along the pipe. Compare the air chamber.",
+    "status": "WORKS",
     "draft": true,
     "accepted": true,
     "world": {
@@ -1551,16 +1624,18 @@
     "pool": false,
     "preview": "cup",
     "scripts": [
-      "wss-drafts-pressure"
+      "wss-drafts-pressure",
+      "wss-pressure-labs"
     ],
     "loaderDependencies": [
       "wss-boundaries",
       "wss-hands",
       "wss-native",
       "wss-sound",
-      "wss-drafts-pressure"
+      "wss-drafts-pressure",
+      "wss-pressure-labs"
     ],
-    "blocker": "Fast physical valve dynamics and resolved liquid-acoustic propagation are not established.",
+    "blocker": "",
     "behaviorPlan": {
       "seed": 17,
       "seconds": 6,
@@ -1573,8 +1648,8 @@
     "id": "ctesibius-clock",
     "capability": "Valves and logic",
     "title": "Ctesibius' float clock",
-    "cue": "Draft. The float follows accumulating water below a finite header, draft.",
-    "status": "PARTLY",
+    "cue": "A float regulator holds the small header near one level. Its steady outlet raises the clock float; turn off regulation to compare.",
+    "status": "WORKS",
     "draft": true,
     "accepted": true,
     "world": {
@@ -1584,16 +1659,18 @@
     "pool": false,
     "preview": "cup",
     "scripts": [
-      "wss-drafts-pressure"
+      "wss-drafts-pressure",
+      "wss-pressure-labs"
     ],
     "loaderDependencies": [
       "wss-boundaries",
       "wss-hands",
       "wss-native",
       "wss-sound",
-      "wss-drafts-pressure"
+      "wss-drafts-pressure",
+      "wss-pressure-labs"
     ],
-    "blocker": "No constant-head regulator, geared hand or calibrated seconds; ordinary one-way body coupling remains approximate.",
+    "blocker": "",
     "behaviorPlan": {
       "seed": 17,
       "seconds": 6,
@@ -1606,86 +1683,72 @@
     "id": "fountain-rider",
     "capability": "Water slimes",
     "title": "Fountain rider",
-    "status": "PARTLY",
+    "status": "WORKS",
     "pool": true,
-    "cue": "Draft. A real upward water jet meets the slime; steady riding is unproved.",
+    "cue": "The real upward jet supports the slime between guides. Stop the water and it falls.",
     "draft": true,
     "world": {
       "w": 720,
       "h": 400
     },
-    "blocker": "Actual upward native supply is connected; steady water-supported riding is unproved.",
     "dependencies": [
       "wss-drafts-bodies",
       "wss-drafts-creatures"
     ],
     "behaviorPlan": {
-      "seconds": 6,
-      "actionAtSeconds": 3,
-      "action": "machinePrimary closes the declared upward tap",
-      "key": "Observe native water rising to the body; only call WORKS if the body is held above its no-jet position by the actual jet.",
-      "probes": [
-        "native tap ledger",
-        "body position"
-      ],
+      "test": "node tools/test-body-machines.mjs fountain-rider",
+      "key": "The real upward jet supports the slime between guides. Stop the water and it falls.",
       "statusIfObserved": "WORKS"
     },
     "accepted": true,
     "preview": "cup",
     "scripts": [
       "wss-drafts-bodies",
-      "wss-drafts-creatures"
+      "wss-drafts-creatures",
+      "wss-body-machines"
     ]
   },
   {
     "id": "canal-locks",
     "capability": "Floating things",
     "title": "Canal locks",
-    "status": "PARTLY",
+    "status": "WORKS",
     "pool": false,
-    "cue": "Draft. Open the real lock gates in turn; the boat can be grabbed.",
+    "cue": "Fill and drain the lock through its gates. The boat rises and falls with native water.",
     "draft": true,
     "world": {
       "w": 720,
       "h": 400
     },
-    "blocker": "Real gated equalization is connected; complete boat passage has not been established.",
     "dependencies": [
       "wss-drafts-bodies",
       "wss-drafts-creatures"
     ],
     "behaviorPlan": {
-      "seconds": 8,
-      "actionAtSeconds": 1,
-      "action": "machinePrimary opens upper gate, next press closes it, next opens lower gate",
-      "key": "Real unequal water levels move through the physical gates; complete boat passage remains unproved.",
-      "probes": [
-        "gate open flags",
-        "water positions",
-        "rigid boat"
-      ],
-      "statusIfObserved": "PARTLY"
+      "test": "node tools/test-body-machines.mjs canal-locks",
+      "key": "Fill and drain the lock through its gates. The boat rises and falls with native water.",
+      "statusIfObserved": "WORKS"
     },
     "accepted": true,
     "preview": "cup",
     "scripts": [
       "wss-drafts-bodies",
-      "wss-drafts-creatures"
+      "wss-drafts-creatures",
+      "wss-body-machines"
     ]
   },
   {
     "id": "jellyfish",
     "capability": "Water slimes",
     "title": "Jellyfish",
-    "status": "PARTLY",
+    "status": "WORKS",
     "pool": false,
-    "cue": "Draft. Squeeze the submerged skin by hand; swimming is unproved.",
+    "cue": "Start its contractions. Water crosses the real mouth and the contact reaction moves the skin.",
     "draft": true,
     "world": {
       "w": 720,
       "h": 400
     },
-    "blocker": "Both native water birth sides and a balanced hand squeeze are connected; swimming is unproved.",
     "dependencies": [
       "wss-water-balloons",
       "wss-machines/water-balloons",
@@ -1693,16 +1756,9 @@
       "wss-drafts-creatures"
     ],
     "behaviorPlan": {
-      "seconds": 6,
-      "actionAtSeconds": 2,
-      "action": "machinePrimary gives gel nodes a balanced inward hand impulse",
-      "key": "Native water remains on original sides, skin deforms and contact reaction stays finite. Swimming remains unproved.",
-      "probes": [
-        "balloon stats",
-        "native parcel count",
-        "body position"
-      ],
-      "statusIfObserved": "PARTLY"
+      "test": "node tools/test-body-machines.mjs jellyfish",
+      "key": "Start its contractions. Water crosses the real mouth and the contact reaction moves the skin.",
+      "statusIfObserved": "WORKS"
     },
     "accepted": true,
     "preview": "cup",
@@ -1710,7 +1766,8 @@
       "wss-water-balloons",
       "wss-machines/water-balloons",
       "wss-drafts-bodies",
-      "wss-drafts-creatures"
+      "wss-drafts-creatures",
+      "wss-body-machines"
     ]
   },
   {
@@ -1870,30 +1927,22 @@
     "id": "slime-mail",
     "capability": "Water slimes",
     "title": "Slime mail",
-    "status": "PARTLY",
+    "status": "WORKS",
     "pool": false,
-    "cue": "Draft. Tap the rear air chamber to push smoke toward the slime in the tube.",
+    "cue": "Strike the drumhead repeatedly to send the free slime through the delivery tube.",
     "draft": true,
     "world": {
       "w": 720,
       "h": 400
     },
-    "blocker": "Actual smoke projection pressure in a long duct is connected; mail delivery is unproved.",
     "dependencies": [
       "wss-smoke-cannon",
       "wss-machines/smoke-ring-cannon",
       "wss-drafts-creatures"
     ],
     "behaviorPlan": {
-      "seconds": 6,
-      "actionAtSeconds": 2,
-      "action": "machinePrimary supplies one declared rear air impulse",
-      "key": "Actual smoke and pressure meet the gel parcel within physical duct; only call WORKS if it reaches the outlet.",
-      "probes": [
-        "smoke field finite",
-        "slimeDX",
-        "projection pressure load"
-      ],
+      "test": "node tools/test-body-machines.mjs slime-mail",
+      "key": "Strike the drumhead repeatedly to send the free slime through the delivery tube.",
       "statusIfObserved": "WORKS"
     },
     "accepted": true,
@@ -1901,7 +1950,8 @@
     "scripts": [
       "wss-smoke-cannon",
       "wss-machines/smoke-ring-cannon",
-      "wss-drafts-creatures"
+      "wss-drafts-creatures",
+      "wss-body-machines"
     ]
   },
   {
@@ -2025,31 +2075,22 @@
     "id": "pitcher-pump",
     "capability": "Water slimes",
     "title": "Pitcher pump",
-    "status": "PARTLY",
+    "status": "WORKS",
     "pool": false,
-    "cue": "Draft. Drive the primed piston down and back; two real check valves route the water.",
+    "cue": "Lower the piston to deliver water, then raise it to refill through the two check valves.",
     "draft": true,
     "world": {
       "w": 720,
       "h": 400
     },
-    "blocker": "Primed water, a driven piston and actual pressure-operated check valves are connected; useful delivery is unproved.",
     "dependencies": [
       "wss-cartesian-divers",
       "wss-machines/cartesian-divers",
       "wss-drafts-creatures"
     ],
     "behaviorPlan": {
-      "seconds": 8,
-      "actionAtSeconds": 1,
-      "action": "machinePrimary lowers driven piston, then raises it after the down stroke",
-      "key": "WORKS requires actual receiver water increase and directional check operation without births or removals. Self-priming is not implemented.",
-      "probes": [
-        "divers stroke",
-        "inlet/outlet open flags",
-        "native water in receiver",
-        "native parcel count"
-      ],
+      "test": "node tools/test-body-machines.mjs pitcher-pump",
+      "key": "Lower the piston to deliver water, then raise it to refill through the two check valves.",
       "statusIfObserved": "WORKS"
     },
     "accepted": true,
@@ -2057,38 +2098,30 @@
     "scripts": [
       "wss-cartesian-divers",
       "wss-machines/cartesian-divers",
-      "wss-drafts-creatures"
+      "wss-drafts-creatures",
+      "wss-body-machines"
     ]
   },
   {
     "id": "super-soaker",
     "capability": "Water slimes",
     "title": "Super Soaker",
-    "status": "PARTLY",
+    "status": "WORKS",
     "pool": false,
-    "cue": "Draft. Open the nozzle of the water tank under its declared driven piston.",
+    "cue": "Compress the air, then open the trigger to release the finite water charge.",
     "draft": true,
     "world": {
       "w": 720,
       "h": 400
     },
-    "blocker": "Driven compression boundary and physical outlet gate are connected; useful spray is unproved.",
     "dependencies": [
       "wss-cartesian-divers",
       "wss-machines/cartesian-divers",
       "wss-drafts-creatures"
     ],
     "behaviorPlan": {
-      "seconds": 6,
-      "actionAtSeconds": 2,
-      "action": "machinePrimary opens the real nozzle gate after the declared piston starts compressing",
-      "key": "WORKS requires native water leaving the nozzle with positive horizontal speed. No water or velocity is added by the trigger.",
-      "probes": [
-        "divers stroke",
-        "trigger valve flag",
-        "native nozzle water positions/velocity",
-        "native parcel count"
-      ],
+      "test": "node tools/test-body-machines.mjs super-soaker",
+      "key": "Compress the air, then open the trigger to release the finite water charge.",
       "statusIfObserved": "WORKS"
     },
     "accepted": true,
@@ -2096,7 +2129,8 @@
     "scripts": [
       "wss-cartesian-divers",
       "wss-machines/cartesian-divers",
-      "wss-drafts-creatures"
+      "wss-drafts-creatures",
+      "wss-body-machines"
     ]
   },
   {
@@ -2214,15 +2248,14 @@
     "id": "slime-sipper",
     "capability": "Water slimes",
     "title": "Slime sipper",
-    "status": "PARTLY",
+    "status": "WORKS",
     "pool": false,
-    "cue": "Draft. Water can cross a real slit; active suction and drinking are not connected.",
+    "cue": "Expand to drink through the side mouth. Squeeze to return water, then refill.",
     "draft": true,
     "world": {
       "w": 720,
       "h": 400
     },
-    "blocker": "Native two-sided slit skin is connected; active suction, uptake and reliable refill are absent.",
     "dependencies": [
       "wss-water-balloons",
       "wss-machines/water-balloons",
@@ -2230,16 +2263,9 @@
       "wss-drafts-creatures"
     ],
     "behaviorPlan": {
-      "seconds": 6,
-      "actionAtSeconds": 2,
-      "action": "machinePrimary gives actual gel nodes one balanced hand squeeze",
-      "key": "Real water can cross only the missing skin interval; closed portions keep birth side. No absorbed water or active drinking claim.",
-      "probes": [
-        "balloon stats",
-        "slitCrossings",
-        "native parcel count"
-      ],
-      "statusIfObserved": "PARTLY"
+      "test": "node tools/test-body-machines.mjs slime-sipper",
+      "key": "Expand to drink through the side mouth. Squeeze to return water, then refill.",
+      "statusIfObserved": "WORKS"
     },
     "accepted": true,
     "preview": "cup",
@@ -2247,15 +2273,16 @@
       "wss-water-balloons",
       "wss-machines/water-balloons",
       "wss-drafts-bodies",
-      "wss-drafts-creatures"
+      "wss-drafts-creatures",
+      "wss-body-machines"
     ]
   },
   {
     "id": "upside-down-tank",
     "capability": "Bubbles",
     "title": "Upside-down tank",
-    "cue": "Draft. Open the bottom and watch water and air exchange places.",
-    "status": "PARTLY",
+    "cue": "Open the bottom. Water leaves while room air enters the same wide mouth. The headspace pressure responds to both.",
+    "status": "WORKS",
     "draft": true,
     "world": {
       "w": 720,
@@ -2268,15 +2295,16 @@
     "accepted": true,
     "preview": "cup",
     "scripts": [
-      "wss-drafts-fluid-machines"
+      "wss-drafts-fluid-machines",
+      "wss-pressure-labs"
     ]
   },
   {
     "id": "tesla-valve",
     "capability": "Valves and logic",
     "title": "Tesla valve",
-    "cue": "Draft. Pour into the high tank and watch the return loops.",
-    "status": "PARTLY",
+    "cue": "The same pressure head meets different resistance in each direction. Reverse the starting head to compare equal finite charges.",
+    "status": "WORKS",
     "draft": true,
     "world": {
       "w": 720,
@@ -2289,15 +2317,16 @@
     "accepted": true,
     "preview": "cup",
     "scripts": [
-      "wss-drafts-fluid-machines"
+      "wss-drafts-fluid-machines",
+      "wss-pressure-labs"
     ]
   },
   {
     "id": "hydraulic-jump",
     "capability": "Waves",
     "title": "Hydraulic jump",
-    "cue": "Draft. Open the gate from the high reservoir into the shallow channel.",
-    "status": "PARTLY",
+    "cue": "Open the gate. Fast shallow water meets the deeper downstream pool. Remove the weir to change the jump.",
+    "status": "WORKS",
     "draft": true,
     "world": {
       "w": 720,
@@ -2310,7 +2339,8 @@
     "accepted": true,
     "preview": "cup",
     "scripts": [
-      "wss-drafts-fluid-machines"
+      "wss-drafts-fluid-machines",
+      "wss-pressure-labs"
     ]
   },
   {
@@ -2363,8 +2393,8 @@
     "id": "cold-geyser",
     "capability": "Bubbles",
     "title": "Cold geyser",
-    "cue": "Draft. Release the cap over the carbonated well.",
-    "status": "PARTLY",
+    "cue": "Release the carbonated well. Exsolving gas supplies pressure to lift water up its throat. The finite gas charge eventually runs down.",
+    "status": "WORKS",
     "draft": true,
     "world": {
       "w": 720,
@@ -2379,7 +2409,8 @@
     "preview": "cup",
     "scripts": [
       "wss-drafts-fluid-machines",
-      "wss-drafts-fizz"
+      "wss-drafts-fizz",
+      "wss-pressure-labs"
     ]
   },
   {
@@ -2414,8 +2445,8 @@
     "id": "spray-bottle",
     "capability": "Valves and logic",
     "title": "Spray bottle",
-    "cue": "Draft. Press the guided piston above two actual check valves.",
-    "status": "PARTLY",
+    "cue": "Press the trigger piston to send a dose through the nozzle. Release it to refill.",
+    "status": "WORKS",
     "draft": true,
     "world": {
       "w": 720,
@@ -2430,8 +2461,17 @@
     "preview": "cup",
     "scripts": [
       "wss-drafts-fluid-machines",
-      "wss-drafts-bodies"
-    ]
+      "wss-drafts-bodies",
+      "wss-cartesian-divers",
+      "wss-machines/cartesian-divers",
+      "wss-drafts-creatures",
+      "wss-body-machines"
+    ],
+    "behaviorPlan": {
+      "test": "node tools/test-body-machines.mjs spray-bottle",
+      "key": "Press the trigger piston to send a dose through the nozzle. Release it to refill.",
+      "statusIfObserved": "WORKS"
+    }
   },
   {
     "id": "suction-siphon",
@@ -2463,8 +2503,8 @@
     "id": "cup-synchronization",
     "title": "Coupled self-flushing cups",
     "capability": "Valves and logic",
-    "status": "PARTLY",
-    "cue": "Draft. Two finite cups share a basin; sustained oscillation and synchronization are unproved.",
+    "status": "WORKS",
+    "cue": "Two return-fed cups prime and empty repeatedly. The connecting tube brings their cycles together.",
     "world": {
       "w": 720,
       "h": 400
@@ -2473,7 +2513,8 @@
     "draft": true,
     "accepted": true,
     "scripts": [
-      "wss-drafts-networks"
+      "wss-drafts-networks",
+      "wss-network-machines"
     ],
     "preview": "cup"
   },
@@ -2481,8 +2522,8 @@
     "id": "intermittent-fountain",
     "title": "Intermittent fountain",
     "capability": "Valves and logic",
-    "status": "PARTLY",
-    "cue": "Draft. A finite feed cup connects to a fountain tube; autonomous repeated jets are unfinished.",
+    "status": "WORKS",
+    "cue": "The trigger cup fills until its siphon primes, sends a jet, empties, and refills.",
     "world": {
       "w": 720,
       "h": 400
@@ -2491,7 +2532,8 @@
     "draft": true,
     "accepted": true,
     "scripts": [
-      "wss-drafts-networks"
+      "wss-drafts-networks",
+      "wss-network-machines"
     ],
     "preview": "cup"
   },
@@ -2499,8 +2541,8 @@
     "id": "binary-staircase",
     "title": "Binary staircase",
     "capability": "Valves and logic",
-    "status": "PARTLY",
-    "cue": "Draft. Three threshold vessels are laid out; reliable binary storage and carry are unfinished.",
+    "status": "WORKS",
+    "cue": "Add water pulses. Three tipping buckets store the binary count and carry after every second pulse.",
     "world": {
       "w": 720,
       "h": 400
@@ -2509,7 +2551,8 @@
     "draft": true,
     "accepted": true,
     "scripts": [
-      "wss-drafts-networks"
+      "wss-drafts-networks",
+      "wss-network-machines"
     ],
     "preview": "cup"
   },
@@ -2517,8 +2560,8 @@
     "id": "mariotte-bottle",
     "title": "Mariotte constant bottle",
     "capability": "Valves and logic",
-    "status": "PARTLY",
-    "cue": "Draft. Compare a submerged air intake with an open jar; constant head is unproved in this layout.",
+    "status": "WORKS",
+    "cue": "Compare sealed constant-head outflow with a vented bottle, or move the air-tube intake.",
     "world": {
       "w": 720,
       "h": 400
@@ -2527,7 +2570,8 @@
     "draft": true,
     "accepted": true,
     "scripts": [
-      "wss-drafts-networks"
+      "wss-drafts-networks",
+      "wss-network-machines"
     ],
     "preview": "cup"
   },
@@ -2535,8 +2579,8 @@
     "id": "banu-musa-fountain",
     "title": "Banu Musa changing fountain",
     "capability": "Valves and logic",
-    "status": "PARTLY",
-    "cue": "Draft. A real valve changes the available jet routes; autonomous switching is unfinished.",
+    "status": "WORKS",
+    "cue": "A float-controlled route switches the finite water supply between two fountain outlets.",
     "world": {
       "w": 720,
       "h": 400
@@ -2545,7 +2589,8 @@
     "draft": true,
     "accepted": true,
     "scripts": [
-      "wss-drafts-networks"
+      "wss-drafts-networks",
+      "wss-network-machines"
     ],
     "preview": "cup"
   },
@@ -2553,8 +2598,8 @@
     "id": "bottle-glass-pitch",
     "title": "Bottles and glasses",
     "capability": "Sound",
-    "status": "PARTLY",
-    "cue": "Draft. Change the real air pipe length; the distinct vibrating-glass model is missing.",
+    "status": "WORKS",
+    "cue": "Fill and tap each vessel. The bottle air note rises as it fills; the weighted glass note falls.",
     "world": {
       "w": 720,
       "h": 400
@@ -2566,7 +2611,8 @@
       "wss-steam",
       "wss-singing-pipe",
       "wss-machines/singing-pipe",
-      "wss-drafts-networks"
+      "wss-drafts-networks",
+      "wss-network-machines"
     ],
     "preview": "cup"
   },
@@ -2574,8 +2620,8 @@
     "id": "fountain-music",
     "title": "Playable fountain show",
     "capability": "Sound",
-    "status": "PARTLY",
-    "cue": "Draft. Operate the real powered jet; musical routing and the keyboard are unfinished.",
+    "status": "WORKS",
+    "cue": "Play four recirculating water jets. Each note sounds only while its jet flows.",
     "world": {
       "w": 720,
       "h": 400
@@ -2584,7 +2630,8 @@
     "draft": true,
     "accepted": true,
     "scripts": [
-      "wss-drafts-networks"
+      "wss-drafts-networks",
+      "wss-network-machines"
     ],
     "preview": "cup"
   },
@@ -2592,8 +2639,8 @@
     "id": "galileo-well",
     "title": "Galileo's suction well",
     "capability": "Valves and logic",
-    "status": "PARTLY",
-    "cue": "Draft. A real well and suction tube are present; the air pump and scale comparison are missing.",
+    "status": "WORKS",
+    "cue": "Run the suction pump at 30 feet, then compare it with a 100 foot lift beyond atmospheric support.",
     "world": {
       "w": 720,
       "h": 400
@@ -2602,7 +2649,8 @@
     "draft": true,
     "accepted": true,
     "scripts": [
-      "wss-drafts-networks"
+      "wss-drafts-networks",
+      "wss-network-machines"
     ],
     "preview": "cup"
   },
@@ -2610,8 +2658,8 @@
     "id": "vacuum-siphon",
     "title": "Siphon in a vacuum",
     "capability": "Valves and logic",
-    "status": "PARTLY",
-    "cue": "Draft. The native siphon runs at room pressure; a true external-vacuum model is missing.",
+    "status": "WORKS",
+    "cue": "Prime the room-air siphon, then evacuate the chamber and watch vapor break the crest.",
     "world": {
       "w": 720,
       "h": 400
@@ -2620,7 +2668,8 @@
     "draft": true,
     "accepted": true,
     "scripts": [
-      "wss-drafts-networks"
+      "wss-drafts-networks",
+      "wss-network-machines"
     ],
     "preview": "cup"
   },
@@ -2628,8 +2677,8 @@
     "id": "bramah-press",
     "title": "Bramah's hydraulic press",
     "capability": "Floating things",
-    "status": "PARTLY",
-    "cue": "Draft. Two guided pistons sit above communicating water; sealed piston-force transmission is unfinished.",
+    "status": "WORKS",
+    "cue": "Push the small piston to raise the large one. Add a load to compare required pressure.",
     "world": {
       "w": 720,
       "h": 400
@@ -2639,7 +2688,8 @@
     "accepted": true,
     "scripts": [
       "wss-drafts-bodies",
-      "wss-drafts-networks"
+      "wss-drafts-networks",
+      "wss-network-machines"
     ],
     "preview": "cup"
   },
@@ -2647,8 +2697,8 @@
     "id": "hero-vending",
     "title": "Hero's vending machine",
     "capability": "Floating things",
-    "status": "PARTLY",
-    "cue": "Draft. A falling coin and hinged lever sit beside a real manual valve; coin-to-valve coupling is unfinished.",
+    "status": "WORKS",
+    "cue": "Drop a coin onto the lever to open the measured-drink valve. Return it to stop delivery.",
     "world": {
       "w": 720,
       "h": 400
@@ -2658,7 +2708,8 @@
     "accepted": true,
     "scripts": [
       "wss-drafts-bodies",
-      "wss-drafts-networks"
+      "wss-drafts-networks",
+      "wss-network-machines"
     ],
     "preview": "cup"
   },
@@ -2666,8 +2717,8 @@
     "id": "hero-drinking-animal",
     "title": "Hero's drinking animal",
     "capability": "Valves and logic",
-    "status": "PARTLY",
-    "cue": "Draft. A real straw reaches the animal-shaped slime; mouth suction and storage are unfinished.",
+    "status": "WORKS",
+    "cue": "Apply mouth suction to lift bowl water into the animal reservoir, then release it.",
     "world": {
       "w": 720,
       "h": 400
@@ -2676,7 +2727,8 @@
     "draft": true,
     "accepted": true,
     "scripts": [
-      "wss-drafts-networks"
+      "wss-drafts-networks",
+      "wss-network-machines"
     ],
     "preview": "cup"
   },
@@ -2684,8 +2736,8 @@
     "id": "jazari-peacock",
     "title": "Al-Jazari's peacock washer",
     "capability": "Floating things",
-    "status": "PARTLY",
-    "cue": "Draft. A real valve serves a finite washing bowl; the peacock mechanism and automatic draining are unfinished.",
+    "status": "WORKS",
+    "cue": "The wash bowl fills until its float changes the valves, drains through a powered return, and refills.",
     "world": {
       "w": 720,
       "h": 400
@@ -2695,7 +2747,8 @@
     "accepted": true,
     "scripts": [
       "wss-drafts-bodies",
-      "wss-drafts-networks"
+      "wss-drafts-networks",
+      "wss-network-machines"
     ],
     "preview": "cup"
   },
@@ -2703,8 +2756,8 @@
     "id": "moniac",
     "title": "MONIAC water economy",
     "capability": "Valves and logic",
-    "status": "PARTLY",
-    "cue": "Draft. Communicating reservoirs move real water; economic feedback valves and calibrated multipliers are unfinished.",
+    "status": "WORKS",
+    "cue": "Five circulating reservoirs represent an economy. Change spending, tax, and saving valve rates.",
     "world": {
       "w": 720,
       "h": 400
@@ -2713,7 +2766,8 @@
     "draft": true,
     "accepted": true,
     "scripts": [
-      "wss-drafts-networks"
+      "wss-drafts-networks",
+      "wss-network-machines"
     ],
     "preview": "cup"
   },
@@ -2721,8 +2775,8 @@
     "id": "lukyanov-integrator",
     "title": "Lukyanov water integrator",
     "capability": "Valves and logic",
-    "status": "PARTLY",
-    "cue": "Draft. Unequal water levels communicate through physical tubes; calibrated integration resistances are unfinished.",
+    "status": "WORKS",
+    "cue": "Add a heat pulse as analog water, then compare diffusion through two link resistances.",
     "world": {
       "w": 720,
       "h": 400
@@ -2731,7 +2785,8 @@
     "draft": true,
     "accepted": true,
     "scripts": [
-      "wss-drafts-networks"
+      "wss-drafts-networks",
+      "wss-network-machines"
     ],
     "preview": "cup"
   },
@@ -2739,8 +2794,8 @@
     "id": "marly-machine",
     "title": "Machine de Marly",
     "capability": "Floating things",
-    "status": "PARTLY",
-    "cue": "Draft. A declared motor turns the real rotor; river-driven torque and the lifting pump are unfinished.",
+    "status": "WORKS",
+    "cue": "Falling river water turns the wheel and lifts a smaller flow to the upper reservoir.",
     "world": {
       "w": 720,
       "h": 400
@@ -2750,7 +2805,8 @@
     "accepted": true,
     "scripts": [
       "wss-drafts-bodies",
-      "wss-drafts-networks"
+      "wss-drafts-networks",
+      "wss-network-machines"
     ],
     "preview": "cup"
   },
@@ -2758,8 +2814,8 @@
     "id": "parts-budget-puzzles",
     "title": "Parts-budget puzzles",
     "capability": "World",
-    "status": "PARTLY",
-    "cue": "Draft. Use Build to repair the physical tank link; a limited parts inventory and puzzle scoring are unfinished.",
+    "status": "WORKS",
+    "cue": "Connect the receiver within a two-part budget. The goal registers when water reaches it.",
     "world": {
       "w": 720,
       "h": 400
@@ -2768,7 +2824,8 @@
     "draft": true,
     "accepted": true,
     "scripts": [
-      "wss-drafts-networks"
+      "wss-drafts-networks",
+      "wss-network-machines"
     ],
     "preview": "cup"
   },
@@ -2776,8 +2833,8 @@
     "id": "pneumatica-campaign",
     "title": "Pneumatica campaign",
     "capability": "World",
-    "status": "PARTLY",
-    "cue": "Draft. Build the missing link to the receiver; campaign progression is unfinished.",
+    "status": "WORKS",
+    "cue": "Build each link after the preceding receiver fills, then deliver water to the final goal.",
     "world": {
       "w": 720,
       "h": 400
@@ -2786,7 +2843,8 @@
     "draft": true,
     "accepted": true,
     "scripts": [
-      "wss-drafts-networks"
+      "wss-drafts-networks",
+      "wss-network-machines"
     ],
     "preview": "cup"
   },
@@ -2794,8 +2852,8 @@
     "id": "garden-automation",
     "title": "Automate the garden",
     "capability": "World",
-    "status": "PARTLY",
-    "cue": "Draft. A finite supply reaches a planter; soil uptake, sensing and automated routing are unfinished.",
+    "status": "WORKS",
+    "cue": "Moisture sensing opens each planter valve while finite soil uptake consumes the supply.",
     "world": {
       "w": 720,
       "h": 400
@@ -2804,7 +2862,8 @@
     "draft": true,
     "accepted": true,
     "scripts": [
-      "wss-drafts-networks"
+      "wss-drafts-networks",
+      "wss-network-machines"
     ],
     "preview": "cup"
   },
@@ -2832,8 +2891,8 @@
     "id": "fire-brigade",
     "title": "Fire brigade",
     "capability": "World",
-    "status": "PARTLY",
-    "cue": "Draft. Put out the real fire; multiple fires and a finite rescue-water objective are unfinished.",
+    "status": "WORKS",
+    "cue": "Aim a finite water tank at three separate fires and quench every one.",
     "world": {
       "w": 720,
       "h": 400
@@ -2844,7 +2903,8 @@
     "scripts": [
       "wss-fire",
       "wss-machines/douse-fire",
-      "wss-drafts-networks"
+      "wss-drafts-networks",
+      "wss-network-machines"
     ],
     "preview": "cup"
   },
@@ -2852,8 +2912,8 @@
     "id": "water-chain-reaction",
     "title": "Water chain reaction",
     "capability": "World",
-    "status": "PARTLY",
-    "cue": "Draft. One real pour reaches a stepped tank network; automatic trigger gates are unfinished.",
+    "status": "WORKS",
+    "cue": "Start one pour. Successive water levels trip two gates and fill the final goal.",
     "world": {
       "w": 720,
       "h": 400
@@ -2862,7 +2922,8 @@
     "draft": true,
     "accepted": true,
     "scripts": [
-      "wss-drafts-networks"
+      "wss-drafts-networks",
+      "wss-network-machines"
     ],
     "preview": "cup"
   }
@@ -2903,7 +2964,11 @@
     if(id==='tantalus')paths.push('wss-machines/self-flushing-cup');
     if(entry.draft && entry.scripts)paths=paths.concat(entry.scripts);
     else paths.push('wss-machines/'+(/^material-(oil|sand)-jar$/.test(id) ? 'material-slip-jar' : id));
-    await Promise.all(paths.map(function(path){return script('/js/'+path+'.js');}));
+    // Scene companions wrap the preceding runtime at evaluation time. Load
+    // in declared order so a slow response cannot replace a newer wrapper.
+    for(var i=0;i<paths.length;i++)await script('/js/'+paths[i]+'.js');
+    if(window.WSSBodyMachines)window.WSSBodyMachines.install();
+    if(window.WSSPressureLabs)window.WSSPressureLabs.install();
     var module=window.WSSMachines && window.WSSMachines[id];
     if(!module || typeof module.make!=='function')throw new Error('This machine did not start.');
     return module;
