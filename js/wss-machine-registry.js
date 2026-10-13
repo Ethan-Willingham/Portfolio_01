@@ -2304,7 +2304,7 @@
     "id": "hydraulic-jump",
     "capability": "Waves",
     "title": "Hydraulic jump",
-    "cue": "Open the gate. Fast shallow water meets the deeper downstream pool. Remove the weir to change the jump.",
+    "cue": "Fast shallow water rises into a deeper tailwater reach. Remove the weir and the standing jump disappears.",
     "status": "WORKS",
     "draft": true,
     "world": {
