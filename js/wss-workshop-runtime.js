@@ -40,6 +40,12 @@ function drawModel(c,s){
  c.save();c.font='12px "Commit Mono", monospace';c.textAlign='center';
  s.links.forEach(function(l){var a=l.a,b=l.b,ax=a.x+a.w,ay=a.y+a.h*.7,bx=b.x,by=b.y+b.h*.7;c.strokeStyle=rule;c.lineWidth=8;c.beginPath();c.moveTo(ax,ay);c.lineTo((ax+bx)/2,ay);c.lineTo((ax+bx)/2,by);c.lineTo(bx,by);c.stroke();if(Math.abs(l.q)>1e-9){c.strokeStyle=water;c.lineWidth=Math.min(5,1+Math.abs(l.q)*16000);c.stroke();var x=(ax+bx)/2,dir=l.q>0?1:-1;c.fillStyle=water;c.beginPath();c.moveTo(x,by-5);c.lineTo(x+dir*8,by);c.lineTo(x,by+5);c.fill();}});
  s.nodes.forEach(function(n){var fill=n.h*Math.max(0,Math.min(1,n.v/n.capacity));c.strokeStyle=accent;c.lineWidth=2;c.strokeRect(n.x,n.y,n.w,n.h);c.globalAlpha=.43;c.fillStyle=water;c.fillRect(n.x+2,n.y+n.h-fill,n.w-4,Math.max(0,fill-2));c.globalAlpha=1;c.fillStyle=text;c.fillText(n.label,n.x+n.w/2,n.y-9);c.fillText((n.v*1000).toFixed(n.capacity>.002?2:3)+' L',n.x+n.w/2,n.y+n.h-10);});
+ if(s.id==='water-half-adder'){
+  var chamber=s.nodes[2],level=chamber.v/chamber.capacity,fy=chamber.y+chamber.h*(1-level)-8;
+  c.strokeStyle=accent;c.fillStyle=accent;c.lineWidth=2;c.beginPath();c.arc(398,Math.max(chamber.y+10,Math.min(chamber.y+chamber.h-10,fy)),8,0,Math.PI*2);c.fill();
+  c.fillStyle=text;c.font='11px "Commit Mono", monospace';
+  c.fillText('A '+Number(s.inputs[0])+' + B '+Number(s.inputs[1])+'   SUM '+Number(s.outputs[0]>1e-6)+'   CARRY '+Number(s.outputs[1]>1e-6),360,362);
+ }
  if(s.T){var flask=s.nodes[0];c.strokeStyle=s.heater?accent:rule;c.lineWidth=5;c.beginPath();for(var i=0;i<7;i++){var x=flask.x+36+i*13,y=flask.y+flask.h+11+(i%2)*8;if(!i)c.moveTo(x,y);else c.lineTo(x,y);}c.stroke();}
  if(s.id==='hero-temple-doors'){c.strokeStyle=accent;c.lineWidth=4;var x=362,y=288;[-1,1].forEach(function(side){c.beginPath();c.moveTo(x+side*20,y);c.lineTo(x+side*(20+44*Math.sin(s.angle)),y-76*Math.cos(s.angle*.5));c.stroke();});c.fillStyle=text;c.fillText((s.angle*180/Math.PI).toFixed(0)+' degrees',x,315);}
  if(s.id==='slime-heart'){c.strokeStyle=accent;c.lineWidth=3;c.beginPath();c.ellipse(356,265,65-s.x*650,48,0,0,2*Math.PI);c.stroke();}

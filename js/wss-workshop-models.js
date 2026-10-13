@@ -51,7 +51,7 @@ function thermal(id,o){
  });
 }
 function halfAdder(o){
- var s=base('water-half-adder'),a=node('a','Input A',56,84,118,144,.9,1,1.1,.002),b=node('b','Input B',546,84,118,144,.9,1,1.1,.002),gate=node('gate','Float chamber',288,102,128,132,.006,.15,.3,.0003),sum=node('sum','SUM',150,272,160,104,0,1.1,0,.004),carry=node('carry','CARRY',424,272,160,104,0,1.1,0,.004);s.nodes=[a,b,gate,sum,carry];s.inputs=[o.a!==false,o.b===true];s.carryOpen=false;s.outputs=[0,0];s.flows={};
+ var s=base('water-half-adder'),a=node('a','Input A',56,84,118,144,.9,1,1.1,.002),b=node('b','Input B',546,84,118,144,.9,1,1.1,.002),gate=node('gate','Float chamber',288,102,128,132,clamp(Number.isFinite(o.gateMl)?o.gateMl:6,0,12)/1000,.15,.3,.0003),sum=node('sum','SUM',150,264,160,80,0,1.1,0,.004),carry=node('carry','CARRY',424,264,160,80,0,1.1,0,.004);s.nodes=[a,b,gate,sum,carry];s.inputs=[o.a!==false,o.b===true];s.carryOpen=false;s.outputs=[0,0];s.flows={};
  ['A','B'].forEach(function(n,i){control(s,'input-'+n,function(){return n+': '+(s.inputs[i]?'open':'closed');},function(held){if(held)s.inputs[i]=!s.inputs[i];});});
  return finalize(s,function(dt){var h=gate.v/gate.area;if(h>.23)s.carryOpen=true;else if(h<.18)s.carryOpen=false;
   var qa=s.inputs[0]?Math.max(0,orifice(RHO*G*(head(a)-head(gate)),.000010)):0,qb=s.inputs[1]?Math.max(0,orifice(RHO*G*(head(b)-head(gate)),.000010)):0;
