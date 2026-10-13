@@ -1155,7 +1155,7 @@
     "id": "soda-mentos",
     "capability": "Bubbles",
     "title": "Soda and Mentos",
-    "cue": "Open the cap over carbonated water. The rough tablet releases dissolved gas faster; pressure and expanding foam drive the outlet.",
+    "cue": "The cap opens on a roughly two-litre bottle. A rough tablet releases dissolved gas; pressure sends a measured jet into the tray.",
     "status": "WORKS",
     "draft": true,
     "world": {
