@@ -21,9 +21,9 @@ function model(id,o){
   function E(a,b,c,w,opts){e.push(edge(a,b,c,w,opts));return a;}
   function K(id,label,x,y,mode){extra.push({id:id,label:label,x:x,y:y,width:90,height:32,mode:mode||'toggle'});}
   if(id==='cup-synchronization'){
-    T('basin','Shared basin',60,300,600,74,.88);T('left','Left cup',110,120,130,170,.20);T('right','Right cup',480,120,130,170,.15);
-    E('feedL','basin','left',8,{pump:210});E('feedR','basin','right',8,{pump:210});E('drainL','left','basin',20,{siphon:true,crest:.58,reset:.09});E('drainR','right','basin',20,{siphon:true,crest:.58,reset:.09});E('coupling','left','right',3);
-    primary='Stop return pump';
+    T('basin','Shared basin',60,300,600,74,.50);T('left','Left cup',110,120,130,170,Number.isFinite(o.leftFill)?Math.max(.50,Math.min(.54,o.leftFill)):.52);T('right','Right cup',480,120,130,170,.48);
+    E('feedL','basin','left',8,{pump:210});E('feedR','basin','right',8,{pump:210});E('drainL','left','basin',20,{siphon:true,crest:.58,reset:.09});E('drainR','right','basin',20,{siphon:true,crest:.58,reset:.09});E('coupling','left','right',3,{open:o.coupled!==false});
+    primary='Stop return pump';K('coupling','Separate cups',564,46);extra[extra.length-1].width=128;u.lastFlush=[null,null];u.flushes=[0,0];
   }else if(id==='intermittent-fountain'){
     T('basin','Receiver',80,296,560,76,.75);T('cup','Trigger cup',105,120,205,162,.18);T('jet','Jet tube',460,140,125,144,0);
     E('feed','basin','cup',8,{pump:210});E('flush','cup','jet',16,{siphon:true,crest:.77,reset:.10});E('fall','jet','basin',22);primary='Stop return pump';
@@ -90,6 +90,7 @@ function make(id,w,o){
   var pipes=[];
   var entry=root.WSSMachineRegistry&&root.WSSMachineRegistry.lookup(id),caption=entry&&entry.cue||'Operate the apparatus. Water moves through its measured levels, pressure differences, valves and pumps.';
   var energyNote=id==='marly-machine'?'External river inflow and outflow are recorded. Falling river water drives the wheel; its available head and a stated 58 percent efficiency limit the lifted flow.':id==='moniac'?'This is a water analog of monetary flow, not a calibrated economic forecast. Declared return pumps recirculate its conserved working water.':id==='binary-staircase'?'Each input removes a measured water pulse from the finite supply. A two-pulse tipping bucket passes half its water upward and returns half to supply, conserving the count fluid.':id==='garden-automation'?'Gravity supplies the irrigation head. Flow resistance dissipates it, while the declared soil-uptake sink removes finite water from the system. No plant metabolism or closed energy budget is modeled.':id==='hero-vending'?'The coin falls under gravity and loads a spring and damper. Its lever opens the water valve; water then drains from a finite raised supply. The mechanical linkage and pipe loss are reduced, without a closed energy budget.':'Pumps and hand inputs supply declared external work. Gravity and pressure set flow direction; friction dissipates energy. This model is not a closed account of heat, sound or detailed fluid momentum.';
+  if(id==='cup-synchronization')energyNote='A declared return pump lifts finite water from the shared basin into both cups. Their siphons drain it back. The cross-connection transfers water by head difference without a separate motor; port loss dissipates energy. This is a reduced hydraulic model.';
   if(id==='water-chain-reaction')energyNote='The finite raised starter supplies all gravity head. No pump or hidden refill runs. Port loss dissipates energy, while local turbulence and detailed gate inertia are outside this reduced model.';
   return{name:id,title:labels[id],draft:true,setup:'network',viewBounds:view,vessels:vessels,pipes:pipes,solids:[],vents:[],parts:[],slimes:[],initial:[],marks:[],meters:[],settings:{enabled:false},primary:{kind:'network',target:{x:364,y:46}},action:net.primary,caption:caption,readingLabel:'Finite water network',measure:{source:vessels[0].rect,receiver:vessels[vessels.length-1].rect},network:net,reducedModel:true,boundaryNote:id==='garden-automation'?'Reduced finite-volume water follows pressure and gravity through three independent valves. Each valve opens when its measured planter falls below the selected threshold. A declared constant soil-uptake sink removes water and is recorded in the mass ledger. The drawing is a schematic; plant growth, soil pores and local turbulence are not simulated.':id==='hero-vending'?'A falling coin loads a spring-mounted lever with finite inertia. Lever angle opens or closes the valve; the finite raised water supply drains only through that gate. Returning the coin removes its weight and lets the spring close the gate. The pipes and mechanical linkage are a reduced two-dimensional section.':'This scene uses a reduced two-dimensional finite-volume hydraulic model. Tank inventories are conserved, pressure and level differences drive each flow, and any pump or hand action is declared. Pipe shape is a schematic of the network; local turbulence, bubbles and particle contacts are outside this model.',energyBudgetStatus:energyNote};
 }
@@ -122,7 +123,7 @@ function create(c){
     else if(id==='garden-automation')d.action=s.running?'Stop moisture control':'Start moisture control';
     else if(id==='fire-brigade')d.action=s.running?'Stop hose':'Start hose';
     else if(id==='water-chain-reaction')d.action=byEdge.trigger0.open?'Close starter gate':'Open starter gate';
-    if(id==='cup-synchronization')d.readingLabel='Cups '+(byEdge.drainL.primed?'left flushing':'filling')+' / '+(byEdge.drainR.primed?'right flushing':'filling');
+    if(id==='cup-synchronization'){var gap=s.lastFlush[0]!==null&&s.lastFlush[1]!==null?Math.abs(s.lastFlush[0]-s.lastFlush[1]).toFixed(1)+' s flush gap':'waiting for first flush';d.readingLabel=(byEdge.coupling.open?'Joined cups, ':'Separate cups, ')+gap;controls[0].label=byEdge.coupling.open?'Separate cups':'Join cups';}
     else if(id==='intermittent-fountain')d.readingLabel=byEdge.flush.primed?'Jet running':'Cup filling';
     else if(id==='binary-staircase')d.readingLabel='Stored bits '+[2,1,0].map(function(k){return by['b'+k].volume>=2500?1:0;}).join('');
     else if(id==='mariotte-bottle')d.readingLabel='Outlet '+(byEdge.outlet.open?'open':'closed')+', '+(s.mode?'open jar':fraction(by.bottle)>byEdge.outlet.intake?'constant head':'falling head');
@@ -178,6 +179,7 @@ function create(c){
     else if(id==='tax-control'){byEdge.tax.bore=byEdge.tax.bore===5?9:5;events++;}
     else if(id==='save-control'){byEdge.saving.bore=byEdge.saving.bore===4?8:4;events++;}
     else if(id==='resistance'){e.filter(function(v){return v.conductance;}).forEach(function(v){v.conductance=v.conductance===2.2?.8:2.2;});events++;}
+    else if(id==='coupling'){byEdge.coupling.open=!byEdge.coupling.open;events++;}
     else if(/^part[12]$/.test(id)){var cost=id==='part2'?2:1;if(s.budget>=cost&&!byEdge[id].open){byEdge[id].open=true;s.budget-=cost;events++;}}
     else if(/^gate[12]$/.test(id)){var gateNumber=Number(id.slice(-1)),previous=gateNumber===1?by.one:by.two,required=gateNumber===1?.40:.25;if(fraction(previous)>=required&&!byEdge[id].open){byEdge[id].open=true;s.stage=gateNumber+1;events++;}}
     else if(id==='sensor'){s.mode=1-s.mode;events++;}
@@ -209,7 +211,7 @@ function create(c){
     if(id==='fire-brigade')e.forEach(function(x){if(/^hose/.test(x.id))x.open=s.running&&x.id==='hose'+s.mode&&s.heat[Number(x.id.slice(-1))]>.001;});
     e.forEach(function(x){
       var a=by[x.a],b=by[x.b];x.flow=0;if(!x.open)return;
-      if(x.siphon){if(!x.primed&&fraction(a)>x.crest)x.primed=true;if(x.primed&&fraction(a)<x.reset)x.primed=false;if(!x.primed)return;}
+      if(x.siphon){if(!x.primed&&fraction(a)>x.crest){x.primed=true;if(id==='cup-synchronization'){var side=x.id==='drainL'?0:1;s.lastFlush[side]=t+dt;s.flushes[side]++;}}if(x.primed&&fraction(a)<x.reset)x.primed=false;if(!x.primed)return;}
       if(x.threshold && fraction(a)<x.threshold)return;
       var head=nodeHead(a)-nodeHead(b)+(x.pump||0);
       if(x.mariotte&&fraction(a)>x.intake)head=Math.max(0,H(b)-(a.rect.y+(1-x.intake)*a.rect.height));
@@ -231,9 +233,21 @@ function create(c){
     if(id==='water-chain-reaction'&&fraction(by.stage2)>.30)completed=true;
   }
   function tick(dt){if(!(dt>0))return;var scale=c.timeScale?Math.max(.05,Math.min(4,c.timeScale())):1,left=Math.min(.2,dt*scale);while(left>1e-8){var h=Math.min(1/120,left);simulate(h);left-=h;t+=h;}setMessage();updateMusic();}
-  function stats(){var current=n.reduce(function(v,a){return v+a.volume;},0);return{model:'finite hydraulic network',scene:d.name,time:t,initial:initial,water:current,added:added,removed:removed,massError:current+removed-initial-added,finite:n.every(function(a){return Number.isFinite(a.volume)&&a.volume>=-1e-5&&a.volume<=a.capacity+1e-5;})&&(d.name!=='hero-vending'||Number.isFinite(s.coin+s.leverAngle+s.leverVelocity)),nodes:n.map(function(a){return{id:a.id,volume:a.volume,capacity:a.capacity,fill:fraction(a),head:nodeHead(a)};}),edges:e.map(function(x){return{id:x.id,flow:x.flow,open:x.open,primed:x.primed||false};}),events:events,completed:completed,energyInput:s.energy,heat:s.heat.slice(),mode:s.mode,coin:s.coin,leverAngle:s.leverAngle||0};}
+  function stats(){var current=n.reduce(function(v,a){return v+a.volume;},0);return{model:'finite hydraulic network',scene:d.name,time:t,initial:initial,water:current,added:added,removed:removed,massError:current+removed-initial-added,finite:n.every(function(a){return Number.isFinite(a.volume)&&a.volume>=-1e-5&&a.volume<=a.capacity+1e-5;})&&(d.name!=='hero-vending'||Number.isFinite(s.coin+s.leverAngle+s.leverVelocity)),nodes:n.map(function(a){return{id:a.id,volume:a.volume,capacity:a.capacity,fill:fraction(a),head:nodeHead(a)};}),edges:e.map(function(x){return{id:x.id,flow:x.flow,open:x.open,primed:x.primed||false};}),events:events,completed:completed,energyInput:s.energy,heat:s.heat.slice(),mode:s.mode,coin:s.coin,leverAngle:s.leverAngle||0,flushes:s.flushes?s.flushes.slice():null,lastFlush:s.lastFlush?s.lastFlush.slice():null};}
   function draw(ctx){ctx.save();var css=getComputedStyle(document.documentElement),water=css.getPropertyValue('--toy-water').trim()||'#8fb3c7',ink=css.getPropertyValue('--text').trim()||'#e8e2d6';
-    if(d.name==='water-chain-reaction'){
+    if(d.name==='cup-synchronization'){
+      var joined=byEdge.coupling.open;
+      ctx.strokeStyle=ink;ctx.globalAlpha=.55;ctx.lineWidth=11;ctx.beginPath();ctx.moveTo(240,260);ctx.lineTo(480,260);ctx.stroke();
+      ctx.strokeStyle=water;ctx.globalAlpha=joined?.82:.18;ctx.lineWidth=5;ctx.setLineDash(joined?[]:[7,7]);ctx.beginPath();ctx.moveTo(240,260);ctx.lineTo(480,260);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;
+      ctx.strokeStyle=ink;ctx.lineWidth=3;ctx.beginPath();ctx.arc(360,260,12,0,Math.PI*2);ctx.moveTo(360,joined?248:247);ctx.lineTo(joined?374:360,joined?237:273);ctx.stroke();
+      [['left','drainL','feedL',175,260],['right','drainR','feedR',545,460]].forEach(function(parts){var cup=by[parts[0]],drain=byEdge[parts[1]],feed=byEdge[parts[2]],x=parts[3],outside=parts[4],a=cup.rect,crest=a.y+a.height-4-a.height*.58;
+        ctx.strokeStyle=ink;ctx.globalAlpha=.5;ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(a.x+5,crest);ctx.lineTo(a.x+a.width-5,crest);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;
+        ctx.strokeStyle=ink;ctx.globalAlpha=.55;ctx.lineWidth=10;ctx.beginPath();ctx.moveTo(x,a.y+a.height-38);ctx.lineTo(x,a.y+29);ctx.quadraticCurveTo((x+outside)/2,a.y+8,outside,a.y+29);ctx.lineTo(outside,318);ctx.stroke();
+        if(drain.primed&&drain.flow>1){ctx.strokeStyle=water;ctx.globalAlpha=.9;ctx.lineWidth=5;ctx.stroke();}ctx.globalAlpha=1;
+        ctx.strokeStyle=ink;ctx.lineWidth=8;ctx.beginPath();ctx.moveTo(x,312);ctx.lineTo(x,282);ctx.stroke();if(feed.flow>1){ctx.strokeStyle=water;ctx.lineWidth=4;ctx.stroke();}
+      });
+      ctx.strokeStyle=ink;ctx.lineWidth=2;ctx.beginPath();ctx.arc(360,338,18,0,Math.PI*2);ctx.stroke();ctx.save();ctx.translate(360,338);ctx.rotate(s.running?t*3:0);for(var spoke=0;spoke<4;spoke++){ctx.rotate(Math.PI/2);ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(15,0);ctx.stroke();}ctx.restore();
+    }else if(d.name==='water-chain-reaction'){
       e.forEach(function(link,i){var a=by[link.a].rect,b=by[link.b].rect,x0=a.x+a.width,x1=b.x,y=Math.min(a.y+a.height-54,b.y+b.height-54),gate=(x0+x1)/2;
         ctx.strokeStyle=ink;ctx.globalAlpha=.48;ctx.lineWidth=10;ctx.beginPath();ctx.moveTo(x0,y);ctx.lineTo(x1,y);ctx.stroke();
         ctx.strokeStyle=water;ctx.globalAlpha=link.open?.85:.18;ctx.lineWidth=5;ctx.setLineDash(link.open?[]:[4,6]);ctx.beginPath();ctx.moveTo(x0,y);ctx.lineTo(x1,y);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;

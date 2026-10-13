@@ -2483,7 +2483,7 @@
     "title": "Coupled self-flushing cups",
     "capability": "Valves and logic",
     "status": "WORKS",
-    "cue": "Two return-fed cups prime and empty repeatedly. The connecting tube brings their cycles together.",
+    "cue": "Watch two cups flush, then separate them. A water-filled cross-connection brings their later siphon cycles together; without it, their flush times drift apart.",
     "world": {
       "w": 720,
       "h": 400
