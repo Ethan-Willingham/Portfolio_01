@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.205'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.206'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -14856,7 +14856,7 @@
       fireWaterClock=liquidWGPU.simulationClock;
       smokeRepaintObstacle();
       ownOxygen=window.WSSOxygen.create({fluid:SmokeFluid,width:worldW,height:worldH,scaleWidth:scaleWidth,
-        source:definition.fire.source,candle:name==='candle-in-jar',resolution:isMobile?112:128});
+        source:definition.fire.source,candle:name==='candle-in-jar',resolution:name==='chimney-draw'?96:isMobile?112:128});
       ownFire=await window.WSSFire.create({liquid:liquidWGPU,width:worldW,height:worldH,maxParticles:LIQUID_MAX_PARTICLES,
         source:definition.fire.source,noEmber:true,oxygen:ownOxygen,candle:name==='candle-in-jar',excludeFrozen:!!definition.sauna});
       if(request!==machineRequest){ownFire.destroy();ownFire=null;if(ownOxygen)ownOxygen.destroy();return null;}
