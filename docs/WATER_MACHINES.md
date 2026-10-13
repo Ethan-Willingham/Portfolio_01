@@ -207,8 +207,21 @@ then transforms each grain's ballistic world motion into its new local frame.
 Moving wall contacts use the glass's actual point velocity, including rotation.
 Every grain-wall impulse returns its opposite linear impulse and torque to
 the body through a GPU reduction. The glass, grain integration, contact sums
-and both renderers remain on the GPU. Only 64 bytes of body state are mirrored
-for hit testing and inspection, without waiting in the animation loop.
+and both renderers remain on the GPU. The 64-byte body state is mirrored for
+hit testing and inspection, without waiting in the animation loop. The timer
+adds 16 bytes of inventory totals to that readback at most ten times per
+simulation second. Its two GPU reductions reuse the contact scratch space
+after the final impulse has been applied; no grain positions leave the GPU.
+
+The timer displays elapsed simulation time, the fraction of sand through the
+neck, and an estimated remaining duration from the last three seconds of net
+flow. Grains inside the neck count as unfinished. Completion requires an empty
+source bulb and neck, then holds the final duration. Pausing or an inactive demo
+freezes the clock. A stable reversal starts a fresh run with the newly elevated
+bulb's actual inventory, including partial fills. Fast tumbles and sideways
+poses hide the estimate. A stopped stream reports that state rather than
+continuing a countdown. The estimate is a measurement, not a target duration
+or an input to the physics. The readout stays upright in the viewport.
 
 A diameter-sized linked-cell grid visits every neighbor without bucket caps
 or representative sampling. Three position-based contact iterations reconstruct
@@ -239,6 +252,10 @@ no impulse, continuing angular motion, pause, fullscreen, resizing, restart
 and scene retirement. Add `--mobile` for touch gestures on landscape mobile.
 Use `--boot` for a quick compilation check and `--benchmark` for 300 completed
 update-and-render workloads followed by 299 animation-frame intervals.
+The browser check also compares the timer's GPU census with the resident
+grains, checks the live estimate and verifies pause, restart and retirement.
+Run `node tools/test-hourglass-timer.mjs` for measured flow, stalls, stable and
+partial reversals, tumbling, last-grain completion and stale readbacks.
 The harness owns Chrome for Testing and writes captures and measurements to
 `/tmp/hourglass-review`.
 

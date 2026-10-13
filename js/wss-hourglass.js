@@ -26,6 +26,42 @@ function contains(x,y,pad){
  pad=pad||0;var slope=(halfWidth(Math.min(G.bottom,y+.01))-halfWidth(Math.max(G.top,y-.01)))/.02;
  return y>=G.top+pad && y<=G.bottom-pad && Math.abs(x-G.cx)<=halfWidth(y)-pad*Math.sqrt(1+slope*slope);
 }
+// Observe the real inventory on the simulation clock. The timer never drives
+// the grains. A stable reversal starts a run, while a tumble has no useful ETA.
+function createTimer(clock,total){
+ var direction=1,run=1,start=clock,end=null,sampledAt=clock,remaining=total;
+ var pending=0,pendingSince=clock,history=[],rate=0,lastFlow=clock,steady=true;
+ function sample(now,upper,throat,lower,angle,spin){
+  if(now<=sampledAt || upper+throat+lower!==total)return;
+  sampledAt=now;
+  var vertical=Math.cos(angle);steady=Math.abs(vertical)>.55 && Math.abs(spin)<1.4;
+  var next=steady?(vertical>0?1:-1):0;
+  if(next && next!==direction){
+   if(pending!==next){pending=next;pendingSince=now;}
+   if(now-pendingSince>=.3){direction=next;run++;start=pendingSince;end=null;pending=0;history=[];rate=0;lastFlow=now;}
+  }else pending=0;
+  var count=(direction===1?upper:lower)+throat;
+  if(count<remaining)lastFlow=now;
+  remaining=count;
+  if(remaining>0)end=null;
+  if(!steady || pending){history=[];rate=0;return;}
+  if(remaining===0 && end===null)end=now;
+  history.push([now,remaining]);
+  while(history.length>1 && now-history[0][0]>3)history.shift();
+  var span=now-history[0][0],moved=history[0][1]-remaining;
+  rate=span>=.75 && moved>=4 && now-lastFlow<.75?Math.max(0,moved/span):0;
+ }
+ function stats(now){
+  var status=end!==null?'complete':!steady || pending?'turning':rate>0?'flowing':now-lastFlow>1.5?'stalled':'measuring';
+  return {run:run,direction:direction,elapsed:Math.max(0,(end===null?now:end)-start),remaining:remaining,total:total,
+   fraction:total?1-remaining/total:0,rate:rate,remainingSeconds:status==='complete'?0:status==='flowing'?remaining/rate:null,status:status,sampledAt:sampledAt};
+ }
+ return {sample:sample,stats:stats};
+}
+function timeText(seconds,tenths){
+ var ticks=Math.floor(Math.max(0,seconds)*10+1e-6),whole=Math.floor(ticks/10);
+ return Math.floor(whole/60)+':'+String(whole%60).padStart(2,'0')+(tenths?'.'+ticks%10:'');
+}
 // Constants are authored once above and used verbatim by the actual GPU walls.
 function profileSource(){return `
 fn halfWidth(y:f32)->f32 {
@@ -144,6 +180,7 @@ struct Rigid {pose:vec4f,velocity:vec4f,previous:vec4f,reaction:vec4f};
 @group(0) @binding(5) var<storage,read_write> rigid:Rigid;
 @group(0) @binding(6) var<storage,read_write> reaction:array<vec4f>;
 @group(0) @binding(7) var<storage,read_write> partials:array<vec4f>;
+@group(0) @binding(8) var<storage,read_write> census:vec4f;
 const DIAMETER:f32=${G.radius*2};
 const GRAIN_MASS:f32=${grainMass};
 const SAFE_WALL_INSET:f32=${safeInset};
@@ -151,6 +188,18 @@ const CELL:f32=${cell};
 const COLS:u32=${cols}u;
 const ROWS:u32=${rows}u;
 `+rigidSource()+`
+@compute @workgroup_size(256)
+fn countBulbs(@builtin(global_invocation_id) id:vec3u,@builtin(local_invocation_id) local:vec3u,@builtin(workgroup_id) group:vec3u){
+ var value=vec4f(0.);
+ if(id.x<cfg.count){let y=source[id.x].y;value=vec4f(select(0.,1.,y<${G.neckTop}.),select(0.,1.,y>=${G.neckTop}. && y<=${G.neckBottom}.),select(0.,1.,y>${G.neckBottom}.),1.);}
+ sums[local.x]=value;workgroupBarrier();
+ for(var stride=128u;stride>0u;stride/=2u){if(local.x<stride){sums[local.x]+=sums[local.x+stride];}workgroupBarrier();}
+ if(local.x==0u){partials[group.x]=sums[0];}
+}
+@compute @workgroup_size(1)
+fn sumBulbs(){
+ var value=vec4f(0.);for(var i=0u;i<(cfg.count+255u)/256u;i++){value+=partials[i];}census=value;
+}
 fn cellAt(p:vec2f)->vec2i {
  return clamp(vec2i(floor((p-vec2f(${G.cx-G.wide-2}.,${G.top-2}.))/CELL)),vec2i(0),vec2i(i32(COLS)-1,i32(ROWS)-1));
 }
@@ -301,7 +350,8 @@ async function create(context){
  var body=buffer('hourglass.rigidBody',64,storage|GPUBufferUsage.COPY_SRC|GPUBufferUsage.COPY_DST);
  var reaction=buffer('hourglass.grainReactions',L.maxParticles*16,storage);
  var partials=buffer('hourglass.reducedReactions',Math.ceil(L.maxParticles/256)*16,storage);
- var read=buffer('hourglass.bodyMirror',64,GPUBufferUsage.MAP_READ|GPUBufferUsage.COPY_DST);
+ var census=buffer('hourglass.bulbInventory',16,storage|GPUBufferUsage.COPY_SRC);
+ var read=buffer('hourglass.bodyMirror',80,GPUBufferUsage.MAP_READ|GPUBufferUsage.COPY_DST);
  var mesh=glassMesh(),glass=buffer('hourglass.glassMesh',mesh.byteLength,GPUBufferUsage.VERTEX|GPUBufferUsage.COPY_DST);queue.writeBuffer(glass,0,mesh);
  var bodyMirror=new Float32Array([360,384-(G.bottom+7-200)*BODY.scale,0,BODY.scale,0,0,0,0,360,384-(G.bottom+7-200)*BODY.scale,0,BODY.scale,0,0,0,0]);queue.writeBuffer(body,0,bodyMirror);
  var held=false,hand={x:360,y:200,localX:360,localY:200},mirrorPending=false;
@@ -313,10 +363,10 @@ async function create(context){
   var info=await Promise.all([contactModule.getCompilationInfo(),finishModule.getCompilationInfo()]);
   var faults=info.flatMap(function(result){return result.messages.filter(function(message){return message.type==='error';}).map(function(message){return message.lineNum+': '+message.message;});});
   if(faults.length)throw Error(faults.join('\n'));
-  var bindings={bodyStep:[4,5],predict:[0,1,4,5,6],clear:[0,2,4],scatter:[0,2,3,4],contacts:[0,1,2,3,4,5,6],reduceReaction:[4,6,7],applyReaction:[4,5,7]};
+  var bindings={bodyStep:[4,5],predict:[0,1,4,5,6],clear:[0,2,4],scatter:[0,2,3,4],contacts:[0,1,2,3,4,5,6],reduceReaction:[4,6,7],applyReaction:[4,5,7],countBulbs:[0,4,7],sumBulbs:[4,7,8]};
   await Promise.all(Object.keys(bindings).map(async function(name){
    var pipeline=await device.createComputePipelineAsync({label:'hourglass.'+name,layout:'auto',compute:{module:contactModule,entryPoint:name}});pipes[name]=pipeline;
-   groups[name]=[0,1].map(function(side){var resources=[state[side],state[1-side],heads,links,count,body,reaction,partials];return device.createBindGroup({layout:pipeline.getBindGroupLayout(0),entries:bindings[name].map(function(binding){return {binding:binding,resource:{buffer:resources[binding]}};})});});
+   groups[name]=[0,1].map(function(side){var resources=[state[side],state[1-side],heads,links,count,body,reaction,partials,census];return device.createBindGroup({layout:pipeline.getBindGroupLayout(0),entries:bindings[name].map(function(binding){return {binding:binding,resource:{buffer:resources[binding]}};})});});
   }));
   var finish=await device.createRenderPipelineAsync({layout:'auto',vertex:{module:finishModule,entryPoint:'vs'},fragment:{module:finishModule,entryPoint:'fs',targets:[{format:format,blend:{color:{srcFactor:'one',dstFactor:'one-minus-src-alpha'},alpha:{srcFactor:'one',dstFactor:'one-minus-src-alpha'}}}]},primitive:{topology:'triangle-list'}});
   var finishGroup=device.createBindGroup({layout:finish.getBindGroupLayout(0),entries:[L.buf.pos,L.buf.flag,view,body].map(function(b,i){return {binding:i,resource:{buffer:b}};})});
@@ -334,6 +384,18 @@ async function create(context){
  finishParams.set(rgb(palette.getPropertyValue('--line-mid').trim()).concat([1]),16);queue.writeBuffer(view,0,finishParams);
  var input=document.getElementById('toy-input'),previousCursor=input.style.cursor,previousLabel=input.getAttribute('aria-label');
  input.style.cursor='grab';input.setAttribute('aria-label','Hourglass. Grab the glass, swing it, and release to toss. Use the arrow keys and Enter to grab and release.');
+ var timer=createTimer(L.simulationClock,L.uploadedCount),lastCensus=-Infinity;
+ var timerPanel=document.createElement('section');timerPanel.id='toy-hourglass-timer';timerPanel.className='toy-hourglass-timer';timerPanel.setAttribute('aria-label','Hourglass timer');
+ timerPanel.innerHTML='<div class="hourglass-timer-label">Elapsed<span class="hourglass-timer-paused">Paused</span></div><div class="hourglass-timer-value" role="timer" aria-label="Elapsed simulation time" aria-live="off">0:00.0</div><div class="hourglass-timer-detail">Measuring flow</div><div class="hourglass-timer-track" role="progressbar" aria-label="Sand through the neck" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i></i></div><div class="hourglass-timer-note">Flip to start a new run</div>';
+ document.getElementById('toy-viewport').appendChild(timerPanel);
+ var timerValue=timerPanel.querySelector('.hourglass-timer-value'),timerDetail=timerPanel.querySelector('.hourglass-timer-detail'),timerTrack=timerPanel.querySelector('.hourglass-timer-track'),timerFill=timerTrack.firstElementChild;
+ function drawTimer(){
+  var t=timer.stats(L.simulationClock),value=timeText(t.elapsed,true);
+  var detail=t.status==='complete'?'Complete':t.status==='turning'?'Turning':t.status==='stalled'?'Flow stopped':t.remainingSeconds===null?'Measuring flow':'About '+timeText(Math.ceil(t.remainingSeconds),false)+' remaining';
+  if(timerValue.textContent!==value)timerValue.textContent=value;
+  if(timerDetail.textContent!==detail)timerDetail.textContent=detail;
+  timerPanel.dataset.status=t.status;timerTrack.setAttribute('aria-valuenow',String(Math.floor(t.fraction*100)));timerFill.style.transform='scaleX('+t.fraction+')';
+ }
  // A fixed small quantum preserves the common clock. Three contact iterations
  // ping-pong immutable snapshots, rebuilding exact neighbor lists each time.
  // The final result always lives in the native resident buffer, including jolt.
@@ -357,9 +419,13 @@ async function create(context){
    }
    dispatch(pass,'reduceReaction',0,L.uploadedCount);dispatch(pass,'applyReaction',0,1);
   }
-  pass.end();var mirror=!mirrorPending;if(mirror){mirrorPending=true;encoder.copyBufferToBuffer(body,0,read,0,64);}
+  var sampleClock=L.simulationClock+steps*h,mirror=!mirrorPending,measure=mirror && sampleClock-lastCensus>=.1;
+  // Reuse the reaction scratch space after its final reduction. Only four
+  // inventory totals join the body readback, at most ten times per sim second.
+  if(measure){dispatch(pass,'countBulbs',0,L.uploadedCount);dispatch(pass,'sumBulbs',0,1);lastCensus=sampleClock;}
+  pass.end();if(mirror){mirrorPending=true;encoder.copyBufferToBuffer(body,0,read,0,64);if(measure)encoder.copyBufferToBuffer(census,0,read,64,16);}
   queue.submit([encoder.finish()]);L.stepDt=h;L.simulationClock+=steps*h;completedSteps+=steps;
-  if(mirror)read.mapAsync(GPUMapMode.READ).then(function(){if(!retired)bodyMirror.set(new Float32Array(read.getMappedRange()));read.unmap();}).catch(function(){}).finally(function(){mirrorPending=false;});
+  if(mirror)read.mapAsync(GPUMapMode.READ).then(function(){if(!retired){var data=new Float32Array(read.getMappedRange());bodyMirror.set(data.subarray(0,16));if(measure){timer.sample(sampleClock,data[16],data[17],data[18],data[2],data[6]);drawTimer();}}read.unmap();}).catch(function(){}).finally(function(){mirrorPending=false;});
  };
  // Keep the established viewport sizing without drawing an invisible water
  // surface, running its grid, or copying the entire pile back to the CPU.
@@ -381,6 +447,7 @@ async function create(context){
   release:function(){held=false;input.style.cursor='grab';},
   render:function(){
    if(retired || !L.renderActive)return;
+   drawTimer();
    // Match the source display resolution, including zoom and device density.
    var source=L.renderCanvas;if(canvas.width!==source.width || canvas.height!==source.height){canvas.width=source.width;canvas.height=source.height;finishParams[2]=720/canvas.width;queue.writeBuffer(view,0,finishParams);}
    var encoder=device.createCommandEncoder({label:'hourglass.finish'}),pass=encoder.beginRenderPass({colorAttachments:[{view:renderContext.getCurrentTexture().createView(),clearValue:{r:0,g:0,b:0,a:0},loadOp:'clear',storeOp:'store'}]});
@@ -393,9 +460,9 @@ async function create(context){
    c.fillStyle=palette.getPropertyValue('--text-dim').trim();c.font='11px "Commit Mono", monospace';c.fillText('Grab the glass. Swing and release to flip.',24,34);
    c.restore();
   },
-  stats:function(){return {glassProfile:G,body:bodyStats(),finish:'Resident physical grains and glass',finiteCharge:true,grainCount:L.uploadedCount,grainFriction:grainFriction,glassFriction:glassFriction,steps:completedSteps,stepSeconds:h,gridCells:cols*rows,neighborSearch:'Exact linked cells',solverBytes:cols*rows*4+L.maxParticles*36+Math.ceil(L.maxParticles/256)*16+mesh.byteLength+256};},
-  destroy:function(){if(retired)return;retired=true;held=false;slip.stats=previousStats;L.update=previousUpdate;L.draw=previousDraw;L.getTimingState=previousTiming;L.awakeCount=previousAwake;L.renderCanvas.style.visibility=previousVisibility;input.style.cursor=previousCursor;if(previousLabel===null)input.removeAttribute('aria-label');else input.setAttribute('aria-label',previousLabel);canvas.remove();renderContext.unconfigure();buffers.forEach(function(b){b.destroy();});}
+  stats:function(){return {glassProfile:G,body:bodyStats(),timer:timer.stats(L.simulationClock),finish:'Resident physical grains and glass',finiteCharge:true,grainCount:L.uploadedCount,grainFriction:grainFriction,glassFriction:glassFriction,steps:completedSteps,stepSeconds:h,gridCells:cols*rows,neighborSearch:'Exact linked cells',solverBytes:cols*rows*4+L.maxParticles*36+Math.ceil(L.maxParticles/256)*16+mesh.byteLength+288};},
+  destroy:function(){if(retired)return;retired=true;held=false;slip.stats=previousStats;L.update=previousUpdate;L.draw=previousDraw;L.getTimingState=previousTiming;L.awakeCount=previousAwake;L.renderCanvas.style.visibility=previousVisibility;input.style.cursor=previousCursor;if(previousLabel===null)input.removeAttribute('aria-label');else input.setAttribute('aria-label',previousLabel);canvas.remove();timerPanel.remove();renderContext.unconfigure();buffers.forEach(function(b){b.destroy();});}
  };
 }
-root.WSSHourglass={configure:configure,geometry:function(){return Object.assign({},G);},halfWidth:halfWidth,contains:contains,create:create};
+root.WSSHourglass={configure:configure,geometry:function(){return Object.assign({},G);},halfWidth:halfWidth,contains:contains,createTimer:createTimer,create:create};
 })(typeof window!=='undefined'?window:globalThis);

@@ -78,13 +78,22 @@ try{
  assert.equal(await ev('__toy.stats().timeScale'),1);assert.equal(await sim('timeInput.value'),'100');
  if(!detail){const geometry=await ev('WSSHourglass.geometry()');assert.equal(geometry.radius*2,.7,'The default grains have half the original diameter');assert(Math.abs(geometry.neck*2-3.08)<1e-6,'The opening fits the larger grains with more clearance');}
  assert(initial.finite && initial.outside===0);const n=initial.n;await sim('render()');assert.deepEqual(await snapshot(),initial,'Drawing reads the resident state without changing physics');
- // Step the actual resident grains with the authored slow clock, preserving the population.
+ // Step the resident grains on the normal clock, preserving the population.
  for(let stage=0;stage<4;stage++){
-  await sim('(function(){for(var i=0;i<120;i++)updateLiquidToy(1/60);render();})()');await pause(150);
+  await sim('(async function(){for(var i=0;i<120;i++){updateLiquidToy(1/60);if(i%6===5){await liquidWGPU.queue.onSubmittedWorkDone();await new Promise(r=>setTimeout(r,0));}}render();})()');await pause(150);
   const state=await snapshot();console.log('FLOW',stage,state);assert.equal(state.n,n);assert(state.finite && state.outside===0,'Finite grains stay within the drawn glass');assert(state.overlapP95<.08,'Dense grains retain their physical size');await capture('flow-'+stage);
  }
  const flow=await snapshot();assert(Math.abs(flow.clock-initial.clock-4*120/60)<.02,'Playback follows the real elapsed time');assert(flow.lower>100 && flow.upper>100,'The narrow neck transfers a finite charge gradually');
  assert(flow.streamCount>10&&flow.streamP95<await ev('WSSHourglass.geometry().neck*1.8'),'The resting glass produces a tight stream through the actual passage');
+ const timer=await sim('toyDraftRuntime.stats().timer');console.log('TIMER',timer);await capture('timer-flow');
+ assert.equal(timer.total,n);assert.equal(timer.run,1);assert.equal(timer.direction,1);
+ assert(timer.elapsed>7.9 && timer.elapsed<flow.clock+.02,'The elapsed timer follows simulation time');
+ assert(timer.status==='flowing'&&timer.remainingSeconds>0&&Number.isFinite(timer.remainingSeconds),'A real stream produces a measured remaining-time estimate');
+ assert(flow.clock-timer.sampledAt<.15,'GPU inventory readback stays current');
+ assert(Math.abs(timer.remaining-flow.upper)<100,'The measured inventory matches the actual grains, including those still inside the neck');
+ assert.equal(await ev('document.querySelectorAll("#toy-hourglass-timer").length'),1);
+ assert(await ev('document.querySelector(".hourglass-timer-detail").textContent.includes("remaining")'),'The live estimate is visible');
+ await pause(200);assert.deepEqual(await sim('toyDraftRuntime.stats().timer'),timer,'Pausing freezes the measured timer');
  // Verify the numerical model directly, using the same live GPU kernels.
  const physical=await sim(`(async()=>{
   const L=liquidWGPU,R=toyDraftRuntime,n=L.uploadedCount,d=L.device,size=n*16,oldClock=L.simulationClock,g=L.getSimParam('GRAVITY');
@@ -141,15 +150,18 @@ try{
  for(const [width,height,mobile] of [[844,390,true],[390,844,true],[1512,700,false]]){
   await send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:2,mobile});await ev('__toy.resize()');await pause(200);await capture(width+'x'+height);
   assert(await ev('document.documentElement.scrollWidth<=innerWidth'),'No page overflow');
+  assert(await ev('(()=>{const t=document.getElementById("toy-hourglass-timer").getBoundingClientRect(),bar=document.querySelector(".toy-top").getBoundingClientRect();return t.top>=bar.bottom && t.bottom<=innerHeight && t.right<=innerWidth && t.left>=0;})()'),'The complete timer stays visible below the toolbar');
   assert(await ev('(()=>{const c=document.getElementById("toy-hourglass-grains"),s=__toy.liquid().renderCanvas;return c.width===s.width && c.height===s.height;})()'),'Finish follows the exact display resolution');
  }
  await ev('document.getElementById("toy-restart").click()');await until('typeof __toy!=="undefined"&&!__toy.stats().loading && __toy.machineState()?.ready');await pause(200);const reset=await snapshot();assert.equal(reset.n,n);assert(reset.lower<10 && reset.finite && reset.outside===0,'Restart rebuilds the charge and contacts');assert.equal(await ev('document.querySelectorAll("#toy-hourglass-grains").length'),1,'Restart retires the old finish');
  const resetBody=await sim('toyDraftRuntime.captureBody()');assert(Math.abs(resetBody.angle)<.001&&!resetBody.held,'Restart restores the glass and releases its grip');
+ const resetTimer=await sim('toyDraftRuntime.stats().timer');assert(resetTimer.elapsed<1&&resetTimer.run===1,'Restart creates a fresh timed run');assert.equal(await ev('document.querySelectorAll("#toy-hourglass-timer").length'),1,'Restart retires the old timer');
  await ev('if(__toy.stats().paused)document.getElementById("toy-pause").click()');await manualClock();const fresh=await sim('toyDraftRuntime.captureBody()');await pointerWorld('mousePressed',fresh.x,fresh.y-75);
  assert(await sim('toyDraftRuntime.stats().body.held'),'The rebuilt glass can be grabbed');await ev('document.getElementById("toy-pause").click()');assert.equal(await sim('toyDraftRuntime.stats().body.held'),false,'Pausing releases a held glass');
  await pointerWorld('mouseReleased',fresh.x,fresh.y-75);await restoreClock();
  await ev('__toy.scene("material-sand-jar")');await until('typeof __toy!=="undefined"&&__toy.stats().scene==="material-sand-jar"&&!__toy.stats().loading');
  assert.equal(await ev('document.querySelectorAll("#toy-hourglass-grains").length'),0,'Leaving the scene retires its finish');assert.equal(await ev('__toy.liquid().renderCanvas.style.visibility'),'','Other material scenes retain their renderer');assert.equal(await ev('__toy.stats().timeScale'),1,'Other scenes keep their existing playback speed');
+ assert.equal(await ev('document.querySelectorAll("#toy-hourglass-timer").length'),0,'Leaving the scene retires its timer');
  assert.equal(errors.length,0,JSON.stringify(errors));console.log('PASS hourglass refinement');
  }
 }finally{
