@@ -197,9 +197,10 @@
         c.save();c.transform(f00,f10,f01,f11,(b.px[i]+b.px[j]+b.px[k])/3,(b.py[i]+b.py[j]+b.py[k])/3);
         c.beginPath();c.ellipse(0,0,size,size*.7,0,0,Math.PI*2);c.fill();c.restore();
       }
-      c.globalAlpha=pressure>12?.9:.45;
+      var poresOpen=pressure>12;
+      c.globalAlpha=poresOpen?.9:.45;
       outlets().forEach(function(v){if(!v.open)return;c.save();c.translate(v.x,v.y);c.rotate(Math.atan2(v.ny,v.nx));
-        c.fillStyle=colors.rule;c.beginPath();c.ellipse(0,0,1.2,pressure>12?3.2:1.8,0,0,Math.PI*2);c.fill();c.restore();});
+        c.fillStyle=colors.rule;c.beginPath();c.ellipse(0,0,poresOpen?1.2:.5,poresOpen?3.2:.75,0,0,Math.PI*2);c.fill();c.restore();});
       if(details){
         c.globalAlpha=.2;c.strokeStyle=colors.text;c.lineWidth=.7/scale;c.beginPath();
         for(var s=0;s<b.springN;s++){c.moveTo(b.px[b.sA[s]],b.py[b.sA[s]]);c.lineTo(b.px[b.sB[s]],b.py[b.sB[s]]);}c.stroke();
