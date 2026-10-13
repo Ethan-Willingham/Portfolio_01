@@ -17,7 +17,18 @@ test('pulsometer alternates chambers from water-level feedback',()=>{const m=mak
 test('Torricelli head is supported by atmospheric pressure',()=>{const m=make('torricelli-tube');advance(m,20);const n=m.nodes;const height=n[0].bottom+m.level(n[0])-n[1].bottom-m.level(n[1]);assert(Math.abs(height-(101325-m.pressure(n[0]))/(1000*9.80665))<.15);const v=n[0].volume;m.activate('primary');advance(m,10);assert(n[0].volume<v*.7);});
 for(const id of ['venturi-aspirator','trompe'])test(id+' air input follows flowing water',()=>{const a=make(id),b=make(id);b.activate('primary');advance(a,4);advance(b,4);assert(a.state.airDrawn>0&&b.state.airDrawn===0);if(id==='trompe')assert(a.state.entrained>0);});
 test('ram waste valve cycles and pumps above the drive reservoir',()=>{const m=make('hydraulic-ram');advance(m,8);assert(m.state.cycles>3);assert(flow(m,'delivery')>.0001);assert(flow(m,'waste')>flow(m,'delivery'));assert(m.state.peak>20000);});
-test('water hammer travels from valve to inlet and air vessel reduces peak',()=>{const a=make('water-hammer',{airChamber:false}),b=make('water-hammer',{airChamber:true});advance(a,1);advance(b,1);a.activate('primary');b.activate('primary');a.tick(.001);const p=a.stats().wave.pressure;assert(p[47]>p[0]*2);advance(a,.1);advance(b,.1);assert(a.state.peak>b.state.peak*1.5);});
+test('water hammer records a travelling pulse and a real air-vessel control on three heads',()=>{
+ for(const sourceFill of [.8,.88,.96]){
+  const bare=make('water-hammer',{sourceFill,airChamber:false}),cushioned=make('water-hammer',{sourceFill,airChamber:true}),open=make('water-hammer',{sourceFill,autoClose:false});
+  advance(bare,1);advance(cushioned,1);advance(open,1);
+  assert(!bare.state.open&&!cushioned.state.open&&open.state.open,'only the declared closure produces the event');
+  assert(bare.state.wave.trace.length>100&&cushioned.state.wave.trace.length>100,'the computed pressure history is captured');
+  const peakTrace=Math.max(...bare.state.wave.trace.map(sample=>sample[2]));
+  assert(peakTrace>open.state.peak*20,'the valve-side trace contains the true impulse');
+  assert(bare.state.peak>cushioned.state.peak*2.5,'air compliance reduces peak pressure');
+  assert(Math.abs(peakTrace/bare.state.peak-1)<.01,'the visible trace retains the solver peak');
+ }
+});
 test('regulated clock holds a steady rise across three finite charges',()=>{
  for(const supplyFill of [.88,.92,.96]){
   const m=make('ctesibius-clock',{supplyFill}),control=make('ctesibius-clock',{supplyFill});control.activate('regulator');
