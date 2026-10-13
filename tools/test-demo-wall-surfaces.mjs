@@ -1,4 +1,4 @@
-// Visible material matches the physical wall mask and bounded smoke room.
+// Apparatus walls stay visible while simulation perimeters stay invisible.
 // Owns one Chrome for Testing child, with no use of the personal browser.
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
@@ -90,7 +90,7 @@ try{
   async function verifyMask(label){
     const result=await inside(`(()=>{
       var before=walls.slice(),version=wallsVersion,count=liquidCount;
-      bakeWalls();bakeSmokeBoundary();
+      bakeWalls();
       var pixelScale=wallsCanvas.width/worldW;
       var pixels=wallsCtx.getImageData(0,0,wallsCanvas.width,wallsCanvas.height).data;
       var missing=0,outside=0,solidPixels=0,airPixels=0,minAlpha=255;
@@ -106,11 +106,11 @@ try{
         return {inside,near};
       }
       // Independently classify raster pixel centers against the shared grid.
-      // This detects a rounded corner, broad lip, missing border or erased hole.
+      // This detects a rounded corner, broad lip, visible perimeter or erased hole.
       for(var y=0;y<wallsCanvas.height;y+=2)for(var x=0;x<wallsCanvas.width;x+=2){
         var r=Math.floor((y+.5)/pixelScale/TILE),c=Math.floor((x+.5)/pixelScale/TILE);
-        var solid=tileAt(r,c)!==null;
-        if(machineState && machineState.definition.hourglass && !isBorderCell(r,c))solid=false;
+        var solid=!isBorderCell(r,c) && tileAt(r,c)!==null;
+        if(machineState && machineState.definition.hourglass)solid=false;
         var polygonPoints=polygons.map(function(points){return polygonPoint(points,(x+.5)/pixelScale,(y+.5)/pixelScale);});
         if(polygonPoints.some(function(p){return p.near;}))continue;
         if(polygonPoints.some(function(p){return p.inside;}))solid=true;
@@ -118,12 +118,19 @@ try{
         if(solid){solidPixels++;minAlpha=Math.min(minAlpha,alpha);if(alpha<200)missing++;}
         else{airPixels++;if(alpha)outside++;}
       }
-      return {missing,outside,solidPixels,airPixels,minAlpha,
+      var perimeterCells=0,missingColliders=0;
+      for(var r=0;r<gridH;r++)for(var c=0;c<gridW;c++)if(isBorderCell(r,c)){
+        perimeterCells++;if(tileAt(r,c)===null)missingColliders++;
+      }
+      return {missing,outside,solidPixels,airPixels,minAlpha,perimeterCells,missingColliders,
         unchanged:version===wallsVersion && count===liquidCount && before.every(function(v,i){return v===walls[i];})};
     })()`);
     assert.equal(result.missing,0,label+': every solid pixel has visible material');
     assert.equal(result.outside,0,label+': no material covers air');
-    assert(result.solidPixels>0 && result.airPixels>0,label+': wall and air both sampled');
+    assert.equal(result.missingColliders,0,label+': invisible perimeter remains solid');
+    assert(result.perimeterCells>0 && result.airPixels>0,label+': perimeter and air both sampled');
+    if(!['blank','rig','hourglass'].includes(await evaluate('__toy.stats().scene')))
+      assert(result.solidPixels>0,label+': actual apparatus walls were sampled');
     assert(result.unchanged,label+': rendering leaves physics unchanged');
     rows.push({label,...result});
   }
@@ -133,11 +140,11 @@ try{
     const frame=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
     fs.writeFileSync(path.join(output,name+'.png'),Buffer.from(frame.data,'base64'));
   }
-  for(const scene of ['falls','zerog','chimney','spa','rig','blank','self-flushing-cup','siphon','thermoscope','smoke-wind-tunnel','hourglass','gold-sluice-box']){
+  for(const scene of ['falls','zerog','chimney','spa','rig','blank','self-flushing-cup','siphon','thermoscope','smoke-ring-cannon','smoke-wind-tunnel','hourglass','gold-sluice-box']){
     await load(scene,1440,900);
     await verifyMask(scene);
     await inside('render()');
-    if(['falls','self-flushing-cup','smoke-wind-tunnel','hourglass'].includes(scene))await capture(scene);
+    if(['falls','self-flushing-cup','thermoscope','smoke-ring-cannon','smoke-wind-tunnel','hourglass'].includes(scene))await capture(scene);
     if(scene==='self-flushing-cup'){
       await evaluate('__toy.glass(false)');await verifyMask('opaque cup');
       await evaluate('__toy.glass(true)');await verifyMask('glass cup');
@@ -150,42 +157,23 @@ try{
   await inside('wallRect(80,80,88,144);wallRect(96,80,104,144);wallRect(80,160,88,168);wallRect(88,168,96,176)');
   await verifyMask('one-cell walls, slot and diagonal contact');await capture('draw-and-erase');
   const sizes=[[1440,900,false,1],[980,700,false,1],[844,390,true,1],[390,844,true,1],[844,390,true,2]];
-  for(const scene of ['falls','self-flushing-cup','smoke-wind-tunnel'])for(const [width,height,mobile,pixelRatio]of sizes){
+  for(const scene of ['falls','self-flushing-cup','thermoscope','smoke-ring-cannon','smoke-wind-tunnel'])for(const [width,height,mobile,pixelRatio]of sizes){
     await load(scene,width,height,mobile,false,pixelRatio);
     await verifyMask(scene+' '+width+'x'+height+' @'+pixelRatio);
-    const boundary=await inside(`(()=>{
-      bakeSmokeBoundary();var c=smokeBoundaryCtx,p=c.getImageData(0,0,smokeBoundaryCanvas.width,smokeBoundaryCanvas.height).data;
-      var left=parseFloat(stage.style.left)||0,top=parseFloat(stage.style.top)||0,t=smokeBoundaryThickness()*fitScale;
-      var x0=left+smokeDomain.x*fitScale,y0=top+smokeDomain.y*fitScale,w=smokeDomain.w*fitScale,h=smokeDomain.h*fitScale;
-      var missing=0,outside=0,closed=0,open=!!SmokeFluid.config.OPEN_RIGHT;
-      for(var y=0;y<smokeBoundaryCanvas.height;y+=2)for(var x=0;x<smokeBoundaryCanvas.width;x+=2){
-        var wx=(x+.5)/dpr-x0,wy=(y+.5)/dpr-y0;
-        var inRoom=wx>=0 && wx<w && wy>=0 && wy<h;
-        var shell=inRoom && (wx<t || wy<t || wy>=h-t || (!open && wx>=w-t));
-        // Antialiasing at fractional camera edges can cover one device pixel.
-        var near=[wx,wx-t,wx-w,wx-w+t,wy,wy-t,wy-h,wy-h+t].some(function(v){return Math.abs(v)<1/dpr;});
-        if(near)continue;
-        var alpha=p[(y*smokeBoundaryCanvas.width+x)*4+3];
-        if(shell){closed++;if(alpha<240)missing++;}else if(alpha)outside++;
-      }
-      return {missing,outside,closed,open};
-    })()`);
-    assert.equal(boundary.missing,0,'The physical smoke wall band is fully visible');
-    assert.equal(boundary.outside,0,'The smoke frame never covers open air or its open outlet');
-    assert(boundary.closed>0,'Closed smoke walls were sampled');
+    assert.equal(await evaluate('document.querySelectorAll("#toy-viewport > canvas").length'),0,
+      'Smoke has no visible simulation frame');
     checkBounds(await inside(geometry));
     await capture(scene+'-'+width+'x'+height);
-    // A paused camera change must immediately move the wall to its new location.
-    const oldKey=await inside('smokeBoundaryKey');
+    // A paused camera change must not restore either simulation frame.
     await evaluate('__toy.setCamera({zoom:1.6,panX:20,panY:10})');
     assert.equal(await evaluate('__toy.camera().zoom'),1.6,'Paused camera really moved');
-    assert.notEqual(await inside('smokeBoundaryKey'),oldKey,'Camera movement repainted the surface');
-    const moved=await inside('var before=smokeBoundaryKey;bakeSmokeBoundary();({cached:before===smokeBoundaryKey,width:smokeBoundaryCanvas.width,height:smokeBoundaryCanvas.height})');
-    assert(moved.cached,'Camera changes repaint the room walls immediately, including when paused');
+    await verifyMask(scene+' paused camera '+width+'x'+height+' @'+pixelRatio);
+    assert.equal(await evaluate('document.querySelectorAll("#toy-viewport > canvas").length'),0,
+      'Camera changes keep the smoke frame hidden');
   }
   assert.equal(errors.length,0,'No browser exceptions');
   fs.writeFileSync(path.join(output,'report.json'),JSON.stringify({pass:true,rows,checks,errors},null,2));
-  console.log('PASS '+rows.length+' wall-mask comparisons, '+checks.length+' smoke-boundary and viewport checks. '+output);
+  console.log('PASS '+rows.length+' apparatus and invisible-perimeter comparisons, '+checks.length+' viewport checks. '+output);
 }finally{
   try{socket?.close();}catch{}
   server.close();

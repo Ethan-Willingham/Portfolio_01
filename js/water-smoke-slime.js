@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.173.1'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.174'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -273,7 +273,6 @@
       return Math.abs(value-buildViewProjection[index])>.01;
     }))cancelHeldInput();
     buildViewProjection=projection;
-    if(smokeBoundaryCanvas)bakeSmokeBoundary();
     if (userPaused && waterState === 'on') {drawLiquidToy();if(toyDraftRuntime && toyDraftRuntime.render)toyDraftRuntime.render();}
   }
   function cameraState(){
@@ -299,7 +298,7 @@
       positionKeyboardCursor(Math.max(minX,Math.min(maxX,keyboardX)),Math.max(minY,Math.min(maxY,keyboardY)));
       px=keyboardX;py=keyboardY;
     }
-    bakeWalls();drawMachineOverlay();bakeSmokeBoundary();
+    bakeWalls();drawMachineOverlay();
     return cameraState();
   }
   window.addEventListener('resize', fitStage);
@@ -418,8 +417,8 @@
   }
 
   /* ---- Wall surfaces, cached until the collision mask changes ----------
-   * Paint the occupied area itself, including the permanent border and
-   * valve seats. Every visible contact edge uses the exact solver cells.
+   * Paint apparatus walls and valve seats, leaving the permanent simulation
+   * perimeter invisible. Every visible contact edge uses the exact solver cells.
    * Shading stays inside the material, with no covering lip or outline. */
   var wallsCanvas = document.createElement('canvas');
   wallsCanvas.width = canvas.width;
@@ -431,11 +430,11 @@
   var instrumentsCanvas=null,instrumentsCtx=null,instrumentsDirty=false;
   var wallsBakedVersion = -1;
 
-  function wallSurfaceFill(c, palette, height, glass, perimeter) {
+  function wallSurfaceFill(c, palette, height, glass) {
     var fill=c.createLinearGradient(0,0,0,height);
-    fill.addColorStop(0,palette.getPropertyValue(perimeter ? '--rule' : '--line-mid').trim());
-    fill.addColorStop(.45,palette.getPropertyValue(perimeter ? '--rule' : '--rule-strong').trim());
-    fill.addColorStop(1,palette.getPropertyValue(perimeter ? '--bg-raised' : '--rule').trim());
+    fill.addColorStop(0,palette.getPropertyValue('--line-mid').trim());
+    fill.addColorStop(.45,palette.getPropertyValue('--rule-strong').trim());
+    fill.addColorStop(1,palette.getPropertyValue('--rule').trim());
     c.fillStyle=fill;c.globalAlpha=glass ? .82 : 1;
   }
 
@@ -456,13 +455,12 @@
       if(hourglass && !isBorderCell(r,c))return false;
       return tileAt(r,c)!==null;
     }
-    var path=new Path2D(),frame=new Path2D();
-    for(var fr=0;fr<gridH;fr++)for(var fc=0;fc<gridW;fc++)
-      if(isBorderCell(fr,fc) && solid(fr,fc))frame.rect(fc*TILE,fr*TILE,TILE,TILE);
+    var path=new Path2D();
     for(var r=0;r<gridH;r++)for(var c=0;c<gridW;){
-      if(!solid(r,c)){c++;continue;}
+      // Omit perimeter paint while retaining its contacts and adjacent shading.
+      if(isBorderCell(r,c) || !solid(r,c)){c++;continue;}
       var start=c;
-      while(c<gridW && solid(r,c))c++;
+      while(c<gridW-1 && solid(r,c))c++;
       path.rect(start*TILE,r*TILE,(c-start)*TILE,TILE);
     }
     // Sluice's native grain contacts also use these authored polygons.
@@ -482,60 +480,22 @@
     var bevel=1.25;
     wallsCtx.fillStyle=palette.getPropertyValue('--text-dim').trim();wallsCtx.globalAlpha=.16;
     for(r=0;r<gridH;r++)for(c=0;c<gridW;c++){
-      if(!solid(r,c))continue;
+      if(isBorderCell(r,c) || !solid(r,c))continue;
       if(!solid(r-1,c))wallsCtx.fillRect(c*TILE,r*TILE,TILE,bevel);
       if(!solid(r,c-1))wallsCtx.fillRect(c*TILE,r*TILE,bevel,TILE);
     }
     wallsCtx.fillStyle=palette.getPropertyValue('--bg-raised').trim();wallsCtx.globalAlpha=.5;
     for(r=0;r<gridH;r++)for(c=0;c<gridW;c++){
-      if(!solid(r,c))continue;
+      if(isBorderCell(r,c) || !solid(r,c))continue;
       if(!solid(r+1,c))wallsCtx.fillRect(c*TILE,(r+1)*TILE-bevel,TILE,bevel);
       if(!solid(r,c+1))wallsCtx.fillRect((c+1)*TILE-bevel,r*TILE,bevel,TILE);
     }
-    wallSurfaceFill(wallsCtx,palette,worldH,false,true);wallsCtx.fill(frame);
     wallsCtx.restore();
   }
 
-  // The grid perimeter contains water and gel. Smoke has its own room
-  // and can have an open outlet, so it gets a separate physical surface.
-  // Smoke can occupy the room around a fitted apparatus. Draw its actual
-  // closed edge bands in viewport coordinates, rather than boxing the camera.
-  var smokeBoundaryCanvas=document.createElement('canvas');
-  smokeBoundaryCanvas.style.cssText='position:absolute;inset:0;pointer-events:none;z-index:7;';
-  smokeBoundaryCanvas.setAttribute('aria-hidden','true');
-  viewport.appendChild(smokeBoundaryCanvas);
-  var smokeBoundaryCtx=smokeBoundaryCanvas.getContext('2d'),smokeBoundaryKey='';
+  // Smoke's physical edge bands remain in its obstacle mask, without a frame.
   function smokeBoundaryThickness() {
     return Math.min(smokeDomain.w,smokeDomain.h)/Math.max(16,smokeEngine.config.SIM_RESOLUTION)*2;
-  }
-  function reactingAirScene() {
-    return !!toyOxygen || !!(machineState && machineState.definition.fire) ||
-      ['candle-in-jar','chimney-draw','slime-sauna','douse-fire','fire-brigade','oil-slick-fire'].indexOf(currentScene)>=0;
-  }
-  function bakeSmokeBoundary() {
-    var width=viewport.clientWidth,height=viewport.clientHeight;
-    var left=parseFloat(stage.style.left)||0,top=parseFloat(stage.style.top)||0;
-    var open=smokeActive && !!SmokeFluid.config.OPEN_RIGHT;
-    var edge=smokeActive && !reactingAirScene() ? smokeBoundaryThickness() : 0;
-    var key=[width,height,left,top,fitScale,smokeActive,open,edge,smokeDomain.x,smokeDomain.y,smokeDomain.w,smokeDomain.h].join(':');
-    if(key===smokeBoundaryKey)return;
-    smokeBoundaryKey=key;
-    smokeBoundaryCanvas.width=Math.max(1,Math.round(width*dpr));
-    smokeBoundaryCanvas.height=Math.max(1,Math.round(height*dpr));
-    smokeBoundaryCtx.setTransform(dpr,0,0,dpr,0,0);
-    if(!smokeActive || !edge)return;
-    var x=left+smokeDomain.x*fitScale,y=top+smokeDomain.y*fitScale;
-    var w=smokeDomain.w*fitScale,h=smokeDomain.h*fitScale,t=edge*fitScale;
-    var shell=new Path2D();
-    shell.rect(x,y,w,t);shell.rect(x,y+h-t,w,t);shell.rect(x,y+t,t,Math.max(0,h-2*t));
-    if(!open)shell.rect(x+w-t,y+t,t,Math.max(0,h-2*t));
-    var palette=getComputedStyle(document.documentElement);
-    wallSurfaceFill(smokeBoundaryCtx,palette,height,false,true);smokeBoundaryCtx.fill(shell);
-    smokeBoundaryCtx.save();smokeBoundaryCtx.clip(shell);
-    smokeBoundaryCtx.globalAlpha=.12;smokeBoundaryCtx.fillStyle=palette.getPropertyValue('--text-dim').trim();
-    smokeBoundaryCtx.fillRect(x+t-1,y+t,1,Math.max(0,h-2*t));
-    smokeBoundaryCtx.fillRect(x+t,y+h-t,Math.max(0,w-t*(open ? 1 : 2)),1);
-    smokeBoundaryCtx.restore();
   }
 
   /* ==== WATER HOST ======================================================
@@ -15281,7 +15241,6 @@
 
   function render() {
     bakeWalls();
-    bakeSmokeBoundary();
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, worldW, worldH);
     drawEmitterFixtures();
