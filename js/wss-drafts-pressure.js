@@ -27,10 +27,12 @@
     d.energyBudgetStatus='The existing whole-parcel steam companion pays actual phase mass and sensible plus latent enthalpy. Vapor pressure follows native gas lineage, and finite cooling can condense it back. The heater supplies the declared external energy. Sustained unsupported vapor, calibrated heat transfer, detailed steam momentum, compressional work and full system-energy closure remain unresolved.';
   }
   function make(id,world,options){
+    if((id==='boyle-j-tube'||id==='torricelli-tube')&&root.WSSPressureScales)return root.WSSPressureScales.make(id,world,options);
     options=options||{};if(world.w!==720||world.h!==400||(world.tile||8)!==8)throw Error('Pressure drafts need a 720 by 400 world.');
     var d,r,receiver,opening;
     if(id==='glugging-bottle'){
       d=base(id,'Glugging bottle','Open the air vent and compare the bottle draining through its mouth, draft.',options);
+      d.settings.phaseChange=true;d.entrainedAir={entrainedArea:200};
       r=vessel(d,'Bottle',rect(272,48,176,176),true);receiver=vessel(d,'Basin',rect(16,312,688,72),false);
       pipe(d,[point(364,204),point(364,292)],16,true);fill(d,rect(280,80,160,136));
       d.vents.push(rect(440,64,8,16));opening={axis:'x',at:448,start:64,end:80};d.primary.opening=opening;d.primary.closed=!options.vented;
@@ -38,7 +40,7 @@
       d.setups=[{id:'ordinary',label:'Shared mouth',options:{}},{id:'vented',label:'Air vent open',options:{vented:true}}];
       d.meters.push({id:'mouth',a:point(360,288),b:point(376,288),axis:'y',positive:1});
       d.measure={source:r,receiver:receiver,gasProbe:point(352,64),outlet:point(368,296),sourceLevel:80,bore:16};
-      d.energyBudgetStatus+=' Alternating gas/water counterflow has not yet been observed. There is no separate bubble drawing or prescribed glug cycle.';
+      d.energyBudgetStatus+=' Compact detached gas uses the finite bubble transport model; the sealed headspace stays in the native pressure solver. Alternating counterflow and its timing are still unvalidated.';
     }else if(id==='boyle-j-tube'){
       d=base(id,"Boyle's J-tube",'The taller water column squeezes the trapped air. Open its vent to compare, draft.',options);
       r=vessel(d,'Trapped air',rect(216,80,80,264),true);receiver=vessel(d,'Open arm',rect(424,32,80,312),false);

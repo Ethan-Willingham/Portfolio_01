@@ -829,6 +829,7 @@
   };
   function install() {
     ids.forEach(function (id) {
+      if (id === 'shishi-odoshi' || id === 'lift-lock' || id === 'ballast-railway') return;
       var current = root.WSSMachines[id];
       if (!current || current.bodyComplete) return;
       originals[id] = current.make;

@@ -7,6 +7,7 @@
     var shell = document.getElementById('toy');
     if (!toy || !shell || !document.getElementById('toy-fallback').hidden) return;
     // The app page is always full-window; its fullscreen button uses the browser's fullscreen.
+    var submarineControls=window.WSSSubmarineControls ? window.WSSSubmarineControls.create(toy,shell) : null;
     var appMode = document.body.classList.contains('toy-app');
     var oxygenView = window.WSSOxygenView ? window.WSSOxygenView.create(toy, shell) : null;
     if (oxygenView) toy.oxygenView = oxygenView;
@@ -459,7 +460,7 @@
         var heldControl=control.hold===true || /^(thumb|fire-pour|pour|sluice-feed)$/.test(control.kind);
         button.dataset.hold=String(heldControl);
         button.disabled=!!control.disabled;
-        button.setAttribute('aria-label',control.label);
+        button.setAttribute('aria-label',control.ariaLabel || control.label);
         var label=button.firstElementChild;if(label.textContent!==control.label)label.textContent=control.label;
         var labelWidth=label.offsetWidth,labelHeight=label.offsetHeight,labelCenter=left+width*.5;
         var fittedCenter=Math.max(8+labelWidth*.5,Math.min(view.width-8-labelWidth*.5,labelCenter));
@@ -557,6 +558,7 @@
       fitPanel();
     }
     function updateMeasurements() {
+      if(submarineControls)submarineControls.sync();
       if(sluiceControls)sluiceControls.update();
       if (oxygenView) oxygenView.update();
       var state = toy.stats(), native=nativeScene(state.scene),machine = /^(siphon|cup|heron)$/.test(state.scene) || native;
@@ -567,7 +569,7 @@
       var cave=state.scene==='breathing-cave',caveReading=sample.cave;
       var caveView=syncCaveIndicator(caveReading,state);
       var fire=!!(liveMachine && liveMachine.definition.fire);
-      var trap=state.scene==='sewer-gas-trap' && !state.reducedModel;
+      var trap=state.scene==='sewer-gas-trap' && !state.reducedModel,marly=state.scene==='marly-machine';
       document.getElementById('toy-trap-physics').hidden=!trap;
       var candle=fire && !!liveMachine.definition.fire.air;
       var slip=!!(liveMachine && liveMachine.definition.materialSlip),sluice=!!(liveMachine && liveMachine.definition.sluice);
@@ -575,7 +577,9 @@
       var birds=!!(liveMachine && liveMachine.definition.birds);
       var wind=state.scene==='smoke-wind-tunnel',cannon=state.scene==='smoke-ring-cannon'||wind,thermal=state.scene==='thermoscope',balloon=state.scene==='water-balloons',divers=state.scene==='cartesian-divers',bubbles=state.scene==='air-hose';
       var thirsty=!!(liveMachine && liveMachine.definition.thirsty);
-      var nativeReduced=!!(liveMachine && (liveMachine.definition.thermal || liveMachine.definition.capillary || liveMachine.definition.gasBodyLab || liveMachine.definition.objective || liveMachine.definition.floatingBlock || liveMachine.definition.wheel));
+      var waterRocket=!!(liveMachine && liveMachine.definition.waterRocketModel);
+      var railway=!!(liveMachine && liveMachine.definition.ballastRailway);
+      var nativeReduced=!!(liveMachine && (liveMachine.definition.thermal || liveMachine.definition.capillary || liveMachine.definition.gasBodyLab || liveMachine.definition.objective || liveMachine.definition.floatingBlock || liveMachine.definition.wheel || railway || liveMachine.definition.marly || liveMachine.definition.tippingTrough || liveMachine.definition.liftCaissons || liveMachine.definition.pressureScaleLab || liveMachine.definition.teslaValve));
       var nativeCargo=!!(liveMachine && (liveMachine.definition.submarine || liveMachine.definition.cuff || liveMachine.definition.rocket));
       var contextual = machine || air.enabled;
       var ledger=sample.ledger || {},convergence=sample.convergence;
@@ -597,8 +601,13 @@
       if(balloon){pressureLabel=state.paused?'Paused':'Live';pressureMessage='Drag, fling and pop. Instruments explains the elastic skin.';}
       if(slip){pressureLabel=state.paused?'Paused':state.scene==='material-oil-jar'||sluice||(window.WSSMachineRegistry&&window.WSSMachineRegistry.lookup(state.scene)?.status==='WORKS')?'Live':'Prototype';pressureMessage='Instruments has the matched-density comparison and model limits.';}
       if(steam){pressureLabel=state.paused?'Paused':'Diagnostic';pressureMessage=birds?'Grab the pipe’s top to change its note. Instruments has the comparisons and acoustic limits.':'The white plume traces escaping vapor. Instruments explains the thermal model.';}
-      if(nativeReduced){var reducedError=fatal || sample.boundary && sample.boundary.error || sample.draftRuntime && sample.draftRuntime.error;pressureLabel=reducedError?'Solver stopped':state.paused?'Paused':sample.ready?'Live':'Starting';pressureMessage=reducedError?'Restart to restore the native solver.':(liveMachine.definition.gasBodyLab || liveMachine.definition.objective || liveMachine.definition.floatingBlock || liveMachine.definition.wheel)?liveMachine.definition.readingLabel:'Instruments has the material model and its comparisons.';}
+      if(liveMachine && liveMachine.definition.acoustics){var acousticError=liveMachine.definition.acousticReading && liveMachine.definition.acousticReading.error;pressureLabel=acousticError?'Solver stopped':state.paused?'Paused':liveMachine.ready?'Live':'Starting';pressureMessage=acousticError?'Restart this machine to restore the sound model.':liveMachine.definition.readingLabel || liveMachine.definition.caption;}
+      if(nativeReduced){var reducedError=fatal || sample.boundary && sample.boundary.error || sample.draftRuntime && sample.draftRuntime.error;pressureLabel=reducedError?'Solver stopped':state.paused?'Paused':sample.ready?'Live':'Starting';pressureMessage=reducedError?'Restart to restore the native solver.':(liveMachine.definition.gasBodyLab || liveMachine.definition.objective || liveMachine.definition.floatingBlock || liveMachine.definition.wheel || railway || liveMachine.definition.marly || liveMachine.definition.tippingTrough || liveMachine.definition.liftCaissons || liveMachine.definition.pressureScaleLab || liveMachine.definition.teslaValve)?liveMachine.definition.readingLabel:'Instruments has the material model and its comparisons.';}
+      if(railway && !reducedError){pressureLabel=state.paused?'Paused':liveMachine.ready?liveMachine.definition.readingLabel:'Starting';pressureMessage=liveMachine.definition.caption;}
+      if(marly){pressureLabel=state.paused?'Paused':liveMachine && liveMachine.definition.readingLabel || 'Starting';pressureMessage='Change the river flow or apply the brake. The valves hold the raised water.';}
       if(nativeCargo){var cargoDefinition=liveMachine.definition,cargoReading=cargoDefinition.rocketReading || cargoDefinition.cuffReading || cargoDefinition.submarineReading,cargoError=fatal || cargoReading && cargoReading.error;pressureLabel=cargoError?'Solver stopped':state.paused?'Paused':!liveMachine.ready || !cargoReading?'Starting':cargoDefinition.rocket?'Diagnostic':'Live';pressureMessage=cargoError?'Restart to restore the native solver.':'Instruments explains the carried-water or gas-body model and its comparisons.';}
+      if(waterRocket){pressureLabel=state.paused?'Paused':'Live';pressureMessage=liveMachine.definition.caption;}
+      if(liveMachine && liveMachine.definition.waveLab){pressureLabel=state.paused?'Paused':liveMachine.ready?'Live':'Starting';pressureMessage=liveMachine.definition.caption;}
       if(state.reducedModel){pressureLabel=fatal?'Model stopped':state.paused?'Paused':'Finite-volume model';pressureMessage=liveMachine && liveMachine.definition.readingLabel || 'The apparatus uses a finite-volume model.';}
       if(trap){
         var trapFan=liveMachine && liveMachine.definition.draftFireSmoke.fan.enabled;
@@ -607,15 +616,15 @@
         pressureMessage=liveMachine && liveMachine.definition.caption || 'Starting the comparison.';
         text('toy-hint',pressureMessage);
       }
-      document.getElementById('toy-machine-diagnostics').hidden=!contextual || fire || balloon || thirsty || trap;
+      document.getElementById('toy-machine-diagnostics').hidden=!contextual || fire || balloon || thirsty || trap || railway;
       text('toy-machine-diagnostics',contextual ? pressureMessage : '');
       if(contextual)text('toy-status',state.loading ? 'Starting machine' : fire ? state.paused?'Paused':'Live' : pressureLabel || (state.paused ? 'Paused' : 'Live'));
-      document.getElementById('toy-machine-scale').hidden=thirsty || trap;
+      document.getElementById('toy-machine-scale').hidden=thirsty || trap || railway;
       document.getElementById('toy-machine-material-notice').hidden = !air.enabled;
       document.getElementById('toy-machine-summary').hidden = !machine || trap;
-      document.getElementById('toy-machine-metrics').hidden = !machine || state.reducedModel || fire || cannon || balloon || slip || cave || trap || thirsty || !!(liveMachine && (liveMachine.definition.airContact || liveMachine.definition.snorkel || liveMachine.definition.gasBodyLab));
+      document.getElementById('toy-machine-metrics').hidden = !machine || state.reducedModel || marly || fire || cannon || balloon || slip || cave || trap || thirsty || waterRocket || railway || !!(liveMachine && (liveMachine.definition.airContact || liveMachine.definition.snorkel || liveMachine.definition.gasBodyLab));
       if(fire)text('toy-hint',liveMachine.definition.sauna ? 'Click the water source or the stones to make steam. Let the room cool between pours.' : candle?'Lift the lid before the flame goes out. Reset lights a fresh candle.':'Click the upper water source or the fire to pour. You can also splash it with Water.');
-      if(thirsty)text('toy-hint',pressureMessage);
+      if(thirsty || railway)text('toy-hint',pressureMessage);
       if(birds && state.tool==='poke')text('toy-hint','Grab the pipe’s top and slide it up for a lower note, down for a higher one.');
       if(cave)text('toy-hint','Hold inside or outside pressure to move the air. Release to stop raising it.');
       if(cannon)text('toy-hint',wind?'Grab the slime. Stop the fan to compare its wake.':'Tap the back. Drag the slime back into the swirl.');
@@ -634,11 +643,11 @@
       document.getElementById('toy-heron-options').hidden=!heron;
       document.getElementById('toy-heron-setup-note').hidden=!heron;
       if(heron && liveMachine && liveMachine.ready && !fountainSelect.disabled)fountainSelect.value=liveMachine.definition.setup || 'sealed';
-      document.getElementById('toy-instruments-open').hidden = !contextual;
+      document.getElementById('toy-instruments-open').hidden = !contextual || marly;
       document.getElementById('toy-instruments-open').textContent=trap?'How it works':'Instruments';
       document.getElementById('toy-heading-instruments').textContent=trap?'How it works':'Instruments';
       document.getElementById('toy-numerical-status').hidden=trap;
-      if (!contextual && openPanel && openPanel.id === 'toy-panel-instruments') closePanel(false);
+      if ((!contextual || marly) && openPanel && openPanel.id === 'toy-panel-instruments') closePanel(false);
       if (machine) {
         text('toy-machine-caption', sample.caption || (liveMachine && liveMachine.definition.caption) || 'The apparatus is being assembled. Measurements will appear when it is ready.');
       }
@@ -666,17 +675,17 @@
         var b=liveMachine.definition.boundaries || {pool:false};
         text('toy-native-boundaries',liveMachine.definition.boundaryNote || (b.pool ? 'Drained water feeds the tap. The powered return adds energy to lift it. The tap requests '+b.tap.rate+' parcels per simulation second at '+b.tap.vy+' pixels per second downward; each parcel represents 1.5625 square pixels. All '+state.allocation+' allocated slots are either present water or stored reserve.' : 'Only the upper opening is held. The lower end stays open. The side-hole comparison connects the upper air space to the room.'));
         var ledger=sample.boundary, reduced=sample.draftRuntime,modelWater=reduced&&Number.isFinite(reduced.waterKg)?reduced.waterKg:reduced&&reduced.water,modelMassError=reduced&&Number.isFinite(reduced.massErrorKg)?reduced.massErrorKg:reduced&&reduced.massError,modelUnit=reduced&&Number.isFinite(reduced.waterKg)?'kg':'units';
-        text('toy-native-ledger',state.reducedModel && Number.isFinite(modelWater) ? 'Model water '+modelWater.toFixed(1)+' '+modelUnit+'; inventory error '+number(modelMassError,modelUnit)+'.' : nativeReduced && ledger && reduced ? 'Native parcels: '+(ledger.present-(reduced.solidParcels || reduced.boundWaterParcels || 0))+' flowing, '+(reduced.solidParcels || reduced.boundWaterParcels || 0)+(liveMachine.definition.thermal?' solid.':' stored at roots.')+' Total '+ledger.count+'.' : sluice && sample.sluice ? 'Quartz washed '+sample.sluice.sand.washed+'/'+sample.sluice.sand.total+'; black sand remaining '+(sample.sluice.blackSand.total-sample.sluice.blackSand.washed)+'/'+sample.sluice.blackSand.total+'; gold remaining '+(sample.sluice.gold.total-sample.sluice.gold.washed)+'/'+sample.sluice.gold.total+'. Water added '+sample.sluice.admitted+'.' : thirsty && sample.thirsty && ledger ? 'Water parcels: '+(ledger.present-sample.thirsty.absorbedParcels)+' flowing, '+sample.thirsty.absorbedParcels+' absorbed, '+ledger.parked+' in reserve. Total '+ledger.count+'. Slime '+Math.round(sample.thirsty.fraction*100)+'% full.' : birds && sample.birds ? 'Whistle dry air: '+number(sample.birds.escapedDryGrains,'grains')+' expelled; '+number(sample.birds.admittedDryGrains,'grains')+' admitted. Native water parcels '+sample.birds.waterParcels+'.' : steam && sample.steam ? 'Water parcels: '+sample.steam.liquidParcels+' liquid, '+sample.steam.vaporParcels+' vapor, '+sample.steam.escapedVaporParcels+' escaped. Heat supplied '+number(sample.steam.heatInputJ/1.3558179483314,'ft·lbf')+'.' : cave && caveReading ? 'Air added '+number(caveReading.pumpedKg,'kg')+'; admitted '+number(caveReading.admittedKg,'kg')+'; expelled '+number(caveReading.escapedKg,'kg')+'; inventory error '+number(caveReading.massResidualKg,'kg')+'.' : b && b.pool && ledger ? 'Present '+ledger.present+'; reserve '+ledger.parked+'. Requested '+ledger.requested+'; admitted '+ledger.admitted+'; collected '+ledger.drained+'; refused '+ledger.shortfall+'. Return work '+number(ledger.externalWork,'J')+'.' : '');
+        text('toy-native-ledger',state.reducedModel && Number.isFinite(modelWater) ? 'Model water '+modelWater.toFixed(1)+' '+modelUnit+'; inventory error '+number(modelMassError,modelUnit)+'.' : railway && reduced && ledger ? 'Water parcels in car A: '+reduced.waterCounts[0]+'; car B: '+reduced.waterCounts[1]+'. Trips: '+reduced.trips+'; full cycles: '+reduced.cycles+'. Native inventory: '+ledger.present+' present, '+ledger.parked+' in reserve. Cable error: '+reduced.cableError.toFixed(6)+'.' : nativeReduced && ledger && reduced ? 'Native parcels: '+(ledger.present-(reduced.solidParcels || reduced.boundWaterParcels || 0))+' flowing, '+(reduced.solidParcels || reduced.boundWaterParcels || 0)+(liveMachine.definition.thermal?' solid.':' stored at roots.')+' Total '+ledger.count+'.' : sluice && sample.sluice ? 'Quartz washed '+sample.sluice.sand.washed+'/'+sample.sluice.sand.total+'; black sand remaining '+(sample.sluice.blackSand.total-sample.sluice.blackSand.washed)+'/'+sample.sluice.blackSand.total+'; gold remaining '+(sample.sluice.gold.total-sample.sluice.gold.washed)+'/'+sample.sluice.gold.total+'. Water added '+sample.sluice.admitted+'.' : thirsty && sample.thirsty && ledger ? 'Water parcels: '+(ledger.present-sample.thirsty.absorbedParcels)+' flowing, '+sample.thirsty.absorbedParcels+' absorbed, '+ledger.parked+' in reserve. Total '+ledger.count+'. Slime '+Math.round(sample.thirsty.fraction*100)+'% full.' : birds && sample.birds ? 'Whistle dry air: '+number(sample.birds.escapedDryGrains,'grains')+' expelled; '+number(sample.birds.admittedDryGrains,'grains')+' admitted. Native water parcels '+sample.birds.waterParcels+'.' : steam && sample.steam ? 'Water parcels: '+sample.steam.liquidParcels+' liquid, '+sample.steam.vaporParcels+' vapor, '+sample.steam.escapedVaporParcels+' escaped. Heat supplied '+number(sample.steam.heatInputJ/1.3558179483314,'ft·lbf')+'.' : cave && caveReading ? 'Air added '+number(caveReading.pumpedKg,'kg')+'; admitted '+number(caveReading.admittedKg,'kg')+'; expelled '+number(caveReading.escapedKg,'kg')+'; inventory error '+number(caveReading.massResidualKg,'kg')+'.' : b && b.pool && ledger ? 'Present '+ledger.present+'; reserve '+ledger.parked+'. Requested '+ledger.requested+'; admitted '+ledger.admitted+'; collected '+ledger.drained+'; refused '+ledger.shortfall+'. Return work '+number(ledger.externalWork,'J')+'.' : '');
       }
       var soundButton=document.getElementById('toy-sound'),sound=toy.soundStats ? toy.soundStats() : {enabled:false};
-      soundButton.hidden=state.reducedModel || !!(liveMachine && liveMachine.definition.workshopAudio) || cave || slip || birds || divers || balloon || bubbles || !native && !fire;pressed(soundButton,!!sound.enabled);soundButton.textContent=sound.enabled ? 'Sound on' : 'Sound off';
+      soundButton.hidden=state.reducedModel || !!(liveMachine && liveMachine.definition.workshopAudio) || marly || waterRocket || cave || slip || birds || divers || balloon || bubbles || !native && !fire;pressed(soundButton,!!sound.enabled);soundButton.textContent=sound.enabled ? 'Sound on' : 'Sound off';
       soundButton.title=birds?'Airflow powers the tone. Grab the pipe top to change its estimated mode.':steam?'A pipe-mode whistle powered by escaping gas. Enable sound with this button.':fire?'A synthesized hiss from water cooling the source. Enable sound with this button.':'Synthesized water impacts. Enable sound with this button.';
       syncMachineControls();
       text('toy-compact-flow', number(sample.flowCubicInchesPerSecond, 'in³/s'));
       document.getElementById('toy-compact-flow').parentElement.hidden=state.reducedModel || divers || steam || bubbles || nativeReduced || nativeCargo;
       document.getElementById('toy-machine-metrics').classList.toggle('is-stale', stale);
       document.getElementById('toy-machine-metrics').title = stale ? 'The measurement sample is more than a quarter second old.' : '';
-      text('toy-machine-scale', sample.scaleText || 'The box is 30 inches wide and 1 inch deep. Seconds use Earth gravity.');
+      text('toy-machine-scale', marly ? 'Simplified mechanical model. The lift is about 13 feet; the drawing is not to scale.' : sample.scaleText || 'The box is 30 inches wide and 1 inch deep. Seconds use Earth gravity.');
       [['pressure', 'pressurePsi', 'psi'], ['speed', 'speedInchesPerSecond', 'in/s'], ['ideal-speed', 'idealSpeedInchesPerSecond', 'in/s'],
         ['flow', 'flowCubicInchesPerSecond', 'in³/s'], ['clock', 'clockSeconds', 's'], ['jet', 'jetRiseInches', 'in'], ['ideal-jet', 'idealJetRiseInches', 'in'],
         ['air-work', 'airWorkFootPounds', 'ft·lbf'], ['water-work', 'gravityWorkFootPounds', 'ft·lbf'], ['age', 'sampleAgeMs', 'ms'],
@@ -696,14 +705,14 @@
       var legend = document.getElementById('toy-pressure-legend');
       airPressureColors=toy.airPressureView();
       ['toy-air-pressure-toggle','toy-air-pressure-compact'].forEach(function(id){pressed(document.getElementById(id),airPressureColors);});
-      legend.hidden = thirsty || cave || fire || cannon || balloon || slip || !(pressureColors || airPressureColors) || !contextual;
+      legend.hidden = railway || thirsty || cave || fire || cannon || balloon || slip || !(pressureColors || airPressureColors) || !contextual;
       if (!legend.hidden) {
         var cap = window.WaterMachinesInstruments && toy.world ? window.WaterMachinesInstruments.scale({ width: toy.world().scaleWidth || toy.world().w }).psi(80000) : null;
         text('toy-pressure-legend', airPressureColors ? 'Air: gold above room pressure, rose below. Labels show gauge psi; room air is 0. Readings are diagnostic.' :
           'Water: rose below room pressure, gold above. Full color at ' + (Number.isFinite(cap) ? '±' + number(cap, 'psi') : 'the model limit') + '.');
       }
-      document.querySelectorAll('#toy-panel-instruments > .toy-instrument-values, #toy-panel-instruments > .toy-details, #toy-panel-instruments .toy-instrument-actions + .toy-panel-note').forEach(function(node){if(node.hidden!==(fire||cannon||balloon||steam||slip||cave||trap||thirsty))node.hidden=fire||cannon||balloon||steam||slip||cave||trap||thirsty;});
-      ['toy-air-pressure-toggle','toy-air-pressure-compact','toy-pressure-toggle'].forEach(function(id){document.getElementById(id).hidden=fire||cannon||balloon||slip||cave||trap||thirsty;});
+      document.querySelectorAll('#toy-panel-instruments > .toy-instrument-values, #toy-panel-instruments > .toy-details, #toy-panel-instruments .toy-instrument-actions + .toy-panel-note').forEach(function(node){if(node.hidden!==(marly||fire||cannon||balloon||steam||slip||cave||trap||thirsty||railway))node.hidden=marly||fire||cannon||balloon||steam||slip||cave||trap||thirsty||railway;});
+      ['toy-air-pressure-toggle','toy-air-pressure-compact','toy-pressure-toggle'].forEach(function(id){document.getElementById(id).hidden=marly||fire||cannon||balloon||slip||cave||trap||thirsty||railway;});
       var builderState = toy.buildState ? toy.buildState() : {};
       var message = builderState.error || sample.error || notice;
       if(builderState.pending)message='Restoring the wall. Water and the clock are paused until the edit finishes.';
@@ -725,6 +734,7 @@
     }
 
     function sync() {
+      if(submarineControls)submarineControls.sync();
       syncCamera();
       var state = toy.stats();
       var native=nativeScene(state.scene),wind=state.scene==='smoke-wind-tunnel',cannon=state.scene==='smoke-ring-cannon'||wind,thermal=state.scene==='thermoscope',balloon=state.scene==='water-balloons',divers=state.scene==='cartesian-divers',bubbles=state.scene==='air-hose';shell.classList.toggle('is-native-machine',native);
@@ -768,7 +778,7 @@
       var hands=!!(builderState && builderState.handsLab);
       shell.classList.toggle('has-wall-editor',hands);
       bar.querySelectorAll('.toy-tools [data-tool]').forEach(function(button){button.hidden=false;});presetsButton.hidden=false;
-      if(state.scene==='thirsty-slime'){bar.querySelectorAll('.toy-tools [data-tool]').forEach(function(button){button.hidden=button.dataset.tool!=='poke';});presetsButton.hidden=true;}
+      if(state.scene==='thirsty-slime' || state.scene==='ballast-railway'){bar.querySelectorAll('.toy-tools [data-tool]').forEach(function(button){button.hidden=button.dataset.tool!=='poke';});presetsButton.hidden=true;}
       if(cannon || thermal || balloon || divers || bubbles){bar.querySelectorAll('.toy-tools [data-tool]').forEach(function(button){button.hidden=false;});presetsButton.hidden=false;}
       if(state.reducedModel){bar.querySelectorAll('.toy-tools [data-tool]').forEach(function(button){button.hidden=button.dataset.tool!=='poke';});presetsButton.hidden=true;}
       if(hands){
@@ -926,7 +936,7 @@
     window.addEventListener('scroll', fitPanel, { passive: true });
     // Reading the existing sample never requests another GPU snapshot.
     var demoActivity = DemoActivity.create(shell);
-    demoActivity.onChange(function(active){if(!active)releaseCavePressure();});
+    demoActivity.onChange(function(active){if(!active){releaseCavePressure();if(submarineControls)submarineControls.release();}});
     demoActivity.setInterval(function () {
       if(document.hidden)return;
       if(shell.classList.contains('is-paused')!==toy.stats().paused)sync();else updateMeasurements();

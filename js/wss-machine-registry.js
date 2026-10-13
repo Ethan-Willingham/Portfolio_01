@@ -638,7 +638,7 @@
     "id": "shishi-odoshi",
     "capability": "Floating things",
     "title": "Shishi-odoshi",
-    "cue": "Water fills the bamboo trough until it tips, empties and swings back.",
+    "cue": "Watch water fill the hinged trough, tip it, and let its counterweight reset it. Stop the feed for a dry control.",
     "status": "WORKS",
     "draft": true,
     "world": {
@@ -652,19 +652,15 @@
       "wss-water-balloons",
       "wss-machines/water-balloons",
       "wss-drafts-bodies",
-      "wss-body-machines"
-    ],
-    "behaviorPlan": {
-      "test": "node tools/test-body-machines.mjs shishi-odoshi",
-      "key": "Water fills the bamboo trough until it tips, empties and swings back.",
-      "statusIfObserved": "WORKS"
-    }
+      "wss-moving-water-loads",
+      "wss-shishi-odoshi"
+    ]
   },
   {
     "id": "lift-lock",
     "capability": "Floating things",
     "title": "Peterborough lift lock",
-    "cue": "Water added to one caisson lowers it and lifts the other through their common hydraulic link.",
+    "cue": "Open the ballast feed. Added water lowers one caisson and raises the other through an equal-area hydraulic link.",
     "status": "WORKS",
     "draft": true,
     "world": {
@@ -678,19 +674,15 @@
       "wss-water-balloons",
       "wss-machines/water-balloons",
       "wss-drafts-bodies",
-      "wss-body-machines"
-    ],
-    "behaviorPlan": {
-      "test": "node tools/test-body-machines.mjs lift-lock",
-      "key": "Water added to one caisson lowers it and lifts the other through their common hydraulic link.",
-      "statusIfObserved": "WORKS"
-    }
+      "wss-moving-water-loads",
+      "wss-lift-lock"
+    ]
   },
   {
     "id": "ballast-railway",
     "capability": "Floating things",
     "title": "Water-ballast cliff railway",
-    "cue": "Fill the upper car. Its water ballast pulls the linked car uphill; open the drains to unload.",
+    "cue": "Water fills the upper car. Its weight pulls the other uphill; the lower car drains for the return trip.",
     "status": "WORKS",
     "draft": true,
     "world": {
@@ -701,16 +693,8 @@
     "accepted": true,
     "preview": "cup",
     "scripts": [
-      "wss-water-balloons",
-      "wss-machines/water-balloons",
-      "wss-drafts-bodies",
-      "wss-body-machines"
-    ],
-    "behaviorPlan": {
-      "test": "node tools/test-body-machines.mjs ballast-railway",
-      "key": "Fill the upper car. Its water ballast pulls the linked car uphill; open the drains to unload.",
-      "statusIfObserved": "WORKS"
-    }
+      "wss-ballast-railway"
+    ]
   },
   {
     "id": "vacuum-coffee",
@@ -855,10 +839,10 @@
     "id": "water-organ",
     "capability": "Sound",
     "title": "Water organ",
-    "cue": "Play several pressure-driven pipe voices from a water-loaded air chest.",
+    "cue": "Falling water expels air through three playable pipes. Turn on sound, then tap C, E or G.",
     "preview": "cup",
     "status": "WORKS",
-    "draft": true,
+    "draft": false,
     "accepted": true,
     "world": {
       "w": 720,
@@ -866,9 +850,11 @@
     },
     "pool": true,
     "scripts": [
-      "wss-workshop-models",
+      "wss-steam",
+      "wss-singing-pipe",
+      "wss-machines/singing-pipe",
       "wss-drafts-workshop",
-      "wss-workshop-runtime"
+      "wss-acoustic-machines"
     ]
   },
   {
@@ -895,10 +881,10 @@
     "id": "ringing-bubbles",
     "capability": "Sound",
     "title": "Ringing bubbles",
-    "cue": "Hear damped tones whose frequency follows the radius of actual native bubbles.",
+    "cue": "Inject actual air pockets, turn on sound, then switch bubble size to hear the lower note.",
     "preview": "cup",
     "status": "WORKS",
-    "draft": true,
+    "draft": false,
     "accepted": true,
     "world": {
       "w": 720,
@@ -909,7 +895,7 @@
       "wss-bubbles",
       "wss-machines/air-hose",
       "wss-drafts-workshop",
-      "wss-workshop-runtime"
+      "wss-acoustic-machines"
     ]
   },
   {
@@ -949,17 +935,17 @@
     "scripts": [
       "wss-wave-maker",
       "wss-drafts-workshop",
-      "wss-workshop-runtime"
+      "wss-wave-labs"
     ]
   },
   {
     "id": "tsunami-runup",
     "capability": "Waves",
     "title": "Tsunami run-up",
-    "cue": "Launch one paddle cycle and measure how far its native wave climbs the beach.",
+    "cue": "Drive native waves onto a stepped shore. The high-water mark tracks their climb; stop the motor to compare.",
     "preview": "cup",
     "status": "WORKS",
-    "draft": true,
+    "draft": false,
     "accepted": true,
     "world": {
       "w": 720,
@@ -969,7 +955,7 @@
     "scripts": [
       "wss-wave-maker",
       "wss-drafts-workshop",
-      "wss-workshop-runtime"
+      "wss-wave-labs"
     ]
   },
   {
@@ -1224,7 +1210,7 @@
     "id": "boyle-j-tube",
     "capability": "Valves and logic",
     "title": "Boyle's J-tube",
-    "cue": "The tall column compresses the trapped air. Vent it to remove the pressure that holds the levels apart.",
+    "cue": "Watch the tall water arm compress trapped air. Open its vent and compare the levels.",
     "status": "WORKS",
     "draft": true,
     "accepted": true,
@@ -1236,7 +1222,7 @@
     "preview": "cup",
     "scripts": [
       "wss-drafts-pressure",
-      "wss-pressure-labs"
+      "wss-pressure-scales"
     ],
     "loaderDependencies": [
       "wss-boundaries",
@@ -1368,7 +1354,7 @@
     "id": "torricelli-tube",
     "capability": "Valves and logic",
     "title": "Torricelli's tube",
-    "cue": "The water column drains until atmospheric pressure supports it against the vapor-filled space above. Admit air to release it.",
+    "cue": "Watch the tall water column settle above its bath. Open the top vent to release it.",
     "status": "WORKS",
     "draft": true,
     "accepted": true,
@@ -1380,7 +1366,7 @@
     "preview": "cup",
     "scripts": [
       "wss-drafts-pressure",
-      "wss-pressure-labs"
+      "wss-pressure-scales"
     ],
     "loaderDependencies": [
       "wss-boundaries",
@@ -1438,7 +1424,7 @@
     "id": "breathing-cave",
     "capability": "Smoke",
     "title": "Breathing cave",
-    "cue": "Raise inside or outside pressure, then watch the pivoted vanes turn with the air. Close the mouth to trap it.",
+    "cue": "Raise inside or outside pressure, then watch the arrows travel and turn with the air. Close the mouth to trap it.",
     "status": "WORKS",
     "draft": false,
     "accepted": true,
@@ -1460,7 +1446,7 @@
     "behaviorPlan": {
       "seed": 17,
       "seconds": 48,
-      "key": "Manual pressure inputs drive air through the real mouth; drag torque and angular inertia turn pinned vane instruments.",
+      "key": "Manual pressure inputs drive air through the real mouth; air drag drives travel and turning of persistent free arrows.",
       "action": "Raise either pressure; reverse the difference, then close and reopen the entrance.",
       "statusIfObserved": "WORKS"
     }
@@ -1848,11 +1834,11 @@
   },
   {
     "id": "water-rocket",
-    "capability": "Water slimes",
+    "capability": "Pressure and motion",
     "title": "Water rocket",
     "status": "WORKS",
     "pool": false,
-    "cue": "A native piston compresses trapped air. Release the nozzle to launch the carried water tank.",
+    "cue": "Fill, pressurize and launch a bottle. Compare the height of your flights.",
     "draft": true,
     "world": {
       "w": 720,
@@ -1860,30 +1846,22 @@
     },
     "blocker": "",
     "dependencies": [
-      "wss-water-balloons",
-      "wss-machines/water-balloons",
-      "wss-drafts-bodies",
-      "wss-cartesian-divers",
-      "wss-machines/cartesian-divers",
-      "wss-drafts-creatures",
+      "wss-water-rocket-model",
+      "wss-water-rocket-view",
       "wss-water-rocket"
     ],
     "behaviorPlan": {
-      "seconds": 6,
-      "actionAtSeconds": 2,
-      "action": "Release the charged native-pressure water tank",
-      "key": "Initial free launch rises in three seeds; the uncompressed control falls. Native water is conserved.",
+      "seconds": 16,
+      "actionAtSeconds": 3,
+      "action": "Pressurize, release and observe the full flight",
+      "key": "Pressure-driven momentum launches the bottle. It reaches an apex and lands; water mass is accounted for, pressure falls, pause freezes state and changing the fill changes the result.",
       "statusIfObserved": "WORKS"
     },
     "accepted": true,
     "preview": "cup",
     "scripts": [
-      "wss-water-balloons",
-      "wss-machines/water-balloons",
-      "wss-drafts-bodies",
-      "wss-cartesian-divers",
-      "wss-machines/cartesian-divers",
-      "wss-drafts-creatures",
+      "wss-water-rocket-model",
+      "wss-water-rocket-view",
       "wss-water-rocket"
     ]
   },
@@ -1893,13 +1871,13 @@
     "title": "Slime submarine",
     "status": "WORKS",
     "pool": false,
-    "cue": "Open the valve to flood its carried tank, then close it and drag the loaded skin.",
+    "cue": "Steer through three rings. Take on ballast, feel the weight, and lift the open hull to drain.",
     "draft": true,
     "world": {
-      "w": 720,
-      "h": 400
+      "w": 560,
+      "h": 320
     },
-    "blocker": "Emptying ballast and calibrated two-way buoyancy remain outside this reduced floodable-tank model.",
+    "blocker": "Steering is an external motor; calibrated two-way buoyancy and propeller flow remain outside this reduced model.",
     "dependencies": [
       "wss-drafts-bodies",
       "wss-water-balloons",
@@ -2303,7 +2281,7 @@
     "id": "tesla-valve",
     "capability": "Valves and logic",
     "title": "Tesla valve",
-    "cue": "The same pressure head meets different resistance in each direction. Reverse the starting head to compare equal finite charges.",
+    "cue": "Switch the high tank and compare forward and reverse flow through the same passive loops.",
     "status": "WORKS",
     "draft": true,
     "world": {
@@ -2312,13 +2290,16 @@
     },
     "pool": false,
     "dependencies": [
-      "wss-drafts-fluid-machines"
+      "wss-drafts-fluid-machines",
+      "wss-tesla-loss",
+      "wss-tesla-valve"
     ],
     "accepted": true,
     "preview": "cup",
     "scripts": [
       "wss-drafts-fluid-machines",
-      "wss-pressure-labs"
+      "wss-tesla-loss",
+      "wss-tesla-valve"
     ]
   },
   {
@@ -2795,7 +2776,7 @@
     "title": "Machine de Marly",
     "capability": "Floating things",
     "status": "WORKS",
-    "cue": "Falling river water turns the wheel and lifts a smaller flow to the upper reservoir.",
+    "cue": "A river-driven wheel powers a piston pump. Close the river or apply the brake to compare.",
     "world": {
       "w": 720,
       "h": 400
@@ -2804,9 +2785,8 @@
     "draft": true,
     "accepted": true,
     "scripts": [
-      "wss-drafts-bodies",
-      "wss-drafts-networks",
-      "wss-network-machines"
+      "wss-marly-model",
+      "wss-marly-machine"
     ],
     "preview": "cup"
   },
@@ -2962,7 +2942,7 @@
     if(id==='cartesian-divers')paths.push('wss-cartesian-divers');
     if(id==='burst-disk')paths.push('wss-burst-disk');
     if(id==='tantalus')paths.push('wss-machines/self-flushing-cup');
-    if(entry.draft && entry.scripts)paths=paths.concat(entry.scripts);
+    if(entry.scripts)paths=paths.concat(entry.scripts);
     else paths.push('wss-machines/'+(/^material-(oil|sand)-jar$/.test(id) ? 'material-slip-jar' : id));
     // Scene companions wrap the preceding runtime at evaluation time. Load
     // in declared order so a slow response cannot replace a newer wrapper.

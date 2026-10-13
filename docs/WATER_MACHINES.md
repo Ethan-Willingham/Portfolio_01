@@ -1,15 +1,119 @@
 # Water machines
 
-Release: toy v5.191. The 76 scenes formerly labeled Partly working now have
+Release: toy v5.201. The 76 scenes formerly labeled Partly working now have
 working controls, visible physical responses, and scene-specific browser checks.
-Twenty-one water-network scenes use finite-volume inventories, head and flow
-relations, and explicit pump work or losses. Twenty-three pressure and material
-scenes use reduced physical models. Fifteen workshop scenes combine native
-solvers with reduced apparatus models, and fifteen soft-body scenes use native
-water and slime behavior. Candle and chimney smoke transport is also verified
-against the native solver. Each reduced scene describes its modeling boundary
+Twenty water-network scenes use finite-volume inventories, head and flow
+relations, and explicit pump work or losses. Other scenes use native water,
+smoke and slime solvers or reduced physical models with finite inventories.
+The workshop apparatus combine native solvers with reduced models. Candle and
+chimney smoke transport is also verified against the native solver. Each
+reduced scene describes its modeling boundary
 in the scene itself. Full quantitative physical acceptance and steady 60 FPS
 across every device remain unverified.
+
+## Water rocket
+
+The Water Rocket scene now uses a bottle with a launch stand, adjustable fill
+and pressure, and a complete charge, release, coast and landing sequence. Its
+separate flight model replaces the earlier native-pressure tank on a short
+vertical guide. It keeps the existing scene URL and menu entry. The default
+view shows feet, miles per hour and psi; Metric changes the displayed units.
+Slow motion shares the host's playback speed, and the global pause and activity
+controller freeze the existing state. Preparing another flight retains the
+session's previous height and best result. The toolbar reset clears the session.
+
+The rigid two-liter bottle has 0.145 kg dry mass, a 9 mm nozzle and a 105 mm
+body diameter. Water discharge uses a coefficient of 0.86; quadratic drag uses
+0.42 with ambient density 1.204 kg per cubic meter. These are declared model
+parameters. The compressor adds ideal-gas mass at fixed temperature while the
+latch holds the bottle. Release adds no impulse. Expanding dry air follows
+P V^1.4; Bernoulli outflow removes actual carried water mass and produces thrust
+from its exhaust momentum. Compressible air blowdown follows, including choked
+nozzle pressure thrust. A fixed 1 ms step integrates gravity, thrust and drag.
+The equations follow [Ohio University's water-rocket analysis](https://people.ohio.edu/urieli/thermo/property_tables/gas/adiabatic/rocket/rocket.html)
+and [NASA's thrust summary](https://www1.grc.nasa.gov/beginners-guide-to-aeronautics/thrust-equations-summary/).
+
+Every spray batch comes from expelled model water, partitioned into visible
+ballistic parcels. The camera follows calculated altitude and keeps the launch
+plane in view; the bottle is explicitly enlarged in flight. Spray breakup is a
+visual approximation. This scene does not use the shared native water solver.
+It assumes uniform dry air, constant ambient conditions and an upright vertical
+bottle, without slosh, wind, tumbling or interactions between expelled parcels.
+Landing ends the flight without rebound. Any residual water or pressure remains
+accounted for. This is an illustrative experiment, not a calibrated prediction
+for a real bottle or launcher.
+
+Run `node tools/test-water-rocket-model.cjs` for water and air mass accounting,
+adiabatic expansion, frame partition equivalence, parameter comparisons,
+zero-pressure behavior and landing. Run `node tools/test-water-rocket.mjs` for
+ordinary browser playback, real pointer, keyboard and touch controls, pause,
+slow motion, reset, scene retirement and responsive layouts. The harness owns
+Chrome for Testing and writes captures to `/tmp/water-rocket-review`.
+
+## Water-ballast cliff railway
+
+The upper car fills with native water while both cars wait at their stations.
+Once it holds a working load and the lower car has drained, the station brake
+releases. The heavier car descends and pulls its partner uphill through one
+fixed-length cable. Arrival opens the lower tank's floor gate and moves the
+supply to the new upper station. The cycle repeats while the water supply is on.
+The supply button stops new filling. It does not erase water already in a tank.
+Instruments includes a dry comparison with the same cars, cable and brakes.
+
+Each tank has moving collision walls and a real opening in its floor. The
+renderer uses that same geometry. A GPU census measures live native parcels
+inside each tank; that inventory supplies the water mass in the mechanical
+equation. Both cars share one coordinate, so their distances from the upper
+stations always sum to the rail length. Gravity acts on their mass difference,
+with the inertia of both cars and their water, against bearing drag. Station
+stops dissipate the arriving motion. Filling and draining change the load;
+there is no assigned travel duration or car animation.
+
+This is a reduced ballast-load model with ideal rails, cable and station brakes.
+It does not resolve cable stretch, pulley inertia or every reciprocal impulse
+from sloshing water. The return pump supplies the energy needed to lift water
+back to the upper station. It is not a closed-energy or calibrated railway model.
+The ordinary native-water solver and its contact approximations still apply.
+
+Run `node tools/test-ballast-railway.cjs` for desktop and landscape touch playback.
+The test reads resident GPU particles independently of the ballast census and
+checks repeated trips in both directions, cable length, the dry comparison,
+supply controls, pause, reset and scene retirement. It owns its Chrome for
+Testing process and writes screenshots and measurements to
+`/tmp/ballast-railway-review`.
+## Machine de Marly
+
+The public Machine de Marly scene is a working cutaway of one river wheel and
+one single-acting piston pump. The Seine powered the original waterwheels;
+cranks and connecting rods drove pumps that lifted water in three stages to
+Louveciennes. The historical installation had 14 wheels. This scene teaches
+the energy and valve sequence, not the historical machine's scale or output.
+Sources: [Musée du Domaine royal de Marly](https://musee-domaine-marly.fr/collections/vue-et-description-de-la-fameuse-machine-de-marly/)
+and [Château de Versailles](https://en.chateauversailles.fr/discover/history/key-dates/water-versailles).
+
+Paddle drag at the current river speed supplies shaft torque against inertia,
+bearing friction, the brake and the water's lifting work. Crank displacement
+changes a fixed chamber volume. On intake, an ideal inlet valve admits river
+water. On delivery, an ideal outlet valve sends that volume up a pipe entering
+near the bottom of the upper tank. As the tank fills, its water level adds to
+the head opposing the crank. A full tank overflows toward the gardens. The
+river is an open boundary, while chamber, tank and overflow water close a
+volume ledger. The painted shaft, piston, valves, pipe-flow markers and tank
+level read the solved state. No motor or target speed is installed.
+
+The calculation uses a reduced SI-unit model. It does not resolve water
+particles, individual paddle impacts, pipe friction, valve dynamics, leakage,
+or the full three-stage historical works. Its visible units default to gallons;
+the units button switches to liters. The river control and brake act on the
+same running model, so closing either does not erase the lifted water.
+Manual pause freezes motion and delivery. Restart begins a fresh run.
+
+`node tools/test-marly-model.cjs` checks torque, displacement, valve and water
+conservation, the shaft energy ledger, river and brake controls, and frame
+cadence. `node tools/test-marly-machine.cjs` uses owned Chrome for Testing to
+check playback, pause, restart, touch and keyboard controls, scene cleanup,
+and desktop and phone layouts. Screenshots and measurements go to
+`/tmp/marly-machine-review`.
 
 ## Sewer gas trap
 
@@ -63,26 +167,32 @@ reservoir pressure, which then stays fixed until the next input. The pressure
 difference drives an entrance with inertia and quadratic pressure loss.
 Closing the real mouth valve traps its existing charge. Reopening uses that
 charge. Instruments offers equal starting pressures and a closed initial mouth.
-Pause freezes the gas and vane motion; the pressure buttons remain usable.
+Pause freezes the gas and arrow motion; the pressure buttons remain usable.
 
-The arrow-shaped vanes are pinned diagnostic instruments. A sail 36 cm ahead
-of each pin receives drag from the local air relative to its own rotational
-motion. The [quadratic drag relation](https://www1.grc.nasa.gov/beginners-guide-to-aeronautics/drag-equation/)
-uses local density, an effective sail area of 0.03 square meters and a declared
-drag coefficient of 1.2. Its moment about the pin drives angular momentum.
-Each instrument has 0.0004 kg square meters of inertia, bearing drag of
-0.0001 Nm seconds and a weak torsion spring of 0.0000002 Nm per radian. The spring
-rests a quarter-turn from the outward field direction, so it also supplies a
-physical bias when the flow reverses. These are declared probe parameters.
+The arrows are free diagnostic probes carried by air drag. Each probe has
+0.002 kg of mass and 0.00004 kg square meters of angular inertia. A front sail
+has 0.03 square meters of effective area, 36 cm ahead of the center of mass;
+a rear sail has 0.006 square meters, 12 cm behind it. The
+[quadratic drag relation](https://www1.grc.nasa.gov/beginners-guide-to-aeronautics/drag-equation/)
+uses local density and a declared drag coefficient of 1.2. Each sail samples
+air at its own location relative to both the probe's translation and rotation.
+The summed forces accelerate the probe; their moments turn it. These are
+declared visualization-probe parameters, not measurements of airborne objects.
 
-An implicit angular-velocity solve balances drag torque, bearing drag and spring
-torque. Angle advances only by the resulting angular velocity. The painter
-reads that angle, with no target-angle interpolation or direction-triggered
-half-turn. Pins stay fixed and every vane stays visible. Closing the mouth stops
-airflow while residual vane motion dissipates. The probes have no feedback into
-the air model. The twenty-pixel vane glyphs always display their calculated
-angles, including with reduced motion enabled. They provide the simulation's
-essential response to the pressure input, without a separate visual animation.
+A coupled implicit solve balances linear and angular momentum. Position and
+angle advance only through those velocities. There are no pins or springs.
+The same arrows persist throughout a run, retaining positions, velocities and
+angles across reversals. They are never reseeded, wrapped or replaced. An arrow
+that leaves the visible region retains its state and can return with the air.
+A swept 0.4-meter contact envelope prevents passage through the actual walls
+or closed gate. Inelastic, frictionless contact removes inward normal velocity;
+a shutter closed on an arrow displaces it to the nearest exposed face. Tile
+seams inside a wall cannot serve as escape faces.
+
+Closing the mouth stops airflow while residual arrow momentum dissipates
+through relative drag. The probes have no feedback into the air model. The
+twenty-pixel glyphs display their calculated positions and angles, including
+with reduced motion enabled. Drawing never changes the physical state.
 
 The readout sits beside the simulation at normal screen resolution. Its
 large text shows actual airflow, while one centered pressure gauge shows which
@@ -110,17 +220,18 @@ turbulence, thermal exchange and a closed energy budget remain unresolved.
 Closing the ideal stationary valve does not model a moving shutter's work.
 
 Run `node tools/test-breathing-cave.cjs` for independent EOS, entrance momentum
-and vane force/torque checks, sampled mouth velocity versus gas transfer,
-nineteen reversals driven by test button inputs, fixed pins, continuous angular
+and arrow force/torque checks, sampled mouth velocity versus gas transfer,
+nineteen reversals driven by test button inputs, persistent identities, passage
+out of and back into the cave, swept gate contact, continuous travel and angular
 advance, closed-mouth energy dissipation, manual mass accounting and frame-size
 checks. The initial sixty-second control stays exactly still. A single input
-must visibly turn even the slowest chamber vane within three seconds. Run
+must move the chamber arrows and visibly turn even the slowest within three seconds. Run
 `DUMP=/tmp/breathing-cave-review node tools/test-breathing-cave.mjs` for owned
 Chrome for Testing playback at desktop and landscape mobile sizes, mouse and
 touch holds, outside-target release, keyboard holds, blur and touch cancellation
 on both pressure controls, pause, reduced motion and reset to
-equal pressures. The browser regression also checks normal-playback angular
-continuity and direction during pressure reversal, readable
+equal pressures. The browser regression also checks normal-playback position and angular
+continuity, persistent identities during pressure reversal, readable
 text contrast, semantic status and meter labels, separation from the apparatus,
 shorter landscape heights and narrow desktop layout. Screenshots and
 measurements go to that directory. The ordinary smoke scene also boots.
@@ -183,6 +294,41 @@ from settling, with a longer dry run to catch a collapsing pile. Checks cover
 bank height, upstream accumulation and downstream flow, the labeled held tap,
 release, pause, reset, finite state and conserved sand. Captures and measurements
 go to `/tmp/sand-dam-review`.
+
+## Slime submarine
+
+The submarine has four held steering controls (WASD or the visible buttons),
+a ballast valve (B), and three numbered course rings. The compact tank uses the
+same 560 by 320 world and water charge on desktop and mobile. The gold point on
+the deforming hull marks the real valve. Opening it underwater admits native
+water. Closing it retains that water. Lifting the open hull above the pool lets
+water leave through the same opening. There is no pump or inventory reset.
+Dragging still uses the existing elastic grip.
+
+The control panel reports the fraction of the hull occupied by water and its
+center depth relative to the measured pool surface and floor. Rings light in
+order when the hull center enters their 25-unit radius. Restart course clears
+only those markers; the main restart restores the tank. The markers exert no
+forces and have no collision geometry.
+
+Steering is a declared external motor, with maximum force equal to 2.4 times
+the dry shell's weight. Diagonal input shares that limit. The force is applied
+to the existing Verlet material substeps, divided by the current shell and
+carried-water mass. It assigns neither a velocity nor a destination. Releasing
+input leaves existing inertia, gravity, water drag and the one-way buoyancy
+approximation. This is not a fluid-coupled propeller. Native water contact
+reactions, asynchronous parcel counts and approximate surface buoyancy retain
+the earlier model's limits; no calibrated submarine or closed energy claim is
+made. The blocked-valve comparison keeps the same motor and dry shell sealed.
+
+Held controls clear on pause, pointer cancellation, capture loss, inactivity,
+scene changes and reset. The panel shares the existing UI activity timer. It
+reserves room beside the tank or below it in a narrow window. The valve remains
+usable while paused, without advancing water. Run
+`node tools/test-slime-submarine.mjs` for owned Chrome for Testing checks of
+real steering, water inventory, ballast mass, keyboard and touch controls,
+input cleanup and responsive layout. Captures go to a temporary directory or
+`DUMP` when specified.
 
 ## Hourglass
 
@@ -391,6 +537,46 @@ The bubble component regression also covers partial wall cells, expansion beside
 a wall, expansion into a corner and swept contact. These checks supplement the
 existing pressure/radius, zero-gravity, headspace and finite-gas checks. They do
 not establish full quantitative acceptance of the fountain pressure solver.
+
+## Bubble audit across demos
+
+Toy v5.196 extends native terrain contact to every `WSSBubbles` companion,
+including Air hose, Aquarium bubbler, Air-lift pump and Ringing bubbles. Their
+ordinary source runs were clearing, but the inherited coarse collision path
+could pin a parcel after expansion beside a wall. Injected and natural gas now
+share the same overlap recovery and circular sweep. The gas source, pressure
+relation and buoyancy model are unchanged.
+
+Glugging bottle also enables finite natural gas transport. Compact detached
+pockets were moving too slowly through its water. The existing 200-square-pixel
+limit applies; a captured parcel carries its actual native gas amount. Large
+sealed headspaces remain native pressure pockets. Gas reaching a sealed
+headspace stays accounted for. There is no age cutoff or underwater gas deletion.
+This does not establish the bottle's complete glug cycle or calibrated
+counterflow through its narrow mouth.
+
+The audit inventoried 119 registered definitions, including 55 with seeded water
+and native particle pressure. A native-buffer survey advanced thirteen relevant
+apparatus for thirty seconds of host frame time: the four gas supplies, cup,
+siphon, large Heron fountain, glugging bottle, upside-down tank, Mariotte bottle,
+sewer gas trap, Roman inverted siphon and water tower. The ordinary cup, large
+fountain and inverted siphon did not show the small fountain's retained-empty-cell
+failure. Dynamic body and thermal mechanisms were inventoried but are outside
+this native-water-only survey. Their dedicated gas companions are unchanged.
+
+`node tools/test-water-bubble-demos.mjs` checks that all four supplies release
+all admitted gas after stopping, with exact water and gas counts and no native
+wall penetration. The bottle runs for thirty seconds of host frame time with two
+desktop seeds, a landscape phone and an open-vent control. It verifies an actual
+rise of more than seventy world pixels within 2.5 native simulation seconds,
+large sealed-headspace preservation, finite state and both gas ledgers. Source
+hashes and screenshots are saved under `/tmp/water-bubble-demos-review`.
+`AUDIT=1` runs the observational thirteen-apparatus survey; `SCENES` may select a
+comma-separated subset. The expanded component test in
+`tools/test-water-entrained-air.mjs` covers injected gas beside partial wall cells,
+expansion beside a wall and corner, swept contact, zero gravity and a sealed
+ceiling. These observations do not certify every apparatus mechanism or its
+mechanical work balance.
 
 ## Spatial oxygen and combustion
 
@@ -1420,96 +1606,21 @@ restart and scene cleanup. These checks do not establish real-device performance
 
 ## Gold sluice box
 
-Toy v5.180 uses the dimensions of the [Keene A52](https://www.keene.store/?Product_Code=A52&Screen=PROD):
-51 inches long, 10 inches wide and 4.5-inch sides. Set up also offers the
-[36-inch A51](https://www.keene.store/mm5/merchant.mvc?Product_Code=A51&Screen=PROD).
-Both use 24 world pixels per inch in a 1440 by 584 world. Changing angle
-projects the same physical bed length onto x and y, rather than changing its
-length. The ruler follows that sloped bed. This is a longitudinal section;
-the width extends out of the page. The ten long-box riffles, their spacing,
-and the thickened eight-pixel collision floor are model choices. Manufacturer
-matting, expanded mesh and exact lining profiles are not reproduced.
+Toy v5.197 uses the dimensions of the [Keene A52](https://www.keene.store/?Product_Code=A52&Screen=PROD): 51 inches long, 10 inches wide, and 4.5-inch sides. Set up also offers the [36-inch A51](https://www.keene.store/mm5/merchant.mvc?Product_Code=A51&Screen=PROD). Both use 24 world pixels per inch in a 1440 by 584 world. Changing the angle projects the same physical bed length onto x and y; the ruler follows the slope. This is a longitudinal section, with width extending out of the page. Riffle spacing, the thickened collision floor, and the cleanout chute are model choices. Manufacturer matting, expanded mesh and exact lining profiles are not reproduced.
 
-The drawn polygons are the collision polygons. Water, quartz, magnetite and
-gold keep separate APIC momentum, shared compressive pressure and common
-gravity. Density ratios are 1, 2.65, 5.2 and 19.3. Magnetite is a common component
-of placer black sand, and its density is documented by
-[USGS prospecting guidance](https://pubs.usgs.gov/gip/70039396/report.pdf).
-Native grain origins 2 and 3 select magnetite and gold mass and pigment.
-The oil field is unused in this apparatus, so its momentum slot carries
-magnetite with grain transport and contacts, without oil filters. Other jars
-retain their original three-phase shader. Shared rendering adds one optional
-black-sand pigment; default game grains retain their original appearance.
+The drawn polygons are the collision polygons. Water, quartz, magnetite and gold keep separate APIC momentum, shared compressive pressure and common gravity. Density ratios are 1, 2.65, 5.2 and 19.3. Magnetite is a common component of placer black sand; its density is documented by [USGS prospecting guidance](https://pubs.usgs.gov/gip/70039396/report.pdf). Native grain origins 2 and 3 select magnetite and gold mass and pigment. The unused oil momentum slot carries magnetite here, without oil transport or filters. Other jars retain their original three-phase shader. Shared rendering adds an optional black-sand pigment; default game grains retain their original appearance.
 
-Grain pairs use a complete neighbor traversal, snapshot Jacobi updates,
-inverse-mass position correction and equal/opposite normal and Coulomb-friction
-impulses. Water/grain drag uses the same volume-based coefficient for all three
-minerals. There are no destination forces, capture switches, frozen gold,
-particle removal or hidden refills. The initial supply is finite. The tailings
-tank and water outside it remain in the same simulated world.
+Grain pairs use complete neighbor traversal, snapshot Jacobi updates, inverse-mass position correction and equal/opposite normal and Coulomb-friction impulses. Water/grain drag uses the same volume-based coefficient for all three minerals. There are no destination forces, capture switches or frozen gold. During washing and rinsing, every admitted particle stays in the simulated world.
 
-The wash station has a live water valve and a 25 to 150 percent flow control.
-An external tank accounts for 36,000 additional water parcels. The hopper
-holds 2,400 grains: 2,202 quartz, 192 magnetite and six gold. Gold is 0.25 percent
-of the grain count. This is a deliberately enriched practice sample, not a
-claim about natural placer grade. All grains use the native contact diameter,
-about 1.5 mm at this scale. They represent already classified material, with
-oversize gravel removed. Clay cohesion and gold-flake shape are not simulated.
-The optional starting sample has 176 quartz, 15 magnetite and one gold grain.
-Seeded shuffling distributes the material identities independently of their
-outlet lanes; changes in density do not change the batch or its starting positions.
-Holding Feed transfers 120 grains per native simulation second through the
-visible chute. Release cancels the fractional admission credit. Seven outlet
-lanes are independent of material. Both stocks stop exactly at exhaustion.
-Supply clocks follow native time, including quarter-speed playback. Opening
-the valve starts its clock at the current simulation time, without banking
-time spent paused or closed. The original held source remains available.
+The water slider is also the valve: zero is off; 25 to 150 percent supplies a trickle through strong flow. The drawn faucet uses the same valve. The paydirt slider admits zero to 240 grains per native second. One scoop or a tap on the drawn hopper releases at most 120 grains from the same supply. The practice hopper contains 2,400 grains: 2,202 quartz, 192 magnetite, and six gold. Gold is 0.25 percent of the grain count, deliberately enriched for visibility rather than an assay of natural placer grade. The approximately 1.5 mm grains represent screened material. Oversize gravel, clay cohesion and gold-flake shape are outside this model. The optional starting sample contains 176 quartz, 15 magnetite and one gold. Seeded shuffling is independent of the seven outlet lanes, and a material comparison starts with identical positions and identities.
 
-The console displays remaining gold, washed sediment and gold in the tailings from
-the existing native position mirror. These are current locations, not permanent
-recovery awards. Readback latency also applies to these counts. Set up changes
-the next run's actual length (36 or 51 inches), slope (4 to 11 degrees), bar
-height (0 to 0.5 inch), density comparison and initial sample. New run and
-the top restart refill supplies; the restart preserves the selected geometry.
-The previous run's counts remain available in Set up.
+The external water tank initially accounts for 36,000 additional parcels. An explicit refill adds up to 18,000 parcels to the finite reserve, limited by the tank level and native resident capacity. It does not inject any water into the box. Supply clocks follow native time, including quarter-speed playback, without banking time while a valve is closed or the app is paused. Pause and focus loss close both valves.
 
-Inspect magnifies the existing renderers and pans between pockets. Dragging
-that view moves only the camera. Walls and annotations get higher-resolution
-backing canvases at larger scales. Optional procedural wash audio follows the
-native runoff velocities and active inlet; gravel cues follow confirmed hopper
-transfers. It starts muted, pauses with the scene and closes its Web Audio
-context on scene exit. It is presentation, not an acoustic simulation.
+Cleanout closes the inputs, lifts the riffles, and inserts a solid return chute above a separate concentrate pan. Water then carries the mixed residue left into the pan. The other receiver remains the tailings bin. Pick up pan reads the stopped GPU positions and material flags, transfers every water and mineral particle actually inside its bounds, and records all four materials in external storage. Empty tailings bin transfers everything in that bin to a separate discard ledger. Native swap-removal preserves every survivor's position, velocity, affine tensor and material identity. Uncollected water and minerals elsewhere remain resident. Continued water can overflow a receiver and spill mineral grains. A difficult grain may require more rinsing, and cleanout never guarantees recovery.
 
-W toggles water, holding G feeds, S selects quarter speed and I opens inspection.
-Space pauses and Escape closes setup or inspection. Pointer release outside a
-control, pointer cancellation, keyboard release and focus loss stop held feed.
-Pause and focus loss also close the water valve. Desktop and landscape touch
-use the same controls with targets at least 44 pixels tall.
+The console shows gold in the box, traveling, in the pan, saved, in tailings and spilled. Contents accounts for quartz and black sand too. A grain in the box may still be moving; only a pan pickup saves it. Live locations use the native position mirror and carry readback latency. The pickup selection uses an exact frozen GPU snapshot. Setup changes the next run's physical length, slope, riffle height, density comparison and initial sample. New run and restart restore supplies and preserve selected hardware settings. Inspector zoom pans between pockets without moving particles; optional procedural audio follows actual runoff and hopper transfers. It starts muted and closes its context on scene exit.
 
-Instruments counts actual current grain positions. Equal mineral densities
-changes magnetite and gold to quartz density. Without riffles removes the bars,
-retaining the same initial particle
-population. Both comparisons restart the apparatus. The dedicated scene module
-owns its factory, including after another material draft loads.
-
-Run `node tools/test-gold-sluice.mjs` for the three seeded washes, equal-density
-and removed-riffle controls, finite resident inventory, material identities,
-polygon penetration, eleven actual GPU contact fixtures, landscape touch targets,
-held pouring, release, pause, reset and scene changes. The station checks also
-measure native flow at 25 and 125 percent, verify exact depletion of both stocks,
-check newly admitted material identities, exact 36/51-inch collision lengths,
-and a steep bed with tall bars. The finite partial-wash comparisons check
-quartz travel, intermediate magnetite travel, retained gold, and how gold moves
-farther after removing riffles or equalizing masses. The former short-box
-wash-out thresholds do not describe transit through this longer apparatus.
-They use real pointer, keyboard and landscape touch events at 844 and 667 pixels,
-check camera-only inspection against unchanged GPU samples and verify the Web
-Audio context lifecycle. Use `GOLD_CASES=station node tools/test-gold-sluice.mjs`
-to run just those interaction checks. The harness owns and closes
-Chrome for Testing. Screenshots and measurements default to `/tmp/gold-sluice-review`.
-Actual quartz, magnetite and gold pixels, preserved submerged edges, default
-grain rendering and the rebuilt v28.208 game boot are covered by
-`node tools/test-water-grain-visibility.mjs`.
+W toggles water, G releases one scoop, S selects quarter speed, and I opens inspection. Space pauses. Desktop and landscape touch use the same controls with targets at least 44 pixels tall. `node tools/test-gold-sluice.mjs` runs seeded washes, density and riffle comparisons, eleven GPU contact fixtures, source and stock controls, actual cleanup transport, inventory transfers, conservation and landscape interactions. `GOLD_CASES=station,operations node tools/test-gold-sluice.mjs` runs the operator checks. The harness owns and closes Chrome for Testing. Screenshots and measurements default to `/tmp/gold-sluice-review`. Shared grain pixels and game boot are checked by `node tools/test-water-grain-visibility.mjs`.
 
 These are behavior and contact-operator checks. The reduced 2D model retains
 exploratory drag, the native water filters, pressure limiting and unmeasured

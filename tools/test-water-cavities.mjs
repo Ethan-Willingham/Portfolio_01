@@ -25,8 +25,8 @@ const server = createServer((request, response) => {
     if(globalThis.cavityReference && file===path.join(root,'js/water-machines-scenes.js'))
       data=data.toString().replace('collapseEmptyCells:true,vaporClosure:true','collapseEmptyCells:false,vaporClosure:false');
     if(globalThis.cavityReference && file===path.join(root,'js/wss-bubbles.js'))
-      data=data.toString().replace('if(entrained){\n      code=code.replace', 'if(false){\n      code=code.replace')
-        .replace("if(entrained)['admit'", "if(false)['admit'");
+      data=data.toString().replace('if(nativeCollision){\n      code=code.replace', 'if(false){\n      code=code.replace')
+        .replace("if(nativeCollision)['admit'", "if(false)['admit'");
     const loadedHash=createHash('sha256').update(data).digest('hex');
     if(file===path.join(root,'js/wss-bubbles.js'))data=Buffer.concat([Buffer.from(data),Buffer.from('\nwindow.__cavityBubbleHash='+JSON.stringify(loadedHash)+';\n')]);
     if(file===path.join(root,'js/water-machines-scenes.js'))data=Buffer.concat([Buffer.from(data),Buffer.from('\nwindow.__cavitySceneHash='+JSON.stringify(loadedHash)+';\n')]);
@@ -141,7 +141,7 @@ try {
   globalThis.cavityReference=c.reference;
   await navigate(c.width,c.height,'?scene=heron-air-smoke&paused=1',!!c.mobile);
   const expectedBubble=frozen.get(path.join(root,'js/wss-bubbles.js')).toString(),expectedScene=frozen.get(path.join(root,'js/water-machines-scenes.js')).toString();
-  const bubble=c.reference?expectedBubble.replace('if(entrained){\n      code=code.replace','if(false){\n      code=code.replace').replace("if(entrained)['admit'","if(false)['admit'"):expectedBubble;
+  const bubble=c.reference?expectedBubble.replace('if(nativeCollision){\n      code=code.replace','if(false){\n      code=code.replace').replace("if(nativeCollision)['admit'","if(false)['admit'"):expectedBubble;
   const scene=c.reference?expectedScene.replace('collapseEmptyCells:true,vaporClosure:true','collapseEmptyCells:false,vaporClosure:false'):expectedScene;
   assert.equal(await evaluate('__cavityBubbleHash'),createHash('sha256').update(bubble).digest('hex'));
   assert.equal(await evaluate('__cavitySceneHash'),createHash('sha256').update(scene).digest('hex'));

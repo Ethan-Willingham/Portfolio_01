@@ -53,11 +53,11 @@ async function sample(){return evaluate(`(async()=>{
 async function run(name,options){
  await load(options);if(options.seed)assert.equal(await evaluate('__toy.machineState().seed'),options.seed);let start=await sample(),rows=[start];await evaluate("__toy.pause(false);__sluiceTest('stopLoop()');__toy.activateMachineControl('primary',true)");
  for(let step=0;step<960;step+=20){
-  await evaluate(`(async()=>{for(let i=0;i<20;i++){__sluiceTest('frame(lastT?lastT+1000/60:1000/60);stopLoop();');if(__toy.stats().water>=${start.n}+30000)__toy.releaseMachineControl();}await __toy.liquid().queue.onSubmittedWorkDone();})()`);
+  await evaluate(`(async()=>{for(let i=0;i<20;i++){__sluiceTest('frame(lastT?lastT+1000/60:1000/60);stopLoop();');if(__toy.stats().water>=${start.n}+30000)__toy.sluiceControl('valve',false);}await __toy.liquid().queue.onSubmittedWorkDone();})()`);
   const row=await sample();assert(row.finite,name+': finite');assert.equal(row.penetrations,0,name+': no parcel crosses the bed or riffles');const admitted=await evaluate('__toy.stats().water')-start.n;assert.equal(row.n,start.n+admitted,name+': resident inventory matches declared additions');if(admitted>=30000)assert(admitted<=30100,'release stops admission without a backlog');assert.deepEqual(row.ids,start.ids,name+': material identities');delete row.ids;rows.push(row);
   if(step%100===0)console.log(name,JSON.stringify(row));
  }
- const final=rows.at(-1);assert(final.n>=start.n+30000 && final.n<=start.n+30100,'only held inlet water enters');assert.equal(await evaluate('__toy.stats().pouring'),false,'the source has stopped');await evaluate('__toy.resize();');await sleep(100);
+ const final=rows.at(-1);assert(final.n>=start.n+30000 && final.n<=start.n+30100,'only held inlet water enters');assert.equal(await evaluate('__toy.sluice().pouring'),false,'the source has stopped');await evaluate('__toy.resize();');await sleep(100);
  const shot=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});fs.writeFileSync(path.join(dump,name+'.png'),Buffer.from(shot.data,'base64'));
  delete start.ids;return {name,options,start,final,rows};
 }
@@ -116,9 +116,9 @@ try{
   const target=await evaluate(`(()=>{const r=document.querySelector('.toy-scene-action[data-control="primary"]').getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2,width:r.width,height:r.height};})()`);
   assert(target.width>=44&&target.height>=44,'the jug has a 44-pixel touch target');
   await send('Input.dispatchMouseEvent',{type:'mousePressed',button:'left',clickCount:1,x:target.x,y:target.y});await send('Input.dispatchMouseEvent',{type:'mouseReleased',button:'left',clickCount:1,x:target.x,y:target.y});
-  assert.equal(await evaluate('__toy.stats().pouring'),false,'a click leaves no queued pour');
-  await send('Input.dispatchMouseEvent',{type:'mousePressed',button:'left',clickCount:1,x:target.x,y:target.y});assert.equal(await evaluate('__toy.stats().pouring'),true,'holding the visible source starts pouring');
-  await evaluate('__toy.pause(false)');await sleep(2000);await send('Input.dispatchMouseEvent',{type:'mouseReleased',button:'left',clickCount:1,x:target.x,y:target.y});const released=await sample();await sleep(250);assert.equal((await sample()).n,released.n,'release immediately stops admission while falling water continues');await evaluate('__toy.pause(true);__toy.liquid().queue.onSubmittedWorkDone()');
+  assert.equal(await evaluate('__toy.sluice().valve'),true,'clicking the visible pipe opens its metered valve');
+  await evaluate('__toy.pause(false)');await sleep(2000);await send('Input.dispatchMouseEvent',{type:'mousePressed',button:'left',clickCount:1,x:target.x,y:target.y});await send('Input.dispatchMouseEvent',{type:'mouseReleased',button:'left',clickCount:1,x:target.x,y:target.y});
+  assert.equal(await evaluate('__toy.sluice().valve'),false,'clicking the pipe again closes it');const released=await sample();await sleep(250);assert.equal((await sample()).n,released.n,'closed pipe stops admission while falling water continues');await evaluate('__toy.pause(true);__toy.liquid().queue.onSubmittedWorkDone()');
   const paused=await sample();await sleep(250);const held=await sample();assert.equal(paused.time,held.time,'pause stops physics');assert.equal(paused.n,held.n,'pause stops water admission');
   assert(paused.n>mobileInitial,'playback admits real inlet water');
   const mobile=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});fs.writeFileSync(path.join(dump,'landscape.png'),Buffer.from(mobile.data,'base64'));
@@ -132,7 +132,10 @@ try{
   const {checkStation}=await import('./gold-sluice-station-checks.mjs');
   await checkStation({load,sample,evaluate,send,sleep,dump,audioEvents});
  }
- if(process.env.GOLD_CASES?.split(',').includes('audio')){
+ if(!process.env.GOLD_CASES || process.env.GOLD_CASES.split(',').includes('operations')){
+  const {checkOperations}=await import('./gold-sluice-operation-checks.mjs');await checkOperations({load,sample,evaluate,send,sleep,dump});
+ }
+ if(!process.env.GOLD_CASES || process.env.GOLD_CASES.split(',').includes('audio')){
   const {checkAudioLifecycle}=await import('./gold-sluice-station-checks.mjs');await checkAudioLifecycle({load,evaluate,sleep,send});
  }
  assert.equal(errors.length,0,JSON.stringify(errors));

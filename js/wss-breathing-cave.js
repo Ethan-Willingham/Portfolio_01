@@ -1,4 +1,4 @@
-/* Manually pressurized cave, neck inertia and pivoted airflow vanes. */
+/* Manually pressurized cave, neck inertia and free airflow arrows. */
 (function(root){
   'use strict';
   function create(definition,world){
@@ -10,7 +10,7 @@
     var version=-1,sourceCells=0,volume=0,area=0,mass=0,initialMass=0,admitted=0,escaped=0,
       seconds=0,speed=0,flow=0,outside=spec.ambientPa,pressure=outside,maxResidual=0,steps=0,unitMouthFlux=0;
     var fieldResidual=0,fieldIterations=0,error=null,initialized=false,clip=null,pumped=0;
-    var markers=[],angularTravel=0,maxAngularStep=0,vane=spec.vane;
+    var markers=[],angularTravel=0,distanceTravel=0,maxAngularStep=0,maxPositionStep=0,vane=spec.arrow;
     function inChamber(x,y){var r=spec.chamber;return x>=r.x && x<r.x+r.width && y>=r.y && y<r.y+r.height;}
     function neighbors(i,visit){
       var x=i%w,y=Math.floor(i/w);
@@ -79,7 +79,7 @@
       if(world.solidAt(x,y))return;
       var vx=interpolate(fx,x/h-1,y/h-.5),vy=interpolate(fy,x/h-.5,y/h-1),length=Math.hypot(vx,vy);
       var rest=(length?Math.atan2(vy,vx):0)+Math.PI*.5;
-      markers.push({id:markers.length,x:x,y:y,angle:rest,restAngle:rest,omega:0});
+      markers.push({id:markers.length,x:x,y:y,vx:0,vy:0,angle:rest,initialAngle:rest,omega:0,distance:0,contacts:0});
     }
     var chamber=spec.chamber,gate=spec.gate,mouth=definition.pipes[0].points.slice(-1)[0];
     for(var row=0,y=chamber.y+24;y<chamber.y+chamber.height-16;y+=48,row++)
@@ -100,28 +100,102 @@
       if(x<0 || y<0 || x>=world.w || y>=world.h || world.solidAt(x,y))return {vx:0,vy:0};
       return {vx:interpolate(fx,x/h-1,y/h-.5)*flowPerDepth,vy:interpolate(fy,x/h-.5,y/h-1)*flowPerDepth};
     }
-    function turnVanes(dt){
+    function wallImpulse(marker,nx,ny){
+      var normal=marker.vx*nx+marker.vy*ny;
+      if(normal<0){marker.vx-=normal*nx;marker.vy-=normal*ny;}
+      marker.contacts++;
+    }
+    function clearInsertedWall(marker){
+      // A closing shutter can overlap a probe. Resolve only that contact,
+      // toward the nearest face, without replacing or reorienting the probe.
+      var r=vane.radius;
+      function clear(x,y){
+        for(var row=Math.max(0,Math.floor((y-r)/h));row<=Math.min(rows-1,Math.floor((y+r)/h));row++)
+          for(var col=Math.max(0,Math.floor((x-r)/h));col<=Math.min(w-1,Math.floor((x+r)/h));col++)
+            if(solid[row*w+col] && x>col*h-r && x<(col+1)*h+r && y>row*h-r && y<(row+1)*h+r)return false;
+        return true;
+      }
+      if(clear(marker.x,marker.y))return;
+      var nearest=null,distance=Infinity;
+      function candidate(x,y,nx,ny){
+        var length=Math.hypot(x-marker.x,y-marker.y);
+        if(length<distance && clear(x,y)){distance=length;nearest={x:x,y:y,nx:nx,ny:ny};}
+      }
+      // Validate faces against the union of solid cells, including neighboring
+      // tiles, so a grid seam is never mistaken for an exposed contact face.
+      for(var row=Math.max(0,Math.floor((marker.y-r)/h)-1);row<=Math.min(rows-1,Math.floor((marker.y+r)/h)+1);row++)
+        for(var col=Math.max(0,Math.floor((marker.x-r)/h)-1);col<=Math.min(w-1,Math.floor((marker.x+r)/h)+1);col++){
+          if(!solid[row*w+col])continue;
+          candidate(col*h-r-1e-8,marker.y,-1,0);candidate((col+1)*h+r+1e-8,marker.y,1,0);
+          candidate(marker.x,row*h-r-1e-8,0,-1);candidate(marker.x,(row+1)*h+r+1e-8,0,1);
+        }
+      if(nearest){marker.x=nearest.x;marker.y=nearest.y;wallImpulse(marker,nearest.nx,nearest.ny);}
+      else error='A cave arrow is trapped inside the wall.';
+    }
+    function moveArrow(marker,dt){
+      // Sweep a small square contact envelope through the actual solid tiles.
+      // Inelastic, frictionless contact removes normal velocity and retains
+      // tangential motion. A large step cannot tunnel through a wall or gate.
+      for(var pass=0;pass<4 && dt>1e-12;pass++){
+        var dx=marker.vx*dt,dy=marker.vy*dt,r=vane.radius,time=1,nx=0,ny=0;
+        var minCol=Math.max(0,Math.floor((Math.min(marker.x,marker.x+dx)-r)/h));
+        var maxCol=Math.min(w-1,Math.floor((Math.max(marker.x,marker.x+dx)+r)/h));
+        var minRow=Math.max(0,Math.floor((Math.min(marker.y,marker.y+dy)-r)/h));
+        var maxRow=Math.min(rows-1,Math.floor((Math.max(marker.y,marker.y+dy)+r)/h));
+        for(var row=minRow;row<=maxRow;row++)for(var col=minCol;col<=maxCol;col++){
+          if(!solid[row*w+col])continue;
+          var left=col*h-r,right=(col+1)*h+r,top=row*h-r,bottom=(row+1)*h+r;
+          if(!dx && (marker.x<=left || marker.x>=right) || !dy && (marker.y<=top || marker.y>=bottom))continue;
+          var tx1=dx?(left-marker.x)/dx:-Infinity,tx2=dx?(right-marker.x)/dx:Infinity;
+          var ty1=dy?(top-marker.y)/dy:-Infinity,ty2=dy?(bottom-marker.y)/dy:Infinity;
+          var tx=Math.min(tx1,tx2),ty=Math.min(ty1,ty2),enter=Math.max(tx,ty),leave=Math.min(Math.max(tx1,tx2),Math.max(ty1,ty2));
+          if(enter<0 || enter>time || enter>leave)continue;
+          time=enter;nx=tx>=ty?-Math.sign(dx):0;ny=ty>=tx?-Math.sign(dy):0;
+        }
+        marker.x+=dx*time;marker.y+=dy*time;
+        if(!nx && !ny)break;
+        marker.x+=nx*1e-8;marker.y+=ny*1e-8;
+        if(nx)wallImpulse(marker,nx,0);if(ny)wallImpulse(marker,0,ny);
+        dt*=1-time;
+      }
+    }
+    function moveArrows(dt){
       markers.forEach(function(marker){
+        clearInsertedWall(marker);
         var rho=inChamber(marker.x,marker.y)?mass/volume:
           (marker.x<mouth.x?(pressure+outside)*.5:outside)/(spec.gasConstant*spec.temperature);
-        var drag=.5*rho*vane.dragCoefficient*vane.area;
-        var velocity=sampleVelocity(marker.x,marker.y);
-        var rx=vane.arm*Math.cos(marker.angle),ry=vane.arm*Math.sin(marker.angle),omega=marker.omega;
-        // Drag acts at the sail ahead of the pin. Relative velocity includes
-        // the sail's rotation. A weak torsion spring biases the instrument
-        // toward its resting angle; there is no direction-change trigger.
-        // Solve I d(omega)/dt = r cross F - bearing drag - spring torque.
-        for(var iteration=0;iteration<16;iteration++){
-          var ux=velocity.vx+omega*ry,uy=velocity.vy-omega*rx,length=Math.hypot(ux,uy),cross=rx*uy-ry*ux;
-          var torque=drag*length*cross;
-          var residual=vane.inertia*(omega-marker.omega)/dt+vane.bearingDrag*omega+
-            vane.spring*(marker.angle+omega*dt-marker.restAngle)-torque;
-          var derivative=vane.inertia/dt+vane.bearingDrag+vane.spring*dt+
-            drag*(vane.arm*vane.arm*length+(length?cross*cross/length:0));
-          var change=residual/derivative;omega-=change;if(Math.abs(change)<1e-12)break;
+        var cosine=Math.cos(marker.angle),sine=Math.sin(marker.angle);
+        var sails=vane.sails.map(function(sail){
+          var rx=sail.arm*cosine,ry=sail.arm*sine;
+          return {rx:rx,ry:ry,air:sampleVelocity(marker.x+rx,marker.y+ry),drag:.5*rho*vane.dragCoefficient*sail.area};
+        });
+        var vx=marker.vx,vy=marker.vy,omega=marker.omega;
+        // Coupled backward Euler of m dv/dt = sum(F), I dw/dt = sum(r x F).
+        // Each sail sees air relative to BOTH its translation and rotation.
+        // The drag Jacobian is positive definite; solve its 3 by 3 system
+        // with Cholesky. No spring, pin, target angle or reversal trigger.
+        for(var iteration=0;iteration<24;iteration++){
+          var a=vane.mass/dt,b=0,c=0,d=a,e=0,f=vane.inertia/dt;
+          var qx=a*(vx-marker.vx),qy=a*(vy-marker.vy),qw=f*(omega-marker.omega);
+          sails.forEach(function(sail){
+            var rx=sail.rx,ry=sail.ry,ux=sail.air.vx-vx+omega*ry,uy=sail.air.vy-vy-omega*rx;
+            var length=Math.hypot(ux,uy),drag=sail.drag,force=drag*length;
+            qx-=force*ux;qy-=force*uy;qw-=force*(rx*uy-ry*ux);
+            var inv=length?drag/length:0,jxx=force+inv*ux*ux,jxy=inv*ux*uy,jyy=force+inv*uy*uy;
+            a+=jxx;b+=jxy;d+=jyy;c+=-ry*jxx+rx*jxy;e+=-ry*jxy+rx*jyy;
+            f+=ry*ry*jxx-2*rx*ry*jxy+rx*rx*jyy;
+          });
+          if(Math.max(Math.abs(qx),Math.abs(qy),Math.abs(qw))<1e-11)break;
+          var l0=Math.sqrt(a),l1=b/l0,l2=c/l0,l3=Math.sqrt(d-l1*l1),l4=(e-l2*l1)/l3,l5=Math.sqrt(f-l2*l2-l4*l4);
+          var y0=qx/l0,y1=(qy-l1*y0)/l3,y2=(qw-l2*y0-l4*y1)/l5;
+          var dw=y2/l5,dy=(y1-l4*dw)/l3,dx=(y0-l1*dy-l2*dw)/l0;
+          vx-=dx;vy-=dy;omega-=dw;
         }
-        marker.omega=omega;marker.angle+=omega*dt;
-        if(!Number.isFinite(marker.angle+marker.omega)){error='The cave vane state is invalid.';return;}
+        var oldX=marker.x,oldY=marker.y;
+        marker.vx=vx;marker.vy=vy;marker.omega=omega;marker.angle+=omega*dt;moveArrow(marker,dt);
+        if(!Number.isFinite(marker.x+marker.y+marker.vx+marker.vy+marker.angle+marker.omega)){error='The cave arrow state is invalid.';return;}
+        var distance=Math.hypot(marker.x-oldX,marker.y-oldY);marker.distance+=distance;distanceTravel+=distance;
+        maxPositionStep=Math.max(maxPositionStep,distance);
         angularTravel+=Math.abs(omega*dt);maxAngularStep=Math.max(maxAngularStep,Math.abs(omega*dt));
       });
     }
@@ -159,7 +233,7 @@
           // divergence carries precisely the computed mass crossing its neck.
           flowPerDepth=(transferred/step)/(mass/volume)/spec.depth;
         }else{flow=0;speed=0;flowPerDepth=0;}
-        turnVanes(step);
+        moveArrows(step);
         if(error)return;
         maxResidual=Math.max(maxResidual,Math.abs(mass-initialMass-pumped-admitted+escaped));steps++;
         if(!(mass>0) || !Number.isFinite(mass+speed)){error='The cave gas state is invalid.';return;}
@@ -167,18 +241,21 @@
     }
     function stats(){
       if(version!==world.version())rebuild();
-      var moving=0,nonfinite=0;
+      var turning=0,moving=0,nonfinite=0,contacts=0;
       markers.forEach(function(marker){
-        if(!Number.isFinite(marker.angle+marker.omega)){nonfinite++;return;}
-        if(Math.abs(marker.omega)>.01)moving++;
+        if(!Number.isFinite(marker.x+marker.y+marker.vx+marker.vy+marker.angle+marker.omega)){nonfinite++;return;}
+        if(Math.abs(marker.omega)>.01)turning++;
+        if(Math.hypot(marker.vx,marker.vy)>.01)moving++;
+        contacts+=marker.contacts;
       });
       return {seconds:seconds,pressurePa:pressure,outsidePressurePa:outside,gaugePressurePa:pressure-outside,
         massKg:mass,initialMassKg:initialMass,admittedKg:admitted,escapedKg:escaped,
         pumpedKg:pumped,massResidualKg:mass-initialMass-pumped-admitted+escaped,maxMassResidualKg:maxResidual,
         flowM3PerSecond:flow,speedMetersPerSecond:speed,volumeM3:volume,mouthAreaM2:area,
-        mouthOpen:area>0 && sourceCells>0,vaneCount:markers.length,turningVanes:moving,
+        mouthOpen:area>0 && sourceCells>0,vaneCount:markers.length,turningVanes:turning,movingVanes:moving,
         vaneAngularTravel:angularTravel,maxAngularStep:maxAngularStep,nonfiniteVanes:nonfinite,
-        visualMotion:'turning-vanes',pressureHoldRatePaPerSecond:spec.pressureHoldRatePaPerSecond,
+        vaneDistanceMeters:distanceTravel,maxPositionStep:maxPositionStep,wallContacts:contacts,
+        visualMotion:'moving-arrows',pressureHoldRatePaPerSecond:spec.pressureHoldRatePaPerSecond,
         fieldResidual:fieldResidual,unitMouthFlux:unitMouthFlux,fieldIterations:fieldIterations,steps:steps,error:error};
     }
     function draw(c,palette){
@@ -195,14 +272,13 @@
       c.save();c.clip(clip);c.strokeStyle=c.fillStyle=palette.air || palette.accent;c.lineWidth=1.6/scale;c.lineCap='round';
       markers.forEach(function(marker){
         var x=marker.x,y=marker.y;
-        if(world.solidAt(x,y))return;
+        if(x<0 || y<0 || x>=world.w || y>=world.h || world.solidAt(x,y))return;
         var angle=marker.angle;
         var dx=Math.cos(angle),dy=Math.sin(angle),tipX=x+dx*size*.5,tipY=y+dy*size*.5;
         c.globalAlpha=.7;c.beginPath();c.moveTo(x-dx*size*.5,y-dy*size*.5);c.lineTo(tipX,tipY);c.stroke();
         c.globalAlpha=1;c.beginPath();c.moveTo(tipX,tipY);
         c.lineTo(tipX-dx*head*1.6-dy*head,tipY-dy*head*1.6+dx*head);
         c.lineTo(tipX-dx*head*1.6+dy*head,tipY-dy*head*1.6-dx*head);c.closePath();c.fill();
-        c.beginPath();c.arc(x,y,1.6/scale,0,Math.PI*2);c.fill();
       });
       c.restore();
     }

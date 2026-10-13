@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.191'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.201'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -253,6 +253,15 @@
         var caveStyle=getComputedStyle(caveIndicator),caveBounds=caveIndicator.getBoundingClientRect();
         if(caveStyle.getPropertyValue('--cave-placement').trim()==='bottom')insetBottom+=caveBounds.height+padding;
         else insetRight+=caveBounds.width+padding;
+      }
+    }
+    var submarinePanel=document.getElementById('toy-submarine-controls');
+    if(submarinePanel){
+      submarinePanel.hidden=currentScene!=='slime-submarine';
+      if(!submarinePanel.hidden){
+        var submarineStyle=getComputedStyle(submarinePanel),submarineBounds=submarinePanel.getBoundingClientRect();
+        if(submarineStyle.getPropertyValue('--submarine-placement').trim()==='bottom')insetBottom+=submarineBounds.height+padding;
+        else insetRight+=submarineBounds.width+padding;
       }
     }
     if(currentScene==='sand-dam'){
@@ -544,7 +553,7 @@
   var liquidOpsOverflow = false;
 
   function canRecordLiquidOp(slots) {
-    return airModel && airModel.enabled && airModel.preserveMaterialState
+    return toyMaterialSlip || airModel && airModel.enabled && airModel.preserveMaterialState
       ? liquidOps.length + slots <= LIQUID_MACHINE_OPS_MAX
       : liquidOps.length < LIQUID_OPS_MAX;
   }
@@ -579,8 +588,8 @@
     return id;
   }
 
-  function removeLiquidParticle(i) {
-    if(toyMaterialSlip || toyBalloon || toyDivers || toyBoundary && toyBoundary.ready)return;
+  function removeLiquidParticle(i,sluiceTransfer) {
+    if(toyMaterialSlip && !(sluiceTransfer === true && machineState && machineState.sluiceRun && machineState.sluiceRun.transferring) || toyBalloon || toyDivers || toyBoundary && toyBoundary.ready)return;
     var last = liquidCount - 1;
     if (i < 0 || i > last) return;
     if(machineState && machineState.energyInitial)machineState.energyModified=true;
@@ -13318,6 +13327,7 @@
   });
   inputEl.addEventListener('blur',function(){cancelHeldInput();hideKeyboardCursor();drawMachineOverlay();});
   inputEl.addEventListener('keydown',function(e){
+    if(e.defaultPrevented)return;
     if(e.ctrlKey || e.metaKey || e.altKey)return;
     var arrows={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]};
     var direction=arrows[e.key];
@@ -13988,6 +13998,7 @@
       applyWaterFeel(); syncSliderUI();
     });
     window.addEventListener('keydown', function (e) {
+      if(e.defaultPrevented)return;
       if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
       var map = { '1': 'draw', '2': 'erase', '3': 'water', '4': 'smoke', '5': 'slime', '6': 'poke' };
       if (map[e.key]) setTool(map[e.key]);
@@ -14386,6 +14397,12 @@
       .finally(function(){if(model===airModel && state===machineState)instrumentPending=false;});
   }
   function instrumentTick(now){
+    if(toyDraftRuntime && machineState && machineState.ready && machineState.definition.waterRocketModel){
+      var rocket=toyDraftRuntime.stats();machineState.readings={ready:true,caption:machineState.definition.caption,action:machineState.definition.action,
+        particleCount:0,sampleAgeMs:0,draftRuntime:rocket,clockSeconds:rocket.flightTime,
+        scaleText:'A 2-liter bottle in vertical flight. Height follows the flight model; the bottle drawing is enlarged as the camera pulls back.',
+        numericalStatus:machineState.definition.boundaryNote,energyBudgetStatus:machineState.definition.energyBudgetStatus,error:buildError};return;
+    }
     if(toyBreathingCave && machineState && machineState.ready){
       var cave=toyBreathingCave.stats();machineState.readings={ready:true,cave:cave,caption:machineState.definition.caption,action:machineState.definition.action,
         particleCount:0,sampleAgeMs:0,gasPressurePsi:cave.gaugePressurePa/6894.757293168,roomAbsolutePressurePsi:cave.outsidePressurePa/6894.757293168,
@@ -14757,7 +14774,7 @@
       if(added!==requested)throw Error('The trap water exceeds the particle capacity.');
       return added;
     };
-    if(definition.sluice)state.sluiceRun={flow:100,valve:false,feeding:false,feedAcc:0,fed:0,waterAdded:0,clock:liquidWGPU.simulationClock};
+    if(definition.sluice)state.sluiceRun={flow:100,valve:false,feeding:false,feedRate:120,scoopRemaining:0,cleanup:false,showGold:true,transferring:false,secured:{sand:0,blackSand:0,gold:0},discarded:{sand:0,blackSand:0,gold:0},storedWater:0,discardedWater:0,feedAcc:0,fed:0,waterAdded:0,clock:liquidWGPU.simulationClock};
     setSceneChip(name);if(!options.canvasThumb)setTool('poke');bakeWalls();updateReadout();
     // The real initial divers and water can be drawn while their pressure
     // pipelines finish. Uploading the authored state advances no simulation.
@@ -14917,7 +14934,11 @@
       toySauna=ownSauna;
       SmokeFluid.setThermalStyle({glow:.18,waterCooling:3});
     }
-    if(definition.draft && window.WSSDraftRuntime)toyDraftRuntime=await window.WSSDraftRuntime.create({definition:definition,liquid:liquidWGPU,airModel:airModel,nativeBoundary:toyBoundary,builder:machineBuilder,solidAt:function(x,y){return tileAt(Math.floor(y/TILE),Math.floor(x/TILE))!==null;},membrane:toyBalloon,divers:toyDivers,steam:toySteam,bubbles:toyBubbles,wave:toyWave,sound:toySound,fire:toyFire,oxygen:toyOxygen,sampleParticles:particleInstrumentSample,timeScale:function(){return timeMul;},terrain:function(x,y){return tileAt(Math.floor(y/TILE),Math.floor(x/TILE))!==null;},terrainVersion:function(){return wallsVersion;},bodyGravity:function(){return JELLO_GRAVITY;},SmokeFluid:SmokeFluid,bodies:jelloBodies,setManualValve:setManualValve,growBody:growDrinkingSlime,skinRing:function(body){if(body.waterBalloon)return toyBalloonCurveRing(body);var g=toySolidSkinGuest(body),ring=[];if(g && (body.airContactSkin || body.snorkelSkin))return toyBalloonCurveGeometry(body,body.surfaceSlime.fluidControls);if(g)for(var k=0;k<g.pts.length;k+=4)ring.push({x:g.pts[k],y:g.pts[k+1],vx:g.pts[k+2],vy:g.pts[k+3]});return ring;},removeBody:function(body){if(surfaceSlimeGrip&&surfaceSlimeGrip.body===body)jelloGrabEnd();var index=jelloBodies.indexOf(body);if(index>=0)jelloBodies.splice(index,1);jelloCount=jelloTotalPoints();}});
+    if(definition.draft && window.WSSDraftRuntime){
+      var ownDraftRuntime=await window.WSSDraftRuntime.create({definition:definition,liquid:liquidWGPU,airModel:airModel,nativeBoundary:toyBoundary,sound:toySound,steam:toySteam,bubbles:toyBubbles,wave:toyWave,fire:toyFire,oxygen:toyOxygen,sampleParticles:particleInstrumentSample,timeScale:function(){return timeMul;},builder:machineBuilder,solidAt:function(x,y){return tileAt(Math.floor(y/TILE),Math.floor(x/TILE))!==null;},membrane:toyBalloon,divers:toyDivers,terrain:function(x,y){return tileAt(Math.floor(y/TILE),Math.floor(x/TILE))!==null;},terrainVersion:function(){return wallsVersion;},bodyGravity:function(){return JELLO_GRAVITY;},SmokeFluid:SmokeFluid,bodies:jelloBodies,setManualValve:setManualValve,growBody:growDrinkingSlime,skinRing:function(body){if(body.waterBalloon)return toyBalloonCurveRing(body);var g=toySolidSkinGuest(body),ring=[];if(g && (body.airContactSkin || body.snorkelSkin))return toyBalloonCurveGeometry(body,body.surfaceSlime.fluidControls);if(g)for(var k=0;k<g.pts.length;k+=4)ring.push({x:g.pts[k],y:g.pts[k+1],vx:g.pts[k+2],vy:g.pts[k+3]});return ring;},removeBody:function(body){if(surfaceSlimeGrip&&surfaceSlimeGrip.body===body)jelloGrabEnd();var index=jelloBodies.indexOf(body);if(index>=0)jelloBodies.splice(index,1);jelloCount=jelloTotalPoints();}});
+      if(request!==machineRequest){if(ownDraftRuntime)ownDraftRuntime.destroy();return null;}
+      toyDraftRuntime=ownDraftRuntime;
+    }
     state.energyInitial=window.WaterMachinesInstruments.waterEnergy(Object.assign({},particleInstrumentSample(),{count:added}),
       {floor:worldH,gravity:250*gravMul*presetGravScale,density:model.settings.density || 1});
     state.energyGravity=250*gravMul*presetGravScale;
@@ -14996,6 +15017,7 @@
     if(primary.kind==='draft-motor' && toyDraftRig){definition.action=toyDraftRig.toggle()?'Stop declared motor':'Start declared motor';machineOverlayCache=null;return true;}
     if(primary.kind==='draft-push' && toyDraftRig)return toyDraftRig.push(jelloStepH>0?jelloStepH:JELLO_H,JELLO_TIMESCALE);
     if(primary.kind==='draft-squeeze')return !!(toyBalloon && window.WSSDraftBodies.squeeze(toyBalloon.body,jelloStepH>0?jelloStepH:JELLO_H,JELLO_TIMESCALE));
+    if(primary.kind==='tesla-direction'){constructMachine('tesla-valve',{seed:machineState.seed,reverse:!definition.teslaDirection,symmetric:definition.tesla.symmetric}).catch(function(error){buildError=error.message;});return true;}
     if(primary.kind==='world-size'){constructMachine('world-knobs',{seed:machineState.seed,widthInches:primary.nextInches,moon:primary.moon}).catch(function(error){buildError=error.message;});return true;}
     if(primary.kind==='draft-gravity'){setGravityUI(gravMul===1?.16:1);definition.action=gravMul===1?'Try Moon gravity':'Try Earth gravity';machineOverlayCache=null;return true;}
     if(primary.kind==='bubble-toggle'){var injecting=toyBubbles.toggle();definition.action=injecting?'Stop the air':'Start the air';machineOverlayCache=null;return true;}
@@ -15055,6 +15077,7 @@
     var runtimeControls=toyDraftRuntime && toyDraftRuntime.controls ? toyDraftRuntime.controls() : [];
     if(d.reducedModel || kind==='runtime')return runtimeControls;
     if(kind==='creature-fixture' || kind==='hourglass-grab')return runtimeControls;
+    if(kind==='rocket-console' || kind==='marly-controls')return [];
     var disabled=!machineState.ready || machineLoading || handsPending ||
       ((kind==='balloon-pop' || kind==='slime') && machineState.primaryUsed) ||
       (kind==='cork-release' && d.corkReading && !d.corkReading.locked) ||
@@ -15086,6 +15109,14 @@
     }else if(kind==='heat-toggle' && d.thermoscope)target(d.thermoscope.x,d.thermoscope.y,48,32);
     else if(kind==='steam-heat-toggle' && d.steam)atRect(d.steam.heater);
     else if(kind==='pipe-sound' && d.steam)target(d.steam.vent.x,d.steam.vent.y,32,32);
+    else if(kind==='acoustic-pipes' && d.steam && d.acoustics){
+      for(var pipeIndex=0;pipeIndex<3;pipeIndex++){
+        target(452+pipeIndex*48,130,40,44,'organ-pipe-'+pipeIndex);
+        var pipeControl=controls[controls.length-1];pipeControl.kind='organ-pipe';pipeControl.pipe=pipeIndex;
+        pipeControl.label=['C','E','G'][pipeIndex];pipeControl.ariaLabel='Toggle '+['low','middle','high'][pipeIndex]+' organ pipe';
+        pipeControl.pressed=!!(d.acoustics.mask&(1<<pipeIndex));
+      }
+    }
     else if((kind==='tap' || kind==='slider-supply') && d.boundaries && d.boundaries.tap)target(d.boundaries.tap.x,d.boundaries.tap.y,36,36);
     else if(kind==='bubble-toggle' && d.bubbles)target(d.bubbles.hose.x,d.bubbles.hose.y,40,32);
     else if(kind==='diver-squeeze' && d.divers){
@@ -15101,11 +15132,12 @@
     }
     else if(kind==='smoke-fan' && d.fan)target(d.fan.x,(d.fan.top+d.fan.bottom)*.5,48,d.fan.bottom-d.fan.top);
     else if(kind==='gas-body-piston' && d.gasBodyLab){var gp=d.gasBodyLab.piston;atRect({x:gp.x,y:gp.y+d.gasBodyLab.offset,width:gp.width,height:gp.height});}
-    else if((kind==='gas-body-pump' || kind==='world-size' || kind==='escape-lid') && p.target)atRect(p.target,'primary','button');
+    else if((kind==='gas-body-pump' || kind==='world-size' || kind==='escape-lid' || kind==='tesla-direction') && p.target)atRect(p.target,'primary','button');
     else if(kind==='air-gripper-motor')body(2);
     else if(kind==='suction-prime' && d.suction){if(d.suction.phase===0 && d.divers){var stroke=toyDivers?toyDivers.stats().stroke:0;atRect({x:d.divers.piston.x+stroke+16,y:d.divers.piston.y+32,width:120,height:28},'primary','button');}else{var outlet=d.parts.find(function(part){return part.id==='delivery';});atRect(outlet.rect);}}
     else if(kind==='tesla-motor' && d.divers){atRect({x:d.divers.piston.x-32,y:d.divers.pistonRodEndY||112,width:d.divers.piston.width+64,height:28},'primary','button');}
-    else if((kind==='ballast-valve' || kind==='cuff-pump' || kind==='rocket-release') && p.target)atRect(p.target,'primary','button');
+    else if(kind==='ballast-valve' && d.submarine)return [];
+    else if((kind==='railway-supply' || kind==='ballast-valve' || kind==='cuff-pump' || kind==='rocket-release') && p.target)atRect(p.target,'primary','button');
     else if(kind==='balloon-pop' || kind==='draft-squeeze' || kind==='draft-push' || kind==='creature-gas' || kind==='cork-release' || kind==='ballast-valve' || kind==='cuff-pump' || kind==='rocket-release')body(0);
     else if(kind==='slime'){
       var slime=d.slimes[p.index || 0];if(slime)target(slime.x,slime.y,slime.radius*2,slime.radius*2);
@@ -15125,8 +15157,8 @@
     else if(kind==='draft-primary' && d.releaseCap)opening(d.releaseCap);
     else if(kind==='creature-gates' && d.parts && d.parts.length)atRect(d.parts[0].rect);
     else target(source.x+source.width*.5,source.y+12,48,32);
-    if(d.sluice){var feed=d.sluice.feed;controls.push({id:'sluice-feed',x:feed.x,y:feed.y-24,width:48,height:44,
-      label:'Hold to feed paydirt',kind:'sluice-feed',disabled:disabled || machineState.sluiceRun.fed>=d.sluice.hopper,pointerMode:'fixture'});}
+    if(d.sluice){controls[0].kind='sluice-valve';controls[0].label='Toggle water valve';controls[0].pressed=machineState.sluiceRun.valve;var feed=d.sluice.feed;controls.push({id:'sluice-scoop',x:feed.x,y:feed.y-24,width:48,height:44,
+      label:'Release one scoop',kind:'sluice-scoop',disabled:disabled || machineState.sluiceRun.cleanup || machineState.sluiceRun.fed>=d.sluice.hopper,pointerMode:'fixture'});}
     return controls.concat(runtimeControls);
   }
   function activateMachineControl(id,held,point){
@@ -15142,8 +15174,10 @@
       var d=machineState.definition;
       return constructMachine(d.name,{dry:d.primary.dry,fanOff:!!d.draftFireSmoke.fan.enabled,seed:machineState.seed});
     }
+    if(control.kind==='organ-pipe' && toyDraftRuntime && toyDraftRuntime.togglePipe)return toyDraftRuntime.togglePipe(control.pipe);
     if(control.kind==='thumb')return machineThumb(held!==false);
-    if(control.kind==='sluice-feed')return sluiceControl('feed',held===true);
+    if(control.kind==='sluice-scoop')return sluiceControl('scoop',120);
+    if(control.kind==='sluice-valve')return sluiceControl('valve',!machineState.sluiceRun.valve);
     if(control.kind==='fire-pour' || control.kind==='pour')return machinePour(held===true);
     return machinePrimary(point);
   }
@@ -15152,6 +15186,7 @@
     if(!held){machinePourHeld=false;machinePourFlow={acc:0};return false;}
     if(!machineState || !machineState.ready || waterState!=='on' ||
       !/^(fire-pour|pour)$/.test(machineState.definition.primary.kind))return false;
+    if(machineState.sluiceRun && !machineState.sluiceRun.flow)machineState.sluiceRun.flow=100;
     if(!machinePourHeld){machinePourClock=liquidWGPU.simulationClock;machinePourFlow={acc:0};}
     machinePourHeld=true;return true;
   }
@@ -15428,7 +15463,7 @@
       instrumentsCanvas.setAttribute('aria-hidden','true');stage.appendChild(instrumentsCanvas);
       instrumentsCtx=instrumentsCanvas.getContext('2d');
     }
-    var overlayDpr=machineState && (machineState.definition.sluice || machineState.definition.sandDam || machineState.definition.fire || machineState.definition.draftBurner) ? Math.min(3,Math.ceil(dpr*Math.max(1,fitScale))) : toyThirsty ? Math.min(3,dpr*Math.max(1,fitScale)) : dpr;
+    var overlayDpr=machineState && (machineState.definition.sluice || machineState.definition.sandDam || machineState.definition.fire || machineState.definition.draftBurner || machineState.definition.ballastRailway) ? Math.min(3,Math.ceil(dpr*Math.max(1,fitScale))) : toyThirsty ? Math.min(3,dpr*Math.max(1,fitScale)) : dpr;
     var overlayW=Math.round(worldW*overlayDpr),overlayH=Math.round(worldH*overlayDpr);
     if(instrumentsCanvas.width!==overlayW || instrumentsCanvas.height!==overlayH){instrumentsCanvas.width=overlayW;instrumentsCanvas.height=overlayH;machineOverlayCache=null;}
     instrumentsCanvas.style.width=worldW+'px';instrumentsCanvas.style.height=worldH+'px';
@@ -15527,12 +15562,14 @@
       if(toySauna)toySauna.draw(c,{accent:accent,text:text,coral:'#d9978c',clay:'#cf9f78'});
       if(toyFloatSlider)toyFloatSlider.draw(c);
       if(toyDraftRig)toyDraftRig.draw(c);
-      if(toyDraftRuntime && toyDraftRuntime.draw)toyDraftRuntime.draw(c);
+      if(toyDraftRuntime && toyDraftRuntime.draw)toyDraftRuntime.draw(c,{palette:palette,scale:fitScale,accent:accent,text:text});
       if(toySteam && definition.birds)window.WSSSingingPipe.draw(c,definition,toySteam.stats(),{accent:accent,text:text},fitScale);
       if(toyWave)toyWave.draw(c,{accent:accent,text:text});
       if(toySteam && !definition.birds){var steamDefinition=definition.steam,steamHeat=toySteam.stats();
-        c.fillText(steamHeat.heated?'Heater on':'Cooling',steamDefinition.heater.x-44,steamDefinition.heater.y+28);
-        if(art)art.heater(c,steamDefinition.heater,{heated:steamHeat.heated});
+        if(!steamDefinition.hideHeaterDrawing){
+          c.fillText(steamHeat.heated?'Heater on':'Cooling',steamDefinition.heater.x-44,steamDefinition.heater.y+28);
+          if(art)art.heater(c,steamDefinition.heater,{heated:steamHeat.heated});
+        }
         if(!steamDefinition.hideWhistleDrawing){
         c.fillText(steamHeat.vaporParcels+' vapor parcels',288,184);
         c.beginPath();c.moveTo(412,152);c.lineTo(412,112);c.moveTo(420,152);c.lineTo(420,112);c.stroke();
@@ -15558,7 +15595,11 @@
       if(toyBubbles){var hose=definition.bubbles.hose;if(art)art.airPort(c,hose.x,hose.y,{bottom:384,active:toyBubbles.stats().injecting});}
       if(definition.sandDam && window.WSSSandDam)window.WSSSandDam.draw(c,definition,{palette:palette,scale:fitScale,pouring:machinePourHeld});
       if(definition.sluice){
-        if(window.WSSSluiceControls)window.WSSSluiceControls.draw(c,definition,machineState.sluiceRun,{scale:fitScale,palette:palette,pouring:machinePourHeld});
+        if(window.WSSSluiceControls){
+          var goldPoints=[];
+          if(machineState.sluiceRun.showGold)for(var gi=0;gi<liquidCount;gi++)if(liquidType[gi]===5 && liquidOrigin[gi]===3)goldPoints.push({x:liquidX[gi],y:liquidY[gi]});
+          window.WSSSluiceControls.draw(c,definition,machineState.sluiceRun,{scale:fitScale,palette:palette,pouring:machinePourHeld,gold:goldPoints});
+        }
       }
       definition.marks.forEach(function(mark){
         c.save();c.setLineDash([5,5]);c.beginPath();c.moveTo(mark.x,mark.y);c.lineTo(mark.x+mark.width,mark.y);c.stroke();c.restore();
@@ -15612,7 +15653,7 @@
       var stockFountainValve=machineState && machineState.definition.name==='heron' && machineState.definition.parts.some(function(p){return p.buildId===part.id;});
       var thermalWall=machineState && machineState.definition.thermal && machineState.definition.thermal.mode==='freeze' && machineState.definition.parts.some(function(p){return p.id==='fracture'&&p.buildId===part.id;});
       var suctionValve=machineState && machineState.definition.suction && machineState.definition.parts.find(function(p){return p.buildId===part.id;});
-      var valveName=suctionValve ? suctionValve.id==='delivery'?'Outlet':'Primer' : stockFountainValve?'Valve':part.id;
+      var valveName=definition.liftCaissons && part.id===definition.parts[0].buildId ? 'Ballast feed' : suctionValve ? suctionValve.id==='delivery'?'Outlet':'Primer' : stockFountainValve?'Valve':part.id;
       var label=thermalWall?'Pipe wall: '+(part.open?'fractured':'intact'):valveName+': '+(part.open ? 'Open' : 'Closed');
       var labelWidth=c.measureText(label).width+8,labelHeight=18;
       // Keep a visible marker's identity inside the cropped view at any zoom.
@@ -15703,7 +15744,7 @@
   var demoActivity = DemoActivity.create(stage, { clock: false });
   function frame(tNow) {
     rafId = demoActivity.requestFrame(frame);
-    if(handsPending || toyBoundary && toyBoundary.inFlight){instrumentTick(tNow);return;}
+    if(handsPending || machineState && machineState.sluiceRun && machineState.sluiceRun.transferring || toyBoundary && toyBoundary.inFlight){instrumentTick(tNow);return;}
     var dt = lastT ? (tNow - lastT) / 1000 : 1 / 60;
     // An uncapped browser can call back faster than the solvers' tiny-dt
     // guard. Bank those callbacks into a real membrane update instead of
@@ -15786,18 +15827,28 @@
   function sluiceInventory(){
     if(!machineState || !machineState.definition.sluice)return null;
     var d=machineState.definition.sluice,run=machineState.sluiceRun;
-    var data={sand:{total:0,washed:0},blackSand:{total:0,washed:0},gold:{total:0,washed:0},admitted:run.waterAdded,pouring:machinePourHeld || run.valve,
-      flow:run.flow,valve:run.valve,feeding:run.feeding,fed:run.fed,hopper:d.hopper-run.fed,waterRemaining:d.waterSupply-run.waterAdded,
+    function mineral(){return {total:0,bed:0,moving:0,washed:0,collected:0,spilled:0};}
+    var data={sand:mineral(),blackSand:mineral(),gold:mineral(),admitted:run.waterAdded,pouring:machinePourHeld || run.valve,
+      secured:Object.assign({},run.secured),discarded:Object.assign({},run.discarded),storedWater:run.storedWater,discardedWater:run.discardedWater,transferring:run.transferring,capacityRemaining:Math.max(0,LIQUID_MAX_PARTICLES-8-liquidCount-(d.waterSupply-run.waterAdded)),flow:run.flow,valve:run.valve,feeding:run.feeding,feedRate:run.feeding?run.feedRate:0,scoopRemaining:run.scoopRemaining,cleanup:run.cleanup,showGold:run.showGold,
+      fed:run.fed,hopper:d.hopper-run.fed,waterRemaining:d.waterSupply-run.waterAdded,
       waterSupply:d.waterSupply,hopperCapacity:d.hopper,lengthInches:d.lengthInches,slope:d.slope,riffleHeight:d.riffles?d.riffleHeight:0,
       clock:Math.max(0,liquidWGPU.simulationClock-(machineState.startedAt || 0)),sampleAge:liquidWGPU.getReadbackAge()};
     data.sourceClock=machinePourClock;
     var runoff=0;
+    function inside(r,x,y){return r && x>=r.x && x<=r.x+r.width && y>=r.y && y<=r.y+r.height;}
     for(var i=0;i<liquidCount;i++){
+      var x=liquidX[i],y=liquidY[i];
       if(liquidType[i]===5){
         var r=liquidOrigin[i]===3?data.gold:liquidOrigin[i]===2?data.blackSand:data.sand;r.total++;
-        if(liquidX[i]>=d.tailingsX || liquidY[i]>=d.tailingsY)r.washed++;
-      }else if(liquidX[i]>d.tailingsX-28 && liquidX[i]<d.tailingsX+32 && liquidY[i]<d.tailingsY+24)runoff+=Math.max(0,liquidVY[i]);
+        // Locations are disjoint. In the box is not a claim of capture.
+        if(inside(d.collection,x,y))r.collected++;
+        else if(inside(d.tailings,x,y))r.washed++;
+        else if(x>=72 && x<d.tailingsX && y>=d.floor(x)-Math.max(20,d.riffleHeight+4) && y<=d.floor(x)+1)r.bed++;
+        else if(y>=d.tailingsY || x<64)r.spilled++;
+        else r.moving++;
+      }else if(x>d.tailingsX-28 && x<d.tailingsX+32 && y<d.tailingsY+24)runoff+=Math.max(0,liquidVY[i]);
     }
+    ['sand','blackSand','gold'].forEach(function(key){data[key].collected+=run.secured[key];data[key].washed+=run.discarded[key];data[key].total+=run.secured[key]+run.discarded[key];});
     data.runoff=Math.min(2,Math.sqrt(runoff/60000));
     return data;
   }
@@ -15805,38 +15856,93 @@
   function sluiceControl(key,value){
     if(!machineState || !machineState.definition.sluice)return false;
     var r=machineState.sluiceRun,d=machineState.definition.sluice;
-    if(key==='flow' && Number.isFinite(value))r.flow=Math.max(25,Math.min(150,value));
+    if(r.transferring)return false;
+    if(key==='refill' && value){
+      var added=Math.min(18000,36000-(d.waterSupply-r.waterAdded),Math.max(0,LIQUID_MAX_PARTICLES-8-liquidCount-(d.waterSupply-r.waterAdded)));
+      if(!added)return false;
+      d.waterSupply+=added;
+    }
+    if(key==='flow' && Number.isFinite(value)){
+      r.flow=Math.max(0,Math.min(150,value));
+      sluiceControl('valve',r.flow>0);
+    }
     if(key==='valve'){
       var open=!!value && machineState.ready && r.waterAdded<d.waterSupply;
+      if(open && !r.flow)r.flow=100;
       if(open!==r.valve){machinePourClock=liquidWGPU.simulationClock;machinePourFlow={acc:0};}
       r.valve=open;
     }
+    if(key==='feedRate' && Number.isFinite(value)){
+      r.feedRate=Math.max(0,Math.min(240,value));r.scoopRemaining=0;
+      sluiceControl('feed',r.feedRate>0);
+    }
     if(key==='feed'){
-      var feeding=!!value && machineState.ready && r.fed<d.hopper;
+      var feeding=!!value && !r.cleanup && machineState.ready && r.fed<d.hopper;
+      if(feeding && !r.feedRate)r.feedRate=120;
       if(feeding!==r.feeding)r.clock=liquidWGPU.simulationClock;
       r.feeding=feeding;
-      if(!r.feeding)r.feedAcc=0;
+      if(!r.feeding){r.feedAcc=0;r.scoopRemaining=0;}
     }
+    if(key==='scoop' && !r.cleanup && machineState.ready){
+      sluiceControl('feed',false);r.feedRate=120;
+      r.scoopRemaining=Math.min(d.hopper-r.fed,Math.max(0,Math.min(240,Math.floor(Number(value)||120))));
+      sluiceControl('feed',r.scoopRemaining>0);
+    }
+    if(key==='cleanup' && value && !r.cleanup && machineState.ready){
+      sluiceControl('feed',false);sluiceControl('valve',false);machinePour(false);
+      toyMaterialSlip.setCleanup(true);r.cleanup=true;
+      d.polygons=d.cleanupPolygons;wallsVersion++;machineOverlayCache=null;bakeWalls();render();
+    }
+    if(key==='showGold')r.showGold=!!value;
     machineOverlayCache=null;
     if(userPaused)drawMachineOverlay();
     return true;
+  }
+
+  async function sluiceTransfer(destination){
+    var state=machineState,r=state && state.sluiceRun;
+    if(!r || r.transferring || !state.ready || !['collect','tailings'].includes(destination))return false;
+    // Picking up the wet pan is an explicit inventory transfer. Freeze the
+    // apparatus while reading its exact native contents, including all water
+    // and all mineral classes. No stale CPU position chooses the selection.
+    sluiceControl('feed',false);sluiceControl('valve',false);machinePour(false);
+    r.transferring=true;stopLoop();
+    try{
+      liquidWGPU.prepareMaterialState();
+      var snapshot=await window.WSSSluiceTransfer.capture(liquidWGPU,destination==='collect'?state.definition.sluice.collection:state.definition.sluice.tailings);
+      if(state!==machineState || liquidCount!==snapshot.count)throw Error('The station changed before the pan could be lifted.');
+      // Shared native OPS_CAPACITY is 262144 f32 slots. Reject an oversized
+      // REMOVE stream before touching either inventory.
+      if(!liquidWGPU.opsReady || liquidOps.length+snapshot.indices.length*2>262144 || !canRecordLiquidOp(snapshot.indices.length*2))throw Error('The native transfer queue is unavailable. The pan remains in place.');
+      // Match the CPU mirror to the frozen snapshot before native swap-removes.
+      // The GPU retains every unselected position, velocity and APIC tensor.
+      for(var i=0;i<snapshot.count;i++){
+        liquidX[i]=snapshot.positions[i*4];liquidY[i]=snapshot.positions[i*4+1];liquidVX[i]=snapshot.positions[i*4+2];liquidVY[i]=snapshot.positions[i*4+3];
+      }
+      var ledger=destination==='collect'?r.secured:r.discarded;
+      snapshot.indices.slice().sort(function(a,b){return b-a;}).forEach(function(index){removeLiquidParticle(index,true);});
+      ['sand','blackSand','gold'].forEach(function(key){ledger[key]+=snapshot.materials[key];});
+      if(destination==='collect')r.storedWater+=snapshot.materials.water;else r.discardedWater+=snapshot.materials.water;
+      liquidWGPU.prepareMaterialState();await liquidWGPU.queue.onSubmittedWorkDone();
+      machineOverlayCache=null;render();
+      return {destination:destination,materials:snapshot.materials};
+    }finally{r.transferring=false;if(state===machineState)syncRunning();}
   }
 
   function sluiceFeedTick(){
     if(!machineState || !machineState.sluiceRun)return;
     var r=machineState.sluiceRun,d=machineState.definition.sluice,clock=liquidWGPU.simulationClock;
     var h=Math.min(.05,Math.max(0,clock-r.clock));r.clock=clock;
-    if(!r.feeding || !machineState.ready)return;
-    r.feedAcc+=h*d.feedRate;
+    if(!r.feeding || r.cleanup || !machineState.ready)return;
+    r.feedAcc+=h*r.feedRate;
     while(r.feedAcc>=1 && r.fed<d.hopper){
-      // A counted external hopper releases one grain through its outlet.
-      // The batch is shuffled once, independently of the seven outlet lanes.
       var lane=(r.fed*3)%7,x=d.feed.x+(lane-3)*2.1;
       var material=d.feedMaterials[r.fed];
-      if(addLiquidParticle(material,x,d.feed.y,0,65,0)<0){r.feeding=false;r.feedAcc=0;break;}
+      if(addLiquidParticle(material,x,d.feed.y,0,65,0)<0){sluiceControl('feed',false);break;}
       r.fed++;r.feedAcc--;
+      if(r.scoopRemaining>0 && --r.scoopRemaining===0){sluiceControl('feed',false);break;}
     }
-    if(r.fed===d.hopper){r.feeding=false;r.feedAcc=0;}
+    if(r.fed===d.hopper)sluiceControl('feed',false);
   }
 
   // A held control admits the same full stream. Release leaves no backlog;
@@ -15900,7 +16006,7 @@
     var definition=machineState.definition.steam;
     toySteam.events().forEach(function(event){
       if(performance.now()-event.receivedAt>100)return;
-      if(toySound)toySound.vent(event);
+      if(toyDraftRuntime && toyDraftRuntime.vent)toyDraftRuntime.vent(event);else if(toySound)toySound.vent(event);
       if(!smokeActive || !(event.steamMassKg>0))return;
       var densityDose=event.steamMassKg/toySteam.stats().parcelMassKg*.08;
       var resolvedArea=(8/24*.0254)*.0254;
@@ -15931,6 +16037,7 @@
   }
 
   function cancelHeldInput() {
+    if(toyDraftRuntime && toyDraftRuntime.releaseInput)toyDraftRuntime.releaseInput();
     releaseMachineControl();
     if(toySound)toySound.setActive(false);
     if (!pointerDown) return;
@@ -16262,6 +16369,7 @@
       releaseMachineControl: releaseMachineControl,
       sluice: sluiceInventory,
       sluiceControl: sluiceControl,
+      sluiceTransfer: sluiceTransfer,
       machineThumb:machineThumb,
       nativeBoundary:function(){return toyBoundary;},
       fire:function(){return toyFire;},
@@ -16276,6 +16384,20 @@
         return changed;
       },
       thermoscope:function(){return toyThermoscope;},
+      submarine:function(){return machineState && machineState.ready && machineState.definition.submarine ? toyDraftRuntime : null;},
+      submarineInput:function(name,active){
+        if(!machineState || !machineState.ready || !machineState.definition.submarine || !toyDraftRuntime)return false;
+        if(active && (userPaused || machineLoading || !demoActivity.active()))return false;
+        return toyDraftRuntime.setInput(name,active);
+      },
+      submarineValve:function(){
+        if(!machineState || !machineState.ready || !machineState.definition.submarine || !toyDraftRuntime)return false;
+        var result=toyDraftRuntime.primary();machineOverlayCache=null;render();drawMachineOverlay();updateReadout();return result;
+      },
+      submarineCourse:function(){
+        if(!machineState || !machineState.ready || !machineState.definition.submarine || !toyDraftRuntime)return false;
+        var result=toyDraftRuntime.restartCourse();machineOverlayCache=null;drawMachineOverlay();return result;
+      },
       balloons:function(){return toyBalloon;},
       divers:function(){return toyDivers;},
       floatSlider:function(){return toyFloatSlider;},

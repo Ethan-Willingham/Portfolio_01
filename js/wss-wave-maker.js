@@ -20,6 +20,7 @@
       setPeriod:function(value){if(!Number.isFinite(value)||value<.5||value>20)throw Error('Paddle period must be between 0.5 and 20 seconds.');pose();period=value;omega=2*Math.PI/period;return period;},
       setStroke:function(value){if(!Number.isFinite(value)||value<0||value>64)throw Error('Paddle stroke must be between 0 and 64 pixels.');pose();stroke=value;return stroke;},
       pulse:function(){pose();phase=0;pulseRemaining=2*Math.PI;on=true;return true;},
+      setMotor:function(value){pose();on=!!value;return on;},
       stats:function(){var p=pose();return {motor:on && !retired,clock:last,phase:phase,frontX:p.x+p.width,velocity:p.vx,period:period,stroke:stroke,retired:retired};},
       draw:function(c,colors){
         if(retired)return;var p=pose(),front=p.x+p.width;

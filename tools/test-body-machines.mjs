@@ -19,9 +19,6 @@ const ids = args.filter((s) => !s.startsWith("--"));
 const selected = ids.length
   ? ids
   : [
-      "shishi-odoshi",
-      "lift-lock",
-      "ballast-railway",
       "fountain-rider",
       "canal-locks",
       "squid-jet",
@@ -323,7 +320,7 @@ try {
           active.bodies[0].x - passive.bodies[0].x,
           active.bodies[0].y - passive.bodies[0].y,
         ) > 15,
-        "Muscle work must change the free body motion relative to its passive control",
+        "Muscle work must change the free body motion relative to its passive control: "+JSON.stringify({passive:passive.bodies[0],active:active.bodies[0]}),
       );
       assert.equal(active.n, initial.n);
       await primary();
@@ -403,7 +400,7 @@ try {
       }
       assert(
         samples.at(-1).regions[key] > 400,
-        "Repeated piston strokes must deliver native water to the collector",
+        "Repeated piston strokes must deliver native water to the collector: "+JSON.stringify(samples.map(s=>s.regions[key])),
       );
       assert.equal(
         samples.at(-1).n,

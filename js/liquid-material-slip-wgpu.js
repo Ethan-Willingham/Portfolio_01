@@ -260,7 +260,12 @@ fn jolt(@builtin(global_invocation_id) id:vec3<u32>){
 // including the sloped floor. There is no tile staircase underneath the bed.
 var BED_GEOMETRY=/* wgsl */ `
 fn bedY(x:f32)->f32{return cfg.bed.y+(x-cfg.bed.x)*(cfg.bed.w-cfg.bed.y)/(cfg.bed.z-cfg.bed.x);}
+fn bedCount()->u32{return u32(cfg.bedOther.y)+select(0u,u32(cfg.bedOther.w),cfg.bedOther.z>0.5);}
 fn bedVertex(k:u32,e:u32)->vec2<f32>{
+ if(cfg.bedOther.z>0.5&&k>u32(cfg.bedOther.y)){
+  let pair=cfg.cleanup[(k-u32(cfg.bedOther.y)-1u)*2u+e/2u];
+  return select(pair.xy,pair.zw,(e&1u)==1u);
+ }
  var x0=cfg.bed.x;var x1=cfg.bed.z;var rise=0.0;var depth=cfg.bedOther.x;
  if(k>0u){x0=cfg.riffles.x+f32(k-1u)*cfg.riffles.y;x1=x0+cfg.riffles.z;rise=cfg.riffles.w;depth=0.0;}
  if(e==0u){return vec2<f32>(x0,bedY(x0)-rise);}
@@ -280,11 +285,11 @@ fn bedDistance(k:u32,p:vec2<f32>)->BedDistance{
  if(inside){return BedDistance(-best,faceNormal);}return BedDistance(best,normal);
 }
 fn bedSolid(p:vec2<f32>)->bool{
- for(var k=0u;k<=u32(cfg.bedOther.y);k++){if(bedDistance(k,p).distance<=0.0){return true;}}return false;
+ for(var k=0u;k<=bedCount();k++){if(bedDistance(k,p).distance<=0.0){return true;}}return false;
 }
 fn bedGridVelocity(input:vec2<f32>,p:vec2<f32>)->vec2<f32>{
  var v=input;
- for(var k=0u;k<=u32(cfg.bedOther.y);k++){
+ for(var k=0u;k<=bedCount();k++){
   let d=bedDistance(k,p);if(d.distance<0.0){return vec2<f32>(0.0);}
   if(d.distance<cfg.constants.y){v-=d.normal*min(0.0,dot(v,d.normal));}
  }return v;
@@ -299,7 +304,7 @@ fn resolveBed(i:u32,grainOnly:bool){
  for(var step=0u;step<steps;step++){
   // Continue the unblocked tangential displacement after a collision.
   var motion=delta/f32(steps);
-  for(var k=0u;k<=u32(cfg.bedOther.y);k++){
+  for(var k=0u;k<=bedCount();k++){
    let d=bedDistance(k,p+motion);
    if(d.distance<radius){
     motion+=d.normal*(radius-d.distance);
@@ -321,7 +326,7 @@ fn bedGrains(@builtin(global_invocation_id) id:vec3<u32>){resolveBed(id.x,true);
 // native grain geometry; the preserved origin bits carry their mass identity.
 function sluiceSource(blackSand,options){
  var code=SOURCE
-  .replace('constants:vec4<f32>','constants:vec4<f32>,extraDrag:vec4<f32>,bed:vec4<f32>,riffles:vec4<f32>,bedOther:vec4<f32>')
+  .replace('constants:vec4<f32>','constants:vec4<f32>,extraDrag:vec4<f32>,bed:vec4<f32>,riffles:vec4<f32>,bedOther:vec4<f32>,cleanup:array<vec4<f32>,4>')
   .replace('array<Species,3>','array<Species,4>')
   .replaceAll('a<3u','a<4u').replaceAll('b<3u','b<4u')
   .replaceAll('*3u+a','*4u+a').replaceAll('array<f32,3>','array<f32,4>')
@@ -499,14 +504,17 @@ function create(instance,options){
  // Complete native world plus its padded 16-cell blocks, not a particle cap.
  // Native bounds include both endpoints before their 16-cell margin and block rounding.
  var capacity=Math.min(2097152,Math.ceil((Math.ceil(width/opts.cellSize)+33)/16)*16*Math.ceil((Math.ceil(height/opts.cellSize)+33)/16)*16);
- var buffers=[],destroyed=false;
+ var buffers=[],destroyed=false,cleanup=false;
  function buffer(name,size,usage){var b=device.createBuffer({label:'liquid.slip.'+name,size:size,usage:usage});buffers.push(b);return b;}
- var config=buffer('config',phases===4?128:64,GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST),packed=buffer('momentum',capacity*(phases*12+12),GPUBufferUsage.STORAGE),velocity=buffer('velocity',capacity*phases*16,GPUBufferUsage.STORAGE),snapshot=buffer('resolved',capacity*phases*16,GPUBufferUsage.STORAGE);
+ var config=buffer('config',phases===4?192:64,GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST),packed=buffer('momentum',capacity*(phases*12+12),GPUBufferUsage.STORAGE),velocity=buffer('velocity',capacity*phases*16,GPUBufferUsage.STORAGE),snapshot=buffer('resolved',capacity*phases*16,GPUBufferUsage.STORAGE);
  var contactAffine=buffer('contactAffine',instance.maxParticles*16,GPUBufferUsage.COPY_SRC|GPUBufferUsage.COPY_DST);
  queue.writeBuffer(config,0,new Float32Array([density[0],density[1],density[2],density[3]||0,drag[0],drag[1],drag[2],0,width,height,0,opts.gridMaxCells,opts.restDensity,opts.cellSize,opts.fixedScale,capacity]));
  if(phases===4){
   if(!opts.bed)throw Error('A mixed-grain sluice requires its physical bed.');
-  queue.writeBuffer(config,64,new Float32Array([drag[3],drag[4],drag[5],0].concat(opts.bed.line,opts.bed.riffles,[opts.bed.thickness,opts.bed.count,0,0])));
+  var cleanupPolygons=opts.bed.cleanupPolygons||[];
+  if(cleanupPolygons.length>2||cleanupPolygons.some(function(polygon){return polygon.length!==4||polygon.some(function(point){return point.length!==2||!point.every(Number.isFinite);});}))throw Error('Cleanout supports two finite quadrilateral solids.');
+  queue.writeBuffer(config,64,new Float32Array([drag[3],drag[4],drag[5],0].concat(opts.bed.line,opts.bed.riffles,[opts.bed.thickness,opts.bed.count,0,cleanupPolygons.length])));
+  if(cleanupPolygons.length)queue.writeBuffer(config,128,new Float32Array(cleanupPolygons.flat(2)));
  }
  var module=device.createShaderModule({label:'liquid.materialSlip',code:phases===4?sluiceSource(opts.blackSand,opts):SOURCE}),resources=[instance.paramsBuf,config,instance.buf.pos,instance.buf.affine,instance.buf.aux,instance.buf.flag,packed,velocity,instance.buf.cellMass,instance.buf.cellOilMass,instance.simParamsBuf,instance.buf.terrainMask,snapshot];
  var bindings={clearCells:[0,1,6,7],scatter:[0,1,2,3,5,6,8,9],stress:[0,1,2,4,5,6,8,10],solve:[0,1,6,10,12],stabilizeGrid:[0,7,10,12],gridBoundary:[0,1,7,10,11],gather:[0,1,2,3,4,5,7,10],jolt:[0,1,2,5]},pipes={},groups={};
@@ -557,12 +565,20 @@ function create(instance,options){
    pass.setPipeline(pipes.jolt);pass.setBindGroup(0,groups.jolt);pass.dispatchWorkgroups(Math.ceil(instance.uploadedCount/256));pass.end();queue.submit([encoder.finish()]);
    return {horizontalVelocityImpulse:speed,allMaterials:true};
   },
+  // The cleanout handle only changes rigid boundary geometry. All mineral and
+  // water parcels keep their resident positions, velocity, mass and identity.
+  setCleanup:function(enabled){
+   if(!model.ready||destroyed||phases!==4||!opts.bed.cleanupPolygons||!opts.bed.cleanupPolygons.length)throw Error('This material scene has no cleanout hardware.');
+   cleanup=!!enabled;
+   queue.writeBuffer(config,112,new Float32Array([opts.bed.thickness,cleanup?0:opts.bed.count,cleanup?1:0,opts.bed.cleanupPolygons.length]));
+   return {cleanup:cleanup,riffleCount:cleanup?0:opts.bed.count};
+  },
   // Stock snow contacts reuse two affine lanes for neighbor certificates.
   // Save the actual APIC tensor around those passes, without changing their
   // native position/velocity constraints or their validated spatial search.
   beforeGrains:function(encoder){encoder.copyBufferToBuffer(instance.buf.affine,0,contactAffine,0,instance.uploadedCount*16);},
   afterGrains:function(encoder){encoder.copyBufferToBuffer(contactAffine,0,instance.buf.affine,0,instance.uploadedCount*16);},
-  stats:function(){return {grainClasses:opts.discreteGrains?['sand']:opts.blackSand?['quartz','magnetite','gold']:phases===4?['quartz','gold']:['grain'],discreteGrains:!!opts.discreteGrains,mixedGrainContacts:!!opts.grainContacts,enabled:!destroyed,ready:model.ready,error:model.error,densities:density.slice(),dragRates:drag.slice(),commonGravity:instance.simParamsHost[0],referenceArea:opts.cellSize*opts.cellSize/opts.restDensity,gridCapacity:capacity,method:(opts.discreteGrains?'Discrete grain inertia, fluid occupancy pressure, implicit equal/opposite grid drag and exact grain neighborhoods. ':'Separate APIC phase momentum, shared compressive volume stress, implicit equal/opposite drag. ')+(opts.grainContacts?'Mass-weighted grain contacts and Coulomb friction. ':'')+'No calibrated viscosity, permeability, surface tension or Drucker-Prager sand law.'};},
+  stats:function(){return {grainClasses:opts.discreteGrains?['sand']:opts.blackSand?['quartz','magnetite','gold']:phases===4?['quartz','gold']:['grain'],discreteGrains:!!opts.discreteGrains,mixedGrainContacts:!!opts.grainContacts,cleanup:cleanup,enabled:!destroyed,ready:model.ready,error:model.error,densities:density.slice(),dragRates:drag.slice(),commonGravity:instance.simParamsHost[0],referenceArea:opts.cellSize*opts.cellSize/opts.restDensity,gridCapacity:capacity,method:(opts.discreteGrains?'Discrete grain inertia, fluid occupancy pressure, implicit equal/opposite grid drag and exact grain neighborhoods. ':'Separate APIC phase momentum, shared compressive volume stress, implicit equal/opposite drag. ')+(opts.grainContacts?'Mass-weighted grain contacts and Coulomb friction. ':'')+'No calibrated viscosity, permeability, surface tension or Drucker-Prager sand law.'};},
   destroy:function(){if(destroyed)return;destroyed=true;model.ready=false;if(instance.materialSlip===model)delete instance.materialSlip;instance.needsDenseClear=true;buffers.forEach(function(b){b.destroy();});}
  };
  if(opts.grainContacts)model.encodeGrainContacts=function(encoder){
