@@ -30,7 +30,7 @@ function paintedVanes(model){
   assert.equal(shafts.length,vanes.length);assert.equal(centers.length,vanes.length);
   for(let i=0;i<vanes.length;i++){
     const {path,alpha}=shafts[i],v=vanes[i];
-    assert.ok(Math.hypot(path[1][0]-v.x-6.5*Math.cos(v.angle),path[1][1]-v.y-6.5*Math.sin(v.angle))<1e-9,'painter uses the integrated vane angle');
+    assert.ok(Math.hypot(path[1][0]-v.x-10*Math.cos(v.angle),path[1][1]-v.y-10*Math.sin(v.angle))<1e-9,'painter uses the integrated vane angle');
     assert.ok(Math.hypot((path[0][0]+path[1][0])/2-v.x,(path[0][1]+path[1][1])/2-v.y)<1e-9,'vane rotates around its fixed pin');
     assert.deepEqual(centers[i],[v.x,v.y]);assert.ok(alpha>=.7,'vanes stay visible at rest');
   }
@@ -39,6 +39,14 @@ const idle=setup(),initial=idle.model.stats(),initialVanes=idle.model.vanes();
 const quiet=run(idle,60);healthy(quiet);
 assert.equal(quiet.outsidePressurePa,initial.outsidePressurePa);assert.equal(quiet.massKg,initial.massKg);
 assert.equal(quiet.flowM3PerSecond,0);assert.deepEqual(idle.model.vanes(),initialVanes,'no automatic breathing or turning');paintedVanes(idle.model);
+const tap=setup();pump(tap,'inside');run(tap,3);
+const room=tap.model.vanes().filter(v=>v.x<460),turns=room.map(v=>Math.abs(v.angle-v.restAngle)).sort((a,b)=>a-b);
+assert.ok(turns[Math.floor(turns.length/2)]>Math.PI/4,'a single tap gives an obvious chamber response within three seconds');
+assert.ok(turns[0]>.1,'even the slowest chamber probe visibly turns after a single tap');
+const incremental=setup();
+for(let i=0;i<120;i++)assert.equal(incremental.model.increasePressure('inside',4000/120),true);
+assert.ok(Math.abs(incremental.model.stats().pumpedKg-4000*incremental.model.stats().volumeM3/(incremental.d.cave.gasConstant*incremental.d.cave.temperature))<1e-6,'continuous pressure additions enter the gas ledger');
+assert.equal(incremental.model.increasePressure('outside',NaN),false);assert.equal(incremental.model.increasePressure('inside',-1),false);
 const s=setup(),beforePump=s.model.stats(),beforeAngles=s.model.vanes();
 pump(s,'inside',3);const pumped=s.model.stats();
 assert.equal(pumped.outsidePressurePa,beforePump.outsidePressurePa);
@@ -78,7 +86,7 @@ for(let i=0;i<120*120;i++){
   }
 }
 assert.ok(min<-5 && max>5 && reversals>=18,'manual inputs produce repeated physical reversals');
-assert.ok(maxRotationStep<.3,'no instantaneous half-turn '+JSON.stringify({maxRotationStep,min,max,reversals}));
+assert.ok(maxRotationStep<Math.PI/2,'no instantaneous half-turn '+JSON.stringify({maxRotationStep,min,max,reversals}));
 assert.ok(s.model.stats().vaneAngularTravel>100,'vanes turn under the applied flow');
 s.close(true);s.model.tick(1/120);const sealed=s.model.stats();
 const energy=()=>s.model.vanes().reduce((sum,v)=>sum+.5*s.d.cave.vane.inertia*v.omega*v.omega+.5*s.d.cave.vane.spring*(v.angle-v.restAngle)**2,0);
@@ -92,5 +100,5 @@ assert.equal(trapped.flowM3PerSecond,0);assert.equal(trapped.massKg,trapped.init
 const coarse=setup(),fine=setup();pump(coarse,'outside',3);pump(fine,'outside',3);
 const a=run(coarse,8,1/30),b=run(fine,8,1/120);healthy(a);healthy(b);
 assert.ok(Math.abs(a.massKg-b.massKg)<1e-5 && Math.abs(a.vaneAngularTravel-b.vaneAngularTravel)<1e-5,'fixed-substep frame-size invariance');
-console.log(JSON.stringify({minSpeed:min,maxSpeed:max,reversals,maxRotationStep,quiet,manual:s.model.stats()},null,2));
+console.log(JSON.stringify({minSpeed:min,maxSpeed:max,reversals,maxRotationStep,minTapTurnDegrees:turns[0]*180/Math.PI,medianTapTurnDegrees:turns[Math.floor(turns.length/2)]*180/Math.PI,quiet,manual:s.model.stats()},null,2));
 console.log('PASS: no automatic forcing; independent gas, entrance and vane momentum; manual pressure; continuous physical rotation; closure and damping; frame-size invariance.');

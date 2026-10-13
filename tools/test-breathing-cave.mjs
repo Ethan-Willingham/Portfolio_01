@@ -44,11 +44,67 @@ async function record(name){
   const shot=await call('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
   fs.writeFileSync(path.join(out,name+'.png'),Buffer.from(shot.data,'base64'));return state;
 }
-async function clickPressure(side,touch){
+async function pressureTarget(side){
   const target=await ev(`(()=>{const b=document.querySelector('[data-cave-pressure="${side}"]'),r=b.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2,width:r.width,height:r.height,enabled:!b.disabled,label:b.getAttribute('aria-label')};})()`);
-  check(side+' pressure button is accessible and at least 44 pixels',target.enabled && target.width>=44 && target.height>=44 && target.label.includes('10 hectopascals'));
+  check(side+' pressure button is accessible and at least 44 pixels',target.enabled && target.width>=44 && target.height>=44 && target.label.includes('10 hectopascals') && target.label.includes('hold'));
+  return target;
+}
+async function clickPressure(side,touch){
+  const target=await pressureTarget(side);
   if(touch){await call('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:target.x,y:target.y}]});await call('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});}
   else{await call('Input.dispatchMouseEvent',{type:'mousePressed',button:'left',clickCount:1,x:target.x,y:target.y});await call('Input.dispatchMouseEvent',{type:'mouseReleased',button:'left',clickCount:1,x:target.x,y:target.y});}
+}
+async function pressureHoldCheck(touch,prefix){
+  await ev('__toy.pause(true)');
+  const target=await pressureTarget('outside'),before=await ev('__toy.breathingCave().stats().outsidePressurePa');
+  if(touch)await call('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:target.x,y:target.y}]});
+  else await call('Input.dispatchMouseEvent',{type:'mousePressed',button:'left',clickCount:1,x:target.x,y:target.y});
+  check('held pressure is visibly pressed',await ev('document.querySelector("[data-cave-pressure=outside]").getAttribute("aria-pressed")==="true"'));
+  await delay(600);const during=await ev('__toy.breathingCave().stats().outsidePressurePa');
+  await delay(400);const later=await ev('__toy.breathingCave().stats().outsidePressurePa');
+  check('holding continuously raises pressure after the tap',during-before>1600 && later-during>1000);
+  if(touch)await call('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+  else await call('Input.dispatchMouseEvent',{type:'mouseReleased',button:'left',clickCount:1,x:2,y:2});
+  const released=await ev('__toy.breathingCave().stats().outsidePressurePa');await delay(350);
+  check('release outside the target immediately stops pressure input',await ev('__toy.breathingCave().stats().outsidePressurePa')===released && await ev('document.querySelector("[data-cave-pressure=outside]").getAttribute("aria-pressed")==="false"'));
+  // Native keyboard events test both hold and browser-generated clicks.
+  await ev('document.querySelector("[data-cave-pressure=inside]").focus()');
+  const old=await ev('__toy.breathingCave().stats().pumpedKg');
+  await call('Input.dispatchKeyEvent',{type:'keyDown',key:' ',code:'Space',windowsVirtualKeyCode:32});await delay(700);
+  check('Space holds the pressure input',await ev('__toy.breathingCave().stats().pumpedKg')>old && await ev('document.querySelector("[data-cave-pressure=inside]").getAttribute("aria-pressed")==="true"'));
+  await call('Input.dispatchKeyEvent',{type:'keyUp',key:' ',code:'Space',windowsVirtualKeyCode:32});
+  const up=await ev('__toy.breathingCave().stats().pumpedKg');await delay(350);
+  check('keyboard release stops input without a duplicate click',await ev('__toy.breathingCave().stats().pumpedKg')===up);
+  await call('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});await delay(300);
+  await ev('document.querySelector("[data-cave-pressure=inside]").blur()');
+  const blurred=await ev('__toy.breathingCave().stats().pumpedKg');await delay(350);
+  check('losing focus cancels a keyboard hold',await ev('__toy.breathingCave().stats().pumpedKg')===blurred && await ev('document.querySelector("[data-cave-pressure=inside]").getAttribute("aria-pressed")==="false"'));
+  await call('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});
+  await ev('document.querySelector("[data-cave-pressure=inside]").focus()');
+  await call('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});await delay(350);
+  await ev('window.dispatchEvent(new Event("blur"))');
+  const inactive=await ev('__toy.breathingCave().stats().pumpedKg');await delay(350);
+  check('window inactivity cancels held input and its scheduling',await ev('__toy.breathingCave().stats().pumpedKg')===inactive && await ev('document.querySelector("[data-cave-pressure=inside]").getAttribute("aria-pressed")==="false"'));
+  await ev('window.dispatchEvent(new Event("focus"))');
+  await call('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});await delay(250);
+  check('returning to the window does not restart the old hold',await ev('__toy.breathingCave().stats().pumpedKg')===inactive);
+  if(touch){
+    await call('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:target.x,y:target.y}]});await delay(350);
+    await call('Input.dispatchTouchEvent',{type:'touchCancel',touchPoints:[]});const cancelled=await ev('__toy.breathingCave().stats().outsidePressurePa');await delay(350);
+    check('touch cancellation stops input',await ev('__toy.breathingCave().stats().outsidePressurePa')===cancelled);
+  }
+  console.log('pressure hold',JSON.stringify({touch,tapAndHoldPa:later-before,continuousGainPa:later-during}));
+  await ev('__toy.machine("breathing-cave",{})');await until('__toy.machineState()?.ready && !__toy.stats().loading');
+  await ev('__toy.pause(false)');
+  const liveTarget=await pressureTarget('inside');
+  if(touch)await call('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:liveTarget.x,y:liveTarget.y}]});
+  else await call('Input.dispatchMouseEvent',{type:'mousePressed',button:'left',clickCount:1,x:liveTarget.x,y:liveTarget.y});
+  await delay(1600);const live=await record(prefix+'-held');
+  check('holding during playback drives visible vane motion',live.speedMetersPerSecond>5 && live.vaneAngularTravel>30);
+  if(touch)await call('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+  else await call('Input.dispatchMouseEvent',{type:'mouseReleased',button:'left',clickCount:1,x:liveTarget.x,y:liveTarget.y});
+  await ev('__toy.pause(true);__toy.machine("breathing-cave",{})');await until('__toy.machineState()?.ready && !__toy.stats().loading');
+  await ev('__toy.pause(false)');
 }
 async function indicatorCheck(name){
   const ui=await ev(`(()=>{
@@ -95,6 +151,7 @@ try{
     else if(message.method==='Runtime.consoleAPICalled' && message.params.type==='error')errors.push(message.params.args);
   });
   await call('Runtime.enable');await call('Page.enable');await call('Network.enable');
+  await call('Page.bringToFront');await call('Emulation.setFocusEmulationEnabled',{enabled:true});
   await call('Network.setBlockedURLs',{urls:['*googletagmanager.com*','*google-analytics.com*']});
   for(const viewport of [{width:1440,height:900,mobile:false},{width:844,height:390,mobile:true}]){
     await call('Emulation.setDeviceMetricsOverride',{...viewport,deviceScaleFactor:1});
@@ -105,11 +162,16 @@ try{
     await until('__toy.breathingCave().stats().seconds>1');const balanced=await record(prefix+'-balanced');
     check('cave starts balanced with no automatic pressure or rotation',balanced.flowM3PerSecond===0 && balanced.massKg===balanced.initialMassKg && balanced.vaneAngularTravel===0);
     await indicatorCheck(prefix+'-balanced');
+    if(process.env.PREVIEW_ONLY!=='1')await pressureHoldCheck(viewport.mobile,prefix);
     await ev(`(()=>{const m=__toy.breathingCave(),tick=m.tick.bind(m);window.rotationAudit={maxFrameAngle:0,samples:0,pinsMoved:0};m.tick=function(dt){const old=m.vanes();tick(dt);m.vanes().forEach((v,i)=>{rotationAudit.maxFrameAngle=Math.max(rotationAudit.maxFrameAngle,Math.abs(v.angle-old[i].angle));if(v.x!==old[i].x || v.y!==old[i].y)rotationAudit.pinsMoved++;});rotationAudit.samples++;};})()`);
     await ev('__toy.pause(true)');const before=await ev('__toy.breathingCave().stats()');
     await clickPressure('inside',viewport.mobile);const input=await ev('__toy.breathingCave().stats()');
     check('inside button adds real mass and exactly 10 hPa without changing outside',input.pumpedKg>0 && Math.abs(input.pressurePa-before.pressurePa-1000)<1e-6 && input.outsidePressurePa===before.outsidePressurePa);
-    await clickPressure('inside',viewport.mobile);await ev('__toy.pause(false)');
+    const singleStart=await ev('__toy.breathingCave().stats().seconds');await ev('__toy.pause(false)');
+    await until('__toy.breathingCave().stats().seconds>'+String(singleStart+3));
+    const response=await ev('(()=>{const room=__toy.breathingCave().vanes().filter(v=>v.x<460),turns=room.map(v=>Math.abs(v.angle-v.restAngle)).sort((a,b)=>a-b);return {median:turns[Math.floor(turns.length/2)],min:turns[0]};})()');
+    check('single tap visibly turns the chamber vanes',response.median>Math.PI/4 && response.min>.1);console.log(prefix+' single tap response',JSON.stringify(response));await record(prefix+'-single-tap');
+    await clickPressure('inside',viewport.mobile);
     await until('__toy.breathingCave().stats().speedMetersPerSecond>5');await record(prefix+'-out');
     check('inside pressure drives outgoing air',(await indicatorCheck(prefix+'-out')).flow==='out');
     await until('__toy.breathingCave().stats().seconds>3');
@@ -147,7 +209,9 @@ try{
   await call('Emulation.setDeviceMetricsOverride',{width:600,height:800,mobile:false,deviceScaleFactor:1});await delay(400);await indicatorCheck('narrow-desktop');await record('narrow-desktop');
   await call('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'reduce'}]});
   await clickPressure('outside',false);await ev('__toy.pause(false)');await until('__toy.breathingCave().stats().seconds>2');await record('reduced-motion');
-  check('reduced motion keeps the physical model active',await ev('__toy.breathingCave().stats().visualMotion==="static-vanes" && __toy.breathingCave().stats().admittedKg>0 && __toy.breathingCave().stats().vaneAngularTravel>0'));
+  check('reduced motion still displays the actual vane response',await ev('__toy.breathingCave().stats().visualMotion==="turning-vanes" && __toy.breathingCave().stats().admittedKg>0 && __toy.breathingCave().stats().vaneAngularTravel>0'));
+  const painted=await ev(`(()=>{const m=__toy.breathingCave(),canvas=document.createElement('canvas'),c=canvas.getContext('2d');let path=[],shaft=[];c.moveTo=(x,y)=>path=[[x,y]];c.lineTo=(x,y)=>path.push([x,y]);c.stroke=()=>shaft.push(path);m.draw(c,{scale:1,air:'white'});return shaft.every((p,i)=>Math.cos(Math.atan2(p[1][1]-p[0][1],p[1][0]-p[0][0])-m.vanes()[i].angle)>1-1e-8);})()`);
+  check('reduced motion does not freeze the displayed angle at rest',painted);
   await call('Emulation.setEmulatedMedia',{features:[]});
   // The ordinary smoke scene still boots the unchanged WebGL solver.
   await call('Page.navigate',{url:'http://127.0.0.1:'+port+'/archive/water-smoke-slime/water-smoke-slime.html?scene=chimney'});

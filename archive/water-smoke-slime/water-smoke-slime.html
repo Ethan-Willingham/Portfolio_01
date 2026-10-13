@@ -26,7 +26,7 @@
   <link rel="preload" href="/assets/fonts/commit_mono_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/water-smoke-slime.css?v=v5.186">
-  <link rel="stylesheet" href="/water-smoke-slime-app.css?v=v5.186">
+  <link rel="stylesheet" href="/water-smoke-slime-app.css?v=v5.188">
 </head>
 <body class="physics-page toy-app toy-expanded">
   <section class="toy-shell is-expanded" id="toy" aria-label="Physics playground">
@@ -76,8 +76,8 @@
           <div class="toy-cave-heading"><span>Airflow</span><span id="toy-cave-paused" hidden>Paused</span></div>
           <h2 id="toy-cave-flow" role="status" aria-live="polite" aria-atomic="true">Starting</h2>
           <div class="toy-cave-controls" aria-label="Raise pressure">
-            <button type="button" data-cave-pressure="inside" aria-label="Increase inside pressure by 10 hectopascals"><span>Inside</span><span>+10 hPa</span></button>
-            <button type="button" data-cave-pressure="outside" aria-label="Increase outside pressure by 10 hectopascals"><span>Outside</span><span>+10 hPa</span></button>
+            <button type="button" data-cave-pressure="inside" aria-pressed="false" aria-label="Raise inside pressure. Tap for 10 hectopascals or hold to keep raising it."><span>Inside</span><span>Hold to raise</span></button>
+            <button type="button" data-cave-pressure="outside" aria-pressed="false" aria-label="Raise outside pressure. Tap for 10 hectopascals or hold to keep raising it."><span>Outside</span><span>Hold to raise</span></button>
           </div>
           <div class="toy-cave-pressure">
             <p id="toy-cave-pressure-text">Waiting for pressure</p>
@@ -276,10 +276,10 @@
   <script src="/js/water-machines-pressure-view.js?v=v5.186"></script>
   <script src="/js/wss-machine-registry.js?v=v5.187"></script>
   <script src="/js/wss-apparatus-art.js?v=v5.186"></script>
-  <script src="/js/water-smoke-slime.js?v=v5.187"></script>
+  <script src="/js/water-smoke-slime.js?v=v5.188"></script>
   <script src="/js/wss-oxygen-view.js?v=v5.186-activity1"></script>
   <script src="/js/wss-sluice-controls.js?v=v5.186"></script>
-  <script src="/js/water-smoke-slime-ui.js?v=v5.187"></script>
+  <script src="/js/water-smoke-slime-ui.js?v=v5.188"></script>
   <script src="/js/smoke-presets-ui.js?v=4"></script>
 </body>
 </html>

@@ -11,7 +11,6 @@
       seconds=0,speed=0,flow=0,outside=spec.ambientPa,pressure=outside,maxResidual=0,steps=0,unitMouthFlux=0;
     var fieldResidual=0,fieldIterations=0,error=null,initialized=false,clip=null,pumped=0;
     var markers=[],angularTravel=0,maxAngularStep=0,vane=spec.vane;
-    var reducedMotion=root.matchMedia?root.matchMedia('(prefers-reduced-motion: reduce)'):null;
     function inChamber(x,y){var r=spec.chamber;return x>=r.x && x<r.x+r.width && y>=r.y && y<r.y+r.height;}
     function neighbors(i,visit){
       var x=i%w,y=Math.floor(i/w);
@@ -126,11 +125,12 @@
         angularTravel+=Math.abs(omega*dt);maxAngularStep=Math.max(maxAngularStep,Math.abs(omega*dt));
       });
     }
-    function increasePressure(side){
-      if(side!=='inside' && side!=='outside' || error)return false;
-      if(side==='outside')outside+=spec.pressureStepPa;
+    function increasePressure(side,amount){
+      if(amount===undefined)amount=spec.pressureStepPa;
+      if(side!=='inside' && side!=='outside' || !(amount>0) || !Number.isFinite(amount) || error)return false;
+      if(side==='outside')outside+=amount;
       else{
-        var added=spec.pressureStepPa*volume/(spec.gasConstant*spec.temperature);
+        var added=amount*volume/(spec.gasConstant*spec.temperature);
         mass+=added;pumped+=added;pressure=spec.ambientPa+(mass-initialMass)*spec.gasConstant*spec.temperature/volume;
       }
       return true;
@@ -178,7 +178,7 @@
         flowM3PerSecond:flow,speedMetersPerSecond:speed,volumeM3:volume,mouthAreaM2:area,
         mouthOpen:area>0 && sourceCells>0,vaneCount:markers.length,turningVanes:moving,
         vaneAngularTravel:angularTravel,maxAngularStep:maxAngularStep,nonfiniteVanes:nonfinite,
-        visualMotion:reducedMotion && reducedMotion.matches?'static-vanes':'turning-vanes',
+        visualMotion:'turning-vanes',pressureHoldRatePaPerSecond:spec.pressureHoldRatePaPerSecond,
         fieldResidual:fieldResidual,unitMouthFlux:unitMouthFlux,fieldIterations:fieldIterations,steps:steps,error:error};
     }
     function draw(c,palette){
@@ -191,12 +191,12 @@
           clip.rect(start*h,row*h,(col-start)*h,h);
         }
       }
-      var scale=palette.scale || 1,size=13/scale,head=4/scale,staticView=reducedMotion && reducedMotion.matches;
+      var scale=palette.scale || 1,size=20/scale,head=5/scale;
       c.save();c.clip(clip);c.strokeStyle=c.fillStyle=palette.air || palette.accent;c.lineWidth=1.6/scale;c.lineCap='round';
       markers.forEach(function(marker){
         var x=marker.x,y=marker.y;
         if(world.solidAt(x,y))return;
-        var angle=staticView?marker.restAngle:marker.angle;
+        var angle=marker.angle;
         var dx=Math.cos(angle),dy=Math.sin(angle),tipX=x+dx*size*.5,tipY=y+dy*size*.5;
         c.globalAlpha=.7;c.beginPath();c.moveTo(x-dx*size*.5,y-dy*size*.5);c.lineTo(tipX,tipY);c.stroke();
         c.globalAlpha=1;c.beginPath();c.moveTo(tipX,tipY);

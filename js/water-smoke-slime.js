@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.187'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.188'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -16258,9 +16258,9 @@
       oxygen:function(){return toyOxygen || (toyDraftRuntime && toyDraftRuntime.oxygen ? toyDraftRuntime.oxygen : null);},
       fireSmokeDraft:function(){return toyFireSmokeDraft;},
       breathingCave:function(){return toyBreathingCave;},
-      cavePressure:function(side){
+      cavePressure:function(side,amount){
         if(!toyBreathingCave || !machineState || !machineState.ready)return false;
-        var changed=toyBreathingCave.increasePressure(side);
+        var changed=toyBreathingCave.increasePressure(side,amount);
         if(changed){instrumentTick(performance.now());drawMachineOverlay();updateReadout();}
         return changed;
       },

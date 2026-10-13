@@ -61,14 +61,65 @@
     var actionButtons = new Map();
     var activeHeldButton = null;
     var caveIndicator=document.getElementById('toy-cave-indicator');
+    var caveHold=null,caveHoldFrame=null;
+    function releaseCavePressure(event){
+      if(!caveHold || event && event.pointerId!==undefined && event.pointerId!==caveHold.pointer)return;
+      var held=caveHold;caveHold=null;
+      if(caveHoldFrame!==null){demoActivity.cancelFrame(caveHoldFrame);caveHoldFrame=null;}
+      held.button.setAttribute('aria-pressed','false');
+      if(held.pointer!==null && held.button.hasPointerCapture(held.pointer))held.button.releasePointerCapture(held.pointer);
+    }
+    function raiseHeldCavePressure(now){
+      caveHoldFrame=null;
+      if(!caveHold)return;
+      var model=toy.breathingCave(),state=toy.stats();
+      if(state.scene!=='breathing-cave' || state.loading || model!==caveHold.model || !demoActivity.active()){
+        releaseCavePressure();return;
+      }
+      // A short press is one step. After a brief hold, pressure grows with
+      // active elapsed time, independent of frame rate and manual pause.
+      if(now>caveHold.start+250){
+        var elapsed=Math.min(100,now-Math.max(caveHold.last,caveHold.start+250));
+        if(elapsed>0)toy.cavePressure(caveHold.button.dataset.cavePressure,elapsed*.001*model.stats().pressureHoldRatePaPerSecond);
+      }
+      caveHold.last=now;caveHoldFrame=demoActivity.requestFrame(raiseHeldCavePressure);
+    }
+    function holdCavePressure(button,pointer,key){
+      if(button.disabled || caveHold || !demoActivity.active())return;
+      var now=demoActivity.now();
+      caveHold={button:button,pointer:pointer,key:key,start:now,last:now,model:toy.breathingCave()};
+      button.setAttribute('aria-pressed','true');
+      toy.cavePressure(button.dataset.cavePressure);sync();
+      caveHoldFrame=demoActivity.requestFrame(raiseHeldCavePressure);
+    }
     if(caveIndicator)caveIndicator.querySelectorAll('[data-cave-pressure]').forEach(function(button){
-      button.addEventListener('click',function(){toy.cavePressure(button.dataset.cavePressure);sync();});
+      button.addEventListener('pointerdown',function(event){
+        if(event.button!==0 || button.disabled || caveHold)return;
+        event.preventDefault();button.focus({preventScroll:true});button.setPointerCapture(event.pointerId);
+        holdCavePressure(button,event.pointerId,null);
+      });
+      ['pointerup','pointercancel','lostpointercapture'].forEach(function(name){button.addEventListener(name,releaseCavePressure);});
+      button.addEventListener('keydown',function(event){
+        if(event.key!==' ' && event.key!=='Enter')return;
+        event.preventDefault();if(!event.repeat)holdCavePressure(button,null,event.key);
+      });
+      button.addEventListener('keyup',function(event){
+        if(caveHold && caveHold.button===button && caveHold.key===event.key){event.preventDefault();releaseCavePressure();}
+      });
+      button.addEventListener('blur',function(){if(caveHold && caveHold.button===button)releaseCavePressure();});
+      button.addEventListener('contextmenu',function(event){event.preventDefault();});
+      button.addEventListener('click',function(event){
+        // Screen readers can invoke click without a pointer or keyboard hold.
+        // Ordinary release clicks must not add a second pressure step.
+        if(event.detail===0 && !caveHold){toy.cavePressure(button.dataset.cavePressure);sync();}
+      });
     });
     function syncCaveIndicator(sample,state){
       if(!caveIndicator)return null;
       caveIndicator.hidden=state.scene!=='breathing-cave';
-      if(caveIndicator.hidden)return null;
+      if(caveIndicator.hidden){releaseCavePressure();return null;}
       var ready=sample && !sample.error && Number.isFinite(sample.gaugePressurePa) && Number.isFinite(sample.speedMetersPerSecond);
+      if(!ready || caveHold && toy.breathingCave()!==caveHold.model)releaseCavePressure();
       var speed=ready?sample.speedMetersPerSecond:0;
       caveIndicator.querySelectorAll('[data-cave-pressure]').forEach(function(button){button.disabled=!ready;});
       var flow=!ready?'loading':!sample.mouthOpen?'closed':Math.abs(speed)<.2?'still':speed>0?'out':'in';
@@ -87,8 +138,8 @@
       meter.setAttribute('aria-valuenow',Math.max(-60,Math.min(60,delta)).toFixed(2));
       meter.setAttribute('aria-valuetext',pressureText);
       var reversing=ready && (flow==='out' && delta<-.05 || flow==='in' && delta>.05);
-      text('toy-cave-context',!ready?'The cave is starting.':state.paused?'Airflow and pressure are frozen.':flow==='closed'?'The shut entrance traps the cave air.':
-        reversing?'Moving air takes a moment to reverse.':flow==='still'?'Raise either pressure to move the air.':'Air moves toward the lower pressure.');
+      text('toy-cave-context',!ready?'The cave is starting.':caveHold?'Raising '+caveHold.button.dataset.cavePressure+' pressure. Release to stop.':state.paused?'Airflow is paused. You can still raise either pressure.':flow==='closed'?'The shut entrance traps the cave air.':
+        reversing?'Moving air takes a moment to reverse.':flow==='still'?'Tap for +10 hPa. Hold to keep raising it.':'Air moves toward the lower pressure.');
       return {label:labels[flow],flow:flow};
     }
     var sluiceControls=window.WSSSluiceControls ? window.WSSSluiceControls.create(toy,shell) : null;
@@ -563,7 +614,7 @@
       if(fire)text('toy-hint',liveMachine.definition.sauna ? 'Click the water source or the stones to make steam. Let the room cool between pours.' : candle?'Lift the lid before the flame goes out. Reset lights a fresh candle.':'Click the upper water source or the fire to pour. You can also splash it with Water.');
       if(thirsty)text('toy-hint',pressureMessage);
       if(birds && state.tool==='poke')text('toy-hint','Grab the pipe’s top and slide it up for a lower note, down for a higher one.');
-      if(cave)text('toy-hint','Raise inside or outside pressure. The vanes turn with the air; close the mouth to stop the flow.');
+      if(cave)text('toy-hint','Hold inside or outside pressure to move the air. Release to stop raising it.');
       if(cannon)text('toy-hint',wind?'Grab the slime. Stop the fan to compare its wake.':'Tap the back. Drag the slime back into the swirl.');
       if(balloon)text('toy-hint','Drag the skin to fling it. Click it to pop and release the water.');
       if(state.scene==='air-hose')text('toy-hint','Stop the declared air source and watch the remaining gas.');
@@ -871,6 +922,7 @@
     window.addEventListener('scroll', fitPanel, { passive: true });
     // Reading the existing sample never requests another GPU snapshot.
     var demoActivity = DemoActivity.create(shell);
+    demoActivity.onChange(function(active){if(!active)releaseCavePressure();});
     demoActivity.setInterval(function () {
       if(document.hidden)return;
       if(shell.classList.contains('is-paused')!==toy.stats().paused)sync();else updateMeasurements();
