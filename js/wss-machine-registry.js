@@ -2677,7 +2677,7 @@
     "title": "Hero's vending machine",
     "capability": "Floating things",
     "status": "WORKS",
-    "cue": "Drop a coin onto the lever to open the measured-drink valve. Return it to stop delivery.",
+    "cue": "Watch the opening coin fall onto the lever. Return it, then drop another to dispense again.",
     "world": {
       "w": 720,
       "h": 400
