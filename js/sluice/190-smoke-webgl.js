@@ -101,7 +101,10 @@
 
     var dye, velocity, divergence, curl, pressure;
     // Optional species solver. Ordinary game smoke never installs this hook.
-    var gasTransport = null;
+    var gasTransport = null, combustionAppearance = null, combustionOwner = null;
+    function setCombustionAppearance(field, owner) {
+      if(field || !owner || combustionOwner===owner){combustionAppearance=field || null;combustionOwner=field?owner:null;}
+    }
     function gasContext() {
       if (!ready || !ext.isWebGL2) return null;
       ensureObstacleTexture();
@@ -690,6 +693,15 @@
       'uniform float opticalAbsorption;\n' +
       'uniform float edgeSharpness;\n' +
       'uniform float heatGlow;\n' +
+      'uniform sampler2D uCombustion;\n' +
+      'uniform float useCombustion;\n' +
+      'uniform vec2 combustionTexelSize;\n' +
+      'float combustionLight(vec2 p) {\n' +
+      '  vec2 g = p / combustionTexelSize - 0.5, f = fract(g);\n' +
+      '  vec2 b = (floor(g) + 0.5) * combustionTexelSize;\n' +
+      '  return mix(mix(texture2D(uCombustion, b).r, texture2D(uCombustion, b + vec2(combustionTexelSize.x, 0.0)).r, f.x),\n' +
+      '    mix(texture2D(uCombustion, b + vec2(0.0, combustionTexelSize.y)).r, texture2D(uCombustion, b + combustionTexelSize).r, f.x), f.y);\n' +
+      '}\n' +
       'void main () {\n' +
       '  vec3 cc = texture2D(uTexture, vUv).rgb;\n' +
       '  vec3 lc = texture2D(uTexture, vL).rgb;\n' +
@@ -697,10 +709,12 @@
       '  vec3 tc = texture2D(uTexture, vT).rgb;\n' +
       '  vec3 bc = texture2D(uTexture, vB).rgb;\n' +
       '  vec3 c = cc * 0.56 + (lc + rc + tc + bc) * 0.11;\n' +
-      '  if (edgeSharpness > 0.0) c = mix(c, cc, edgeSharpness);\n' +
+      '  if (edgeSharpness > 0.0 && useCombustion < 0.5) c = mix(c, cc, edgeSharpness);\n' +
       // Empty dye remains transparent after lighting and either obstacle mask.
       // Test all five taps so the edge filter keeps its existing footprint.
-      '  if (all(equal(c, vec3(0.0)))) { gl_FragColor = vec4(0.0); return; }\n' +
+      '  float emission = useCombustion > 0.5 ? combustionLight(vUv) : 0.0;\n' +
+      '  float combustionAlpha = 0.0;\n' +
+      '  if (all(equal(c, vec3(0.0))) && emission == 0.0) { gl_FragColor = vec4(0.0); return; }\n' +
       '#ifdef SHADING\n' +
       '  float dx = length(rc) - length(lc);\n' +
       '  float dy = length(tc) - length(bc);\n' +
@@ -709,13 +723,24 @@
       '  float diffuse = clamp(dot(n, l) + 0.7, 0.7, 1.0);\n' +
       '  c *= diffuse;\n' +
       '#endif\n' +
-      '  if (heatGlow > 0.0) {\n' +
+      '  if (heatGlow > 0.0 && useCombustion < 0.5) {\n' +
       '    float heat = max(0.0, texture2D(uTexture, vUv).a);\n' +
       '    float hot = smoothstep(0.18, 1.3, heat) * heatGlow;\n' +
       '    vec3 flame = mix(vec3(0.32, 0.035, 0.012), vec3(0.9, 0.28, 0.045), smoothstep(0.2, 1.1, heat));\n' +
       '    flame = mix(flame, vec3(0.98, 0.72, 0.16), smoothstep(1.1, 2.6, heat));\n' +
       '    flame = mix(flame, vec3(0.96, 0.93, 0.85), smoothstep(2.6, 5.0, heat));\n' +
       '    c = mix(c, flame * min(1.0, max(c.r, max(c.g, c.b)) * 3.0 + hot * 0.6), hot);\n' +
+      '  }\n' +
+      // Optical products have their own fine field. Warm exhaust is not light.
+      '  if (useCombustion > 0.5) {\n' +
+      '    float density = max(c.r, max(c.g, c.b));\n' +
+      '    float smokeAlpha = 1.0 - exp(-density * 7.0);\n' +
+      '    vec3 smoke = density > 0.0 ? c / density * 0.48 : vec3(0.0);\n' +
+      '    float fireAlpha = (1.0 - exp(-emission * 2.0)) * smoothstep(0.04, 0.12, emission);\n' +
+      '    vec3 flame = mix(vec3(0.68, 0.12, 0.025), vec3(0.98, 0.58, 0.10), smoothstep(0.1, 0.9, emission));\n' +
+      '    flame = mix(flame, vec3(0.98, 0.93, 0.77), smoothstep(0.9, 2.8, emission));\n' +
+      '    combustionAlpha = fireAlpha + smokeAlpha * (1.0 - fireAlpha);\n' +
+      '    c = (smoke * smokeAlpha * (1.0 - fireAlpha) + flame * fireAlpha) / max(combustionAlpha, 0.00001);\n' +
       '  }\n' +
       '  vec3 unmasked = c;\n' +
       '  float visibility = 1.0;\n' +
@@ -745,21 +770,22 @@
       '    visibility *= 1.0 - texture2D(uLiquid, vUv).a;\n' +
       '    c *= 1.0 - texture2D(uLiquid, vUv).a;\n' +
       '  }\n' +
-      '  float a = max(c.r, max(c.g, c.b));\n' +
+      '  float a = useCombustion > 0.5 ? combustionAlpha * visibility : max(c.r, max(c.g, c.b));\n' +
       // Straight-alpha absorption preserves hue in dense experimental smoke.
       // Legacy materials retain their original RGB/alpha transfer exactly.
-      '  if (opticalDensity > 0.5) {\n' +
+      '  if (opticalDensity > 0.5 && useCombustion < 0.5) {\n' +
       '    float density = max(unmasked.r, max(unmasked.g, unmasked.b));\n' +
       '    c = opticalBrightness * unmasked / max(density, 0.0001);\n' +
       '    a = (1.0 - exp(-density * opticalAbsorption)) * visibility;\n' +
       '  }\n' +
       // Sharpen the smoke's opacity before applying coverage. Solid/water/gel
       // silhouettes must keep their own antialiasing even at full definition.
-      '  if (edgeSharpness > 0.0) {\n' +
+      '  if (edgeSharpness > 0.0 && useCombustion < 0.5) {\n' +
       '    float density = max(unmasked.r, max(unmasked.g, unmasked.b));\n' +
       '    float baseAlpha = opticalDensity > 0.5 ? 1.0 - exp(-density * opticalAbsorption) : clamp(density, 0.0, 1.0);\n' +
       '    a = mix(baseAlpha, smoothstep(0.06, 0.72, baseAlpha), edgeSharpness) * visibility;\n' +
       '  }\n' +
+      '  if (useCombustion > 0.5) c = unmasked;\n' +
       '  gl_FragColor = vec4(c, a);\n' +
       '}\n';
   
@@ -1489,6 +1515,9 @@
       uniform1f(displayMaterial.uniforms.opticalAbsorption, config.OPTICAL_ABSORPTION);
       uniform1f(displayMaterial.uniforms.edgeSharpness, config.EDGE_SHARPNESS);
       uniform1f(displayMaterial.uniforms.heatGlow, thermalStyle.glow);
+      uniform1f(displayMaterial.uniforms.useCombustion, combustionAppearance ? 1 : 0);
+      uniform1i(displayMaterial.uniforms.uCombustion, combustionAppearance ? combustionAppearance.attach(6) : dye.read.attach(6));
+      uniform2f(displayMaterial.uniforms.combustionTexelSize,1/(combustionAppearance?combustionAppearance.width:dye.width),1/(combustionAppearance?combustionAppearance.height:dye.height));
       bindLiquidField(displayMaterial.uniforms);
       if (displayMaterial.uniforms.texelSize)
         uniform2f(displayMaterial.uniforms.texelSize, dye.texelSizeX, dye.texelSizeY);
@@ -1621,6 +1650,7 @@
       setMovingBodies: setMovingBodies,
       sampleFlow: sampleFlow,
       setGasTransport:setGasTransport,
+      setCombustionAppearance:setCombustionAppearance,
       sampleTemperature:sampleTemperature,
       heatSource:heatSource,
       setLiquidField: setLiquidField,

@@ -12,7 +12,7 @@ import {fileURLToPath} from 'node:url';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const output=path.resolve(process.env.DUMP || '/tmp/fire-airflow-review');
 const phase=process.env.PHASE || 'all',diagnostic=process.env.DIAGNOSTIC_ONLY==='1';
-assert(['all','cold','plumes','decay','pour','presets','convergence','locality','topology'].includes(phase),'known airflow test phase');
+assert(['all','cold','plumes','decay','pour','presets','convergence','locality','topology','appearance'].includes(phase),'known airflow test phase');
 const profile=fs.mkdtempSync(path.join(os.tmpdir(),'fire-airflow-browser-'));
 fs.mkdirSync(output,{recursive:true});
 const sourceSHA256=Object.fromEntries(['js/wss-oxygen.js','js/wss-fire.js','js/sluice/190-smoke-webgl.js','js/wss-drafts-fire-smoke.js','js/wss-drafts-materials.js','js/wss-sauna.js'].map(file=>[file,createHash('sha256').update(fs.readFileSync(path.join(root,file))).digest('hex')]));
@@ -80,6 +80,102 @@ async function screenshot(name){
   await until('__toy.oxygenView.inspect().revision===__toy.oxygen().snapshot().revision','overlay paints measured airflow');
   const shot=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
   fs.writeFileSync(path.join(output,name+'.png'),Buffer.from(shot.data,'base64'));
+}
+async function normalScreenshot(name){
+  await evaluate('__toy.oxygenView.toggle(false);__toy.pause(false);true');
+  await until('__toy.stats().paused===false && document.querySelector("#toy-resume").hidden && !__toy.oxygenView.enabled()','playing normal flame view');
+  const shot=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
+  fs.writeFileSync(path.join(output,name+'.png'),Buffer.from(shot.data,'base64'));
+}
+async function physicalFingerprint(){
+  return evaluate(`(async()=>{const o=__toy.oxygen();o.capture();const s=o.snapshot();async function hash(a){return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',a))).map(v=>v.toString(16).padStart(2,'0')).join('');}return{seconds:s.seconds,physicalSeconds:s.physicalSeconds,width:s.width,height:s.height,consumed:o.stats().oxygenConsumedKg,chemicalHeatJ:o.stats().chemicalHeatJ,hashes:await Promise.all([s.oxygen,s.oxygenMassKg,s.carrierVolumeM3,s.vx,s.vy,s.temperatureK,s.solid,s.projectionPotential].map(hash))};})()`);
+}
+// Read production optical output, without changing or detaching its owner.
+// The temporary FBO is a readback target only; all GL state is restored.
+async function appearanceProbe(){
+  const fluid=__toy.smoke().fluid,bridge=fluid.setGasTransport(null,{}),gl=bridge.gl;
+  const s=__toy.oxygen().snapshot(),definition=__toy.machineState().definition,source=(definition.fire || definition.draftBurner).source;
+  const cx=source.x+source.width/2,cy=source.y+source.height/2;
+  const saved={program:gl.getParameter(gl.CURRENT_PROGRAM),draw:gl.getParameter(gl.DRAW_FRAMEBUFFER_BINDING),read:gl.getParameter(gl.READ_FRAMEBUFFER_BINDING),readBuffer:gl.getParameter(gl.READ_BUFFER),active:gl.getParameter(gl.ACTIVE_TEXTURE),pack:gl.getParameter(gl.PACK_ALIGNMENT),pbo:gl.getParameter(gl.PIXEL_PACK_BUFFER_BINDING),viewport:gl.getParameter(gl.VIEWPORT),clear:gl.getParameter(gl.COLOR_CLEAR_VALUE),blend:gl.isEnabled(gl.BLEND),vao:gl.getParameter(gl.VERTEX_ARRAY_BINDING),array:gl.getParameter(gl.ARRAY_BUFFER_BINDING),element:gl.getParameter(gl.ELEMENT_ARRAY_BUFFER_BINDING),textures:[]};
+  for(let unit=0;unit<=6;unit++){gl.activeTexture(gl.TEXTURE0+unit);saved.textures.push(gl.getParameter(gl.TEXTURE_BINDING_2D));}gl.activeTexture(saved.active);
+  let fbo,light,pixels,width,height,enabled,unit,error;
+  try{
+    fluid.displayPass();const program=gl.getParameter(gl.CURRENT_PROGRAM);
+    enabled=gl.getUniform(program,gl.getUniformLocation(program,'useCombustion'));
+    unit=gl.getUniform(program,gl.getUniformLocation(program,'uCombustion'));
+    const texel=gl.getUniform(program,gl.getUniformLocation(program,'combustionTexelSize'));
+    if(!texel || !(texel[0]>0&&texel[1]>0))throw Error('Production combustion display is unavailable');
+    width=Math.round(1/texel[0]);height=Math.round(1/texel[1]);
+    gl.activeTexture(gl.TEXTURE0+unit);const texture=gl.getParameter(gl.TEXTURE_BINDING_2D);
+    if(!texture)throw Error('Production combustion light texture is missing');
+    gl.bindBuffer(gl.PIXEL_PACK_BUFFER,null);gl.pixelStorei(gl.PACK_ALIGNMENT,1);
+    fbo=gl.createFramebuffer();gl.bindFramebuffer(gl.READ_FRAMEBUFFER,fbo);gl.framebufferTexture2D(gl.READ_FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,texture,0);gl.readBuffer(gl.COLOR_ATTACHMENT0);
+    if(gl.checkFramebufferStatus(gl.READ_FRAMEBUFFER)!==gl.FRAMEBUFFER_COMPLETE)throw Error('Combustion readback framebuffer is incomplete');
+    light=new Float32Array(width*height*4);gl.readPixels(0,0,width,height,gl.RGBA,gl.FLOAT,light);
+    gl.bindFramebuffer(gl.READ_FRAMEBUFFER,null);gl.readBuffer(gl.BACK);
+    pixels=new Uint8Array(gl.drawingBufferWidth*gl.drawingBufferHeight*4);gl.readPixels(0,0,gl.drawingBufferWidth,gl.drawingBufferHeight,gl.RGBA,gl.UNSIGNED_BYTE,pixels);error=gl.getError();
+  }finally{
+    gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER,saved.draw);gl.bindFramebuffer(gl.READ_FRAMEBUFFER,saved.read);gl.readBuffer(saved.readBuffer);
+    if(fbo)gl.deleteFramebuffer(fbo);gl.bindBuffer(gl.PIXEL_PACK_BUFFER,saved.pbo);gl.pixelStorei(gl.PACK_ALIGNMENT,saved.pack);
+    for(let i=0;i<saved.textures.length;i++){gl.activeTexture(gl.TEXTURE0+i);gl.bindTexture(gl.TEXTURE_2D,saved.textures[i]);}gl.activeTexture(saved.active);
+    gl.useProgram(saved.program);gl.bindVertexArray(saved.vao);gl.bindBuffer(gl.ARRAY_BUFFER,saved.array);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,saved.element);gl.viewport(...saved.viewport);gl.clearColor(...saved.clear);saved.blend?gl.enable(gl.BLEND):gl.disable(gl.BLEND);
+  }
+  let nonfinite=0,minimum=Infinity,maximum=0,total=0,near=0,upper=0,nearMaximum=0,upperMaximum=0;
+  const bins=new Array(16*24).fill(0),pixelArea=s.worldWidth*s.worldHeight/(width*height);
+  function zone(x,y){return x>=cx-64&&x<cx+64&&y>=cy-112&&y<cy+16;}
+  for(let y=0;y<height;y++)for(let x=0;x<width;x++){
+    const at=(y*width+x)*4,value=light[at],wx=(x+.5)*s.worldWidth/width,wy=(height-y-.5)*s.worldHeight/height;
+    for(let k=0;k<4;k++)if(!Number.isFinite(light[at+k]))nonfinite++;
+    minimum=Math.min(minimum,value);maximum=Math.max(maximum,value);total+=value*pixelArea;
+    if(zone(wx,wy)){near+=value*pixelArea;nearMaximum=Math.max(nearMaximum,value);const bx=Math.min(15,Math.floor((wx-cx+64)/128*16)),by=Math.min(23,Math.floor((wy-cy+112)/128*24));bins[by*16+bx]+=value*pixelArea;}
+    if(wy<cy-160){upper+=value*pixelArea;upperMaximum=Math.max(upperMaximum,value);}
+  }
+  let nearWarmPixels=0,upperWarmPixels=0;const alphaLevels=new Set(),cw=gl.drawingBufferWidth,ch=gl.drawingBufferHeight;
+  for(let y=0;y<ch;y++)for(let x=0;x<cw;x++){
+    const at=(y*cw+x)*4,wx=(x+.5)*s.worldWidth/cw,wy=(ch-y-.5)*s.worldHeight/ch;
+    const warm=pixels[at]>130&&pixels[at]>pixels[at+2]*1.15&&pixels[at+3]>12;
+    if(warm&&zone(wx,wy)){nearWarmPixels++;alphaLevels.add(pixels[at+3]);}if(warm&&wy<cy-160)upperWarmPixels++;
+  }
+  async function hash(a){return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',a))).map(v=>v.toString(16).padStart(2,'0')).join('');}
+  return{scene:definition.name,seconds:s.seconds,physicalSeconds:s.physicalSeconds,gasWidth:s.width,gasHeight:s.height,width,height,enabled,textureUnit:unit,nonfinite,minimum,maximum,totalLight:total,nearLight:near,upperLight:upper,nearMaximum,upperMaximum,nearWarmPixels,upperWarmPixels,alphaLevels:alphaLevels.size,canvasWidth:cw,canvasHeight:ch,shape:bins.map(v=>v/Math.max(near,1e-30)),lightHash:await hash(light),pixelHash:await hash(pixels),glError:error};
+}
+async function optical(name){const r=await evaluate('('+appearanceProbe.toString()+')()');reports.push({name,...r});return r;}
+async function appearance(id){
+  await send('Emulation.setDeviceMetricsOverride',{width:1440,height:900,deviceScaleFactor:1,mobile:false});
+  await construct(id,id==='candle-in-jar'?{opened:true}:{});
+  await evaluate('__toy.set("smokePreset","copperhead");__toy.set("smokeScale","default");__toy.oxygenView.toggle(false);__toy.pause(false)');await advance(25);
+  const hot=await optical(id+'-normal-optics-first');await normalScreenshot('desktop-'+id+'-normal-flame-first');
+  await advance(.2);const second=await optical(id+'-normal-optics-second');await normalScreenshot('desktop-'+id+'-normal-flame-next');
+  check(id+' flame uses a materially finer optical field',hot.enabled===1&&hot.width>=2*hot.gasWidth&&hot.height>=2*hot.gasHeight);
+  // A drafted flue stretches the dim optical tail farther than an open
+  // candle. The visible upper exhaust must still remain free of flame color.
+  check(id+' luminous field is finite positive and localized near the burner',hot.glError===0&&hot.nonfinite===0&&hot.minimum>=-1e-7&&hot.nearMaximum>.05&&hot.nearLight>hot.totalLight*.65);
+  check(id+' upper exhaust is not painted as a glowing flame',hot.upperWarmPixels<Math.max(1,hot.nearWarmPixels*.02));
+  check(id+' normal rendered flame has visible smooth opacity gradients',hot.nearWarmPixels>=12&&hot.alphaLevels>=16);
+  const shapeChange=hot.shape.reduce((sum,v,i)=>sum+Math.abs(v-second.shape[i]),0);reports.push({name:id+'-normal-flame-shape-change',shapeChange});
+  check(id+' flame outline changes rather than only brightening a rigid shape',second.lightHash!==hot.lightHash&&second.pixelHash!==hot.pixelHash&&shapeChange>.002);
+  await evaluate('__toy.pause(true)');await delay(250);const before=await physicalFingerprint(),lit=await optical(id+'-paused-normal-optics');
+  await evaluate('(()=>{for(let i=0;i<12;i++)__toy.smoke().fluid.displayPass();})()');const drawn=await optical(id+'-repeated-display-optics'),after=await physicalFingerprint();
+  check(id+' repeated rendering does not advance or mutate simulated gas',JSON.stringify(before)===JSON.stringify(after)&&lit.lightHash===drawn.lightHash&&lit.pixelHash===drawn.pixelHash);
+  for(const preset of ['velvet-rope','prismatic']){
+    await evaluate('__toy.set("smokePreset",'+JSON.stringify(preset)+')');const styled=await optical(id+'-optical-preset-'+preset);
+    check(id+' combustion rendering ignores legacy optical preset artifacts '+preset,styled.lightHash===lit.lightHash&&styled.pixelHash===lit.pixelHash);
+  }
+  await evaluate('__toy.set("smokePreset","copperhead");__toy.set("smokeScale","default")');
+  const extremes=await evaluate(`(async()=>{const c=__toy.smoke().fluid.config,keys=['OPTICAL_DENSITY','OPTICAL_BRIGHTNESS','OPTICAL_ABSORPTION','EDGE_SHARPNESS'],saved=Object.fromEntries(keys.map(k=>[k,c[k]]));try{Object.assign(c,{OPTICAL_DENSITY:1,OPTICAL_BRIGHTNESS:3,OPTICAL_ABSORPTION:40,EDGE_SHARPNESS:1});return await (${appearanceProbe.toString()})();}finally{Object.assign(c,saved);}})()`);reports.push({name:id+'-legacy-optical-extremes',...extremes});
+  check(id+' combustion transfer is independent of legacy opacity and sharpening',extremes.lightHash===lit.lightHash&&extremes.pixelHash===lit.pixelHash);
+  check(id+' optical controls leave physical fields and clocks unchanged',JSON.stringify(before)===JSON.stringify(await physicalFingerprint()));
+  const clock=before.seconds;await steps(1);await evaluate('__toy.oxygen().capture();true');check(id+' read-only optical inspection preserves the active gas owner',await evaluate('__toy.oxygen().stats().seconds')>clock);
+  await send('Emulation.setDeviceMetricsOverride',{width:844,height:390,deviceScaleFactor:2,mobile:true});await evaluate('__toy.resize();__toy.pause(false);true');await advance(.4);
+  await normalScreenshot('mobile-'+id+'-normal-flame');const mobile=await optical(id+'-mobile-normal-optics');
+  check(id+' landscape normal flame stays visible without an oxygen overlay',mobile.nearWarmPixels>=12&&await evaluate('!__toy.oxygenView.enabled()&&document.documentElement.scrollWidth<=innerWidth'));
+  await evaluate('__toy.oxygen().setBurnerEnabled(false)');await advancePhysical(.75);const off=await optical(id+'-reaction-off-optics');
+  check(id+' flame light fades when reaction stops',off.nearLight<mobile.nearLight*.05&&off.totalLight<mobile.totalLight*.05);
+  // Open plumes can leave the room before this comparison. Supply a known
+  // paid heater pulse to test warm gas independently of retained flame heat.
+  await evaluate('(()=>{const d=__toy.machineState().definition;__toy.oxygen().addGasHeat((d.fire||d.draftBurner).source,10);__toy.smoke().fluid.step(1/60);})()');
+  const heated=await optical(id+'-non-burning-heater-optics'),gas=await capture(id+'-reaction-off-heated-gas');
+  check(id+' hot gas from a non-burning heater cannot create flame light',heated.totalLight<mobile.totalLight*.05&&gas.oxygen.heatReleaseW===0&&gas.sensibleHeatJ>.1&&gas.maxTemperatureK>313.15&&gas.oxygen.airExtraHeatJ>9.99);
 }
 async function capture(name){
   await evaluate('__toy.oxygen().capture(); true');
@@ -208,7 +304,9 @@ try{
   socket.addEventListener('message',event=>{const m=JSON.parse(event.data);if(m.id){const p=pending.get(m.id);if(!p)return;pending.delete(m.id);clearTimeout(p.timer);m.error?p.reject(Error(JSON.stringify(m.error))):p.resolve(m.result);}else if(m.method==='Runtime.exceptionThrown')errors.push(m.params.exceptionDetails);else if(m.method==='Runtime.consoleAPICalled'&&m.params.type==='error')errors.push(m.params.args.map(a=>a.value||a.description));});
   await send('Runtime.enable');await send('Page.enable');await send('Network.enable');await send('Network.setBlockedURLs',{urls:['*googletagmanager.com*','*google-analytics.com*']});
   await send('Emulation.setDeviceMetricsOverride',{width:1440,height:900,deviceScaleFactor:1,mobile:false});
+  await send('Page.bringToFront');
   await send('Page.navigate',{url:`http://127.0.0.1:${server.address().port}/archive/water-smoke-slime/water-smoke-slime.html?scene=chimney-draw`});
+  await until('document.hasFocus() && !document.hidden','foreground test page');
   await until('!!window.__toy && __toy.machineState()?.ready && !!__toy.oxygen?.() && !__toy.stats().loading','ordinary real-host combustion boot');
   if(phase==='all'||phase==='cold')for(const id of ['candle-in-jar','chimney-draw','douse-fire','fire-brigade'])await cold(id);
   if(phase==='all'||phase==='plumes')for(const id of ['candle-in-jar','chimney-draw','douse-fire','fire-brigade','slime-sauna','oil-slick-fire']){
@@ -279,6 +377,7 @@ try{
     check('spatial refinement preserves thermal centroid rise',Math.abs(coarse.riseMetres-fine.riseMetres)<Math.max(.003,Math.abs(fine.riseMetres)*.3));
     check('large live timestep preserves thermal centroid rise',Math.abs(liveDt.riseMetres-fine.riseMetres)<Math.max(.001,Math.abs(fine.riseMetres)*.15));
   }
+  if(phase==='all'||phase==='appearance')for(const id of ['candle-in-jar','chimney-draw','douse-fire','fire-brigade','slime-sauna','oil-slick-fire'])await appearance(id);
   check('no runtime or GPU errors',errors.length===0);
   console.log((diagnostic?'DIAGNOSTIC COMPLETE':'PASS')+' fire airflow phase '+phase+'; failed checks '+checks.filter(c=>!c.pass).length+'; '+output);
 }finally{save();await cleanup();}

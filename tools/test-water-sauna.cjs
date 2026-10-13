@@ -19,6 +19,7 @@ const server=http.createServer((req,res)=>{
     browser=await chromium.launch({...launchOptions,args:['--enable-unsafe-webgpu','--use-angle=metal','--disable-gpu-sandbox','--no-first-run']});
     const page=await browser.newPage({viewport:{width:960,height:620},deviceScaleFactor:1});
     const errors=[];page.on('pageerror',e=>errors.push(e.message));
+    await page.bringToFront();
     await page.goto(`http://127.0.0.1:${server.address().port}/archive/water-smoke-slime/water-smoke-slime.html?scene=slime-sauna&paused=1`);
     await page.waitForFunction(()=>window.__toy?.machineState()?.ready,{},{timeout:25000});
     await page.evaluate(()=>__toy.liquid().device.addEventListener('uncapturederror',e=>window.__saunaGpuError=e.error.message));

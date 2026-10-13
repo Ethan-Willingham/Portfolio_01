@@ -375,7 +375,8 @@ The reacting solver now owns momentum, oxygen and gas enthalpy together. Smoke
 presets change appearance; their wind, curl and heat controls do not force air.
 
 Velocity lives on staggered faces in metres per physical second. Momentum is
-advected with staggered interpolation and molecular viscosity of 0.000015
+advected with midpoint trajectories and bounded MacCormack correction, using
+staggered interpolation and molecular viscosity of 0.000015
 square metres per second. Hot air rises under bounded thermal-density buoyancy
 using 9.80665 metres per second squared and a 293.15-kelvin ambient temperature.
 One wall-aware pressure projection supplies the faces used by every scalar.
@@ -423,6 +424,10 @@ the miniature hearth has 250 watts. These are source capacities, not guaranteed
 outputs. Actual heat follows consumed oxygen at 13.1 megajoules per kilogram,
 the common oxygen-consumption calorimetry approximation described by
 [NIST](https://nvlpubs.nist.gov/nistpubs/sp958-lide/280-282.pdf).
+The declared exposed fuel surface has a small fixed variation across its
+reacting cells. Positive weights sum to the same source capacity; local oxygen,
+wet contact and finite fuel still limit the actual reaction. This allows an
+uneven buoyant plume without adding wind or vorticity forces to the room.
 
 Thirty percent of chemical heat enters the advected gas enthalpy; the rest
 is credited exactly once to the fuel's native sensible-heat sensor. The source
@@ -443,6 +448,18 @@ arrows scale with actual displacement without a minimum length. Instruments
 reports local oxygen, consumed mass and heat output. The overlay requests no
 additional GPU sampling and never changes the solver.
 
+Toy v5.186 restores a separate fine appearance field for combustion. A previous
+display pass copied nearest-filtered gas cells into the finer smoke texture
+and treated air only eighteen degrees above ambient as luminous flame. Recent
+oxygen consumption now supplies a short-lived optical emission tracer, while
+smoke is emitted once per reaction and steam retains its existing color.
+Both follow the interpolated physical airflow with midpoint trajectories.
+Display reconstruction filters the numerical cells without changing their
+inventories. The canvas follows device density and camera scale, and optical
+coverage uses straight alpha. The emission lifetime and fine surface flicker
+are rendering approximations, separate from gas enthalpy, oxygen and momentum.
+There is no transported fuel-vapor chemistry or resolved soot model.
+
 This is a two-dimensional incompressible, reference-density approximation with
 bounded thermal buoyancy. The exhaust field is an
 oxygen-equivalent product tracer, not separate carbon dioxide and water species.
@@ -462,6 +479,10 @@ thermal expansion in each sealed component, as distinguished in the
 Run `node tools/test-fire-airflow.mjs` for still ambient air, localized rising
 heat, cooling after a source stops, hot lid changes, native pour wakes, pressure energy,
 resolution and timestep comparisons, and independence from decorative presets.
+Use `PHASE=appearance` for normal-view desktop and landscape-mobile captures,
+fine emission, changing flame outlines, smooth opacity, and rendering isolation.
+It also checks that a funded heater can warm the gas without producing flame
+light after combustion stops.
 Run `node tools/test-oxygen-transport.mjs` for production-shader transport,
 wall isolation, reaction accounting, ordinary browser combustion and overlays.
 The harness owns and closes Chrome for Testing. Visual captures stay outside

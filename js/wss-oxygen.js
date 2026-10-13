@@ -12,7 +12,7 @@
   const COMMON=`#version 300 es
   precision highp float; precision highp sampler2D;
   in vec2 uv; out vec4 result;
-  uniform sampler2D gas,flow,mask,oldGas,pressure,faces,ledger,wet,energy,oldEnergy,liquid,body,dye;
+  uniform sampler2D gas,flow,mask,oldGas,pressure,faces,ledger,wet,energy,oldEnergy,liquid,body,dye,fuelSurface;
   uniform vec2 size,world,velocitySize,spacing,liquidScale;
   uniform vec4 source;
   uniform float dt,diffusion,demand,fuelLimit,hot,wetActive,flameSupport,physical,liquidActive,bodyActive;
@@ -234,9 +234,10 @@ function makeAirPressureSolver(width,height,packed){
       const fbo=gl.createFramebuffer();gl.bindFramebuffer(gl.FRAMEBUFFER,fbo);gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,texture,0);
       if(gl.checkFramebufferStatus(gl.FRAMEBUFFER)!==gl.FRAMEBUFFER_COMPLETE)throw Error('Oxygen needs floating-point render targets.');
       gl.viewport(0,0,w,h);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);
-      const t={texture,fbo,width:w,height:h};resources.push(t);return t;
+      const t={texture,fbo,width:w,height:h,attach(unit){gl.activeTexture(gl.TEXTURE0+unit);gl.bindTexture(gl.TEXTURE_2D,texture);return unit;}};resources.push(t);return t;
     }
     function pair(w=width,h=height){return {read:target(w,h),write:target(w,h),swap(){const t=this.read;this.read=this.write;this.write=t;}};}
+    function release(t){gl.deleteTexture(t.texture);gl.deleteFramebuffer(t.fbo);const index=resources.indexOf(t);if(index>=0)resources.splice(index,1);}
     function pass(p,t,inputs={},values={}){
       gl.disable(gl.BLEND);gl.useProgram(p.p);
       let unit=0;for(const [name,value] of Object.entries(inputs)){if(p.uniforms[name]==null)continue;gl.activeTexture(gl.TEXTURE0+unit);gl.bindTexture(gl.TEXTURE_2D,value.texture || value);gl.uniform1i(p.uniforms[name],unit++);}
@@ -257,14 +258,27 @@ function makeAirPressureSolver(width,height,packed){
     const context=fluid.setGasTransport(null);
     if(!context)throw Error('Spatial oxygen requires WebGL 2.');
     bridge=context;gl=context.gl;gl.getExtension('EXT_color_buffer_float');
-    let sourceCells=0;
+    let sourceCells=0,sourceWeight=0;
+    const fuelWeights=new Float32Array(width*height*4);
     for(let y=0;y<height;y++)for(let x=0;x<width;x++){
       const wx=(x+.5)*W/width,wy=(height-y-.5)*H/height;
-      if(wx>=src.x && wx<src.x+src.width && wy>=src.y && wy<src.y+src.height)sourceCells++;
+      if(wx>=src.x && wx<src.x+src.width && wy>=src.y && wy<src.y+src.height){
+        sourceCells++;const px=(wx-src.x)/src.width,py=(wy-src.y)/src.height;
+        const weight=1+.28*Math.sin(px*8.7+py*4.1)+.12*Math.sin(px*19.3-py*7.9);
+        fuelWeights[(y*width+x)*4]=weight;sourceWeight+=weight;
+      }
     }
     if(!sourceCells)throw Error('The oxygen grid misses the fuel surface.');
+    // A declared uneven exposed fuel surface breaks the exact planar source
+    // symmetry. Its integrated demand remains the same finite burner power.
+    for(let i=0;i<fuelWeights.length;i+=4)fuelWeights[i]*=sourceCells/sourceWeight;
+    const fuelSurface=target();gl.bindTexture(gl.TEXTURE_2D,fuelSurface.texture);gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,width,height,gl.RGBA,gl.FLOAT,fuelWeights);
     const gas=pair(),pressure=pair(),ledgers=pair(),candidate=target(),faces=target(),divergence=target(),before=target();
-    const momentum=pair(),energy=pair(),heatLedger=pair(),energyBefore=target(),residual=target();
+    const momentum=pair(),momentumPrediction=target(),energy=pair(),heatLedger=pair(),energyBefore=target(),residual=target();
+    // Optical detail has the dye resolution, independent of the conservative
+    // gas cells. It can emit light, never add oxygen, enthalpy or momentum.
+    let appearance=prescribed?null:pair(bridge.dye.width,bridge.dye.height);
+    const appearanceBefore=prescribed?null:target();
     const init=program(`void main(){result=solid(uv)?vec4(0.):vec4(.209,1.,0.,0.);}`);
     const copy=program(`void main(){result=texture(gas,uv);}`);
     const buildFaces=program(`void main(){
@@ -286,26 +300,62 @@ function makeAirPressureSolver(width,height,packed){
     const correctVelocity=program(`void main(){vec2 c=cell();vec2 f=face(uv);
       result=vec4(vec2(.5*(f.x+face(uv-vec2(c.x,0)).x),.5*(f.y+face(uv-vec2(0,c.y)).y))*velocitySize/size,0.,1.);
     }`);
-    const momentumPass=program(`
-      float component(ivec2 p,int k){
-        if(k==0&&p.x==-1&&p.y>=0&&p.y<int(size.y))return texelFetch(faces,ivec2(0,p.y),0).z;
-        if(k==1&&p.y==-1&&p.x>=0&&p.x<int(size.x))return texelFetch(faces,ivec2(p.x,0),0).w;
+    const momentumSampling=`
+      float componentOf(sampler2D field,ivec2 p,int k){
+        if(k==0&&p.x==-1&&p.y>=0&&p.y<int(size.y))return texelFetch(field,ivec2(0,p.y),0).z;
+        if(k==1&&p.y==-1&&p.x>=0&&p.x<int(size.x))return texelFetch(field,ivec2(p.x,0),0).w;
         if(any(lessThan(p,ivec2(0)))||any(greaterThanEqual(p,ivec2(size))))return 0.;
-        return texelFetch(faces,p,0)[k];
+        return texelFetch(field,p,0)[k];
       }
-      float interpolate(vec2 p,int k){
+      float component(ivec2 p,int k){return componentOf(faces,p,k);}
+      float interpolateOf(sampler2D field,vec2 p,int k){
         vec2 g=p*size-(k==0?vec2(1.,.5):vec2(.5,1.));ivec2 b=ivec2(floor(g));vec2 f=fract(g);
-        return mix(mix(component(b,k),component(b+ivec2(1,0),k),f.x),mix(component(b+ivec2(0,1),k),component(b+ivec2(1,1),k),f.x),f.y);
+        return mix(mix(componentOf(field,b,k),componentOf(field,b+ivec2(1,0),k),f.x),mix(componentOf(field,b+ivec2(0,1),k),componentOf(field,b+ivec2(1,1),k),f.x),f.y);
       }
+      float interpolate(vec2 p,int k){return interpolateOf(faces,p,k);}
+      vec2 velocityAt(vec2 p){return vec2(interpolate(p,0),interpolate(p,1))/(spacing*size);}
+      vec2 trace(vec2 p,float h,out bool valid){
+        vec2 end=p-h*velocityAt(p-.5*h*velocityAt(p));valid=true;
+        // Half-cell segment tests prevent transport across a thin wall.
+        // Exterior traces use first-order inflow/outflow, not reversible correction.
+        int count=max(1,int(ceil(max(abs(end.x-p.x)*size.x,abs(end.y-p.y)*size.y)*2.)));
+        if(count>96){valid=false;return p;}
+        for(int i=1;i<=96;i++){
+          if(i>count)break;vec2 q=mix(p,end,float(i)/float(count));
+          if(!inside(q)){valid=false;return end;}
+          if(solid(q)){valid=false;return mix(p,end,float(i-1)/float(count));}
+        }return end;
+      }
+      bool supported(vec2 p,int k){
+        ivec2 b=ivec2(floor(p*size-(k==0?vec2(1.,.5):vec2(.5,1.))));
+        for(int y=0;y<2;y++)for(int x=0;x<2;x++){
+          ivec2 i=b+ivec2(x,y);if(any(lessThan(i,ivec2(0)))||any(greaterThanEqual(i,ivec2(size))))return false;
+          vec2 a=(vec2(i)+.5)/size,offset=k==0?vec2(1./size.x,0.):vec2(0.,1./size.y);
+          if(openFace(a,a+offset)<.5)return false;
+        }return true;
+      }
+    `;
+    const momentumPredictor=program(momentumSampling+`
+      float predict(vec2 a,vec2 b,int k){bool valid;return openFace(a,b)>.5?interpolate(trace((a+b)*.5,dt,valid),k):0.;}
+      void main(){vec2 c=cell();ivec2 i=ivec2(gl_FragCoord.xy);
+        result=vec4(predict(uv,uv+vec2(c.x,0),0),predict(uv,uv+vec2(0,c.y),1),
+          i.x==0?predict(uv-vec2(c.x,0),uv,0):0.,i.y==0?predict(uv-vec2(0,c.y),uv,1):0.);
+      }`);
+    const momentumPass=program(momentumSampling+`
       float neighbour(ivec2 p,int k,float center){
         if((k==0&&p.x<-1)||(k==1&&p.y<-1)||p.x>=int(size.x)||p.y>=int(size.y)||(k==0&&p.y<0)||(k==1&&p.x<0))return center;
         return component(p,k);
       }
       float advanceFace(vec2 a,vec2 b,ivec2 index,int k){
         if(openFace(a,b)<.5)return 0.;vec2 pos=(a+b)*.5;
-        vec2 v=vec2(interpolate(pos,0),interpolate(pos,1));
-        vec2 back=pos-dt*v/(spacing*size);
-        float value=interpolate(back,k),center=component(index,k);
+        bool backValid,forwardValid;vec2 back=trace(pos,dt,backValid),forward=trace(pos,-dt,forwardValid);float center=component(index,k);
+        // Bounded MacCormack corrects the forward/backward transport error.
+        // Donor bounds prevent new extrema. No curl force supplies detail.
+        float value=componentOf(flow,index,k);
+        if(backValid&&forwardValid&&supported(back,k)&&supported(forward,k))value+=.5*(center-interpolateOf(flow,forward,k));
+        ivec2 donor=ivec2(floor(back*size-(k==0?vec2(1.,.5):vec2(.5,1.))));
+        vec4 samples=vec4(component(donor,k),component(donor+ivec2(1,0),k),component(donor+ivec2(0,1),k),component(donor+ivec2(1,1),k));
+        value=clamp(value,min(min(samples.x,samples.y),min(samples.z,samples.w)),max(max(samples.x,samples.y),max(samples.z,samples.w)));
         value+=dt*1.5e-5*((neighbour(index+ivec2(1,0),k,center)+neighbour(index-ivec2(1,0),k,center)-2.*center)/(spacing.x*spacing.x)
           +(neighbour(index+ivec2(0,1),k,center)+neighbour(index-ivec2(0,1),k,center)-2.*center)/(spacing.y*spacing.y));
         if(k==1){float delta=.5*(temperature(a)+temperature(b));value+=dt*9.80665*delta/(293.15+max(0.,delta));}
@@ -406,7 +456,7 @@ function makeAirPressureSolver(width,height,packed){
     const reaction=program(`void main(){vec4 s=state(uv);vec2 upper=source.xy+source.zw;
       bool fuelPatch=all(greaterThanEqual(uv,source.xy))&&all(lessThan(uv,upper));
       float contact=wetActive>.5?texture(wet,uv).b:0.;
-      float used=fuelPatch&&contact<.5?min(max(0.,s.r),min(max(0.,fuelLimit-s.a),dt*demand*hot*flameSupport*clamp(s.r/max(s.g,.00001)/.209,0.,1.))):0.;
+      float used=fuelPatch&&contact<.5?min(max(0.,s.r),min(max(0.,fuelLimit-s.a),dt*demand*texture(fuelSurface,uv).r*hot*flameSupport*clamp(s.r/max(s.g,.00001)/.209,0.,1.))):0.;
       result=vec4(s.r-used,s.g,s.b+used,s.a+used);
     }`);
     const ledgerPass=program(`void main(){vec4 old=texture(oldGas,uv),now=state(uv),l=texture(ledger,uv);
@@ -460,21 +510,60 @@ function makeAirPressureSolver(width,height,packed){
     }`);
     const energyLedger=program(`void main(){vec4 l=texture(ledger,uv);l.r+=texture(oldEnergy,uv).r-texture(energy,uv).r;result=l;}`);
     const extraLedger=program(`void main(){vec4 l=texture(ledger,uv);l.g+=texture(energy,uv).r-texture(oldEnergy,uv).r;result=l;}`);
-    const displayDye=program(`void main(){vec4 old=texture(dye,uv);vec2 v=physicalFace(uv)/(spacing*size);
-      // Appearance follows physical temperature and spent oxygen. RGB keeps
-      // paid steam and user smoke, but never supplies buoyancy or momentum.
-      vec3 tracer=texture(dye,uv-v*dt).rgb/(1.+dt*.4);
-      float exhaust=state(uv).b;vec3 chemical=vec3(.45,.41,.35)*exhaust*8.;
-      result=solid(uv)?vec4(0.):vec4(max(tracer,chemical),max(0.,temperature(uv))/100.);
-    }`);
+    const visualSampling=`
+      vec4 linearField(sampler2D field,vec2 p){
+        vec2 extent=vec2(textureSize(field,0)),g=p*extent-.5;ivec2 b=ivec2(floor(g));vec2 f=fract(g);vec4 value=vec4(0.);
+        for(int y=0;y<2;y++)for(int x=0;x<2;x++){
+          ivec2 q=b+ivec2(x,y);vec2 pos=(vec2(q)+.5)/extent;
+          float w=(x==0?1.-f.x:f.x)*(y==0?1.-f.y:f.y);
+          if(all(greaterThanEqual(q,ivec2(0)))&&all(lessThan(q,ivec2(extent)))&&!solid(pos))value+=w*texelFetch(field,q,0);
+        }return value;
+      }
+      float visualComponent(ivec2 p,int k){
+        if(k==0&&p.x==-1&&p.y>=0&&p.y<int(size.y))return texelFetch(faces,ivec2(0,p.y),0).z;
+        if(k==1&&p.y==-1&&p.x>=0&&p.x<int(size.x))return texelFetch(faces,ivec2(p.x,0),0).w;
+        return all(greaterThanEqual(p,ivec2(0)))&&all(lessThan(p,ivec2(size)))?texelFetch(faces,p,0)[k]:0.;
+      }
+      float visualVelocity(vec2 p,int k){
+        vec2 g=p*size-(k==0?vec2(1.,.5):vec2(.5,1.));ivec2 b=ivec2(floor(g));vec2 f=fract(g);
+        return mix(mix(visualComponent(b,k),visualComponent(b+ivec2(1,0),k),f.x),mix(visualComponent(b+ivec2(0,1),k),visualComponent(b+ivec2(1,1),k),f.x),f.y);
+      }
+      vec2 visualFlow(vec2 p){return vec2(visualVelocity(p,0),visualVelocity(p,1))/(spacing*size);}
+      vec2 backtrace(){vec2 midpoint=uv-.5*dt*visualFlow(uv);return uv-dt*visualFlow(midpoint);}
+      float reacted(){return max(0.,linearField(gas,uv).a-linearField(oldGas,uv).a);}
+    `;
+    const visualLight=program(visualSampling+`
+      uniform float visualClock;
+      void main(){
+        vec2 p=(uv-source.xy)/source.zw;
+        // Fine luminous soot varies across the burner surface. This optical
+        // closure rides only the measured flow; it is not procedural wind.
+        float edge=smoothstep(0.,.18,p.x)*smoothstep(0.,.18,1.-p.x)*smoothstep(0.,.18,p.y)*smoothstep(0.,.18,1.-p.y);
+        float pattern=.75+.25*sin(p.x*19.+visualClock*37.)*sin(p.y*11.-visualClock*23.);
+        float support=reacted()/max(dt*demand,1e-12);
+        float decay=exp(-dt/.12);
+        float light=linearField(flow,backtrace()).r*decay+4.*support*edge*pattern*(1.-decay);
+        result=vec4(light,0.,0.,0.);
+      }`);
+    const displayDye=program(visualSampling+`
+      void main(){
+        vec3 tracer=linearField(dye,backtrace()).rgb*exp(-dt*.4);
+        // A reaction emits an optical soot tracer once. Cumulative spent
+        // oxygen is not re-injected into the picture on every frame.
+        tracer+=vec3(.45,.41,.35)*reacted()*8.;
+        vec4 s=linearField(gas,uv);float e=linearField(energy,uv).r;
+        result=vec4(tracer,s.g>0.?max(0.,e/s.g)/100.:0.);
+      }`);
     pass(init,gas.read,{mask:bridge.obstacle});pass(copy,gas.write,{gas:gas.read});
     let initialized=false;
     function advancePhysical(h){
+      pass(copy,appearanceBefore,{gas:gas.read});
       // Semi-Lagrangian momentum, molecular viscosity and one common
       // projection. Scalar substeps use exactly the resulting MAC faces.
       const steps=Math.max(1,Math.ceil(h*60)),step=h/steps;
       for(let k=0;k<steps;k++){
-        pass(momentumPass,candidate,{faces:momentum.read,energy:energy.read,gas:gas.read,mask:bridge.obstacle,
+        pass(momentumPredictor,momentumPrediction,{faces:momentum.read,mask:bridge.obstacle},{dt:step});
+        pass(momentumPass,candidate,{faces:momentum.read,flow:momentumPrediction,energy:energy.read,gas:gas.read,mask:bridge.obstacle,
           liquid:bridge.liquid || bridge.obstacle,body:bridge.moving || bridge.obstacle},{dt:step});
         projectPhysical(step);
         maxOutgoing=reducePeak({faces},peakFlow);
@@ -491,7 +580,7 @@ function makeAirPressureSolver(width,height,packed){
           pass(transport,gas.write,{gas:gas.read,faces,mask:bridge.obstacle},{dt:scalarStep});gas.swap();
           pass(boundaryLedger,ledgers.write,{oldGas:before,faces,mask:bridge.obstacle,ledger:ledgers.read},{dt:scalarStep});ledgers.swap();
           pass(copy,before,{gas:gas.read});
-          pass(reaction,gas.write,{gas:gas.read,wet:bridge.wet || bridge.obstacle,mask:bridge.obstacle},{dt:scalarStep});gas.swap();
+          pass(reaction,gas.write,{gas:gas.read,wet:bridge.wet || bridge.obstacle,mask:bridge.obstacle,fuelSurface},{dt:scalarStep});gas.swap();
           pass(energyReaction,energy.write,{energy:energy.read,gas:gas.read,oldGas:before,mask:bridge.obstacle});energy.swap();
         }
       }
@@ -510,7 +599,12 @@ function makeAirPressureSolver(width,height,packed){
       }
       heatSources=[];
       pass(physicalVelocity,bridge.velocity.write,{faces,mask:bridge.obstacle});bridge.velocity.swap();
-      pass(displayDye,bridge.dye.write,{energy:energy.read,gas:gas.read,faces,dye:bridge.dye.read,mask:bridge.obstacle},{dt:h});bridge.dye.swap();
+      if(appearance.read.width!==bridge.dye.width||appearance.read.height!==bridge.dye.height){
+        const next=pair(bridge.dye.width,bridge.dye.height);pass(copy,next.read,{gas:appearance.read});release(appearance.read);release(appearance.write);appearance=next;
+      }
+      pass(visualLight,appearance.write,{flow:appearance.read,gas:gas.read,oldGas:appearanceBefore,faces,mask:bridge.obstacle},{dt:h,visualClock:seconds*timeScale});appearance.swap();
+      fluid.setCombustionAppearance?.(appearance.read,advance);
+      pass(displayDye,bridge.dye.write,{energy:energy.read,gas:gas.read,oldGas:appearanceBefore,faces,dye:bridge.dye.read,mask:bridge.obstacle},{dt:h});bridge.dye.swap();
     }
     function advance(h,ctx){
       if(retired || !(h>0))return;bridge=ctx;
@@ -538,7 +632,7 @@ function makeAirPressureSolver(width,height,packed){
           pass(ledgerPass,ledgers.write,{gas:gas.read,oldGas:before,mask:bridge.obstacle,ledger:ledgers.read});ledgers.swap();
           pass(reservoir,gas.write,{gas:gas.read,mask:bridge.obstacle});gas.swap();
           pass(copy,before,{gas:gas.read});
-          pass(reaction,gas.write,{gas:gas.read,wet:bridge.wet || bridge.obstacle,mask:bridge.obstacle},{dt:step});gas.swap();
+          pass(reaction,gas.write,{gas:gas.read,wet:bridge.wet || bridge.obstacle,mask:bridge.obstacle,fuelSurface},{dt:step});gas.swap();
           pass(emission,bridge.dye.write,{flow:bridge.dye.read,gas:gas.read,oldGas:before});bridge.dye.swap();
         }
         seconds+=h;if(seconds-captureClock>=.12)capture();
@@ -627,7 +721,7 @@ function makeAirPressureSolver(width,height,packed){
       capture,snapshot(){return snapshot;},stats(){return report || {seconds,error:null};},
       addGasHeat(rect,joules){if(Number.isFinite(joules)&&joules>0)heatSources.push({rect:rect,joules:joules});},
       takeHeat(){const value=heatCredit;heatCredit=0;return value;},
-      destroy(){retired=true;fluid.setGasTransport(null,advance);for(const t of resources){gl.deleteTexture(t.texture);gl.deleteFramebuffer(t.fbo);}for(const p of programs)gl.deleteProgram(p);},
+      destroy(){retired=true;fluid.setGasTransport(null,advance);fluid.setCombustionAppearance?.(null,advance);for(const t of resources){gl.deleteTexture(t.texture);gl.deleteFramebuffer(t.fbo);}for(const p of programs)gl.deleteProgram(p);},
       constants:{ambient:AMBIENT,heatPerKg:HEAT_PER_KG,fuelMassKg:fuelMass,stoichiometricOxygen:stoich,secondsPerSimulationSecond:timeScale}};
   }
   root.WSSOxygen={create,ambient:AMBIENT,heatPerKg:HEAT_PER_KG};

@@ -60,6 +60,11 @@ async function advance(seconds) {
   const target = await evaluate('__toy.oxygen().stats().seconds') + seconds;
   await until(`__toy.oxygen().stats().seconds >= ${target}`, 'oxygen clock', Math.max(90000, seconds * 8000));
 }
+async function advancePhysical(seconds) {
+  const target = await evaluate('__toy.oxygen().stats().physicalSeconds') + seconds;
+  assert.ok(Number.isFinite(target), 'reaction comparison uses the physical gas clock');
+  await until(`__toy.oxygen().stats().physicalSeconds >= ${target}`, 'physical gas clock', Math.max(90000, seconds * 15000));
+}
 async function pauseSettled() {
   await evaluate('__toy.pause(true)');
   await delay(250); // Finish the already submitted GPU sample without taking a new step.
@@ -296,7 +301,9 @@ try {
   await send('Runtime.enable'); await send('Page.enable'); await send('Network.enable');
   await send('Network.setBlockedURLs', { urls:['*googletagmanager.com*', '*google-analytics.com*'] });
   await send('Emulation.setDeviceMetricsOverride', { width:1440, height:900, deviceScaleFactor:1, mobile:false });
+  await send('Page.bringToFront');
   await send('Page.navigate', { url:`http://127.0.0.1:${server.address().port}/archive/water-smoke-slime/water-smoke-slime.html?scene=chimney-draw` });
+  await until('document.hasFocus() && !document.hidden', 'foreground test page');
   await until('!!window.__toy && __toy.machineState()?.ready && !!__toy.oxygen?.() && !__toy.stats().loading', 'initial combustion and transport readiness');
 
   if (phase === 'all' || phase === 'fixtures') {
@@ -373,18 +380,25 @@ try {
 
   if (phase === 'all' || phase === 'chimney' || phase === 'remainder') {
   await scene('chimney-draw');
+  // Compare equal physical windows after chamber turnover. A transient from
+  // a previously oxygen-rich state must not inflate the closed-inlet average.
+  await advancePhysical(3);
   const initiallyOpen = await evaluate('__toy.oxygen().stats()');
-  await advance(10);
+  await advancePhysical(3);
   const open = await measure('desktop-chimney-open');
   await pauseSettled();
   const beforeClose = await evaluate('Array.from(__toy.oxygen().snapshot().oxygen)');
   await primary();
   assert.deepEqual(await evaluate('Array.from(__toy.oxygen().snapshot().oxygen)'), beforeClose, 'closing inlet changes geometry without a fake immediate oxygen decrement');
-  await overlay(true); await evaluate('__toy.pause(false)'); await advance(15);
+  await overlay(true); await evaluate('__toy.pause(false)'); await advancePhysical(3);
+  const settledClosed = await evaluate('__toy.oxygen().stats()');
+  await advancePhysical(3);
   const closed = await measure('desktop-chimney-closed-overlay', true);
   assert.ok(closed.oxygen.localOxygenFraction < open.oxygen.localOxygenFraction, 'closed inlet reduces local transported oxygen');
   assert.equal(closed.fire.quenchEvents, 0, 'oxygen restriction does not fake water quenching');
-  await primary(); await advance(15);
+  await primary(); await advancePhysical(3);
+  const settledReopened = await evaluate('__toy.oxygen().stats()');
+  await advancePhysical(3);
   const reopened = await measure('desktop-chimney-reopened-overlay', true);
   assert.ok(reopened.oxygen.localOxygenFraction > closed.oxygen.localOxygenFraction, 'reopening transports fresh oxygen back to the fire');
   function intervalPower(before, after) {
@@ -392,7 +406,7 @@ try {
     assert.ok(Number.isFinite(elapsed) && elapsed > 0, 'reaction window has a real physical duration');
     return (after.oxygenConsumedKg - before.oxygenConsumedKg) * 13.1e6 / elapsed;
   }
-  const averages = { openW:intervalPower(initiallyOpen, open.oxygen), closedW:intervalPower(open.oxygen, closed.oxygen), reopenedW:intervalPower(closed.oxygen, reopened.oxygen) };
+  const averages = { openW:intervalPower(initiallyOpen, open.oxygen), closedW:intervalPower(settledClosed, closed.oxygen), reopenedW:intervalPower(settledReopened, reopened.oxygen) };
   reports.push({ name:'chimney-interval-chemical-power', ...averages, closedInstantaneousW:closed.oxygen.heatReleaseW, reopenedInstantaneousW:reopened.oxygen.heatReleaseW });
   console.log('chimney physical interval power', JSON.stringify(averages));
   assert.ok(averages.closedW < averages.openW, 'oxygen restriction reduces integrated chemical heat per physical second');
