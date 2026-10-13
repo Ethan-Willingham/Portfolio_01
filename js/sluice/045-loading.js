@@ -87,22 +87,22 @@
     // The art bench builds on DOMContentLoaded and needs synchronous state.
     if (!window.SluiceLoading) {
       work();
-      if (!gameRafId) gameRafId = requestAnimationFrame(function (t) { lastTime = t; loop(t); });
+      if (!gameRafId) gameRafId = demoActivity.requestFrame(function (t) { lastTime = t; loop(t); });
       return;
     }
     beginSceneLoading(label, true);
     loadingTask('world', 'running', label + '. Generating terrain and placing the rig.');
     gameLoadingWorkPending = true;
     var ticket = gameLoadingGeneration;
-    requestAnimationFrame(function () {
-      requestAnimationFrame(function () {
+    demoActivity.requestFrame(function () {
+      demoActivity.requestFrame(function () {
         if (ticket !== gameLoadingGeneration) return;
         try {
           work();
           loadingTask('world', 'done', (gameLoadingWorldDetail || 'Mine prepared') + '. ' + COLS + ' columns x ' + TOTAL_ROWS + ' rows.');
           gameLoadingWorldDetail = '';
           gameLoadingWorkPending = false;
-          if (!gameRafId) gameRafId = requestAnimationFrame(function (t) { lastTime = t; loop(t); });
+          if (!gameRafId) gameRafId = demoActivity.requestFrame(function (t) { lastTime = t; loop(t); });
         } catch (e) {
           gameLoadingWorkPending = false;
           window.__bootErr = String(e) + '\n' + (e.stack || '');

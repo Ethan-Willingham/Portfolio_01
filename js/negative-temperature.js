@@ -4,6 +4,7 @@ import { withDeadline } from './negative-temperature-loading.js?v=4';
 
 const $ = id => document.getElementById(id), piece = $('nt-piece'), canvas = $('nt-canvas');
 const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  const demoActivity = DemoActivity.create(piece);
 let paused = reduced.matches, onscreen = true, running = false, disposed = false, room = null, device = null, context = null, target = null, presentation = null;
 let frame = 0, lastTime = 0, ambientTime = 0, accumulator = 0, reading = 0, starting = false, fallback = false, gpuBusy = false;
 const cleanup = [], timings = [], maxDPR = 2.5;
@@ -64,8 +65,8 @@ function readouts() {
   $('nt-readouts').replaceChildren(...pairs.map(([name, value]) => { const div = document.createElement('div'), dt = document.createElement('dt'), dd = document.createElement('dd'); dt.textContent = name; dd.textContent = value; div.append(dt, dd); return div; }));
 }
 function active() { return !paused && !document.hidden && onscreen && !disposed && !starting && !fallback && !!room; }
-function stop() { cancelAnimationFrame(frame); frame = 0; running = false; lastTime = 0; accumulator = 0; }
-function updateLoop() { controls(); if (active() && !running) { running = true; lastTime = 0; frame = requestAnimationFrame(tick); } else if (!active()) stop(); }
+function stop() { demoActivity.cancelFrame(frame); frame = 0; running = false; lastTime = 0; accumulator = 0; }
+function updateLoop() { controls(); if (active() && !running) { running = true; lastTime = 0; frame = demoActivity.requestFrame(tick); } else if (!active()) stop(); }
 function tick(time) {
   if (!active()) { stop(); return; }
   const dt = lastTime ? Math.min(0.1, (time - lastTime) / 1000) : 0; lastTime = time;
@@ -74,14 +75,14 @@ function tick(time) {
     accumulator += dt; let count = 0;
     while (accumulator >= 1 / 60 && count < 4) { ambientTime += 1 / 60; room.step({ dtSeconds: 1 / 60, elapsedSeconds: ambientTime, scoreSeconds: ambientTime }); accumulator -= 1 / 60; count++; }
     if (count === 4) accumulator = Math.min(accumulator, 1 / 60);
-    const start = performance.now(); draw(); gpuBusy = true;
+    const start = demoActivity.now(); draw(); gpuBusy = true;
     withDeadline(device.queue.onSubmittedWorkDone(), 15000, 'The GPU stopped responding.').then(() => {
-      timings.push(performance.now() - start); if (timings.length > 300) timings.shift(); gpuBusy = false;
+      timings.push(demoActivity.now() - start); if (timings.length > 300) timings.shift(); gpuBusy = false;
       if (timings.length >= 60 && pixelRatioCap > 2 && [...timings.slice(-60)].sort((a,b)=>a-b)[30] > 24) { pixelRatioCap = 2; resize(); }
     }).catch(e => fail(e.message));
   }
   if (time - reading > 500) { readouts(); reading = time; }
-  frame = requestAnimationFrame(tick);
+  frame = demoActivity.requestFrame(tick);
 }
 async function restart() {
   if (starting || fallback || disposed) return;

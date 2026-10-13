@@ -1,6 +1,7 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 <head>
+  <script src="js/demo-activity.js?v=1"></script>
   <meta charset="UTF-8">
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-1NS9QT1HEM"></script>
@@ -39,7 +40,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="sluice-menu.css?v=v28.208">
+  <link rel="stylesheet" href="sluice-menu.css?v=v28.209">
   <style>
     /* Page-specific overrides for the Sluice game.
        The base panel system is in style.css. */
@@ -655,6 +656,7 @@
     // This controller is inline so failed game downloads still have diagnostics.
     (function () {
       var root = document.getElementById('game-intro'), area = root.parentNode;
+      var loadingActivity = DemoActivity.create(area);
       var status = document.getElementById('gm-loading-status');
       var note = document.getElementById('gm-loading-note'), retry = document.getElementById('gm-loading-retry');
       var details = document.getElementById('gm-loading-details');
@@ -795,7 +797,7 @@
       }
       function begin(text, kind, hasWork) {
         generation++;
-        clearTimeout(revealTimer); clearInterval(ticker);
+        clearTimeout(revealTimer); loadingActivity.clearInterval(ticker);
         if (!run || kind !== 'boot') {
           if (run) history.push(snapshot());
           if (history.length > 6) history.splice(1, 1);
@@ -814,7 +816,7 @@
         root.setAttribute('data-state', 'loading'); root.setAttribute('aria-hidden', 'false');
         root.setAttribute('aria-busy', 'true'); area.setAttribute('aria-busy', 'true');
         stage(text || 'Loading game files'); note.hidden = retry.hidden = true;
-        syncInput(); paint(); ticker = setInterval(paint, 150);
+        syncInput(); paint(); ticker = loadingActivity.setInterval(paint, 150);
       }
       function collectResources() {
         run.resources = performance.getEntriesByType('resource').filter(function (r) {
@@ -828,7 +830,7 @@
         if (pending.length) { fail('Startup finished without a readiness result for: ' + pending.map(function (t) { return t.label; }).join(', '), pending[0].id); return; }
         var ticket = generation;
         run.state = 'ready'; run.end = performance.now(); collectResources();
-        clearInterval(ticker); stage('Ready'); paint();
+        loadingActivity.clearInterval(ticker); stage('Ready'); paint();
         root.setAttribute('data-state', 'revealing');
         var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         revealTimer = setTimeout(function () {
@@ -844,7 +846,7 @@
         if (!active() || run.state === 'error') return;
         var t = id || (run.tasks.find(function (item) { return item.state === 'running'; }) || {}).id;
         if (t) task(t, 'error', String(error && (error.stack || error.message) || error || 'Startup failed.'));
-        generation++; clearTimeout(revealTimer); clearInterval(ticker);
+        generation++; clearTimeout(revealTimer); loadingActivity.clearInterval(ticker);
         run.state = 'error'; run.error = String(error && (error.stack || error.message) || error || window.__bootErr || 'Unknown startup error');
         run.end = performance.now(); collectResources();
         root.hidden = false; root.setAttribute('data-state', 'error');
@@ -1040,13 +1042,13 @@
       });
     })();
   </script>
-  <script defer src="js/sluice-performance-gpu.js?v=v28.208"></script>
-  <script defer data-loading-task="script-liquid-wgpu" src="js/liquid-wgpu.js?v=v28.208"></script>
-  <script defer data-loading-task="script-smoke-wgpu" src="js/smoke-wgpu.js?v=v28.208"></script>
-  <script defer data-loading-task="script-fire-wgpu" src="js/fire-wgpu.js?v=v28.208"></script>
-  <script defer data-loading-task="script-jello-wgpu" src="js/jello-wgpu.js?v=v28.208"></script>
-  <script defer data-loading-task="script-audio" src="js/audio.js?v=v28.208"></script>
-  <script defer data-loading-task="script-smoke-presets" src="js/smoke-presets.js?v=v28.208"></script>
-  <script defer data-loading-task="script-sluice" src="js/sluice.js?v=v28.208"></script>
+  <script defer src="js/sluice-performance-gpu.js?v=v28.209"></script>
+  <script defer data-loading-task="script-liquid-wgpu" src="js/liquid-wgpu.js?v=v28.209"></script>
+  <script defer data-loading-task="script-smoke-wgpu" src="js/smoke-wgpu.js?v=v28.209"></script>
+  <script defer data-loading-task="script-fire-wgpu" src="js/fire-wgpu.js?v=v28.209"></script>
+  <script defer data-loading-task="script-jello-wgpu" src="js/jello-wgpu.js?v=v28.209"></script>
+  <script defer data-loading-task="script-audio" src="js/audio.js?v=v28.209"></script>
+  <script defer data-loading-task="script-smoke-presets" src="js/smoke-presets.js?v=v28.209"></script>
+  <script defer data-loading-task="script-sluice" src="js/sluice.js?v=v28.209"></script>
 </body>
 </html>

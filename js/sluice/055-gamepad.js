@@ -265,7 +265,7 @@
   // slow poll keeps watching the pad so Start can resume. It only acts when
   // gamePaused is set (gpFrame suppresses everything but Start then).
   try {
-    setInterval(function () {
+    demoActivity.setInterval(function () {
       try { if (gamePaused) gpFrame(); } catch (e) {}
     }, GAMEPAD_PAUSE_POLL_MS);
   } catch (e) {}

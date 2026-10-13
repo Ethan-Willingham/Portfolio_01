@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <script src="js/demo-activity.js?v=1"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>No Man's Land — Caution Banner Lab</title>
@@ -42,6 +43,8 @@
   </footer>
 </div>
 <script>
+var demoActivity = DemoActivity.create(document.getElementById('c'));
+
 "use strict";
 /* ===================================================================
    No Man's Land caution-banner chooser. Standalone, no deps.
@@ -519,13 +522,13 @@ function frame(now){
     ctx.font = '10px Commit Mono, monospace';
     ctx.fillText(PANELS[i].sub, cx, 44);
   }
-  requestAnimationFrame(frame);
+  demoActivity.requestFrame(frame);
 }
 
 resize();
 // paint one frame immediately so a screenshot works even if RAF is throttled
 ctx.setTransform(DPR,0,0,DPR,0,0); paintBackdrop();
-requestAnimationFrame(frame);
+demoActivity.requestFrame(frame);
 </script>
 </body>
 </html>

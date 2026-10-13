@@ -283,6 +283,7 @@
   function clamp(x, lo, hi) { return Math.max(lo, Math.min(hi, x)); }
 
   function mount(host, input) {
+    var demoActivity = DemoActivity.create(host);
     var svg = document.createElementNS(ns, 'svg');
     svg.classList.add('hairline-string');
     svg.setAttribute('aria-hidden', 'true');
@@ -301,6 +302,7 @@
     var wave = { svg: svg, host: host, draw: draw, reset: reset, ripple: ripple,
       point: point, grab: grab, move: move, release: release };
     waves.push(wave);
+    demoActivity.onChange(function(active){if(!active)held=null;});
 
     function feel(soft) {
       tension = Math.pow((count - 1) * (soft ? 0.45 : 3.2), 2);
@@ -326,7 +328,7 @@
       width = next; reset();
     }
     function reset() {
-      cancelAnimationFrame(frame); frame = 0; remainder = 0; held = null;
+      demoActivity.cancelFrame(frame); frame = 0; remainder = 0; held = null;
       u.fill(0); velocity.fill(0); warmth = 0; feel(false); draw();
     }
     function point(x, y) {
@@ -355,12 +357,12 @@
     function grab(x, y, crossed) {
       var p = point(x, y);
       held = { x: p.x, gap: p.y - p.offset, offset: p.offset,
-        moved: crossed, speed: 0, time: performance.now() };
+        moved: crossed, speed: 0, time: demoActivity.now() };
     }
     function move(x, y) {
       if (!held) return false;
       feel(false);
-      var p = point(x, y), now = performance.now();
+      var p = point(x, y), now = demoActivity.now();
       var pull = p.y - held.gap;
       var limit = clamp(width * 0.22, 90, 170);
       // Resistance builds before the band slips out of the hand.
@@ -380,7 +382,7 @@
       if (held.moved) {
         // A pause in the hand kills throw velocity. A slow return to the rest
         // line can therefore finish almost silently, with no mandatory pluck.
-        var speed = held.speed * Math.exp(-(performance.now() - held.time) / 65) * 0.28;
+        var speed = held.speed * Math.exp(-(demoActivity.now() - held.time) / 65) * 0.28;
         if (slip) speed = -held.offset * 5;
         pose(speed);
         if (Math.abs(held.offset) < 0.65 && Math.abs(speed) < 9) {
@@ -416,7 +418,7 @@
       warmth = 1; run();
     }
     function run() {
-      if (!frame && !motion.matches) { lastTime = performance.now(); frame = requestAnimationFrame(tick); }
+      if (!frame && !motion.matches) { lastTime = demoActivity.now(); frame = demoActivity.requestFrame(tick); }
     }
     function tick(now) {
       frame = 0;
@@ -434,7 +436,7 @@
       var energy = 0;
       for (var k = 1; k < count - 1; k++) energy = Math.max(energy, Math.abs(u[k]), Math.abs(velocity[k]) / 25);
       if (energy < 0.06 && warmth === 0) { reset(); return; }
-      draw(); frame = requestAnimationFrame(tick);
+      draw(); frame = demoActivity.requestFrame(tick);
     }
     if (input) {
       var measure = document.createElement('canvas').getContext('2d');

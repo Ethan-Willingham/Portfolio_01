@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script src="js/demo-activity.js?v=1"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#303931">
@@ -123,6 +124,8 @@
 </div>
 
 <script>
+var demoActivity = DemoActivity.create(document.body);
+
 (function(){
   'use strict';
   var BEDS = [
@@ -134,6 +137,7 @@
   ];
   var DIR='assets/music/';   // the music beds (background) now live in assets/music/
   var ctx,master,sfxMuffle,musicBus,sfxBus;
+  demoActivity.onChange(function(active){if(ctx){if(active)ctx.resume().catch(function(){});else ctx.suspend().catch(function(){});}});
   var musicBuf=null,musicSrc=null,musicPlaying=false;
   var cands=[],active=null,activeSrc=null,repTimer=null,nextId=1;
 
@@ -192,7 +196,7 @@
     });
   }
   function curRate(){ var p=parseFloat($('pitch').value); if($('jitter').checked) p*= (0.94+Math.random()*0.12); return p; }
-  function stopActiveSrc(){ if(activeSrc){try{activeSrc.stop();}catch(e){} activeSrc=null;} if(repTimer){clearInterval(repTimer);repTimer=null;} }
+  function stopActiveSrc(){ if(activeSrc){try{activeSrc.stop();}catch(e){} activeSrc=null;} if(repTimer){demoActivity.clearInterval(repTimer);repTimer=null;} }
   function stopActive(){ stopActiveSrc(); active=null; renderCands(); }
   function startActiveLoop(){
     if(!active) return; stopActiveSrc();
@@ -203,7 +207,7 @@
       activeSrc.connect(sfxBus); try{activeSrc.start();}catch(e){}
     } else if($('autoRep').checked){
       var fire=function(){ triggerOne(active,false); };
-      fire(); repTimer=setInterval(fire, parseInt($('repRate').value,10));
+      fire(); repTimer=demoActivity.setInterval(fire, parseInt($('repRate').value,10));
     }
   }
   function toggleActive(c){
@@ -259,7 +263,7 @@
   $('muffle').addEventListener('change',function(){ if(!sfxMuffle)return; var on=this.checked; sfxMuffle.frequency.linearRampToValueAtTime(on?3500:20000, ctx.currentTime+(on?0.4:0.12)); }); // SFX only; eases in over 0.4s, clears fast (0.12s) like bursting up out of the ground
   $('loopMode').addEventListener('change',function(){ if(active) startActiveLoop(); });
   $('autoRep').addEventListener('change',function(){ $('repWrap').style.opacity=this.checked?'1':'.5'; if(active&&!$('loopMode').checked) startActiveLoop(); });
-  $('repRate').addEventListener('input',function(){ $('repRateV').textContent=this.value+'ms'; if(repTimer){clearInterval(repTimer); repTimer=setInterval(function(){triggerOne(active,false);},parseInt(this.value,10));} });
+  $('repRate').addEventListener('input',function(){ $('repRateV').textContent=this.value+'ms'; if(repTimer){demoActivity.clearInterval(repTimer); repTimer=demoActivity.setInterval(function(){triggerOne(active,false);},parseInt(this.value,10));} });
   $('xfade').addEventListener('input',function(){ $('xfadeV').textContent=this.value+'ms'; if(active&&$('loopMode').checked&&$('xfadeOn').checked) startActiveLoop(); });
   $('xfadeOn').addEventListener('change',function(){ if(active&&$('loopMode').checked) startActiveLoop(); });
   $('dlLoop').addEventListener('click',downloadLoop);

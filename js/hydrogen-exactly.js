@@ -4,6 +4,7 @@ import { DISPLAY } from './hydrogen-exactly-shaders.js?v=6';
 import * as M from './hydrogen-exactly-math.js?v=2';
 const $ = id => document.getElementById(id);
 const demo = $('hx-demo'), canvas = $('hx-canvas'), status = $('hx-status');
+  const demoActivity = DemoActivity.create(demo);
 const controller = new AbortController(), options = { signal: controller.signal };
 const seed = '00000000000000000000000000000030';
 const reduced = matchMedia('(prefers-reduced-motion: reduce)');
@@ -22,7 +23,7 @@ function canSelectLayer() { return !!room && !disposed && !busy && demo.dataset.
 function canInspect() { return canSelectLayer() && visible && intersecting; }
 function clearInspection() {
   inspection = null; inspectionRevision++; if (!pinnedLayer) layerTip.hidden = true;
-  cancelAnimationFrame(inspectionRaf); clearTimeout(inspectionTimer); inspectionRaf = 0; inspectionTimer = 0;
+  demoActivity.cancelFrame(inspectionRaf); clearTimeout(inspectionTimer); inspectionRaf = 0; inspectionTimer = 0;
   // Pointer exit can cancel a pending presence check on an otherwise still view.
   if (pinnedLayer) requestInspection();
 }
@@ -77,14 +78,14 @@ function pinLayer(layer, point) {
 function requestInspection() {
   if ((!inspection && !pinnedLayer) || !canInspect() || (drag && !pinnedLayer) || picking || inspectionRaf || inspectionTimer) return;
   if (pinnedLayer && !inspection?.pin && lastPresenceSerial === renderSerial) return;
-  const delay = inspection?.pin ? 0 : Math.max(0, 110 - (performance.now() - lastPickAt));
+  const delay = inspection?.pin ? 0 : Math.max(0, 110 - (demoActivity.now() - lastPickAt));
   if (delay) { inspectionTimer = setTimeout(() => { inspectionTimer = 0; requestInspection(); }, delay); return; }
   const inspect = async () => {
     inspectionRaf = 0;
     if ((!inspection && !pinnedLayer) || !canInspect() || (drag && !pinnedLayer)) return;
     const point = inspection, revision = inspectionRevision, serial = renderSerial, box = canvas.getBoundingClientRect();
     const selected = point?.pin ? null : pinnedLayer;
-    picking = true; lastPickAt = performance.now();
+    picking = true; lastPickAt = demoActivity.now();
     try {
       if (selected) {
         const presence = await room.readLayerPresence();
@@ -106,12 +107,12 @@ function requestInspection() {
     finally { picking = false; if ((inspection || pinnedLayer) && (revision !== inspectionRevision || serial !== renderSerial)) requestInspection(); }
   };
   // Submit an explicit click pick before the next animation render when idle.
-  if (inspection?.pin) void inspect(); else inspectionRaf = requestAnimationFrame(inspect);
+  if (inspection?.pin) void inspect(); else inspectionRaf = demoActivity.requestFrame(inspect);
 }
 function inspectPoint(e, pin = false) {
   if (!canInspect() || (!pin && (pinnedLayer || inspection?.pin))) return;
   inspection = { x: e.clientX, y: e.clientY, kind: e.pointerType === 'touch' ? 'touch' : 'mouse', pin }; inspectionRevision++;
-  if (pin) { cancelAnimationFrame(inspectionRaf); clearTimeout(inspectionTimer); inspectionRaf = 0; inspectionTimer = 0; }
+  if (pin) { demoActivity.cancelFrame(inspectionRaf); clearTimeout(inspectionTimer); inspectionRaf = 0; inspectionTimer = 0; }
   requestInspection();
 }
 function updateLayerGuide() {
@@ -143,7 +144,7 @@ function setCamera(yaw, tilt) {
   cameraYaw = wrapAngle(yaw); cameraTilt = wrapAngle(tilt);
   room.setPresentation({ yaw: cameraYaw, tilt: cameraTilt }); viewDirty = true;
   // One pending redraw coalesces pointer events and also works while paused.
-  if (!viewRaf) viewRaf = requestAnimationFrame(() => {
+  if (!viewRaf) viewRaf = demoActivity.requestFrame(() => {
     viewRaf = 0;
     if (viewDirty && canRotate() && visible && intersecting) render();
   });
@@ -165,10 +166,10 @@ function fallback(message) {
   $('hx-play').textContent = 'Still';
   cameraInteraction();
 }
-function stop() { running = false; cancelAnimationFrame(raf); cancelAnimationFrame(viewRaf); raf = 0; viewRaf = 0; accumulator = 0; lastFrame = 0; }
+function stop() { running = false; demoActivity.cancelFrame(raf); demoActivity.cancelFrame(viewRaf); raf = 0; viewRaf = 0; accumulator = 0; lastFrame = 0; }
 function schedule() {
   if (disposed || !room || paused || !visible || !intersecting || running || busy) return;
-  running = true; lastFrame = 0; raf = requestAnimationFrame(frame);
+  running = true; lastFrame = 0; raf = demoActivity.requestFrame(frame);
 }
 function render() {
   if (!device || !scene || disposed) return;
@@ -233,11 +234,11 @@ function frame(now) {
     }
   }
   if (now - lastReadout > 250) { updateReadouts(); lastReadout = now; }
-  raf = requestAnimationFrame(frame);
+  raf = demoActivity.requestFrame(frame);
 }
 function seek(seconds) {
   score = Math.max(0, Number(seconds)); accumulator = 0;
-  room?.step({ dtSeconds: 1 / 30, elapsedSeconds: Math.max(0, (performance.now() - createdAt) / 1000), scoreSeconds: score }); render(); updateReadouts();
+  room?.step({ dtSeconds: 1 / 30, elapsedSeconds: Math.max(0, (demoActivity.now() - createdAt) / 1000), scoreSeconds: score }); render(); updateReadouts();
 }
 function toggleInstruments() {
   const open = $('hx-instruments').hidden;
@@ -339,6 +340,7 @@ for (const name of ['pointerup', 'pointercancel', 'lostpointercapture']) canvas.
 canvas.addEventListener('pointerleave', () => { if (!inspection?.pin && inspection?.kind !== 'touch') clearInspection(); }, options);
 document.addEventListener('pointerdown', e => { if (e.target !== canvas) clearInspection(); }, options);
 window.addEventListener('scroll', clearInspection, { ...options, passive: true });
+demoActivity.onChange(active => { lastFrame = 0; if (!active) { clearInspection(); endDrag(); } });
 document.addEventListener('visibilitychange', () => { visible = !document.hidden; if (!visible) { clearInspection(); endDrag(); stop(); } else { if (viewDirty) setCamera(cameraYaw, cameraTilt); schedule(); requestInspection(); } }, options);
 demo.addEventListener('keydown', e => {
   if (e.key === 'Escape') { if (pinnedLayer) { e.preventDefault(); clearPinnedLayer(); } else clearInspection(); return; }
@@ -374,7 +376,7 @@ async function init() {
       }
     });
     room = await createRoom({ device, seed, quality: 'medium' });
-    createdAt = performance.now();
+    createdAt = demoActivity.now();
     room.setPresentation({ tint: tokenRGB('--accent') });
     context = canvas.getContext('webgpu'); if (!context) throw new Error('WebGPU canvas is unavailable.');
     const format = navigator.gpu.getPreferredCanvasFormat(); context.configure({ device, format, alphaMode: 'opaque' });

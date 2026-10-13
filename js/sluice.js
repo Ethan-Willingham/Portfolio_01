@@ -39,6 +39,7 @@
 
   var canvas = document.getElementById('game-canvas');
   if (!canvas) return;
+  var demoActivity = DemoActivity.create(canvas, { clock: false });
   var ctx = canvas.getContext('2d');
 
   // ---- Render architecture: stacked canvas layers ----
@@ -74,7 +75,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.208';
+  var GAME_VERSION = 'v28.209';
   // Water-removal comparison for performance recording. Require a fresh
   // no-save run so the diagnostic cannot alter a stored world. Snow keeps
   // its ordinary emission, contacts, slime boundaries and rendering.
@@ -2816,10 +2817,8 @@
   var screenW, screenH;
   var scale = 1;
   var lastFrameDt = 1 / 60;
-  // v17.82 — pause state. When the window loses focus we fully STOP the rAF
-  // loop (not just freeze state) so the CPU/GPU drop to idle and the laptop
-  // stops cooking. gameRafId is the handle of the pending frame so we can
-  // cancel it on pause and re-kick exactly one on resume (no double loops).
+  // Manual pause stops the loop; demo activity separately gates scheduling
+  // when the page loses focus or the canvas leaves the viewport.
   var gamePaused = false;
   // Orientation blocks play independently so rotating cannot undo a pause.
   var mobileLandscapeBlocked = false;
@@ -2831,11 +2830,7 @@
   // bootPauseFired is the one-shot guard.
   var startInPause = false;
   var bootPauseFired = false;
-  // Dev/harness boot lever (?nopause=1, the ?nosave=1 idiom): disables the
-  // focus auto-pause + boot pause. Headless screenshot/regression runs never
-  // hold window focus, so without this the blur handler pauses the loop a
-  // moment after boot and every capture shows the pause overlay instead of
-  // the game. No effect unless the query param is present.
+  // Harness lever for manual and boot pauses. Activity still gates scheduling.
   var PAUSE_DISABLED = (function () {
     try { return /[?&]nopause=1/.test(window.location.search); } catch (e) { return false; }
   })();
@@ -3343,7 +3338,7 @@
     document.addEventListener('visibilitychange', function () { playPerfEvent('visibility', { visible: !document.hidden }); perfLiveInterrupt(); if (playPerfTrace) playPerfTrace.binInterrupted = true; });
     window.addEventListener('error', function (e) { playPerfEvent('error', { message: e.message, file: e.filename, line: e.lineno }); });
     window.addEventListener('unhandledrejection', function (e) { playPerfEvent('rejection', { message: String(e.reason) }); });
-    setInterval(playPerfHeartbeat, 1000);
+    demoActivity.setInterval(playPerfHeartbeat, 1000);
   })();
   /* Bounded local history for the live performance panel. No particle scans. */
   var perfLive = { enabled: false, frameId: 0, started: 0, write: 0, count: 0,
@@ -5708,22 +5703,22 @@
     // The art bench builds on DOMContentLoaded and needs synchronous state.
     if (!window.SluiceLoading) {
       work();
-      if (!gameRafId) gameRafId = requestAnimationFrame(function (t) { lastTime = t; loop(t); });
+      if (!gameRafId) gameRafId = demoActivity.requestFrame(function (t) { lastTime = t; loop(t); });
       return;
     }
     beginSceneLoading(label, true);
     loadingTask('world', 'running', label + '. Generating terrain and placing the rig.');
     gameLoadingWorkPending = true;
     var ticket = gameLoadingGeneration;
-    requestAnimationFrame(function () {
-      requestAnimationFrame(function () {
+    demoActivity.requestFrame(function () {
+      demoActivity.requestFrame(function () {
         if (ticket !== gameLoadingGeneration) return;
         try {
           work();
           loadingTask('world', 'done', (gameLoadingWorldDetail || 'Mine prepared') + '. ' + COLS + ' columns x ' + TOTAL_ROWS + ' rows.');
           gameLoadingWorldDetail = '';
           gameLoadingWorkPending = false;
-          if (!gameRafId) gameRafId = requestAnimationFrame(function (t) { lastTime = t; loop(t); });
+          if (!gameRafId) gameRafId = demoActivity.requestFrame(function (t) { lastTime = t; loop(t); });
         } catch (e) {
           gameLoadingWorkPending = false;
           window.__bootErr = String(e) + '\n' + (e.stack || '');
@@ -7470,14 +7465,14 @@
         drillSfxActive = false; drillSfxMat = null;
         playPerfPause(true, 'rotate to landscape');
         if (introPhase === 'done' && gameRafId) {
-          cancelAnimationFrame(gameRafId); gameRafId = 0;
+          demoActivity.cancelFrame(gameRafId); gameRafId = 0;
         }
       } else if (!gamePaused) {
         playPerfPause(false);
         if (introPhase === 'done') {
           lastTime = performance.now();
-          if (gameRafId) cancelAnimationFrame(gameRafId);
-          gameRafId = requestAnimationFrame(loop);
+          if (gameRafId) demoActivity.cancelFrame(gameRafId);
+          gameRafId = demoActivity.requestFrame(loop);
         }
       }
       if (window.SluiceAudio) window.SluiceAudio.setPaused(blocked || gamePaused || introPhase !== 'done');
@@ -7510,8 +7505,8 @@
       playPerfPause(true, reason);
       if (typeof SluiceAudio !== 'undefined' && SluiceAudio.setPaused) SluiceAudio.setPaused(true);
       drillSfxActive = false; drillSfxMat = null;
-      bootPauseFired = true;   // a manual/focus pause also satisfies the boot pause
-      if (gameRafId) { cancelAnimationFrame(gameRafId); gameRafId = 0; }
+      bootPauseFired = true;   // a manual pause also satisfies the boot pause
+      if (gameRafId) { demoActivity.cancelFrame(gameRafId); gameRafId = 0; }
       // Show the menu BEFORE clearing input so a hiccup in clearAllInput can
       // never leave the loop stopped with no visible way to resume.
       showPauseOverlay(reason);
@@ -7528,28 +7523,15 @@
       // Reset the clock so the long paused gap doesn't arrive as one giant dt
       // on the first resumed frame (loop clamps to 0.1s, but this is cleaner).
       lastTime = performance.now();
-      if (gameRafId) cancelAnimationFrame(gameRafId);
-      gameRafId = mobileLandscapeBlocked ? 0 : requestAnimationFrame(loop);
+      if (gameRafId) demoActivity.cancelFrame(gameRafId);
+      gameRafId = mobileLandscapeBlocked ? 0 : demoActivity.requestFrame(loop);
     }
-    // Auto-pause triggers: window blur (visible-but-unfocused — the case the
-    // browser does NOT throttle on its own) and tab hide. Both route through
-    // pauseGame, which still clears input the way the old handlers did.
-    // EXCEPTION: entering/exiting fullscreen fires a transient window blur that
-    // is NOT the user leaving the game. sluice.html stamps window.__sluiceFsGuardUntil
-    // for the duration of a fullscreen transition; skip the auto-pause while it's
-    // active so going fullscreen no longer pops the pause menu. (visibilitychange
-    // is left unguarded — fullscreen never hides the document, so a real tab-hide
-    // still pauses.)
-    function fsTransitionActive() {
-      var until = window.__sluiceFsGuardUntil || 0;
-      return until && performance.now() < until;
-    }
-    window.addEventListener('blur', function () {
-      if (fsTransitionActive()) return;
-      pauseGame('window lost focus');
-    });
-    document.addEventListener('visibilitychange', function () {
-      if (document.hidden) pauseGame('window lost focus');
+    // Leaving the demo freezes scheduling independently of manual pause.
+    demoActivity.onChange(function(active) {
+      lastTime = performance.now(); simDebt = 0;
+      if (!active) { surfaceSlimeGrabEnd(undefined, true); clearAllInput(); gpReleaseAll(); drillSfxActive = false; drillSfxMat = null; }
+      if (window.SluiceAudio) window.SluiceAudio.setInactive(!active);
+      playPerfPause(!active || gamePaused || mobileLandscapeBlocked, active ? undefined : 'demo inactive');
     });
     // Pause-menu buttons. Resume continues; Restart wipes the run then resumes
     // so the freshly-init'd world starts animating again.
@@ -8727,7 +8709,7 @@
   // slow poll keeps watching the pad so Start can resume. It only acts when
   // gamePaused is set (gpFrame suppresses everything but Start then).
   try {
-    setInterval(function () {
+    demoActivity.setInterval(function () {
       try { if (gamePaused) gpFrame(); } catch (e) {}
     }, GAMEPAD_PAUSE_POLL_MS);
   } catch (e) {}
@@ -9481,10 +9463,10 @@
         v *= 0.92;
         if (Math.abs(v) > 0.05 &&
             shopScroll > 0 && shopScroll < SHOP_LAYOUT.scrollMax) {
-          requestAnimationFrame(step);
+          demoActivity.requestFrame(step);
         }
       };
-      requestAnimationFrame(step);
+      demoActivity.requestFrame(step);
       return;
     }
   }
@@ -14870,7 +14852,7 @@
       }
       bathLayerVis(toInside);
       beginSceneLoading(toInside ? 'Entering bathhouse' : 'Returning outside');
-      if (!gameRafId) gameRafId = requestAnimationFrame(loop);
+      if (!gameRafId) gameRafId = demoActivity.requestFrame(loop);
       el.style.opacity = '0';
       setTimeout(function () { if (ticket === bathTransitionSerial) bathFading = false; }, 240);
     }, 240);
@@ -60848,7 +60830,7 @@
       host.appendChild(cell);
     }
     canvas.parentElement.appendChild(host);
-    requestAnimationFrame(function () { requestAnimationFrame(function () { host.remove(); }); });
+    demoActivity.requestFrame(function () { demoActivity.requestFrame(function () { host.remove(); }); });
   }
 
   // A self-contained death beat. Only its clock and cosmetic fragments move;
@@ -77628,7 +77610,7 @@
     gamepadTick(0);
     if (gameOver && !gamePaused && !mobileLandscapeBlocked) deathFrameTick(Math.min(0.25,Math.max(0,intervalMs/1000)));
     if (playPerfActive || playPerfAuto || perfLive.enabled) playPerfFrame(time,intervalMs,cpuStart ? performance.now()-cpuStart : 0,2);
-    gameRafId=gamePaused || mobileLandscapeBlocked ? 0 : requestAnimationFrame(loop);
+    gameRafId=gamePaused || mobileLandscapeBlocked ? 0 : demoActivity.requestFrame(loop);
   }
 
   function loop(time) {
@@ -77648,7 +77630,7 @@
         console.error('Loading render failed:', e);
         return;
       }
-      gameRafId = requestAnimationFrame(loop);
+      gameRafId = demoActivity.requestFrame(loop);
       if (_perfWatching) playPerfFrame(time, _playLoadingInterval, performance.now() - _playPerfCPU, 3);
       return;
     }
@@ -77710,7 +77692,7 @@
       cargoManifestPadHeld = manifestNow;
       render();
       if (_perfWatching) playPerfFrame(time, frameIntervalMs, _playPerfCPU ? performance.now() - _playPerfCPU : 0, 1);
-      gameRafId = gamePaused ? 0 : requestAnimationFrame(loop);
+      gameRafId = gamePaused ? 0 : demoActivity.requestFrame(loop);
       return;
     }
     cargoManifestPadHeld = {};
@@ -77728,7 +77710,7 @@
       ledgerPadHeld = ledgerNow;
       render();
       if (_perfWatching) playPerfFrame(time, frameIntervalMs, _playPerfCPU ? performance.now() - _playPerfCPU : 0, 2);
-      gameRafId = gamePaused ? 0 : requestAnimationFrame(loop);
+      gameRafId = gamePaused ? 0 : demoActivity.requestFrame(loop);
       return;
     }
     ledgerPadHeld = {};
@@ -77749,7 +77731,7 @@
         // re-init (fresh world) for testing; the save survives until the
         // next autosave because dev runs don't dock-save.
         if (typeof radioMsgCut === 'function') radioMsgCut();   // prompt answered, drop the line
-        if (devMode) { queueSceneLoading('Preparing your mine', init); gameRafId = requestAnimationFrame(loop); if (_perfWatching) playPerfFrame(time, frameIntervalMs, performance.now() - _playPerfCPU, 3); return; }
+        if (devMode) { queueSceneLoading('Preparing your mine', init); gameRafId = demoActivity.requestFrame(loop); if (_perfWatching) playPerfFrame(time, frameIntervalMs, performance.now() - _playPerfCPU, 3); return; }
         else if (gameOver) respawnFromDeath();
         else bailoutToTown();
       } else {
@@ -77765,10 +77747,10 @@
     if ((gameWon || (gameOver && !UI_NEW)) && touch.active) {
       touch.active = false;
       if (gameOver) respawnFromDeath();
-      else { queueSceneLoading('Preparing your mine', init); gameRafId = requestAnimationFrame(loop); if (_perfWatching) playPerfFrame(time, frameIntervalMs, performance.now() - _playPerfCPU, 3); return; }
+      else { queueSceneLoading('Preparing your mine', init); gameRafId = demoActivity.requestFrame(loop); if (_perfWatching) playPerfFrame(time, frameIntervalMs, performance.now() - _playPerfCPU, 3); return; }
     }
 
-    if (introPhase !== 'done') { gameRafId = requestAnimationFrame(loop); if (_perfWatching) playPerfFrame(time, frameIntervalMs, performance.now() - _playPerfCPU, 3); return; }
+    if (introPhase !== 'done') { gameRafId = demoActivity.requestFrame(loop); if (_perfWatching) playPerfFrame(time, frameIntervalMs, performance.now() - _playPerfCPU, 3); return; }
 
     // Shop toggle via keyboard. [E] is the documented key (shown in the
     // proximity prompt); [P] is kept as a hidden alias for muscle memory
@@ -78187,7 +78169,7 @@
 
     // v17.84 — never reschedule while paused (covers the boot pause, which sets
     // gamePaused mid-frame after the top guard has already passed).
-    gameRafId = gamePaused || mobileLandscapeBlocked ? 0 : requestAnimationFrame(loop);
+    gameRafId = gamePaused || mobileLandscapeBlocked ? 0 : demoActivity.requestFrame(loop);
   }
 
   /* ---- Boot ---- */

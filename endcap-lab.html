@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <script src="js/demo-activity.js?v=1"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sluice, Console End Caps</title>
@@ -55,6 +56,8 @@
   <aside id="panel"></aside>
 </div>
 <script>
+var demoActivity = DemoActivity.create(document.getElementById('c'));
+
 (function () {
   'use strict';
 
@@ -404,7 +407,7 @@
       g.fillText(VARIANTS[sel].name+'  ·  '+capW+'×'+capH+' logical  ·  '+Z+'× zoom', VW*DPR/2, (sy-16)*DPR);
       g.textAlign='left';
       updateHud();
-      requestAnimationFrame(frame); return;
+      demoActivity.requestFrame(frame); return;
     }
 
     // ---- TOP: the cap mounted on the real console ----
@@ -452,7 +455,7 @@
     }
 
     updateHud();
-    requestAnimationFrame(frame);
+    demoActivity.requestFrame(frame);
   }
 
   function updateHud(){
@@ -532,7 +535,7 @@
     return m[k]||'';
   }
 
-  resize(); buildPanel(); requestAnimationFrame(frame);
+  resize(); buildPanel(); demoActivity.requestFrame(frame);
 })();
 </script>
 </body>

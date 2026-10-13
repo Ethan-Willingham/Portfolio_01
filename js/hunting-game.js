@@ -15,7 +15,8 @@
   let guide = false, scopeToggle = false, sound = false, audio;
   let previous = 0, accumulator = 0, raf = 0, saveTime = 0, messageUntil = 0, shotViewLeft = 0;
   let opportunityLeft = 0, seenOpportunity = 0, pace = { clock: 1, simulation: 1 }, menuResume = false;
-  let active = !document.hidden, visible = true;
+  let active = !document.hidden;
+  const demoActivity = DemoActivity.create(canvas, { clock: false });
   const scopePointer = { point: { x: T.width / 2, y: T.height / 2 }, last: null, active: false, type: 'mouse', id: null };
   const STEP = 1 / 120;
   const esc = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -83,7 +84,6 @@
   function stopScopeInput() { scopePointer.active = false; scopePointer.last = null; if (view) view.stopScopePan(); }
   function clearInput() { keys.clear(); holds.clear(); touchAim.clear(); stopScopeInput(); $('wait').setAttribute('aria-pressed', 'false'); }
   function setPhase(next) {
-    if (next === 'running' && !visible) next = 'paused';
     phase = next; game.dataset.phase = next; clearInput(); accumulator = 0;
     $('overlay').hidden = next !== 'paused' && next !== 'loading'; $('options').hidden = next !== 'menu';
     if (next === 'paused') {
@@ -244,14 +244,11 @@
     updateUI();
   });
   $('wait').addEventListener('blur', () => { holds.delete('keyboard'); updateUI(); });
-  function loseFocus() { active = false; previous = 0; menuResume = false; clearInput(); if (phase === 'running') setPhase('paused'); persist(); }
-  window.addEventListener('blur', loseFocus);
-  window.addEventListener('focus', () => { active = true; previous = 0; });
-  document.addEventListener('visibilitychange', () => { if (document.hidden) loseFocus(); else { active = true; previous = 0; } });
-  new IntersectionObserver(entries => {
-    visible = entries[0].isIntersecting;
-    if (!visible) { menuResume = false; if (phase === 'running') setPhase('paused'); }
-  }, { threshold: .1 }).observe(game);
+  demoActivity.onChange(enabled => {
+    active = enabled; previous = 0;
+    if (!enabled) { clearInput(); persist(); if (audio) audio.suspend().catch(() => {}); }
+    else if (audio && sound) audio.resume().catch(() => {});
+  });
   $('start').addEventListener('click', () => { if (phase === 'paused') setPhase('running'); });
   $('pause').addEventListener('click', pause);
   $('scope').addEventListener('click', () => { if (phase === 'running' && !world.bullets.length && !shotViewLeft) setScope(!scopeToggle); });
@@ -300,7 +297,7 @@
     // A long rendering stall cannot extend a wildlife easing window. Limit
     // simulation catch-up to keep the tab responsive after a stalled frame.
     if (phase === 'running') opportunityLeft = Math.max(0, opportunityLeft - Math.max(0, wallElapsed - elapsed));
-    previous = time; advance(elapsed); raf = requestAnimationFrame(frame);
+    previous = time; advance(elapsed); raf = demoActivity.requestFrame(frame);
   }
   HuntingView.loadArt().then(loaded => {
     art = loaded; view = new HuntingView.View(canvas, art.sprites, art.scene); view.onArtReady = () => draw();
@@ -308,7 +305,7 @@
       setProperty('range', 'hidden', !scoped);
       if (scoped) setText('range-value', range ? 'Range ' + range.yards.toFixed(1) + ' yd' : 'No range');
     };
-    beginField(); setPhase('running'); fitCanvas(); renderOptions(); raf = requestAnimationFrame(frame);
+    beginField(); setPhase('running'); fitCanvas(); renderOptions(); raf = demoActivity.requestFrame(frame);
   }).catch(error => {
     $('overlay-title').textContent = 'The field did not load'; $('overlay-text').textContent = error.message + ' Reload to try again.';
     $('start').textContent = 'Reload'; $('start').disabled = false;

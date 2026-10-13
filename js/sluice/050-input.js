@@ -102,14 +102,14 @@
         drillSfxActive = false; drillSfxMat = null;
         playPerfPause(true, 'rotate to landscape');
         if (introPhase === 'done' && gameRafId) {
-          cancelAnimationFrame(gameRafId); gameRafId = 0;
+          demoActivity.cancelFrame(gameRafId); gameRafId = 0;
         }
       } else if (!gamePaused) {
         playPerfPause(false);
         if (introPhase === 'done') {
           lastTime = performance.now();
-          if (gameRafId) cancelAnimationFrame(gameRafId);
-          gameRafId = requestAnimationFrame(loop);
+          if (gameRafId) demoActivity.cancelFrame(gameRafId);
+          gameRafId = demoActivity.requestFrame(loop);
         }
       }
       if (window.SluiceAudio) window.SluiceAudio.setPaused(blocked || gamePaused || introPhase !== 'done');
@@ -142,8 +142,8 @@
       playPerfPause(true, reason);
       if (typeof SluiceAudio !== 'undefined' && SluiceAudio.setPaused) SluiceAudio.setPaused(true);
       drillSfxActive = false; drillSfxMat = null;
-      bootPauseFired = true;   // a manual/focus pause also satisfies the boot pause
-      if (gameRafId) { cancelAnimationFrame(gameRafId); gameRafId = 0; }
+      bootPauseFired = true;   // a manual pause also satisfies the boot pause
+      if (gameRafId) { demoActivity.cancelFrame(gameRafId); gameRafId = 0; }
       // Show the menu BEFORE clearing input so a hiccup in clearAllInput can
       // never leave the loop stopped with no visible way to resume.
       showPauseOverlay(reason);
@@ -160,28 +160,15 @@
       // Reset the clock so the long paused gap doesn't arrive as one giant dt
       // on the first resumed frame (loop clamps to 0.1s, but this is cleaner).
       lastTime = performance.now();
-      if (gameRafId) cancelAnimationFrame(gameRafId);
-      gameRafId = mobileLandscapeBlocked ? 0 : requestAnimationFrame(loop);
+      if (gameRafId) demoActivity.cancelFrame(gameRafId);
+      gameRafId = mobileLandscapeBlocked ? 0 : demoActivity.requestFrame(loop);
     }
-    // Auto-pause triggers: window blur (visible-but-unfocused — the case the
-    // browser does NOT throttle on its own) and tab hide. Both route through
-    // pauseGame, which still clears input the way the old handlers did.
-    // EXCEPTION: entering/exiting fullscreen fires a transient window blur that
-    // is NOT the user leaving the game. sluice.html stamps window.__sluiceFsGuardUntil
-    // for the duration of a fullscreen transition; skip the auto-pause while it's
-    // active so going fullscreen no longer pops the pause menu. (visibilitychange
-    // is left unguarded — fullscreen never hides the document, so a real tab-hide
-    // still pauses.)
-    function fsTransitionActive() {
-      var until = window.__sluiceFsGuardUntil || 0;
-      return until && performance.now() < until;
-    }
-    window.addEventListener('blur', function () {
-      if (fsTransitionActive()) return;
-      pauseGame('window lost focus');
-    });
-    document.addEventListener('visibilitychange', function () {
-      if (document.hidden) pauseGame('window lost focus');
+    // Leaving the demo freezes scheduling independently of manual pause.
+    demoActivity.onChange(function(active) {
+      lastTime = performance.now(); simDebt = 0;
+      if (!active) { surfaceSlimeGrabEnd(undefined, true); clearAllInput(); gpReleaseAll(); drillSfxActive = false; drillSfxMat = null; }
+      if (window.SluiceAudio) window.SluiceAudio.setInactive(!active);
+      playPerfPause(!active || gamePaused || mobileLandscapeBlocked, active ? undefined : 'demo inactive');
     });
     // Pause-menu buttons. Resume continues; Restart wipes the run then resumes
     // so the freshly-init'd world starts animating again.

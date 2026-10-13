@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <script src="js/demo-activity.js?v=1"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sluice — Audio Lab</title>
@@ -317,6 +318,8 @@
   // Audio graph (bible §5.1) — built lazily on first gesture.
   // musicBus -> musicDuck -> depthFilter -> master -> analyser -> destination
   // ============================================================
+  var demoActivity = DemoActivity.create(document.body);
+  demoActivity.onChange(function(active){if(AC){if(active)AC.resume().catch(function(){});else AC.suspend().catch(function(){});}});
   var AC=null, master, musicBus, musicDuck, depthFilter, analyser, meterBuf;
   function ensureAudio(){
     if (AC) { if (AC.state==='suspended') AC.resume(); return; }
@@ -328,7 +331,7 @@
     musicBus = AC.createGain();    musicBus.gain.value = 1;
     musicBus.connect(musicDuck); musicDuck.connect(depthFilter); depthFilter.connect(master);
     master.connect(analyser); analyser.connect(AC.destination);
-    requestAnimationFrame(meterLoop);
+    demoActivity.requestFrame(meterLoop);
   }
 
   // ============================================================
@@ -450,7 +453,7 @@
   var mc = document.getElementById('meter'), mctx = mc.getContext('2d');
   var peakHold = -90, peakHoldT = 0;
   function meterLoop(){
-    requestAnimationFrame(meterLoop);
+    demoActivity.requestFrame(meterLoop);
     var w=mc.width, h=mc.height; mctx.clearRect(0,0,w,h);
     mctx.fillStyle='#0a0d12'; mctx.fillRect(0,0,w,h);
     // target zone -18..-20 and ceiling -1
@@ -598,7 +601,7 @@
       rack.appendChild(row);
     });
     // animate playheads
-    if (!renderRack._raf){ renderRack._raf = true; requestAnimationFrame(playheadLoop); }
+    if (!renderRack._raf){ renderRack._raf = true; demoActivity.requestFrame(playheadLoop); }
   }
 
   function drawWave(cv, slot){
@@ -623,7 +626,7 @@
   }
 
   function playheadLoop(){
-    requestAnimationFrame(playheadLoop);
+    demoActivity.requestFrame(playheadLoop);
     if (!playing || !AC) return;
     var rack = document.getElementById('rack'); if (!rack) return;
     var canvases = rack.querySelectorAll('canvas.wf');

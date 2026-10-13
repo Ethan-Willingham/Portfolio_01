@@ -35,6 +35,8 @@
     var W, H, balls = [];
     var pointerDown = false, ptrX = 0, ptrY = 0;
     var prevTime = 0, fc = 0, ft = 0, hintVis = true;
+  var demoActivity = DemoActivity.create(canvas);
+    demoActivity.onChange(function (active) { if (!active) pointerDown = false; });
 
     /* Slider refs */
     var sliders = {};
@@ -237,7 +239,7 @@
         if (fpsEl) fpsEl.textContent = Math.round(fc / ft) + ' fps';
         fc = 0; ft = 0;
       }
-      requestAnimationFrame(tick);
+      demoActivity.requestFrame(tick);
     }
 
     /* Events */
@@ -280,8 +282,8 @@
     /* Boot */
     resize();
     balls = makeBalls(Math.round(param('count', 80)));
-    prevTime = performance.now();
-    requestAnimationFrame(tick);
+    prevTime = demoActivity.now();
+    demoActivity.requestFrame(tick);
   }
 
   /* Init all demos on page */

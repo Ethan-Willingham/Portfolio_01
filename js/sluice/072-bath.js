@@ -413,7 +413,7 @@
       }
       bathLayerVis(toInside);
       beginSceneLoading(toInside ? 'Entering bathhouse' : 'Returning outside');
-      if (!gameRafId) gameRafId = requestAnimationFrame(loop);
+      if (!gameRafId) gameRafId = demoActivity.requestFrame(loop);
       el.style.opacity = '0';
       setTimeout(function () { if (ticket === bathTransitionSerial) bathFading = false; }, 240);
     }, 240);

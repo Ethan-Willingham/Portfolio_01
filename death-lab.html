@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <script src="js/demo-activity.js?v=1"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sluice · Death Screen Lab</title>
@@ -53,6 +54,8 @@
   <aside id="panel"></aside>
 </div>
 <script>
+var demoActivity = DemoActivity.create(document.getElementById('c'));
+
 (function () {
   'use strict';
 
@@ -1251,7 +1254,7 @@
     var dt = Math.min(0.05, now - lastNow || 0.016);
     lastNow = now;
     step(dt * L.pace, now);
-    requestAnimationFrame(frame);
+    demoActivity.requestFrame(frame);
   }
   function step(dt, now) {
     if (!VW) { resize(); layout(); }
@@ -1512,7 +1515,7 @@
 
   // boot
   resize(); layout(); buildPanel();
-  requestAnimationFrame(function (n) { lastNow = n / 1000; requestAnimationFrame(frame); });
+  demoActivity.requestFrame(function (n) { lastNow = n / 1000; demoActivity.requestFrame(frame); });
 })();
 </script>
 </body>

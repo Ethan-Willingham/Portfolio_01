@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <script src="js/demo-activity.js?v=1"></script>
   <meta charset="utf-8">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-e8CELAfCb8OqXrRg8ghl7o0Apq6nRqTFedPq+uFmvSE=' 'sha256-GGQNBW1yIsKYHZC+jztn/w6PhNbziA+2JK1vMRtM5KE='; style-src 'sha256-hsJeGiRNak+F6w6auZxFSHewKalMpGdPptxkEpDabIY='; img-src data:; base-uri 'none'; form-action 'none'">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -523,7 +524,7 @@
 
     // Recipient: a clock with visibility pauses and a reproducible seek.
     function stopClock() {
-      cancelAnimationFrame(frame); clearTimeout(fallback);
+      demoActivity.cancelFrame(frame); clearTimeout(fallback);
       frame = 0; fallback = 0;
       if (sequence) sequence.running = false;
     }
@@ -549,9 +550,10 @@
       $('return').textContent = 'Back to your link';
       document.activeElement?.blur();
       say('Step 1: Type your question: ' + question);
-      render(0); frame = requestAnimationFrame(tick);
+      render(0); frame = demoActivity.requestFrame(tick);
     }
 
+    const demoActivity = DemoActivity.create(document.getElementById('recipient'));
     function tick(now) {
       if (!sequence?.running) return;
       if (!document.hidden) {
@@ -560,7 +562,7 @@
       }
       sequence.last = document.hidden ? null : now;
       if (sequence.time >= sequence.times.end) finish();
-      else frame = requestAnimationFrame(tick);
+      else frame = demoActivity.requestFrame(tick);
     }
 
     function anchor(element, x, y) {

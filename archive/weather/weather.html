@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script src="../../js/demo-activity.js?v=1"></script>
   <meta charset="UTF-8">
   <script>document.documentElement.className += ' js';</script>
   <!-- Google tag (gtag.js) -->
@@ -1097,8 +1098,8 @@
         clearBG();
       }
 
+      var demoActivity = DemoActivity.create(canvas);
       function frame() {
-        if (document.hidden) { running = requestAnimationFrame(frame); return; }
         // a few integration steps per frame, drawing short trails
         for (var i = 0; i < 6; i++) {
           var pa0 = proj(a), pb0 = proj(b);
@@ -1121,11 +1122,11 @@
         if (clock) clock.textContent = 'model time ' + t.toFixed(1);
         if (rA) rA.textContent = a[0].toFixed(2);
         if (rB) rB.textContent = b[0].toFixed(2);
-        running = requestAnimationFrame(frame);
+        running = demoActivity.requestFrame(frame);
       }
 
       var running = null;
-      function start() { if (running) cancelAnimationFrame(running); reset(); resize(); running = requestAnimationFrame(frame); }
+      function start() { if (running) demoActivity.cancelFrame(running); reset(); resize(); running = demoActivity.requestFrame(frame); }
 
       slider.addEventListener('input', function () { reset(); });
       resetBtn.addEventListener('click', function () { reset(); });
@@ -1151,7 +1152,7 @@
         var io = new IntersectionObserver(function (es) {
           es.forEach(function (e) {
             if (e.isIntersecting) { if (!running) start(); }
-            else if (running) { cancelAnimationFrame(running); running = null; }
+            else if (running) { demoActivity.cancelFrame(running); running = null; }
           });
         }, { threshold: 0.25 });
         io.observe(canvas);

@@ -338,10 +338,10 @@
         v *= 0.92;
         if (Math.abs(v) > 0.05 &&
             shopScroll > 0 && shopScroll < SHOP_LAYOUT.scrollMax) {
-          requestAnimationFrame(step);
+          demoActivity.requestFrame(step);
         }
       };
-      requestAnimationFrame(step);
+      demoActivity.requestFrame(step);
       return;
     }
   }

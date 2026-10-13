@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script src="js/demo-activity.js?v=1"></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#303931">
@@ -88,7 +89,7 @@
       const heartbeat = () => { clearTimeout(timer); timer = setTimeout(unavailable, 30000); };
       piece.addEventListener('negative-temperature-progress', heartbeat);
       heartbeat();
-      import('./js/negative-temperature.js?v=6').catch(error => { console.error('Superfluid startup:', error); unavailable(); }).finally(() => {
+      import('./js/negative-temperature.js?v=6-activity1').catch(error => { console.error('Superfluid startup:', error); unavailable(); }).finally(() => {
         clearTimeout(timer); piece.removeEventListener('negative-temperature-progress', heartbeat);
       });
     })();

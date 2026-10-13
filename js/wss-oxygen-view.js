@@ -18,6 +18,7 @@
     var canvas = document.getElementById('toy-oxygen-canvas');
     var panel = document.getElementById('toy-oxygen-legend');
     if (!stage || !canvas || !panel) return null;
+  var demoActivity = DemoActivity.create(stage);
     var context = canvas.getContext('2d', { alpha: true });
     if (!context) return null;
     var toggleButton = document.getElementById('toy-oxygen-toggle');
@@ -309,7 +310,7 @@
     function frame(now) {
       raf = 0;
       if (disposed || !enabled || !controller || document.hidden) return;
-      raf = requestAnimationFrame(frame);
+      raf = demoActivity.requestFrame(frame);
       if (now - lastFrame < 1000 / 30) return;
       var state = toy.stats(), wallStep = Math.min(.05, Math.max(0, (now - lastFrame) / 1000));
       lastFrame = now;
@@ -344,7 +345,7 @@
         context.moveTo(cursor.x, cursor.y + gap); context.lineTo(cursor.x, cursor.y + radius); context.stroke();
       }
     }
-    function start() { if (!raf && enabled && controller && !document.hidden) { lastFrame = performance.now(); raf = requestAnimationFrame(frame); } }
+    function start() { if (!raf && enabled && controller && !document.hidden) { lastFrame = demoActivity.now(); raf = demoActivity.requestFrame(frame); } }
     function update() {
       if (disposed) return;
       var next = typeof toy.oxygen === 'function' ? toy.oxygen() : null;
@@ -358,7 +359,7 @@
       canvas.hidden = panel.hidden = !enabled || !controller;
       shell.classList.toggle('has-oxygen-overlay', enabled && !!controller);
       pressed(toggleButton, enabled && !!controller); pressed(instrumentsButton, enabled && !!controller);
-      if (!enabled || !controller) { probe.hidden = true; if (raf) cancelAnimationFrame(raf); raf = 0; }
+      if (!enabled || !controller) { probe.hidden = true; if (raf) demoActivity.cancelFrame(raf); raf = 0; }
       readings(); start();
     }
     function toggle(value) { enabled = value === undefined ? !enabled : !!value; update(); return enabled; }
@@ -371,10 +372,10 @@
       cursor = { clientX: event.clientX, clientY: event.clientY }; updateProbe();
     }, { passive: true });
     listen(viewport, 'pointerleave', function () { cursor = null; probe.hidden = true; readings(); });
-    listen(document, 'visibilitychange', function () { if (document.hidden && raf) { cancelAnimationFrame(raf); raf = 0; } else start(); });
+    listen(document, 'visibilitychange', function () { if (document.hidden && raf) { demoActivity.cancelFrame(raf); raf = 0; } else start(); });
     listen(reducedMotion, 'change', function () { traces = []; readings(); start(); });
     function destroy() {
-      disposed = true; if (raf) cancelAnimationFrame(raf); raf = 0;
+      disposed = true; if (raf) demoActivity.cancelFrame(raf); raf = 0;
       bindings.forEach(function (remove) { remove(); }); bindings = []; traces = []; snapshot = controller = centeredVX = centeredVY = null;
       canvas.hidden = panel.hidden = probe.hidden = true; shell.classList.remove('has-oxygen-overlay');
       fieldCanvas.width = maskCanvas.width = baseCanvas.width = 1;

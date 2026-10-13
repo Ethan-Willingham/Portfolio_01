@@ -2,6 +2,7 @@
   'use strict';
   const $ = id => document.getElementById('cart-' + id);
   const canvas = $('canvas'), ctx = canvas.getContext('2d');
+  const demoActivity = DemoActivity.create(canvas, { clock: false });
   if (!ctx || !window.CartPhysics || !window.CartCourse || !window.CartView) return;
   const { World, clamp } = CartPhysics;
   const Course = CartCourse, levels = Course.chapters, game = $('game');
@@ -103,7 +104,7 @@
   // Rendering owns the isometric camera; input and fixed-step physics never
   // use screen coordinates. The same renderer draws play, previews and art.
   let sceneryRaf=0;
-  const view = CartView.create(P,{onSceneryReady:()=>{if(phase!=='running'&&!sceneryRaf)sceneryRaf=requestAnimationFrame(()=>{sceneryRaf=0;draw();});}});
+  const view = CartView.create(P,{onSceneryReady:()=>{if(phase!=='running'&&!sceneryRaf)sceneryRaf=demoActivity.requestFrame(()=>{sceneryRaf=0;draw();});}});
   $('stage').style.backgroundColor = view.blend(P.hairDark,P.edge,.48);
   const makeFloor = level => view.makeFloor(level,false);
   const motion=CartView.createMotionInterpolator();
@@ -218,7 +219,7 @@
     $('options').open=false; $('overlay').scrollTop=0;
   }
   function prepare(w,continuing=false) {
-    if(raf)cancelAnimationFrame(raf);raf=0;
+    if(raf)demoActivity.cancelFrame(raf);raf=0;
     clearInput();world=w;levelIndex=w.level.startRoom;resumed=continuing;
     phase='ready';particles=[];screenShake=0;toastLife=0;
     $('toast').classList.remove('is-visible');$('picker').hidden=true;$('result').hidden=true;
@@ -245,8 +246,8 @@
   function run() {
     if(!artworkReady)return;
     phase='running';clearInput();$('overlay').hidden=true;
-    canvas.focus({preventScroll:true});sound.prepare().then(ready => { if (ready && phase === 'running' && !document.hidden) sound.update(world, controls()); });last=performance.now();accumulator=0;uiTime=0;
-    motion.capture(world);updateUI();if(!raf)raf=requestAnimationFrame(frame);
+    canvas.focus({preventScroll:true});sound.prepare().then(ready => { if (ready && phase === 'running' && demoActivity.active()) sound.update(world, controls()); });last=performance.now();accumulator=0;uiTime=0;
+    motion.capture(world);updateUI();if(!raf)raf=demoActivity.requestFrame(frame);
   }
   function pause() {
     if(phase!=='running')return;
@@ -280,7 +281,7 @@
     while(accumulator>=1/120&&phase==='running'){motion.capture(world);world.step(1/120,input);events();tickEffects(1/120);accumulator-=1/120;}
     draw(ctx,world,floor,false,phase==='running'?accumulator*120:null);if(phase==='running')sound.update(world, input, dt);
     uiTime+=dt;saveTime+=dt;if(uiTime>.1||phase!=='running'){uiTime=0;updateUI();}if(saveTime>2)save();
-    if(phase==='running')raf=requestAnimationFrame(frame);
+    if(phase==='running')raf=demoActivity.requestFrame(frame);
   }
   function closePicker() {
     $('picker').hidden=true;
@@ -487,19 +488,22 @@
     if (movement.has(e.code) && phase === 'running') { e.preventDefault(); keys.add(e.code); }
   });
   document.addEventListener('keyup', e => keys.delete(e.code));
-  window.addEventListener('blur', () => { clearInput(); pause(); sound.stop(); });
-  document.addEventListener('visibilitychange', () => { if (document.hidden) { clearInput(); pause(); sound.stop(); } });
-  window.addEventListener('pagehide', () => { pause(); save(); clearInput(); sound.stop(); });
+  window.addEventListener('pagehide', () => { save(); clearInput(); sound.stop(); });
   window.addEventListener('resize', () => { if (touches.size) clearInput(); });
   window.addEventListener('orientationchange', clearInput);
   window.addEventListener('pageshow', e => {
     clearInput();
     // Back/forward cache restores the existing JavaScript world without a reload.
-    if(e.persisted)newVisit();
+    if(e.persisted)last=performance.now();
   });
   window.visualViewport?.addEventListener('resize', clearInput);
   touchMode.addEventListener('change', clearInput);
   reducedMotion.addEventListener('change', () => { screenShake = 0; draw(); });
+  demoActivity.onChange(active => {
+    clearInput(); last=performance.now();
+    if (!active) { sound.stop(); save(); }
+    else if (phase === 'running' && sound.enabled) sound.prepare().then(ready => { if (ready && demoActivity.active() && phase === 'running') sound.update(world, controls()); });
+  });
   refreshSound(); prepare(world);save();
   const viewResize = new ResizeObserver(resizeView);
   viewResize.observe($('stage')); viewResize.observe($('touch'));

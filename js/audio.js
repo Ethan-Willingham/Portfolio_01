@@ -301,8 +301,12 @@ var SluiceAudio = (function () {
     return typeof window !== 'undefined' && (window.AudioContext || window.webkitAudioContext);
   }
 
+  var audioInactive = false;
+  var audioActivity = typeof DemoActivity !== 'undefined' && document.getElementById ?
+    DemoActivity.create(document.getElementById('game-canvas') || document.body) :
+    { setInterval: setInterval, clearInterval: clearInterval, setTimeout: setTimeout, clearTimeout: clearTimeout };
   function ensure() {
-    if (ctx) { if (ctx.state === 'suspended') { try { ctx.resume(); } catch (e) {} } if (userGestured) loadAll(); return ctx; }
+    if (ctx) { if (!audioInactive && ctx.state === 'suspended') { try { ctx.resume(); } catch (e) {} } if (userGestured) loadAll(); return ctx; }
     if (disabled || !supported()) { disabled = true; return null; }
     try {
       var AC = window.AudioContext || window.webkitAudioContext;
@@ -350,6 +354,7 @@ var SluiceAudio = (function () {
       // re-establish whatever context was requested before the gesture
       if (music.mode) { var m = music.mode, id = music.townId; music.mode = null; setMusic(m, { townId: id }); }
     } catch (e) { disabled = true; ctx = null; }
+    if (ctx && audioInactive) ctx.suspend().catch(function () {});
     return ctx;
   }
   function mkLP(hz) { var f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = hz; f.Q.value = 0.7; return f; }
@@ -477,7 +482,7 @@ var SluiceAudio = (function () {
 
   // ===== world music: one cue, a quiet gap, then a fresh context pick ========
   function stopMusic() {
-    if (music.timer !== null) { clearTimeout(music.timer); music.timer = null; }
+    if (music.timer !== null) { audioActivity.clearTimeout(music.timer); music.timer = null; }
     music.nextAt = 0; music.nextCue = null; music.nextKey = null;
     if (music.current) {
       music.current.src.onended = null;
@@ -486,9 +491,9 @@ var SluiceAudio = (function () {
     music.ugBand = -1; music.ugDanger = false;
   }
   function queueMusic(gap) {
-    if (music.timer !== null) clearTimeout(music.timer);
+    if (music.timer !== null) audioActivity.clearTimeout(music.timer);
     music.nextAt = tnow() + gap;
-    music.timer = setTimeout(playMusicCue, Math.max(0, (gap > MUSIC_PREFETCH_S ? gap - MUSIC_PREFETCH_S : gap) * 1000));
+    music.timer = audioActivity.setTimeout(playMusicCue, Math.max(0, (gap > MUSIC_PREFETCH_S ? gap - MUSIC_PREFETCH_S : gap) * 1000));
   }
   function prepareMusicCue() {
     var names, key = music.mode + ':' + music.townId;
@@ -529,7 +534,7 @@ var SluiceAudio = (function () {
     var remaining = music.nextAt - tnow();
     if (remaining > 0 || ctx.state !== 'running') {
       if (remaining <= MUSIC_PREFETCH_S && ctx.state === 'running') prepareMusicCue();
-      music.timer = setTimeout(playMusicCue, Math.max(ctx.state === 'running' ? 1 : 1000, remaining * 1000));
+      music.timer = audioActivity.setTimeout(playMusicCue, Math.max(ctx.state === 'running' ? 1 : 1000, remaining * 1000));
       return;
     }
     var name = prepareMusicCue();
@@ -802,7 +807,7 @@ var SluiceAudio = (function () {
       if (idle > SFXLOOP_FADE_MS && !L.faded) { L.faded = true; L.h.setGain(0, 0.1); }
       live = true;
     }
-    if (!live && sfxLoopWatchT) { clearInterval(sfxLoopWatchT); sfxLoopWatchT = null; }
+    if (!live && sfxLoopWatchT) { audioActivity.clearInterval(sfxLoopWatchT); sfxLoopWatchT = null; }
   }
   function sfxLoopDrive(name, opts) {
     if (!ensure() || sfxPaused) return; opts = opts || {};
@@ -813,7 +818,7 @@ var SluiceAudio = (function () {
       L = sfxLoopReg[name] = { h: createLoopVoice(name, d.b), lastMs: 0, faded: false };
       L.h.setGain(0, 0.01);        // enter silent; the drive below sets the real level
       L.h.start(0.1);
-      if (!sfxLoopWatchT) sfxLoopWatchT = setInterval(sfxLoopWatchdog, 120);
+      if (!sfxLoopWatchT) sfxLoopWatchT = audioActivity.setInterval(sfxLoopWatchdog, 120);
     } else if (!L.h.playing()) {
       L.h.start(0.1);              // freed by the watchdog (or asset late-loaded): rebuild
     }
@@ -834,7 +839,7 @@ var SluiceAudio = (function () {
     sfxDrill.stop();
     for (var key in sfxLoopReg) sfxLoopReg[key].h.stop(80);
     sfxLoopReg = {};
-    if (sfxLoopWatchT) { clearInterval(sfxLoopWatchT); sfxLoopWatchT = null; }
+    if (sfxLoopWatchT) { audioActivity.clearInterval(sfxLoopWatchT); sfxLoopWatchT = null; }
     if (fl) { fl.muted = true; fset(fl.bus.gain, 0, 0.06); }
   }
   function setPaused(on) {
@@ -884,7 +889,7 @@ var SluiceAudio = (function () {
     start: function (material) {
       if (sfxPaused) return;
       drill.lastMs = nowMs();
-      if (!drill.watchT) drill.watchT = setInterval(function () {
+      if (!drill.watchT) drill.watchT = audioActivity.setInterval(function () {
         // Modals can suspend gameplay without using the pause menu. Fade
         // a stranded grind; setProgress restores it when mining resumes.
         if (drill.voice && nowMs() - drill.lastMs > 350) drill.voice.setGain(0, 0.1);
@@ -910,7 +915,7 @@ var SluiceAudio = (function () {
     },
     bounce: function () { playSfx('drill-bounce'); },    // cannot penetrate (reqDrill/reqHeat/barrier)
     stop: function () {                                  // release = the ear-rest reward (snap-back is the next start)
-      if (drill.watchT) { clearInterval(drill.watchT); drill.watchT = null; }
+      if (drill.watchT) { audioActivity.clearInterval(drill.watchT); drill.watchT = null; }
       if (drill.alt) { drill.alt.stop(120); drill.alt = null; }
       if (drill.voice) { drill.voice.stop(140); drill.voice = null; }
       drill.mat = null; drill.progress = 0;
@@ -930,9 +935,9 @@ var SluiceAudio = (function () {
   };
   var amb = { zone: null, voice: null, emitT: null };
   function ambScheduleEmit() {
-    if (amb.emitT) { clearTimeout(amb.emitT); amb.emitT = null; }
+    if (amb.emitT) { audioActivity.clearTimeout(amb.emitT); amb.emitT = null; }
     var pool = AMB_EMIT[amb.zone]; if (!pool) return;
-    amb.emitT = setTimeout(function () {
+    amb.emitT = audioActivity.setTimeout(function () {
       amb.emitT = null;
       playSfx(pool[Math.floor(Math.random() * pool.length)], {
         gain: AMB_EMIT_GAIN, pan: (Math.random() * 2 - 1) * AMB_EMIT_PAN
@@ -948,7 +953,7 @@ var SluiceAudio = (function () {
       var z = zone ? String(zone).replace(/^amb-/, '') : null;
       if (z === amb.zone) return;
       amb.zone = z;
-      if (amb.emitT) { clearTimeout(amb.emitT); amb.emitT = null; }
+      if (amb.emitT) { audioActivity.clearTimeout(amb.emitT); amb.emitT = null; }
       if (amb.voice) { amb.voice.stop(AMB_CROSSFADE_S * 1000); amb.voice = null; }
       if (!z || !SFX_MANIFEST['amb-' + z]) return;
       amb.voice = createLoopVoice('amb-' + z, 'z');
@@ -1024,7 +1029,7 @@ var SluiceAudio = (function () {
         // seed the last-seen counters from the FIRST state so a mid-flight
         // audio unlock does not replay a backlog of flight events
         seen: { boom: fx.boomN | 0, vap: fx.vaporN | 0 },
-        watchT: setInterval(flightWatchdog, 120)
+        watchT: audioActivity.setInterval(flightWatchdog, 120)
       };
     } catch (e) { fl = null; flightDead = true; }
     return fl;
@@ -1199,6 +1204,12 @@ var SluiceAudio = (function () {
     isDisabled: function () { return disabled; },
     loadedCount: function () { return Object.keys(buffers).length; },
 
+    setInactive: function (on) {
+      audioInactive = !!on;
+      if (!ctx) return;
+      if (on) { stopActionSfx(); ctx.suspend().catch(function () {}); }
+      else if (!audioInactive && ctx.state === 'suspended') ctx.resume().catch(function () {});
+    },
     setPaused: setPaused,
     setMusicVolume: function (v) { musicVol = clamp01(v); if (musicVolumeGate) ramp(musicVolumeGate.gain, musicVol, 0.2); },
     setEnabled: function (on) { enabled = !!on; if (master) ramp(master.gain, enabled ? masterVol : 0, 0.3); },

@@ -4,6 +4,7 @@
   'use strict';
   var container = document.getElementById('globe-container');
   if (!container) return;
+  var demoActivity = DemoActivity.create(container, { clock: false });
   var THREE = window.THREE, math = window.GlobeMath, data = window.GlobeData, stars = window.GlobeStars, optics = window.GlobeOptics, timeline=window.GlobeTimeline, clouds=window.GlobeClouds, shared=window.GlobeArchive, replay=window.GlobeReplay, aurora=window.GlobeAurora;
   var byId = function (id) { return document.getElementById(id); };
   var wrapper = document.querySelector('.globe-wrapper');
@@ -38,7 +39,7 @@
     text(loadingElapsed,Math.floor((now-loadingStarted)/1000)+'s');
   }
   function stopLoadingFeedback(){
-    clearInterval(loadingTimer);loadingTimer=null;
+    demoActivity.clearInterval(loadingTimer);loadingTimer=null;
     container.querySelector('.globe-loading-activity').hidden=true;
   }
   function finishLoading() {
@@ -189,12 +190,12 @@
     if(archiveController)archiveController.abort();
     photoGeneration++;archiveGeneration++;fetchingPhoto=false;archiveBusy=false;requestedDay='';
     scrubUntil=performance.now()+350;
-    if(scrubFrame===null)scrubFrame=requestAnimationFrame(function(){scrubFrame=null;applyCachedTime();updateAstronomy();updateLabels();announce();});
+    if(scrubFrame===null)scrubFrame=demoActivity.requestFrame(function(){scrubFrame=null;applyCachedTime();updateAstronomy();updateLabels();announce();});
     timeEditTimer=setTimeout(function(){timeEditTimer=null;refreshData();},350);
   }
   hourInput.addEventListener('input',editTime);
   returnButton.addEventListener('click',function () {
-    if(scrubFrame!==null){cancelAnimationFrame(scrubFrame);scrubFrame=null;}scrubUntil=0;
+    if(scrubFrame!==null){demoActivity.cancelFrame(scrubFrame);scrubFrame=null;}scrubUntil=0;
     clearTimeout(timeEditTimer);timeEditTimer=null;if(cloudController)cloudController.abort();if(detailController){detailController.abort();detailController=null;}if(archiveController)archiveController.abort();
     photoGeneration++;archiveGeneration++;fetchingPhoto=false;archiveBusy=false;requestedDay='';
     live = true; instant = new Date();recentMode=true;recentEnd=timeline.recentBounds(instant).end; tilt = undefined; pinDayKey = '';expireLivePhoto();if(liveForecast)setForecast(liveForecast);else forecast=null;
@@ -422,7 +423,7 @@
     finally{clearTimeout(timer);settleLoad('stars');}
   }
   explore.querySelectorAll('input,button').forEach(function(control){control.disabled=true;});returnButton.disabled=true;
-  updateLoadingProgress();loadingTimer=setInterval(updateLoadingProgress,1000);
+  updateLoadingProgress();loadingTimer=demoActivity.setInterval(updateLoadingProgress,1000);
   loadLocal('assets/images/earth.jpg','base');loadLocal('assets/images/earth-night-2016.jpg','night');loadLocal('assets/images/moon.jpg','moon');loadStars();
   function nearestOrbitAngle(angle,current) {
     return current+Math.atan2(Math.sin(angle-current),Math.cos(angle-current));
@@ -592,18 +593,19 @@
     if(time-lastLabels>1000){updateAstronomy();updateLabels();lastLabels=time;}
     photoMix=Math.min(1,photoMix+dt*.7);earthMaterial.uniforms.photoMix.value=photo?photoMix:0;
     auroraMeshes.forEach(function (mesh) {mesh.material.uniforms.tick.value=time/1000;});
-    advanceReplay(time);renderer.render(scene,camera);finishLoading();frameRequest=requestAnimationFrame(frame);
+    advanceReplay(time);renderer.render(scene,camera);finishLoading();frameRequest=demoActivity.requestFrame(frame);
     upgradePhotoDetail();
   }
   function renderingVisible() {return !document.hidden&&(inView||wrapper.classList.contains('is-fullscreen'));}
-  function resume() {if(renderingVisible()&&frameRequest===null){lastFrame=0;frameRequest=requestAnimationFrame(frame);}}
+  function resume() {if(renderingVisible()&&frameRequest===null){lastFrame=0;frameRequest=demoActivity.requestFrame(frame);}}
   function syncViewportVisibility() {
     var rect=container.getBoundingClientRect();inView=rect.bottom>=-100&&rect.top<=innerHeight+100&&rect.right>=-100&&rect.left<=innerWidth+100;
-    if(!renderingVisible()&&frameRequest!==null){cancelAnimationFrame(frameRequest);frameRequest=null;}
+    if(!renderingVisible()&&frameRequest!==null){demoActivity.cancelFrame(frameRequest);frameRequest=null;}
     resume();
   }
-  document.addEventListener('visibilitychange',function () {if(document.hidden&&frameRequest!==null){cancelAnimationFrame(frameRequest);frameRequest=null;}else{updateAstronomy();updateLabels();resume();refreshData();}});
-  new IntersectionObserver(function (entries) {inView=entries[0].isIntersecting;if(!renderingVisible()&&frameRequest!==null){cancelAnimationFrame(frameRequest);frameRequest=null;}resume();},{rootMargin:'100px'}).observe(container);
+  demoActivity.onChange(function(active){lastFrame=0;if(!active){pointers.clear();pinchDistance=0;}else{if(live)instant=new Date();updateAstronomy();updateLabels();resume();}});
+  document.addEventListener('visibilitychange',function () {if(document.hidden&&frameRequest!==null){demoActivity.cancelFrame(frameRequest);frameRequest=null;}else{updateAstronomy();updateLabels();resume();refreshData();}});
+  new IntersectionObserver(function (entries) {inView=entries[0].isIntersecting;if(!renderingVisible()&&frameRequest!==null){demoActivity.cancelFrame(frameRequest);frameRequest=null;}resume();},{rootMargin:'100px'}).observe(container);
   var fullscreenButton=byId('globe-fullscreen'), savedOverflow='', inertElements=[];
   function isolateFullscreen(on) {
     if(!on){inertElements.forEach(function(item){item.element.inert=item.previous;});inertElements=[];return;}
@@ -618,14 +620,14 @@
     wrapper.classList.remove('is-fullscreen');document.body.style.overflow=savedOverflow;isolateFullscreen(false);
     fullscreenButton.setAttribute('aria-label','Enter fullscreen');
     if(document.fullscreenElement)document.exitFullscreen().catch(function(){});
-    requestAnimationFrame(resize);syncViewportVisibility();fullscreenButton.focus({preventScroll:true});
+    demoActivity.requestFrame(resize);syncViewportVisibility();fullscreenButton.focus({preventScroll:true});
   }
   fullscreenButton.addEventListener('click',function () {
     if(wrapper.classList.contains('is-fullscreen')){exitFullscreen();return;}
     savedOverflow=document.body.style.overflow;document.body.style.overflow='hidden';wrapper.classList.add('is-fullscreen');isolateFullscreen(true);fullscreenButton.setAttribute('aria-label','Exit fullscreen');
-    if(wrapper.requestFullscreen)wrapper.requestFullscreen().catch(function(){});requestAnimationFrame(resize);syncViewportVisibility();
+    if(wrapper.requestFullscreen)wrapper.requestFullscreen().catch(function(){});demoActivity.requestFrame(resize);syncViewportVisibility();
   });
-  document.addEventListener('fullscreenchange',function () {if(!document.fullscreenElement&&wrapper.classList.contains('is-fullscreen')){wrapper.classList.remove('is-fullscreen');document.body.style.overflow=savedOverflow;isolateFullscreen(false);fullscreenButton.setAttribute('aria-label','Enter fullscreen');requestAnimationFrame(resize);syncViewportVisibility();fullscreenButton.focus({preventScroll:true});}});
+  document.addEventListener('fullscreenchange',function () {if(!document.fullscreenElement&&wrapper.classList.contains('is-fullscreen')){wrapper.classList.remove('is-fullscreen');document.body.style.overflow=savedOverflow;isolateFullscreen(false);fullscreenButton.setAttribute('aria-label','Enter fullscreen');demoActivity.requestFrame(resize);syncViewportVisibility();fullscreenButton.focus({preventScroll:true});}});
   document.addEventListener('keydown',function (event) {
     if(!wrapper.classList.contains('is-fullscreen'))return;
     if(event.key==='Escape'){event.preventDefault();exitFullscreen();return;}
@@ -1032,5 +1034,5 @@
   }
   window.addEventListener('online',function(){requestedDay='';weatherChecked=0;sharedChecked=0;cloudCatalogChecked=0;refreshData();});
   updateAstronomy();updateLabels();announce();resume();refreshData();
-  setInterval(function(){if(live)instant=new Date();updateAstronomy();updateLabels();refreshData();},60000);
+  demoActivity.setInterval(function(){if(live)instant=new Date();updateAstronomy();updateLabels();refreshData();},60000);
 }());

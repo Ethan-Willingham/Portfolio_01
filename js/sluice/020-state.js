@@ -1453,10 +1453,8 @@
   var screenW, screenH;
   var scale = 1;
   var lastFrameDt = 1 / 60;
-  // v17.82 — pause state. When the window loses focus we fully STOP the rAF
-  // loop (not just freeze state) so the CPU/GPU drop to idle and the laptop
-  // stops cooking. gameRafId is the handle of the pending frame so we can
-  // cancel it on pause and re-kick exactly one on resume (no double loops).
+  // Manual pause stops the loop; demo activity separately gates scheduling
+  // when the page loses focus or the canvas leaves the viewport.
   var gamePaused = false;
   // Orientation blocks play independently so rotating cannot undo a pause.
   var mobileLandscapeBlocked = false;
@@ -1468,11 +1466,7 @@
   // bootPauseFired is the one-shot guard.
   var startInPause = false;
   var bootPauseFired = false;
-  // Dev/harness boot lever (?nopause=1, the ?nosave=1 idiom): disables the
-  // focus auto-pause + boot pause. Headless screenshot/regression runs never
-  // hold window focus, so without this the blur handler pauses the loop a
-  // moment after boot and every capture shows the pause overlay instead of
-  // the game. No effect unless the query param is present.
+  // Harness lever for manual and boot pauses. Activity still gates scheduling.
   var PAUSE_DISABLED = (function () {
     try { return /[?&]nopause=1/.test(window.location.search); } catch (e) { return false; }
   })();

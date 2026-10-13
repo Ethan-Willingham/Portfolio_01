@@ -1,0 +1,44 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
+function surface() { const events = new Map(); return { addEventListener(type, fn) { if (!events.has(type)) events.set(type, new Set()); events.get(type).add(fn); }, removeEventListener(type, fn) { events.get(type)?.delete(fn); }, emit(type) { for (const fn of events.get(type) || []) fn(); }, count() { return [...events.values()].reduce((n, set) => n + set.size, 0); } }; }
+const window = surface(), document = surface();
+let time = 100, focused = true, rect = { width: 100, height: 100, top: 10, left: 10, bottom: 110, right: 110 }, id = 0;
+const frames = new Map(), timers = new Map();
+window.requestAnimationFrame = fn => { frames.set(++id, fn); return id; };
+window.cancelAnimationFrame = id => frames.delete(id);
+window.setTimeout = (fn, delay) => { timers.set(++id, { fn, due: time + delay }); return id; };
+window.clearTimeout = id => timers.delete(id);
+document.hidden = false; document.hasFocus = () => focused;
+const context = { window, document, innerWidth: 1000, innerHeight: 1000, performance: { now: () => time }, Map };
+vm.runInNewContext(fs.readFileSync(require.resolve('../js/demo-activity.js'), 'utf8'), context);
+const activity = window.DemoActivity.create({ getBoundingClientRect: () => rect });
+const samples = [], transitions = [];
+activity.onChange(active => transitions.push(active));
+function tick(t) { samples.push(t); activity.requestFrame(tick); }
+activity.requestFrame(tick);
+function frame() { time += 16; const callbacks = [...frames.values()]; frames.clear(); callbacks.forEach(fn => fn(time)); }
+frame(); assert.equal(samples.length, 1);
+focused = false; window.emit('blur'); assert.equal(frames.size, 0);
+const frozen = activity.now(); time += 600000; assert.equal(activity.now(), frozen);
+assert.equal(samples.length, 1);
+focused = true; window.emit('focus'); assert.equal(frames.size, 1);
+frame(); assert.equal(samples[1] - samples[0], 16, 'inactive time never reaches the simulation');
+rect = { ...rect, top: 1200, bottom: 1300 }; window.emit('scroll'); assert.equal(frames.size, 0);
+let cancelled = false; const queued = activity.requestFrame(() => { cancelled = true; }); activity.cancelFrame(queued);
+time += 1000; rect = { ...rect, top: 10, bottom: 110 }; window.emit('scroll'); frame(); assert.equal(cancelled, false);
+let intervals = 0; const interval = activity.setInterval(() => intervals++, 100);
+time += 40; document.hidden = true; document.emit('visibilitychange'); assert.equal(timers.size, 0); assert.equal(frames.size, 0);
+time += 10000; document.hidden = false; document.emit('visibilitychange');
+assert.equal([...timers.values()][0].due - time, 60, 'timer retains its remaining active delay');
+time += 60; const scheduled = [...timers.values()]; timers.clear(); scheduled.forEach(t => t.fn()); assert.equal(intervals, 1);
+activity.clearInterval(interval); assert.equal(timers.size, 0);
+window.emit('pagehide'); assert.equal(frames.size, 0);
+window.emit('pageshow'); assert.equal(frames.size, 1);
+focused = false; window.emit('blur'); document.emit('visibilitychange'); assert.equal(frames.size, 0, 'visible but unfocused stays stopped');
+assert.deepEqual(transitions, [true, false, true, false, true, false, true, false, true, false]);
+focused=true;window.emit('focus');
+let once=0;activity.setTimeout(()=>once++,10);time+=10;const oneShot=[...timers.values()];timers.clear();oneShot.forEach(t=>t.fn());assert.equal(once,1);assert.equal(timers.size,0,'one-shot timer never repeats');
+const dropped=activity.setTimeout(()=>once++,10);activity.clearTimeout(dropped);assert.equal(timers.size,0);
+activity.destroy(); assert.equal(window.count() + document.count(), 0); assert.equal(frames.size + timers.size, 0);
+console.log('PASS demo activity: independent frame/timer suspension, frozen clocks, cancellation, focus, scrolling, hidden tabs, page restore and cleanup');

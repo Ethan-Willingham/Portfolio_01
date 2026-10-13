@@ -53,7 +53,7 @@
       host.appendChild(cell);
     }
     canvas.parentElement.appendChild(host);
-    requestAnimationFrame(function () { requestAnimationFrame(function () { host.remove(); }); });
+    demoActivity.requestFrame(function () { demoActivity.requestFrame(function () { host.remove(); }); });
   }
 
   // A self-contained death beat. Only its clock and cosmetic fragments move;

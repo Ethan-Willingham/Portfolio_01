@@ -870,7 +870,8 @@
     window.addEventListener('resize', fitPanel);
     window.addEventListener('scroll', fitPanel, { passive: true });
     // Reading the existing sample never requests another GPU snapshot.
-    window.setInterval(function () {
+    var demoActivity = DemoActivity.create(shell);
+    demoActivity.setInterval(function () {
       if(document.hidden)return;
       if(shell.classList.contains('is-paused')!==toy.stats().paused)sync();else updateMeasurements();
     }, 200);

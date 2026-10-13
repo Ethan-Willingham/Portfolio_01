@@ -305,5 +305,5 @@
     document.addEventListener('visibilitychange', function () { playPerfEvent('visibility', { visible: !document.hidden }); perfLiveInterrupt(); if (playPerfTrace) playPerfTrace.binInterrupted = true; });
     window.addEventListener('error', function (e) { playPerfEvent('error', { message: e.message, file: e.filename, line: e.lineno }); });
     window.addEventListener('unhandledrejection', function (e) { playPerfEvent('rejection', { message: String(e.reason) }); });
-    setInterval(playPerfHeartbeat, 1000);
+    demoActivity.setInterval(playPerfHeartbeat, 1000);
   })();

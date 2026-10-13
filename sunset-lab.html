@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script src="js/demo-activity.js?v=1"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Sluice — Sunset Lab (chooser)</title>
@@ -124,6 +125,8 @@
 </div>
 
 <script>
+var demoActivity = DemoActivity.create(document.getElementById('glcanvas'));
+
 (function () {
   'use strict';
 
@@ -498,7 +501,7 @@
     // stars fade in as the sun drops below horizon
     var night = Math.max(0, Math.min(1, (-elev)/0.35));
     if (night > 0.01) {
-      var tt = performance.now()/1000;
+      var tt = demoActivity.now()/1000;
       for (var s=0;s<STARS.length;s++){ var st=STARS[s];
         var a = night * (0.4 + 0.6*Math.abs(Math.sin(tt*0.7 + st.ph)));
         octx.fillStyle = 'rgba(220,228,245,'+a.toFixed(3)+')';
@@ -572,7 +575,7 @@
       + (state.split ? ' &nbsp; <b>split:</b> baseline | graded' : '');
   }
 
-  var last = performance.now();
+  var last = demoActivity.now();
   function loop(now) {
     var dt = (now - last)/1000; last = now;
     if (state.playing) { state.t = (state.t + state.speed*dt*60/60) % 1; if (state.t<0) state.t+=1;
@@ -580,14 +583,14 @@
     else if (state.sweep) { state.t += 0.02*dt; if (state.t > 0.90) state.t = 0.62;
       timeEl.value = state.t; timeOut.textContent = state.t.toFixed(3).replace(/^0/,''); renderOnce(); }
     else { drawOverlay(sunData(state.t, glcanvas.width/Math.max(1,glcanvas.height)).elev); } // keep stars twinkling
-    requestAnimationFrame(loop);
+    demoActivity.requestFrame(loop);
   }
 
   // ---- Boot ----
   resize();
   applyPreset('tropical');
   renderOnce();
-  requestAnimationFrame(loop);
+  demoActivity.requestFrame(loop);
 })();
 </script>
 </body>

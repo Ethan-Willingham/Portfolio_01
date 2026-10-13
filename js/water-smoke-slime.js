@@ -15578,8 +15578,9 @@
 
   }
 
+  var demoActivity = DemoActivity.create(stage, { clock: false });
   function frame(tNow) {
-    rafId = requestAnimationFrame(frame);
+    rafId = demoActivity.requestFrame(frame);
     if(handsPending || toyBoundary && toyBoundary.inFlight){instrumentTick(tNow);return;}
     var dt = lastT ? (tNow - lastT) / 1000 : 1 / 60;
     // An uncapped browser can call back faster than the solvers' tiny-dt
@@ -15791,17 +15792,17 @@
   function startLoop() {
     if (rafId) return;
     lastT = 0;
-    rafId = requestAnimationFrame(frame);
+    rafId = demoActivity.requestFrame(frame);
   }
 
   function stopLoop() {
     if (!rafId) return;
-    cancelAnimationFrame(rafId);
+    demoActivity.cancelFrame(rafId);
     rafId = 0;
   }
 
   function syncRunning() {
-    var active=!handsPending && !machineLoading && !userPaused && !document.hidden && visibleFrac>=0.06;
+    var active=!handsPending && !machineLoading && !userPaused && demoActivity.active() && !document.hidden && visibleFrac>=0.06;
     if(toySound)toySound.setActive(active && !!(toyBoundary || toyFire));
     if(!active)stopLoop();else startLoop();
   }
@@ -15814,6 +15815,7 @@
     try { inputEl.releasePointerCapture(pointerId); } catch (e) {}
     releasePointer({ pointerId: pointerId },true);
   }
+  demoActivity.onChange(function(active){lastT=0;if(!active)cancelHeldInput();syncRunning();});
   document.addEventListener('visibilitychange', function () {
     if (document.hidden) cancelHeldInput();
     syncRunning();

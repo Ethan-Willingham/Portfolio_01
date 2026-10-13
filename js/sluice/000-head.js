@@ -39,6 +39,7 @@
 
   var canvas = document.getElementById('game-canvas');
   if (!canvas) return;
+  var demoActivity = DemoActivity.create(canvas, { clock: false });
   var ctx = canvas.getContext('2d');
 
   // ---- Render architecture: stacked canvas layers ----
@@ -74,7 +75,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.208';
+  var GAME_VERSION = 'v28.209';
   // Water-removal comparison for performance recording. Require a fresh
   // no-save run so the diagnostic cannot alter a stored world. Snow keeps
   // its ordinary emission, contacts, slime boundaries and rendering.

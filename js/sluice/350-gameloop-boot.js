@@ -191,7 +191,7 @@
     gamepadTick(0);
     if (gameOver && !gamePaused && !mobileLandscapeBlocked) deathFrameTick(Math.min(0.25,Math.max(0,intervalMs/1000)));
     if (playPerfActive || playPerfAuto || perfLive.enabled) playPerfFrame(time,intervalMs,cpuStart ? performance.now()-cpuStart : 0,2);
-    gameRafId=gamePaused || mobileLandscapeBlocked ? 0 : requestAnimationFrame(loop);
+    gameRafId=gamePaused || mobileLandscapeBlocked ? 0 : demoActivity.requestFrame(loop);
   }
 
   function loop(time) {
@@ -211,7 +211,7 @@
         console.error('Loading render failed:', e);
         return;
       }
-      gameRafId = requestAnimationFrame(loop);
+      gameRafId = demoActivity.requestFrame(loop);
       if (_perfWatching) playPerfFrame(time, _playLoadingInterval, performance.now() - _playPerfCPU, 3);
       return;
     }
@@ -273,7 +273,7 @@
       cargoManifestPadHeld = manifestNow;
       render();
       if (_perfWatching) playPerfFrame(time, frameIntervalMs, _playPerfCPU ? performance.now() - _playPerfCPU : 0, 1);
-      gameRafId = gamePaused ? 0 : requestAnimationFrame(loop);
+      gameRafId = gamePaused ? 0 : demoActivity.requestFrame(loop);
       return;
     }
     cargoManifestPadHeld = {};
@@ -291,7 +291,7 @@
       ledgerPadHeld = ledgerNow;
       render();
       if (_perfWatching) playPerfFrame(time, frameIntervalMs, _playPerfCPU ? performance.now() - _playPerfCPU : 0, 2);
-      gameRafId = gamePaused ? 0 : requestAnimationFrame(loop);
+      gameRafId = gamePaused ? 0 : demoActivity.requestFrame(loop);
       return;
     }
     ledgerPadHeld = {};
@@ -312,7 +312,7 @@
         // re-init (fresh world) for testing; the save survives until the
         // next autosave because dev runs don't dock-save.
         if (typeof radioMsgCut === 'function') radioMsgCut();   // prompt answered, drop the line
-        if (devMode) { queueSceneLoading('Preparing your mine', init); gameRafId = requestAnimationFrame(loop); if (_perfWatching) playPerfFrame(time, frameIntervalMs, performance.now() - _playPerfCPU, 3); return; }
+        if (devMode) { queueSceneLoading('Preparing your mine', init); gameRafId = demoActivity.requestFrame(loop); if (_perfWatching) playPerfFrame(time, frameIntervalMs, performance.now() - _playPerfCPU, 3); return; }
         else if (gameOver) respawnFromDeath();
         else bailoutToTown();
       } else {
@@ -328,10 +328,10 @@
     if ((gameWon || (gameOver && !UI_NEW)) && touch.active) {
       touch.active = false;
       if (gameOver) respawnFromDeath();
-      else { queueSceneLoading('Preparing your mine', init); gameRafId = requestAnimationFrame(loop); if (_perfWatching) playPerfFrame(time, frameIntervalMs, performance.now() - _playPerfCPU, 3); return; }
+      else { queueSceneLoading('Preparing your mine', init); gameRafId = demoActivity.requestFrame(loop); if (_perfWatching) playPerfFrame(time, frameIntervalMs, performance.now() - _playPerfCPU, 3); return; }
     }
 
-    if (introPhase !== 'done') { gameRafId = requestAnimationFrame(loop); if (_perfWatching) playPerfFrame(time, frameIntervalMs, performance.now() - _playPerfCPU, 3); return; }
+    if (introPhase !== 'done') { gameRafId = demoActivity.requestFrame(loop); if (_perfWatching) playPerfFrame(time, frameIntervalMs, performance.now() - _playPerfCPU, 3); return; }
 
     // Shop toggle via keyboard. [E] is the documented key (shown in the
     // proximity prompt); [P] is kept as a hidden alias for muscle memory
@@ -750,7 +750,7 @@
 
     // v17.84 — never reschedule while paused (covers the boot pause, which sets
     // gamePaused mid-frame after the top guard has already passed).
-    gameRafId = gamePaused || mobileLandscapeBlocked ? 0 : requestAnimationFrame(loop);
+    gameRafId = gamePaused || mobileLandscapeBlocked ? 0 : demoActivity.requestFrame(loop);
   }
 
   /* ---- Boot ---- */

@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script src="../../js/demo-activity.js?v=1"></script>
   <meta charset="UTF-8">
   <script>document.documentElement.className += ' js';</script>
   <!-- Google tag (gtag.js) -->
@@ -2171,19 +2172,20 @@
         frameLab.textContent = 'FR ' + String(i + 1).padStart(2, '0') + ' / 11';
         scrub.value = i;
       }
+      var demoActivity = DemoActivity.create(canvas);
       function tick() { cur = (cur + 1) % 11; draw(cur); }
       function play() {
         if (playing) return;
         playing = true; playBtn.textContent = 'Pause';
         playBtn.setAttribute('aria-label', 'Pause the gallop');
         playBtn.setAttribute('aria-pressed', 'true');
-        timer = setInterval(tick, 1000 / 14);
+        timer = demoActivity.setInterval(tick, 1000 / 14);
       }
       function pause() {
         playing = false; playBtn.textContent = 'Play';
         playBtn.setAttribute('aria-label', 'Play the gallop');
         playBtn.setAttribute('aria-pressed', 'false');
-        if (timer) clearInterval(timer);
+        if (timer) demoActivity.clearInterval(timer);
       }
       playBtn.addEventListener('click', function () { playing ? pause() : play(); });
       scrub.addEventListener('input', function () { pause(); cur = +scrub.value; draw(cur); });
@@ -2200,8 +2202,7 @@
       if ('IntersectionObserver' in window) {
         var fio = new IntersectionObserver(function (entries) {
           entries.forEach(function (e) {
-            if (e.isIntersecting) { ensureLoaded(); if (loaded && sprite.complete && !reduced) play(); }
-            else if (playing) pause();
+            if (e.isIntersecting) ensureLoaded();
           });
         }, { threshold: 0.25 });
         fio.observe(canvas);

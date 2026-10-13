@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <script src="js/demo-activity.js?v=1"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sluice — Block Break</title>
@@ -58,6 +59,8 @@
   <aside id="panel"></aside>
 </div>
 <script>
+var demoActivity = DemoActivity.create(document.getElementById('c'));
+
 (function () {
   'use strict';
 
@@ -542,10 +545,10 @@
     thaw:function(){ freezeT=0; drilling=null; }
   };
   function boot(){ resize(); genWorld(); buildPanel(); draw();
-    var last=performance.now(), acc=0, n=0;
+    var last=demoActivity.now(), acc=0, n=0;
     function loop(now){ var dt=Math.min(0.05,(now-last)/1000); last=now; shClock+=dt; acc+=1/(dt||0.016); n++; if(n>=20){fps=acc/n;acc=0;n=0;}
-      update(dt); updateCam(); draw(); requestAnimationFrame(loop); }
-    requestAnimationFrame(loop);
+      update(dt); updateCam(); draw(); demoActivity.requestFrame(loop); }
+    demoActivity.requestFrame(loop);
   }
   boot();
 })();

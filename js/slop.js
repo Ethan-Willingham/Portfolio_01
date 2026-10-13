@@ -6,6 +6,7 @@
   const stage = $('slop-stage');
   const wall = $('slop-wall');
   if (!stage || !wall) return;
+  const demoActivity = DemoActivity.create(stage);
 
   const TILE = 336;
   const PITCH = 376;
@@ -205,7 +206,7 @@
   }
 
   function requestRender() {
-    if (!state.raf) state.raf = requestAnimationFrame(frame);
+    if (!state.raf) state.raf = demoActivity.requestFrame(frame);
   }
 
   function frame(now) {
@@ -260,7 +261,7 @@
       if (complete) complete();
       return;
     }
-    state.tween = { from: { x: state.x, y: state.y, zoom: state.zoom }, to: { x, y, zoom }, start: performance.now(), duration: 440, complete };
+    state.tween = { from: { x: state.x, y: state.y, zoom: state.zoom }, to: { x, y, zoom }, start: demoActivity.now(), duration: 440, complete };
     requestRender();
   }
 
@@ -306,7 +307,7 @@
     event.preventDefault();
     const wasMoving = (Math.abs(state.vx) + Math.abs(state.vy)) * state.zoom > 0.12;
     stopMotion();
-    const point = { x: event.clientX, y: event.clientY, startX: event.clientX, startY: event.clientY, time: performance.now() };
+    const point = { x: event.clientX, y: event.clientY, startX: event.clientX, startY: event.clientY, time: demoActivity.now() };
     pointers.set(event.pointerId, point);
     stage.setPointerCapture(event.pointerId);
     if (pointers.size === 1) {
@@ -322,7 +323,7 @@
   function pointerMove(event) {
     const point = pointers.get(event.pointerId);
     if (!point || !state.gesture) return;
-    const now = performance.now();
+    const now = demoActivity.now();
     if (pointers.size >= 2) {
       const pair = [...pointers.values()].slice(0, 2);
       const oldX = (pair[0].x + pair[1].x) / 2;
@@ -363,14 +364,14 @@
     pointers.delete(event.pointerId);
     if (stage.hasPointerCapture(event.pointerId)) stage.releasePointerCapture(event.pointerId);
     if (pointers.size) {
-      for (const point of pointers.values()) { point.startX = point.x; point.startY = point.y; point.time = performance.now(); }
+      for (const point of pointers.values()) { point.startX = point.x; point.startY = point.y; point.time = demoActivity.now(); }
       state.vx = 0; state.vy = 0;
       return;
     }
     const gesture = state.gesture;
     state.gesture = null;
     stage.classList.remove('is-dragging');
-    if (event.type !== 'pointerup' || motionPreference.matches || performance.now() - state.lastPointerMove > 85) {
+    if (event.type !== 'pointerup' || motionPreference.matches || demoActivity.now() - state.lastPointerMove > 85) {
       state.vx = 0; state.vy = 0;
     }
     if (event.type === 'pointerup' && gesture && !gesture.moved && !gesture.pinched && gesture.index !== undefined) {
@@ -453,7 +454,7 @@
         if (dialog.dataset.routeClosing) delete dialog.dataset.routeClosing;
         else closeWorkRoute();
       }
-      requestAnimationFrame(() => {
+      demoActivity.requestFrame(() => {
         if (anyDialogOpen()) return;
         const target = returnFocus.get(dialog);
         if (target?.isConnected && !target.closest('dialog:not([open])')) target.focus({ preventScroll: true });
@@ -754,7 +755,7 @@
   window.addEventListener('popstate', syncWorkRoute);
   window.addEventListener('hashchange', syncWorkRoute);
   window.visualViewport?.addEventListener('resize', resize);
-  window.addEventListener('blur', clearPointers);
+  demoActivity.onChange(active => { if (!active) clearPointers(); });
   document.addEventListener('visibilitychange', () => { if (document.hidden) clearPointers(); });
   motionPreference.addEventListener('change', () => { stopMotion(); requestRender(); });
 

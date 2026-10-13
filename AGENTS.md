@@ -171,3 +171,12 @@ not every page):
   The only sanctioned pictographs are three long-standing text glyphs already in the site
   (the checkmark, star, and pickaxe); do not add new ones.
 - A git pre-commit linter (`tools/voice-lint.sh`, wired via `tools/githooks/`) hard-blocks em dashes, emojis, and the formulaic empty-writing tells listed in `VOICE.md` from any staged `.html`/`.md` post content. Enable it once per checkout with `git config core.hooksPath tools/githooks`. It skips the frozen game demo, the throwaway `*-lab.html` choosers, and the meta-docs; bypass in a real exception with `git commit --no-verify`.
+
+## Demo activity
+
+Continuous demos must stop their frame and timer scheduling when their tab is hidden,
+window loses focus, or stage leaves the viewport. Use `js/demo-activity.js` and one
+`DemoActivity.create(stage)` controller per independent demo. Resume the existing state
+when it becomes active again, excluding inactive time from simulation clocks. Clear held
+input and suspend audio on inactivity. Keep manual pause and mobile orientation gates
+independent so returning cannot undo them. Do not override the browser scheduling APIs.

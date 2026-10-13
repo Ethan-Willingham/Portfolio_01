@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script src="js/demo-activity.js?v=1"></script>
   <meta charset="UTF-8">
   <script>document.documentElement.className += ' js';</script>
   <!-- Google tag (gtag.js) -->
@@ -924,11 +925,11 @@
       wmsA = ease(wmsA, tWms, e); annoA = ease(annoA, noteTxt ? 1 : 0, ea);
       advance(dt);
     }
-    function frame(now) { var dt = Math.min((now - last) / 1000, 0.05); last = now; sim(dt); drawFlow(dt); if (inkFrames > 0) { drawInk(); inkFrames--; } raf = requestAnimationFrame(frame); }
-    function play() { if (REDUCE || raf) return; last = performance.now(); raf = requestAnimationFrame(frame); }
-    function stop() { if (raf) { cancelAnimationFrame(raf); raf = null; } }
-    new IntersectionObserver(function (en) { en[0].isIntersecting ? play() : stop(); }, { threshold: 0.05 }).observe(fig);
-    document.addEventListener('visibilitychange', function () { if (document.hidden) stop(); });
+    var demoActivity = DemoActivity.create(fig.querySelector('.plate'));
+    function frame(now) { var dt = Math.min((now - last) / 1000, 0.05); last = now; sim(dt); drawFlow(dt); if (inkFrames > 0) { drawInk(); inkFrames--; } raf = demoActivity.requestFrame(frame); }
+    function play() { if (REDUCE || raf) return; last = demoActivity.now(); raf = demoActivity.requestFrame(frame); }
+    function stop() { if (raf) { demoActivity.cancelFrame(raf); raf = null; } }
+    play();
 
     fig.__viz = { apply: apply, frames: function (n, dt) { dt = dt || 0.033; for (var i = 0; i < n; i++) { sim(dt); drawFlow(dt); } drawInk(); } };
     resize(); apply(0);
@@ -1259,11 +1260,11 @@
       annoA = ease(annoA, noteTxt ? 1 : 0, ea);
       advance(dt);
     }
-    function frame(now) { var dt = Math.min((now - last) / 1000, 0.05); last = now; sim(dt); drawFlow(dt); if (inkFrames > 0) { drawInk(); inkFrames--; } raf = requestAnimationFrame(frame); }
-    function play() { if (REDUCE || raf) return; last = performance.now(); raf = requestAnimationFrame(frame); }
-    function stop() { if (raf) { cancelAnimationFrame(raf); raf = null; } }
-    new IntersectionObserver(function (en) { en[0].isIntersecting ? play() : stop(); }, { threshold: 0.05 }).observe(fig);
-    document.addEventListener('visibilitychange', function () { if (document.hidden) stop(); });
+    var demoActivity = DemoActivity.create(fig.querySelector('.plate'));
+    function frame(now) { var dt = Math.min((now - last) / 1000, 0.05); last = now; sim(dt); drawFlow(dt); if (inkFrames > 0) { drawInk(); inkFrames--; } raf = demoActivity.requestFrame(frame); }
+    function play() { if (REDUCE || raf) return; last = demoActivity.now(); raf = demoActivity.requestFrame(frame); }
+    function stop() { if (raf) { demoActivity.cancelFrame(raf); raf = null; } }
+    play();
 
     fig.__viz = { apply: apply, frames: function (n, dt) { dt = dt || 0.033; for (var i = 0; i < n; i++) { sim(dt); drawFlow(dt); } drawInk(); } };
     resize(); apply(0);
@@ -1558,11 +1559,11 @@
       annoA = ease(annoA, noteTxt ? 1 : 0, ea);
       advance(dt);
     }
-    function frame(now) { var dt = Math.min((now - last) / 1000, 0.05); last = now; sim(dt); drawFlow(dt); if (inkFrames > 0) { drawInk(); inkFrames--; } raf = requestAnimationFrame(frame); }
-    function play() { if (REDUCE || raf) return; last = performance.now(); raf = requestAnimationFrame(frame); }
-    function stop() { if (raf) { cancelAnimationFrame(raf); raf = null; } }
-    new IntersectionObserver(function (en) { en[0].isIntersecting ? play() : stop(); }, { threshold: 0.05 }).observe(fig);
-    document.addEventListener('visibilitychange', function () { if (document.hidden) stop(); });
+    var demoActivity = DemoActivity.create(fig.querySelector('.plate'));
+    function frame(now) { var dt = Math.min((now - last) / 1000, 0.05); last = now; sim(dt); drawFlow(dt); if (inkFrames > 0) { drawInk(); inkFrames--; } raf = demoActivity.requestFrame(frame); }
+    function play() { if (REDUCE || raf) return; last = demoActivity.now(); raf = demoActivity.requestFrame(frame); }
+    function stop() { if (raf) { demoActivity.cancelFrame(raf); raf = null; } }
+    play();
 
     fig.__viz = { apply: apply, frames: function (n, dt) { dt = dt || 0.033; for (var i = 0; i < n; i++) { sim(dt); drawFlow(dt); } drawInk(); } };
     resize(); apply(0);

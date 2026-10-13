@@ -13,6 +13,7 @@ class SliceViewer {
     this.cur = null; this.img = null; this.idx = 0;
     this.playing = false; this.timer = null; this.cache = new Map();
     this.loadId = 0;
+    this.activity = DemoActivity.create(els.canvas);
     this.canvas = els.canvas; this.ctx = this.canvas.getContext('2d');
     this.hintShown = true;
     this._bind();
@@ -139,7 +140,7 @@ class SliceViewer {
     this.els.play.textContent = 'Pause';
     this.els.play.setAttribute('aria-label', 'Pause slices');
     this.els.play.setAttribute('aria-pressed', 'true');
-    this.timer = setInterval(() => this.setIdx((this.idx + 1) % this.cur.count), 90);
+    this.timer = this.activity.setInterval(() => this.setIdx((this.idx + 1) % this.cur.count), 90);
   }
   stop() {
     this.playing = false;
@@ -147,7 +148,7 @@ class SliceViewer {
     this.els.play.textContent = 'Play';
     this.els.play.setAttribute('aria-label', 'Play slices');
     this.els.play.setAttribute('aria-pressed', 'false');
-    if (this.timer !== null) clearInterval(this.timer);
+    if (this.timer !== null) this.activity.clearInterval(this.timer);
     this.timer = null;
   }
 }
@@ -168,6 +169,7 @@ const SCENES = {
 
 class Surface3D {
   constructor(canvas, els, Niivue) {
+    this.activity = DemoActivity.create(canvas);
     this.canvas = canvas; this.els = els; this.Niivue = Niivue;
     this.scene = 'brain'; this.requestedScene = 'brain';
     this.az = 120; this.el = 12; this.rotating = true;
@@ -226,9 +228,9 @@ class Surface3D {
         this.az = (this.az + 0.35) % 360;
         this.nv.setRenderAzimuthElevation(this.az, this.el);
       }
-      requestAnimationFrame(tick);
+      this.activity.requestFrame(tick);
     };
-    requestAnimationFrame(tick);
+    this.activity.requestFrame(tick);
   }
 }
 

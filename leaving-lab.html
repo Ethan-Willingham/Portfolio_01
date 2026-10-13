@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script src="js/demo-activity.js?v=1"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex">
@@ -168,6 +169,8 @@
   </div>
 
   <script>
+var demoActivity = DemoActivity.create(document.getElementById('stage'));
+
   (function () {
     'use strict';
 
@@ -191,7 +194,7 @@
     var lastMove = -1e9;
     var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var DWELL = 2800;
-    var t0 = performance.now();
+    var t0 = demoActivity.now();
 
     function setVar(k, v) { stack.style.setProperty(k, v); }
     function resize() { W = stage.clientWidth; H = stage.clientHeight; }
@@ -223,14 +226,14 @@
       setVar('--reveal', reveal.toFixed(3));
 
       prog.style.width = (((now - t0) % (DWELL + 700)) / DWELL * 100).toFixed(1) + '%';
-      requestAnimationFrame(frame);
+      demoActivity.requestFrame(frame);
     }
 
     stage.addEventListener('pointermove', function (e) {
       var r = stage.getBoundingClientRect();
       target.x = (e.clientX - r.left) / r.width;
       target.y = (e.clientY - r.top) / r.height;
-      lastMove = performance.now();
+      lastMove = demoActivity.now();
     });
 
     function bind(id, fn, fmt) {
@@ -269,7 +272,7 @@
 
     window.addEventListener('resize', resize);
 
-    function boot() { resize(); requestAnimationFrame(frame); }
+    function boot() { resize(); demoActivity.requestFrame(frame); }
     if (document.fonts && document.fonts.load) {
       document.fonts.load('700 80px century_supra_a').then(boot).catch(boot);
     } else { boot(); }

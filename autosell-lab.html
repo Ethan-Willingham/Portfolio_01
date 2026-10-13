@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <script src="js/demo-activity.js?v=1"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sluice — Auto-Sell Reveal</title>
@@ -56,6 +57,8 @@
   <aside id="panel"></aside>
 </div>
 <script>
+var demoActivity = DemoActivity.create(document.getElementById('c'));
+
 (function () {
   'use strict';
 
@@ -1051,7 +1054,7 @@
   }
 
   // ================= loop =================
-  var last = performance.now();
+  var last = demoActivity.now();
   var frames = 0;
   function frame(ts) {
     var dt = (ts - last) / 1000; last = ts;
@@ -1062,7 +1065,7 @@
     } catch (e) {
       drawError((e && e.message) ? e.message : String(e));
     }
-    requestAnimationFrame(frame);
+    demoActivity.requestFrame(frame);
   }
   // never fail silently: if a frame throws, paint the reason on the canvas
   function drawError(msg) {
@@ -1076,7 +1079,7 @@
   }
   // RAF is paused while the tab is hidden; reset the clock so it resumes cleanly
   document.addEventListener('visibilitychange', function () {
-    if (!document.hidden) { last = performance.now(); draw(); }
+    if (!document.hidden) { last = demoActivity.now(); draw(); }
   });
 
   // ================= input =================
@@ -1225,7 +1228,7 @@
     buildPanel();
     startSeq();
     draw();                       // paint immediately so it's never blank before the first RAF tick
-    requestAnimationFrame(frame);
+    demoActivity.requestFrame(frame);
   }
   // run after layout so getBoundingClientRect is non-zero
   if (document.readyState === 'complete') boot();
