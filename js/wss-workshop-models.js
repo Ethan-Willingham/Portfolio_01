@@ -16,11 +16,11 @@ function control(s,id,label,run,held){s.controls.push({id:id,label:label,run:run
 function finalize(s,step){if(!s.links.length){var routes=s.id==='water-half-adder'?[[0,2],[1,2],[2,3]]:s.nodes.length===2?[[0,1]]:[[0,1],[1,2]];if(['singing-birds-owl','water-organ','hydraulophone'].indexOf(s.id)>=0)routes.push([2,0]);routes.forEach(function(route){link(s,s.nodes[route[0]],s.nodes[route[1]],0);});}s.initial=total(s);s.step=function(dt){if(!Number.isFinite(dt)||dt<0)throw Error('Invalid workshop step');var remain=dt;while(remain>1e-10){var h=Math.min(remain,.0025);s.links=[];step(h);s.t+=h;remain-=h;}s.massError=total(s)-s.initial-s.admitted+s.escaped;s.finite=s.nodes.every(function(n){return Number.isFinite(n.v)&&n.v>=-1e-12&&n.v<=n.capacity+1e-12;})&&Number.isFinite(s.massError);if(!s.finite)throw Error('Non-finite workshop state');};s.activate=function(id,held){action(s,id,held);};s.release=function(){s.controls.forEach(function(c){if(c.held)c.run(false);});};return s;}
 function thermal(id,o){
  var s=base(id),geyser=id==='steam-geyser',doors=id==='hero-temple-doors';
- var lower=node('flask',geyser?'Hot chamber':'Lower flask',152,190,152,158,.52,.86,0,.0014),upper=node('upper',doors?'Door counterweight':geyser?'Cool recharge bowl':'Coffee bowl',432,86,152,152,geyser?.28:0,.9,.2,.0045);
+ var lower=node('flask',geyser?'Hot chamber':'Lower flask',152,190,152,158,geyser?clamp(Number.isFinite(o.lowerL)?o.lowerL:.6,.57,.63):.52,.86,0,.0014),upper=node('upper',doors?'Door counterweight':geyser?'Cool recharge bowl':'Coffee bowl',432,86,152,152,0,.9,.2,.0045);
  s.nodes=[lower,upper];s.T=geyser?365:doors?clamp(Number.isFinite(o.initialK)?o.initialK:360,356,364):343.15;s.vaporMass=sat(s.T)*(lower.capacity-lower.v)/(RV*s.T);lower.v-=s.vaporMass/RHO;
  var gasV=lower.capacity-lower.v;s.airMass=(ATM-sat(s.T))*gasV/(RG*s.T);s.upperT=293.15;s.heater=o.heated!==false;s.power=geyser?1900:1250;s.cooling=geyser?1.7:3.8;s.q=0;s.cycles=0;s.angle=0;s.angularVelocity=0;s.maxAngle=0;s.peakUpper=upper.v;s.peakPressure=ATM;s.lastOut=false;s.flows={};
  control(s,'heater',function(){return s.heater?'Turn heater off':'Turn heater on';},function(held){if(held)s.heater=!s.heater;});
- if(geyser)control(s,'cooling','Add cold recharge',function(held){if(held){var energy=Math.min(30000,Math.max(0,(s.T-293.15)*(RHO*lower.v*CP+160)));s.T-=energy/(RHO*lower.v*CP+160);s.heatOutJ+=energy;}});
+ if(geyser)control(s,'cooling','Quench chamber',function(held){if(held){var energy=Math.min(30000,Math.max(0,(s.T-293.15)*(RHO*lower.v*CP+160)));s.T-=energy/(RHO*lower.v*CP+160);s.heatOutJ+=energy;}});
  return finalize(s,function(dt){
   var capacity=RHO*lower.v*CP+160,heat=(s.heater&&lower.v>.000015?s.power:0)*dt,loss=s.cooling*(s.T-293.15)*dt;
   s.heatInJ+=heat;s.heatOutJ+=loss;s.T+= (heat-loss)/capacity;
@@ -44,7 +44,10 @@ function thermal(id,o){
    // when reservoir pressure drops below the recharge head.
    var feed=orifice(RHO*G*(.38+head(upper)-head(lower))-(s.pressure-ATM),.000025);feed=Math.max(0,feed);
    var fed=transfer(upper,lower,feed*dt),mix=RHO*fed*CP;s.T=(s.T*capacity+s.upperT*mix)/(capacity+mix);s.flows.refill=fed/dt;
-   var erupt=s.q>.00003;if(erupt&&!s.lastOut)s.cycles++;s.lastOut=erupt;
+   // Count an eruption only after the receiving bowl has gained substantial
+   // water, then require a near-empty recharge before it can count again.
+   if(!s.lastOut&&upper.v>.00012&&s.q>.00003){s.cycles++;s.lastOut=true;}
+   if(upper.v<.00004&&s.q<=0)s.lastOut=false;
   }
   if(doors){var bucketMass=upper.v*RHO,torque=bucketMass*G*.22-.006-s.angle*.032,acc=(torque-.06*s.angularVelocity)/.008;s.angularVelocity+=acc*dt;s.angle=clamp(s.angle+s.angularVelocity*dt,0,1.45);if(s.angle===0&&s.angularVelocity<0||s.angle===1.45&&s.angularVelocity>0)s.angularVelocity=0;s.maxAngle=Math.max(s.maxAngle,s.angle);}
   s.peakUpper=Math.max(s.peakUpper,upper.v);s.flows.tube=s.q;link(s,lower,upper,s.q,'Pressure tube');s.notice=(s.T-273.15).toFixed(1)+' C   '+((s.pressure-ATM)/1000).toFixed(1)+' kPa   '+(Math.abs(s.q)*1e6).toFixed(0)+' mL/s';

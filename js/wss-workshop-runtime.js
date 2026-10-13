@@ -33,6 +33,23 @@ function drawCoffee(c,s,text,accent,water,rule){
  c.fillStyle=text;c.font='12px "Commit Mono", monospace';c.fillText('Coffee bowl',360,79);c.fillText('Sealed lower flask',220,218);c.fillText((upper.v*1000).toFixed(2)+' L',360,177);c.fillText((lower.v*1000).toFixed(2)+' L',360,346);
  c.font='11px "Commit Mono", monospace';c.fillText(s.heater?'Heater on':'Cooling',202,385);c.fillText(s.notice,519,385);c.font='10px "Commit Mono", monospace';c.fillText('Finite-volume model. Heating lifts water; cooling draws it back through the same tube.',360,409);c.restore();
 }
+function drawGeyser(c,s,text,accent,water,rule){
+ var hot=s.nodes[0],bowl=s.nodes[1],out=Math.max(0,s.flows.tube||0),back=Math.max(0,s.flows.refill||0),hotLevel=342-105*hot.v/hot.capacity,bowlLevel=296-83*bowl.v/bowl.capacity;
+ c.save();c.lineJoin='round';c.lineCap='round';c.textAlign='center';
+ c.strokeStyle=rule;c.lineWidth=16;c.beginPath();c.moveTo(229,294);c.lineTo(345,294);c.lineTo(345,144);c.stroke();
+ c.lineWidth=11;c.beginPath();c.moveTo(532,295);c.lineTo(532,342);c.lineTo(250,342);c.stroke();
+ c.strokeStyle=accent;c.lineWidth=2;c.beginPath();c.moveTo(488,342);c.lineTo(500,334);c.lineTo(488,326);c.stroke();
+ if(out>1e-8){c.strokeStyle=water;c.lineWidth=Math.min(10,3+out*60000);c.beginPath();c.moveTo(229,294);c.lineTo(345,294);c.lineTo(345,144);if(out>.00001)c.quadraticCurveTo(411,118,499,215);c.stroke();}
+ if(back>1e-8){c.strokeStyle=water;c.lineWidth=Math.min(7,2+back*60000);c.beginPath();c.moveTo(532,295);c.lineTo(532,342);c.lineTo(250,342);c.stroke();}
+ c.strokeStyle=accent;c.lineWidth=3;c.beginPath();c.moveTo(94,341);c.lineTo(94,245);c.quadraticCurveTo(94,222,120,222);c.lineTo(238,222);c.quadraticCurveTo(264,222,264,245);c.lineTo(264,341);c.closePath();c.stroke();
+ c.save();c.beginPath();c.rect(96,224,166,118);c.clip();c.fillStyle=water;c.globalAlpha=.5;c.fillRect(96,hotLevel,166,342-hotLevel);c.restore();
+ c.strokeStyle=accent;c.lineWidth=3;c.beginPath();c.moveTo(454,220);c.lineTo(454,297);c.lineTo(649,297);c.lineTo(649,220);c.stroke();
+ c.save();c.beginPath();c.rect(456,221,191,75);c.clip();c.fillStyle=water;c.globalAlpha=.5;c.fillRect(456,bowlLevel,191,296-bowlLevel);c.restore();
+ c.strokeStyle=s.heater?accent:rule;c.lineWidth=4;c.beginPath();for(var i=0;i<6;i++){var x=121+i*21;c.moveTo(x,365+(i%2)*5);c.lineTo(x+12,365+((i+1)%2)*5);}c.stroke();
+ c.fillStyle=text;c.font='12px "Commit Mono", monospace';c.fillText('Hot chamber',179,207);c.fillText('Eruption tube',345,114);c.fillText('Cool recharge bowl',551,195);
+ c.font='11px "Commit Mono", monospace';c.fillText((hot.v*1000).toFixed(2)+' L',180,318);c.fillText((bowl.v*1000).toFixed(2)+' L',552,280);c.fillText('One-way recharge',405,358);
+ c.fillText('Full eruptions '+s.cycles+'   '+s.notice,360,385);c.font='10px "Commit Mono", monospace';c.fillText('Heater work drives each burst. A cooled bowl drains through the check valve.',360,399);c.restore();
+}
 function drawHeart(c,s,text,accent,water,rule){
  var source=s.nodes[0],heart=s.nodes[1],air=s.nodes[2],x=s.x/.028,sy=source.y+source.h*(1-source.v/source.capacity),ay=air.y+air.h*(1-air.v/air.capacity);
  c.save();c.lineCap='round';c.lineJoin='round';c.textAlign='center';
@@ -74,6 +91,7 @@ function drawModel(c,s){
  var text=color('--text','#e8e2d6'),accent=color('--accent','#d4c4a0'),water=color('--toy-water','#8fb3c7'),rule=color('--rule-strong','#5a675c');
  if(s.id==='glass-toilet'){drawToilet(c,s,text,accent,water,rule);return;}
  if(s.id==='vacuum-coffee'){drawCoffee(c,s,text,accent,water,rule);return;}
+ if(s.id==='steam-geyser'){drawGeyser(c,s,text,accent,water,rule);return;}
  if(s.id==='hero-temple-doors'){drawTemple(c,s,text,accent,water,rule);return;}
  if(s.id==='slime-heart'){drawHeart(c,s,text,accent,water,rule);return;}
  c.save();c.font='12px "Commit Mono", monospace';c.textAlign='center';
