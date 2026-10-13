@@ -1387,7 +1387,7 @@
     "id": "venturi-aspirator",
     "capability": "Valves and logic",
     "title": "Venturi and water aspirator",
-    "cue": "Water accelerates through the throat. Its lower pressure draws room air through the side inlet.",
+    "cue": "Falling water accelerates through the throat. Its lower pressure pulls air from the sealed tracer chamber until that chamber pressure falls.",
     "status": "WORKS",
     "draft": true,
     "accepted": true,
