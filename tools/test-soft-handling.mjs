@@ -99,6 +99,7 @@ try {
     }
   });
   await send('Runtime.enable'); await send('Page.enable');
+  await send('Page.bringToFront');
   await send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false });
   await send('Page.navigate', { url: `http://127.0.0.1:${port}/grand-motherload.html?nosave=1&nopause=1&tod=0.35&softcontact=1&softhandling=1` });
   for (let attempt = 0; attempt < 300; attempt++) {
@@ -108,7 +109,7 @@ try {
   assert.ok(await game("introPhase === 'done' && SAVE_DISABLED && SOFT_CONTACT && SOFT_HANDLING"), 'game boots with saves disabled');
   await evaluate("document.body.classList.add('gm-fs'); document.body.appendChild(document.querySelector('.game-wrapper')); window.dispatchEvent(new Event('resize')); window.scrollTo(0, 0)");
   await sleep(200);
-  await game(`cancelAnimationFrame(gameRafId); gameRafId = 0; devMode = false;
+  await game(`if (typeof demoActivity !== 'undefined') demoActivity.cancelFrame(gameRafId); else cancelAnimationFrame(gameRafId); gameRafId = 0; devMode = false;
     window.__handlingPlayerInitial = JSON.parse(JSON.stringify(player));
     skySlimes.length = 0; skySlimeNext = 100000; surfaceSlimesSeeded = true;`);
 
@@ -389,7 +390,7 @@ try {
     if (await evaluate("typeof __handlingTest === 'function' && !!document.getElementById('soft-contact-playtest')")) break;
     await sleep(100);
   }
-  await game('cancelAnimationFrame(gameRafId); gameRafId = 0;');
+  await game("if (typeof demoActivity !== 'undefined') demoActivity.cancelFrame(gameRafId); else cancelAnimationFrame(gameRafId); gameRafId = 0;");
   await evaluate("document.body.classList.add('gm-fs'); document.body.appendChild(document.querySelector('.game-wrapper')); window.dispatchEvent(new Event('resize')); window.scrollTo(0, 0)");
   await sleep(200);
   ui = await game(`(function() {

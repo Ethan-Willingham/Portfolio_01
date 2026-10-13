@@ -6481,6 +6481,9 @@
         km = k;
       }
     }
+    // Round stretched resident skin before subdivision. This only writes
+    // render scratch; the lattice and its velocity history stay untouched.
+    if (b.surfaceSlime && typeof surfaceSlimeRoundSkin === 'function') surfaceSlimeRoundSkin(b);
     // CHAMFER pass (v25.27, edge styles >= 1): one Chaikin corner-cut on the
     // drawn ring — each vertex becomes two points at 1/4 and 3/4 of its edges,
     // so a kink's amplitude halves and a rest-cube corner loses ~3px to a 45°

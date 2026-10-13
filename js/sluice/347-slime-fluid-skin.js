@@ -18,6 +18,30 @@
     var ih = JELLO_TIMESCALE / (jelloStepH || JELLO_H);
     var physical = typeof softWorldBody === 'function' && softWorldBody(body);
     var fadeScale = physical ? 1 / softWorldWaterScale() : 1;
+    var nodeVX = m.fluidNodeVX, nodeVY = m.fluidNodeVY;
+    if (!nodeVX || nodeVX.length !== body.ringN) {
+      nodeVX = m.fluidNodeVX = new Float64Array(body.ringN);
+      nodeVY = m.fluidNodeVY = new Float64Array(body.ringN);
+    }
+    var rounding = m.skinRoundWeights, nodes = m.skinRoundNodes;
+    var centerVX = 0, centerVY = 0, roundScale = rounding ? m.skinRoundScale : 1;
+    if (rounding) for (var p = 0; p < body.n; p++) {
+      centerVX += (body.px[p] - body.ox[p]) * ih / body.n;
+      centerVY += (body.py[p] - body.oy[p]) * ih / body.n;
+    }
+    for (var ni = 0; ni < body.ringN; ni++) {
+      var nx = 0, ny = 0;
+      for (var tap = 0; tap < (rounding ? 6 : 1); tap++) {
+        var index = body.ring[rounding ? nodes[ni * 6 + tap] : ni];
+        var blend = rounding ? rounding[ni * 6 + tap] : 1;
+        nx += (body.px[index] - body.ox[index]) * ih * blend;
+        ny += (body.py[index] - body.oy[index]) * ih * blend;
+      }
+      nx = skySlimeClamp(centerVX + (nx - centerVX) * roundScale, -600, 600);
+      ny = skySlimeClamp(centerVY + (ny - centerVY) * roundScale, -600, 600);
+      var fade = physical ? fadeScale : skySlimeClamp((Math.hypot(nx, ny) - 20) / 50, 0, 1);
+      nodeVX[ni] = nx * fade; nodeVY[ni] = ny * fade;
+    }
     var chamfer = JELLO_EDGE_STYLE >= 1 && body.ringN * 2 <= JELLO_MAX_POINTS;
     for (var k = 0; k < take; k++) {
       var s = k * n / take, i = Math.floor(s), t = s - i;
@@ -31,12 +55,9 @@
         var original = chamfer ? Math.floor(baked / 2) : baked;
         var cut = chamfer ? (baked % 2 ? 0.75 : 0.25) : 0;
         for (var side = 0; side < (chamfer ? 2 : 1); side++) {
-          var node = body.ring[(original + side) % body.ringN];
-          var ux = skySlimeClamp((body.px[node] - body.ox[node]) * ih, -600, 600);
-          var uy = skySlimeClamp((body.py[node] - body.oy[node]) * ih, -600, 600);
-          var fade = physical ? fadeScale : skySlimeClamp((Math.hypot(ux, uy) - 20) / 50, 0, 1);
-          var w = weight * (chamfer ? (side ? cut : 1 - cut) : 1) * fade;
-          vx += ux * w; vy += uy * w;
+          var slot = (original + side) % body.ringN;
+          var w = weight * (chamfer ? (side ? cut : 1 - cut) : 1);
+          vx += nodeVX[slot] * w; vy += nodeVY[slot] * w;
         }
       }
       sample[k * 4 + 2] = vx; sample[k * 4 + 3] = vy;
@@ -88,6 +109,23 @@
       pts[p * 4] = x; pts[p * 4 + 1] = y;
       pts[p * 4 + 2] = sample[p * 4 + 2]; pts[p * 4 + 3] = sample[p * 4 + 3];
       left = Math.min(left, x); right = Math.max(right, x); top = Math.min(top, y); bottom = Math.max(bottom, y);
+    }
+    // A narrow concavity can make the enclosing faces cross even without
+    // opposite normals. Use the same bounded envelope for that case too.
+    for (var ea = 0; !folded && ea < take; ea++) {
+      var eb = (ea + 1) % take, ax0 = pts[ea * 4], ay0 = pts[ea * 4 + 1];
+      var adx = pts[eb * 4] - ax0, ady = pts[eb * 4 + 1] - ay0;
+      for (var ec = ea + 2; ec < take; ec++) {
+        var ed = (ec + 1) % take;
+        if (ed === ea) continue;
+        var cx0 = pts[ec * 4], cy0 = pts[ec * 4 + 1];
+        var cdx = pts[ed * 4] - cx0, cdy = pts[ed * 4 + 1] - cy0;
+        var ac = adx * (cy0 - ay0) - ady * (cx0 - ax0);
+        var ad = adx * (pts[ed * 4 + 1] - ay0) - ady * (pts[ed * 4] - ax0);
+        var ca = cdx * (ay0 - cy0) - cdy * (ax0 - cx0);
+        var cb = cdx * (pts[eb * 4 + 1] - cy0) - cdy * (pts[eb * 4] - cx0);
+        if (ac * ad < 0 && ca * cb < 0) { folded = true; break; }
+      }
     }
     if (folded) {
       // A folded cusp has incompatible local outward faces. Use a bounded

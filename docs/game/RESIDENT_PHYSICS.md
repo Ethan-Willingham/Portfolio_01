@@ -886,3 +886,69 @@ checks remain in `tools/test-soft-rig-ramp.cjs`. The existing contact comparison
 also passes its solved-contact, mesh, terrain and support checks. At 144 Hz
 its two-pixel display-overlap limit still fails on pending physics frames,
 including unchanged centered and offset drops in the pre-carry snapshot.
+
+### v28.210 rounded skin during throws
+
+The owner's 2026-10-12 request supersedes the older corner-rounding veto for
+soft resident outlines. The game and physics demo share a reconstruction of the
+resident outline. It samples the outward-baked ring at equal distances, applies a short
+symmetric filter, then preserves the quadratic outline's area. The area
+correction's linear scale is capped at eight percent so a collapsed ring cannot inflate.
+The sample count stays fixed. Buffers are reused on each body, and the existing
+quadratic drawing path, colors, interior and eye remain in use.
+
+This changes drawing, not the soft-body solver. Material coefficients, lattice
+points, velocity histories, grips, locomotion, rig/terrain/resident contact
+solvers and resident saves are unchanged. Hard sky visitors and non-resident jello retain their original
+rendering. `?slimeskin=0` selects the previous resident outline in either host;
+use `&nosave=1` for game comparisons.
+
+The game's water and snow envelope follows the reconstructed skin with the
+same twenty-edge budget. Face velocities use its recorded material weights
+and bounded area transform. An enclosing polygon whose faces cross uses the
+existing bounded convex envelope, including for a narrow folded cusp.
+The demo retains its existing water guest contract. Its physical balloon and
+solid-skin membrane adapters set `skinRoundingLocked`, preserving their accepted
+geometry and material mapping; ordinary slime drawing receives the rounding.
+
+Verification for this release:
+
+- `node tools/test-slime-rounded-skin.cjs` checks real swing and landing poses,
+  finite degenerate contours, unchanged physical arrays, fixed path complexity,
+  area preservation, scale and rotation, both windings, protected jello, and
+  exact preservation of locked physical membranes.
+  The maximum turn measured over one-pixel steps falls from 21.1 to 13.1 degrees
+  in the captured throw, and from 155.3 to 20.8 degrees in the bunched landing.
+  These are fixture measurements, not a bound on every possible deformation.
+- Matched `test-soft-handling.mjs` runs against the pre-change bundle and release
+  bundle produced identical reports for 30 cases: center hold, edge swing,
+  side flick, stopped-hand release and wall drag at 30, 60 and 144 Hz, in both
+  handling modes. Each run also passed twelve real mouse/touch interactions.
+  The handling and demo harnesses now foreground their testing tabs, and the
+  deterministic harness cancels through the new activity controller.
+- `BEFORE=js/liquid-wgpu.js node tools/test-slime-fluid-skin.mjs` passes 18 CPU
+  cases and 115 GPU cases, totaling 7,013 checks. The contemporary shader is
+  the reference because this change does not modify it; the test's historical
+  default predates the current rig hull and fails four unrelated rig-pinch
+  comparisons. Captured throw and landing contours now join the fluid fixtures.
+- `node tools/test-water-demo.mjs` passes desktop and mobile scenes, throwing,
+  terrain containment, finite material, and the unavailable-GPU fallback.
+  `node tools/test-soft-presentation.cjs` passes 3,843 assertions.
+- `node tools/test-thirsty-slime.mjs` passes desktop and emulated-touch checks
+  for dry controls, swelling, conserved discharge, pressure-driven jets,
+  shrinking, recoil, both squeeze handles, refill, pause and scene cleanup.
+- A separate browser check confirms that drawing leaves resident save data
+  unchanged, and a full-game save roundtrip preserves identity and size.
+  Landscape mobile, the portrait input gate, and manual pause are verified.
+  The activity browser checks pass for both hosts: background and offscreen
+  scheduling stops and the existing state resumes.
+- The older `test-sky-slimes.cjs`, `test-sky-slime-physics.cjs` and
+  `test-sky-slime-jets.cjs` fixtures omit `rigContactHull` and fail before their
+  checks complete. Their loaded production fragments are unchanged here.
+  The older surface smoke test also stops at its unseeded walking-distance
+  assertion; its result is not counted as a passing regression test.
+
+Before/after render captures use identical physical poses. A local browser
+microbenchmark of an 18-point ring measured roughly 0.0015 to 0.002 ms per new skin bake,
+versus 0.00016 ms for the prior bake. This measures contour preparation only,
+not total rendering, water contact, or ordinary game frame rate.

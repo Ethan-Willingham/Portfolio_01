@@ -254,6 +254,77 @@
     return view;
   }
 
+  // Keep the previous outline available for matched, no-save comparisons.
+  var SURFACE_SLIME_ROUND_SKIN = !(typeof window !== 'undefined' &&
+    /[?&]slimeskin=0(?:&|$)/.test(window.location.search));
+
+  function surfaceSlimeSkinArea(x, y, n) {
+    var area = 0, ox = x[0], oy = y[0];
+    for (var k = 0; k < n; k++) {
+      var prev = (k + n - 1) % n, next = (k + 1) % n;
+      var bx = x[k] - ox, by = y[k] - oy;
+      var ax = (x[prev] - ox + bx) * 0.5, ay = (y[prev] - oy + by) * 0.5;
+      var cx = (x[next] - ox + bx) * 0.5, cy = (y[next] - oy + by) * 0.5;
+      area += (ax * by - ay * bx + bx * cy - by * cx) / 3 + (ax * cy - ay * cx) / 6;
+    }
+    return area;
+  }
+
+  function surfaceSlimeRoundSkin(b) {
+    var m = b.surfaceSlime, n = b.ringN;
+    if (!SURFACE_SLIME_ROUND_SKIN || m.skinRoundingLocked) { m.skinRoundWeights = null; m.skinRoundScale = 1; return; }
+    var weights = m.skinRoundWeights;
+    if (!weights || weights.length !== n * 6) {
+      weights = m.skinRoundWeights = new Float64Array(n * 6);
+      m.skinRoundNodes = new Int32Array(n * 6);
+      m.skinRoundLengths = new Float64Array(n);
+      m.skinSampleNodes = new Int32Array(n);
+      m.skinSampleBlend = new Float64Array(n);
+    }
+    var nodes = m.skinRoundNodes, lengths = m.skinRoundLengths;
+    var samples = m.skinSampleNodes, blends = m.skinSampleBlend;
+    var x = jelloROX, y = jelloROY, sx = jelloRSX, sy = jelloRSY, perimeter = 0;
+    var beforeArea = surfaceSlimeSkinArea(x, y, n);
+    for (var i = 0; i < n; i++) {
+      var next = (i + 1) % n;
+      lengths[i] = Math.hypot(x[next] - x[i], y[next] - y[i]); perimeter += lengths[i];
+    }
+    // Equal distances along the skin keep bunched mesh points from making
+    // tiny, pointed bends. The sample count stays fixed as the body moves.
+    var edge = 0, travelled = 0;
+    for (var sample = 0; sample < n; sample++) {
+      var distance = sample * perimeter / n;
+      while (edge < n - 1 && travelled + lengths[edge] < distance) travelled += lengths[edge++];
+      samples[sample] = edge;
+      blends[sample] = lengths[edge] > 1e-9 ? skySlimeClamp((distance - travelled) / lengths[edge], 0, 1) : 0;
+    }
+    // A short, symmetric filter spreads a bend over neighbouring samples.
+    // Record its material weights so the water boundary carries the same
+    // local motion. No physical point, constraint or velocity is changed.
+    for (var k = 0; k < n; k++) {
+      var px = 0, py = 0;
+      for (var tap = 0; tap < 3; tap++) {
+        var at = (k + tap + n - 1) % n, a = samples[at], c = (a + 1) % n;
+        var amount = tap === 1 ? 0.5 : 0.25, t = blends[at], slot = k * 6 + tap * 2;
+        nodes[slot] = a; nodes[slot + 1] = c;
+        weights[slot] = amount * (1 - t); weights[slot + 1] = amount * t;
+        px += x[a] * weights[slot] + x[c] * weights[slot + 1];
+        py += y[a] * weights[slot] + y[c] * weights[slot + 1];
+      }
+      sx[k] = px; sy[k] = py;
+    }
+    // Preserve the visible gel area lost by smoothing, without allowing a
+    // nearly collapsed ring to inflate. This is only a drawing transform.
+    var afterArea = surfaceSlimeSkinArea(sx, sy, n), scale = 1;
+    if (beforeArea * afterArea > 0 && Math.abs(afterArea) > 1e-6) {
+      scale = skySlimeClamp(Math.sqrt(beforeArea / afterArea), 0.92, 1.08);
+    }
+    m.skinRoundScale = scale;
+    for (var p = 0; p < n; p++) {
+      x[p] = b.cx + (sx[p] - b.cx) * scale; y[p] = b.cy + (sy[p] - b.cy) * scale;
+    }
+  }
+
   function surfaceSlimeSkinPath() {
     var path = new Path2D(), count = jelloRingBakeN;
     path.moveTo((jelloROX[count - 1] + jelloROX[0]) * 0.5, (jelloROY[count - 1] + jelloROY[0]) * 0.5);

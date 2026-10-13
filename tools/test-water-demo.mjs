@@ -174,6 +174,7 @@ try {
     else if (m.method === 'Runtime.consoleAPICalled' && m.params.type === 'error') errors.push(m.params.args.map(a => a.value || a.description));
   });
   await send('Runtime.enable'); await send('Page.enable');
+  await send('Page.bringToFront');
   await navigate(1440, 1000);
   await screenshot('desktop');
   console.log('ERRORS', JSON.stringify([...new Set(errors.map(e => e.exception?.description || JSON.stringify(e)))]));

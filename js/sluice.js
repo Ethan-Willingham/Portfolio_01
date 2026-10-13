@@ -75,7 +75,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.209';
+  var GAME_VERSION = 'v28.210';
   // Water-removal comparison for performance recording. Require a fresh
   // no-save run so the diagnostic cannot alter a stored world. Snow keeps
   // its ordinary emission, contacts, slime boundaries and rendering.
@@ -71495,6 +71495,9 @@
         km = k;
       }
     }
+    // Round stretched resident skin before subdivision. This only writes
+    // render scratch; the lattice and its velocity history stay untouched.
+    if (b.surfaceSlime && typeof surfaceSlimeRoundSkin === 'function') surfaceSlimeRoundSkin(b);
     // CHAMFER pass (v25.27, edge styles >= 1): one Chaikin corner-cut on the
     // drawn ring — each vertex becomes two points at 1/4 and 3/4 of its edges,
     // so a kink's amplitude halves and a rest-cube corner loses ~3px to a 45°
@@ -75101,6 +75104,30 @@
     var ih = JELLO_TIMESCALE / (jelloStepH || JELLO_H);
     var physical = typeof softWorldBody === 'function' && softWorldBody(body);
     var fadeScale = physical ? 1 / softWorldWaterScale() : 1;
+    var nodeVX = m.fluidNodeVX, nodeVY = m.fluidNodeVY;
+    if (!nodeVX || nodeVX.length !== body.ringN) {
+      nodeVX = m.fluidNodeVX = new Float64Array(body.ringN);
+      nodeVY = m.fluidNodeVY = new Float64Array(body.ringN);
+    }
+    var rounding = m.skinRoundWeights, nodes = m.skinRoundNodes;
+    var centerVX = 0, centerVY = 0, roundScale = rounding ? m.skinRoundScale : 1;
+    if (rounding) for (var p = 0; p < body.n; p++) {
+      centerVX += (body.px[p] - body.ox[p]) * ih / body.n;
+      centerVY += (body.py[p] - body.oy[p]) * ih / body.n;
+    }
+    for (var ni = 0; ni < body.ringN; ni++) {
+      var nx = 0, ny = 0;
+      for (var tap = 0; tap < (rounding ? 6 : 1); tap++) {
+        var index = body.ring[rounding ? nodes[ni * 6 + tap] : ni];
+        var blend = rounding ? rounding[ni * 6 + tap] : 1;
+        nx += (body.px[index] - body.ox[index]) * ih * blend;
+        ny += (body.py[index] - body.oy[index]) * ih * blend;
+      }
+      nx = skySlimeClamp(centerVX + (nx - centerVX) * roundScale, -600, 600);
+      ny = skySlimeClamp(centerVY + (ny - centerVY) * roundScale, -600, 600);
+      var fade = physical ? fadeScale : skySlimeClamp((Math.hypot(nx, ny) - 20) / 50, 0, 1);
+      nodeVX[ni] = nx * fade; nodeVY[ni] = ny * fade;
+    }
     var chamfer = JELLO_EDGE_STYLE >= 1 && body.ringN * 2 <= JELLO_MAX_POINTS;
     for (var k = 0; k < take; k++) {
       var s = k * n / take, i = Math.floor(s), t = s - i;
@@ -75114,12 +75141,9 @@
         var original = chamfer ? Math.floor(baked / 2) : baked;
         var cut = chamfer ? (baked % 2 ? 0.75 : 0.25) : 0;
         for (var side = 0; side < (chamfer ? 2 : 1); side++) {
-          var node = body.ring[(original + side) % body.ringN];
-          var ux = skySlimeClamp((body.px[node] - body.ox[node]) * ih, -600, 600);
-          var uy = skySlimeClamp((body.py[node] - body.oy[node]) * ih, -600, 600);
-          var fade = physical ? fadeScale : skySlimeClamp((Math.hypot(ux, uy) - 20) / 50, 0, 1);
-          var w = weight * (chamfer ? (side ? cut : 1 - cut) : 1) * fade;
-          vx += ux * w; vy += uy * w;
+          var slot = (original + side) % body.ringN;
+          var w = weight * (chamfer ? (side ? cut : 1 - cut) : 1);
+          vx += nodeVX[slot] * w; vy += nodeVY[slot] * w;
         }
       }
       sample[k * 4 + 2] = vx; sample[k * 4 + 3] = vy;
@@ -75171,6 +75195,23 @@
       pts[p * 4] = x; pts[p * 4 + 1] = y;
       pts[p * 4 + 2] = sample[p * 4 + 2]; pts[p * 4 + 3] = sample[p * 4 + 3];
       left = Math.min(left, x); right = Math.max(right, x); top = Math.min(top, y); bottom = Math.max(bottom, y);
+    }
+    // A narrow concavity can make the enclosing faces cross even without
+    // opposite normals. Use the same bounded envelope for that case too.
+    for (var ea = 0; !folded && ea < take; ea++) {
+      var eb = (ea + 1) % take, ax0 = pts[ea * 4], ay0 = pts[ea * 4 + 1];
+      var adx = pts[eb * 4] - ax0, ady = pts[eb * 4 + 1] - ay0;
+      for (var ec = ea + 2; ec < take; ec++) {
+        var ed = (ec + 1) % take;
+        if (ed === ea) continue;
+        var cx0 = pts[ec * 4], cy0 = pts[ec * 4 + 1];
+        var cdx = pts[ed * 4] - cx0, cdy = pts[ed * 4 + 1] - cy0;
+        var ac = adx * (cy0 - ay0) - ady * (cx0 - ax0);
+        var ad = adx * (pts[ed * 4 + 1] - ay0) - ady * (pts[ed * 4] - ax0);
+        var ca = cdx * (ay0 - cy0) - cdy * (ax0 - cx0);
+        var cb = cdx * (pts[eb * 4 + 1] - cy0) - cdy * (pts[eb * 4] - cx0);
+        if (ac * ad < 0 && ca * cb < 0) { folded = true; break; }
+      }
     }
     if (folded) {
       // A folded cusp has incompatible local outward faces. Use a bounded
@@ -75863,6 +75904,77 @@
     }
     view.cx = x / b.n; view.cy = y / b.n; view.shFrame = -1;
     return view;
+  }
+
+  // Keep the previous outline available for matched, no-save comparisons.
+  var SURFACE_SLIME_ROUND_SKIN = !(typeof window !== 'undefined' &&
+    /[?&]slimeskin=0(?:&|$)/.test(window.location.search));
+
+  function surfaceSlimeSkinArea(x, y, n) {
+    var area = 0, ox = x[0], oy = y[0];
+    for (var k = 0; k < n; k++) {
+      var prev = (k + n - 1) % n, next = (k + 1) % n;
+      var bx = x[k] - ox, by = y[k] - oy;
+      var ax = (x[prev] - ox + bx) * 0.5, ay = (y[prev] - oy + by) * 0.5;
+      var cx = (x[next] - ox + bx) * 0.5, cy = (y[next] - oy + by) * 0.5;
+      area += (ax * by - ay * bx + bx * cy - by * cx) / 3 + (ax * cy - ay * cx) / 6;
+    }
+    return area;
+  }
+
+  function surfaceSlimeRoundSkin(b) {
+    var m = b.surfaceSlime, n = b.ringN;
+    if (!SURFACE_SLIME_ROUND_SKIN || m.skinRoundingLocked) { m.skinRoundWeights = null; m.skinRoundScale = 1; return; }
+    var weights = m.skinRoundWeights;
+    if (!weights || weights.length !== n * 6) {
+      weights = m.skinRoundWeights = new Float64Array(n * 6);
+      m.skinRoundNodes = new Int32Array(n * 6);
+      m.skinRoundLengths = new Float64Array(n);
+      m.skinSampleNodes = new Int32Array(n);
+      m.skinSampleBlend = new Float64Array(n);
+    }
+    var nodes = m.skinRoundNodes, lengths = m.skinRoundLengths;
+    var samples = m.skinSampleNodes, blends = m.skinSampleBlend;
+    var x = jelloROX, y = jelloROY, sx = jelloRSX, sy = jelloRSY, perimeter = 0;
+    var beforeArea = surfaceSlimeSkinArea(x, y, n);
+    for (var i = 0; i < n; i++) {
+      var next = (i + 1) % n;
+      lengths[i] = Math.hypot(x[next] - x[i], y[next] - y[i]); perimeter += lengths[i];
+    }
+    // Equal distances along the skin keep bunched mesh points from making
+    // tiny, pointed bends. The sample count stays fixed as the body moves.
+    var edge = 0, travelled = 0;
+    for (var sample = 0; sample < n; sample++) {
+      var distance = sample * perimeter / n;
+      while (edge < n - 1 && travelled + lengths[edge] < distance) travelled += lengths[edge++];
+      samples[sample] = edge;
+      blends[sample] = lengths[edge] > 1e-9 ? skySlimeClamp((distance - travelled) / lengths[edge], 0, 1) : 0;
+    }
+    // A short, symmetric filter spreads a bend over neighbouring samples.
+    // Record its material weights so the water boundary carries the same
+    // local motion. No physical point, constraint or velocity is changed.
+    for (var k = 0; k < n; k++) {
+      var px = 0, py = 0;
+      for (var tap = 0; tap < 3; tap++) {
+        var at = (k + tap + n - 1) % n, a = samples[at], c = (a + 1) % n;
+        var amount = tap === 1 ? 0.5 : 0.25, t = blends[at], slot = k * 6 + tap * 2;
+        nodes[slot] = a; nodes[slot + 1] = c;
+        weights[slot] = amount * (1 - t); weights[slot + 1] = amount * t;
+        px += x[a] * weights[slot] + x[c] * weights[slot + 1];
+        py += y[a] * weights[slot] + y[c] * weights[slot + 1];
+      }
+      sx[k] = px; sy[k] = py;
+    }
+    // Preserve the visible gel area lost by smoothing, without allowing a
+    // nearly collapsed ring to inflate. This is only a drawing transform.
+    var afterArea = surfaceSlimeSkinArea(sx, sy, n), scale = 1;
+    if (beforeArea * afterArea > 0 && Math.abs(afterArea) > 1e-6) {
+      scale = skySlimeClamp(Math.sqrt(beforeArea / afterArea), 0.92, 1.08);
+    }
+    m.skinRoundScale = scale;
+    for (var p = 0; p < n; p++) {
+      x[p] = b.cx + (sx[p] - b.cx) * scale; y[p] = b.cy + (sy[p] - b.cy) * scale;
+    }
   }
 
   function surfaceSlimeSkinPath() {

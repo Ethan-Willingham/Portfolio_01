@@ -52,7 +52,7 @@ for(const winding of [1,-1]) {
   fixtures.cpu.push({name:'two-substep-velocity-packing-'+winding,checks,pass:Object.values(checks).every(Boolean)});
 }
 const oldTool=fs.readFileSync(path.join(root,'tools/test-water-collision-gpu.mjs'),'utf8');
-const legacyFixtureSource=oldTool.slice(oldTool.indexOf('function makeFixtures()'),oldTool.indexOf('async function runGPU()'));
+const legacyFixtureSource=oldTool.slice(oldTool.indexOf('function makeFixtures('),oldTool.indexOf('async function runGPU()'));
 const legacyFixtures=vm.runInNewContext('('+legacyFixtureSource+')()');
 for(const f of legacyFixtures)fixtures.fixtures.push({...f,exact:true,clearance:null,outlines:[]});
 let runner=oldTool.slice(oldTool.indexOf('async function runGPU()'),oldTool.indexOf('async function runBenchmark()'));

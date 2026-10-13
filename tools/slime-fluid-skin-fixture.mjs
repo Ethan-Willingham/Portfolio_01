@@ -47,12 +47,13 @@ export function makeSkinFixtures(root) {
   vm.runInContext(between(texts[0], '  function jelloRingBake(b)', '  function jelloRingPath(b, target)') +
     between(texts[1], '  function surfaceSlimeRenderBody(b)', '  function surfaceSlimeDraw(b)') + draw + texts[2], context);
   function body(options = {}) {
-    const n = 37, px = new Float64Array(n), py = new Float64Array(n), ox = new Float64Array(n), oy = new Float64Array(n);
+    const n = options.points ? options.points.length : 37, px = new Float64Array(n), py = new Float64Array(n), ox = new Float64Array(n), oy = new Float64Array(n);
     const sign = options.reverse ? -1 : 1, cx = options.cx ?? 100, cy = options.cy ?? 100;
     const previousX = new Float64Array(n), previousY = new Float64Array(n), rippleU = new Float64Array(n);
     for (let i = 0; i < n; i++) {
       const a = sign * i * Math.PI * 2 / n, r = options.foldedCusp && i===0 ? -75 : (options.radius ?? 25) * (1 + (options.deform ?? 0) * Math.cos(3*a));
       px[i] = cx + Math.cos(a) * r * (options.squash ?? 1); py[i] = cy + Math.sin(a) * r;
+      if(options.points) { px[i]=cx+options.points[i][0]; py[i]=cy+options.points[i][1]; }
       if (options.notch) px[i] -= 17 * Math.exp(-((a / .38) ** 2));
       const vx = options.varyVelocity ? 36 + 15 * Math.sin(a) : 36, vy = options.varyVelocity ? -12 + 9 * Math.cos(a) : -12;
       ox[i] = px[i] - vx * context.JELLO_H / context.JELLO_TIMESCALE; oy[i] = py[i] - vy * context.JELLO_H / context.JELLO_TIMESCALE;
@@ -77,7 +78,19 @@ export function makeSkinFixtures(root) {
     // ripple disabled. This independently records the same render interpolation
     // stencil, without calling the fluid helper's velocity interpolation.
     const velocityBody={...b,px:Float64Array.from(b.px,(v,i)=>(v-b.ox[i])*context.JELLO_TIMESCALE/context.jelloStepH),
-      py:Float64Array.from(b.py,(v,i)=>(v-b.oy[i])*context.JELLO_TIMESCALE/context.jelloStepH),rippleOn:false};
+      py:Float64Array.from(b.py,(v,i)=>(v-b.oy[i])*context.JELLO_TIMESCALE/context.jelloStepH),rippleOn:false,surfaceSlime:null};
+    // Rounding weights belong to the measured pose, not to a new contour
+    // made from velocity vectors. Transport those vectors with that stencil.
+    const weights=b.surfaceSlime.skinRoundWeights,nodes=b.surfaceSlime.skinRoundNodes;
+    if(weights)for(const axis of ['px','py']) {
+      const source=velocityBody[axis].slice();
+      const center=source.reduce((sum,v)=>sum+v,0)/b.n;
+      for(let k=0;k<b.ringN;k++) {
+        let value=0;
+        for(let j=0;j<6;j++)value+=source[b.ring[nodes[k*6+j]]]*weights[k*6+j];
+        velocityBody[axis][b.ring[k]]=center+(value-center)*b.surfaceSlime.skinRoundScale;
+      }
+    }
     const oldOutset=context.JELLO_RENDER_OUTSET;context.JELLO_RENDER_OUTSET=0;
     context.jelloRingBake(velocityBody);const velocityPath=context.surfaceSlimeSkinPath();context.JELLO_RENDER_OUTSET=oldOutset;
     const expectedVelocity=Array.from({length:20},(_,k)=>{
@@ -91,7 +104,10 @@ export function makeSkinFixtures(root) {
     ['deep-concave',{deform:.6}], ['ripple',{ripple:true,deform:.15}],
     ['interpolated',{interp:true,deform:.3}], ['clockwise',{reverse:true,deform:.3}],['clockwise-convex',{reverse:true}],
     ['unchamfered',{noChamfer:true,deform:.3}], ['varying-velocity',{varyVelocity:true,deform:.15}],
-    ['folded-cusp',{foldedCusp:true}]
+    ['folded-cusp',{foldedCusp:true}],
+    ...JSON.parse(fs.readFileSync(path.join(root,'tools/fixtures/slime-skin-poses.json'),'utf8')).poses
+      .filter(p=>p.name==='flung-tip'||p.name==='bunched-landing')
+      .map(p=>[p.name,{points:p.points,varyVelocity:true}])
   ].map(([name,options])=>({name,...geometry(options)}));
   const cpu = [];
   for (const shape of shapes) {
@@ -110,7 +126,7 @@ export function makeSkinFixtures(root) {
     }
     const checks = { twentyVertices:g.pts.length===80, finite:g.pts.every(Number.isFinite), curveEnclosed:outside.length===0,
       noFoldedEdges:!folded,noMiterSpike:options.foldedCusp || maxVertexOutset<5,
-      foldedCuspActuallyExercised:!options.foldedCusp||minimumAdjacentNormalDot<-.95,
+      foldedCuspActuallyExercised:!options.foldedCusp||(minimumAdjacentNormalDot<-.9&&g.convex===b.ringSign),
       signedConvexAdmission:shape.name==='convex'?g.convex===1:shape.name==='clockwise-convex'?g.convex===-1:true,
       boundedRenderedAABB:points.every(p=>p[0]>=Math.min(...rendered.map(q=>q[0]))-5 && p[0]<=Math.max(...rendered.map(q=>q[0]))+5 && p[1]>=Math.min(...rendered.map(q=>q[1]))-5 && p[1]<=Math.max(...rendered.map(q=>q[1]))+5),
       exactBounds:points.every(p=>Math.abs(p[0]-g.x)<=g.hw+1e-9 && Math.abs(p[1]-g.y)<=g.hh+1e-9),
@@ -158,7 +174,7 @@ export function makeSkinFixtures(root) {
       terrain:'empty',region:[0,-128,256,256],modes:['standalone','shared-encoder'],snowOnly:snow,...options});
   }
   for (const snow of [false,true]) {
-    for (const shape of shapes.filter(s=>['convex','concave','ripple','interpolated','clockwise','clockwise-convex','folded-cusp'].includes(s.name))) {
+    for (const shape of shapes.filter(s=>['convex','concave','ripple','interpolated','clockwise','clockwise-convex','folded-cusp','flung-tip','bunched-landing'].includes(s.name))) {
       const probes=[];
       for(let e=0;e<20;e++) {
         const a=shape.points[e],b=shape.points[(e+1)%20],len=Math.hypot(b[0]-a[0],b[1]-a[1]),nx=shape.body.ringSign*(b[1]-a[1])/len,ny=-shape.body.ringSign*(b[0]-a[0])/len;
@@ -185,5 +201,5 @@ export function makeSkinFixtures(root) {
     const bodies=centers.map(([cx,cy],i)=>geometry({cx,cy,deform:name==='separate'?0:.15+i*.035}));
     return {name,guests:bodies.map(s=>s.guest),legacyGuests:bodies.map(s=>s.legacy)};
   });
-  return { cpu,fixtures,benchFamilies,hashes,constants:{JELLO_H:context.JELLO_H,JELLO_TIMESCALE:context.JELLO_TIMESCALE},limitation:'Finite simple 37-node body contours, including substantial concavity and both windings; not arbitrary folded or self-intersecting soft bodies.' };
+  return { cpu,fixtures,benchFamilies,hashes,constants:{JELLO_H:context.JELLO_H,JELLO_TIMESCALE:context.JELLO_TIMESCALE},limitation:'Analytic contours and captured production swing/landing poses, including substantial concavity and both windings; not exhaustive over arbitrary folded or self-intersecting soft bodies.' };
 }
