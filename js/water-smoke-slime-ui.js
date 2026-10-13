@@ -575,7 +575,7 @@
       var slip=!!(liveMachine && liveMachine.definition.materialSlip),sluice=!!(liveMachine && liveMachine.definition.sluice);
       var steam=!!(liveMachine && liveMachine.definition.steam);
       var birds=!!(liveMachine && liveMachine.definition.birds);
-      var wind=state.scene==='smoke-wind-tunnel',cannon=state.scene==='smoke-ring-cannon'||wind,thermal=state.scene==='thermoscope',balloon=state.scene==='water-balloons',divers=state.scene==='cartesian-divers',bubbles=state.scene==='air-hose';
+      var wind=state.scene==='smoke-wind-tunnel',cannon=state.scene==='smoke-ring-cannon'||wind,thermal=state.scene==='thermoscope',balloon=state.scene==='water-balloons'||state.scene==='water-balloon-fight',divers=state.scene==='cartesian-divers',bubbles=state.scene==='air-hose';
       var thirsty=!!(liveMachine && liveMachine.definition.thirsty);
       var waterRocket=!!(liveMachine && liveMachine.definition.waterRocketModel);
       var railway=!!(liveMachine && liveMachine.definition.ballastRailway);
@@ -738,7 +738,7 @@
       if(submarineControls)submarineControls.sync();
       syncCamera();
       var state = toy.stats();
-      var native=nativeScene(state.scene),wind=state.scene==='smoke-wind-tunnel',cannon=state.scene==='smoke-ring-cannon'||wind,thermal=state.scene==='thermoscope',balloon=state.scene==='water-balloons',divers=state.scene==='cartesian-divers',bubbles=state.scene==='air-hose';shell.classList.toggle('is-native-machine',native);
+      var native=nativeScene(state.scene),wind=state.scene==='smoke-wind-tunnel',cannon=state.scene==='smoke-ring-cannon'||wind,thermal=state.scene==='thermoscope',balloon=state.scene==='water-balloons'||state.scene==='water-balloon-fight',divers=state.scene==='cartesian-divers',bubbles=state.scene==='air-hose';shell.classList.toggle('is-native-machine',native);
       shell.dataset.scene=state.scene;
       shell.classList.toggle('has-fire',!!toy.fire());
       var building = /^(build|draw|erase)$/.test(state.tool);
