@@ -4,7 +4,7 @@
 var descriptions={
  'vacuum-coffee':['Vacuum coffee maker','Heat expands the sealed flask gas and raises water into the coffee bowl. Turn the heater off: condensation and cooling pull the same water back.'],
  'steam-geyser':['Steam geyser','Heat the finite chamber. Pressure expels hot water, and the check-valved cold recharge changes the next eruption.'],
- 'hero-temple-doors':["Hero\'s temple doors",'Heat pushes water into a counterweight. Its measured weight turns the doors against a return spring. Cooling draws water back and closes them.'],
+ 'hero-temple-doors':["Hero\'s temple doors",'A warm flask pushes water into a hanging bucket, whose weight opens the doors. Turn the heater off and watch the bucket drain and the doors close.'],
  'water-half-adder':['Water half adder','Open either input for SUM. Open both: the rising float closes SUM and opens CARRY. The gate responds to water level, not a programmed truth table.'],
  'slime-heart':['Slime heart','Hold the squeeze control. An elastic chamber and two one-way valves pump water into a sealed air accumulator. Release to refill the heart.'],
  'singing-birds-owl':['Singing birds and owl','Water fills an air chest and drives three whistles. A float closes the inlet and opens the drain, the weighted owl turns, and the chest refills while the return pump runs.'],

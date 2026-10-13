@@ -52,10 +52,29 @@ function drawHeart(c,s,text,accent,water,rule){
  c.fillText('Inlet check',253,291);c.fillText('Outlet check',468,291);c.fillText(s.notice,360,393);
  c.font='10px "Commit Mono", monospace';c.fillText('Hold to contract. Release to refill through the inlet.',360,411);c.restore();
 }
+function drawTemple(c,s,text,accent,water,rule){
+ var flask=s.nodes[0],bucket=s.nodes[1],open=s.angle/1.45,drop=18+open*54,level=flask.v/flask.capacity;
+ c.save();c.lineJoin='round';c.lineCap='round';c.textAlign='center';
+ c.strokeStyle=rule;c.lineWidth=12;c.beginPath();c.moveTo(211,274);c.lineTo(211,129);c.lineTo(592,129);c.lineTo(592,185+drop);c.stroke();
+ if(Math.abs(s.flows.tube||0)>1e-8){c.strokeStyle=water;c.lineWidth=4;c.beginPath();c.moveTo(211,266);c.lineTo(211,129);c.lineTo(592,129);c.lineTo(592,185+drop);c.stroke();}
+ c.strokeStyle=accent;c.lineWidth=3;c.beginPath();c.moveTo(100,330);c.lineTo(100,229);c.quadraticCurveTo(100,210,120,210);c.lineTo(241,210);c.quadraticCurveTo(260,210,260,229);c.lineTo(260,330);c.quadraticCurveTo(180,359,100,330);c.closePath();c.stroke();
+ c.save();c.beginPath();c.moveTo(102,330);c.lineTo(102,229);c.quadraticCurveTo(102,212,120,212);c.lineTo(241,212);c.quadraticCurveTo(258,212,258,229);c.lineTo(258,330);c.quadraticCurveTo(180,357,102,330);c.clip();c.fillStyle=water;c.globalAlpha=.5;c.fillRect(102,351-137*level,156,137*level);c.restore();
+ c.strokeStyle=s.heater?accent:rule;c.lineWidth=4;c.beginPath();for(var i=0;i<6;i++){var hx=125+i*21;c.moveTo(hx,365+(i%2)*5);c.lineTo(hx+12,365+((i+1)%2)*5);}c.stroke();
+ c.strokeStyle=rule;c.lineWidth=7;c.beginPath();c.moveTo(305,315);c.lineTo(305,189);c.quadraticCurveTo(360,121,415,189);c.lineTo(415,315);c.stroke();
+ c.strokeStyle=accent;c.lineWidth=2;c.beginPath();c.moveTo(316,313);c.lineTo(316,194);c.quadraticCurveTo(360,138,404,194);c.lineTo(404,313);c.stroke();
+ [-1,1].forEach(function(side){c.save();c.translate(360+side*3,310);c.rotate(-side*s.angle);c.fillStyle=rule;c.globalAlpha=.75;c.fillRect(side<0?-43:0,-105,43,105);c.globalAlpha=1;c.strokeStyle=accent;c.lineWidth=2;c.strokeRect(side<0?-43:0,-105,43,105);c.restore();});
+ c.strokeStyle=accent;c.lineWidth=2;c.beginPath();c.arc(544,125,12,0,Math.PI*2);c.moveTo(544,113);c.lineTo(544,91);c.moveTo(544,137);c.lineTo(544,182+drop);c.stroke();
+ c.strokeStyle=accent;c.lineWidth=3;c.strokeRect(555,185+drop,90,90);c.save();c.beginPath();c.rect(557,187+drop,86,86);c.clip();c.fillStyle=water;c.globalAlpha=.55;c.fillRect(557,275+drop-86*bucket.v/bucket.capacity,86,86*bucket.v/bucket.capacity);c.restore();
+ c.strokeStyle=rule;c.lineWidth=2;c.beginPath();c.moveTo(555,199+drop);c.lineTo(544,182+drop);c.moveTo(645,199+drop);c.lineTo(657,182+drop);c.stroke();
+ c.fillStyle=text;c.font='12px "Commit Mono", monospace';c.fillText('Heated flask',154,192);c.fillText('Temple doors',360,110);c.fillText('Water counterweight',600,162+drop);c.font='11px "Commit Mono", monospace';
+ c.fillText((flask.v*1000).toFixed(3)+' L',180,310);c.fillText((bucket.v*1000).toFixed(3)+' L',600,260+drop);c.fillText(Math.round(s.angle*180/Math.PI)+' degrees',360,344);
+ c.fillText(s.notice,360,385);c.font='10px "Commit Mono", monospace';c.fillText('Heated gas displaces water into a bucket; its weight opens the doors. Cooling closes them.',360,409);c.restore();
+}
 function drawModel(c,s){
  var text=color('--text','#e8e2d6'),accent=color('--accent','#d4c4a0'),water=color('--toy-water','#8fb3c7'),rule=color('--rule-strong','#5a675c');
  if(s.id==='glass-toilet'){drawToilet(c,s,text,accent,water,rule);return;}
  if(s.id==='vacuum-coffee'){drawCoffee(c,s,text,accent,water,rule);return;}
+ if(s.id==='hero-temple-doors'){drawTemple(c,s,text,accent,water,rule);return;}
  if(s.id==='slime-heart'){drawHeart(c,s,text,accent,water,rule);return;}
  c.save();c.font='12px "Commit Mono", monospace';c.textAlign='center';
  s.links.forEach(function(l){var a=l.a,b=l.b,ax=a.x+a.w,ay=a.y+a.h*.7,bx=b.x,by=b.y+b.h*.7;c.strokeStyle=rule;c.lineWidth=8;c.beginPath();c.moveTo(ax,ay);c.lineTo((ax+bx)/2,ay);c.lineTo((ax+bx)/2,by);c.lineTo(bx,by);c.stroke();if(Math.abs(l.q)>1e-9){c.strokeStyle=water;c.lineWidth=Math.min(5,1+Math.abs(l.q)*16000);c.stroke();var x=(ax+bx)/2,dir=l.q>0?1:-1;c.fillStyle=water;c.beginPath();c.moveTo(x,by-5);c.lineTo(x+dir*8,by);c.lineTo(x,by+5);c.fill();}});

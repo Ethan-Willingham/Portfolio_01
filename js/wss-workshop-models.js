@@ -17,7 +17,7 @@ function finalize(s,step){if(!s.links.length){var routes=s.id==='water-half-adde
 function thermal(id,o){
  var s=base(id),geyser=id==='steam-geyser',doors=id==='hero-temple-doors';
  var lower=node('flask',geyser?'Hot chamber':'Lower flask',152,190,152,158,.52,.86,0,.0014),upper=node('upper',doors?'Door counterweight':geyser?'Cool recharge bowl':'Coffee bowl',432,86,152,152,geyser?.28:0,.9,.2,.0045);
- s.nodes=[lower,upper];s.T=geyser?365:343.15;s.vaporMass=sat(s.T)*(lower.capacity-lower.v)/(RV*s.T);lower.v-=s.vaporMass/RHO;
+ s.nodes=[lower,upper];s.T=geyser?365:doors?clamp(Number.isFinite(o.initialK)?o.initialK:360,356,364):343.15;s.vaporMass=sat(s.T)*(lower.capacity-lower.v)/(RV*s.T);lower.v-=s.vaporMass/RHO;
  var gasV=lower.capacity-lower.v;s.airMass=(ATM-sat(s.T))*gasV/(RG*s.T);s.upperT=293.15;s.heater=o.heated!==false;s.power=geyser?1900:1250;s.cooling=geyser?1.7:3.8;s.q=0;s.cycles=0;s.angle=0;s.angularVelocity=0;s.maxAngle=0;s.peakUpper=upper.v;s.peakPressure=ATM;s.lastOut=false;s.flows={};
  control(s,'heater',function(){return s.heater?'Turn heater off':'Turn heater on';},function(held){if(held)s.heater=!s.heater;});
  if(geyser)control(s,'cooling','Add cold recharge',function(held){if(held){var energy=Math.min(30000,Math.max(0,(s.T-293.15)*(RHO*lower.v*CP+160)));s.T-=energy/(RHO*lower.v*CP+160);s.heatOutJ+=energy;}});
@@ -46,7 +46,7 @@ function thermal(id,o){
    var fed=transfer(upper,lower,feed*dt),mix=RHO*fed*CP;s.T=(s.T*capacity+s.upperT*mix)/(capacity+mix);s.flows.refill=fed/dt;
    var erupt=s.q>.00003;if(erupt&&!s.lastOut)s.cycles++;s.lastOut=erupt;
   }
-  if(doors){var bucketMass=upper.v*RHO,torque=bucketMass*G*.16-.12-s.angle*.032,acc=(torque-.15*s.angularVelocity)/.045;s.angularVelocity+=acc*dt;s.angle=clamp(s.angle+s.angularVelocity*dt,0,1.45);if(s.angle===0&&s.angularVelocity<0||s.angle===1.45&&s.angularVelocity>0)s.angularVelocity=0;s.maxAngle=Math.max(s.maxAngle,s.angle);}
+  if(doors){var bucketMass=upper.v*RHO,torque=bucketMass*G*.22-.006-s.angle*.032,acc=(torque-.06*s.angularVelocity)/.008;s.angularVelocity+=acc*dt;s.angle=clamp(s.angle+s.angularVelocity*dt,0,1.45);if(s.angle===0&&s.angularVelocity<0||s.angle===1.45&&s.angularVelocity>0)s.angularVelocity=0;s.maxAngle=Math.max(s.maxAngle,s.angle);}
   s.peakUpper=Math.max(s.peakUpper,upper.v);s.flows.tube=s.q;link(s,lower,upper,s.q,'Pressure tube');s.notice=(s.T-273.15).toFixed(1)+' C   '+((s.pressure-ATM)/1000).toFixed(1)+' kPa   '+(Math.abs(s.q)*1e6).toFixed(0)+' mL/s';
  });
 }
