@@ -2891,7 +2891,7 @@
     "title": "Water chain reaction",
     "capability": "World",
     "status": "WORKS",
-    "cue": "Start one pour. Successive water levels trip two gates and fill the final goal.",
+    "cue": "Watch the first pour lift a float. Each rising tank opens the next gate and passes water toward the final goal. Close the starter gate to stop the chain.",
     "world": {
       "w": 720,
       "h": 400
