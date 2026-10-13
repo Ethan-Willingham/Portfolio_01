@@ -2372,7 +2372,7 @@
     "id": "cold-geyser",
     "capability": "Bubbles",
     "title": "Cold geyser",
-    "cue": "Release the carbonated well. Exsolving gas supplies pressure to lift water up its throat. The finite gas charge eventually runs down.",
+    "cue": "The carbonated well vents on its own. Released gas drives a plume through the narrow throat until the finite charge runs down.",
     "status": "WORKS",
     "draft": true,
     "world": {
