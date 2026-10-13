@@ -2697,7 +2697,7 @@
     "title": "Hero's drinking animal",
     "capability": "Valves and logic",
     "status": "WORKS",
-    "cue": "Apply mouth suction to lift bowl water into the animal reservoir, then release it.",
+    "cue": "Watch the animal drink through its straw. Stop suction to hold the bowl level, then start it again.",
     "world": {
       "w": 720,
       "h": 400

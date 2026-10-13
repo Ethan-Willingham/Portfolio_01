@@ -54,7 +54,10 @@ function model(id,o){
     T('supply','Supply',95,75,200,280,Number.isFinite(o.sourceFill)?Math.max(.8,Math.min(.9,o.sourceFill)):.85);T('drink','Measured drink',440,230,175,125,0);E('coin-valve','supply','drink',12,{open:false});primary='Drop a coin';K('reset','Return coin',520,145);
     u.coin=o.coin===false?0:.001;u.coinVelocity=0;u.leverAngle=0;u.leverVelocity=0;
   }else if(id==='hero-drinking-animal'){
-    T('bowl','Drinking bowl',85,220,220,135,.75);T('stomach','Animal reservoir',425,155,205,200,.06);E('straw','bowl','stomach',8,{pump:130,check:true});primary='Suck through straw';K('release','Release mouth',492,117);
+    T('bowl','Drinking bowl',85,220,220,135,Number.isFinite(o.bowlFill)?Math.max(.70,Math.min(.80,o.bowlFill)):.75);
+    T('stomach','Animal reservoir',425,155,205,200,.06);
+    E('straw','bowl','stomach',8,{pump:130,check:true,open:o.suction!==false});
+    u.pressed=o.suction!==false;primary=u.pressed?'Stop suction':'Start suction';
   }else if(id==='jazari-peacock'){
     T('supply','Finite supply',75,70,210,285,.86);T('bowl','Wash bowl',425,245,210,110,0);E('serve','supply','bowl',12,{open:false});E('empty','bowl','supply',6,{open:false,pump:260});primary='Serve water';
   }else if(id==='moniac'){
@@ -96,7 +99,8 @@ function make(id,w,o){
   if(id==='bramah-press')energyNote='A declared hand stroke applies about 30 kPa to the smaller piston. The larger piston has 2.1 times its area, so it moves about half as far under the same transmitted pressure. The removable heavy load needs more pressure than that stroke supplies. Port loss and piston inertia are reduced.';
   if(id==='water-chain-reaction')energyNote='The finite raised starter supplies all gravity head. No pump or hidden refill runs. Port loss dissipates energy, while local turbulence and detailed gate inertia are outside this reduced model.';
   if(id==='banu-musa-fountain'){energyNote='The finite raised supply provides the gravity head. Rising floats switch a two-way valve when they reach the marked level; a lower reset level prevents chatter. Pipe losses dissipate energy. The float-to-valve linkage is schematic.';caption='As one jet cup fills to its marked float line, the valve directs the next pour to the other jet. The raised supply is finite. Use the button to switch it by hand.';}
-  return{name:id,title:labels[id],draft:true,setup:'network',viewBounds:view,vessels:vessels,pipes:pipes,solids:[],vents:[],parts:[],slimes:[],initial:[],marks:[],meters:[],settings:{enabled:false},primary:{kind:'network',target:{x:364,y:46}},action:net.primary,caption:caption,readingLabel:'Finite water network',measure:{source:net.nodes[0].rect,receiver:net.nodes[net.nodes.length-1].rect},network:net,reducedModel:true,boundaryNote:id==='banu-musa-fountain'?'Finite tank levels and port head drive the two jets. The outlet manifold starts primed with its intake below the supply surface. A float crossing the marked level operates an ideal two-way valve with hysteresis. Water in the manifold and local splashes are not separately resolved.':id==='garden-automation'?'Reduced finite-volume water follows pressure and gravity through three independent valves. Each valve opens when its measured planter falls below the selected threshold. A declared constant soil-uptake sink removes water and is recorded in the mass ledger. The drawing is a schematic; plant growth, soil pores and local turbulence are not simulated.':id==='hero-vending'?'A falling coin loads a spring-mounted lever with finite inertia. Lever angle opens or closes the valve; the finite raised water supply drains only through that gate. Returning the coin removes its weight and lets the spring close the gate. The pipes and mechanical linkage are a reduced two-dimensional section.':'This scene uses a reduced two-dimensional finite-volume hydraulic model. Tank inventories are conserved, pressure and level differences drive each flow, and any pump or hand action is declared. Pipe shape is a schematic of the network; local turbulence, bubbles and particle contacts are outside this model.',energyBudgetStatus:energyNote};
+  if(id==='hero-drinking-animal'){vessels=vessels.filter(function(v){return v.id==='bowl';});energyNote='The animal applies a declared 32.5 kPa mouth suction while drinking. A one-way straw carries conserved water from the finite bowl into its body reservoir. Muscle work is external; detailed breathing and swallowing are not modeled.';caption='The animal drinks through its straw as soon as the scene opens. Stop suction to leave the water in the bowl, then start again to watch the body reservoir fill.';}
+  return{name:id,title:labels[id],draft:true,setup:'network',viewBounds:view,vessels:vessels,pipes:pipes,solids:[],vents:[],parts:[],slimes:[],initial:[],marks:[],meters:[],settings:{enabled:false},primary:{kind:'network',target:{x:364,y:46}},action:net.primary,caption:caption,readingLabel:'Finite water network',measure:{source:net.nodes[0].rect,receiver:net.nodes[net.nodes.length-1].rect},network:net,reducedModel:true,boundaryNote:id==='hero-drinking-animal'?'The shaped animal is a section view of a finite body reservoir, not a soft-body slime. A declared 32.5 kPa mouth suction moves conserved water through a one-way straw. The water level represents stored volume; local swallowing, splashes and tissue motion are not resolved.':id==='banu-musa-fountain'?'Finite tank levels and port head drive the two jets. The outlet manifold starts primed with its intake below the supply surface. A float crossing the marked level operates an ideal two-way valve with hysteresis. Water in the manifold and local splashes are not separately resolved.':id==='garden-automation'?'Reduced finite-volume water follows pressure and gravity through three independent valves. Each valve opens when its measured planter falls below the selected threshold. A declared constant soil-uptake sink removes water and is recorded in the mass ledger. The drawing is a schematic; plant growth, soil pores and local turbulence are not simulated.':id==='hero-vending'?'A falling coin loads a spring-mounted lever with finite inertia. Lever angle opens or closes the valve; the finite raised water supply drains only through that gate. Returning the coin removes its weight and lets the spring close the gate. The pipes and mechanical linkage are a reduced two-dimensional section.':'This scene uses a reduced two-dimensional finite-volume hydraulic model. Tank inventories are conserved, pressure and level differences drive each flow, and any pump or hand action is declared. Pipe shape is a schematic of the network; local turbulence, bubbles and particle contacts are outside this model.',energyBudgetStatus:energyNote};
 }
 function create(c){
   var d=c.definition,net=d.network;
@@ -121,7 +125,7 @@ function create(c){
     else if(id==='vacuum-siphon')d.action=s.prime?'Break prime':'Prime siphon';
     else if(id==='hero-vending')d.action=s.coin>0?'Drop another coin':'Drop a coin';
     else if(id==='bramah-press')controls[0].label=s.mode?'Remove heavy load':'Add heavy load';
-    else if(id==='hero-drinking-animal')d.action=s.pressed?'Release mouth':'Suck through straw';
+    else if(id==='hero-drinking-animal')d.action=s.pressed?'Stop suction':'Start suction';
     else if(id==='jazari-peacock')d.action=s.running?'Stop washer':'Start washer';
     else if(id==='moniac')d.action=byEdge.spend.bore>7?'Lower spending':'Raise spending';
     else if(id==='marly-machine')d.action=s.running?'Stop river wheel':'Engage river wheel';
@@ -139,7 +143,7 @@ function create(c){
     else if(id==='vacuum-siphon')d.readingLabel=(s.prime?'Primed':'Unprimed')+', '+(s.mode?'vacuum':'room air');
     else if(id==='bramah-press')d.readingLabel='Large piston lift '+Math.round((fraction(by.large)-.56)*by.large.rect.height)+' px';
     else if(id==='hero-vending')d.readingLabel=s.coin>0?(s.coin>=1?'Coin holds valve':'Coin falling'):'Insert a coin';
-    else if(id==='hero-drinking-animal')d.readingLabel=(s.pressed?'Sucking':'Mouth released')+', '+Math.round(fraction(by.stomach)*100)+'% stored';
+    else if(id==='hero-drinking-animal')d.readingLabel=(s.pressed?'Mouth suction -32.5 kPa':'Mouth released')+', '+Math.round(fraction(by.stomach)*100)+'% stored';
     else if(id==='jazari-peacock')d.readingLabel=s.mode?'Bowl draining':'Serving until bowl fills';
     else if(id==='moniac')d.readingLabel='Treasury '+Math.round(fraction(by.t0)*100)+'%, household '+Math.round(fraction(by.t2)*100)+'%';
     else if(id==='lukyanov-integrator')d.readingLabel='Layer temperatures represented by water levels';
@@ -276,6 +280,11 @@ function create(c){
       ctx.strokeStyle=ink;ctx.globalAlpha=.48;ctx.lineWidth=9;ctx.beginPath();ctx.moveTo(244,300);ctx.lineTo(252,300);ctx.lineTo(252,145);ctx.lineTo(450,145);ctx.lineTo(450,165);ctx.moveTo(450,165);ctx.lineTo(336,165);ctx.lineTo(336,180);ctx.moveTo(450,165);ctx.lineTo(554,165);ctx.lineTo(554,180);ctx.moveTo(402,336);ctx.lineTo(488,336);ctx.stroke();
       ctx.strokeStyle=water;ctx.globalAlpha=.9;ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(244,300);ctx.lineTo(252,300);ctx.lineTo(252,145);ctx.lineTo(450,145);ctx.lineTo(450,165);ctx.lineTo(s.mode?554:336,165);ctx.lineTo(s.mode?554:336,180);ctx.stroke();
       ctx.strokeStyle=gold;ctx.globalAlpha=1;ctx.lineWidth=2;ctx.beginPath();ctx.arc(450,165,10,0,Math.PI*2);ctx.moveTo(450,165);ctx.lineTo(s.mode?460:440,158);ctx.stroke();
+    }else if(d.name==='hero-drinking-animal'){
+      var straw=byEdge.straw,flowing=straw.open&&straw.flow>5;
+      ctx.strokeStyle=ink;ctx.globalAlpha=.55;ctx.lineWidth=12;ctx.beginPath();ctx.moveTo(252,300);ctx.lineTo(340,300);ctx.quadraticCurveTo(359,300,359,278);ctx.lineTo(359,246);ctx.quadraticCurveTo(359,231,378,231);ctx.lineTo(414,231);ctx.stroke();
+      ctx.strokeStyle=water;ctx.globalAlpha=flowing?.92:.3;ctx.lineWidth=6;ctx.stroke();ctx.globalAlpha=1;
+      ctx.strokeStyle=ink;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(376,225);ctx.lineTo(376,237);ctx.moveTo(383,225);ctx.lineTo(383,237);ctx.stroke();
     }else e.forEach(function(link){var a=by[link.a].rect,b=by[link.b].rect,ax=a.x+a.width*.5,ay=a.y+a.height*.5,bx=b.x+b.width*.5,byy=b.y+b.height*.5;
       ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(bx,byy);ctx.lineWidth=Math.max(3,Math.min(8,link.bore*.7));ctx.strokeStyle=link.open?water:ink;ctx.globalAlpha=link.open?.62:.25;ctx.setLineDash(link.open?[]:[5,5]);ctx.stroke();ctx.setLineDash([]);
       if(Math.abs(link.flow)>5){var dx=bx-ax,dy=byy-ay,len=Math.hypot(dx,dy)||1,sign=Math.sign(link.flow),mx=(ax+bx)*.5,my=(ay+byy)*.5;ctx.beginPath();ctx.moveTo(mx+sign*dx/len*10,my+sign*dy/len*10);ctx.lineTo(mx-sign*dx/len*5-dy/len*5,my-sign*dy/len*5+dx/len*5);ctx.lineTo(mx-sign*dx/len*5+dy/len*5,my-sign*dy/len*5-dx/len*5);ctx.closePath();ctx.fillStyle=water;ctx.globalAlpha=.95;ctx.fill();}
@@ -291,6 +300,16 @@ function create(c){
       ctx.fillStyle=ink;ctx.textAlign='center';ctx.font='12px "Commit Mono", monospace';ctx.fillText('Finite water',153,145);ctx.fillText('Blown bottle',385,91);ctx.fillText('Tapped glass',580,201);
       ctx.font='11px "Commit Mono", monospace';ctx.fillText(Math.round(bottleFrequency())+' Hz',385,332);ctx.fillText(Math.round(glassFrequency())+' Hz',580,348);
       for(var ring=0;ring<3;ring++){if(t-(s.lastTap||-1)>0&&t-s.lastTap<.4){ctx.beginPath();ctx.arc(385,130,12+ring*10,Math.PI,2*Math.PI);ctx.stroke();}if(t-(s.lastGlassTap||-1)>0&&t-s.lastGlassTap<.4){ctx.beginPath();ctx.arc(580,205,12+ring*10,Math.PI,2*Math.PI);ctx.stroke();}}
+    }else if(d.name==='hero-drinking-animal'){
+      var animal=by.stomach,bowl=by.bowl,bodyLevel=355-(animal.volume/animal.capacity)*188,bowlHeight=Math.min(bowl.rect.height-8,bowl.volume/bowl.rect.width);
+      ctx.fillStyle=water;ctx.globalAlpha=.70;ctx.fillRect(bowl.rect.x+4,bowl.rect.y+bowl.rect.height-4-bowlHeight,bowl.rect.width-8,bowlHeight);ctx.globalAlpha=1;
+      function animalShape(){ctx.beginPath();ctx.moveTo(416,231);ctx.quadraticCurveTo(386,215,395,193);ctx.quadraticCurveTo(402,176,438,181);ctx.quadraticCurveTo(461,145,515,151);ctx.quadraticCurveTo(553,139,594,165);ctx.quadraticCurveTo(628,179,631,222);ctx.lineTo(631,325);ctx.quadraticCurveTo(631,353,608,355);ctx.lineTo(438,355);ctx.quadraticCurveTo(422,353,422,332);ctx.lineTo(422,259);ctx.quadraticCurveTo(419,240,416,231);ctx.closePath();}
+      ctx.save();animalShape();ctx.clip();ctx.fillStyle=water;ctx.globalAlpha=.68;ctx.fillRect(390,bodyLevel,250,355-bodyLevel);ctx.restore();
+      ctx.strokeStyle=ink;ctx.globalAlpha=.8;ctx.lineWidth=2.5;animalShape();ctx.stroke();ctx.globalAlpha=1;
+      ctx.fillStyle=gold;ctx.beginPath();ctx.arc(440,198,4,0,Math.PI*2);ctx.fill();
+      ctx.strokeStyle=ink;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(395,193);ctx.quadraticCurveTo(414,187,422,202);ctx.moveTo(414,231);ctx.quadraticCurveTo(417,237,426,240);ctx.stroke();
+      ctx.font='11px "Commit Mono", monospace';ctx.textAlign='center';ctx.fillStyle=ink;ctx.fillText('Body reservoir',528,139);
+      ctx.fillStyle=gold;ctx.fillText(s.pressed?'Muscle suction':'Mouth released',523,375);
     }else{ctx.globalAlpha=.70;ctx.fillStyle=water;n.forEach(function(a){var r=a.rect,h=Math.min(r.height-8,a.volume/r.width);if(h>0)ctx.fillRect(r.x+4,r.y+r.height-4-h,r.width-8,h);});ctx.globalAlpha=1;}
     function spout(a,flow,side){if(!(flow>8))return;var r=a.rect,x=r.x+r.width*.5,y=r.y+40,swing=side*44;ctx.strokeStyle=water;ctx.lineWidth=Math.max(2,Math.min(5,flow/180));ctx.globalAlpha=.80;ctx.beginPath();ctx.moveTo(x,y);ctx.quadraticCurveTo(x+swing*.55,r.y-90,x+swing,r.y+65);ctx.stroke();ctx.globalAlpha=1;}
     if(d.name==='fountain-music')for(var jet=0;jet<4;jet++)spout(by['jet'+jet],byEdge['note'+jet].flow,jet<2?-1:1);
