@@ -282,8 +282,8 @@ of the pressure inventory and is counted once when checking its balance.
 
 The small apparatus also uses the direct pressure transport and boundary
 reconstruction already used by the larger water machines. Fine-grid particle
-pressure and the spacing correction remain active. The shared game engine and surface rendering are
-unchanged.
+pressure and the spacing correction remain active. The shared game engine and
+surface rendering are unchanged.
 
 `node tools/test-water-entrained-air.mjs` checks actual GPU gas transfer, an
 independent pressure/radius relation, buoyancy, uniform carrier flow, zero
@@ -298,6 +298,38 @@ are saved under `/tmp/water-entrained-air-review`.
 This is the existing reduced isothermal bubble model, with approximate drag and
 coalescence. It does not add gas dissolution or establish full physical
 acceptance of the fountain's pressure solver.
+
+## Persistent source-tank cavities
+
+Toy v5.182 fixes the remaining holes in the small Heron source jar. The earlier
+bubble transfer handled finite gas parcels but missed empty regions with no gas
+owner. The air classifier relabeled those regions as liquid, leaving them open
+without a gas pressure response. The apparatus now enables the existing empty
+cavity and vapor closure branches. Pressure moves native water into an unowned
+cavity until it closes. Finite gas keeps its inventory and buoyancy model.
+
+Natural gas parcels now collide against the native water terrain mask. Partial
+solid fractions in the coarse air grid cannot locate the actual wall inside a
+cell, so using them as collision tests could block open space. An expanded
+parcel also resolves its wall overlap before transport. Circular sweeps prevent
+crossing a wall, including near corners. The dedicated air hose retains its
+existing collision path. Retiring an older companion no longer detaches a newer
+companion during an overlapping reset.
+
+`node tools/test-water-cavities.mjs` reproduces the released behavior by disabling
+these two changes, then compares actual GPU particle positions. It detects empty
+components in the submerged lower half of the right-hand source jar, separately
+from its free surface and headspace. Each run advances sixty seconds of host
+frame time. Corrected cases cover three seeds, desktop at 30 and 60 Hz, and a
+landscape phone at 30 Hz. The test checks actual empty area, liquid phase
+classification, finite state, water count and both gas ledgers. Rendering
+parameters are unchanged. Measurements and screenshots are saved under
+`/tmp/water-cavity-review`.
+
+The bubble component regression also covers partial wall cells, expansion beside
+a wall, expansion into a corner and swept contact. These checks supplement the
+existing pressure/radius, zero-gravity, headspace and finite-gas checks. They do
+not establish full quantitative acceptance of the fountain pressure solver.
 
 ## Spatial oxygen and combustion
 

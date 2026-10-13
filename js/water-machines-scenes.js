@@ -191,7 +191,8 @@
       // fine-grid response keeps the liquid near its resting density.
       // Omitting this response let the small fountain form porous sheets.
       Object.assign(result.settings,{particlePressure:true,directGather:true,
-        projectedVelocity:true,boundaryReconstruction:true,phaseChange:true});
+        projectedVelocity:true,boundaryReconstruction:true,phaseChange:true,
+        collapseEmptyCells:true,vaporClosure:true});
       result.entrainedAir={entrainedArea:200};
       result.title="Heron's fountain";result.action='Pour into basin';
       result.caption='An open basin drains into a sealed receiving jar. Pour water into the basin to test whether the trapped air drives a jet from the source jar.';

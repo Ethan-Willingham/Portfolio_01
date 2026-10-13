@@ -178,6 +178,73 @@ fn outsidePressure(q:vec2f,r:f32)->f32{
  if(any(bubbles[i]!=bubbles[i]) || any(material[i]!=material[i]) || material[i].y<=0. || material[i].x<=0.){atomicAdd(&ledger[9],1);}
 }
 `;
+  // Natural parcels collide with the same tile mask as the water. The air
+  // grid stores partial-cell area, which cannot locate a wall inside a cell.
+  var NATIVE_COLLISION=`
+struct TerrainGrid {
+ count:u32,width:u32,height:u32,originX:u32,originY:u32,cells:u32,dt:f32,invCell:f32,
+ worldCols:f32,tile:f32,worldRows:f32,pad:f32,terrainX:u32,terrainY:u32,terrainW:u32,terrainH:u32
+};
+@group(0) @binding(18) var<storage,read> terrain:array<u32>;
+@group(0) @binding(19) var<uniform> tg:TerrainGrid;
+fn solidTile(t:vec2i)->bool{
+ if(any(t<vec2i(0)) || t.x>=i32(tg.worldCols) || t.y>=i32(tg.worldRows)){return true;}
+ let local=t-vec2i(bitcast<i32>(tg.terrainX),bitcast<i32>(tg.terrainY));
+ if(any(local<vec2i(0)) || local.x>=i32(tg.terrainW) || local.y>=i32(tg.terrainH)){
+  let c=cell((vec2f(t)+.5)*tg.tile);return c==NONE || geometry[c].volume.x>.001;
+ }
+ let k=u32(local.y)*tg.terrainW+u32(local.x);return (terrain[k>>5u]&(1u<<(k&31u)))!=0u;
+}
+fn pointClear(q:vec2f)->bool{return !solidTile(vec2i(floor(q/tg.tile)));}
+fn clear(q:vec2f,r:f32)->bool{
+ let lo=vec2i(floor((q-r)/tg.tile));let hi=vec2i(floor((q+r)/tg.tile));
+ for(var y=lo.y;y<=hi.y;y++){for(var x=lo.x;x<=hi.x;x++){
+  if(!solidTile(vec2i(x,y))){continue;}let a=vec2f(f32(x),f32(y))*tg.tile;
+  let difference=q-clamp(q,a,a+tg.tile);if(dot(difference,difference)<r*r+1e-8){return false;}
+ }}return true;
+}
+fn boxHit(a:vec2f,b:vec2f,lo:vec2f,hi:vec2f)->bool{
+ var begin=0.;var end=1.;let delta=b-a;
+ for(var axis=0u;axis<2u;axis++){
+  if(abs(delta[axis])<1e-8){if(a[axis]<=lo[axis] || a[axis]>=hi[axis]){return false;}}
+  else{let u=(lo[axis]-a[axis])/delta[axis];let v=(hi[axis]-a[axis])/delta[axis];begin=max(begin,min(u,v));end=min(end,max(u,v));}
+ }return begin<=end && end>=0. && begin<=1.;
+}
+fn pathClear(a:vec2f,b:vec2f,r:f32)->bool{
+ let lo=vec2i(floor((min(a,b)-r)/tg.tile));let hi=vec2i(floor((max(a,b)+r)/tg.tile));let delta=b-a;
+ for(var y=lo.y;y<=hi.y;y++){for(var x=lo.x;x<=hi.x;x++){
+  if(!solidTile(vec2i(x,y))){continue;}let corner=vec2f(f32(x),f32(y))*tg.tile;
+  if(boxHit(a,b,corner-vec2f(r,0.),corner+vec2f(tg.tile+r,tg.tile)) ||
+     boxHit(a,b,corner-vec2f(0.,r),corner+vec2f(tg.tile,tg.tile+r))){return false;}
+  if(r>0.){for(var k=0u;k<4u;k++){
+   let c=corner+vec2f(f32(k&1u),f32(k>>1u))*tg.tile;
+   let nearest=a+delta*clamp(dot(c-a,delta)/max(dot(delta,delta),1e-8),0.,1.);
+   if(distance(nearest,c)<r-1e-5){return false;}
+  }}
+ }}return true;
+}
+fn recover(q:vec2f,r:f32)->vec2f{
+ var center=q;
+ // Gas expansion supplies the new radius before transport. Resolve that
+ // overlap first; rejecting every endpoint froze an expanded bubble in place.
+ for(var iteration=0u;iteration<16u;iteration++){
+  if(clear(center,r)){return center;}var push=vec2f(0.);var depth=0.;
+  let lo=vec2i(floor((center-r)/tg.tile));let hi=vec2i(floor((center+r)/tg.tile));
+  for(var y=lo.y;y<=hi.y;y++){for(var x=lo.x;x<=hi.x;x++){
+   if(!solidTile(vec2i(x,y))){continue;}let corner=vec2f(f32(x),f32(y))*tg.tile;
+   let d=center-clamp(center,corner,corner+tg.tile);let distance=length(d);var correction=vec2f(0.);
+   if(distance>1e-6 && distance<r){correction=d*((r-distance+.001)/distance);}
+   else if(distance<=1e-6){
+    let distances=vec4f(center.x-corner.x,corner.x+tg.tile-center.x,center.y-corner.y,corner.y+tg.tile-center.y);
+    var face=0u;for(var k=1u;k<4u;k++){if(distances[k]<distances[face]){face=k;}}
+    correction=array<vec2f,4>(vec2f(-1.,0.),vec2f(1.,0.),vec2f(0.,-1.),vec2f(0.,1.))[face]*(r+distances[face]+.001);
+   }
+   if(length(correction)>depth){push=correction;depth=length(correction);}
+  }}
+  if(depth<=0. || !pathClear(center,center+push,0.)){return q;}center+=push;
+ }return select(q,center,clear(center,r));
+}
+`;
   async function create(options){
     var L=options.liquid,A=options.air,device=L.device,queue=L.queue,U=GPUBufferUsage;
     if(!L.simActive || !A || !A.enabled || !A.buffers.transport)throw Error('Bubbles need native direct water transport and opt-in air.');
@@ -185,10 +252,21 @@ fn outsidePressure(q:vec2f,r:f32)->f32{
     function buffer(label,size,usage){var value=device.createBuffer({label:'toy.bubbles.'+label,size:size,usage:usage});buffers.push(value);return value;}
     var params=buffer('params',80,U.UNIFORM|U.COPY_DST),bubbles=buffer('position',n*16,U.STORAGE|U.COPY_SRC),material=buffer('material',n*16,U.STORAGE|U.COPY_SRC),
       witness=buffer('witness',n*16,U.STORAGE|U.COPY_SRC),ledger=buffer('ledger',128,U.STORAGE|U.COPY_SRC|U.COPY_DST),previous=buffer('previous',count*4,U.STORAGE),current=buffer('current',count*4,U.STORAGE),natural=entrained?buffer('natural',count*16,U.STORAGE|U.COPY_DST):null,claims=entrained?buffer('claims',n*4,U.STORAGE):null;
-    var module=device.createShaderModule({label:'toy.bubbles.model',code:SOURCE}),info=await module.getCompilationInfo();
+    var code=SOURCE;
+    if(entrained){
+      code=code.replace('fn clear(q:vec2f,r:f32)->bool{','fn coarseClear(q:vec2f,r:f32)->bool{')+NATIVE_COLLISION;
+      code=code.replace('let velocity=carrierVelocity(q,radius)', 'q=recover(q,radius);let velocity=carrierVelocity(q,radius)')
+        .replace('if(clear(candidate,radius))','if(clear(candidate,radius) && pathClear(q,candidate,radius))')
+        .replace('if(clear(x,radius))','if(clear(x,radius) && pathClear(q,x,radius))')
+        .replace('if(clear(y,radius))','if(clear(y,radius) && pathClear(q,y,radius))')
+        .replace('if(c==NONE || geometry[c].volume.x>.001){atomicAdd(&ledger[19],1);continue;}',
+          'if(c==NONE || !pointClear(projected)){atomicAdd(&ledger[19],1);continue;}');
+    }
+    var module=device.createShaderModule({label:'toy.bubbles.model',code:code}),info=await module.getCompilationInfo();
     var errors=info.messages.filter(function(m){return m.type==='error';});if(errors.length)throw Error(errors.map(function(m){return m.lineNum+': '+m.message;}).join('; '));
-    var resources=[params,bubbles,material,witness,ledger,A.buffers.history,A.buffers.cells,A.buffers.geometry,A.buffers.labels,A.buffers.gas,previous,current,A.buffers.transport,L.buf.pos,L.buf.flag,L.buf.affine,natural,claims];
+    var resources=[params,bubbles,material,witness,ledger,A.buffers.history,A.buffers.cells,A.buffers.geometry,A.buffers.labels,A.buffers.gas,previous,current,A.buffers.transport,L.buf.pos,L.buf.flag,L.buf.affine,natural,claims,L.buf.terrainMask,L.paramsBuf];
     var bindings={admit:[0,1,2,3,4,5,6,7],sparger:[0,2,3,4,6,7,8],strip:[0,4,5,10,11],assign:[0,1,2,3,4,6,7,8,11],inject:[0,4,9,11],finish:[0,4,5,10,11],advance:[0,1,2,4,5,6,7,12],coalesce:[0,1,2,4,7],contact:[0,1,2,4,7,13,14,15],inventory:[1,2,4],collectNatural:[0,5,6,7,8,10,16],validateNatural:[0,5,6,7,8,16],releaseClaims:[0,2,17],captureNatural:[0,1,2,3,4,5,10,16,17]},pipes={},groups={};
+    if(entrained)['admit','advance','coalesce','contact','validateNatural'].forEach(function(key){bindings[key]=bindings[key].concat([18,19]);});
     for(var name of Object.keys(bindings)){if(!entrained && ['collectNatural','validateNatural','releaseClaims','captureNatural'].includes(name))continue;pipes[name]=await device.createComputePipelineAsync({layout:'auto',compute:{module:module,entryPoint:name}});groups[name]=device.createBindGroup({layout:pipes[name].getBindGroupLayout(0),entries:bindings[name].map(function(binding){return {binding:binding,resource:{buffer:resources[binding]}};})});}
     var active=options.inject!==false,retired=false,clock=0,quantity=0,latest=new Int32Array(32),points=[],error=null;
     var reads=Array.from({length:3},function(){return {buffer:buffer('read',128+n*32,U.COPY_DST|U.MAP_READ),busy:false,captured:false};}),row=null;
@@ -205,7 +283,7 @@ fn outsidePressure(q:vec2f,r:f32)->f32{
       captureClock:0,toggle:function(){active=!active;return active;},
       stats:function(){var scale=A.settings.volumeScale;return {injecting:active,injectedAmount:latest[0]/scale,escapedAmount:latest[1]/scale,dispersedAmount:latest[2]/scale,eulerianAmount:latest[3]/scale,capturedAmount:latest[21]/scale,coupledAmount:latest[23]/scale,naturalCaptures:latest[22],residual:(latest[0]+latest[21]-latest[1]-latest[2]-latest[3])/scale,births:latest[10],transitions:latest[11],recoveries:latest[12],coalescences:latest[18],finiteErrors:latest[9],historyUnderflows:latest[8],capacityRefusals:latest[13],blockedSource:latest[15],spargerGasSteps:latest[16],surfaceExits:latest[17],blockedContacts:latest[19],waterContacts:latest[20],usedSlots:latest[4],points:points,captureClock:companion.captureClock,captureAgeSimulationSeconds:Math.max(0,L.simulationClock-companion.captureClock),error:error};},
       buffers:{position:bubbles,material:material,witness:witness,ledger:ledger},
-      destroy:function(){retired=true;L.setToyMembrane(null);A.setPhaseCompanion(null);buffers.forEach(function(b){try{b.destroy();}catch(e){}});}
+      destroy:function(){retired=true;if(L.toyMembrane===companion)L.setToyMembrane(null);A.setPhaseCompanion(null);buffers.forEach(function(b){try{b.destroy();}catch(e){}});}
     };A.setPhaseCompanion(companion);return companion;
   }
   root.WSSBubbles={create:create,source:SOURCE,radius:radius,slip:slip};

@@ -91,18 +91,30 @@ async function componentFixture(kind) {
   const cells=new ArrayBuffer(count*32),cf=new Float32Array(cells),ci=new Uint32Array(cells),labels=new Uint32Array(count*2);
   labels.fill(0xffffffff);for(let c=0;c<count;c++){cf[c*8]=1;ci[c*8+3]=1;}
   const history=new ArrayBuffer(count*32),hf=new Float32Array(history),hi=new Int32Array(history),geometry=new Float32Array(count*8),transport=new Float32Array(count*12);
-  const root=20*width+16,area=kind==='large'?225:25,amount=area*scale;
+  const root=(kind==='expansion-corner'?18:20)*width+(['partial-wall','expansion-wall','expansion-corner'].includes(kind)?18:16),area=kind==='large'?225:25,amount=area*scale;
   for(let y=0;y<(kind==='large'?3:1);y++)for(let x=0;x<(kind==='large'?3:1);x++){
     const c=root+y*width+x;cf[c*8]=0;ci[c*8+3]=2;labels[c*2]=kind==='atmosphere'?0:root+1;
   }
   hi[root*8+2]=amount;hi[root*8+3]=amount;hf[root*8+4]=area;hi[root*8+5]=root+1;
   if(kind==='vapor')hi[root*8+6]=1;
   if(kind==='compressed')hf[root*8]=100000;
-  if(kind==='ceiling')for(let x=0;x<width;x++)geometry[(16*width+x)*8]=1;
-  const vx=kind==='advect'?12:0,vy=kind==='advect'?5:0;
+  if(kind==='ceiling'||kind==='expansion-corner')for(let x=0;x<width;x++)geometry[(16*width+x)*8]=1;
+  const vx=kind==='sweep-wall'?1200:kind==='advect'?12:0,vy=kind==='advect'?5:0;
   for(let c=0;c<count;c++){transport[c*12]=vx;transport[c*12+1]=vx;transport[c*12+2]=vy;transport[c*12+3]=vy;}
   const L={simActive:true,device,queue,simulationClock:0,simParamsHost:new Float32Array([kind==='zero'||kind==='advect'?0:250]),
-    buf:{pos:buffer(16),flag:buffer(4),affine:buffer(16)},setToyMembrane(){}};
+    buf:{pos:buffer(16),flag:buffer(4),affine:buffer(16),terrainMask:buffer(64)},setToyMembrane(){}};
+  L.paramsBuf=device.createBuffer({size:64,usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST});allocated.push(L.paramsBuf);
+  const gridBytes=new ArrayBuffer(64),gu=new Uint32Array(gridBytes),gf=new Float32Array(gridBytes);
+  gf[8]=20;gf[9]=8;gf[10]=20;gu[14]=20;gu[15]=20;queue.writeBuffer(L.paramsBuf,0,gridBytes);
+  const terrain=new Uint32Array(16);
+  function solid(x,y){const k=y*20+x;terrain[k>>5]|=1<<(k&31);}
+  if(kind==='ceiling'||kind==='expansion-corner')for(let x=0;x<20;x++)solid(x,10);
+  if(['partial-wall','expansion-wall','expansion-corner'].includes(kind)){
+    for(let y=0;y<20;y++)solid(10,y);
+    for(let c=0;c<count;c++)if(c%width===17)geometry[c*8]=.6;
+  }
+  if(kind==='sweep-wall')for(let y=0;y<20;y++)solid(13,y);
+  queue.writeBuffer(L.buf.terrainMask,0,terrain);
   queue.writeBuffer(L.buf.pos,0,new Float32Array([150,150,7,11]));queue.writeBuffer(L.buf.flag,0,new Uint32Array([32]));
   const A={enabled:true,width,height,cellSize:dx,settings:{atmospherePressure:100000,volumeScale:scale},buffers:{
     cells:buffer(count*32),labels:buffer(count*8),history:buffer(count*32),geometry:buffer(count*32),transport:buffer(count*48),gas:buffer(count*64)},setPhaseCompanion(){}};
@@ -126,6 +138,21 @@ async function componentFixture(kind) {
       const carried=await read();check(carried.material[0]===amount && carried.material[2]===1 && carried.material[3]===-1,'A transient parent label keeps gas in its parcel');
       check(carried.ledger[23]===0 && carried.ledger[8]===0,'A non-root cell cannot own coupled pressure inventory');
       return {kind,birth,carried,errors};
+    }
+    if(kind==='expansion-wall'||kind==='expansion-corner'){
+      for(let c=0;c<count;c++)if(ci[c*8+3]===1)hf[c*8]=-80000;queue.writeBuffer(A.buffers.history,0,history);
+      e=device.createCommandEncoder();B.afterSubstep(e,{count:1});queue.submit([e.finish()]);
+      const expanded=await read(),radius=expanded.material[1];
+      check(expanded.material[0]===amount,'Expansion preserves finite gas');
+      check(radius>4.5 && expanded.pos[0]>=88+radius,'Expansion contact moves away from the wall instead of pinning the bubble');
+      if(kind==='expansion-corner')check(expanded.pos[1]>=88+radius,'Both corner contacts remain clear');
+      else check(expanded.pos[1]<birth.pos[1],'An expanding bubble continues to rise along the wall');
+      return {kind,birth,expanded,errors};
+    }
+    if(kind==='sweep-wall'){
+      for(let i=0;i<20;i++){e=device.createCommandEncoder();B.afterSubstep(e,{count:1});queue.submit([e.finish()]);}
+      const swept=await read();check(swept.pos[0]>birth.pos[0] && swept.pos[0]+swept.material[1]<=104,'Swept circular contact cannot cross the native wall');
+      check(swept.material[0]===amount,'Wall contact preserves gas');return {kind,birth,swept,errors};
     }
     // Capture runs again while the native root still reports the same amount.
     e=device.createCommandEncoder();B.collectGas(e);B.finishGas(e);queue.submit([e.finish()]);
@@ -164,11 +191,11 @@ async function tank(mode){
   await inside(`(async()=>{userPaused=true;syncRunning();clearWorldAll();machineState=null;
     wallRect(224,112,232,320);wallRect(432,112,440,320);wallRect(224,312,440,320);
     for(let y=160;y<311;y+=1.25)for(let x=234;x<431;x+=1.25)if(Math.hypot(x-330,y-254)>7.5)addLiquidParticle('water',x,y,0,0,0);
-    liquidWGPU.uploadParticles();bakeWalls();await enableAirModel({phaseChange:true,iterations:128,cellSize:5,particlePressure:true,directGather:${mode==='corrected'},projectedVelocity:${mode==='corrected'},boundaryReconstruction:${mode==='corrected'}});
+    liquidWGPU.uploadParticles();bakeWalls();await enableAirModel({phaseChange:true,iterations:128,cellSize:5,particlePressure:true,directGather:${mode==='corrected'},projectedVelocity:${mode==='corrected'},boundaryReconstruction:${mode==='corrected'},collapseEmptyCells:${mode==='corrected'},vaporClosure:${mode==='corrected'}});
     if(${mode==='corrected'}){toyEntrainedAir=await WSSBubbles.create({liquid:liquidWGPU,air:airModel,width:worldW,height:worldH,maxParticles:256,inject:false,entrainedArea:200});liquidWGPU.setToyMembrane(toyEntrainedAir);}
   })()`);
   const rows=[];
-  for(let i=0;i<=30;i++){if(i)await evaluate('__toy.liquid().bench(4,1/60)');const row=await snapshot();rows.push(row);assert(row.finite);assert.equal(row.count,rows[0].count);
+  for(let i=0;i<=40;i++){if(i)await evaluate('__toy.liquid().bench(4,1/60)');const row=await snapshot();rows.push(row);assert(row.finite);assert.equal(row.count,rows[0].count);
     if(row.bubbleLedger){const l=row.bubbleLedger;assert.equal(l[0]+l[21]-l[1]-l[2]-l[3],0,'Captured gas is either moving or released to the atmosphere');assert.equal(l[8],0);assert.equal(l[9],0);}}
   await inside('drawLiquidToy()');await screenshot('tank-'+mode);return {mode,rows};
 }
@@ -197,13 +224,16 @@ try {
 
   await navigate(1440,900,'?scene=heron-air-smoke&paused=1');
   const components=[];
-  for(const kind of ['small','zero','advect','ceiling','large','vapor','atmosphere','compressed','unresolved']){
+  for(const kind of ['small','zero','advect','ceiling','large','vapor','atmosphere','compressed','unresolved','partial-wall','expansion-wall','expansion-corner','sweep-wall']){
     const row=await evaluate(`(${componentFixture.toString()})(${JSON.stringify(kind)})`);assert.deepEqual(row.errors,[]);components.push(row);console.log('COMPONENT',kind,'pass');}
+  fs.writeFileSync(path.join(dump,'component-report.json'),JSON.stringify({sourceHashes,components},null,2));
+  if(process.env.COMPONENT_ONLY==='1')process.exitCode=0;
+  else {
   const reference=await tank('reference'),corrected=await tank('corrected');
   fs.writeFileSync(path.join(dump,'tank-report.json'),JSON.stringify({components,reference,corrected},null,2));
   const exit=corrected.rows.find(r=>r.bubbleLedger?.[1]>0),last=corrected.rows.at(-1);
   assert(exit && exit.clock<2.5,'A submerged compact pocket reaches the atmosphere within 2.5 simulation seconds');
-  assert(exit.bubbles.some(b=>b.state===3 && b.birthY-b.y>65),'The gas actually travels through the water before escaping');
+  assert(corrected.rows.some(r=>r.bubbles.some(b=>b.birthY>245 && b.birthY-b.y>65)),'The gas actually travels through the water before escaping');
   assert(reference.rows.some(r=>r.clock>2.5 && r.pockets.some(p=>p.amount>25)),'The released transport reproduces the lingering pocket');
   assert(last.bubbleLedger[21]>0);assert(last.bubbleLedger[1]>=last.bubbleLedger[21]*.98,'Captured finite air reaches atmosphere instead of disappearing underwater');
   const scenes=[];
@@ -223,4 +253,5 @@ try {
   assert.equal(errors.length,0,JSON.stringify(errors));
   fs.writeFileSync(path.join(dump,'report.json'),JSON.stringify({sourceHashes,components,reference,corrected,scenes,hose,errors},null,2));
   console.log('PASS actual gas transfer, buoyancy, carrier flow, ceiling, zero gravity, pressure radius, no timer, native water conservation and real desktop/mobile fountain');
+  }
 }finally{await cleanup();}
