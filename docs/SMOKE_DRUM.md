@@ -38,6 +38,11 @@ front. The smoke charge and opening remain the same. Strike position changes
 the membrane motion and its measured chamber-flow profile.
 
 Smoke dye is passive and replenished inside the chamber on accepted strikes.
+The drum uses the site's muted blue with the same maximum dye charge. The
+existing optical-density renderer preserves that hue in dense folds and gives
+thin smoke a soft edge. Brightness is 0.72 and absorption is 1. These display
+settings do not alter membrane forces, air flow or strike position, and leaving
+the scene restores the previous optics.
 The fluid solver generates the rolling front. No ring shape, prescribed vortex,
 travel path or shot animation is supplied. Freezing the membrane prevents the
 compression flow, even when its strike velocity has been set.

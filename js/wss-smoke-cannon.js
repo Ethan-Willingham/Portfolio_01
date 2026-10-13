@@ -3,12 +3,17 @@
   'use strict';
   function create(definition,fluid,world,options){
     var field=null,clock=0,pushes=0,pressureImpulseX=0,pressureImpulseY=0,peakLoad=0,bodyStart=null;
-    var savedConfig={},keys=['CURL','VELOCITY_DISSIPATION','DENSITY_DISSIPATION','PRESSURE_ITERATIONS','SOLID_PROJECTION','SIM_RESOLUTION'];
+    var savedConfig={},keys=['CURL','VELOCITY_DISSIPATION','DENSITY_DISSIPATION','PRESSURE_ITERATIONS','SOLID_PROJECTION','SIM_RESOLUTION','OPTICAL_DENSITY','OPTICAL_BRIGHTNESS','OPTICAL_ABSORPTION'];
     keys.forEach(function(k){savedConfig[k]=fluid.config[k];});
     fluid.config.CURL=0;fluid.config.VELOCITY_DISSIPATION=.025;fluid.config.DENSITY_DISSIPATION=.06;fluid.config.PRESSURE_ITERATIONS=32;
     var savedPhysics=fluid.getPhysics();fluid.setPhysics({HEAT:0,COOLING:0,BUOYANCY:0,WEIGHT:0,VISCOSITY:.08,EDGE_SPIN:0},0);
     fluid.config.SOLID_PROJECTION=0;
-    if(definition.drum){var canvas=fluid.getCanvas();fluid.config.SIM_RESOLUTION=224;fluid.resize(canvas.width,canvas.height,true);}
+    if(definition.drum){
+      // Preserve the dye's cool hue when dense folds overlap, instead of
+      // clipping every RGB channel to white. Optics do not change the flow.
+      fluid.config.OPTICAL_DENSITY=1;fluid.config.OPTICAL_BRIGHTNESS=.72;fluid.config.OPTICAL_ABSORPTION=1;
+      var canvas=fluid.getCanvas();fluid.config.SIM_RESOLUTION=224;fluid.resize(canvas.width,canvas.height,true);
+    }
     var drum=definition.drum,skin=null,skinVelocity=null,segments=[],combined=[],strikeEnergy=0,pressureWork=0,dampingLoss=0,displacedArea=0,displacedMoment=0,outletSpeed=0,flowSkew=0,lastStrikeY=null;
     if(drum){
       skin=new Float64Array(drum.nodes);skinVelocity=new Float64Array(drum.nodes);
@@ -69,7 +74,8 @@
     }
     function movingBodies(bodies){combined.length=0;Array.prototype.push.apply(combined,bodies);Array.prototype.push.apply(combined,segments);return combined;}
     function fill(){
-      var color={r:.8,g:.72,b:.6};
+      // The site's muted blue (#8fb3c7), normalized to the same dye charge.
+      var color=drum ? {r:.575,g:.72,b:.8} : {r:.8,g:.72,b:.6};
       for(var x=176;x<=224;x+=16)for(var y=176;y<=224;y+=16)
         fluid.splat(x/world.w,1-y/world.h,0,0,color,.11);
     }
