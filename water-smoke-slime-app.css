@@ -604,3 +604,62 @@ body.toy-app ::selection { background: var(--selection-bg); color: var(--selecti
   .hourglass-timer-value { font-size: 28px; }
   .hourglass-timer-track { margin-top: 9px; }
 }
+
+/* Marly is a mechanical cutaway with its own volume model and visible controls. */
+.marly-demo { position: absolute; inset: 0; z-index: 8; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; background: var(--bg-raised); color: var(--text); padding: calc(var(--toy-top-height, 52px) + 12px) clamp(12px, 2.7vw, 36px) clamp(12px, 2.7vw, 36px); gap: 8px; font-family: var(--font-body); }
+.marly-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+.marly-kicker { margin: 0 0 8px; color: var(--accent); font: 11px/1.4 var(--font-mono); letter-spacing: .05em; }
+.marly-heading h2 { margin: 0; font: 400 clamp(25px, 3vw, 44px)/1.2 var(--font-heading); color: var(--text); }
+.marly-intro { margin: 10px 0 0; color: var(--text-dim); font: 15px/1.5 var(--font-body); }
+.marly-drawing { position: relative; min-height: 0; }
+#marly-canvas { display: block; width: 100%; height: 100%; }
+.marly-dashboard { border-top: 1px solid var(--rule); padding-top: 16px; }
+.marly-readout { display: flex; align-items: center; gap: 32px; margin-bottom: 14px; font-variant-numeric: tabular-nums; }
+.marly-readout > div { display: grid; gap: 4px; min-width: 102px; }
+.marly-readout span { color: var(--text-dim); font-size: 12px; }
+.marly-readout output { color: var(--text); font: 22px/1.2 var(--font-mono); }
+#marly-phase { margin: 0 0 0 auto; max-width: 290px; color: var(--text-dim); font-size: 14px; line-height: 1.4; }
+.marly-controls { display: flex; gap: 12px; align-items: center; }
+.marly-controls label { flex: 1; max-width: 480px; margin-right: auto; font-size: 13px; color: var(--text-dim); }
+.marly-controls label > span { display: flex; justify-content: space-between; }
+.marly-controls input { display: block; width: 100%; height: 44px; margin: 0; accent-color: var(--accent); }
+.toy-app .toy-shell .marly-demo button { flex-shrink: 0; min-height: 44px; padding: 10px 16px; border: 1px solid var(--rule-strong); border-radius: 6px; color: var(--text); background: var(--bg-raised); font: 13px/1.3 var(--font-body); }
+.toy-app .toy-shell .marly-demo button:hover { background: var(--bg); border-color: var(--accent); }
+.toy-app .toy-shell .marly-demo button[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); }
+.marly-demo :is(button,input,a):focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.marly-notes { position: absolute; z-index: 2; top: 12px; right: 12px; bottom: 12px; width: min(420px, calc(100% - 24px)); box-sizing: border-box; overflow-y: auto; overscroll-behavior: contain; padding: 22px; background: var(--bg-raised); border: 1px solid var(--rule-strong); border-radius: 10px; box-shadow: 0 8px 30px rgb(0 0 0 / .3); font: 15px/1.6 var(--font-body); }
+.marly-notes h3 { font: 26px/1.2 var(--font-heading); color: var(--text); clear: both; padding-top: 16px; }
+.marly-notes li { margin: 0 0 12px; }
+.marly-notes ol { padding-left: 22px; }
+.marly-notes a { color: var(--accent); text-underline-offset: 3px; }
+#marly-notes-close { float: right; }
+.has-marly-demo #toy-scene-actions, .has-marly-demo #toy-input { display: none; }
+@media (max-height: 560px) {
+  .marly-demo { padding: calc(var(--toy-top-height, 52px) + 4px) 18px 8px; gap: 0; }
+  .marly-kicker, .marly-intro { display: none; }
+  .marly-heading { align-items: center; }
+  .marly-heading h2 { font-size: 23px; }
+  .marly-dashboard { padding-top: 6px; }
+  .marly-readout { margin-bottom: 0; gap: 20px; }
+  .marly-readout > div { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+  .marly-readout span { font-size: 10px; }
+  .marly-readout output { font-size: 15px; }
+  #marly-phase { font-size: 11px; max-width: 220px; }
+  .marly-controls { gap: 8px; }
+  .toy-app .toy-shell .marly-demo button { padding: 6px 10px; font-size: 12px; }
+}
+@media (max-width: 600px) and (min-height: 561px) {
+  .marly-demo { padding: calc(var(--toy-top-height, 52px) + 12px) 14px 14px; }
+  .marly-heading { flex-wrap: wrap; gap: 10px; }
+  .marly-kicker { font-size: 9px; }
+  .marly-intro { font-size: 13px; }
+  .marly-controls { flex-wrap: wrap; gap: 8px; }
+  .marly-controls label { flex: 1 0 100%; max-width: none; }
+  .marly-controls button { flex: 1; }
+  .marly-readout { flex-wrap: wrap; gap: 14px; }
+  .marly-readout > div { flex: 1; min-width: 0; }
+  .marly-readout output { font-size: 17px; }
+  #marly-phase { flex: 1 0 100%; max-width: none; min-height: 2.8em; margin: 0; font-size: 13px; }
+}
+
+.has-marly-demo .toy-resume { top: 100px; right: 18px; left: auto; transform: none; }

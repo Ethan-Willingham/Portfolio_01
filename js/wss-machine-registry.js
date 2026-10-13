@@ -2728,8 +2728,8 @@
     "id": "marly-machine",
     "title": "Machine de Marly",
     "capability": "Floating things",
-    "status": "PARTLY",
-    "cue": "Draft. A declared motor turns the real rotor; river-driven torque and the lifting pump are unfinished.",
+    "status": "WORKS",
+    "cue": "A river-driven wheel powers a piston pump. Close the river or apply the brake to compare.",
     "world": {
       "w": 720,
       "h": 400
@@ -2738,8 +2738,8 @@
     "draft": true,
     "accepted": true,
     "scripts": [
-      "wss-drafts-bodies",
-      "wss-drafts-networks"
+      "wss-marly-model",
+      "wss-marly-machine"
     ],
     "preview": "cup"
   },

@@ -74,6 +74,39 @@ checks repeated trips in both directions, cable length, the dry comparison,
 supply controls, pause, reset and scene retirement. It owns its Chrome for
 Testing process and writes screenshots and measurements to
 `/tmp/ballast-railway-review`.
+## Machine de Marly
+
+The public Machine de Marly scene is a working cutaway of one river wheel and
+one single-acting piston pump. The Seine powered the original waterwheels;
+cranks and connecting rods drove pumps that lifted water in three stages to
+Louveciennes. The historical installation had 14 wheels. This scene teaches
+the energy and valve sequence, not the historical machine's scale or output.
+Sources: [Musée du Domaine royal de Marly](https://musee-domaine-marly.fr/collections/vue-et-description-de-la-fameuse-machine-de-marly/)
+and [Château de Versailles](https://en.chateauversailles.fr/discover/history/key-dates/water-versailles).
+
+Paddle drag at the current river speed supplies shaft torque against inertia,
+bearing friction, the brake and the water's lifting work. Crank displacement
+changes a fixed chamber volume. On intake, an ideal inlet valve admits river
+water. On delivery, an ideal outlet valve sends that volume up a pipe entering
+near the bottom of the upper tank. As the tank fills, its water level adds to
+the head opposing the crank. A full tank overflows toward the gardens. The
+river is an open boundary, while chamber, tank and overflow water close a
+volume ledger. The painted shaft, piston, valves, pipe-flow markers and tank
+level read the solved state. No motor or target speed is installed.
+
+The calculation uses a reduced SI-unit model. It does not resolve water
+particles, individual paddle impacts, pipe friction, valve dynamics, leakage,
+or the full three-stage historical works. Its visible units default to gallons;
+the units button switches to liters. The river control and brake act on the
+same running model, so closing either does not erase the lifted water.
+Manual pause freezes motion and delivery. Restart begins a fresh run.
+
+`node tools/test-marly-model.cjs` checks torque, displacement, valve and water
+conservation, the shaft energy ledger, river and brake controls, and frame
+cadence. `node tools/test-marly-machine.cjs` uses owned Chrome for Testing to
+check playback, pause, restart, touch and keyboard controls, scene cleanup,
+and desktop and phone layouts. Screenshots and measurements go to
+`/tmp/marly-machine-review`.
 
 ## Sewer gas trap
 

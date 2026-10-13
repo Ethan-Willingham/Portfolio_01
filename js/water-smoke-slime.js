@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.194'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.195'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -15072,7 +15072,7 @@
   function machineControlTargets(){
     if(!machineState || !machineState.definition.primary)return [];
     var d=machineState.definition,p=d.primary,kind=p.kind;
-    if(kind==='creature-fixture' || kind==='hourglass-grab' || kind==='rocket-console')return [];
+    if(kind==='creature-fixture' || kind==='hourglass-grab' || kind==='rocket-console' || kind==='marly-controls')return [];
     var disabled=!machineState.ready || machineLoading || handsPending ||
       ((kind==='balloon-pop' || kind==='slime') && machineState.primaryUsed) ||
       (kind==='cork-release' && d.corkReading && !d.corkReading.locked) ||
