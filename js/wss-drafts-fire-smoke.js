@@ -2,7 +2,7 @@
 (function(root){
   'use strict';
   var entries=[
-    {id:'candle-in-jar',capability:'Fire',title:'Candle in a jar',cue:'Keep the lid closed and the candle uses up its air. Lift it while the flame is still burning to let fresh air in.',status:'PARTLY',blocker:'Oxygen moves through the airflow and is consumed locally. Detailed chemistry remains approximate.',draft:true,world:{w:720,h:400},pool:false},
+    {id:'candle-in-jar',capability:'Fire',title:'Candle in a jar',cue:'Keep the lid closed and the candle uses up its air. Lift it while the flame is still burning to let fresh air in.',status:'WORKS',blocker:'Oxygen moves through the airflow and is consumed locally. Detailed chemistry remains approximate.',draft:true,world:{w:720,h:400},pool:false},
     {id:'chimney-draw',capability:'Fire',title:'Chimney draft',cue:'Close the inlet and watch oxygen delivery change. Reopen it while the fuel is hot.',status:'PARTLY',blocker:'Spatial oxygen and fuel heat respond to the open inlet and flue; detailed chemistry remains approximate.',draft:true,world:{w:720,h:400},pool:false},
     {id:'slime-sauna',capability:'Fire',title:'Slime sauna',cue:'Pour onto the stones to make steam. Watch the slime warm up; let the room cool between pours.',status:'WORKS',blocker:'Vented room mixing and guest comfort use an approximate thermal model.',draft:true,world:{w:720,h:400},pool:false},
     {id:'heron-air-smoke',capability:'Smoke',title:"The air in Heron's fountain",cue:'Pour into the basin and follow the smoke in the air link, draft.',status:'PARTLY',blocker:'Smoke traces a separate flow field, not the native compressible gas inventory.',draft:true,world:{w:720,h:400},pool:false},
