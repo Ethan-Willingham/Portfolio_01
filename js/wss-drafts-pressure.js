@@ -27,6 +27,7 @@
     d.energyBudgetStatus='The existing whole-parcel steam companion pays actual phase mass and sensible plus latent enthalpy. Vapor pressure follows native gas lineage, and finite cooling can condense it back. The heater supplies the declared external energy. Sustained unsupported vapor, calibrated heat transfer, detailed steam momentum, compressional work and full system-energy closure remain unresolved.';
   }
   function make(id,world,options){
+    if((id==='boyle-j-tube'||id==='torricelli-tube')&&root.WSSPressureScales)return root.WSSPressureScales.make(id,world,options);
     options=options||{};if(world.w!==720||world.h!==400||(world.tile||8)!==8)throw Error('Pressure drafts need a 720 by 400 world.');
     var d,r,receiver,opening;
     if(id==='glugging-bottle'){

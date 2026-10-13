@@ -247,7 +247,7 @@
           <div class="toy-panel-head"><h2 id="toy-heading-about">About</h2><button class="toy-icon" data-close aria-label="Close About"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
           <div class="toy-about-body">
             <p>Three physics engines from <a href="/grand-motherload.html">Sluice</a>, my mining game, share one box. Draw a wall and the water, smoke and slime all collide with it. Choose a machine from the menu at the top, or grab a slime and pull.</p>
-            <p>October 12 update: ten more drafts now work. Water turns the leaky-cup wheel and air lifts water into a receiving cup. Gold settles below quartz, a gas bladder makes a slime rise and sink, and the jar lungs breathe through their tubes. Try the floating block, bubbler, vacuum slime, jar escape and box-size comparisons too. The remaining drafts stay marked Partly working. Instruments explains the physical controls and approximations.</p>
+            <p>October 13 update: five more drafts now work. Water fills and tips the shishi-odoshi trough; adding ballast lowers one lift-lock caisson and raises the other. Boyle's J-tube compresses trapped air, and room pressure supports the tall water column in Torricelli's tube. The Tesla valve compares both flow directions through one set of loops, using a disclosed resistance model for turbulence the grid cannot resolve. The other drafts stay marked Partly working. Instruments explains the physical controls and approximations.</p>
             <dl>
               <div><dt>Water</dt><dd>Particles carry the liquid. A temporary grid exchanges their momentum and applies pressure. The MLS-MPM solver runs on WebGPU, adapted from <a href="https://oimo.io/works/water/">saharan’s water demo</a>.</dd></div>
               <div><dt>Air</dt><dd>The water machines add a pressure solve. Room air sets zero gauge pressure, and each sealed pocket has one pressure at a fixed temperature, compressing as water takes its space. <a href="https://orionquest.github.io/papers/MMTFBIF/paper.html">Aanjaneya, Patkar and Fedkiw’s bubble model</a> describes this approximation.</dd></div>
@@ -276,14 +276,14 @@
   <script src="/js/water-machines-scenes.js?v=v5.186"></script>
   <script src="/js/water-machines-instruments.js?v=v5.186"></script>
   <script src="/js/water-machines-pressure-view.js?v=v5.186"></script>
-  <script src="/js/wss-machine-registry.js?v=v5.195"></script>
+  <script src="/js/wss-machine-registry.js?v=v5.198"></script>
   <script src="/js/wss-apparatus-art.js?v=v5.186"></script>
-  <script src="/js/water-smoke-slime.js?v=v5.197"></script>
+  <script src="/js/water-smoke-slime.js?v=v5.198"></script>
   <script src="/js/wss-oxygen-view.js?v=v5.186-activity1"></script>
   <script src="/js/wss-sluice-transfer.js?v=v5.197"></script>
   <script src="/js/wss-sluice-controls.js?v=v5.197"></script>
   <script src="/js/wss-submarine-controls.js?v=v5.192"></script>
-  <script src="/js/water-smoke-slime-ui.js?v=v5.195"></script>
+  <script src="/js/water-smoke-slime-ui.js?v=v5.198"></script>
   <script src="/js/smoke-presets-ui.js?v=4"></script>
 </body>
 </html>

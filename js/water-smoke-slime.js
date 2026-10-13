@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.197'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.198'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -15016,6 +15016,7 @@
     if(primary.kind==='draft-motor' && toyDraftRig){definition.action=toyDraftRig.toggle()?'Stop declared motor':'Start declared motor';machineOverlayCache=null;return true;}
     if(primary.kind==='draft-push' && toyDraftRig)return toyDraftRig.push(jelloStepH>0?jelloStepH:JELLO_H,JELLO_TIMESCALE);
     if(primary.kind==='draft-squeeze')return !!(toyBalloon && window.WSSDraftBodies.squeeze(toyBalloon.body,jelloStepH>0?jelloStepH:JELLO_H,JELLO_TIMESCALE));
+    if(primary.kind==='tesla-direction'){constructMachine('tesla-valve',{seed:machineState.seed,reverse:!definition.teslaDirection,symmetric:definition.tesla.symmetric}).catch(function(error){buildError=error.message;});return true;}
     if(primary.kind==='world-size'){constructMachine('world-knobs',{seed:machineState.seed,widthInches:primary.nextInches,moon:primary.moon}).catch(function(error){buildError=error.message;});return true;}
     if(primary.kind==='draft-gravity'){setGravityUI(gravMul===1?.16:1);definition.action=gravMul===1?'Try Moon gravity':'Try Earth gravity';machineOverlayCache=null;return true;}
     if(primary.kind==='bubble-toggle'){var injecting=toyBubbles.toggle();definition.action=injecting?'Stop the air':'Start the air';machineOverlayCache=null;return true;}
@@ -15119,7 +15120,7 @@
     }
     else if(kind==='smoke-fan' && d.fan)target(d.fan.x,(d.fan.top+d.fan.bottom)*.5,48,d.fan.bottom-d.fan.top);
     else if(kind==='gas-body-piston' && d.gasBodyLab){var gp=d.gasBodyLab.piston;atRect({x:gp.x,y:gp.y+d.gasBodyLab.offset,width:gp.width,height:gp.height});}
-    else if((kind==='gas-body-pump' || kind==='world-size' || kind==='escape-lid') && p.target)atRect(p.target,'primary','button');
+    else if((kind==='gas-body-pump' || kind==='world-size' || kind==='escape-lid' || kind==='tesla-direction') && p.target)atRect(p.target,'primary','button');
     else if(kind==='air-gripper-motor')body(2);
     else if(kind==='suction-prime' && d.suction){if(d.suction.phase===0 && d.divers){var stroke=toyDivers?toyDivers.stats().stroke:0;atRect({x:d.divers.piston.x+stroke+16,y:d.divers.piston.y+32,width:120,height:28},'primary','button');}else{var outlet=d.parts.find(function(part){return part.id==='delivery';});atRect(outlet.rect);}}
     else if(kind==='tesla-motor' && d.divers){atRect({x:d.divers.piston.x-32,y:d.divers.pistonRodEndY||112,width:d.divers.piston.width+64,height:28},'primary','button');}
@@ -15632,7 +15633,7 @@
       var stockFountainValve=machineState && machineState.definition.name==='heron' && machineState.definition.parts.some(function(p){return p.buildId===part.id;});
       var thermalWall=machineState && machineState.definition.thermal && machineState.definition.thermal.mode==='freeze' && machineState.definition.parts.some(function(p){return p.id==='fracture'&&p.buildId===part.id;});
       var suctionValve=machineState && machineState.definition.suction && machineState.definition.parts.find(function(p){return p.buildId===part.id;});
-      var valveName=suctionValve ? suctionValve.id==='delivery'?'Outlet':'Primer' : stockFountainValve?'Valve':part.id;
+      var valveName=definition.liftCaissons && part.id===definition.parts[0].buildId ? 'Ballast feed' : suctionValve ? suctionValve.id==='delivery'?'Outlet':'Primer' : stockFountainValve?'Valve':part.id;
       var label=thermalWall?'Pipe wall: '+(part.open?'fractured':'intact'):valveName+': '+(part.open ? 'Open' : 'Closed');
       var labelWidth=c.measureText(label).width+8,labelHeight=18;
       // Keep a visible marker's identity inside the cropped view at any zoom.

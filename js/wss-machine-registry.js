@@ -619,42 +619,44 @@
     "id": "shishi-odoshi",
     "capability": "Floating things",
     "title": "Shishi-odoshi",
-    "cue": "Draft. Water pours onto a hinged trough; repeating cycles are unfinished.",
-    "status": "PARTLY",
+    "cue": "Watch water fill the hinged trough, tip it, and let its counterweight reset it. Stop the feed for a dry control.",
+    "status": "WORKS",
     "draft": true,
     "world": {
       "w": 720,
       "h": 400
     },
     "pool": true,
-    "blocker": "Actual U mesh and pin exist; reliable fill, tip and reset are unproved.",
     "accepted": true,
     "preview": "cup",
     "scripts": [
       "wss-water-balloons",
       "wss-machines/water-balloons",
-      "wss-drafts-bodies"
+      "wss-drafts-bodies",
+      "wss-moving-water-loads",
+      "wss-shishi-odoshi"
     ]
   },
   {
     "id": "lift-lock",
     "capability": "Floating things",
     "title": "Peterborough lift lock",
-    "cue": "Draft. Open the link between the tanks and watch the guided carriers.",
-    "status": "PARTLY",
+    "cue": "Open the ballast feed. Added water lowers one caisson and raises the other through an equal-area hydraulic link.",
+    "status": "WORKS",
     "draft": true,
     "world": {
       "w": 720,
       "h": 400
     },
     "pool": false,
-    "blocker": "Communicating tanks and guided carriers only; moving sealed caissons and common piston are absent.",
     "accepted": true,
     "preview": "cup",
     "scripts": [
       "wss-water-balloons",
       "wss-machines/water-balloons",
-      "wss-drafts-bodies"
+      "wss-drafts-bodies",
+      "wss-moving-water-loads",
+      "wss-lift-lock"
     ]
   },
   {
@@ -1168,8 +1170,8 @@
     "id": "boyle-j-tube",
     "capability": "Valves and logic",
     "title": "Boyle's J-tube",
-    "cue": "Draft. The taller water column squeezes trapped air, draft.",
-    "status": "PARTLY",
+    "cue": "Watch the tall water arm compress trapped air. Open its vent and compare the levels.",
+    "status": "WORKS",
     "draft": true,
     "accepted": true,
     "world": {
@@ -1179,7 +1181,8 @@
     "pool": false,
     "preview": "cup",
     "scripts": [
-      "wss-drafts-pressure"
+      "wss-drafts-pressure",
+      "wss-pressure-scales"
     ],
     "loaderDependencies": [
       "wss-boundaries",
@@ -1304,8 +1307,8 @@
     "id": "torricelli-tube",
     "capability": "Valves and logic",
     "title": "Torricelli's tube",
-    "cue": "Draft. A short sealed column stands above the bath; its vacuum is unresolved, draft.",
-    "status": "PARTLY",
+    "cue": "Watch the tall water column settle above its bath. Open the top vent to release it.",
+    "status": "WORKS",
     "draft": true,
     "accepted": true,
     "world": {
@@ -1315,7 +1318,8 @@
     "pool": false,
     "preview": "cup",
     "scripts": [
-      "wss-drafts-pressure"
+      "wss-drafts-pressure",
+      "wss-pressure-scales"
     ],
     "loaderDependencies": [
       "wss-boundaries",
@@ -2264,8 +2268,8 @@
     "id": "tesla-valve",
     "capability": "Valves and logic",
     "title": "Tesla valve",
-    "cue": "Draft. Pour into the high tank and watch the return loops.",
-    "status": "PARTLY",
+    "cue": "Switch the high tank and compare forward and reverse flow through the same passive loops.",
+    "status": "WORKS",
     "draft": true,
     "world": {
       "w": 720,
@@ -2273,12 +2277,16 @@
     },
     "pool": false,
     "dependencies": [
-      "wss-drafts-fluid-machines"
+      "wss-drafts-fluid-machines",
+      "wss-tesla-loss",
+      "wss-tesla-valve"
     ],
     "accepted": true,
     "preview": "cup",
     "scripts": [
-      "wss-drafts-fluid-machines"
+      "wss-drafts-fluid-machines",
+      "wss-tesla-loss",
+      "wss-tesla-valve"
     ]
   },
   {

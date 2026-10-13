@@ -53,6 +53,8 @@
       if(!root.WSSBallastRailway)throw Error('The railway module has not loaded.');
       return root.WSSBallastRailway.make(world,options);
     }
+    if(id==='shishi-odoshi' && root.WSSShishiOdoshi)return root.WSSShishiOdoshi.make(world,options);
+    if(id==='lift-lock' && root.WSSLiftLock)return root.WSSLiftLock.make(world,options);
     if(id==='lorenz-wheel' && root.WSSLorenzWheel)return root.WSSLorenzWheel.make(world,options);
     if(id==='floating-block' && root.WSSFloatingBlock)return root.WSSFloatingBlock.make(world,options);
     if(world.w!==720||world.h!==400||(world.tile||8)!==8)throw Error('These drafts need the ordinary toy box.');
@@ -151,5 +153,5 @@
   root.WSSMachines['water-balloon-fight']={make:function(w,o){return balloon(w,o,false);}};
   root.WSSMachines['squid-jet']={make:function(w,o){return balloon(w,o,true);}};
   entries.filter(function(e){return e.id!=='water-balloon-fight'&&e.id!=='squid-jet';}).forEach(function(e){root.WSSMachines[e.id]={make:function(w,o){return draft(w,o,e.id);}};});
-  root.WSSDraftBodies={entries:entries,squeeze:squeeze,createRig:createRig,shapes:{'draft-trough':['#.....#','#.....#','#######']}};
+  root.WSSDraftBodies={entries:entries,squeeze:squeeze,createRig:createRig,shapes:{'draft-axle':['#'],'draft-trough':['#.....#','#.....#','#######']}};
 })(typeof window!=='undefined'?window:globalThis);

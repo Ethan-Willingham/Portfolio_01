@@ -32,7 +32,7 @@ function directional(d){
  d.initial=[fill(r(88,120,136,176)),fill(r(496,272,136,24))];d.primary={kind:'pour',target:{x:152,y:88}};d.measure={source:left,receiver:right};return d;
 }
 add('tesla-valve','Water','Tesla valve','Pour into the high tank and watch the return loops.','PARTLY',function(w,o){
- var d=directional(base('tesla-valve','Tesla valve',w,o));
+ if(root.WSSTeslaValve)return root.WSSTeslaValve.make(w,o);var d=directional(base('tesla-valve','Tesla valve',w,o));
  d.caption='Draft. Water finds its way through two asymmetric return loops. Directional resistance has not been measured yet.';
  d.boundaryNote+=' Fixed loops split and rejoin the actual channel. The different stored heads drive flow; no directional acceleration or hidden check valve is installed.';return d;
 });
