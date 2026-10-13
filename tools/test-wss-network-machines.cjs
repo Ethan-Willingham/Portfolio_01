@@ -2,7 +2,7 @@
 const assert=require('node:assert/strict');
 require('../js/wss-network-machines.js');
 const suite=global.WSSNetworkMachines;
-function make(id){const definition=suite.make(id,{w:720,h:400});return{definition,runtime:suite.create({definition})};}
+function make(id,o){const definition=suite.make(id,{w:720,h:400},o);return{definition,runtime:suite.create({definition})};}
 function run(r,seconds){for(let i=0;i<seconds*60;i++)r.tick(1/60);const s=r.stats();assert(s.finite,idOf(r)+' has invalid inventory');assert(Math.abs(s.massError)<1e-5,idOf(r)+' loses water');return s;}
 function idOf(r){return r.stats().scene;}
 function node(s,id){return s.nodes.find(x=>x.id===id);}
@@ -26,6 +26,6 @@ check('lukyanov-integrator',r=>{let old=node(r.stats(),'t0').volume;r.primary();
 check('marly-machine',r=>{r.primary();let s=run(r,30);assert(node(s,'upper').fill>.2);assert(s.energyInput>0);assert(edge(s,'wheel').flow>0);});
 check('parts-budget-puzzles',r=>{r.primary();r.activate('part1');assert(run(r,60).completed);});
 check('pneumatica-campaign',r=>{r.primary();assert(!run(r,15).completed);assert(!r.controls().find(x=>x.id==='gate1').disabled);r.activate('gate1');assert(!run(r,15).completed);assert(!r.controls().find(x=>x.id==='gate2').disabled);r.activate('gate2');assert(run(r,30).completed);});
-check('garden-automation',r=>{r.primary();let s=run(r,30);assert(node(s,'soil0').fill>.3);assert(s.removed>0);});
+check('garden-automation',()=>{for(let soilFill of [.1,.15,.2]){let on=make('garden-automation',{soilFill}).runtime,off=make('garden-automation',{soilFill,running:false}).runtime;try{let started=run(on,2);assert(started.edges.some(e=>/^irrigate/.test(e.id)&&e.flow>0),'irrigation begins within two seconds');let wet=run(on,28),dry=run(off,30);for(let i=0;i<3;i++)assert(node(wet,'soil'+i).fill>node(dry,'soil'+i).fill+.1,'automatic valve keeps planter '+i+' wetter than the off control');assert(wet.removed>0);}finally{on.destroy();off.destroy();}}});
 check('fire-brigade',r=>{r.primary();run(r,10);r.activate('hose1');run(r,10);r.activate('hose2');assert(run(r,10).completed);});
 check('water-chain-reaction',r=>{r.primary();assert(run(r,40).completed);});

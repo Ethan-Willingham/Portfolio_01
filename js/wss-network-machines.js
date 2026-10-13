@@ -14,7 +14,8 @@ function tank(id,label,x,y,w,h,f){return{id:id,label:label,rect:rect(x,y,w,h),vo
 function edge(id,a,b,bore,extra){return Object.assign({id:id,a:a,b:b,bore:bore,open:true,length:80,flow:0},extra||{});}
 function H(n){return n.rect.y+n.rect.height;}
 function nodeHead(n){return -H(n)+n.volume/n.rect.width+(n.pressure||0)/250;}
-function model(id){
+function model(id,o){
+  o=o||{};
   var n=[],e=[],u={running:true,pressed:false,mode:0,stage:0,coin:0,angle:0,omega:0,energy:0,heat:[1,1,1],fuel:0,prime:true},primary='Pause supply',extra=[];
   function T(a,b,x,y,w,h,f){n.push(tank(a,b,x,y,w,h,f));return a;}
   function E(a,b,c,w,opts){e.push(edge(a,b,c,w,opts));return a;}
@@ -71,8 +72,8 @@ function model(id){
     T('source','Supply',70,85,180,270,.92);T('one','First receiver',280,150,120,205,0);T('two','Second receiver',430,190,112,165,0);T('goal','Final goal',570,220,115,135,0);
     E('gate0','source','one',9,{open:false});E('gate1','one','two',9,{open:false});E('gate2','two','goal',9,{open:false});primary='Build first link';K('gate1','Build second link',359,115);K('gate2','Build final link',521,115);
   }else if(id==='garden-automation'){
-    T('supply','Supply',62,85,180,270,.93);for(var g=0;g<3;g++){T('soil'+g,'Planter '+(g+1),280+143*g,213,112,142,.15);E('irrigate'+g,'supply','soil'+g,5,{open:false});}
-    primary='Start moisture control';u.running=false;K('sensor','Adjust dry threshold',416,92);
+    T('supply','Supply',62,85,180,270,.93);for(var g=0;g<3;g++){T('soil'+g,'Planter '+(g+1),280+143*g,213,112,142,Math.max(.1,Math.min(.2,Number.isFinite(o.soilFill)?o.soilFill:.15)));E('irrigate'+g,'supply','soil'+g,5,{open:false});}
+    primary=o.running===false?'Start moisture control':'Stop moisture control';u.running=o.running!==false;K('sensor','Adjust dry threshold',416,145);
   }else if(id==='fire-brigade'){
     T('tank','Rescue water',62,100,175,255,.85);for(var f=0;f<3;f++){T('fire'+f,'Fire '+(f+1),275+142*f,233,105,120,0);E('hose'+f,'tank','fire'+f,8,{open:f===0,pump:185});K('hose'+f,'Aim at fire '+(f+1),313+142*f,105);}
     primary='Start hose';u.running=false;
@@ -84,11 +85,11 @@ function model(id){
 }
 function make(id,w,o){
   if(!w || w.w!==720 || w.h!==400)throw Error('Network scenes need a 720 by 400 box.');
-  var net=model(id),view=rect(20,42,680,330),vessels=net.nodes.map(function(n){return{id:n.id,label:n.label,rect:n.rect,sealed:false};});
+  var net=model(id,o),view=rect(20,42,680,330),vessels=net.nodes.map(function(n){return{id:n.id,label:n.label,rect:n.rect,sealed:false};});
   var pipes=[];
   var entry=root.WSSMachineRegistry&&root.WSSMachineRegistry.lookup(id),caption=entry&&entry.cue||'Operate the apparatus. Water moves through its measured levels, pressure differences, valves and pumps.';
-  var energyNote=id==='marly-machine'?'External river inflow and outflow are recorded. Falling river water drives the wheel; its available head and a stated 58 percent efficiency limit the lifted flow.':id==='moniac'?'This is a water analog of monetary flow, not a calibrated economic forecast. Declared return pumps recirculate its conserved working water.':id==='binary-staircase'?'Each input removes a measured water pulse from the finite supply. A two-pulse tipping bucket passes half its water upward and returns half to supply, conserving the count fluid.':'Pumps and hand inputs supply declared external work. Gravity and pressure set flow direction; friction dissipates energy. This model is not a closed account of heat, sound or detailed fluid momentum.';
-  return{name:id,title:labels[id],draft:true,setup:'network',viewBounds:view,vessels:vessels,pipes:pipes,solids:[],vents:[],parts:[],slimes:[],initial:[],marks:[],meters:[],settings:{enabled:false},primary:{kind:'network',target:{x:364,y:46}},action:net.primary,caption:caption,readingLabel:'Finite water network',measure:{source:vessels[0].rect,receiver:vessels[vessels.length-1].rect},network:net,reducedModel:true,boundaryNote:'This scene uses a reduced two-dimensional finite-volume hydraulic model. Tank inventories are conserved, pressure and level differences drive each flow, and any pump or hand action is declared. Pipe shape is a schematic of the network; local turbulence, bubbles and particle contacts are outside this model.',energyBudgetStatus:energyNote};
+  var energyNote=id==='marly-machine'?'External river inflow and outflow are recorded. Falling river water drives the wheel; its available head and a stated 58 percent efficiency limit the lifted flow.':id==='moniac'?'This is a water analog of monetary flow, not a calibrated economic forecast. Declared return pumps recirculate its conserved working water.':id==='binary-staircase'?'Each input removes a measured water pulse from the finite supply. A two-pulse tipping bucket passes half its water upward and returns half to supply, conserving the count fluid.':id==='garden-automation'?'Gravity supplies the irrigation head. Flow resistance dissipates it, while the declared soil-uptake sink removes finite water from the system. No plant metabolism or closed energy budget is modeled.':'Pumps and hand inputs supply declared external work. Gravity and pressure set flow direction; friction dissipates energy. This model is not a closed account of heat, sound or detailed fluid momentum.';
+  return{name:id,title:labels[id],draft:true,setup:'network',viewBounds:view,vessels:vessels,pipes:pipes,solids:[],vents:[],parts:[],slimes:[],initial:[],marks:[],meters:[],settings:{enabled:false},primary:{kind:'network',target:{x:364,y:46}},action:net.primary,caption:caption,readingLabel:'Finite water network',measure:{source:vessels[0].rect,receiver:vessels[vessels.length-1].rect},network:net,reducedModel:true,boundaryNote:id==='garden-automation'?'Reduced finite-volume water follows pressure and gravity through three independent valves. Each valve opens when its measured planter falls below the selected threshold. A declared constant soil-uptake sink removes water and is recorded in the mass ledger. The drawing is a schematic; plant growth, soil pores and local turbulence are not simulated.':'This scene uses a reduced two-dimensional finite-volume hydraulic model. Tank inventories are conserved, pressure and level differences drive each flow, and any pump or hand action is declared. Pipe shape is a schematic of the network; local turbulence, bubbles and particle contacts are outside this model.',energyBudgetStatus:energyNote};
 }
 function create(c){
   var d=c.definition,net=d.network;
