@@ -27,6 +27,23 @@ const server=http.createServer((req,res)=>{
       const end=await page.evaluate(()=>__toy.fireSmokeDraft().stats(false).seconds)+seconds;
       await page.waitForFunction(end=>__toy.fireSmokeDraft().stats(false).seconds>=end,end,{timeout:60000});
     }
+    async function waterToggle(name,key,touch){
+      const before=await page.evaluate(()=>{
+        const T=__toy,paused=T.stats().paused;T.pause(true);
+        window.__trapRun={machine:T.machineState(),smoke:T.fireSmokeDraft()};
+        return {paused,setup:T.machineState().definition.setup,flow:T.fireSmokeDraft().stats(true)};
+      });
+      const button=page.getByRole('button',{name,exact:true});
+      if(key){await button.focus();await page.keyboard.press(key);}
+      else if(touch)await button.tap();else await button.click();
+      const after=await page.evaluate(()=>({flow:__toy.fireSmokeDraft().stats(true),
+        setup:__toy.machineState().definition.setup,paused:__toy.stats().paused,
+        sameRun:__toy.machineState()===__trapRun.machine && __toy.fireSmokeDraft()===__trapRun.smoke}));
+      assert(after.sameRun,'water changes keep the running apparatus and smoke solver');
+      assert.notEqual(after.setup,before.setup);assert(after.paused);
+      assert.deepEqual(after.flow,before.flow,'water toggle preserves sampled smoke, air velocity, pressure, clock and force exactly while paused');
+      await page.evaluate(paused=>__toy.pause(paused),before.paused);
+    }
     async function capture(name){
       const report=await page.evaluate(()=>{
         const T=__toy,d=T.machineState().definition,n=T.stats().water;
@@ -59,11 +76,14 @@ const server=http.createServer((req,res)=>{
       await page.screenshot({path:path.join(output,name+'.png')});return report;
     }
     function dye(report,id){return report.smoke.probes.find(p=>p.id===id).dye;}
-    function sealed(report){
+    function sealed(report,residual){
       assert(report.water>5000,'wet trap retains native water');
       assert(dye(report,'sewer')>.02,'incoming smoke is visible');
-      assert(dye(report,'bend')<1e-6 && dye(report,'room-outlet')<1e-6 && dye(report,'room-plume')<1e-6,'water stops dye transport through the bend and into the room');
-      assert(report.smoke.regions[0].maxDye<1e-6,'the room stays clear');
+      assert(dye(report,'bend')<1e-6,'water blocks dye transport through the bend');
+      if(!residual){
+        assert(dye(report,'room-outlet')<1e-6 && dye(report,'room-plume')<1e-6,'no smoke has reached the room');
+        assert(report.smoke.regions[0].maxDye<1e-6,'the room stays clear');
+      }
     }
     function dry(report){
       assert.equal(report.water,0,'water target removes all water');
@@ -75,7 +95,7 @@ const server=http.createServer((req,res)=>{
     await capture('wet-initial');await page.evaluate(()=>__toy.pause(false));
     await advance(6);sealed(await capture('desktop-wet'));
     await advance(24);sealed(await capture('desktop-wet-long'));
-    await page.getByRole('button',{name:'Water on',exact:true}).click();
+    await waterToggle('Water on');
     await page.waitForFunction(()=>__toy.machineState()?.ready&&__toy.machineState().definition.setup==='dry');
     await advance(12);const driven=await capture('desktop-dry');dry(driven);
     await page.getByRole('button',{name:'Airflow on',exact:true}).click();
@@ -97,28 +117,31 @@ const server=http.createServer((req,res)=>{
     await page.getByRole('button',{name:'Airflow off',exact:true}).click();
     await page.waitForFunction(()=>__toy.machineState()?.ready && __toy.fireSmokeDraft().stats(false).fanEnabled);
     await advance(12);dry(await capture('same-dry-airflow-on'));
-    await page.getByRole('button',{name:'Water off',exact:true}).click();
+    await waterToggle('Water off');
     await page.waitForFunction(()=>__toy.machineState()?.ready&&__toy.machineState().definition.setup==='wet');
-    await advance(8);sealed(await capture('desktop-refilled'));
+    const refilled=await capture('desktop-refill-preserved');
+    assert(refilled.smoke.regions[0].maxDye>.02,'refilling keeps the existing room plume');
+    await advance(8);sealed(await capture('desktop-refilled'),true);
     // Keyboard controls work while paused, and switching keeps manual pause.
     await page.getByRole('button',{name:'Pause',exact:true}).click();
-    await page.getByRole('button',{name:'Water on',exact:true}).focus();await page.keyboard.press('Enter');
+    const pausedClock=await page.evaluate(()=>__toy.fireSmokeDraft().stats(false).seconds);
+    await waterToggle('Water on','Enter');
     await page.waitForFunction(()=>__toy.machineState()?.ready&&__toy.machineState().definition.setup==='dry');
     assert(await page.evaluate(()=>__toy.stats().paused));
-    assert.equal(await page.evaluate(()=>__toy.fireSmokeDraft().stats(false).seconds),0);
+    assert.equal(await page.evaluate(()=>__toy.fireSmokeDraft().stats(false).seconds),pausedClock);
     assert.equal((await capture('paused-dry')).water,0);
-    await page.getByRole('button',{name:'Water off',exact:true}).click();
+    await waterToggle('Water off');
     await page.waitForFunction(()=>__toy.machineState()?.ready&&__toy.machineState().definition.setup==='wet');
     assert(await page.evaluate(()=>__toy.stats().paused));
-    assert.equal(await page.evaluate(()=>__toy.fireSmokeDraft().stats(false).seconds),0);
+    assert.equal(await page.evaluate(()=>__toy.fireSmokeDraft().stats(false).seconds),pausedClock);
     await page.getByRole('button',{name:'Airflow on',exact:true}).click();
     await page.waitForFunction(()=>__toy.machineState()?.ready && !__toy.fireSmokeDraft().stats(false).fanEnabled);
     assert(await page.evaluate(()=>__toy.stats().paused));
     assert.equal(await page.evaluate(()=>__toy.fireSmokeDraft().stats(false).seconds),0);
-    await page.getByRole('button',{name:'Water on',exact:true}).click();
+    await waterToggle('Water on');
     await page.waitForFunction(()=>__toy.machineState()?.ready && __toy.machineState().definition.setup==='dry');
     assert.equal(await page.evaluate(()=>__toy.fireSmokeDraft().stats(false).fanEnabled),false,'water toggle preserves airflow setting');
-    await page.getByRole('button',{name:'Water off',exact:true}).click();
+    await waterToggle('Water off');
     await page.waitForFunction(()=>__toy.machineState()?.ready && __toy.machineState().definition.setup==='wet');
     await page.getByRole('button',{name:'Airflow off',exact:true}).focus();await page.keyboard.press('Space');
     await page.waitForFunction(()=>__toy.machineState()?.ready && __toy.fireSmokeDraft().stats(false).fanEnabled);
@@ -136,12 +159,13 @@ const server=http.createServer((req,res)=>{
     // The same helpers inspect desktop and touch using the current page.
     page=mobile;
     await advance(8);sealed(await capture('mobile-wet'));
-    await mobile.getByRole('button',{name:'Water on',exact:true}).tap();
+    await waterToggle('Water on',null,true);
     await mobile.waitForFunction(()=>__toy.machineState()?.ready&&__toy.machineState().definition.setup==='dry');
     await advance(16);dry(await capture('mobile-dry'));
-    await mobile.getByRole('button',{name:'Water off',exact:true}).tap();
+    await waterToggle('Water off',null,true);
     await mobile.waitForFunction(()=>__toy.machineState()?.ready&&__toy.machineState().definition.setup==='wet');
-    await advance(8);sealed(await capture('mobile-refilled'));
+    assert((await capture('mobile-refill-preserved')).smoke.regions[0].maxDye>.02,'touch refill keeps the existing plume');
+    await advance(8);sealed(await capture('mobile-refilled'),true);
     await mobile.getByRole('button',{name:'Airflow on',exact:true}).tap();
     await mobile.waitForFunction(()=>__toy.machineState()?.ready && !__toy.fireSmokeDraft().stats(false).fanEnabled);
     assert.equal(await mobile.evaluate(()=>__toy.fireSmokeDraft().stats(false).fanEnabled),false);
@@ -159,7 +183,7 @@ const server=http.createServer((req,res)=>{
     await mobile.waitForTimeout(1000);
     assert.equal(await mobile.evaluate(()=>__toy.instruments().error||null),null);
     assert.equal(await page.evaluate(()=>window.__trapGpuError||null),null);assert.deepEqual(errors,[]);
-    console.log('PASS: wet/dry transport, plain spatial toggles, restart on every toggle, matched airflow-off control, desktop, touch, keyboard, pause and explanation verified.');
+    console.log('PASS: water toggles preserve smoke, velocity, pressure and clock; wet/dry transport, airflow comparison, desktop, touch, keyboard, pause and explanation verified.');
   }finally{
     fs.writeFileSync(path.join(output,'measurements.json'),JSON.stringify({reports,errors},null,2));
     if(browser)await browser.close();await new Promise(resolve=>server.close(resolve));

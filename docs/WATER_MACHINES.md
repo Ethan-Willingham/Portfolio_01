@@ -14,11 +14,14 @@ above the inner wall. The main view names the wet or dry state, with no pressure
 readings to wait for.
 
 The inlet has a plain Airflow on / Airflow off toggle centered on the entrance
-pipe, with no fan illustration. Both toggles restart the water and smoke for
-a fresh comparison, preserving the other setting and manual pause. Smoke
-injection continues with zero momentum when airflow is off. How it works explains the
-calculated airflow, the passive smoke tracer and the missing air-to-water
-pressure response, with links to both source files. The browser regression
+pipe, with no fan illustration. The water toggle adds or removes only native
+water, preserving the smoke field, air velocity, pressure, clock, airflow
+setting and manual pause. Refilling uses the same pipe-contained native seed
+without reconstructing the scene. Smoke already in the room remains there
+and continues moving after the water returns. The airflow toggle starts a
+fresh comparison. Smoke injection continues with zero momentum when airflow
+is off. How it works explains the calculated airflow, passive smoke tracer
+and missing air-to-water pressure response, with links to both source files. The browser regression
 compares the driven dry trap with the same fresh dry setup and airflow off:
 the latter has zero airflow and no smoke in the room. Switching airflow on
 starts a fresh driven setup that advects smoke through the pipe.
@@ -29,12 +32,14 @@ Advection clips its backtrace at water and walls instead of sampling through
 them. The pressure grid is capped at 128 cells on its short axis, independent
 of the visible smoke resolution. Other scenes and the game leave the liquid
 barrier disabled. The inlet force supplies momentum and smoke supplies passive dye;
-air pressure cannot displace the water seal. Switching compares fresh setups,
-without simulating evaporation or a drain.
+air pressure cannot displace the water seal. The water toggle updates its
+boundary immediately, including while paused, without clearing the smoke
+solver or simulating evaporation or a drain.
 
 Run `node tools/test-sewer-gas-trap.cjs` for actual wet and dry smoke transport,
-room-plume measurements, water placement, repeated refill, visible controls,
-keyboard and touch operation, manual pause, narrow desktop and landscape phone
+room-plume measurements, water placement, continuous smoke across repeated
+water toggles, visible controls, keyboard and touch operation, manual pause,
+narrow desktop and landscape phone
 views, and departure into another smoke scene. The harness owns Chrome for
 Testing and saves screenshots and measurements to `/tmp/sewer-trap-review`.
 

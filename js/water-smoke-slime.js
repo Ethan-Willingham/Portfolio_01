@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.175'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.176'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -14589,17 +14589,20 @@
       }
       return true;
     }
-    for(var y=TILE+pitch*.5;y<worldH-TILE;y+=pitch)for(var x=TILE+pitch*.5;x<worldW-TILE;x+=pitch){
-      if(tileAt(Math.floor(y/TILE),Math.floor(x/TILE))!==null)continue;
-      if(!definition.initial.some(function(shape){return window.WaterMachinesScenes.contains(shape,x,y);}))continue;
-      var jitter=definition.seedJitter===undefined?.12:definition.seedJitter;
-      var px=x+(random()-.5)*jitter,py=y+(random()-.5)*jitter;
-      if(balloonSeedRing && ((!definition.membrane.seedBoth && !window.WSSWaterBalloons.geometry.contains(balloonSeedRing,px,py)) || window.WSSWaterBalloons.geometry.nearest(balloonSeedRing,px,py).distance<3))continue;
-      if(!seedClear(px,py) || definition.seedClear && !definition.seedClear(px,py))continue;
-      requested++;
-      var seedMaterial=definition.materialSlip ? definition.materialAt(x,y) : 'water';
-      if(addLiquidParticle(seedMaterial,px,py,0,0,0)>=0)added++;
+    function seedInitialMaterial(shapes){
+      for(var y=TILE+pitch*.5;y<worldH-TILE;y+=pitch)for(var x=TILE+pitch*.5;x<worldW-TILE;x+=pitch){
+        if(tileAt(Math.floor(y/TILE),Math.floor(x/TILE))!==null)continue;
+        if(!shapes.some(function(shape){return window.WaterMachinesScenes.contains(shape,x,y);}))continue;
+        var jitter=definition.seedJitter===undefined?.12:definition.seedJitter;
+        var px=x+(random()-.5)*jitter,py=y+(random()-.5)*jitter;
+        if(balloonSeedRing && ((!definition.membrane.seedBoth && !window.WSSWaterBalloons.geometry.contains(balloonSeedRing,px,py)) || window.WSSWaterBalloons.geometry.nearest(balloonSeedRing,px,py).distance<3))continue;
+        if(!seedClear(px,py) || definition.seedClear && !definition.seedClear(px,py))continue;
+        requested++;
+        var seedMaterial=definition.materialSlip ? definition.materialAt(x,y) : 'water';
+        if(addLiquidParticle(seedMaterial,px,py,0,0,0)>=0)added++;
+      }
     }
+    seedInitialMaterial(definition.initial);
     if((definition.boundaries || definition.divers || definition.materialSlip) && added!==requested)throw new Error('Apparatus exceeds the particle capacity: '+requested+' requested, '+added+' added.');
     if(!definition.membrane && !definition.divers && !definition.slider)definition.slimes.forEach(function(s){
       if(s.held)return;
@@ -14620,6 +14623,12 @@
     if(definition.draftRig)toyDraftRig=window.WSSDraftBodies.createRig(definition,jelloBodies);
     var state=machineState={definition:definition,seed:options.seed || 17,initialParticles:added,ready:false,
       primaryUsed:false,startedAt:null,wallClockStartedAt:null,energyInput:0,inputParticles:0,energyModified:false};
+    if(definition.name==='sewer-gas-trap')state.refillTrapWater=function(){
+      randomState=state.seed>>>0;requested=0;added=0;
+      seedInitialMaterial([definition.draftFireSmoke.waterFill]);
+      if(added!==requested)throw Error('The trap water exceeds the particle capacity.');
+      return added;
+    };
     if(definition.sluice)state.sluiceRun={flow:100,valve:false,feeding:false,feedAcc:0,fed:0,waterAdded:0,clock:liquidWGPU.simulationClock};
     setSceneChip(name);if(!options.canvasThumb)setTool('poke');bakeWalls();updateReadout();
     // The real initial divers and water can be drawn while their pressure
@@ -14834,7 +14843,19 @@
       machineBuilder.begin('Move draft opening');machineBuilder.vent(gate.rect,gate.opened);machineBuilder.commit();
       definition.action=gate.opened?gate.openLabel:gate.closedLabel;machineOverlayCache=null;bakeWalls();return true;
     }
-    if(primary.kind==='draft-trap-setup')return constructMachine(definition.name,{dry:!primary.dry,fanOff:definition.draftFireSmoke.fan.enabled===false,seed:machineState.seed});
+    if(primary.kind==='draft-trap-setup'){
+      // Change only the native water. Rebuilding the apparatus would also
+      // clear the smoke, air velocity and pressure, and reset their clock.
+      var dry=!primary.dry;
+      clearLiquid();
+      if(!dry)machineState.refillTrapWater();
+      primary.dry=dry;definition.setup=dry?'dry':'wet';definition.action=dry?'Water off':'Water on';
+      definition.initial=dry?[]:[definition.draftFireSmoke.waterFill];
+      liquidWGPU.prepareMaterialState({reset:true});
+      smokeWaterFlowCouple();smokeAwakeT=SMOKE_IDLE_HOLD;
+      machineOverlayCache=null;render();SmokeFluid.displayPass();
+      return true;
+    }
     if(primary.kind==='material-jolt' && toyMaterialSlip){
       var direction=definition.primary.direction || 1;definition.primary.direction=-direction;
       machineState.lastMaterialImpulse=toyMaterialSlip.jolt(direction*(primary.speed===undefined?80:primary.speed));return true;

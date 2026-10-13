@@ -56,18 +56,19 @@
         tracers:link.points.concat([{x:bottom.x+bottom.width*.5,y:bottom.y+20}]),probes:link.points.map(function(p,i){return {id:'air-link-'+i,x:p.x,y:p.y};})};
     }else if(id==='sewer-gas-trap'){
       var dry=options.dry===true;d.setup=dry?'dry':'wet';d.action=dry?'Water off':'Water on';d.primary={kind:'draft-trap-setup',dry:dry};
-      d.caption='Click the water to dry or refill the bend. Click the inlet to switch airflow. Each change starts fresh.';
+      d.caption='Click the water to dry or refill the bend while the smoke keeps moving. Click the inlet to switch airflow and start fresh.';
       d.setups=[{id:'wet',label:'Water seal',options:{dry:false}},{id:'dry',label:'Dry trap',options:{dry:true}}];
       d.pipes=[{id:'trap',points:[{x:112,y:184},{x:256,y:184},{x:256,y:304},{x:432,y:304},{x:432,y:184},{x:608,y:184}],bore:48,primed:false}];
       // Seed only the pipe's interior below its waterline. A rectangular fill
       // also placed water in the open space above the inner wall of the bend.
-      d.initial=dry?[]:[{kind:'pipe',points:d.pipes[0].points,bore:48,exclude:[{kind:'rect',rect:rect(0,0,720,236)}]}];
+      q.waterFill={kind:'pipe',points:d.pipes[0].points,bore:48,exclude:[{kind:'rect',rect:rect(0,0,720,236)}]};
+      d.initial=dry?[]:[q.waterFill];
       q.fan={x:144,top:168,bottom:200,spacing:8,acceleration:2800,enabled:options.fanOff!==true};
       q.tracers=[{x:152,y:176},{x:152,y:184},{x:152,y:192}];q.labels=[{x:464,y:144,text:'Into the room'}];
       q.probes=[{id:'sewer',x:208,y:184},{id:'above-water',x:256,y:252},{id:'bend',x:344,y:304},{id:'room-outlet',x:560,y:184},{id:'room-plume',x:640,y:184}];
       q.regions=[{id:'room',rect:rect(616,120,88,160)}];
-      d.boundaryNote='The pale smoke traces air pushed in from the left. Click the water seal to remove or restore it; click the inlet to switch airflow. Each switch starts a fresh comparison.';
-      d.energyBudgetStatus='A declared external force supplies air momentum at the left inlet. Native water density supplies the air boundary in the separate smoke solver; air-to-water pressure feedback is absent. Each toggle rebuilds the initial apparatus.';
+      d.boundaryNote='The pale smoke traces air pushed in from the left. Removing or restoring the water keeps the existing air and smoke. Switching airflow starts a fresh comparison.';
+      d.energyBudgetStatus='A declared external force supplies air momentum at the left inlet. Native water density supplies the air boundary in the separate smoke solver; air-to-water pressure feedback is absent. The water toggle changes only native water and its boundary. The airflow toggle rebuilds the initial apparatus.';
     }
     return d;
   }
