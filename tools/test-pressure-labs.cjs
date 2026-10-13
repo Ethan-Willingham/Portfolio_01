@@ -16,7 +16,19 @@ test('Savery cooling condenses vapor and draws a refill',()=>{const m=make('save
 test('pulsometer alternates chambers from water-level feedback',()=>{const m=make('pulsometer');advance(m,145);assert(m.state.cycles>=2);assert(flow(m,'delivery')>.001&&flow(m,'delivery2')>.001);assert(flow(m,'refill')>.001&&flow(m,'refill2')>.001);});
 test('Torricelli head is supported by atmospheric pressure',()=>{const m=make('torricelli-tube');advance(m,20);const n=m.nodes;const height=n[0].bottom+m.level(n[0])-n[1].bottom-m.level(n[1]);assert(Math.abs(height-(101325-m.pressure(n[0]))/(1000*9.80665))<.15);const v=n[0].volume;m.activate('primary');advance(m,10);assert(n[0].volume<v*.7);});
 for(const id of ['venturi-aspirator','trompe'])test(id+' air input follows flowing water',()=>{const a=make(id),b=make(id);b.activate('primary');advance(a,4);advance(b,4);assert(a.state.airDrawn>0&&b.state.airDrawn===0);if(id==='trompe')assert(a.state.entrained>0);});
-test('ram waste valve cycles and pumps above the drive reservoir',()=>{const m=make('hydraulic-ram');advance(m,8);assert(m.state.cycles>3);assert(flow(m,'delivery')>.0001);assert(flow(m,'waste')>flow(m,'delivery'));assert(m.state.peak>20000);});
+test('ram lifts finite water above the drive head on three charges; closed drive cannot',()=>{
+ for(const sourceFill of [.8,.86,.92]){
+  const m=make('hydraulic-ram',{sourceFill}),control=make('hydraulic-ram',{sourceFill});control.activate('primary');
+  advance(m,3);advance(control,3);
+  assert(m.state.cycles>=5,'waste valve is cycling in the first three seconds');
+  assert(flow(m,'delivery')>.001,'water reaches the higher delivery');
+  assert(m.nodes[2].bottom>m.nodes[0].bottom+m.level(m.nodes[0]),'delivery is above the current drive surface');
+  advance(m,9);advance(control,9);
+  assert(flow(m,'waste')>flow(m,'delivery')*3,'falling waste water funds the lift');
+  assert(m.state.peak>20000,'valve closure creates the delivery impulse');
+  assert(control.state.cycles===0&&flow(control,'delivery')===0,'closed drive cannot pump');
+ }
+});
 test('water hammer records a travelling pulse and a real air-vessel control on three heads',()=>{
  for(const sourceFill of [.8,.88,.96]){
   const bare=make('water-hammer',{sourceFill,airChamber:false}),cushioned=make('water-hammer',{sourceFill,airChamber:true}),open=make('water-hammer',{sourceFill,autoClose:false});
