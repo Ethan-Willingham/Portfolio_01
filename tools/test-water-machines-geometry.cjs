@@ -12,7 +12,7 @@ const valveSeats=new Uint8Array(10*10);
 for(let r=0;r<10;r++)for(let c=0;c<10;c++)if(!r||!c||r===9||c===9)wall[r*10+c]=1;
 let captures=0,last;
 const context={Set,Uint8Array,Float32Array,Math,airGeometryVersion:-1,airStaticGeometry:null,airHadBodies:false,
-  machineState:null,toyWave:null,toyDivers:null,toyFloatSlider:null,
+  machineState:null,toyWave:null,toyDivers:null,toyFloatSlider:null,toyDraftRuntime:null,
   wallsVersion:1,walls:wall,valveSeats,gridW:10,gridH:10,TILE:tile,JELLO_H:1,JELLO_TIMESCALE:1,jelloBodies:[],
   tileAt:(r,c)=>r<0||c<0||r>=10||c>=10||wall[r*10+c]||valveSeats[r*10+c]?{}:null,
   airModel:{enabled:true,width,height,cellSize:dx,geometry:(solid,room,vx,vy,faces)=>{

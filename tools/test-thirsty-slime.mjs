@@ -1,4 +1,4 @@
-// Contact absorption regression, with an owned Chrome for Testing process.
+// Contact uptake and pressure-driven discharge regression, with an owned Chrome for Testing process.
 // Screenshots and measured uptake states go to /tmp/thirsty-slime-review.
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
@@ -62,6 +62,8 @@ async function capture(name){
   assert.ok(report.finite,'the grown mesh stays finite');
   assert.ok(report.press.minJ>.25,'local material cells stay oriented');
   assert.equal(report.crossings,0,'the skin never crosses itself');
+  assert.equal(report.uptake.totalTaken,report.uptake.absorbedParcels+report.uptake.ejectedParcels,'all absorbed water is either stored or discharged');
+  assert.equal(report.uptake.jetCounts.reduce((sum,n)=>sum+n,0),report.uptake.ejectedParcels,'every emitted parcel belongs to one pore');
   assert.ok(report.penetration<1.5,'skin and interior stay outside the jaw faces: '+report.penetration);
   assert.equal(report.stats.boundary.present+report.stats.boundary.parked,report.stats.allocation,'every native slot keeps an owner');
   assert.ok(Math.abs(report.uptake.restArea-(report.uptake.dryArea+report.uptake.grownParcels*1.5625))<.0001,'rest area follows only confirmed absorbed water');
@@ -142,76 +144,94 @@ try {
     assert.deepEqual(await evaluate('__toy.thirsty().stats()'),paused,'pause holds uptake and rest growth');
     await evaluate('__toy.pause(false)');
     await until('!document.getElementById("toy").classList.contains("is-paused") && document.getElementById("toy-resume").hidden','resume controls before a new gesture');
-    const growingHandle=await evaluate(`(()=>{const p=__toy.thirsty().press.stats(),r=document.getElementById('toy-stage').getBoundingClientRect(),s=__toy.camera().scale;return {x:r.x+(p.center+p.q)*s,y:r.y+260*s,target:r.x+(p.center+60)*s};})()`);
-    if(viewport.mobile)await send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:growingHandle.x,y:growingHandle.y,id:1}]});
-    else await send('Input.dispatchMouseEvent',{type:'mousePressed',button:'left',buttons:1,clickCount:1,x:growingHandle.x,y:growingHandle.y});
-    assert.ok(await evaluate('__toy.thirsty().press.stats().held'),'growing handle is grabbed: '+JSON.stringify(growingHandle));
-    if(viewport.mobile)await send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:growingHandle.target,y:growingHandle.y,id:1}]});
-    else await send('Input.dispatchMouseEvent',{type:'mouseMoved',buttons:1,x:growingHandle.target,y:growingHandle.y});
-    await advance(2);const growing=await capture(prefix+'-growing-under-load');
-    assert.ok(growing.press.held,'the press remains held during growth');
-    assert.ok(growing.uptake.absorbedParcels>wet.uptake.absorbedParcels+300,'water uptake continues against the press');
-    assert.ok(growing.press.areaRatio>.93,'the constrained gel grows without losing area');
-    if(viewport.mobile)await send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
-    else await send('Input.dispatchMouseEvent',{type:'mouseReleased',button:'left',buttons:0,clickCount:1,x:growingHandle.target,y:growingHandle.y});
+    async function pointer(type,x=0,y=0){
+      if(viewport.mobile)await send('Input.dispatchTouchEvent',{type:{down:'touchStart',move:'touchMove',up:'touchEnd'}[type],touchPoints:type==='up'?[]:[{x,y,id:1}]});
+      else await send('Input.dispatchMouseEvent',{type:{down:'mousePressed',move:'mouseMoved',up:'mouseReleased'}[type],button:type==='move'?'none':'left',buttons:type==='up'?0:1,clickCount:type==='move'?0:1,x,y});
+    }
+    async function handle(side,target){return evaluate(`(()=>{const p=__toy.thirsty().press.stats(),r=document.getElementById('toy-stage').getBoundingClientRect(),s=__toy.camera().scale;return {x:r.x+(p.center+${side}*p.q)*s,y:r.y+260*s,target:r.x+(p.center+${side}*${target})*s};})()`);}
+    async function inventory(record=false){return evaluate(`(async()=>{
+      const L=__toy.liquid(),count=__toy.stats().allocation,bytes=count*36;
+      const read=L.device.createBuffer({size:bytes,usage:GPUBufferUsage.MAP_READ|GPUBufferUsage.COPY_DST}),enc=L.device.createCommandEncoder();
+      enc.copyBufferToBuffer(L.buf.pos,0,read,0,count*16);enc.copyBufferToBuffer(L.buf.flag,0,read,count*16,count*4);
+      enc.copyBufferToBuffer(L.toyNativeExtension.slotsBuffer,0,read,count*20,count*16);L.queue.submit([enc.finish()]);
+      await read.mapAsync(GPUMapMode.READ);const raw=read.getMappedRange(),pos=new Float32Array(raw,0,count*4),flags=new Uint32Array(raw,count*16,count),slots=new Uint32Array(raw,count*20,count*4);
+      let bound=0,flowing=0,reserve=0,released=0,upward=0,minY=400,maxSpeed=0;const ids=[];
+      for(let i=0;i<count;i++){const kind=slots[i*4];
+        if(!Number.isFinite(pos[i*4]+pos[i*4+1]+pos[i*4+2]+pos[i*4+3]))throw Error('Nonfinite native water');
+        if(kind===2){bound++;ids.push(i);if(flags[i]!==160)throw Error('Bound water became live');}
+        else if(kind===1){flowing++;if(flags[i]&160)throw Error('Released water remained frozen');
+          if(window.__testBoundIds?.has(i)){released++;if(pos[i*4+3]<-40)upward++;minY=Math.min(minY,pos[i*4+1]);maxSpeed=Math.max(maxSpeed,Math.hypot(pos[i*4+2],pos[i*4+3]));}}
+        else if(kind===0)reserve++;else throw Error('Unknown owner');
+      }
+      if(${record})window.__testBoundIds=new Set(ids);read.unmap();read.destroy();
+      return {bound,flowing,reserve,total:count,released,upward,minY,maxSpeed};
+    })()`);}
     await until('__toy.thirsty().stats().full','finite capacity',1200);await advance(.5);
     const full=await capture(prefix+'-full');assert.equal(full.uptake.absorbedParcels,full.uptake.capacityParcels);
     assert.ok(full.actualArea>dry.actualArea*14,'full slime reaches its much larger capacity');
-    await advance(1);assert.equal(await evaluate('__toy.thirsty().stats().absorbedParcels'),full.uptake.absorbedParcels,'full slime stops taking water');
+    assert.equal(full.uptake.ejectedParcels,0,'water stays stored without a compressive load');
     await evaluate('__toy.machinePrimary()');await advance(1.5);
-    const beforePress=await capture(prefix+'-before-press');
-    const handle=await evaluate(`(()=>{const p=__toy.thirsty().press.stats(),r=document.getElementById('toy-stage').getBoundingClientRect(),s=__toy.camera().scale;return {x:r.x+(p.center+p.q)*s,y:r.y+260*s,target:r.x+(p.center+65)*s};})()`);
-    if(viewport.mobile)await send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:handle.x,y:handle.y,id:1}]});
-    else await send('Input.dispatchMouseEvent',{type:'mousePressed',button:'left',buttons:1,clickCount:1,x:handle.x,y:handle.y});
+    const beforePress=await capture(prefix+'-before-press');await inventory(true);
+    const grip=await handle(1,115);await pointer('down',grip.x,grip.y);
     assert.ok(await evaluate('__toy.thirsty().press.stats().held'),'the actual handle starts the squeeze');
-    for(let k=1;k<=60;k++){
-      const x=handle.x+(handle.target-handle.x)*k/60,y=handle.y;
-      if(viewport.mobile)await send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x,y,id:1}]});
-      else await send('Input.dispatchMouseEvent',{type:'mouseMoved',buttons:1,x,y});
-      await delay(35);
-    }
-    await advance(.7);const squeezed=await capture(prefix+'-squeezed');
-    assert.ok(squeezed.press.q<beforePress.press.q-30,'the jaws close');
-    assert.ok(squeezed.bounds.top<beforePress.bounds.top-25,'compression produces upward bulging');
-    assert.ok(squeezed.press.q>squeezed.press.target+3,'gel load pushes back on the spring handle');
-    assert.ok(squeezed.press.areaRatio>.9,'squeezing preserves gel area');
-    assert.ok(squeezed.press.minJ>0,'material cells stay uninverted');
-    assert.equal(squeezed.uptake.absorbedParcels,full.uptake.absorbedParcels,'squeezing does not invent or lose bound water');
-    if(viewport.mobile)await send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
-    else await send('Input.dispatchMouseEvent',{type:'mouseReleased',button:'left',buttons:0,clickCount:1,x:handle.target,y:handle.y});
-    assert.equal(await evaluate('__toy.thirsty().press.stats().held'),false);
-    await advance(3);const released=await capture(prefix+'-released');
+    for(let k=1;k<=36;k++){await pointer('move',grip.x+(grip.target-grip.x)*k/36,grip.y);await delay(25);}
+    await advance(.6);const mild=await capture(prefix+'-mild-jets');
+    assert.ok(mild.uptake.ejectedParcels>100,'compressive contact releases stored native water');
+    assert.ok(mild.uptake.jetCounts.filter(n=>n>0).length>=2,'separate pores produce multiple eruptions');
+    assert.ok(mild.press.q>mild.press.target+2,'the gel still pushes back on the jaws');
+    const hardTarget=await handle(1,24);await pointer('move',hardTarget.target,hardTarget.y);
+    assert.ok(await evaluate('__toy.thirsty().press.stats().q>60'),'fast input pulls a spring without teleporting the jaw');
+    await advance(.8);const hard=await capture(prefix+'-hard-jets');
+    const flight=await inventory();console.log(prefix+'-native-flight',JSON.stringify(flight));
+    assert.ok(flight.released>100 && flight.upward>10,'previously bound parcels are live upward-moving native water');
+    assert.ok(flight.minY<beforePress.bounds.top-20,'the jets visibly rise above the unsqueezed slime');
+    assert.ok(hard.uptake.jetSpeed>mild.uptake.jetSpeed,'a harder squeeze makes faster jets');
+    await advance(2);const squeezed=await capture(prefix+'-squeezed');
+    assert.ok(squeezed.uptake.absorbedParcels<full.uptake.absorbedParcels-2500,'holding the press visibly empties the slime');
+    assert.ok(squeezed.actualArea<full.actualArea*.92,'the skin shrinks as its water leaves');
+    assert.ok(squeezed.press.areaRatio>.9,'the smaller wet mesh retains its updated material area');
+    assert.ok(squeezed.uptake.jetEnergy>0,'discharge carries kinetic energy');
+    await pointer('up',hardTarget.target,hardTarget.y);await advance(2);
+    const released=await capture(prefix+'-released');
     assert.ok(released.press.q>squeezed.press.q+30,'return springs reopen the jaws');
-    assert.ok(released.bounds.right-released.bounds.left>squeezed.bounds.right-squeezed.bounds.left+20,'the released gel spreads back out');
-    // Fast, full-stroke gestures on both handles exercise the contact limit.
-    for(const side of [-1,1]){
-      const grip=await evaluate(`(()=>{const p=__toy.thirsty().press.stats(),r=document.getElementById('toy-stage').getBoundingClientRect(),s=__toy.camera().scale;return {x:r.x+(p.center+${side}*p.q)*s,y:r.y+260*s,target:r.x+(p.center+${side}*p.min)*s};})()`);
-      if(viewport.mobile)await send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:grip.x,y:grip.y,id:1}]});
-      else await send('Input.dispatchMouseEvent',{type:'mousePressed',button:'left',buttons:1,clickCount:1,x:grip.x,y:grip.y});
-      if(viewport.mobile)await send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:grip.target,y:grip.y,id:1}]});
-      else await send('Input.dispatchMouseEvent',{type:'mouseMoved',buttons:1,x:grip.target,y:grip.y});
-      assert.ok(await evaluate('__toy.thirsty().press.stats().q>120'),'the handle pulls a spring instead of teleporting the jaws');
-      await advance(1.5);const hard=await capture(prefix+'-hard-'+side);
-      assert.ok(hard.press.areaRatio>.93,'hard squeezes retain material area');
-      await evaluate('__toy.pause(true)');await delay(150);
-      const heldPause=await evaluate('__toy.thirsty().press.stats()');
-      assert.equal(heldPause.held,false,'pausing cancels the held press');
-      await delay(200);assert.deepEqual(await evaluate('__toy.thirsty().press.stats()'),heldPause,'pause holds mechanical state');
-      if(viewport.mobile)await send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
-      else await send('Input.dispatchMouseEvent',{type:'mouseReleased',button:'left',buttons:0,clickCount:1,x:grip.target,y:grip.y});
-      await evaluate('__toy.pause(false)');await advance(2.5);
-      await capture(prefix+'-recover-'+side);
+    assert.ok(released.press.pressure<12,'unloading removes the pressure source');
+    const stopCount=released.uptake.ejectedParcels;await advance(.5);
+    assert.equal(await evaluate('__toy.thirsty().stats().ejectedParcels'),stopCount,'jets stop when the press unloads');
+    for(let axis=0;axis<2;axis++){
+      const waterImpulse=released.uptake.jetImpulses.filter((_,i)=>i%2===axis).reduce((sum,n)=>sum+n,0);
+      assert.ok(Math.abs(waterImpulse+released.press[axis?'recoilY':'recoilX'])<.001,'the gel receives the opposite measured jet impulse');
     }
-    const inventory=await evaluate(`(()=>{const s=__toy.liquid().toyNativeExtension.snapshot();let bound=0,flowing=0,reserve=0;
-      for(let i=0;i<s.count;i++){const kind=s.slots[i*4];if(kind===2){bound++;if(s.flags[i]!==160)throw Error('Bound water became live');}else if(kind===1)flowing++;else if(kind===0)reserve++;else throw Error('Unknown owner');}
-      return {bound,flowing,reserve,total:s.count};})()`);
-    assert.equal(inventory.bound,full.uptake.absorbedParcels,'unique bound native slots match absorption ledger');
-    assert.equal(inventory.bound+inventory.flowing+inventory.reserve,inventory.total);
+    // Exercise the other handle, and pause in the middle of an eruption.
+    const left=await handle(-1,24);await pointer('down',left.x,left.y);await pointer('move',left.target,left.y);
+    await advance(1.5);await capture(prefix+'-left-jets');
+    await evaluate('__toy.pause(true)');await delay(150);
+    const heldPause=await evaluate('__toy.thirsty().press.stats()'),waterPause=await evaluate('__toy.thirsty().stats()');
+    assert.equal(heldPause.held,false,'pausing cancels the held press');
+    await delay(200);assert.deepEqual(await evaluate('__toy.thirsty().press.stats()'),heldPause,'pause holds mechanical state');
+    assert.deepEqual(await evaluate('__toy.thirsty().stats()'),waterPause,'pause holds uptake and discharge');
+    const stored=await inventory();
+    assert.equal(stored.bound,waterPause.absorbedParcels,'actual stored slots match the net absorption ledger');
+    assert.equal(stored.bound+stored.flowing+stored.reserve,stored.total,'discharge preserves the resident inventory');
+    await pointer('up',left.target,left.y);await evaluate('__toy.pause(false)');await advance(2);
+    const refillStart=await evaluate('__toy.thirsty().stats().absorbedParcels');
+    await evaluate('__toy.machinePrimary()');await advance(4);
+    const refilled=await capture(prefix+'-refilled');
+    assert.ok(refilled.uptake.absorbedParcels>refillStart+300,'after release the slime drinks and grows again');
     await evaluate('document.getElementById("toy-instruments-open").click()');await delay(150);
     assert.ok(await evaluate('document.querySelector("#toy-panel-instruments > .toy-instrument-values").hidden && document.getElementById("toy-air-pressure-toggle").hidden'),'unused pressure readings are hidden');
-    await evaluate('__toy.pause(true);__toy.machine("thirsty-slime",{})');
+    await evaluate('document.querySelector("#toy-panel-instruments [data-close]").click()');
+    await evaluate('__toy.pause(true);__toy.machine("thirsty-slime",{tapEnabled:false})');
     await until('__toy.machineState()?.ready && __toy.thirsty()?.stats().absorbedParcels===0','restart clears uptake');
     assert.ok(Math.abs(await evaluate('__toy.thirsty().stats().restArea')-dry.uptake.dryArea)<.01,'restart restores dry material');
+    await evaluate('__toy.pause(false)');await advance(.5);
+    await until('!document.getElementById("toy").classList.contains("is-paused") && document.getElementById("toy-resume").hidden','dry press controls are available');
+    const empty=await handle(1,24);await pointer('down',empty.x,empty.y);
+    assert.ok(await evaluate('__toy.thirsty().press.stats().held'),'the dry comparison actually grabs the press');
+    await pointer('move',empty.target,empty.y);await advance(1);
+    const dryPress=await capture(prefix+'-dry-press');
+    assert.ok(dryPress.press.q<90,'the empty comparison physically closes the jaws');
+    assert.equal(dryPress.uptake.ejectedParcels,0,'squeezing a dry slime cannot invent water');
+    await pointer('up',empty.target,empty.y);
     await evaluate('__toy.pause(false);__toy.scene("falls")');
     await until('!!window.__toy && __toy.stats().scene==="falls"','ordinary scene after the press');
     assert.equal(await evaluate('__toy.thirsty()'),null,'changing scenes retires contact resources');
@@ -226,7 +246,7 @@ try {
 
   }
   assert.deepEqual(errors,[],'no JavaScript or GPU errors');
-  console.log('PASS: dry control, uptake, 16x swelling, conserved inventory, mouse/touch squeeze, volume retention, jaw resistance, uninverted cells, uncrossed skin, contact clearance, fast gestures, release, pause, restart and scene cleanup.');
+  console.log('PASS: dry and off-stream controls, 16x swelling, conserved native discharge, multiple rising jets, load-dependent speed, shrinking, recoil, both handles, release, refill, pause, restart and scene cleanup with mouse and emulated touch.');
 } finally {
   fs.writeFileSync(path.join(output,'measurements.json'),JSON.stringify({reports,errors},null,2));await cleanup();
 }

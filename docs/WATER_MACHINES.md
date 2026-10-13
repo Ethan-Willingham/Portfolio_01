@@ -1238,49 +1238,58 @@ Run `node tools/test-water-sauna.cjs` for that interaction check.
 
 ## Thirsty slime
 
-Toy v5.166 lets the slime grow to sixteen times its dry area. Water touching
-its skin increases its rest area and mass. Drag either gold handle inward to
-close the linked jaws; release it to let the return springs reopen them.
-The larger slime bulges upward under load and spreads out again after release.
-The source still toggles water, and Water off starts with a dry slime.
+Toy v5.179 lets the slime drink up to sixteen times its dry area, then expel
+that water when squeezed. Drag either gold handle inward. Compressive contact
+with the jaws raises pore pressure, and several exposed pores send water jets
+outward. The slime shrinks as its stored water leaves. Release the press to
+unload it and let it drink again. The source toggles the falling supply;
+Water off starts with a dry slime.
 
 The 127-node mesh uses central nonlinear elastic springs and local signed
 triangle-area constraints. Four XPBD iterations run inside every existing
-microstep, with terrain and jaw contact interleaved. The jaws share a finite
-mass coordinate through their symmetric linkage. A compliant pointer spring
-pulls that coordinate, and gel contact applies the opposite generalized
-reaction. The pointer never assigns a jaw or skin position. Contact friction,
-internal damping and the return springs control sliding and ring-down.
-The material flecks deform with their triangles; opening Instruments reveals
-the actual spring mesh. This companion belongs only to Thirsty slime.
+microstep, with terrain and jaw contact interleaved. The linked jaws have
+finite mass, compliant pointer and return springs, and reciprocal gel contact.
+The pointer never assigns a jaw or skin position. Contact friction and internal
+damping control sliding and rebound. Material flecks follow their triangles;
+Instruments reveals the actual spring mesh.
 
-The contact pass runs after each native water substep. A parcel inside the
-boundary ring or within six world pixels of it transfers to bound ownership
-(state 2), with frozen native guards. Each parcel adds 1.5625 square pixels to
-the elastic rest area. Bound slots remain allocated and cannot be admitted at
-the inlet or recycled by the collector. This scene uses 32,768 resident slots
-on desktop and mobile, including enough reserve for its larger capacity and
-runoff. Other boundary scenes retain their existing allocation. Flowing, bound
-and reserve counts sum to the original resident inventory.
+Eight pores follow fixed material vertices and their current surface normals.
+Pores covered by a jaw or terrain cannot discharge. Compressive jaw traction
+during an active squeeze, averaged over the loaded height, supplies pressure.
+Bumping an idle jaw does not open the pores. An orifice approximation
+sets exit speed from pressure above a small opening threshold and the water's
+mass per area. Each open pore has a 3.2-pixel width and a 0.78 discharge
+coefficient. The numerical exit-speed limit is 350 pixels per native second.
+The same native liquid solver carries the jets after exit, including gravity,
+collisions, breakup and runoff. No separate decorative spray is drawn.
 
-Springs, spacing, triangle rest areas and material highlights follow growth.
-The visible skin moves through the elastic and contact solve. A readback can
-precede the next host physics frame; grownParcels records the cohort applied
-to the rest shape. Both jaws are moving native-water obstacles. The wider
-slime uses uncapped guest bounds and velocities in the water simulation clock.
+The contact pass transfers a native parcel that reaches the skin from flowing
+ownership (state 1) into absorbed ownership (state 2). A serial discharge pass
+releases only those stored slots, preserving their IDs and the fixed 32,768-slot
+inventory. It decrements the stored count and increments the discharged count.
+Cumulative uptake equals stored plus discharged parcels. A released parcel
+stays live but has a 0.65-native-second reabsorption delay; positive pore
+pressure also prevents immediate uptake. Falling water can be absorbed again
+after unloading. Other scenes keep their existing allocation and solvers.
 
-Absorbed water stays bound during a squeeze. This is a nearly incompressible
-elastic gel, not a porous sponge model. Uptake, water drag and swelling work
-remain approximate; native water does not apply a reciprocal force to the
-jaws. The mechanical jaw/gel reaction is coupled, but the complete water/gel
-system does not claim calibrated material properties or closed energy and
-momentum. The shared Sluice engines are unchanged.
+Each currently stored parcel adds 1.5625 square pixels to elastic rest area.
+Springs, spacing, triangle areas and material highlights follow both growth
+and shrinkage. GPU readback records the cohort applied to the host mesh as
+grownParcels. Per-pore jet impulses return as opposite impulses to normalized
+local material patches on that readback. Both jaws remain moving obstacles
+for native water, and the skin uses its full grown bounds.
 
-Run `node tools/test-thirsty-slime.mjs` for the owned Chrome for Testing check.
-It uses actual desktop mouse and emulated landscape touch gestures and records
-screenshots and measurements in `/tmp/thirsty-slime-review`. Checks include
-dry and off-stream controls, visible growth, finite saturation, unique bound
-ownership, jaw resistance, upward bulging, area retention, release, pause,
+This is an approximate porous-gel toy. Pore pressure is inferred from contact
+traction rather than a resolved internal pore-fluid field. Readback delays the
+returned jet impulse, and ordinary water drag and swelling work remain
+approximate. The complete system does not claim calibrated material properties
+or a closed energy budget. The shared Sluice engines are unchanged.
+
+Run `node tools/test-thirsty-slime.mjs` with owned Chrome for Testing. The test
+uses desktop mouse and emulated landscape touch, with screenshots and measured
+states in `/tmp/thirsty-slime-review`. It checks dry and off-stream controls,
+full growth, multiple native jets, faster jets under greater load, decreasing
+stored water and skin area, exact ownership, recoil, release, refill, pause,
 restart and scene cleanup. These checks do not establish real-device performance.
 
 ## Gold sluice box

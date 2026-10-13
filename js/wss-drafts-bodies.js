@@ -4,7 +4,7 @@
   var entries=[
     {id:'water-balloon-fight',capability:'Water slimes',title:'Water-balloon fight',cue:'Draft. Fling the balloon at the slimes, then pop it.',status:'PARTLY',draft:true,world:{w:720,h:400},pool:false},
     {id:'squid-jet',capability:'Water slimes',title:'Squid jet',cue:'Draft. Squeeze the slit skin and watch the released water.',status:'PARTLY',draft:true,world:{w:720,h:400},pool:false},
-    {id:'thirsty-slime',capability:'Water slimes',title:'Thirsty slime',cue:'Let it drink. Drag the gold handles inward to squeeze, then release.',status:'WORKS',draft:true,world:{w:720,h:400},pool:true},
+    {id:'thirsty-slime',capability:'Water slimes',title:'Thirsty slime',cue:'Let it drink. Drag either gold handle inward to make water erupt.',status:'WORKS',draft:true,world:{w:720,h:400},pool:true},
     {id:'floating-block',capability:'Floating things',title:'Floating block',cue:'Draft. Grab the stiff block and drop it into water.',status:'PARTLY',draft:true,world:{w:720,h:400},pool:false},
     {id:'lorenz-wheel',capability:'Floating things',title:'Lorenz waterwheel',cue:'Draft. A declared motor turns this rotor; water drive is unfinished.',status:'PARTLY',draft:true,world:{w:720,h:400},pool:true},
     {id:'shishi-odoshi',capability:'Floating things',title:'Shishi-odoshi',cue:'Draft. Water pours onto a hinged trough; repeating cycles are unfinished.',status:'PARTLY',draft:true,world:{w:720,h:400},pool:true},
@@ -68,8 +68,8 @@
       d.setups=[{id:'tap-on',label:'Water running',options:{tapEnabled:true}},{id:'tap-off',label:'Water off',options:{tapEnabled:false}}];
       d.boundaries.drain={x:120,y:368,width:480,height:8};d.boundaries.boundStorage=true;d.boundaries.reserveCapacity=32768;
       d.thirsty=true;d.quietApparatus=true;d.caption=entry.cue;d.readingLabel='Drinking slime';
-      d.boundaryNote='Contact transfers native water into the slime’s bound storage. Each absorbed parcel adds 1.5625 square pixels to its elastic rest area, up to sixteen times its dry area. The linked jaws have finite mass and spring handles. Local elastic cells resist compression and transfer contact forces back to the jaws. Bound slots cannot return to the tap. Unabsorbed runoff recirculates through the tray.';
-      d.energyBudgetStatus='This is a toy absorption model. The tap supplies lifting work. Elastic swelling, water drag and momentum exchange are approximate; no calibrated hydrogel or closed energy claim.';
+      d.boundaryNote='Contact transfers native water into the slime’s bound storage. Each absorbed parcel adds 1.5625 square pixels to its elastic rest area, up to sixteen times its dry area. The linked jaws have finite mass and spring handles. Compressive jaw traction drives jets through exposed skin pores. Discharge releases stored native parcels, shrinks the gel and returns the jet impulse to its material. Unabsorbed runoff recirculates through the tray.';
+      d.energyBudgetStatus='This is a toy absorption model. The tap supplies lifting work. Pore pressure, elastic swelling and water drag are approximate; jet recoil returns through GPU readback. No calibrated hydrogel or closed energy claim.';
     }else if(id==='floating-block'){
       d.vessels=[{id:'basin',label:'Water',rect:{x:112,y:128,width:496,height:256},sealed:false}];
       d.initial=[{kind:'rect',rect:{x:120,y:264,width:480,height:104}}];d.slimes=[{x:352,y:224,radius:24,shape:'cube'}];

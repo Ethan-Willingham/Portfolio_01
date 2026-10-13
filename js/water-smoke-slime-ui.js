@@ -535,7 +535,7 @@
         'The pressure sample is current. Open Instruments for the calculation status.';
       if(liveMachine && (liveMachine.definition.airContact || liveMachine.definition.snorkel)){pressureLabel=fatal?'Pressure stopped':state.paused?'Paused':'Reduced gas';pressureMessage=liveMachine.definition.readingLabel || liveMachine.definition.caption;}
       if(cave){pressureLabel=state.paused?'Paused':caveView?caveView.label:'Starting';pressureMessage='The airflow indicator compares pressure for you. Close the cave mouth or compare steady pressure in Instruments.';}
-      if(thirsty){pressureLabel=state.paused?'Paused':sample.thirsty && sample.thirsty.full?'Full':sample.thirsty && sample.thirsty.drinking?'Drinking':'Thirsty';pressureMessage='Let it drink. Drag either gold handle inward to squeeze. Release to let it spring back.';}
+      if(thirsty){pressureLabel=state.paused?'Paused':sample.thirsty && sample.thirsty.ejecting?'Spraying':sample.thirsty && sample.thirsty.full?'Full':sample.thirsty && sample.thirsty.drinking?'Drinking':'Thirsty';pressureMessage='Drag either gold handle inward to send water jets out of the skin. Release to let it drink again.';}
       if(cannon){pressureLabel=state.paused?'Paused':'Live';pressureMessage=wind?'A steady fan drives the smoke past the supported slime.':'The smoke carries the push. Instruments explains the flat section.';}
       if(balloon){pressureLabel=state.paused?'Paused':'Live';pressureMessage='Drag, fling and pop. Instruments explains the elastic skin.';}
       if(slip){pressureLabel=state.paused?'Paused':state.scene==='material-oil-jar'||sluice?'Live':'Prototype';pressureMessage='Instruments has the matched-density comparison and model limits.';}

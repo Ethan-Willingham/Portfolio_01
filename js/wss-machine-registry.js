@@ -540,7 +540,7 @@
     "id": "thirsty-slime",
     "capability": "Water slimes",
     "title": "Thirsty slime",
-    "cue": "Let it drink. Drag the gold handles inward to squeeze, then release.",
+    "cue": "Let it drink. Drag either gold handle inward to make water erupt.",
     "status": "WORKS",
     "draft": true,
     "world": {

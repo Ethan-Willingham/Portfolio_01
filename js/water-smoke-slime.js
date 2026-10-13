@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.178.1'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.179'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -14763,7 +14763,7 @@
       ownThirsty.press=window.WSSSlimePress.create(jelloBodies[0],{terrain:function(){
         var b=jelloBodies[0],h=jelloStepH>0?jelloStepH:JELLO_H;
         for(var i=0;i<b.n;i++){jelloCollidePointWorld(b,i,h);jelloClampWorld(b,i);}
-      }});
+      },blocked:jelloWorldSolidAt});
       liquidWGPU.setToyMembrane(ownThirsty);
     }
     if(definition.steam){
@@ -15374,9 +15374,9 @@
       if(toyThirsty){
         var drink=toyThirsty.stats(),tray=definition.vessels[0].rect;
         c.save();c.textAlign='center';c.font=(14/fitScale)+'px \"Segoe UI\", sans-serif';
-        c.fillText('Let it drink. Drag the gold handles inward to squeeze.',tray.x+tray.width*.5,24);
+        c.fillText('Drag either gold handle inward to make water erupt.',tray.x+tray.width*.5,24);
         c.font=(16/fitScale)+'px \"Commit Mono\", monospace';
-        c.fillText((drink.full?'Full':(drink.drinking?'Drinking':'Thirsty')+', '+Math.round(drink.fraction*100)+'% full')+'  /  '+(drink.restArea/drink.dryArea).toFixed(1)+'x area',tray.x+tray.width*.5,48);
+        c.fillText((drink.ejecting?'Spraying':drink.full?'Full':drink.drinking?'Drinking':'Thirsty')+', '+Math.round(drink.fraction*100)+'% full  /  '+(drink.restArea/drink.dryArea).toFixed(1)+'x area',tray.x+tray.width*.5,48);
         c.lineWidth=3/fitScale;c.strokeStyle=palette.getPropertyValue('--rule').trim();
         c.beginPath();c.moveTo(tray.x+88,60);c.lineTo(tray.x+tray.width-88,60);c.stroke();
         c.strokeStyle=accent;c.beginPath();c.moveTo(tray.x+88,60);c.lineTo(tray.x+88+(tray.width-176)*drink.fraction,60);c.stroke();c.restore();

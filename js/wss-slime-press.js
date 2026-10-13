@@ -10,6 +10,8 @@
     var signedArea=new Float64Array(b.triN),previousArea=-1,pointMass=1;
     var lastX=new Float64Array(b.n),lastY=new Float64Array(b.n);
     var dryArea=b.restArea,gripLambda=0,returnLambda=0;
+    var pressure=0,contactTop=bottom,contactBottom=top,axialReaction=0;
+    var recoilX=0,recoilY=0;
     function clamp(v,a,c){return Math.max(a,Math.min(c,v));}
     function material(){
       if(previousArea===b.restArea)return;
@@ -23,7 +25,7 @@
       dt=h/timescale;material();lastX.set(b.ox);lastY.set(b.oy);
       oldQ=q;q+=velocity*dt;
       edgeLambda.fill(0);areaLambda.fill(0);gripLambda=returnLambda=0;
-      contacts=0;reaction=0;steps++;
+      contacts=0;reaction=0;axialReaction=0;contactTop=bottom;contactBottom=top;steps++;
     }
     function spring(rest,stiffness,lambda){
       var alpha=1/(stiffness*dt*dt),dl=(-(q-rest)-alpha*lambda)/(invJaw+alpha);
@@ -85,6 +87,7 @@
         var friction=clamp(-slip/(inv+invJaw*jt*jt),-.28*dl,.28*dl);
         b.px[i]+=inv*tx*friction;b.py[i]+=inv*ty*friction;q+=invJaw*jt*friction;
         reaction+=Math.abs(dl);contacts++;
+        if(nx*s<0){axialReaction+=dl;contactTop=Math.min(contactTop,y);contactBottom=Math.max(contactBottom,y);}
       }
     }
     function solve(){
@@ -101,6 +104,34 @@
       collide();q=clamp(q,min,home+4);
       velocity=(q-oldQ)/dt*Math.exp(-(held?10:2.6)*dt);
       velocity=clamp(velocity,-300,300);
+      // Compressive jaw traction supplies pore pressure. An unloaded jaw has
+      // no source of pressure, even when the pointer is held far inward.
+      var load=held && target<q ? axialReaction/(dt*dt*2*Math.max(24,contactBottom-contactTop)) : 0;
+      pressure+=(load-pressure)*(1-Math.exp(-dt/.045));
+    }
+    function outlets(){
+      var vents=[];
+      for(var k=0;k<8;k++){
+        var r=Math.floor((k+.375)*b.ringN/8),i=b.ring[r],a=b.ring[(r+b.ringN-1)%b.ringN],j=b.ring[(r+1)%b.ringN];
+        var dx=b.px[j]-b.px[a],dy=b.py[j]-b.py[a],len=Math.max(1e-6,Math.hypot(dx,dy));
+        var nx=dy/len,ny=-dx/len,x=b.px[i],y=b.py[i];
+        if(nx*(x-b.cx)+ny*(y-b.cy)<0){nx=-nx;ny=-ny;}
+        var ex=x+nx*9,ey=y+ny*9,open=ny<.65 && ey>18 && ey<364;
+        for(var s=-1;s<=1;s+=2)if(Math.abs(ex-center-s*q)<half+5 && ey>top-5 && ey<bottom+5)open=false;
+        if(options.blocked && (options.blocked(ex,ey)||options.blocked(ex+nx*8,ey+ny*8)))open=false;
+        vents.push({node:i,x:x,y:y,exitX:ex,exitY:ey,nx:nx,ny:ny,open:open,
+          vx:(b.px[i]-b.ox[i])/dt,vy:(b.py[i]-b.oy[i])/dt});
+      }
+      return vents;
+    }
+    function recoil(k,impulseX,impulseY){
+      // Return the measured jet impulse to a local material patch. Normalized
+      // weights preserve the net impulse without overloading a single vertex.
+      material();var i=b.ring[Math.floor((k+.375)*b.ringN/8)],weights=new Float64Array(b.n),sum=0;
+      var radius=Math.max(12,b.spacing*2.5);
+      for(var j=0;j<b.n;j++){var d=Math.hypot(b.px[j]-b.px[i],b.py[j]-b.py[i]);weights[j]=Math.max(0,1-d/radius);sum+=weights[j];}
+      for(j=0;j<b.n;j++){var w=weights[j]/sum*dt/pointMass;b.ox[j]-=impulseX*w;b.oy[j]-=impulseY*w;}
+      recoilX+=impulseX;recoilY+=impulseY;b.sleeping=false;
     }
     function hit(x,y,scale){
       var pad=Math.max(15,22/scale);
@@ -126,6 +157,7 @@
       for(var s=0;s<b.springN;s++)maxStrain=Math.max(maxStrain,Math.abs(Math.hypot(b.px[b.sB[s]]-b.px[b.sA[s]],b.py[b.sB[s]]-b.py[b.sA[s]])/b.sRest[s]-1));
       return {q:q,home:home,min:min,center:center,half:half,top:top,bottom:bottom,gap:2*(q-half),velocity:velocity,
         held:held,target:target,mass:mass,gelMass:pointMass*b.n,contacts:contacts,reaction:reaction/(dt*dt),
+        pressure:pressure,recoilX:recoilX,recoilY:recoilY,
         area:Math.abs(area)*.5,areaRatio:Math.abs(area)*.5/b.restArea,minJ:minJ,maxStrain:maxStrain,steps:steps,growth:b.restArea/dryArea};
     }
     function draw(c,colors,scale,details){
@@ -165,6 +197,9 @@
         c.save();c.transform(f00,f10,f01,f11,(b.px[i]+b.px[j]+b.px[k])/3,(b.py[i]+b.py[j]+b.py[k])/3);
         c.beginPath();c.ellipse(0,0,size,size*.7,0,0,Math.PI*2);c.fill();c.restore();
       }
+      c.globalAlpha=pressure>12?.9:.45;
+      outlets().forEach(function(v){if(!v.open)return;c.save();c.translate(v.x,v.y);c.rotate(Math.atan2(v.ny,v.nx));
+        c.fillStyle=colors.rule;c.beginPath();c.ellipse(0,0,1.2,pressure>12?3.2:1.8,0,0,Math.PI*2);c.fill();c.restore();});
       if(details){
         c.globalAlpha=.2;c.strokeStyle=colors.text;c.lineWidth=.7/scale;c.beginPath();
         for(var s=0;s<b.springN;s++){c.moveTo(b.px[b.sA[s]],b.py[b.sA[s]]);c.lineTo(b.px[b.sB[s]],b.py[b.sB[s]]);}c.stroke();
@@ -173,7 +208,7 @@
     }
     material();
     return {body:b,begin:begin,solve:solve,finish:finish,grab:grab,move:move,release:release,hit:hit,
-      guests:guests,stats:stats,draw:draw,wake:function(){b.sleeping=false;b.sleepFrames=0;}};
+      guests:guests,stats:stats,draw:draw,outlets:outlets,recoil:recoil,pressure:function(){return pressure;},wake:function(){b.sleeping=false;b.sleepFrames=0;}};
   }
   root.WSSSlimePress={create:create};
 })(typeof window!=='undefined'?window:globalThis);
