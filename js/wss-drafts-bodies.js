@@ -5,8 +5,8 @@
     {id:'water-balloon-fight',capability:'Water slimes',title:'Water-balloon fight',cue:'Draft. Fling the balloon at the slimes, then pop it.',status:'PARTLY',draft:true,world:{w:720,h:400},pool:false},
     {id:'squid-jet',capability:'Water slimes',title:'Squid jet',cue:'Draft. Squeeze the slit skin and watch the released water.',status:'PARTLY',draft:true,world:{w:720,h:400},pool:false},
     {id:'thirsty-slime',capability:'Water slimes',title:'Thirsty slime',cue:'Let it drink. Drag either gold handle inward to make water erupt.',status:'WORKS',draft:true,world:{w:720,h:400},pool:true},
-    {id:'floating-block',capability:'Floating things',title:'Floating block',cue:'Draft. Grab the stiff block and drop it into water.',status:'PARTLY',draft:true,world:{w:720,h:400},pool:false},
-    {id:'lorenz-wheel',capability:'Floating things',title:'Lorenz waterwheel',cue:'Draft. A declared motor turns this rotor; water drive is unfinished.',status:'PARTLY',draft:true,world:{w:720,h:400},pool:true},
+    {id:'floating-block',capability:'Floating things',title:'Floating block',cue:'Push or drop the light block into water. Compare the dense block, which sinks.',status:'WORKS',draft:true,world:{w:720,h:400},pool:false},
+    {id:'lorenz-wheel',capability:'Floating things',title:'Leaky-cup waterwheel',cue:'Water loads the hanging cups and turns the unpowered wheel.',status:'WORKS',draft:true,world:{w:720,h:400},pool:true},
     {id:'shishi-odoshi',capability:'Floating things',title:'Shishi-odoshi',cue:'Draft. Water pours onto a hinged trough; repeating cycles are unfinished.',status:'PARTLY',draft:true,world:{w:720,h:400},pool:true},
     {id:'lift-lock',capability:'Floating things',title:'Peterborough lift lock',cue:'Draft. Open the link between the tanks and watch the guided carriers.',status:'PARTLY',draft:true,world:{w:720,h:400},pool:false},
     {id:'ballast-railway',capability:'Floating things',title:'Water-ballast cliff railway',cue:'Draft. Carriers slide on rails; ballast and cable coupling are unfinished.',status:'PARTLY',draft:true,world:{w:720,h:400},pool:true}
@@ -49,6 +49,8 @@
     body.sleeping=false;body.sleepFrames=0;return true;
   }
   function draft(world,options,id){
+    if(id==='lorenz-wheel' && root.WSSLorenzWheel)return root.WSSLorenzWheel.make(world,options);
+    if(id==='floating-block' && root.WSSFloatingBlock)return root.WSSFloatingBlock.make(world,options);
     if(world.w!==720||world.h!==400||(world.tile||8)!==8)throw Error('These drafts need the ordinary toy box.');
     var entry=entries.find(function(e){return e.id===id;}),basin={x:112,y:304,width:496,height:80};
     var d={name:id,title:entry.title,seed:options&&options.seed||17,draft:true,setup:'draft',setups:[],action:'Close tap',primary:{kind:'tap'},

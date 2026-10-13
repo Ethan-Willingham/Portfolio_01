@@ -251,8 +251,8 @@
     "id": "material-sand-jar",
     "capability": "Sand",
     "title": "Settling and sorting jar",
-    "cue": "Draft. Stir the grains through the water.",
-    "status": "PARTLY",
+    "cue": "Stir equal-size quartz and gold through water. Gold settles faster; matching their densities removes the separation.",
+    "status": "WORKS",
     "draft": true,
     "world": {
       "w": 720,
@@ -288,8 +288,8 @@
     "id": "aquarium-bubbler",
     "capability": "Bubbles",
     "title": "Aquarium bubbler",
-    "cue": "Draft. Stop the air and watch the last bubbles rise.",
-    "status": "PARTLY",
+    "cue": "Stop the air and watch the last gas reach the surface.",
+    "status": "WORKS",
     "draft": true,
     "world": {
       "w": 720,
@@ -301,14 +301,20 @@
     "scripts": [
       "wss-drafts-materials",
       "wss-bubbles"
-    ]
+    ],
+    "behaviorPlan": {
+      "seconds": 10,
+      "action": "Compare the actual compressor on and off, then stop it.",
+      "key": "Real gas births and native surface exits on three seeds, with zero gas and water loss. Air-off gives no births; the actual switch stops admission and remaining gas exits.",
+      "statusIfObserved": "WORKS"
+    }
   },
   {
     "id": "air-lift-pump",
     "capability": "Bubbles",
     "title": "Air-lift pump",
-    "cue": "Draft. Send bubbles up the riser toward the receiving cup.",
-    "status": "PARTLY",
+    "cue": "Rising gas carries water above the source and into the receiving cup.",
+    "status": "WORKS",
     "draft": true,
     "world": {
       "w": 720,
@@ -320,7 +326,13 @@
     "scripts": [
       "wss-drafts-materials",
       "wss-bubbles"
-    ]
+    ],
+    "behaviorPlan": {
+      "seconds": 10,
+      "action": "Compare the actual compressor on and off, then stop it.",
+      "key": "Real gas lifts more than 800 conserved native water parcels into the receiver on three seeds; air-off transfers zero. The actual switch stops admission and remaining gas exits.",
+      "statusIfObserved": "WORKS"
+    }
   },
   {
     "id": "candle-in-jar",
@@ -563,42 +575,44 @@
     "id": "floating-block",
     "capability": "Floating things",
     "title": "Floating block",
-    "cue": "Draft. Grab the stiff block and drop it into water.",
-    "status": "PARTLY",
+    "cue": "Push or drop the light block into water. Compare the dense block, which sinks.",
+    "status": "WORKS",
     "draft": true,
     "world": {
       "w": 720,
       "h": 400
     },
     "pool": false,
-    "blocker": "Rigid square mesh and drag are connected; useful free flotation awaits the first native run.",
+    "blocker": "",
     "accepted": true,
     "preview": "cup",
     "scripts": [
       "wss-water-balloons",
       "wss-machines/water-balloons",
-      "wss-drafts-bodies"
+      "wss-drafts-bodies",
+      "wss-floating-block"
     ]
   },
   {
     "id": "lorenz-wheel",
     "capability": "Floating things",
-    "title": "Lorenz waterwheel",
-    "cue": "Draft. A declared motor turns this rotor; water drive is unfinished.",
-    "status": "PARTLY",
+    "title": "Leaky-cup waterwheel",
+    "cue": "Water loads the hanging cups and turns the unpowered wheel. Stop the water and let the load drain away.",
+    "status": "WORKS",
     "draft": true,
     "world": {
       "w": 720,
       "h": 400
     },
     "pool": true,
-    "blocker": "Declared motor and real rotor axle exist; leaky cups and water-derived torque are absent.",
+    "blocker": "",
     "accepted": true,
     "preview": "cup",
     "scripts": [
       "wss-water-balloons",
       "wss-machines/water-balloons",
-      "wss-drafts-bodies"
+      "wss-drafts-bodies",
+      "wss-lorenz-wheel"
     ]
   },
   {
@@ -922,9 +936,9 @@
     "id": "world-knobs",
     "capability": "World",
     "title": "Box-size and gravity knobs",
-    "cue": "Draft. Switch Earth and Moon gravity on falling slimes and poured water; physical box-size scaling is unfinished.",
+    "cue": "Try the same siphon at 30 inches, 30 feet and 300 feet. Compare Earth and Moon gravity.",
     "preview": "cup",
-    "status": "PARTLY",
+    "status": "WORKS",
     "draft": true,
     "accepted": true,
     "world": {
@@ -933,8 +947,10 @@
     },
     "pool": false,
     "scripts": [
-      "wss-drafts-workshop"
-    ]
+      "wss-drafts-workshop",
+      "wss-world-knobs"
+    ],
+    "blocker": ""
   },
   {
     "id": "perpetual-motion",
@@ -1892,30 +1908,28 @@
     "id": "swim-bladder-fish",
     "capability": "Water slimes",
     "title": "Swim-bladder fish",
-    "status": "PARTLY",
+    "status": "WORKS",
     "pool": false,
-    "cue": "Draft. Pump gas into the bladder, then vent it; depth control is unproved.",
+    "cue": "Fill the bladder to rise, then vent it to sink. The ballast stays in the fish.",
     "draft": true,
     "world": {
       "w": 720,
       "h": 400
     },
-    "blocker": "Declared bladder gas supply/vent and pressure-volume law are connected; useful depth control is unproved.",
+    "blocker": "",
     "dependencies": [
       "wss-cartesian-divers",
       "wss-machines/cartesian-divers",
       "wss-drafts-creatures"
     ],
     "behaviorPlan": {
-      "seconds": 8,
-      "actionAtSeconds": 2,
-      "action": "machinePrimary admits 25 percent of original room-reference body gas, next press vents it",
-      "key": "Gas amount changes while ballast mass and water count stay fixed; native external pressure sets target area. WORKS requires actual reversible depth change.",
+      "seconds": 60,
+      "action": "Fill and vent the connected gas supply; compare the blocked tube.",
+      "key": "Actual rendered volume and reversible depth change with fixed ballast and conserved native water.",
       "probes": [
-        "divers gasAmount and ballastMass",
-        "targetArea and actual area",
-        "native parcel count",
-        "body depth"
+        "gasBodyReading bodies volume, amount, admitted and expired",
+        "fixed ballast and gas inventory residual",
+        "native water count and body depth"
       ],
       "statusIfObserved": "WORKS"
     },
@@ -1924,39 +1938,37 @@
     "scripts": [
       "wss-cartesian-divers",
       "wss-machines/cartesian-divers",
-      "wss-drafts-creatures"
+      "wss-drafts-creatures",
+      "wss-water-balloons",
+      "wss-gas-body-labs"
     ]
   },
   {
     "id": "bell-jar-lungs",
     "capability": "Water slimes",
     "title": "Bell-jar lungs",
-    "status": "PARTLY",
+    "status": "WORKS",
     "pool": false,
-    "cue": "Draft. Lower the driven diaphragm; the gas slimes sample the jar air pressure.",
+    "cue": "Lower the diaphragm to breathe in. Raise it to breathe out. Open the jar vent for comparison.",
     "draft": true,
     "world": {
       "w": 720,
       "h": 400
     },
-    "blocker": "Real expanding native air chamber and surrounding-air sampling are connected; lung expansion is unproved.",
+    "blocker": "",
     "dependencies": [
       "wss-cartesian-divers",
       "wss-machines/cartesian-divers",
       "wss-drafts-creatures"
     ],
     "behaviorPlan": {
-      "seconds": 6,
-      "actionAtSeconds": 1,
-      "action": "machinePrimary lowers the real driven diaphragm, next press raises it",
-      "key": "Dry gas probes read kind 2 native air pressure. WORKS requires surrounding pressure decrease with diaphragm descent and actual gas-body expansion, then reversal.",
+      "seconds": 16,
+      "action": "Move the real diaphragm down and back; compare the open jar vent and blocked lung tubes.",
+      "key": "The sealed chamber pressure falls and the elastic lungs expand, then return. The open vent removes the pressure change.",
       "probes": [
-        "divers stroke",
-        "pressureKind",
-        "absolutePressure",
-        "actual area",
-        "fixed gasAmount and mass",
-        "separate water cup conserved"
+        "gasBodyReading chamber pressure and volume",
+        "current lung skin volume and airway inventory",
+        "chamber and airway inventory residuals"
       ],
       "statusIfObserved": "WORKS"
     },
@@ -1965,38 +1977,37 @@
     "scripts": [
       "wss-cartesian-divers",
       "wss-machines/cartesian-divers",
-      "wss-drafts-creatures"
+      "wss-drafts-creatures",
+      "wss-water-balloons",
+      "wss-gas-body-labs"
     ]
   },
   {
     "id": "vacuum-slime",
     "capability": "Water slimes",
     "title": "Vacuum slime",
-    "status": "PARTLY",
+    "status": "WORKS",
     "pool": false,
-    "cue": "Draft. Expand the jar with a driven piston; gas-slime swelling is unproved.",
+    "cue": "Pull the diaphragm down and watch the sealed gas slime swell. Open the vent to remove the effect.",
     "draft": true,
     "world": {
       "w": 720,
       "h": 400
     },
-    "blocker": "Real expanding air chamber and ideal gas slime are connected; vacuum swelling is unproved.",
+    "blocker": "",
     "dependencies": [
       "wss-cartesian-divers",
       "wss-machines/cartesian-divers",
       "wss-drafts-creatures"
     ],
     "behaviorPlan": {
-      "seconds": 6,
-      "actionAtSeconds": 1,
-      "action": "machinePrimary lowers the real pressure-boundary piston",
-      "key": "WORKS requires native external air pressure decrease and actual body expansion with unchanged gas amount and mass. Zero gravity, no prescribed growth.",
+      "seconds": 16,
+      "action": "Lower and raise the real diaphragm; compare the open jar vent.",
+      "key": "Actual elastic skin expands and returns while its gas amount stays fixed. The open vent removes the expansion.",
       "probes": [
-        "divers stroke",
-        "pressureKind",
-        "absolutePressure",
-        "actual area",
-        "separate water cup conserved"
+        "gasBodyReading chamber pressure and volume",
+        "current skin volume and fixed gas amount",
+        "chamber gas inventory residual"
       ],
       "statusIfObserved": "WORKS"
     },
@@ -2005,7 +2016,9 @@
     "scripts": [
       "wss-cartesian-divers",
       "wss-machines/cartesian-divers",
-      "wss-drafts-creatures"
+      "wss-drafts-creatures",
+      "wss-water-balloons",
+      "wss-gas-body-labs"
     ]
   },
   {
@@ -2799,8 +2812,8 @@
     "id": "escape-the-jar",
     "title": "Escape the jar",
     "capability": "World",
-    "status": "PARTLY",
-    "cue": "Draft. Grab the real slime and try to leave the open jar; objective tracking is unfinished.",
+    "status": "WORKS",
+    "cue": "Grab the slime and lift its whole skin out of the jar. A closed lid blocks the escape.",
     "world": {
       "w": 720,
       "h": 400
@@ -2809,9 +2822,11 @@
     "draft": true,
     "accepted": true,
     "scripts": [
-      "wss-drafts-networks"
+      "wss-drafts-networks",
+      "wss-escape-jar"
     ],
-    "preview": "cup"
+    "preview": "cup",
+    "blocker": ""
   },
   {
     "id": "fire-brigade",

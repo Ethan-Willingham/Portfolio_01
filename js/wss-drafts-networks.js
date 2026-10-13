@@ -6,7 +6,7 @@ function base(id,title){return{name:id,title:title,draft:true,setup:'draft',capt
 function box(d,id,x,y,w,h,sealed){var r=R(x,y,w,h);d.vessels.push({id:id,label:id,rect:r,sealed:!!sealed});return r;}
 function fill(d,x,y,w,h){d.initial.push({kind:'rect',rect:R(x,y,w,h)});}
 function pipe(d,points,bore){d.pipes.push({points:points.map(p=>({x:p[0],y:p[1]})),bore:bore||24});}
-function reg(id,title,f){M[id]={make:function(w,o){var d=base(id,title);f(d,o||{});return d;}};}
+function reg(id,title,f){M[id]={make:function(w,o){if(id==='escape-the-jar'&&root.WSSEscapeJar)return root.WSSEscapeJar.make(w,o);var d=base(id,title);f(d,o||{});return d;}};}
 function tanks(d,n){for(var i=0;i<n;i++){var x=64+i*128;box(d,'Tank '+(i+1),x,64,104,304);fill(d,x+8,200+i*24,88,160-i*24);if(i)pipe(d,[[x-32,328],[x+16,328]],16);}d.primary={kind:'pour',target:{x:104,y:80}};}
 function loopCup(d,x,y,label){box(d,label,x,y,144,144);fill(d,x+8,y+72,128,64);pipe(d,[[x+120,y+112],[x+120,y+56],[x+160,y+56],[x+160,344]],16);}
 reg('cup-synchronization','Coupled self-flushing cups',d=>{loopCup(d,144,88,'Left oscillator');loopCup(d,432,88,'Right oscillator');box(d,'Shared basin',88,288,568,96);d.caption='Draft. Two finite cups share a basin; sustained oscillation and synchronization are unproved.';});

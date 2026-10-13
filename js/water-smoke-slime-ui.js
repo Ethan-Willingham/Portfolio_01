@@ -522,7 +522,7 @@
       var birds=!!(liveMachine && liveMachine.definition.birds);
       var wind=state.scene==='smoke-wind-tunnel',cannon=state.scene==='smoke-ring-cannon'||wind,thermal=state.scene==='thermoscope',balloon=state.scene==='water-balloons',divers=state.scene==='cartesian-divers',bubbles=state.scene==='air-hose';
       var thirsty=!!(liveMachine && liveMachine.definition.thirsty);
-      var nativeReduced=!!(liveMachine && (liveMachine.definition.thermal || liveMachine.definition.capillary));
+      var nativeReduced=!!(liveMachine && (liveMachine.definition.thermal || liveMachine.definition.capillary || liveMachine.definition.gasBodyLab || liveMachine.definition.objective || liveMachine.definition.floatingBlock || liveMachine.definition.wheel));
       var nativeCargo=!!(liveMachine && (liveMachine.definition.submarine || liveMachine.definition.cuff || liveMachine.definition.rocket));
       var contextual = machine || air.enabled;
       var ledger=sample.ledger || {},convergence=sample.convergence;
@@ -537,14 +537,14 @@
       var pressureMessage=fatal ? 'The pressure calculation stopped. Restart or choose another scene.' : !sample.ready || !convergence ? 'Waiting for a pressure sample.' :
         diagnostic ? 'Pressure readings are diagnostic. Open Instruments for the calculation status.' : stale ? 'The pressure sample is old. Open Instruments for its age.' :
         'The pressure sample is current. Open Instruments for the calculation status.';
-      if(liveMachine && (liveMachine.definition.airContact || liveMachine.definition.snorkel)){pressureLabel=fatal?'Pressure stopped':state.paused?'Paused':'Reduced gas';pressureMessage=liveMachine.definition.readingLabel || liveMachine.definition.caption;}
+      if(liveMachine && (liveMachine.definition.airContact || liveMachine.definition.snorkel || liveMachine.definition.gasBodyLab)){pressureLabel=fatal?'Pressure stopped':state.paused?'Paused':'Reduced gas';pressureMessage=liveMachine.definition.readingLabel || liveMachine.definition.caption;}
       if(cave){pressureLabel=state.paused?'Paused':caveView?caveView.label:'Starting';pressureMessage='The airflow indicator compares pressure for you. Close the cave mouth or compare steady pressure in Instruments.';}
       if(thirsty){pressureLabel=state.paused?'Paused':sample.thirsty && sample.thirsty.ejecting?'Spraying':sample.thirsty && sample.thirsty.full?'Full':sample.thirsty && sample.thirsty.drinking?'Drinking':'Thirsty';pressureMessage='Drag either gold handle inward to send water jets out of the skin. Release to let it drink again.';}
       if(cannon){pressureLabel=state.paused?'Paused':'Live';pressureMessage=wind?'A steady fan drives the smoke past the supported slime.':'The smoke carries the push. Instruments explains the flat section.';}
       if(balloon){pressureLabel=state.paused?'Paused':'Live';pressureMessage='Drag, fling and pop. Instruments explains the elastic skin.';}
-      if(slip){pressureLabel=state.paused?'Paused':state.scene==='material-oil-jar'||sluice?'Live':'Prototype';pressureMessage='Instruments has the matched-density comparison and model limits.';}
+      if(slip){pressureLabel=state.paused?'Paused':state.scene==='material-oil-jar'||sluice||(window.WSSMachineRegistry&&window.WSSMachineRegistry.lookup(state.scene)?.status==='WORKS')?'Live':'Prototype';pressureMessage='Instruments has the matched-density comparison and model limits.';}
       if(steam){pressureLabel=state.paused?'Paused':'Diagnostic';pressureMessage=birds?'Grab the pipe’s top to change its note. Instruments has the comparisons and acoustic limits.':'The white plume traces escaping vapor. Instruments explains the thermal model.';}
-      if(nativeReduced){var reducedError=fatal || sample.boundary && sample.boundary.error || sample.draftRuntime && sample.draftRuntime.error;pressureLabel=reducedError?'Solver stopped':state.paused?'Paused':sample.ready?'Live':'Starting';pressureMessage=reducedError?'Restart to restore the native solver.':'Instruments has the material model and its comparisons.';}
+      if(nativeReduced){var reducedError=fatal || sample.boundary && sample.boundary.error || sample.draftRuntime && sample.draftRuntime.error;pressureLabel=reducedError?'Solver stopped':state.paused?'Paused':sample.ready?'Live':'Starting';pressureMessage=reducedError?'Restart to restore the native solver.':(liveMachine.definition.gasBodyLab || liveMachine.definition.objective || liveMachine.definition.floatingBlock || liveMachine.definition.wheel)?liveMachine.definition.readingLabel:'Instruments has the material model and its comparisons.';}
       if(nativeCargo){var cargoDefinition=liveMachine.definition,cargoReading=cargoDefinition.rocketReading || cargoDefinition.cuffReading || cargoDefinition.submarineReading,cargoError=fatal || cargoReading && cargoReading.error;pressureLabel=cargoError?'Solver stopped':state.paused?'Paused':!liveMachine.ready || !cargoReading?'Starting':cargoDefinition.rocket?'Diagnostic':'Live';pressureMessage=cargoError?'Restart to restore the native solver.':'Instruments explains the carried-water or gas-body model and its comparisons.';}
       if(trap){
         var trapFan=liveMachine && liveMachine.definition.draftFireSmoke.fan.enabled;
@@ -559,7 +559,7 @@
       document.getElementById('toy-machine-scale').hidden=thirsty || trap;
       document.getElementById('toy-machine-material-notice').hidden = !air.enabled;
       document.getElementById('toy-machine-summary').hidden = !machine || trap;
-      document.getElementById('toy-machine-metrics').hidden = !machine || fire || cannon || balloon || slip || cave || trap || thirsty || !!(liveMachine && (liveMachine.definition.airContact || liveMachine.definition.snorkel));
+      document.getElementById('toy-machine-metrics').hidden = !machine || fire || cannon || balloon || slip || cave || trap || thirsty || !!(liveMachine && (liveMachine.definition.airContact || liveMachine.definition.snorkel || liveMachine.definition.gasBodyLab));
       if(fire)text('toy-hint',liveMachine.definition.sauna ? 'Click the water source or the stones to make steam. Let the room cool between pours.' : candle?'Lift the lid before the flame goes out. Reset lights a fresh candle.':'Click the upper water source or the fire to pour. You can also splash it with Water.');
       if(thirsty)text('toy-hint',pressureMessage);
       if(birds && state.tool==='poke')text('toy-hint','Grab the pipe’s top and slide it up for a lower note, down for a higher one.');

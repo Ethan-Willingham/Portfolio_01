@@ -42,6 +42,7 @@
     d.name=id;d.title=e.title;d.draft=true;d.setups=[];d.caption=e.cue;delete d.source;return d;
   }
   function dryGas(id,w,o,two){
+    if(root.WSSGasBodyLabs)return root.WSSGasBodyLabs.make(id,w,o);
     var d=gas(id,w,o),jar=rect(200,112,320,272),cup=rect(80,304,80,80);
     d.draftGravity=0;d.vessels=[box('jar','Air chamber',jar,true),box('water-cup','Water cup',cup)];
     d.initial=[water(rect(88,344,64,32))];d.slimes=two?[{x:296,y:224,radius:32,density:1},{x:424,y:224,radius:32,density:1}]:[{x:360,y:224,radius:40,density:1}];
@@ -103,6 +104,7 @@
       d.boundaryNote+=' The long physical duct surrounds a free gel parcel. The original declared rear air impulse loads the actual gel ring through current smoke projection pressure. No delivery path or additional parcel force is assigned.';return d;
     },
     'swim-bladder-fish':function(w,o){
+      if(root.WSSGasBodyLabs)return root.WSSGasBodyLabs.make('swim-bladder-fish',w,o);
       var d=gas('swim-bladder-fish',w,o);d.slimes=[{x:360,y:240,radius:28,density:.94}];d.divers.stroke=0;
       d.creatureGas={supplied:false};d.primary={kind:'creature-gas'};d.action='Pump bladder gas';
       d.boundaryNote='Draft. The bladder is the existing fixed-ballast ideal-gas slime in native water. The button represents a declared gas pump: it admits 25 percent of the original room-reference gas amount, or vents exactly that amount on the next press. Ballast mass stays fixed. Current native external pressure sets its target area. No depth or lift trajectory is assigned.';

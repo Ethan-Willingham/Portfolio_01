@@ -22,7 +22,7 @@
     return{level:(start+1-water)*dx,wetCells:count};
   }
   function volume(amount,room,absolute){if(!(amount>0 && room>0 && absolute>0))throw Error('Diver gas needs positive absolute pressure.');return amount*room/absolute;}
-  function lift(b){var d=b.cartesianDiver;return d ? area(b)/d.mass : null;}
+  function lift(b){var d=b.cartesianDiver;return d ? (b.gasBodyRenderArea || area(b))/d.mass : null;}
   function create(options){
     var L=options.liquid,definition=options.definition,bodies=options.bodies,model=options.model,room=model.settings.atmospherePressure,
       clock=L.simulationClock,offset=0,squeezed=definition.divers.squeezed,pistonVelocity=0,retired=false,generation=0,pending=false,lastAt=-Infinity,
@@ -43,7 +43,7 @@
       },
       sample:function(){
         var now=performance.now();if(retired || pending || now-lastAt<80)return;lastAt=now;pending=true;
-        var own=generation,at=L.simulationClock,frame=L.readbackTick,enc=L.device.createCommandEncoder({label:'toy.divers.pressure'}),poses=bodies.map(ring);
+        var own=generation,at=L.simulationClock,frame=L.readbackTick,enc=L.device.createCommandEncoder({label:'toy.divers.pressure'}),poses=bodies.map(controller.skinRing || ring);
         // Lower side probes remain in water when the base touches the floor.
         bodies.forEach(function(b,k){[[0,1],[1,.5],[-1,.5]].forEach(function(direction,j){
           var node=b.ring[0],best=-Infinity;for(var v=0;v<b.ringN;v++){var p=b.ring[v],score=(b.px[p]-b.cx)*direction[0]+(b.py[p]-b.cy)*direction[1];if(score>best){best=score;node=p;}}

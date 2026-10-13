@@ -245,14 +245,14 @@
           <div class="toy-panel-head"><h2 id="toy-heading-about">About</h2><button class="toy-icon" data-close aria-label="Close About"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
           <div class="toy-about-body">
             <p>Three physics engines from <a href="/grand-motherload.html">Sluice</a>, my mining game, share one box. Draw a wall and the water, smoke and slime all collide with it. Choose a machine from the menu at the top, or grab a slime and pull.</p>
-            <p>October 12 update: the twelve unfinished machines now have working mechanisms and comparison setups. Watch ice melt, flood the submarine, vent the suction cup, or withdraw the gripper pistons. Instruments explains each model’s approximations.</p>
+            <p>October 12 update: ten more drafts now work. Water turns the leaky-cup wheel and air lifts water into a receiving cup. Gold settles below quartz, a gas bladder makes a slime rise and sink, and the jar lungs breathe through their tubes. Try the floating block, bubbler, vacuum slime, jar escape and box-size comparisons too. The remaining drafts stay marked Partly working. Instruments explains the physical controls and approximations.</p>
             <dl>
               <div><dt>Water</dt><dd>Particles carry the liquid. A temporary grid exchanges their momentum and applies pressure. The MLS-MPM solver runs on WebGPU, adapted from <a href="https://oimo.io/works/water/">saharan’s water demo</a>.</dd></div>
               <div><dt>Air</dt><dd>The water machines add a pressure solve. Room air sets zero gauge pressure, and each sealed pocket has one pressure at a fixed temperature, compressing as water takes its space. <a href="https://orionquest.github.io/papers/MMTFBIF/paper.html">Aanjaneya, Patkar and Fedkiw’s bubble model</a> describes this approximation.</dd></div>
               <div><dt>Smoke</dt><dd>A WebGL fluid solver moves velocity and dye through a grid, following <a href="https://github.com/PavelDoGreat/WebGL-Fluid-Simulation">Pavel Dobryakov’s work</a>. The visible smoke is dye in that flow.</dd></div>
               <div><dt>Slime</dt><dd>A mesh of elastic connections holds its volume while it stretches and compresses, solved with <a href="https://mmacklin.com/xpbd.pdf">XPBD</a> on the CPU.</dd></div>
             </dl>
-            <p>The instruments treat the box as 30 inches wide and 1 inch deep. This is a game simulation tuned for play: the engines trade approximate boundary motion instead of sharing one solver.</p>
+            <p>The instruments normally treat the box as 30 inches wide and 1 inch deep. The box-size experiment changes its physical width and keeps the one-inch depth. This is a game simulation tuned for play: the engines trade approximate boundary motion instead of sharing one solver.</p>
             <p>Water needs WebGPU and smoke needs WebGL; without one, the rest still runs. Space pauses, F toggles fullscreen, O shows oxygen in combustion scenes, and keys 1 to 6 choose tools.</p>
             <div class="toy-about-links"><a href="https://github.com/Ethan-Willingham/Portfolio_01/blob/main/js/water-smoke-slime.js">Read the source</a><a href="/grand-motherload.html">Play Sluice</a><a href="/">ethanwillingham.com</a></div>
           </div>
@@ -274,12 +274,12 @@
   <script src="/js/water-machines-scenes.js?v=v5.186"></script>
   <script src="/js/water-machines-instruments.js?v=v5.186"></script>
   <script src="/js/water-machines-pressure-view.js?v=v5.186"></script>
-  <script src="/js/wss-machine-registry.js?v=v5.186"></script>
+  <script src="/js/wss-machine-registry.js?v=v5.187"></script>
   <script src="/js/wss-apparatus-art.js?v=v5.186"></script>
-  <script src="/js/water-smoke-slime.js?v=v5.186"></script>
+  <script src="/js/water-smoke-slime.js?v=v5.187"></script>
   <script src="/js/wss-oxygen-view.js?v=v5.186-activity1"></script>
   <script src="/js/wss-sluice-controls.js?v=v5.186"></script>
-  <script src="/js/water-smoke-slime-ui.js?v=v5.186"></script>
+  <script src="/js/water-smoke-slime-ui.js?v=v5.187"></script>
   <script src="/js/smoke-presets-ui.js?v=4"></script>
 </body>
 </html>
