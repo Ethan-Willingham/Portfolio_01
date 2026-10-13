@@ -2657,7 +2657,7 @@
     "title": "Bramah's hydraulic press",
     "capability": "Floating things",
     "status": "WORKS",
-    "cue": "Push the small piston to raise the large one. Add a load to compare required pressure.",
+    "cue": "Watch the narrow piston make its first stroke: the wider platform rises half as far. Push again, then add the heavy load and compare.",
     "world": {
       "w": 720,
       "h": 400
