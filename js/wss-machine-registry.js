@@ -911,17 +911,18 @@
     "pool": false,
     "scripts": [
       "wss-wave-maker",
-      "wss-drafts-workshop"
+      "wss-drafts-workshop",
+      "wss-wave-labs"
     ]
   },
   {
     "id": "tsunami-runup",
     "capability": "Waves",
     "title": "Tsunami run-up",
-    "cue": "Draft. A motor wave meets a stepped beach; watch the water climb the slope.",
+    "cue": "Drive native waves onto a stepped shore. The high-water mark tracks their climb; stop the motor to compare.",
     "preview": "cup",
-    "status": "PARTLY",
-    "draft": true,
+    "status": "WORKS",
+    "draft": false,
     "accepted": true,
     "world": {
       "w": 720,
@@ -930,7 +931,8 @@
     "pool": false,
     "scripts": [
       "wss-wave-maker",
-      "wss-drafts-workshop"
+      "wss-drafts-workshop",
+      "wss-wave-labs"
     ]
   },
   {

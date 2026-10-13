@@ -605,6 +605,7 @@
       if(marly){pressureLabel=state.paused?'Paused':liveMachine && liveMachine.definition.readingLabel || 'Starting';pressureMessage='Change the river flow or apply the brake. The valves hold the raised water.';}
       if(nativeCargo){var cargoDefinition=liveMachine.definition,cargoReading=cargoDefinition.rocketReading || cargoDefinition.cuffReading || cargoDefinition.submarineReading,cargoError=fatal || cargoReading && cargoReading.error;pressureLabel=cargoError?'Solver stopped':state.paused?'Paused':!liveMachine.ready || !cargoReading?'Starting':cargoDefinition.rocket?'Diagnostic':'Live';pressureMessage=cargoError?'Restart to restore the native solver.':'Instruments explains the carried-water or gas-body model and its comparisons.';}
       if(waterRocket){pressureLabel=state.paused?'Paused':'Live';pressureMessage=liveMachine.definition.caption;}
+      if(liveMachine && liveMachine.definition.waveLab){pressureLabel=state.paused?'Paused':liveMachine.ready?'Live':'Starting';pressureMessage=liveMachine.definition.caption;}
       if(trap){
         var trapFan=liveMachine && liveMachine.definition.draftFireSmoke.fan.enabled;
         pressureLabel=state.paused?'Paused':liveMachine && liveMachine.definition.setup==='dry'?'Trap dry':'Water seal';

@@ -17,6 +17,8 @@
           pts:[x,y,v,0,x+w,y,v,0,x+w,y+h,v,0,x,y+h,v,0]};
       },
       toggle:function(){if(retired)return false;pose();on=!on;return on;},
+      setPeriod:function(value){if(!(value>0&&Number.isFinite(value)))throw Error('Paddle period must be positive');pose();period=value;omega=2*Math.PI/period;return period;},
+      setMotor:function(value){pose();on=!!value;return on;},
       stats:function(){var p=pose();return {motor:on && !retired,clock:last,phase:phase,frontX:p.x+p.width,velocity:p.vx,period:period,stroke:stroke,retired:retired};},
       draw:function(c,colors){
         if(retired)return;var p=pose(),front=p.x+p.width;
