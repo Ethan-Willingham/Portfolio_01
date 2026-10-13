@@ -2578,7 +2578,7 @@
     "title": "Bottles and glasses",
     "capability": "Sound",
     "status": "WORKS",
-    "cue": "Fill and tap each vessel. The bottle air note rises as it fills; the weighted glass note falls.",
+    "cue": "Water is filling both vessels. Blow across the bottle, then tap the glass: the shrinking air space raises one note while added water lowers the other.",
     "world": {
       "w": 720,
       "h": 400

@@ -38,9 +38,9 @@ function model(id,o){
     T('supply','Supply',72,80,172,276,.9);T('left','Left jet',270,180,132,176,0);T('right','Right jet',488,180,132,176,0);
     E('routeL','supply','left',10,{autoRoute:0});E('routeR','supply','right',10,{autoRoute:1});E('returnL','left','right',4);primary='Change route';
   }else if(id==='bottle-glass-pitch'){
-    T('supply','Water',60,154,185,210,.90);T('bottle','Air bottle',300,104,170,260,.18);T('glass','Vibrating glass',525,214,110,150,0);
-    E('fill','supply','bottle',8,{valve:true,open:false});E('glass-fill','supply','glass',8,{valve:true,open:false});primary='Fill bottle';
-    K('drain','Drain bottle',410,85);K('tap','Tap bottle',325,85);K('glass-fill','Fill glass',583,85);K('glass-drain','Drain glass',583,122);K('glass-tap','Tap glass',583,159);
+    T('supply','Water',60,154,185,210,Number.isFinite(o.sourceFill)?Math.max(.85,Math.min(.95,o.sourceFill)):.90);T('bottle','Air bottle',300,104,170,260,.18);T('glass','Vibrating glass',525,214,110,150,0);
+    E('fill','supply','bottle',8,{valve:true,open:o.filling!==false});E('glass-fill','supply','glass',8,{valve:true,open:o.filling!==false});primary=o.filling===false?'Fill both':'Stop filling';
+    K('drain','Drain both',92,100);K('tap','Blow bottle',570,28);K('glass-tap','Tap glass',570,100);
   }else if(id==='fountain-music'){
     T('basin','Recirculating basin',82,294,556,76,.75);for(var j=0;j<4;j++){T('jet'+j,'Jet '+(j+1),136+j*145,152,80,126,0);E('note'+j,'basin','jet'+j,5,{pump:168,open:false});E('return'+j,'jet'+j,'basin',10);K('note'+j,'Note '+(j+1),163+j*145,92);}
     primary='Play all jets';
@@ -87,12 +87,14 @@ function model(id,o){
 function make(id,w,o){
   if(!w || w.w!==720 || w.h!==400)throw Error('Network scenes need a 720 by 400 box.');
   var net=model(id,o),view=rect(20,42,680,330),vessels=net.nodes.map(function(n){return{id:n.id,label:n.label,rect:n.rect,sealed:false};});
+  if(id==='bottle-glass-pitch')vessels=[];
   var pipes=[];
   var entry=root.WSSMachineRegistry&&root.WSSMachineRegistry.lookup(id),caption=entry&&entry.cue||'Operate the apparatus. Water moves through its measured levels, pressure differences, valves and pumps.';
   var energyNote=id==='marly-machine'?'External river inflow and outflow are recorded. Falling river water drives the wheel; its available head and a stated 58 percent efficiency limit the lifted flow.':id==='moniac'?'This is a water analog of monetary flow, not a calibrated economic forecast. Declared return pumps recirculate its conserved working water.':id==='binary-staircase'?'Each input removes a measured water pulse from the finite supply. A two-pulse tipping bucket passes half its water upward and returns half to supply, conserving the count fluid.':id==='garden-automation'?'Gravity supplies the irrigation head. Flow resistance dissipates it, while the declared soil-uptake sink removes finite water from the system. No plant metabolism or closed energy budget is modeled.':id==='hero-vending'?'The coin falls under gravity and loads a spring and damper. Its lever opens the water valve; water then drains from a finite raised supply. The mechanical linkage and pipe loss are reduced, without a closed energy budget.':'Pumps and hand inputs supply declared external work. Gravity and pressure set flow direction; friction dissipates energy. This model is not a closed account of heat, sound or detailed fluid momentum.';
   if(id==='cup-synchronization')energyNote='A declared return pump lifts finite water from the shared basin into both cups. Their siphons drain it back. The cross-connection transfers water by head difference without a separate motor; port loss dissipates energy. This is a reduced hydraulic model.';
+  if(id==='bottle-glass-pitch')energyNote='Finite water flows by gravity into both vessels. Bottle pitch follows a Helmholtz air-cavity estimate; glass pitch follows an approximate added-water modal mass. The audible tones are synthesized on demand and do not feed back into water motion.';
   if(id==='water-chain-reaction')energyNote='The finite raised starter supplies all gravity head. No pump or hidden refill runs. Port loss dissipates energy, while local turbulence and detailed gate inertia are outside this reduced model.';
-  return{name:id,title:labels[id],draft:true,setup:'network',viewBounds:view,vessels:vessels,pipes:pipes,solids:[],vents:[],parts:[],slimes:[],initial:[],marks:[],meters:[],settings:{enabled:false},primary:{kind:'network',target:{x:364,y:46}},action:net.primary,caption:caption,readingLabel:'Finite water network',measure:{source:vessels[0].rect,receiver:vessels[vessels.length-1].rect},network:net,reducedModel:true,boundaryNote:id==='garden-automation'?'Reduced finite-volume water follows pressure and gravity through three independent valves. Each valve opens when its measured planter falls below the selected threshold. A declared constant soil-uptake sink removes water and is recorded in the mass ledger. The drawing is a schematic; plant growth, soil pores and local turbulence are not simulated.':id==='hero-vending'?'A falling coin loads a spring-mounted lever with finite inertia. Lever angle opens or closes the valve; the finite raised water supply drains only through that gate. Returning the coin removes its weight and lets the spring close the gate. The pipes and mechanical linkage are a reduced two-dimensional section.':'This scene uses a reduced two-dimensional finite-volume hydraulic model. Tank inventories are conserved, pressure and level differences drive each flow, and any pump or hand action is declared. Pipe shape is a schematic of the network; local turbulence, bubbles and particle contacts are outside this model.',energyBudgetStatus:energyNote};
+  return{name:id,title:labels[id],draft:true,setup:'network',viewBounds:view,vessels:vessels,pipes:pipes,solids:[],vents:[],parts:[],slimes:[],initial:[],marks:[],meters:[],settings:{enabled:false},primary:{kind:'network',target:{x:364,y:46}},action:net.primary,caption:caption,readingLabel:'Finite water network',measure:{source:net.nodes[0].rect,receiver:net.nodes[net.nodes.length-1].rect},network:net,reducedModel:true,boundaryNote:id==='garden-automation'?'Reduced finite-volume water follows pressure and gravity through three independent valves. Each valve opens when its measured planter falls below the selected threshold. A declared constant soil-uptake sink removes water and is recorded in the mass ledger. The drawing is a schematic; plant growth, soil pores and local turbulence are not simulated.':id==='hero-vending'?'A falling coin loads a spring-mounted lever with finite inertia. Lever angle opens or closes the valve; the finite raised water supply drains only through that gate. Returning the coin removes its weight and lets the spring close the gate. The pipes and mechanical linkage are a reduced two-dimensional section.':'This scene uses a reduced two-dimensional finite-volume hydraulic model. Tank inventories are conserved, pressure and level differences drive each flow, and any pump or hand action is declared. Pipe shape is a schematic of the network; local turbulence, bubbles and particle contacts are outside this model.',energyBudgetStatus:energyNote};
 }
 function create(c){
   var d=c.definition,net=d.network;
@@ -102,7 +104,7 @@ function create(c){
   function audioContext(){if(audio)return audio;var Context=root.AudioContext||root.webkitAudioContext;if(!Context)return null;audio=new Context();return audio;}
   function bottleFrequency(){var fill=Math.max(.02,Math.min(.97,fraction(by.bottle))),airVolume=.004*(1-fill),neckArea=.0004,neckLength=.015;return Math.min(1200,Math.max(110,343/(2*Math.PI)*Math.sqrt(neckArea/(airVolume*neckLength))));}
   function glassFrequency(){return 800/Math.sqrt(1+2.4*fraction(by.glass));}
-  function tapResonator(frequency){var ctx=audioContext();if(!ctx)return;ctx.resume();var oscillator=ctx.createOscillator(),gain=ctx.createGain(),now=ctx.currentTime;oscillator.type='sine';oscillator.frequency.value=frequency;gain.gain.setValueAtTime(.0001,now);gain.gain.exponentialRampToValueAtTime(.09,now+.012);gain.gain.exponentialRampToValueAtTime(.0001,now+.42);oscillator.connect(gain);gain.connect(ctx.destination);oscillator.start(now);oscillator.stop(now+.44);}
+  function tapResonator(frequency){var ctx=audioContext();if(!ctx)return;ctx.resume();var oscillator=ctx.createOscillator(),gain=ctx.createGain(),now=ctx.currentTime;oscillator.type='sine';oscillator.frequency.value=frequency;gain.gain.setValueAtTime(.0001,now);gain.gain.exponentialRampToValueAtTime(.09,now+.012);gain.gain.exponentialRampToValueAtTime(.0001,now+.42);oscillator.connect(gain);gain.connect(ctx.destination);oscillator.start(now);oscillator.stop(now+.44);s.soundEvents=(s.soundEvents||0)+1;}
   function updateMusic(){if(d.name!=='fountain-music'||!audio)return;var ctx=audio;for(var i=0;i<4;i++){var v=voices[i],pipe=byEdge['note'+i];if(!v)continue;var target=audioActive&&pipe.open&&pipe.flow>1?Math.min(.035,.006+pipe.flow/30000):.0001;v.gain.gain.setTargetAtTime(target,ctx.currentTime,.04);}}
   function ensureMusic(){var ctx=audioContext();if(!ctx)return;ctx.resume();if(voices.length)return;for(var i=0;i<4;i++){var oscillator=ctx.createOscillator(),gain=ctx.createGain();oscillator.type='sine';oscillator.frequency.value=[261.63,329.63,392,523.25][i];gain.gain.value=.0001;oscillator.connect(gain);gain.connect(ctx.destination);oscillator.start();voices.push({oscillator:oscillator,gain:gain});}}
   n.forEach(function(a){by[a.id]=a;initial+=a.volume;});e.forEach(function(a){byEdge[a.id]=a;a.flow=0;a.primed=false;});
@@ -111,7 +113,7 @@ function create(c){
   function setMessage(){var id=d.name;
     if(id==='cup-synchronization'||id==='intermittent-fountain')d.action=s.running?'Stop return pump':'Start return pump';
     else if(id==='mariotte-bottle')d.action=byEdge.outlet.open?'Close outlet':'Open outlet';
-    else if(id==='bottle-glass-pitch')d.action=byEdge.fill.open?'Stop filling bottle':'Fill bottle';
+    else if(id==='bottle-glass-pitch')d.action=byEdge.fill.open?'Stop filling':'Fill both';
     else if(id==='fountain-music')d.action=e.some(function(x){return /^note/.test(x.id)&&x.open;})?'Stop all jets':'Play all jets';
     else if(id==='galileo-well')d.action=s.running?'Stop suction pump':'Start suction pump';
     else if(id==='vacuum-siphon')d.action=s.prime?'Break prime':'Prime siphon';
@@ -152,7 +154,7 @@ function create(c){
       if(name==='binary-staircase'){var dose=2500,admitted=move(by.supply,by.b0,dose);s.energy+=admitted*250*140;for(var bit=0;bit<3;bit++){var bucket=by['b'+bit];if(bucket.volume<dose*2-1)break;var next=bit<2?by['b'+(bit+1)]:by.supply;move(bucket,next,dose);move(bucket,by.supply,dose);events++;}events++;}
       else if(name==='bramah-press'){s.pressTime=.35;events++;}
       else if(name==='hero-vending'){s.coin=.001;s.coinVelocity=0;byEdge['coin-valve'].open=false;events++;}
-      else if(name==='bottle-glass-pitch'){byEdge.fill.open=!byEdge.fill.open;events++;}
+      else if(name==='bottle-glass-pitch'){byEdge.fill.open=!byEdge.fill.open;byEdge['glass-fill'].open=byEdge.fill.open;events++;}
       else if(name==='fountain-music'){var next=e.some(function(x){return /^note/.test(x.id)&&!x.open;});e.forEach(function(x){if(/^note/.test(x.id))x.open=next;});ensureMusic();events++;}
       else if(name==='mariotte-bottle'){byEdge.outlet.open=!byEdge.outlet.open;events++;}
       else if(name==='moniac'){byEdge.spend.bore=byEdge.spend.bore===6?10:6;events++;}
@@ -165,12 +167,12 @@ function create(c){
       else {s.running=!s.running;if(name==='vacuum-siphon')s.prime=s.running;events++;}
     }else if(id==='air-tube'){byEdge.outlet.intake=byEdge.outlet.intake===.46?.25:.46;events++;}
     else if(id==='vent'){s.mode=1-s.mode;events++;}
-    else if(id==='drain'){byEdge.fill.open=false;move(by.bottle,by.supply,Math.min(by.bottle.volume,by.bottle.capacity*.15));events++;}
+    else if(id==='drain'){byEdge.fill.open=false;byEdge['glass-fill'].open=false;move(by.bottle,by.supply,Math.min(by.bottle.volume,by.bottle.capacity*.15));move(by.glass,by.supply,Math.min(by.glass.volume,by.glass.capacity*.30));events++;}
     else if(id==='glass-fill'){byEdge['glass-fill'].open=!byEdge['glass-fill'].open;events++;}
     else if(id==='glass-drain'){byEdge['glass-fill'].open=false;move(by.glass,by.supply,Math.min(by.glass.volume,by.glass.capacity*.30));events++;}
     else if(/^note[0-3]$/.test(id)){byEdge[id].open=!byEdge[id].open;ensureMusic();events++;}
-    else if(id==='tap'){tapResonator(bottleFrequency());events++;}
-    else if(id==='glass-tap'){tapResonator(glassFrequency());events++;}
+    else if(id==='tap'){tapResonator(bottleFrequency());s.lastTap=t;events++;}
+    else if(id==='glass-tap'){tapResonator(glassFrequency());s.lastGlassTap=t;events++;}
     else if(id==='air'){s.mode=1-s.mode;if(s.mode)s.prime=false;events++;}
     else if(id==='scale'){s.mode=1-s.mode;events++;}
     else if(id==='load'){s.mode=1-s.mode;events++;}
@@ -233,9 +235,13 @@ function create(c){
     if(id==='water-chain-reaction'&&fraction(by.stage2)>.30)completed=true;
   }
   function tick(dt){if(!(dt>0))return;var scale=c.timeScale?Math.max(.05,Math.min(4,c.timeScale())):1,left=Math.min(.2,dt*scale);while(left>1e-8){var h=Math.min(1/120,left);simulate(h);left-=h;t+=h;}setMessage();updateMusic();}
-  function stats(){var current=n.reduce(function(v,a){return v+a.volume;},0);return{model:'finite hydraulic network',scene:d.name,time:t,initial:initial,water:current,added:added,removed:removed,massError:current+removed-initial-added,finite:n.every(function(a){return Number.isFinite(a.volume)&&a.volume>=-1e-5&&a.volume<=a.capacity+1e-5;})&&(d.name!=='hero-vending'||Number.isFinite(s.coin+s.leverAngle+s.leverVelocity)),nodes:n.map(function(a){return{id:a.id,volume:a.volume,capacity:a.capacity,fill:fraction(a),head:nodeHead(a)};}),edges:e.map(function(x){return{id:x.id,flow:x.flow,open:x.open,primed:x.primed||false};}),events:events,completed:completed,energyInput:s.energy,heat:s.heat.slice(),mode:s.mode,coin:s.coin,leverAngle:s.leverAngle||0,flushes:s.flushes?s.flushes.slice():null,lastFlush:s.lastFlush?s.lastFlush.slice():null};}
+  function stats(){var current=n.reduce(function(v,a){return v+a.volume;},0);return{model:'finite hydraulic network',scene:d.name,time:t,initial:initial,water:current,added:added,removed:removed,massError:current+removed-initial-added,finite:n.every(function(a){return Number.isFinite(a.volume)&&a.volume>=-1e-5&&a.volume<=a.capacity+1e-5;})&&(d.name!=='hero-vending'||Number.isFinite(s.coin+s.leverAngle+s.leverVelocity)),nodes:n.map(function(a){return{id:a.id,volume:a.volume,capacity:a.capacity,fill:fraction(a),head:nodeHead(a)};}),edges:e.map(function(x){return{id:x.id,flow:x.flow,open:x.open,primed:x.primed||false};}),events:events,completed:completed,energyInput:s.energy,heat:s.heat.slice(),mode:s.mode,coin:s.coin,leverAngle:s.leverAngle||0,flushes:s.flushes?s.flushes.slice():null,lastFlush:s.lastFlush?s.lastFlush.slice():null,pitchHz:d.name==='bottle-glass-pitch'?{bottle:bottleFrequency(),glass:glassFrequency()}:null,soundEvents:s.soundEvents||0,audioState:audio?audio.state:'closed'};}
   function draw(ctx){ctx.save();var css=getComputedStyle(document.documentElement),water=css.getPropertyValue('--toy-water').trim()||'#8fb3c7',ink=css.getPropertyValue('--text').trim()||'#e8e2d6';
-    if(d.name==='cup-synchronization'){
+    if(d.name==='bottle-glass-pitch'){
+      ctx.strokeStyle=ink;ctx.globalAlpha=.42;ctx.lineWidth=9;ctx.beginPath();ctx.moveTo(244,300);ctx.lineTo(300,300);ctx.moveTo(244,333);ctx.lineTo(270,333);ctx.lineTo(270,385);ctx.lineTo(505,385);ctx.lineTo(505,315);ctx.lineTo(525,315);ctx.stroke();
+      if(byEdge.fill.flow>1){ctx.strokeStyle=water;ctx.globalAlpha=.82;ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(244,300);ctx.lineTo(300,300);ctx.stroke();}
+      if(byEdge['glass-fill'].flow>1){ctx.strokeStyle=water;ctx.globalAlpha=.82;ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(244,333);ctx.lineTo(270,333);ctx.lineTo(270,385);ctx.lineTo(505,385);ctx.lineTo(505,315);ctx.lineTo(525,315);ctx.stroke();}ctx.globalAlpha=1;
+    }else if(d.name==='cup-synchronization'){
       var joined=byEdge.coupling.open;
       ctx.strokeStyle=ink;ctx.globalAlpha=.55;ctx.lineWidth=11;ctx.beginPath();ctx.moveTo(240,260);ctx.lineTo(480,260);ctx.stroke();
       ctx.strokeStyle=water;ctx.globalAlpha=joined?.82:.18;ctx.lineWidth=5;ctx.setLineDash(joined?[]:[7,7]);ctx.beginPath();ctx.moveTo(240,260);ctx.lineTo(480,260);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;
@@ -263,7 +269,18 @@ function create(c){
       ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(bx,byy);ctx.lineWidth=Math.max(3,Math.min(8,link.bore*.7));ctx.strokeStyle=link.open?water:ink;ctx.globalAlpha=link.open?.62:.25;ctx.setLineDash(link.open?[]:[5,5]);ctx.stroke();ctx.setLineDash([]);
       if(Math.abs(link.flow)>5){var dx=bx-ax,dy=byy-ay,len=Math.hypot(dx,dy)||1,sign=Math.sign(link.flow),mx=(ax+bx)*.5,my=(ay+byy)*.5;ctx.beginPath();ctx.moveTo(mx+sign*dx/len*10,my+sign*dy/len*10);ctx.lineTo(mx-sign*dx/len*5-dy/len*5,my-sign*dy/len*5+dx/len*5);ctx.lineTo(mx-sign*dx/len*5+dy/len*5,my-sign*dy/len*5-dx/len*5);ctx.closePath();ctx.fillStyle=water;ctx.globalAlpha=.95;ctx.fill();}
     });
-    ctx.globalAlpha=.70;ctx.fillStyle=water;n.forEach(function(a){var r=a.rect,h=Math.min(r.height-8,a.volume/r.width);if(h>0)ctx.fillRect(r.x+4,r.y+r.height-4-h,r.width-8,h);});ctx.globalAlpha=1;
+    if(d.name==='bottle-glass-pitch'){
+      var supply=by.supply,bottle=by.bottle,glass=by.glass;
+      ctx.strokeStyle=ink;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(60,364);ctx.lineTo(60,154);ctx.moveTo(245,154);ctx.lineTo(245,364);ctx.lineTo(60,364);ctx.stroke();
+      ctx.fillStyle=water;ctx.globalAlpha=.68;ctx.fillRect(63,364-198*fraction(supply),179,198*fraction(supply));ctx.globalAlpha=1;
+      function bottleSkin(){ctx.beginPath();ctx.moveTo(360,104);ctx.lineTo(410,104);ctx.lineTo(410,153);ctx.quadraticCurveTo(470,169,470,202);ctx.lineTo(470,362);ctx.quadraticCurveTo(385,376,300,362);ctx.lineTo(300,202);ctx.quadraticCurveTo(300,169,360,153);ctx.closePath();}
+      bottleSkin();ctx.save();ctx.clip();ctx.fillStyle=water;ctx.globalAlpha=.65;ctx.fillRect(300,364-248*fraction(bottle),170,248*fraction(bottle));ctx.restore();ctx.strokeStyle=ink;ctx.lineWidth=3;bottleSkin();ctx.stroke();
+      function glassSkin(){ctx.beginPath();ctx.moveTo(525,214);ctx.lineTo(635,214);ctx.lineTo(621,364);ctx.lineTo(539,364);ctx.closePath();}
+      glassSkin();ctx.save();ctx.clip();ctx.fillStyle=water;ctx.globalAlpha=.65;ctx.fillRect(525,364-138*fraction(glass),110,138*fraction(glass));ctx.restore();ctx.strokeStyle=ink;ctx.lineWidth=3;glassSkin();ctx.stroke();
+      ctx.fillStyle=ink;ctx.textAlign='center';ctx.font='12px "Commit Mono", monospace';ctx.fillText('Finite water',153,145);ctx.fillText('Blown bottle',385,91);ctx.fillText('Tapped glass',580,201);
+      ctx.font='11px "Commit Mono", monospace';ctx.fillText(Math.round(bottleFrequency())+' Hz',385,332);ctx.fillText(Math.round(glassFrequency())+' Hz',580,348);
+      for(var ring=0;ring<3;ring++){if(t-(s.lastTap||-1)>0&&t-s.lastTap<.4){ctx.beginPath();ctx.arc(385,130,12+ring*10,Math.PI,2*Math.PI);ctx.stroke();}if(t-(s.lastGlassTap||-1)>0&&t-s.lastGlassTap<.4){ctx.beginPath();ctx.arc(580,205,12+ring*10,Math.PI,2*Math.PI);ctx.stroke();}}
+    }else{ctx.globalAlpha=.70;ctx.fillStyle=water;n.forEach(function(a){var r=a.rect,h=Math.min(r.height-8,a.volume/r.width);if(h>0)ctx.fillRect(r.x+4,r.y+r.height-4-h,r.width-8,h);});ctx.globalAlpha=1;}
     function spout(a,flow,side){if(!(flow>8))return;var r=a.rect,x=r.x+r.width*.5,y=r.y+40,swing=side*44;ctx.strokeStyle=water;ctx.lineWidth=Math.max(2,Math.min(5,flow/180));ctx.globalAlpha=.80;ctx.beginPath();ctx.moveTo(x,y);ctx.quadraticCurveTo(x+swing*.55,r.y-90,x+swing,r.y+65);ctx.stroke();ctx.globalAlpha=1;}
     if(d.name==='fountain-music')for(var jet=0;jet<4;jet++)spout(by['jet'+jet],byEdge['note'+jet].flow,jet<2?-1:1);
     if(d.name==='banu-musa-fountain'){spout(by.left,byEdge.routeL.flow,-1);spout(by.right,byEdge.routeR.flow,1);}
@@ -278,7 +295,7 @@ function create(c){
     if(d.name==='marly-machine'){var wheel=byEdge.wheel,angle=t*Math.min(8,Math.abs(wheel.flow)/110);ctx.strokeStyle=ink;ctx.lineWidth=3;ctx.beginPath();ctx.arc(310,315,25,0,Math.PI*2);ctx.stroke();for(var k=0;k<6;k++){var theta=angle+k*Math.PI/3;ctx.beginPath();ctx.moveTo(310,315);ctx.lineTo(310+25*Math.cos(theta),315+25*Math.sin(theta));ctx.stroke();}}
     if(d.name==='fire-brigade'){for(var f=0;f<3;f++)if(s.heat[f]>.001){var fire=by['fire'+f].rect;ctx.fillStyle=ink;ctx.globalAlpha=.4+.6*s.heat[f];ctx.beginPath();ctx.arc(fire.x+fire.width*.5,fire.y+fire.height*.35,7+14*s.heat[f],0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;}}
     ctx.font='13px "Commit Mono", monospace';ctx.textAlign='center';ctx.fillStyle=ink;ctx.fillText(d.readingLabel||'',360,15);ctx.restore();}
-  setMessage();return{smoke:false,tick:tick,draw:draw,clock:function(){return t;},stats:stats,primary:function(){return activate('primary');},controls:function(){return[{id:'primary',label:d.action,x:364,y:46,width:130,height:36,kind:'runtime',pointerMode:'button',disabled:d.name==='parts-budget-puzzles'&&(s.budget<1||byEdge.part0.open)||d.name==='pneumatica-campaign'&&byEdge.gate0.open}].concat(controls.map(function(x){return{id:x.id,label:x.label,x:x.x,y:x.y,width:x.width,height:x.height,kind:'runtime',pointerMode:'button',disabled:d.name==='parts-budget-puzzles'&&(byEdge[x.id].open||s.budget<(x.id==='part2'?2:1))||d.name==='pneumatica-campaign'&&(byEdge[x.id].open||!(x.id==='gate1'?s.readyGate1:s.readyGate2))};}));},activate:function(id){return activate(id);},release:function(){},setActive:function(active){audioActive=!!active;if(audio){if(audioActive)audio.resume();else audio.suspend();}updateMusic();},destroy:function(){voices.forEach(function(v){v.oscillator.stop();});voices=[];if(audio)audio.close();audio=null;}};
+  setMessage();return{smoke:false,tick:tick,draw:draw,clock:function(){return t;},stats:stats,primary:function(){return activate('primary');},controls:function(){return[{id:'primary',label:d.action,x:d.name==='bottle-glass-pitch'?92:364,y:d.name==='bottle-glass-pitch'?28:46,width:130,height:36,kind:'runtime',pointerMode:'button',disabled:d.name==='parts-budget-puzzles'&&(s.budget<1||byEdge.part0.open)||d.name==='pneumatica-campaign'&&byEdge.gate0.open}].concat(controls.map(function(x){return{id:x.id,label:x.label,x:x.x,y:x.y,width:x.width,height:x.height,kind:'runtime',pointerMode:'button',disabled:d.name==='parts-budget-puzzles'&&(byEdge[x.id].open||s.budget<(x.id==='part2'?2:1))||d.name==='pneumatica-campaign'&&(byEdge[x.id].open||!(x.id==='gate1'?s.readyGate1:s.readyGate2))};}));},activate:function(id){return activate(id);},release:function(){},setActive:function(active){audioActive=!!active;if(audio){if(audioActive)audio.resume();else audio.suspend();}updateMusic();},destroy:function(){voices.forEach(function(v){v.oscillator.stop();});voices=[];if(audio)audio.close();audio=null;}};
 }
 var previous=root.WSSDraftRuntime;
 root.WSSDraftRuntime={create:function(c){return c.definition.network?create(c):previous&&previous.create?previous.create(c):null;}};

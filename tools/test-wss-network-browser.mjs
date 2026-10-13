@@ -33,6 +33,15 @@ try{
   await ev('document.querySelector(\'.toy-scene-action[data-control="primary"]\').click()');await pause(100);
   assert.equal(await ev('__toy.runtime().stats().finite'),true);
   assert((await ev('__toy.runtime().stats().events'))>before,'primary click acted on '+id);
+  if(id==='bottle-glass-pitch'){
+   for(const control of ['tap','glass-tap']){
+    const target=await ev(`(()=>{let r=document.querySelector('.toy-scene-action[data-control="${control}"]').getBoundingClientRect();return{x:r.x+r.width/2,y:r.y+r.height/2}})()`);
+    await send('Input.dispatchMouseEvent',{type:'mousePressed',x:target.x,y:target.y,button:'left',clickCount:1});
+    await send('Input.dispatchMouseEvent',{type:'mouseReleased',x:target.x,y:target.y,button:'left',clickCount:1});
+   }
+   assert((await ev('__toy.runtime().stats().soundEvents'))>=2,'both real browser gestures start resonator tones');
+   assert.equal(await ev('__toy.runtime().stats().audioState'),'running','browser audio context runs after a gesture');
+  }
   if(process.env.WSS_SCREENSHOT_DIR&&['cup-synchronization','fountain-music','bottle-glass-pitch'].includes(id)){
    await pause(500);assert((await ev('__toy.runtime().clock()'))>.05,'active browser advances '+id);
    fs.mkdirSync(process.env.WSS_SCREENSHOT_DIR,{recursive:true});const shot=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});fs.writeFileSync(path.join(process.env.WSS_SCREENSHOT_DIR,id+'.png'),Buffer.from(shot.data,'base64'));
