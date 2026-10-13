@@ -35,6 +35,7 @@ try{
  ws=new WebSocket(tabs.find(t=>t.type==='page').webSocketDebuggerUrl);await new Promise((r,j)=>{ws.addEventListener('open',r,{once:true});ws.addEventListener('error',j,{once:true});});
  ws.addEventListener('message',event=>{const m=JSON.parse(event.data);if(m.id){let p=pending.get(m.id);if(p){clearTimeout(p.timer);pending.delete(m.id);m.error?p.reject(Error(JSON.stringify(m.error))):p.resolve(m.result);}}else if(m.method==='Runtime.exceptionThrown')errors.push(m.params.exceptionDetails);else if(m.method==='Runtime.consoleAPICalled'&&m.params.type==='error')errors.push(m.params.args.map(a=>a.value||a.description));});
  await send('Runtime.enable');await send('Page.enable');await send('Emulation.setDeviceMetricsOverride',{width:1180,height:780,deviceScaleFactor:1,mobile:false});
+ if(!process.env.WSS_ADDER_ONLY){
  await load('douse-fire');
  async function pressPour(id='primary'){
   const r=await target(id);assert(r,'visible pour button');await mouse('mouseMoved',r.x,r.y);await mouse('mousePressed',r.x,r.y);await until('__toy.stats().pouring===true');return r;
@@ -84,13 +85,22 @@ try{
   await until('__toy.stats().pouring===true');await until(`__toy.fire().stats().poured>${before+150}`);
   await send('Input.dispatchTouchEvent',{type:release,touchPoints:[]});await stopped(release+' stops touch pouring');
  }
+ }
+ await send('Emulation.setDeviceMetricsOverride',{width:844,height:390,deviceScaleFactor:1,mobile:true});
+ await send('Emulation.setTouchEmulationEnabled',{enabled:true,maxTouchPoints:5});
  await load('water-half-adder');
- const button=await target(),waterBefore=await ev('__toy.stats().water');
+ // The completed comparator owns a conserved finite-volume circuit. Each tap
+ // operates its real inlet valve; holding cannot add unrelated native water.
+ const button=await target('workshop-input-B');assert(button&&button.width>=44&&button.height>=44);
  await send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:button.x,y:button.y,id:1,radiusX:8,radiusY:8,force:1}]});
- await until('__toy.stats().pouring===true');await until(`__toy.stats().water>${waterBefore+150}`);
- await send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await until('__toy.stats().pouring===false');
- const waterAfter=await ev('__toy.stats().water');await pause(150);assert.equal(await ev('__toy.stats().water'),waterAfter,'ordinary pour controls also stop on release');
- console.log('TOUCH landscape release, cancel and ordinary pour buttons passed');
+ await send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+ await until('__toy.runtime().stats().inputs[1]===true');await until('__toy.runtime().stats().flows.carry>0.00001');
+ const inputA=await target('primary');await send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:inputA.x,y:inputA.y,id:1,radiusX:8,radiusY:8,force:1}]});
+ await send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+ await until('__toy.runtime().stats().inputs[0]===false');await until('__toy.runtime().stats().flows.sum>0.00001');
+ assert(Math.abs(await ev('__toy.runtime().stats().massError'))<1e-9,'comparator conserves its original water');
+ assert.equal(await ev('__toy.stats().pouring'),false);assert.equal(await ev('__toy.stats().water'),0,'circuit has no duplicate native water');
+ console.log('TOUCH landscape release, cancel and comparator inlet controls passed');
  assert.equal(errors.length,0,JSON.stringify(errors));console.log('PASS direct actions; no browser errors');
 }finally{
  for(const p of pending.values())clearTimeout(p.timer);ws?.close();

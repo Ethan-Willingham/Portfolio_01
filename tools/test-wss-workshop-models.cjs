@@ -1,0 +1,21 @@
+const assert=require('node:assert/strict');
+require('../js/wss-workshop-models.js');
+const create=WSSWorkshopModels.create;
+function advance(s,seconds,h=.02){for(let t=0;t<seconds-1e-9;t+=h)s.step(Math.min(h,seconds-t));assert(s.finite);assert(Math.abs(s.massError)<1e-10,`${s.id} conserves water including vapor and external supply`);return s;}
+function liters(s,id){return s.nodes.find(n=>n.id===id).v*1000;}
+let cold=advance(create('vacuum-coffee',{heated:false}),40),coffee=advance(create('vacuum-coffee'),40);
+assert(coffee.peakUpper>.00015,'heating must deliver over 150 mL');assert(cold.peakUpper<.00001,'no heater does not deliver water');
+let hotPeak=coffee.peakUpper;coffee.activate('heater',true);advance(coffee,180);assert(liters(coffee,'upper')<hotPeak*1000*.2,'cooling returns at least 80 percent of raised water');
+let geyser=advance(create('steam-geyser'),100),noHeat=advance(create('steam-geyser',{heated:false}),100);assert(geyser.cycles>=2,'blowdown and cold recharge yield repeated eruptions');assert.equal(noHeat.cycles,0);
+let doors=advance(create('hero-temple-doors'),65);assert(doors.maxAngle>1,'heated counterweight opens the doors');doors.activate('heater',true);advance(doors,180);assert(doors.angle<.03,'cooling removes water load and closes doors');
+let outputs=[];for(let pair of [[false,false],[true,false],[false,true],[true,true]]){let s=advance(create('water-half-adder',{a:pair[0],b:pair[1]}),8);outputs.push(s.outputs.map(q=>q>1e-6?1:0));}assert.deepEqual(outputs,[[0,0],[1,0],[1,0],[0,1]]);
+let switcher=advance(create('water-half-adder',{a:true,b:true}),5);switcher.activate('input-B',true);advance(switcher,12);assert(!switcher.carryOpen,'one remaining input drains the comparator and restores SUM');
+let idleHeart=advance(create('slime-heart'),10),heart=create('slime-heart');for(let i=0;i<8;i++){heart.activate('squeeze',true);advance(heart,.7);heart.release();advance(heart,.8);}assert(heart.pumped>idleHeart.pumped+.000035,'manual work pumps additional liquid');assert(heart.inletTotal>0);assert(heart.strokeWorkJ>0);assert(!heart.squeeze);
+let toilet=create('glass-toilet',{supply:false}),idleToilet=advance(create('glass-toilet',{supply:false}),15);assert.equal(idleToilet.siphons,0);toilet.activate('flush',true);advance(toilet,15);assert.equal(toilet.siphons,1);assert(toilet.minBowl<.0004,'siphon clears bowl to exposed intake');assert.equal(toilet.flap,0,'flapper closes when cistern empties');assert.equal(toilet.admitted,0);
+let refill=create('glass-toilet');refill.activate('flush',true);advance(refill,65);assert(liters(refill,'tank')>5.99);assert(liters(refill,'bowl')>1.19);assert(refill.admitted>0);
+let half=create('glass-toilet',{half:true,supply:false});half.activate('flush',true);advance(half,15);assert(half.nodes[2].v<toilet.nodes[2].v,'half cistern sends less water downstream');
+let birds=advance(create('singing-birds-owl'),200);assert(birds.cycles>=20,'float drain cycle continues after many refills');assert(Math.abs(birds.airError)<1e-12);assert(birds.pumpWorkJ>0);let noPump=advance(create('singing-birds-owl',{pump:false}),65);assert(noPump.nodes[0].v<birds.nodes[0].v);assert.equal(noPump.pumpWorkJ,0);
+let organ=advance(create('water-organ'),2);organ.activate('key-1',true);advance(organ,.2);assert.equal(organ.voices.filter(v=>v.active).length,2);assert(organ.voices[0].frequency<organ.voices[1].frequency);assert(organ.voices.filter(v=>v.active).every(v=>v.flow>0));advance(organ,100);assert(organ.voices.filter(v=>v.active).every(v=>v.flow>0),'declared bellows sustain both voices');assert(Math.abs(organ.airError)<1e-12);
+let hydro=advance(create('hydraulophone'),2);let active=hydro.voices[0].flow;hydro.activate('key-0',true);advance(hydro,1);assert.equal(hydro.voices[0].active,false);assert(hydro.voices[0].flow<active*.15,'closing a finger port stops its air voice');
+let a=advance(create('vacuum-coffee'),25,.02),b=advance(create('vacuum-coffee'),25,.005);assert(Math.abs(a.nodes[1].v-b.nodes[1].v)<1e-9,'frame partition does not change fixed-step thermal flow');
+console.log(JSON.stringify({pass:true,models:9,truthTable:outputs,coffeeRaisedMl:hotPeak*1e6,geyserCycles:geyser.cycles,heartPumpedMl:heart.pumped*1e6,toiletSiphons:toilet.siphons,birdCycles:birds.cycles}));
