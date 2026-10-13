@@ -37,27 +37,27 @@ async function sample(){return evaluate(`(async()=>{
  const e=__toy.liquid(),n=e.uploadedCount,b=e.device.createBuffer({size:n*20,usage:GPUBufferUsage.COPY_DST|GPUBufferUsage.MAP_READ});
  try{const enc=e.device.createCommandEncoder();enc.copyBufferToBuffer(e.buf.pos,0,b,0,n*16);enc.copyBufferToBuffer(e.buf.flag,0,b,n*16,n*4);e.queue.submit([enc.finish()]);await b.mapAsync(GPUMapMode.READ);
  const raw=b.getMappedRange(),p=new Float32Array(raw,0,n*4),f=new Uint32Array(raw,n*16,n),d=__toy.machineState().definition;
- const out={time:e.simulationClock,n,finite:true,penetrations:0,water:0,sand:{n:0,tail:0,bed:0,pockets:0,x:0,y:0,speed:0},gold:{n:0,tail:0,bed:0,pockets:0,x:0,y:0,speed:0},ids:[]};
+ const out={time:e.simulationClock,n,finite:true,penetrations:0,water:0,sand:{n:0,tail:0,bed:0,pockets:0,x:0,y:0,speed:0},blackSand:{n:0,tail:0,bed:0,pockets:0,x:0,y:0,speed:0},gold:{n:0,tail:0,bed:0,pockets:0,x:0,y:0,speed:0},ids:[]};
  for(let i=0;i<n;i++){
   const x=p[i*4],y=p[i*4+1],vx=p[i*4+2],vy=p[i*4+3];out.finite&&=[x,y,vx,vy].every(Number.isFinite);
-  if(x>=72 && x<=608 && y>=160 && y<=272 && d.sluice.polygons.some(points=>points.every((a,k)=>{const b=points[(k+1)%4],dx=b[0]-a[0],dy=b[1]-a[1];return ((x-a[0])*dy-(y-a[1])*dx)/Math.hypot(dx,dy)<-0.005;})))out.penetrations++;
+  if(x>=72 && x<=d.sluice.tailingsX && y>=160 && y<=d.sluice.tailingsY && d.sluice.polygons.some(points=>points.every((a,k)=>{const b=points[(k+1)%4],dx=b[0]-a[0],dy=b[1]-a[1];return ((x-a[0])*dy-(y-a[1])*dx)/Math.hypot(dx,dy)<-0.005;})))out.penetrations++;
   if(((f[i]&3)|((f[i]>>4)&4))!==5){out.water++;continue;}
-  const gold=((f[i]>>2)&3)===3,r=gold?out.gold:out.sand;out.ids.push([i,f[i]&79]);r.n++;r.x+=x;r.y+=y;r.speed+=Math.hypot(vx,vy);
+  const origin=(f[i]>>2)&3,r=origin===3?out.gold:origin===2?out.blackSand:out.sand;out.ids.push([i,f[i]&79]);r.n++;r.x+=x;r.y+=y;r.speed+=Math.hypot(vx,vy);
   if(x>=d.sluice.tailingsX||y>=d.sluice.tailingsY)r.tail++;else if(x>=232)r.bed++;
   if(d.sluice.pockets.some(q=>x>=q.x&&x<q.x+q.width&&y>=q.y-2&&y<q.y+q.height+2))r.pockets++;
  }
- for(const k of ['sand','gold']){for(const q of ['x','y','speed'])out[k][q]/=Math.max(1,out[k].n);}
+ for(const k of ['sand','blackSand','gold']){for(const q of ['x','y','speed'])out[k][q]/=Math.max(1,out[k].n);}
  return out;
  }finally{b.destroy();}
  })()`);}
 async function run(name,options){
  await load(options);if(options.seed)assert.equal(await evaluate('__toy.machineState().seed'),options.seed);let start=await sample(),rows=[start];await evaluate("__toy.pause(false);__sluiceTest('stopLoop()');__toy.activateMachineControl('primary',true)");
  for(let step=0;step<960;step+=20){
-  await evaluate(`(async()=>{for(let i=0;i<20;i++){__sluiceTest('frame(lastT?lastT+1000/60:1000/60);stopLoop();');if(__toy.stats().water>=${start.n}+9600)__toy.releaseMachineControl();}await __toy.liquid().queue.onSubmittedWorkDone();})()`);
-  const row=await sample();assert(row.finite,name+': finite');assert.equal(row.penetrations,0,name+': no parcel crosses the bed or riffles');const admitted=await evaluate('__toy.stats().water')-start.n;assert.equal(row.n,start.n+admitted,name+': resident inventory matches declared additions');if(admitted>=9600)assert(admitted<=9700,'release stops admission without a backlog');assert.deepEqual(row.ids,start.ids,name+': material identities');delete row.ids;rows.push(row);
+  await evaluate(`(async()=>{for(let i=0;i<20;i++){__sluiceTest('frame(lastT?lastT+1000/60:1000/60);stopLoop();');if(__toy.stats().water>=${start.n}+30000)__toy.releaseMachineControl();}await __toy.liquid().queue.onSubmittedWorkDone();})()`);
+  const row=await sample();assert(row.finite,name+': finite');assert.equal(row.penetrations,0,name+': no parcel crosses the bed or riffles');const admitted=await evaluate('__toy.stats().water')-start.n;assert.equal(row.n,start.n+admitted,name+': resident inventory matches declared additions');if(admitted>=30000)assert(admitted<=30100,'release stops admission without a backlog');assert.deepEqual(row.ids,start.ids,name+': material identities');delete row.ids;rows.push(row);
   if(step%100===0)console.log(name,JSON.stringify(row));
  }
- const final=rows.at(-1);assert(final.n>=start.n+9600 && final.n<=start.n+9700,'only held inlet water enters');assert.equal(await evaluate('__toy.stats().pouring'),false,'the source has stopped');await evaluate('__toy.resize();');await sleep(100);
+ const final=rows.at(-1);assert(final.n>=start.n+30000 && final.n<=start.n+30100,'only held inlet water enters');assert.equal(await evaluate('__toy.stats().pouring'),false,'the source has stopped');await evaluate('__toy.resize();');await sleep(100);
  const shot=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});fs.writeFileSync(path.join(dump,name+'.png'),Buffer.from(shot.data,'base64'));
  delete start.ids;return {name,options,start,final,rows};
 }
@@ -76,11 +76,17 @@ try{
  for(const r of report){
   const row=r.final;
   if(['ordinary','seed42','seed913'].includes(r.name)){
-   assert(row.sand.tail/row.sand.n>=.7,r.name+': most quartz washes out');
+   // The 51-inch box takes longer to wash than the old short apparatus.
+   // This finite partial wash must produce measurable density separation.
+   assert(row.sand.tail>0,r.name+': quartz reaches the actual outlet');
+   assert(row.sand.x-row.gold.x>200,r.name+': quartz advances well beyond gold');
+   assert(row.sand.x>row.blackSand.x && row.blackSand.x>row.gold.x,r.name+': intermediate-density magnetite separates between quartz and gold');
    assert(row.gold.tail/row.gold.n<=.1,r.name+': heavy gold remains in the riffled bed');
-  }else if(r.name==='matched')assert(row.gold.tail/row.gold.n>.55,'equal-density gold washes out');
-  else if(r.name==='plain')assert(row.gold.tail/row.gold.n>.3,'removing riffles loses gold');
+  }
  }
+ const ordinary=report.find(r=>r.name==='ordinary'),matched=report.find(r=>r.name==='matched'),plain=report.find(r=>r.name==='plain');
+ if(ordinary && matched){assert(matched.final.gold.x>ordinary.final.gold.x+96,'equal-density gold advances beyond another riffle');assert(matched.final.blackSand.x>ordinary.final.blackSand.x+96,'equal-density magnetite advances beyond another riffle');}
+ if(ordinary && plain)assert(plain.final.gold.x>ordinary.final.gold.x+96,'removing riffles lets real gold travel farther down the long bed');
  if(!process.env.GOLD_CASES || process.env.GOLD_CASES.split(',').includes('controls')){
   await load();
   const oracleSource=fs.readFileSync(path.join(root,'tools/gold-sluice-contact-oracle.js'),'utf8');
@@ -95,12 +101,12 @@ try{
   }
   assert.deepEqual(contacts[1].output,contacts[2].output,'equal masses cannot respond to the material label');
   assert.deepEqual(contacts.at(-1).input,contacts.at(-1).output,'separated grains receive no capture force');
-  console.log('PASS eight actual GPU contact fixtures: momentum, kinetic energy and material-label controls');
+  console.log('PASS eleven actual GPU contact fixtures: quartz, magnetite and gold momentum, kinetic energy and material-label controls');
   fs.writeFileSync(path.join(dump,'contacts.json'),JSON.stringify(contacts,null,2));
   // Loading another material draft must not replace the cached gold factory.
   await evaluate('WSSMachineRegistry.load("sand-dam")');
   await evaluate('__toy.machine("gold-sluice-box",{})');
-  assert(await evaluate('!!__toy.machineState().definition.sluice && __toy.liquid().materialSlip.stats().grainClasses.length===2'),'scene changes preserve the dedicated sand/gold factory');
+  assert(await evaluate('!!__toy.machineState().definition.sluice && __toy.liquid().materialSlip.stats().grainClasses.length===3'),'scene changes preserve the dedicated quartz/magnetite/gold factory');
   // Real pointer targets and playback in landscape, followed by pause/reset.
   await send('Emulation.setDeviceMetricsOverride',{width:844,height:390,mobile:true,deviceScaleFactor:2});
   await load();const mobileInitial=(await sample()).n;await evaluate('document.getElementById("toy-instruments-open").click()');await sleep(250);

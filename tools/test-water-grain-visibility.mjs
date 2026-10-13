@@ -87,7 +87,20 @@ try{
       cases.push({name,dpws,difference,maskError,samples,dryArea,wetArea,firstHash:hash(first),lastHash:hash(last)});
     }
     }
-    return {format:e.renderFormat,cases};
+    // Optional mineral pigment reads the preserved native origin bits.
+    // All three species keep the same grain footprint and submerged edge.
+    e.materialSlip.grainColors=[.70,.68,.62,1,.874,.76,.533,1,.29,.30,.32,1];
+    const pigments=[];view.dpws=4;
+    const water=Array.from({length:81},(_,i)=>[60.125+(i%9-4)*1.25,32.125+(Math.floor(i/9)-4)*1.25,0,0,0]);
+    for(const [name,flag,expected] of [['quartz',65,[.70,.68,.62]],['magnetite',73,[.29,.30,.32]],['gold',77,[.874,.76,.533]]]){
+      const dry=await capture([[...grain.slice(0,4),flag]]),wet=await capture([...water,[...grain.slice(0,4),flag]]);
+      const offset=(Math.floor(grain[1]*4)*512+Math.floor(grain[0]*4))*4;
+      const order=e.renderFormat.startsWith('bgra')?[2,1,0]:[0,1,2];
+      const color=order.map(k=>dry[offset+k]/Math.max(1,dry[offset+3]));
+      const wetColor=order.map(k=>wet[offset+k]/Math.max(1,wet[offset+3]));
+      pigments.push({name,flag,expected,color,wetColor});
+    }
+    return {format:e.renderFormat,cases,pigments};
   })()`);
   console.log(JSON.stringify(result,null,2));
   fs.writeFileSync(path.join(dump,'result.json'),JSON.stringify(result,null,2));
@@ -96,6 +109,7 @@ try{
     assert(row.samples>0 && row.maskError<.04,row.name+': immersed and dry grains retain the same opacity and edge');
     assert(Math.abs(row.wetArea/row.dryArea-1)<.05,row.name+': immersion preserves the visible grain footprint');
   }
+  for(const row of result.pigments){for(let k=0;k<3;k++){assert(Math.abs(row.color[k]-row.expected[k])<.015,row.name+': actual native pigment');assert(Math.abs(row.wetColor[k]-row.expected[k])<.015,row.name+': water cannot repaint its center');}}
   await send('Emulation.setDeviceMetricsOverride',{width:844,height:390,mobile:true,deviceScaleFactor:2});
   await send('Page.navigate',{url});
   ready=false;for(let i=0;i<300;i++){if(await evaluate('!!window.__toy && !!__toy.machineState()?.ready && !__toy.stats().loading')){ready=true;break;}await sleep(100);}assert(ready);

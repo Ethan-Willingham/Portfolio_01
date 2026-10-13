@@ -1294,34 +1294,56 @@ restart and scene cleanup. These checks do not establish real-device performance
 
 ## Gold sluice box
 
-The gold scene has an open, continuous downhill bed and six raised riffles.
-The drawn polygons are the collision polygons. Water, quartz and gold keep
-separate APIC momentum, shared compressive pressure and common gravity.
-Density ratios are 1, 2.65 and 19.3. The fourth phase uses the native grain
-material with preserved origin tag 3; that tag selects mass and pigment only.
+Toy v5.180 uses the dimensions of the [Keene A52](https://www.keene.store/?Product_Code=A52&Screen=PROD):
+51 inches long, 10 inches wide and 4.5-inch sides. Set up also offers the
+[36-inch A51](https://www.keene.store/mm5/merchant.mvc?Product_Code=A51&Screen=PROD).
+Both use 24 world pixels per inch in a 1440 by 584 world. Changing angle
+projects the same physical bed length onto x and y, rather than changing its
+length. The ruler follows that sloped bed. This is a longitudinal section;
+the width extends out of the page. The ten long-box riffles, their spacing,
+and the thickened eight-pixel collision floor are model choices. Manufacturer
+matting, expanded mesh and exact lining profiles are not reproduced.
+
+The drawn polygons are the collision polygons. Water, quartz, magnetite and
+gold keep separate APIC momentum, shared compressive pressure and common
+gravity. Density ratios are 1, 2.65, 5.2 and 19.3. Magnetite is a common component
+of placer black sand, and its density is documented by
+[USGS prospecting guidance](https://pubs.usgs.gov/gip/70039396/report.pdf).
+Native grain origins 2 and 3 select magnetite and gold mass and pigment.
+The oil field is unused in this apparatus, so its momentum slot carries
+magnetite with grain transport and contacts, without oil filters. Other jars
+retain their original three-phase shader. Shared rendering adds one optional
+black-sand pigment; default game grains retain their original appearance.
 
 Grain pairs use a complete neighbor traversal, snapshot Jacobi updates,
 inverse-mass position correction and equal/opposite normal and Coulomb-friction
-impulses. Water/grain drag uses the same volume-based coefficient for quartz
-and gold. There are no destination forces, capture switches, frozen gold,
+impulses. Water/grain drag uses the same volume-based coefficient for all three
+minerals. There are no destination forces, capture switches, frozen gold,
 particle removal or hidden refills. The initial supply is finite. The tailings
 tank and water outside it remain in the same simulated world.
 
-The v5.168 wash station adds a live water valve and a 25 to 150 percent flow
-control. An external tank accounts for 18,000 additional water parcels. The
-hopper accounts for 240 grains, 216 quartz and 24 gold, before their admission.
-Holding Feed transfers 30 grains per native simulation second through the
+The wash station has a live water valve and a 25 to 150 percent flow control.
+An external tank accounts for 36,000 additional water parcels. The hopper
+holds 2,400 grains: 2,202 quartz, 192 magnetite and six gold. Gold is 0.25 percent
+of the grain count. This is a deliberately enriched practice sample, not a
+claim about natural placer grade. All grains use the native contact diameter,
+about 1.5 mm at this scale. They represent already classified material, with
+oversize gravel removed. Clay cohesion and gold-flake shape are not simulated.
+The optional starting sample has 176 quartz, 15 magnetite and one gold grain.
+Seeded shuffling distributes the material identities independently of their
+outlet lanes; changes in density do not change the batch or its starting positions.
+Holding Feed transfers 120 grains per native simulation second through the
 visible chute. Release cancels the fractional admission credit. Seven outlet
 lanes are independent of material. Both stocks stop exactly at exhaustion.
 Supply clocks follow native time, including quarter-speed playback. Opening
 the valve starts its clock at the current simulation time, without banking
 time spent paused or closed. The original held source remains available.
 
-The console displays remaining gold, washed sand and gold in the tailings from
+The console displays remaining gold, washed sediment and gold in the tailings from
 the existing native position mirror. These are current locations, not permanent
 recovery awards. Readback latency also applies to these counts. Set up changes
-the next run's actual slope (4 to 11 degrees), bar height (0 to 0.5 inch at the
-existing 30-inch-box scale), density comparison and initial sample. New run and
+the next run's actual length (36 or 51 inches), slope (4 to 11 degrees), bar
+height (0 to 0.5 inch), density comparison and initial sample. New run and
 the top restart refill supplies; the restart preserves the selected geometry.
 The previous run's counts remain available in Set up.
 
@@ -1338,23 +1360,29 @@ control, pointer cancellation, keyboard release and focus loss stop held feed.
 Pause and focus loss also close the water valve. Desktop and landscape touch
 use the same controls with targets at least 44 pixels tall.
 
-Instruments counts actual current grain positions. Equal densities changes only
-gold mass. Without riffles removes the bars, retaining the same initial particle
+Instruments counts actual current grain positions. Equal mineral densities
+changes magnetite and gold to quartz density. Without riffles removes the bars,
+retaining the same initial particle
 population. Both comparisons restart the apparatus. The dedicated scene module
 owns its factory, including after another material draft loads.
 
 Run `node tools/test-gold-sluice.mjs` for the three seeded washes, equal-density
 and removed-riffle controls, finite resident inventory, material identities,
-polygon penetration, eight actual GPU contact fixtures, landscape touch targets,
+polygon penetration, eleven actual GPU contact fixtures, landscape touch targets,
 held pouring, release, pause, reset and scene changes. The station checks also
 measure native flow at 25 and 125 percent, verify exact depletion of both stocks,
-check newly admitted material identities and test a steep bed with tall bars.
+check newly admitted material identities, exact 36/51-inch collision lengths,
+and a steep bed with tall bars. The finite partial-wash comparisons check
+quartz travel, intermediate magnetite travel, retained gold, and how gold moves
+farther after removing riffles or equalizing masses. The former short-box
+wash-out thresholds do not describe transit through this longer apparatus.
 They use real pointer, keyboard and landscape touch events at 844 and 667 pixels,
 check camera-only inspection against unchanged GPU samples and verify the Web
 Audio context lifecycle. Use `GOLD_CASES=station node tools/test-gold-sluice.mjs`
 to run just those interaction checks. The harness owns and closes
 Chrome for Testing. Screenshots and measurements default to `/tmp/gold-sluice-review`.
-The default grain rendering and game boot are covered by
+Actual quartz, magnetite and gold pixels, preserved submerged edges, default
+grain rendering and the rebuilt v28.208 game boot are covered by
 `node tools/test-water-grain-visibility.mjs`.
 
 These are behavior and contact-operator checks. The reduced 2D model retains
@@ -1362,7 +1390,7 @@ exploratory drag, the native water filters, pressure limiting and unmeasured
 contact/pressure projection work. It does not predict calibrated recovery
 percentages, grain shape effects, turbulence or full mixture energy conservation.
 
-The v5.154 reference runs (17, 42 and 913) wash out 44, 45 and 42 of 54 quartz
+The old short-box v5.154 reference runs (17, 42 and 913) wash out 44, 45 and 42 of 54 quartz
 parcels at about 24.8 native seconds, retaining all 55 gold parcels. Equal
 densities washes out 44 of 55 gold parcels; removing the riffles loses 31 of
 55. Every checkpoint has finite state and zero bed/riffle penetrations. The

@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.179'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.180'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -196,6 +196,7 @@
   }
   // Physical units follow the authored machine, never the added room.
   var scaleWidth=roomCore ? roomCore.w : worldW;
+  if(bootScene==='gold-sluice-box')scaleWidth=720; // 24 pixels per inch, independent of hardware length
   if(appFill)document.getElementById('toy').classList.add('has-room');
 
   stage.style.width = worldW + 'px';
@@ -509,7 +510,7 @@
    * is a one-time push of CALM 0 / GRID_VISC 0 / DAMPING 1 / MOTION 1
    * after the device is ready, not a per-frame state machine. ==== */
   var hourglassScale=Math.max(2,Math.min(6,Number(bootParams.get('sand'))||2));
-  var LIQUID_MAX_PARTICLES = Math.max(isMobile ? 40000 : 100000,bootScene==='hourglass'?Math.ceil(8000*hourglassScale*hourglassScale):0);
+  var LIQUID_MAX_PARTICLES = Math.max(isMobile ? bootScene==='gold-sluice-box'?60000:40000 : 100000,bootScene==='hourglass'?Math.ceil(8000*hourglassScale*hourglassScale):0);
   var LIQUID_DENSITY_REST = 4;              // mirrors the module's 1/PDELTA^2
   var LIQUID_OPS_MAX = 300000;
   var LIQUID_MACHINE_OPS_MAX = 900000;
@@ -550,8 +551,8 @@
     if (liquidCount >= LIQUID_MAX_PARTICLES) return -1;
     var id = liquidCount++;
     liquidMutationSeq++;
-    liquidType[id] = type === 'oil' ? 1 : type === 'sand' || type === 'gold' ? 5 : 0;
-    liquidOrigin[id] = type==='gold'?3:origin || 0;
+    liquidType[id] = type === 'oil' ? 1 : type === 'sand' || type === 'black-sand' || type === 'gold' ? 5 : 0;
+    liquidOrigin[id] = type==='gold'?3:type==='black-sand'?2:origin || 0;
     liquidX[id] = x;
     liquidY[id] = y;
     liquidVX[id] = vx || 0;
@@ -14304,7 +14305,9 @@
         numericalStatus:'Two-sided native water contacts and a smooth quadratic skin. Contact frame '+membrane.contactFrame+'.',
         energyBudgetStatus:machineState.definition.energyBudgetStatus,error:membrane.error || buildError};return;
     }
-    if(toyMaterialSlip && machineState){machineState.readings={ready:true,caption:machineState.definition.caption,action:machineState.definition.action,particleCount:liquidCount,materialSlip:toyMaterialSlip.stats(),sluice:machineState.definition.sluice?sluiceInventory():null,numericalStatus:toyMaterialSlip.stats().method,energyBudgetStatus:machineState.definition.energyBudgetStatus,error:buildError || liquidWGPU.materialStateError};return;}
+    if(toyMaterialSlip && machineState){var sd=machineState.definition.sluice;machineState.readings={ready:true,caption:machineState.definition.caption,action:machineState.definition.action,particleCount:liquidCount,materialSlip:toyMaterialSlip.stats(),sluice:sd?sluiceInventory():null,
+      scaleText:sd?sd.lengthInches+' inches along the bed, 10 inches across and 4.5-inch sides. This is a longitudinal 2D section at 24 pixels per inch, with roughly 1.5 mm classified grains.':null,
+      numericalStatus:toyMaterialSlip.stats().method,energyBudgetStatus:machineState.definition.energyBudgetStatus,error:buildError || liquidWGPU.materialStateError};return;}
     if(toyFire && machineState){var heat=toyFire.stats();machineState.readings={ready:true,caption:machineState.definition.caption,action:machineState.definition.action,particleCount:liquidCount,fire:heat,mirrorAgeSimulationMs:liquidWGPU.getReadbackAge()*1000,inputWaterWorkFootPounds:(machineState.energyInput || 0)/1.3558179483314,energyBudgetStatus:machineState.definition.energyBudgetStatus,error:buildError || airState.error};return;}
     if(toyCannon && machineState && machineState.ready){
       machineState.readings={ready:true,caption:machineState.definition.caption,action:machineState.definition.action,
@@ -14603,6 +14606,7 @@
       }
     }
     seedInitialMaterial(definition.initial);
+    if(definition.initialGrains)definition.initialGrains.forEach(function(grain){requested++;if(addLiquidParticle(grain.material,grain.x,grain.y,0,0,0)>=0)added++;});
     if((definition.boundaries || definition.divers || definition.materialSlip) && added!==requested)throw new Error('Apparatus exceeds the particle capacity: '+requested+' requested, '+added+' added.');
     if(!definition.membrane && !definition.divers && !definition.slider)definition.slimes.forEach(function(s){
       if(s.held)return;
@@ -14680,6 +14684,7 @@
         var grainStyle=getComputedStyle(document.documentElement);
         function grainColor(token){var hex=grainStyle.getPropertyValue(token).trim();return [1,3,5].map(function(i){return parseInt(hex.slice(i,i+2),16)/255;});}
         slipOptions.grainColors=grainColor(definition.grainLook==='sand'?'--app-brass-dim':'--text-dim').concat([1],grainColor('--toy-grain-gold'),[1]);
+        if(definition.sluice)slipOptions.grainColors=slipOptions.grainColors.concat(grainColor('--line-mid'),[1]);
       }
       ownSlip=await liquidWGPU.configureMaterialSlip(slipOptions);
       if(request!==machineRequest){ownSlip.destroy();return null;}
@@ -15658,17 +15663,17 @@
   function sluiceInventory(){
     if(!machineState || !machineState.definition.sluice)return null;
     var d=machineState.definition.sluice,run=machineState.sluiceRun;
-    var data={sand:{total:0,washed:0},gold:{total:0,washed:0},admitted:run.waterAdded,pouring:machinePourHeld || run.valve,
+    var data={sand:{total:0,washed:0},blackSand:{total:0,washed:0},gold:{total:0,washed:0},admitted:run.waterAdded,pouring:machinePourHeld || run.valve,
       flow:run.flow,valve:run.valve,feeding:run.feeding,fed:run.fed,hopper:d.hopper-run.fed,waterRemaining:d.waterSupply-run.waterAdded,
-      waterSupply:d.waterSupply,hopperCapacity:d.hopper,slope:d.slope,riffleHeight:d.riffles?d.riffleHeight:0,
+      waterSupply:d.waterSupply,hopperCapacity:d.hopper,lengthInches:d.lengthInches,slope:d.slope,riffleHeight:d.riffles?d.riffleHeight:0,
       clock:Math.max(0,liquidWGPU.simulationClock-(machineState.startedAt || 0)),sampleAge:liquidWGPU.getReadbackAge()};
     data.sourceClock=machinePourClock;
     var runoff=0;
     for(var i=0;i<liquidCount;i++){
       if(liquidType[i]===5){
-        var r=liquidOrigin[i]===3?data.gold:data.sand;r.total++;
+        var r=liquidOrigin[i]===3?data.gold:liquidOrigin[i]===2?data.blackSand:data.sand;r.total++;
         if(liquidX[i]>=d.tailingsX || liquidY[i]>=d.tailingsY)r.washed++;
-      }else if(liquidX[i]>580 && liquidX[i]<640 && liquidY[i]<d.tailingsY+24)runoff+=Math.max(0,liquidVY[i]);
+      }else if(liquidX[i]>d.tailingsX-28 && liquidX[i]<d.tailingsX+32 && liquidY[i]<d.tailingsY+24)runoff+=Math.max(0,liquidVY[i]);
     }
     data.runoff=Math.min(2,Math.sqrt(runoff/60000));
     return data;
@@ -15702,9 +15707,9 @@
     r.feedAcc+=h*d.feedRate;
     while(r.feedAcc>=1 && r.fed<d.hopper){
       // A counted external hopper releases one grain through its outlet.
-      // Seven lanes and a ten-grain mix visit every lane for each material.
+      // The batch is shuffled once, independently of the seven outlet lanes.
       var lane=(r.fed*3)%7,x=d.feed.x+(lane-3)*2.1;
-      var material=r.fed%10===7?'gold':'sand';
+      var material=d.feedMaterials[r.fed];
       if(addLiquidParticle(material,x,d.feed.y,0,65,0)<0){r.feeding=false;r.feedAcc=0;break;}
       r.fed++;r.feedAcc--;
     }

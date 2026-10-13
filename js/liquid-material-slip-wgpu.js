@@ -319,7 +319,7 @@ fn bedGrains(@builtin(global_invocation_id) id:vec3<u32>){resolveBed(id.x,true);
 // A fourth momentum field is opt-in. The existing three-phase shader remains
 // byte-identical for jars and the other material scenes. Both grain classes use
 // native grain geometry; the preserved origin bits carry their mass identity.
-function sluiceSource(){
+function sluiceSource(blackSand){
  var code=SOURCE
   .replace('constants:vec4<f32>','constants:vec4<f32>,extraDrag:vec4<f32>,bed:vec4<f32>,riffles:vec4<f32>,bedOther:vec4<f32>')
   .replace('array<Species,3>','array<Species,4>')
@@ -332,7 +332,18 @@ function sluiceSource(){
   .replace('gp.dt*cfg.drag[pair]','gp.dt*pairDrag(pair)*(m[a]/cfg.density[a])*(m[b]/cfg.density[b])*(1.0/m[a]+1.0/m[b])');
 
  code=code.replace('velocities[node]=vec4<f32>(boundaryVelocity(state.xy,b,inside,left,right,up,down,lip),state.zw);', 'velocities[node]=vec4<f32>(bedGridVelocity(boundaryVelocity(state.xy,b,inside,left,right,up,down,lip),vec2<f32>((f32(gx)+0.5)*cfg.constants.y,(f32(gy)+0.5)*cfg.constants.y)),state.zw);');
- return BED_GEOMETRY+code.replace('fn encodeFx', 'fn pairDrag(pair:u32)->f32{if(pair<3u){return cfg.drag[pair];}return cfg.extraDrag[pair-3u];}\nfn encodeFx')+BED_COLLIDE;
+ var collide=BED_COLLIDE;
+ if(blackSand){
+  // This scene has no oil. Its fourth field carries actual magnetite grains,
+  // with grain transport and boundary rules, not the native oil filters.
+  code=code.replace('return select(2u,3u,((fl>>2u)&3u)==3u);','let origin=(fl>>2u)&3u;if(origin==2u){return 1u;}return select(2u,3u,origin==3u);')
+   .replace('if(a>=2u)','if(a>=1u)')
+   .replace('if(a==1u){b=sp.lanes[3];}','')
+   .replace('else if(a==1u){damp=sp.lanes[4].z;}','')
+   .replaceAll('a<2u','a==0u');
+  collide=collide.replace('grainOnly&&a<2u','grainOnly&&a==0u').replaceAll('a>=2u','a>=1u');
+ }
+ return BED_GEOMETRY+code.replace('fn encodeFx', 'fn pairDrag(pair:u32)->f32{if(pair<3u){return cfg.drag[pair];}return cfg.extraDrag[pair-3u];}\nfn encodeFx')+collide;
 }
 // All contacting pairs are visited, without neighbor sampling. Snapshot
 // Jacobi updates use the same pair degree and opposite impulse on both ends.
@@ -393,6 +404,7 @@ fn contacts(@builtin(global_invocation_id) id:vec3<u32>){
  pos[i]=vec4<f32>(p.xy+shift,p.zw+dv);aux[i].zw=p.xy;
 }
 `;
+function contactSource(blackSand){return blackSand?CONTACT_SOURCE.replace('return cfg.density[select(2u,3u,((flags[i]>>2u)&3u)==3u)];','let origin=(flags[i]>>2u)&3u;if(origin==2u){return cfg.density[1u];}return cfg.density[select(2u,3u,origin==3u)];'):CONTACT_SOURCE;}
 function dragPair(ma,mb,va,vb,h,rate){
  if(!(ma>0&&mb>0))return [va.slice(),vb.slice()];
  var sum=ma+mb,mean=va.map(function(v,i){return (ma*v+mb*vb[i])/sum;}),rel=va.map(function(v,i){return (v-vb[i])/(1+h*rate);});
@@ -416,7 +428,7 @@ function create(instance,options){
   if(!opts.bed)throw Error('A mixed-grain sluice requires its physical bed.');
   queue.writeBuffer(config,64,new Float32Array([drag[3],drag[4],drag[5],0].concat(opts.bed.line,opts.bed.riffles,[opts.bed.thickness,opts.bed.count,0,0])));
  }
- var module=device.createShaderModule({label:'liquid.materialSlip',code:phases===4?sluiceSource():SOURCE}),resources=[instance.paramsBuf,config,instance.buf.pos,instance.buf.affine,instance.buf.aux,instance.buf.flag,packed,velocity,instance.buf.cellMass,instance.buf.cellOilMass,instance.simParamsBuf,instance.buf.terrainMask,snapshot];
+ var module=device.createShaderModule({label:'liquid.materialSlip',code:phases===4?sluiceSource(opts.blackSand):SOURCE}),resources=[instance.paramsBuf,config,instance.buf.pos,instance.buf.affine,instance.buf.aux,instance.buf.flag,packed,velocity,instance.buf.cellMass,instance.buf.cellOilMass,instance.simParamsBuf,instance.buf.terrainMask,snapshot];
  var bindings={clearCells:[0,1,6,7],scatter:[0,1,2,3,5,6,8,9],stress:[0,1,2,4,5,6,8,10],solve:[0,1,6,10,12],stabilizeGrid:[0,7,10,12],gridBoundary:[0,1,7,10,11],gather:[0,1,2,3,4,5,7,10],jolt:[0,1,2,5]},pipes={},groups={};
  if(phases===4){bindings.bedCollide=[0,1,2,4,5];bindings.bedGrains=[0,1,2,4,5];}
  Object.keys(bindings).forEach(function(name){
@@ -430,7 +442,7 @@ function create(instance,options){
   if(phases!==4)throw Error('Mixed grain contacts require four phases.');
   contactBefore=buffer('grainBefore',instance.maxParticles*16,GPUBufferUsage.STORAGE|GPUBufferUsage.COPY_DST);
   var degrees=buffer('grainDegrees',instance.maxParticles*4,GPUBufferUsage.STORAGE);
-  contactModule=device.createShaderModule({label:'liquid.slip.grainContacts',code:CONTACT_SOURCE});
+  contactModule=device.createShaderModule({label:'liquid.slip.grainContacts',code:contactSource(opts.blackSand)});
   var cr=[instance.paramsBuf,config,instance.buf.pos,contactBefore,instance.buf.flag,degrees,instance.buf.cellCount,instance.buf.cellStart,instance.buf.sortedIdx,instance.buf.aux];
   [['degrees',[0,3,4,5,6,7,8]],['contacts',[0,1,2,3,4,5,6,7,8,9]]].forEach(function(row){
    var layout=device.createBindGroupLayout({entries:row[1].map(function(b){return {binding:b,visibility:GPUShaderStage.COMPUTE,buffer:{type:b<2?'uniform':b===2||b===5||b===9?'storage':'read-only-storage'}};})});
@@ -457,7 +469,7 @@ function create(instance,options){
   // native position/velocity constraints or their validated spatial search.
   beforeGrains:function(encoder){encoder.copyBufferToBuffer(instance.buf.affine,0,contactAffine,0,instance.uploadedCount*16);},
   afterGrains:function(encoder){encoder.copyBufferToBuffer(contactAffine,0,instance.buf.affine,0,instance.uploadedCount*16);},
-  stats:function(){return {grainClasses:phases===4?['quartz','gold']:['grain'],mixedGrainContacts:!!opts.grainContacts,enabled:!destroyed,ready:model.ready,error:model.error,densities:density.slice(),dragRates:drag.slice(),commonGravity:instance.simParamsHost[0],referenceArea:opts.cellSize*opts.cellSize/opts.restDensity,gridCapacity:capacity,method:'Separate APIC phase momentum, shared compressive volume stress, implicit equal/opposite drag. '+(opts.grainContacts?'Mass-weighted grain contacts and Coulomb friction. ':'')+'No calibrated viscosity, permeability, surface tension or Drucker-Prager sand law.'};},
+  stats:function(){return {grainClasses:opts.blackSand?['quartz','magnetite','gold']:phases===4?['quartz','gold']:['grain'],mixedGrainContacts:!!opts.grainContacts,enabled:!destroyed,ready:model.ready,error:model.error,densities:density.slice(),dragRates:drag.slice(),commonGravity:instance.simParamsHost[0],referenceArea:opts.cellSize*opts.cellSize/opts.restDensity,gridCapacity:capacity,method:'Separate APIC phase momentum, shared compressive volume stress, implicit equal/opposite drag. '+(opts.grainContacts?'Mass-weighted grain contacts and Coulomb friction. ':'')+'No calibrated viscosity, permeability, surface tension or Drucker-Prager sand law.'};},
   destroy:function(){if(destroyed)return;destroyed=true;model.ready=false;if(instance.materialSlip===model)delete instance.materialSlip;instance.needsDenseClear=true;buffers.forEach(function(b){b.destroy();});}
  };
  if(opts.grainContacts)model.encodeGrainContacts=function(encoder){
@@ -468,5 +480,5 @@ function create(instance,options){
  model.grainColors=opts.grainColors||null;
  return model;
 }
-root.LiquidMaterialSlipWGPU={create:create,source:SOURCE,sluiceSource:sluiceSource,contactSource:CONTACT_SOURCE,dragPair:dragPair};
+root.LiquidMaterialSlipWGPU={create:create,source:SOURCE,sluiceSource:sluiceSource,contactSource:CONTACT_SOURCE,grainContactSource:contactSource,dragPair:dragPair};
 })(typeof window!=='undefined'?window:globalThis);

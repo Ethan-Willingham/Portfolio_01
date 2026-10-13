@@ -995,11 +995,11 @@
     "id": "gold-sluice-box",
     "capability": "Sand",
     "title": "Gold sluice box",
-    "cue": "Wash pale sand downhill and leave gold at the riffles.",
+    "cue": "Wash classified paydirt through a 51-inch hand sluice.",
     "accepted": true,
     "world": {
-      "w": 720,
-      "h": 400
+      "w": 1440,
+      "h": 584
     },
     "pool": false,
     "preview": "cup"

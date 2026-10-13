@@ -33,9 +33,9 @@ function sound(){
  return {toggle:toggle,tick:tick,stop:stop,enabled:function(){return enabled;}};
 }
 function draw(c,definition,run,view){
- var d=definition.sluice,s=view.scale,p=view.palette;
+ var d=definition.sluice,s=view.scale,p=view.palette,compact=s<.65;
  var ink=p.getPropertyValue('--text-dim').trim(),edge=p.getPropertyValue('--rule-strong').trim(),gold=p.getPropertyValue('--toy-grain-gold').trim();
- var panel=p.getPropertyValue('--bg-raised').trim(),accent=p.getPropertyValue('--accent').trim();
+ var panel=p.getPropertyValue('--bg-raised').trim(),accent=p.getPropertyValue('--accent').trim(),black=p.getPropertyValue('--line-mid').trim();
  var flowing=(run.valve || view.pouring) && run.waterAdded<d.waterSupply;
  c.save();c.lineWidth=1/s;c.lineJoin='round';c.strokeStyle=edge;c.fillStyle=panel;
  // The faucet's drawn mouth is the real admission point at (120, 64).
@@ -47,20 +47,32 @@ function draw(c,definition,run,view){
  c.textAlign='center';c.fillText('WASH WATER',116,23);
  // This external hopper is a counted supply. Only released grains enter the world.
  c.fillStyle=panel;c.strokeStyle=run.feeding?accent:edge;
- c.beginPath();c.moveTo(200,96);c.lineTo(232,96);c.lineTo(225,127);c.lineTo(225,137);c.lineTo(207,137);c.lineTo(207,127);c.closePath();c.fill();c.stroke();
+ var fx=d.feed.x;c.beginPath();c.moveTo(fx-28,80);c.lineTo(fx+28,80);c.lineTo(fx+9,127);c.lineTo(fx+9,137);c.lineTo(fx-9,137);c.lineTo(fx-9,127);c.closePath();c.fill();c.stroke();
  c.save();c.clip();var fraction=(d.hopper-run.fed)/d.hopper;
- c.fillStyle=ink;c.globalAlpha=.4;c.fillRect(200,127-28*fraction,32,28*fraction);
- c.globalAlpha=.85;c.fillStyle=gold;
- for(var i=0;i<Math.ceil(fraction*12);i++){var gx=202+(i*13)%28,gy=102+Math.floor(i/4)*7;c.fillRect(gx,gy,1.6,1.6);}c.restore();
- c.strokeStyle=run.feeding?accent:edge;c.lineWidth=2/s;c.beginPath();c.moveTo(205,run.feeding?133:138);c.lineTo(run.feeding?211:227,run.feeding?129:138);c.stroke();
- c.fillStyle=ink;c.fillText('PAYDIRT',216,85);
+ c.fillStyle=ink;c.globalAlpha=.18;c.fillRect(fx-28,127-44*fraction,56,44*fraction);
+ c.globalAlpha=.9;
+ var remaining=d.hopper-run.fed,dots=Math.ceil(fraction*80);
+ for(var i=0;i<dots;i++){var material=d.feedMaterials[Math.min(d.hopper-1,run.fed+Math.floor(i*remaining/Math.max(1,dots)))];
+  c.fillStyle=material==='gold'?gold:material==='black-sand'?black:ink;
+  var gx=fx-26+(i*17)%52,gy=86+Math.floor(i/10)*5;c.fillRect(gx,gy,1.6,1.6);
+ }c.restore();
+ c.strokeStyle=run.feeding?accent:edge;c.lineWidth=2/s;c.beginPath();c.moveTo(fx-11,run.feeding?133:138);c.lineTo(run.feeding?fx-5:fx+11,run.feeding?129:138);c.stroke();
+ c.fillStyle=ink;c.fillText('CLASSIFIED PAYDIRT',fx+28,68);
  // Bolts and the underside line sit inside the same continuous bed polygon.
- c.lineWidth=1/s;c.strokeStyle=edge;c.beginPath();c.moveTo(80,d.floor(80)+12);c.lineTo(600,d.floor(600)+12);c.stroke();
- for(var x=92;x<608;x+=72){c.beginPath();c.arc(x,d.floor(x)+8,1.8,0,Math.PI*2);c.stroke();}
- c.fillStyle=ink;c.textAlign='left';c.fillText(d.slope.toFixed(1)+' degrees',90,d.floor(90)+42);
- c.textAlign='center';c.fillText(d.riffles?'RIFFLE BED':'PLAIN BED',408,d.floor(408)+46);
- c.fillText('TAILINGS',588,355);
- c.font=(10/s)+'px "Commit Mono", monospace';c.fillText('Water + washed grains',588,369);
+ c.lineWidth=1/s;c.strokeStyle=edge;c.beginPath();c.moveTo(80,d.floor(80)+6);c.lineTo(d.tailingsX-8,d.floor(d.tailingsX-8)+6);c.stroke();
+ for(var x=92;x<d.tailingsX;x+=96){c.beginPath();c.arc(x,d.floor(x)+4,1.4,0,Math.PI*2);c.stroke();}
+ c.save();c.translate(72,176);c.rotate(d.slope*Math.PI/180);c.strokeStyle=edge;c.beginPath();c.moveTo(0,34);c.lineTo(d.lengthInches*d.pixelsPerInch,34);
+ for(var inch=0;inch<=d.lengthInches;inch+=3){var ux=inch*d.pixelsPerInch;c.moveTo(ux,34-3/s);c.lineTo(ux,34+(inch%12===0?5:3)/s);}c.stroke();
+ var rulerStep=compact && d.lengthInches>36?24:12,rulerY=34+18/s;
+ c.fillStyle=ink;c.textAlign='center';for(inch=0;inch<d.lengthInches-6;inch+=rulerStep)c.fillText(inch+' in',inch*d.pixelsPerInch,rulerY);c.fillText(d.lengthInches+' in',d.lengthInches*d.pixelsPerInch,rulerY);c.restore();
+ c.fillStyle=ink;c.textAlign='left';c.font=(10/s)+'px "Commit Mono", monospace';
+ c.fillText(compact?d.lengthInches+' x 10 x 4.5 in / '+d.slope.toFixed(1)+' deg':d.lengthInches+' in long / 10 in wide / 4.5 in sides / '+d.slope.toFixed(1)+' degrees',400,22);
+ var mid=(72+d.tailingsX)/2;c.textAlign='center';
+ if(compact){c.fillText('Quartz / black sand / sparse gold',mid,d.floor(mid)+34+36/s);}
+ else{c.fillText(d.riffles?'RIFFLE BED':'PLAIN BED',mid,d.floor(mid)+90);
+  var legendY=d.floor(mid)+112;c.fillStyle=ink;c.fillText('Quartz',mid-120,legendY);c.fillText('Black sand',mid,legendY);c.fillStyle=gold;c.fillText('Sparse gold',mid+130,legendY);}
+ c.fillStyle=ink;c.fillText('TAILINGS',d.tailingsX-32,538);
+ if(!compact)c.fillText('Water + washed sediment',d.tailingsX-32,554);
  c.restore();
 }
 function create(toy,shell){
@@ -69,7 +81,7 @@ function create(toy,shell){
  box.innerHTML=`
   <div class="sluice-readings">
    <div class="sluice-stat sluice-gold"><span>Gold remaining</span><b id="sluice-gold">0 / 0</b><span class="sluice-meter"><i id="sluice-gold-bar"></i></span></div>
-   <div class="sluice-stat"><span>Sand washed</span><b id="sluice-sand">0 / 0</b><span class="sluice-meter"><i id="sluice-sand-bar"></i></span></div>
+   <div class="sluice-stat"><span>Sediment washed</span><b id="sluice-sand">0 / 0</b><span class="sluice-meter"><i id="sluice-sand-bar"></i></span></div>
    <div class="sluice-stat sluice-loss"><span>Gold in tailings</span><b id="sluice-lost">0</b></div>
    <p id="sluice-guidance" role="status">Open the water. Feed a little. Watch the bed.</p>
   </div>
@@ -80,7 +92,7 @@ function create(toy,shell){
    </div>
    <div class="sluice-feed-controls">
     <button id="sluice-feed" type="button" aria-pressed="false" title="Hold to feed paydirt (G)"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 3h14l-5 8v4H8v-4Z M8 18h.01M12 18h.01"/></svg><span>Hold to feed</span></button>
-    <span class="sluice-supply"><b id="sluice-hopper">240</b> grains in hopper<span class="sluice-meter"><i id="sluice-hopper-bar"></i></span></span>
+    <span class="sluice-supply"><b id="sluice-hopper">2400</b> grains in hopper<span class="sluice-meter"><i id="sluice-hopper-bar"></i></span></span>
    </div>
    <div class="sluice-view-controls">
     <button id="sluice-sound" type="button" aria-pressed="false" title="Turn wash and gravel sound on">Sound</button>
@@ -92,17 +104,19 @@ function create(toy,shell){
  shell.appendChild(box);
  var bench=document.createElement('section');bench.id='sluice-workbench';bench.className='sluice-workbench';bench.hidden=true;bench.setAttribute('aria-label','Set up the next sluice run');
  bench.innerHTML=`<div class="sluice-workbench-head"><h2>Build the next run</h2><button id="sluice-close" type="button" aria-label="Close sluice setup">Close</button></div>
-  <p>Set the bed, then start fresh. Flow stays adjustable during the run.</p>
+  <p>Real hand-sluice dimensions. This view cuts along the bed; its 10-inch width extends out of the page.</p>
+  <label for="sluice-length">Box length</label><select id="sluice-length"><option value="51">51 inches, Keene A52</option><option value="36">36 inches, Keene A51</option></select>
   <label for="sluice-slope">Bed angle <output id="sluice-slope-value">8.5 degrees</output></label>
   <input id="sluice-slope" type="range" min="4" max="11" step="0.5" value="8.5"/>
   <label for="sluice-riffle">Riffle height <output id="sluice-riffle-value">0.25 in</output></label>
   <input id="sluice-riffle" type="range" min="0" max="12" step="1" value="6"/>
   <p class="sluice-range-note">Flat at 0. Taller bars make deeper pockets.</p>
-  <label for="sluice-materials">Material comparison</label><select id="sluice-materials"><option value="ordinary">Sand and gold</option><option value="matched">Equal densities</option></select>
+  <p>Practice batch: 2,202 quartz grains, 192 heavy black-sand grains, and 6 gold grains. Screened to roughly 1.5 mm. Gold is enriched for visibility.</p>
+  <label for="sluice-materials">Material comparison</label><select id="sluice-materials"><option value="ordinary">Quartz, black sand and gold</option><option value="matched">Equal mineral densities</option></select>
   <label class="sluice-check"><input id="sluice-charge" type="checkbox" checked/>Start with a sample on the bed</label>
   <p id="sluice-previous" hidden></p>
   <div class="sluice-run-actions"><button id="sluice-defaults" type="button">Defaults</button><button id="sluice-run" type="button">New run</button></div>
-  <p class="sluice-shortcuts">W water · hold G to feed · S slow · I inspect<br/>Space pauses. The same grain mix returns each run.</p>`;
+  <p class="sluice-shortcuts">W water · hold G to feed · S slow · I inspect<br/>Space pauses. The same grain mix returns each run. <a id="sluice-dimensions-source" href="https://www.keene.store/?Product_Code=A52&amp;Screen=PROD" target="_blank" rel="noopener">Dimensions source</a></p>`;
  shell.appendChild(bench);
  var inspect=document.createElement('div');inspect.className='sluice-inspector';inspect.hidden=true;
  inspect.innerHTML='<button type="button" id="sluice-prev" aria-label="Inspect previous pocket">Previous</button><span id="sluice-pocket">Pocket 1 of 6</span><button type="button" id="sluice-next" aria-label="Inspect next pocket">Next</button><button type="button" id="sluice-fit">Whole bed</button>';
@@ -125,10 +139,10 @@ function create(toy,shell){
  function toggleSlow(){if(!active)return;toy.set('time',toy.stats().timeScale<.5?1:.25);update();}
  function inspectPocket(){
   if(!active)return;
-  var d=toy.machineState().definition.sluice,x=268+pocket*64,y=d.floor(x)-7;
+  var d=toy.machineState().definition.sluice;pocket%=d.sections.length;var section=d.sections[pocket],x=section.x,y=section.y;
   toy.setCamera({zoom:2.8,panX:0,panY:0});var cam=toy.camera();
-  toy.setCamera({panX:(360-x)*cam.scale,panY:(200-y)*cam.scale});
-  text(el('pocket'),(d.riffles?'Pocket ':'Section ')+(pocket+1)+' of 6');
+  var world=toy.world();toy.setCamera({panX:(world.w*.5-x)*cam.scale,panY:(world.h*.5-y)*cam.scale});
+  text(el('pocket'),(d.riffles?'Pocket ':'Section ')+(pocket+1)+' of '+d.sections.length);
  }
  function setInspect(on){inspectOn=on;inspect.hidden=!on;pan.hidden=!on;pressed(zoom,on);drag=null;
   if(on)inspectPocket();else toy.setCamera({zoom:1,panX:0,panY:0});
@@ -151,16 +165,16 @@ function create(toy,shell){
  });el('close').addEventListener('click',function(){setBench(false);});
  shell.addEventListener('click',function(e){if(e.target.closest('[data-panel]')){bench.hidden=true;setup.setAttribute('aria-expanded','false');}});
  el('fit').addEventListener('click',function(){setInspect(false);});
- el('prev').addEventListener('click',function(){pocket=(pocket+5)%6;inspectPocket();});
- el('next').addEventListener('click',function(){pocket=(pocket+1)%6;inspectPocket();});
+ el('prev').addEventListener('click',function(){var n=toy.machineState().definition.sluice.sections.length;pocket=(pocket+n-1)%n;inspectPocket();});
+ el('next').addEventListener('click',function(){pocket++;inspectPocket();});
  el('slope').addEventListener('input',function(){pendingSlope=+this.value;text(el('slope-value'),pendingSlope.toFixed(1)+' degrees');});
  el('riffle').addEventListener('input',function(){pendingHeight=+this.value;var label=(pendingHeight/24).toFixed(2)+' in';text(el('riffle-value'),label);this.setAttribute('aria-valuetext',label);});
- el('defaults').addEventListener('click',function(){pendingSlope=Math.atan(80/536)*180/Math.PI;pendingHeight=6;el('slope').value=pendingSlope;el('riffle').value=6;el('materials').value='ordinary';el('charge').checked=true;text(el('slope-value'),'8.5 degrees');text(el('riffle-value'),'0.25 in');});
+ el('defaults').addEventListener('click',function(){pendingSlope=8.5;pendingHeight=6;el('length').value='51';el('slope').value=8.5;el('riffle').value=6;el('materials').value='ordinary';el('charge').checked=true;text(el('slope-value'),'8.5 degrees');text(el('riffle-value'),'0.25 in');});
  el('run').addEventListener('click',async function(){
   if(!active || toy.stats().loading)return;
   var before=toy.sluice(),seed=toy.machineState().seed;this.disabled=true;stopInputs();
   try{
-   await toy.machine('gold-sluice-box',{slope:pendingSlope,riffleHeight:pendingHeight,matched:el('materials').value==='matched',initialCharge:el('charge').checked,seed:seed});
+   await toy.machine('gold-sluice-box',{lengthInches:+el('length').value,slope:pendingSlope,riffleHeight:pendingHeight,matched:el('materials').value==='matched',initialCharge:el('charge').checked,seed:seed});
    previous=before;setInspect(false);setBench(false);toy.pause(false);update();
   }catch(error){text(el('guidance'),error.message);}finally{this.disabled=false;}
  });
@@ -191,16 +205,18 @@ function create(toy,shell){
   if(current!==lastRun){
    if(lastData)previous=lastData;lastRun=current;
    var d=current.definition.sluice;pendingSlope=d.slope;pendingHeight=d.riffles?d.riffleHeight:0;
-   el('slope').value=pendingSlope;el('riffle').value=pendingHeight;el('materials').value=d.matched?'matched':'ordinary';el('charge').checked=d.initialCharge;
+   el('length').value=d.lengthInches;el('slope').value=pendingSlope;el('riffle').value=pendingHeight;el('materials').value=d.matched?'matched':'ordinary';el('charge').checked=d.initialCharge;
+   el('dimensions-source').href=current.definition.source.url;
    text(el('slope-value'),pendingSlope.toFixed(1)+' degrees');text(el('riffle-value'),(pendingHeight/24).toFixed(2)+' in');el('riffle').setAttribute('aria-valuetext',(pendingHeight/24).toFixed(2)+' inches');
    if(inspectOn)inspectPocket();
   }
   lastData=state;
   audio.tick(state,!stats.paused && !document.hidden && !stats.loading);
   shell.classList.toggle('sluice-start-hints',!state.fed && !state.admitted && state.clock<6);
-  text(el('gold'),(state.gold.total-state.gold.washed)+' / '+state.gold.total);text(el('sand'),state.sand.washed+' / '+state.sand.total);text(el('lost'),String(state.gold.washed));
+  var sedimentTotal=state.sand.total+state.blackSand.total,sedimentWashed=state.sand.washed+state.blackSand.washed;
+  text(el('gold'),(state.gold.total-state.gold.washed)+' / '+state.gold.total);text(el('sand'),sedimentWashed+' / '+sedimentTotal);text(el('lost'),String(state.gold.washed));
   el('gold-bar').style.width=(state.gold.total?100*(1-state.gold.washed/state.gold.total):0)+'%';
-  el('sand-bar').style.width=(state.sand.total?100*state.sand.washed/state.sand.total:0)+'%';
+  el('sand-bar').style.width=(sedimentTotal?100*sedimentWashed/sedimentTotal:0)+'%';
   el('hopper-bar').style.width=100*state.hopper/state.hopperCapacity+'%';text(el('hopper'),String(state.hopper));
   text(el('valve-label'),state.waterRemaining===0?'Tank empty':state.valve?'Water on':'Water off');pressed(water,state.valve);water.disabled=!current.ready || stats.loading || !state.waterRemaining;
   feed.disabled=!current.ready || stats.loading || !state.hopper;pressed(feed,state.feeding);
@@ -210,7 +226,7 @@ function create(toy,shell){
    !state.hopper?'Hopper empty. Wash the bed, then close the water.':state.feeding?'Feeding paydirt. Release to stop.':state.gold.washed?'Gold reached the tailings. Try a gentler flow.':state.valve?'Water running. Hold Feed for a small charge.':'Open the water. Feed a little. Watch the bed.';
   text(el('guidance'),guidance);
   el('previous').hidden=!previous;
-  if(previous)text(el('previous'),'Previous run: '+(previous.gold.total-previous.gold.washed)+'/'+previous.gold.total+' gold remained; '+previous.sand.washed+'/'+previous.sand.total+' sand washed out.');
+  if(previous)text(el('previous'),'Previous '+previous.lengthInches+'-inch run: '+(previous.gold.total-previous.gold.washed)+'/'+previous.gold.total+' gold remained; '+previous.sand.washed+'/'+previous.sand.total+' quartz washed out, '+(previous.blackSand.total-previous.blackSand.washed)+' black-sand grains remained.');
   var height=box.getBoundingClientRect().height;if(height!==lastHeight){lastHeight=height;shell.style.setProperty('--sluice-console-height',height+'px');toy.resize();}
  }
  return {update:update};

@@ -1,32 +1,47 @@
-/* Finite wash water, mixed quartz/gold feed and physical riffle pockets. */
+/* A dimensioned hand sluice and finite, classified quartz/magnetite/gold feed. */
 (function(root){
 'use strict';
 function rect(x,y,w,h){return {x:x,y:y,width:w,height:h};}
 function make(world,options){
  options=options||{};
- if(world.w!==720||world.h!==400||world.tile!==8)throw Error('The sluice needs a 720 by 400 world.');
- var slope=Number.isFinite(options.slope)?Math.max(4,Math.min(11,options.slope)):Math.atan(80/536)*180/Math.PI;
+ if(world.w!==1440||world.h!==584||world.tile!==8)throw Error('The sluice needs a 1440 by 584 world.');
+ var unit=24,length=options.lengthInches===36?36:51;
+ var slope=Number.isFinite(options.slope)?Math.max(4,Math.min(11,options.slope)):8.5;
  var height=Number.isFinite(options.riffleHeight)?Math.max(0,Math.min(12,options.riffleHeight)):6;
- var drop=536*Math.tan(slope*Math.PI/180);
- var matched=options.matched===true,plain=options.riffles===false || height===0,solids=[],pockets=[],polygons=[],seedPolygons=[];
- function floor(x){return 176+(x-72)*drop/536;}
+ var span=length*unit*Math.cos(slope*Math.PI/180),drop=length*unit*Math.sin(slope*Math.PI/180),end=72+span;
+ var matched=options.matched===true,plain=options.riffles===false || height===0,solids=[],pockets=[],sections=[],polygons=[],seedPolygons=[];
+ function floor(x){return 176+(x-72)*drop/span;}
  function slab(x0,x1,rise,depth){return [[x0,floor(x0)-rise],[x1,floor(x1)-rise],[x1,floor(x1)+depth],[x0,floor(x0)+depth]];}
- polygons.push(slab(72,608,0,16));seedPolygons.push(polygons[0]);
- for(var sx=240;sx<608;sx+=72)seedPolygons.push(slab(sx,sx+8,height,0));
- // An open downhill bed drains into a separate tailings tank. No downstream
- // wall raises the wash into a static pool, and no upstream sump traps feed.
- solids.push(rect(64,48,8,136));
- if(!plain)for(var x=240;x<608;x+=72){
-  polygons.push(slab(x,x+8,height,0));pockets.push(rect(x+8,floor(x+8)-height,56,height+10));
+ polygons.push(slab(72,end,0,8));seedPolygons.push(polygons[0]);
+ for(var x=312;x<end-64;x+=96){
+  var bar=slab(x,x+6,height,0);seedPolygons.push(bar);
+  sections.push({x:Math.min(end-16,x+42),y:floor(Math.min(end-16,x+42))-7});
+  if(!plain){polygons.push(bar);pockets.push(rect(x+6,floor(x+6)-height,80,height+10));}
  }
- return {name:'gold-sluice-box',title:'Gold sluice box',seed:options.seed||17,
+ // A common scale makes the longer hardware physically longer, including its
+ // slope projection. Width is out of the page in this longitudinal section.
+ solids.push(rect(64,68,8,116));
+ var seed=(options.seed||17)>>>0;
+ function batch(count,gold,black,salt){
+  var state=(seed^salt)>>>0,items=Array(count).fill('sand');
+  for(var i=0;i<gold;i++)items[i]='gold';for(i=gold;i<gold+black;i++)items[i]='black-sand';
+  for(i=count-1;i>0;i--){state=(Math.imul(state,1664525)+1013904223)>>>0;var j=Math.floor(state/4294967296*(i+1)),v=items[i];items[i]=items[j];items[j]=v;}
+  return items;
+ }
+ var feedMaterials=batch(2400,6,192,0x91a45),initialMaterials=batch(192,1,15,0x738ba),initialGrains=[];
+ if(options.initialCharge!==false)initialMaterials.forEach(function(material,i){
+  var gx=208+(i%16)*2.1;initialGrains.push({material:material,x:gx,y:floor(gx)-3-Math.floor(i/16)*2.1});
+ });
+ var tank=rect(end-168,424,272,144);
+ return {name:'gold-sluice-box',title:'Gold sluice box',seed:seed,
   action:'Pour wash water',primary:{kind:'pour',target:{x:120,y:64}},
-  setup:matched?'matched-density':plain?'no-riffles':'ordinary',caption:'Open the water, then hold Feed to drop a little paydirt. Pale sand washes downhill. Gold settles at the riffles. Try less water before adding more material.',
-  readingLabel:'Sand and gold',viewBounds:rect(48,32,656,368),
-  vessels:[{id:'tailings',label:'Water and washed sand',rect:rect(480,288,216,96),sealed:false}],
+  setup:matched?'matched-density':plain?'no-riffles':'ordinary',caption:'Feed a little classified paydirt into the wash. Most of it is pale quartz. The darker grains are heavy black sand; gold is sparse. Watch the pockets before adding more.',
+  readingLabel:'Quartz, black sand and gold',viewBounds:rect(48,28,end+112-48,548),
+  vessels:[{id:'tailings',label:'Water and washed sediment',rect:tank,sealed:false}],
   pipes:[],solids:solids,vents:[],parts:[],slimes:[],marks:[],meters:[],
-  initial:[{kind:'rect',rect:rect(72,72,128,104)},{kind:'rect',rect:rect(200,176,400,32)}],
+  initial:[{kind:'rect',rect:rect(72,120,128,56)},{kind:'rect',rect:rect(200,160,end-200,256)}],initialGrains:initialGrains,
   seedClear:function(x,y){
+   if(x>=200 && (y<floor(x)-6 || y>=floor(x)-.75))return false;
    return seedPolygons.every(function(points){
     var inside=true,nearest=Infinity;
     points.forEach(function(a,i){var b=points[(i+1)%4],dx=b[0]-a[0],dy=b[1]-a[1];
@@ -35,24 +50,20 @@ function make(world,options){
      nearest=Math.min(nearest,Math.hypot(x-a[0]-t*dx,y-a[1]-t*dy));
     });return !inside && nearest>=.71;
    });
-  },
-  materialAt:function(x,y){
-   if(options.initialCharge!==false && x>=200 && x<232 && y>=176 && y<192){
-    var col=Math.floor((x-8.625)/1.25),row=Math.floor((y-8.625)/1.25);
-    if((col+row)%3===0)return (col+row)%6===0?'gold':'sand';
-   }
-   return 'water';
-  },
-  materialSlip:{density:[1,.7733,2.65,matched?2.65:19.3],drag:[4,600,600,4,4,4],separateGold:true,grainContacts:true,bed:{line:[72,176,608,176+drop],riffles:[240,72,8,height],count:plain?0:6,thickness:16}},
-  sluice:{polygons:polygons,pockets:pockets,tailingsX:608,tailingsY:Math.max(288,196+drop),matched:matched,riffles:!plain,
-   slope:slope,riffleHeight:height,initialCharge:options.initialCharge!==false,waterSupply:18000,hopper:240,feedRate:30,feed:{x:216,y:140},floor:floor},
-  setups:[{id:'ordinary',label:'Sand and gold',options:{}},{id:'matched-density',label:'Equal densities',options:{matched:true}},
+  },materialAt:function(){return 'water';},
+  materialSlip:{density:[1,matched?2.65:5.2,2.65,matched?2.65:19.3],drag:[600,600,600,4,4,4],separateGold:true,blackSand:true,grainContacts:true,
+   bed:{line:[72,176,end,floor(end)],riffles:[312,96,6,height],count:plain?0:sections.length,thickness:8}},
+  sluice:{polygons:polygons,pockets:pockets,sections:sections,tailingsX:end,tailingsY:424,matched:matched,riffles:!plain,
+   lengthInches:length,widthInches:10,wallInches:4.5,pixelsPerInch:unit,slope:slope,riffleHeight:height,
+   initialCharge:options.initialCharge!==false,waterSupply:36000,hopper:2400,feedRate:120,feed:{x:224,y:140},feedMaterials:feedMaterials,
+   mix:{sand:2202,blackSand:192,gold:6},floor:floor},
+  setups:[{id:'ordinary',label:'Classified paydirt',options:{}},{id:'matched-density',label:'Equal mineral densities',options:{matched:true}},
    {id:'no-riffles',label:'Without riffles',options:{riffles:false}}],
   settings:{},boundaries:null,
-  source:{title:'USGS: gold density and gravity separation',url:'https://pubs.usgs.gov/gip/prospect1/goldgip.html'},
-  boundaryNote:'The initial charge is already in the sluice. The external water tank contains 18,000 more parcels; the hopper holds 216 sand grains and 24 gold grains. Opening the valve or holding the source transfers water from that supply. Holding Feed transfers grains from the hopper, with gravity acting from its outlet. Supplies stop on release or exhaustion. Every admitted parcel stays in the world, including the tailings. Changing the bed builds a fresh run.',
-  energyBudgetStatus:'Water, sand and gold carry separate APIC momentum under common gravity and shared compressive pressure. Pair drag and grain contact impulses are equal and opposite. Grain contacts use mass-weighted nonpenetration and Coulomb friction. Density ratios are water 1, quartz 2.65 and pure gold 19.3. The reduced 2D model has exploratory drag, numerical water filters and contact/pressure projection work; it is not a calibrated recovery-efficiency prediction.',
-  measure:{source:rect(72,48,128,144),receiver:rect(480,288,216,96)}};
+  source:length===51?{title:'Keene A52: 51 by 10 by 4.5 inches',url:'https://www.keene.store/?Product_Code=A52&Screen=PROD'}:{title:'Keene A51: 36 by 10 by 4.5 inches',url:'https://www.keene.store/mm5/merchant.mvc?Product_Code=A51&Screen=PROD'},
+  boundaryNote:'A longitudinal section at 24 world pixels per inch. The 51-inch length, 10-inch width and 4.5-inch side height follow the Keene A52; the 36-inch option follows the A51. Width extends out of the page. Riffle spacing and the thickened collision floor are model choices, not a replica of the manufacturer\'s recovery lining. The finite practice hopper holds 2,202 quartz grains, 192 magnetite grains and six gold grains. This is classified, roughly 1.5 mm material; the coarse rocks have already been screened out. The sample is deliberately enriched enough to inspect, not an ore-grade assay. Every admitted particle stays in the world, including the tailings.',
+  energyBudgetStatus:'Water, quartz, magnetite and gold carry separate APIC momentum under common gravity and shared compressive pressure. Pair drag and grain contact impulses are equal and opposite. Density ratios are 1, 2.65, 5.2 and 19.3. Equal mineral densities changes magnetite and gold to quartz density. All grains use the same native contact diameter. The reduced 2D model does not resolve clay cohesion, irregular gravel, gold-flake shape, full 3D turbulence, recovery matting or calibrated recovery efficiency.',
+  measure:{source:rect(72,68,128,116),receiver:tank}};
 }
 root.WSSMachines=root.WSSMachines||{};
 root.WSSMachines['gold-sluice-box']={make:make};

@@ -8028,6 +8028,7 @@ struct RenderParams {
   reconstruction : vec4<f32>, // x = reconstruct water from current positions
   sandColor     : vec4<f32>,   // opt-in mineral grains, a = enabled
   goldColor     : vec4<f32>,
+  blackSandColor : vec4<f32>, // optional third mineral pigment, origin 2
 };
 @group(0) @binding(0) var<uniform> rp : RenderParams;
 
@@ -8646,6 +8647,7 @@ fn particleVertex(vid : u32, iid : u32, grainPass : bool) -> VOut {
     let mass = mix(mix(s00,s10,sf.x),mix(s01,s11,sf.x),sf.y);
     let snowAlpha = select(1.0 - smoothstep(0.62,1.30,mass),1.0,rp.sandColor.a>0.5);
     if(rp.sandColor.a>0.5){out.color=select(rp.sandColor.rgb,rp.goldColor.rgb,((fl>>2u)&3u)==3u);}
+    if(rp.blackSandColor.a>0.5 && ((fl>>2u)&3u)==2u){out.color=rp.blackSandColor.rgb;}
     // A grain inside the pile surface has zero alpha; under premultiplied
     // over its fragments would leave every pixel unchanged, so emit none.
     if (snowAlpha <= 0.0) { return out; }
@@ -10561,10 +10563,10 @@ fn machinePointExitClear(a:vec2<f32>,b:vec2<f32>,r:f32)->bool {
     // reconstruction, 36 f32 lanes. Older shaders read only their prefix.
     instance.renderParamsBuf = dev.createBuffer({
       label: 'liquid.renderParams',
-      size: 176,
+      size: 192,
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
     });
-    instance.renderParamsHost = new Float32Array(44);   // reconstruction plus opt-in grain pigments
+    instance.renderParamsHost = new Float32Array(48);   // reconstruction plus opt-in grain pigments
 
     // --- render bind group layout: uniform + 3 read-only particle bufs --
     var renderEntries = [
@@ -11074,7 +11076,7 @@ fn machinePointExitClear(a:vec2<f32>,b:vec2<f32>,r:f32)->bool {
     rh[28] = LIQUID_SURF_BRIDGE;   rh[29] = LIQUID_SURF_BRIDGE_R;
     rh[30] = instance.dropletStretch; rh[31] = instance.surfaceGapBridge;
     rh[32] = instance.surfaceFromPositions ? 1 : 0;
-    rh.fill(0,36,44);
+    rh.fill(0,36,48);
     if(instance.materialSlip && instance.materialSlip.grainColors)rh.set(instance.materialSlip.grainColors,36);
     instance.queue.writeBuffer(instance.renderParamsBuf, 0, rh);
 
