@@ -3,7 +3,7 @@
   'use strict';
   var rows=[
     ['fountain-rider','Floating things','Fountain rider','PARTLY',true,'A real upward water jet meets the slime; steady riding is unproved.'],
-    ['canal-locks','Floating things','Canal locks','PARTLY',false,'Open the real lock gates in turn; the boat can be grabbed.'],
+    ['canal-locks','Floating things','Canal locks','WORKS',false,'Fill the lock, close the upper gate, then drain through the lower gate and guide the boat through.'],
     ['jellyfish','Water slimes','Jellyfish','PARTLY',false,'Squeeze the submerged skin by hand; swimming is unproved.'],
     ['soft-robot-gripper','Water slimes','Soft robot gripper','NOT WORKING',false,'Grab the elastic cup around the block; air actuation is not connected.'],
     ['suction-cup','Water slimes','Suction cup','NOT WORKING',false,'Press the elastic cup against the shelf; vacuum adhesion is not connected.'],

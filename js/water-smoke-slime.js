@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.209'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.210'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -13216,14 +13216,14 @@
         pointerControl=true;pointerThumb=true;
         machineThumb(true).catch(function(error){buildError=error.message;});return;
       }
-      pointerControl=toggleValveAt(px,py);
-      if(pointerControl)return;
       // A grabbed slime is already the water's moving boundary. Registering
       // the pointer circle and an explosion wake at the same place made one
       // gesture inject momentum three times. Wake the local water, but let
       // the slime silhouette provide the only displacement.
-      if (jelloGrabStart(px, py)) wakeLiquidNear(px, py, 100);
-      else pushWake(px, py, 40, 300);
+      if (jelloGrabStart(px, py)) { wakeLiquidNear(px, py, 100); return; }
+      pointerControl=toggleValveAt(px,py);
+      if(pointerControl)return;
+      pushWake(px, py, 40, 300);
     } else if (tool === 'slime') {
       slimeGhost = { x: px, y: py };
     } else if(tool==='build' || tool==='draw' || tool==='erase') {

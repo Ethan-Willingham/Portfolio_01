@@ -608,6 +608,7 @@
       if(nativeCargo){var cargoDefinition=liveMachine.definition,cargoReading=cargoDefinition.rocketReading || cargoDefinition.cuffReading || cargoDefinition.submarineReading,cargoError=fatal || cargoReading && cargoReading.error;pressureLabel=cargoError?'Solver stopped':state.paused?'Paused':!liveMachine.ready || !cargoReading?'Starting':cargoDefinition.rocket?'Diagnostic':'Live';pressureMessage=cargoError?'Restart to restore the native solver.':'Instruments explains the carried-water or gas-body model and its comparisons.';}
       if(waterRocket){pressureLabel=state.paused?'Paused':'Live';pressureMessage=liveMachine.definition.caption;}
       if(state.scene==='glugging-bottle' && liveMachine){pressureLabel=fatal?'Solver stopped':state.paused?'Paused':liveMachine.ready?'Live':'Starting';pressureMessage=liveMachine.definition.caption;}
+      if(state.scene==='canal-locks' && liveMachine){pressureLabel=fatal?'Solver stopped':state.paused?'Paused':liveMachine.ready?'Live':'Starting';pressureMessage=liveMachine.definition.caption;}
       if(liveMachine && liveMachine.definition.waveLab){pressureLabel=state.paused?'Paused':liveMachine.ready?'Live':'Starting';pressureMessage=liveMachine.definition.caption;}
       if(state.reducedModel){pressureLabel=fatal?'Model stopped':state.paused?'Paused':'Finite-volume model';pressureMessage=liveMachine && liveMachine.definition.readingLabel || 'The apparatus uses a finite-volume model.';}
       if(trap){
