@@ -172,54 +172,74 @@ go to `/tmp/sand-dam-review`.
 
 ## Hourglass
 
-The hourglass starts at 20% playback speed with 30,726 physical grains. Their
-diameter is 0.7 world units, half the original size, and their initial spacing
-is 1.03 diameters. The throat is 3.08 units wide, or 4.4 grain diameters, up
-from 3.6 diameters in the finer-grain version. Both the outline and collision
-walls use the same smooth profile. The drawn discs read the actual resident
-positions and use the contact radius; subpixel antialiasing preserves the area
-of each disc.
+The hourglass runs at normal playback speed with about 30,000 physical grains.
+Their authored diameter is 0.7 units, half the original size, with initial
+spacing of 1.03 diameters. The throat is 3.08 units wide and 24 units long.
+The longer straight passage collimates the stream through real wall contacts.
+There is no lateral attraction, assigned falling path or decorative population.
 
-This all-grain scene has its own WebGPU dry-contact path. A diameter-sized grid
-uses linked cells with no bucket cap or sampled neighbors. Each small ballistic
-step has three compressive contact iterations, with friction and glass contact.
-Each iteration reads an immutable position snapshot, rebuilds the neighbor grid,
-and clears only occupied cells. The result stays in the native resident buffer,
-so the existing gentle-shake action acts on the real charge. It skips the unused
-liquid grid, hidden water-surface rendering and full-pile CPU readback. There is
-no emitter, refill, prescribed stream or decorative particle population.
+Grab anywhere on the glass silhouette, swing it, and release to toss. The grip
+is a damped point spring with a finite force limit. Its off-center force creates
+torque through the body's actual inertia. Release changes only whether the
+spring is active; it adds no velocity, angular impulse or prescribed flip.
+The arrow keys and Enter also move, grab and release the shared pointer.
+Pause, camera changes, lost capture and scene retirement release the grip.
 
-The fixed quantum is 1/(240 times the detail scale) seconds. The scene retains
-its time remainder, honors the playback and gravity controls, and restores the
-engine's update, draw and timing methods when retired. This remains a reduced
-granular model, without a calibrated sand constitutive law.
+The glass has mass 1.8 and the finite charge has total mass 1 in the model's
+mass units. Its rotational inertia comes from the actual wall and cap areas.
+The object is drawn at 0.75 of its authored dimensions, leaving room to swing.
+The rendered mesh, grain walls, grip coordinates and stage contacts use the
+same rigid transform. Stage contacts use the convex hull of every visible
+outer mesh vertex, which has the same support against the floor and window
+planes as the complete outline. Floor contacts have sliding friction and a
+small restitution for harder impacts. There is no automatic righting.
 
-Grain friction is 0.55 and glass friction is 0.32. The floor and ceiling now
-apply the same sliding friction as the curved walls. Impacts have no bounce,
-and the gentle shake adds 12 units of sideways velocity. These contact losses
-give the charge a calmer settling motion while preserving ballistic freefall.
+Grain positions stay in glass-local coordinates, while their velocities stay
+in inertial world coordinates. Each substep first advances the rigid body,
+then transforms each grain's ballistic world motion into its new local frame.
+Moving wall contacts use the glass's actual point velocity, including rotation.
+Every grain-wall impulse returns its opposite linear impulse and torque to
+the body through a GPU reduction. The glass, grain integration, contact sums
+and both renderers remain on the GPU. Only 64 bytes of body state are mirrored
+for hit testing and inspection, without waiting in the animation loop.
+
+A diameter-sized linked-cell grid visits every neighbor without bucket caps
+or representative sampling. Three position-based contact iterations reconstruct
+world velocity from the position correction and apply grain friction. A common
+relaxation factor keeps each pair's corrections and impulses symmetric. This
+preserves total linear momentum within numerical error in a freely moving
+container and charge. Grain spin and a calibrated sand constitutive law are
+not included. The reduced contact model has finite overlap and numerical
+contact work; it is not a laboratory hourglass model.
+
+The fixed quantum is 1/(720 times the detail scale) seconds. Playback at 100%
+advances one simulation second per real second. The scene retains its time
+remainder, honors gravity and speed controls, and restores the native engine's
+update, draw and timing methods when retired. Rendering reads the actual
+resident grains and body pose. Subpixel antialiasing preserves disc area.
 
 The `sand` URL parameter selects a detail scale from 2 to 6. Desktop and mobile
 default to 2. Smaller spacing increases the population without changing the
-filled region. Capacity grows only for an hourglass boot requesting
-more than the normal allocation. `?scene=hourglass&sand=4` selects about 123,000
-grains at one-quarter the old diameter. Scales 5 and 6 are stress settings.
+filled region. Capacity grows only for an hourglass boot requesting more than
+the normal allocation. `?scene=hourglass&sand=4` selects about 120,000 grains
+at one-quarter the old diameter. Scales 5 and 6 remain stress settings.
 
-Run `node tools/test-hourglass.mjs` for GPU containment, inventory, packing,
-freefall, pair separation, floor friction, slow-clock accounting, read-only
-drawing, pause, shake, fullscreen, resize, restart and scene retirement. Add `--mobile` for
-mobile startup. Use `--benchmark` to measure 300 completed update-and-render
-workloads followed by 299 animation-frame intervals; the timings include the
-CPU submission and GPU completion wait, and are not isolated GPU timestamps.
-Set `HOURGLASS_SAND=4` (or another scale) to compare density. The harness owns
-Chrome for Testing and writes captures and measurements to
-`/tmp/hourglass-review`. The M1 Pro trial results are recorded in
-`docs/hourglass-benchmark-2026-10-12.json`. Those trials predate the half-size
-default and wider throat. These desktop measurements do not predict phone
-speed. The previous 69,409-grain default held 60 fps; the 122,938-grain
-trial reached 39 fps, and the 192,648 and 277,607 stress runs reached 19 and
-8 fps. Stress settings also hit the host's existing 50 ms frame-input clamp,
-so their simulated time falls behind wall time. They are not faster defaults.
+Run `node tools/test-hourglass.mjs` for real WebGPU containment, inventory,
+packing, stream width, grain and glass freefall, inelastic pair contact, floor
+friction, grain-to-body momentum transfer and full-charge momentum conservation.
+Real pointer gestures check force-driven translation, torque, release adding
+no impulse, continuing angular motion, pause, fullscreen, resizing, restart
+and scene retirement. Add `--mobile` for touch gestures on landscape mobile.
+Use `--boot` for a quick compilation check and `--benchmark` for 300 completed
+update-and-render workloads followed by 299 animation-frame intervals.
+The harness owns Chrome for Testing and writes captures and measurements to
+`/tmp/hourglass-review`.
+
+The older density trials in `docs/hourglass-benchmark-2026-10-12.json` predate
+both the half-size default and dynamic body. They used 20% playback and cannot
+predict this version's frame rate or phone speed. High density still encounters
+the host's 50 ms frame-input clamp if frame rate falls, so stress settings can
+lag behind wall time.
 
 ## Smoke wind tunnel
 

@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.184'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.185'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -274,7 +274,7 @@
     var bounds=stage.getBoundingClientRect(),projection=[bounds.left,bounds.top,bounds.width,bounds.height];
     // A captured construction stroke uses screen-to-world coordinates. A
     // toolbar-height, fullscreen or scroll change must not add a new bend.
-    if(buildViewProjection && buildGesture && projection.some(function(value,index){
+    if(buildViewProjection && (buildGesture || pointerApparatus) && projection.some(function(value,index){
       return Math.abs(value-buildViewProjection[index])>.01;
     }))cancelHeldInput();
     buildViewProjection=projection;
@@ -337,7 +337,7 @@
 
   // ---- Instrument state ------------------------------------------------
   var gravMul = 1;     // 0..2   — water + slime gravity, smoke lift
-  var timeMul = bootScene==='hourglass' ? .2 : 1;     // 0.05..1 — one slow-motion clock for all three engines
+  var timeMul = 1;     // 0.05..1, one clock for all three engines
   var brushR = 16;     // px     — wall/erase/pour/puff radius, slime size seed
   var waterFeel = 0.42; // 0..1, defaults just inside the "fluid" band
   var debugParticles = false;
@@ -13112,6 +13112,7 @@
   var pointerPour = false;
   var pointerPipe = false,pipeGrabOffset=0;
   var pointerPress=false;
+  var pointerApparatus=false;
   var pointerClickAction=null,pointerStartX=0,pointerStartY=0;
   var pointerId = -1;
   var px = 0, py = 0;            // current world position
@@ -13153,6 +13154,9 @@
     pointerWaterFlow.acc = 0;
     pointerControl=false;pointerClickAction=null;pointerStartX=x;pointerStartY=y;
     if (tool === 'poke') {
+      if(toyDraftRuntime && toyDraftRuntime.grab && machineState && machineState.definition.hourglass){
+        pointerApparatus=!userPaused && toyDraftRuntime.grab(x,y);pointerControl=true;return;
+      }
       if(toyThirsty && toyThirsty.press.grab(x,y,fitScale)){pointerPress=true;pointerControl=true;return;}
       var bodyAction=machineControlTargets().find(function(control){return !control.disabled && control.pointerMode==='tap-body' &&
         Math.abs(x-control.x)<=control.width*.5 && Math.abs(y-control.y)<=control.height*.5;});
@@ -13205,6 +13209,7 @@
       pvy = pvy * 0.5 + ((y - py) / mdt) * 0.5;
     }
     px = x; py = y;
+    if(pointerApparatus && toyDraftRuntime)toyDraftRuntime.move(x,y);
     if(pointerPress && toyThirsty)toyThirsty.press.move(x);
     if(pointerDown && Math.hypot(x-pointerStartX,y-pointerStartY)*fitScale>6)pointerClickAction=null;
     if(pointerPipe && pointerDown && toySteam){window.WSSSingingPipe.extend(machineState.definition,toySteam,py-pipeGrabOffset);machineOverlayCache=null;drawMachineOverlay();}
@@ -13223,6 +13228,7 @@
   function releasePointer(e,cancelled) {
     if (!pointerDown || e.pointerId !== pointerId) return;
     var clickAction=!cancelled ? pointerClickAction : null;pointerClickAction=null;
+    if(pointerApparatus && toyDraftRuntime)toyDraftRuntime.release();pointerApparatus=false;
     if(pointerPress && toyThirsty)toyThirsty.press.release();pointerPress=false;
     if(pointerThumb){pointerThumb=false;machineThumb(false);}
     if(pointerPour){pointerPour=false;machinePour(false);}
@@ -13297,7 +13303,7 @@
     }else if(!userPaused || /^(build|draw|erase)$/.test(tool) || machineState && machineState.definition.birds){
       beginToolInput(keyboardX,keyboardY,keyboardPointerId);
       // A manual valve is a single real toggle, not a held stirring gesture.
-      if(pointerControl && !pointerThumb && !pointerPour && !pointerPipe && !pointerPress)releasePointer({pointerId:keyboardPointerId},false);
+      if(pointerControl && !pointerThumb && !pointerPour && !pointerPipe && !pointerPress && !pointerApparatus)releasePointer({pointerId:keyboardPointerId},false);
     }
     updateKeyboardHelp();drawMachineOverlay();
   });
@@ -13394,7 +13400,7 @@
 
   function applyTimescale() {
     var t = Math.max(0.05, timeMul);
-    if (liquidWGPU && liquidWGPU.setSimParam) liquidWGPU.setSimParam('TIMESCALE', 1.55 * t * presetWaterTimeScale);
+    if (liquidWGPU && liquidWGPU.setSimParam) liquidWGPU.setSimParam('TIMESCALE', (currentScene==='hourglass'?1:1.55) * t * presetWaterTimeScale);
     JELLO_TIMESCALE = 0.5 * t;
   }
 
@@ -15008,7 +15014,7 @@
   function machineControlTargets(){
     if(!machineState || !machineState.definition.primary)return [];
     var d=machineState.definition,p=d.primary,kind=p.kind;
-    if(kind==='creature-fixture')return [];
+    if(kind==='creature-fixture' || kind==='hourglass-grab')return [];
     var disabled=!machineState.ready || machineLoading || handsPending ||
       ((kind==='balloon-pop' || kind==='slime') && machineState.primaryUsed) ||
       (kind==='cork-release' && d.corkReading && !d.corkReading.locked) ||
@@ -15319,6 +15325,7 @@
   var readoutTick = 0;
 
   function drawCursor() {
+    if(machineState && machineState.definition.hourglass)return;
     if (!pointerIn && !pointerDown) return;
     if (isMobile && !pointerDown) return;
     var r = tool === 'slime' ? slimeRadius() : brushR;

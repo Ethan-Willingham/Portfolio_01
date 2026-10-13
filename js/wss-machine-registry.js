@@ -269,7 +269,7 @@
     "id": "hourglass",
     "capability": "Sand",
     "title": "Hourglass",
-    "cue": "Draft. Watch the grains settle through the glass.",
+    "cue": "Grab the glass. Swing and release to flip it.",
     "status": "PARTLY",
     "draft": true,
     "world": {

@@ -23,16 +23,16 @@ register('material-sand-jar','Sand','Settling and sorting jar','Stir the grains 
  d.viewBounds=rect(208,0,304,400);d.vessels=[box('jar','Grains in water',jar)];d.initial=[initial(rect(256,120,208,248))];
  d.materialSlip=slip();d.materialAt=function(x,y){return y>=132&&y<232&&Math.floor((x-256)/1.25)%4===0&&Math.floor((y-120)/1.25)%4===0?'sand':'water';};d.measure={source:jar,receiver:jar};return d;
 });
-register('hourglass','Sand','Hourglass','Watch the grains settle through the glass.','PARTLY',function(w,o){
- var d=base('hourglass','Hourglass','A finite charge of grains falls through the glass. Shake gently if a bridge forms.',w,o);
- d.viewBounds=rect(208,24,304,352);d.vessels=[box('glass','',rect(240,40,240,320),true)];
- // The broad tile envelope is only a backstop. The shared smooth profile
- // supplies the actual grain contacts and the visible glass in WSSHourglass.
+register('hourglass','Sand','Hourglass','Grab the glass. Swing and release to flip it.','PARTLY',function(w,o){
+ var d=base('hourglass','Hourglass','Grab the glass, swing it, and release to toss. The grains push back on the moving glass.',w,o);
+ d.viewBounds=rect(0,0,720,400);d.vessels=[];
+ // Moving contacts and drawing both read the GPU's actual rigid-body pose.
  d.hourglass=root.WSSHourglass.configure(o.grainScale);d.seedContains=root.WSSHourglass.contains;
  d.seedPitch=d.hourglass.pitch;d.seedInset=d.hourglass.radius*1.1;d.seedJitter=d.hourglass.radius*.02;d.initial=[initial(rect(256,72,208,94))];d.materialSlip=slip();d.materialAt=function(){return 'sand';};
- d.primary={kind:'material-jolt',speed:12,target:{x:360,y:351}};d.action='Shake gently';d.readingLabel='Finite sand';
+ d.primary={kind:'hourglass-grab'};d.action='Grab and toss';d.readingLabel='Finite sand';
  d.measure={source:rect(240,48,240,152),receiver:rect(240,200,240,152)};
- d.boundaryNote='Finite physical grains. Exact GPU neighbor contacts and the drawn glass profile determine the flow. No refill or prescribed stream.';
+ d.boundaryNote='Finite grains in a dynamic rigid glass body. A damped point grip applies force and torque. Wall impacts return equal and opposite impulses to the glass.';
+ d.energyBudgetStatus='Gravity, finite rigid-body mass and rotational inertia, dissipative grain contacts, floor collisions and a force-limited hand spring. No prescribed flip or release impulse. This reduced granular model is not calibrated to laboratory sand.';
  return d;
 },['wss-hourglass']);
 register('aquarium-bubbler','Bubbles','Aquarium bubbler','Stop the air and watch the last bubbles rise.','PARTLY',function(w,o){
