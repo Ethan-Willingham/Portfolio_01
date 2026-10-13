@@ -2,10 +2,11 @@
  * Glass contacts and the visible glass thickness share the same profile. */
 (function(root){
 'use strict';
-var G={cx:360,top:56,bottom:344,shoulder:80,upper:108,neckTop:196,neckBottom:204,lower:292,heel:320,wide:104,end:80,neck:.84,radius:1.4/6,scale:3,pitch:1.4/3*1.03};
+var G={cx:360,top:56,bottom:344,shoulder:80,upper:108,neckTop:196,neckBottom:204,lower:292,heel:320,wide:104,end:80,neck:1.54,radius:.35,scale:2,pitch:.7*1.03};
+var grainFriction=.55,glassFriction=.32;
 function configure(scale){
- scale=Math.max(2,Math.min(6,Number(scale)||3));
- G.radius=1.4/scale*.5;G.neck=G.radius*3.6;G.scale=scale;G.pitch=G.radius*2*1.03;
+ scale=Math.max(2,Math.min(6,Number(scale)||2));
+ G.radius=1.4/scale*.5;G.neck=G.radius*4.4;G.scale=scale;G.pitch=G.radius*2*1.03;
  return Object.assign({},G);
 }
 function smooth(t){return t*t*(3-2*t);}
@@ -53,10 +54,16 @@ const ROWS:u32=${rows}u;
 fn cellAt(p:vec2f)->vec2i {
  return clamp(vec2i(floor((p-vec2f(${G.cx-G.wide-2}.,${G.top-2}.))/CELL)),vec2i(0),vec2i(i32(COLS)-1,i32(ROWS)-1));
 }
+fn glassContact(velocity:vec2f,normal:vec2f)->vec2f {
+ let incoming=max(0.,dot(velocity,normal));
+ let tangent=vec2f(-normal.y,normal.x);let speed=dot(velocity,tangent);
+ return velocity-normal*incoming-tangent*clamp(speed,-incoming*${glassFriction},incoming*${glassFriction});
+}
 fn wall(state:vec4f)->vec4f {
  var p=state.xy;var v=state.zw;
- if(p.y<${G.top+G.radius}){p.y=${G.top+G.radius};v.y=max(0.,v.y);}
- if(p.y>${G.bottom-G.radius}){p.y=${G.bottom-G.radius};v.y=min(0.,v.y);}
+ // The floor and ceiling resist sliding just like the curved glass does.
+ if(p.y<${G.top+G.radius}){p.y=${G.top+G.radius};v=glassContact(v,vec2f(0.,-1.));}
+ if(p.y>${G.bottom-G.radius}){p.y=${G.bottom-G.radius};v=glassContact(v,vec2f(0.,1.));}
  for(var k=0;k<4;k++){
   let side=select(-1.,1.,p.x>=${G.cx}.);
   let width=halfWidth(p.y);
@@ -66,12 +73,7 @@ fn wall(state:vec4f)->vec4f {
   if(distance>=${G.radius}){break;}
   p-=normal*(${G.radius}-distance);
   p.y=clamp(p.y,${G.top+G.radius},${G.bottom-G.radius});
-  let incoming=dot(v,normal);
-  if(incoming>0.){
-   v-=normal*incoming;
-   let tangent=vec2f(-normal.y,normal.x);let speed=dot(v,tangent);
-   v-=tangent*clamp(speed,-incoming*.18,incoming*.18);
-  }
+  v=glassContact(v,normal);
  }
  return vec4f(p,v);
 }
@@ -109,7 +111,7 @@ fn contacts(@builtin(global_invocation_id) id:vec3u){
    shift+=normal*(DIAMETER-distance)*.5;neighbors+=1.;
    let relative=p.zw-other.zw;let closing=min(0.,dot(relative,normal));let support=-closing*.5;
    let tangent=relative-normal*dot(relative,normal);
-   impulse+=normal*support-tangent*min(.5,.35*support/max(length(tangent),.00001));
+   impulse+=normal*support-tangent*min(.5,${grainFriction}*support/max(length(tangent),.00001));
   }
  }}
  let relax=1./max(1.,neighbors*.5);shift*=relax;
@@ -235,7 +237,7 @@ async function create(context){
    c.fillRect(250,49,220,2);c.fillRect(250,344,220,2);
    c.restore();
   },
-  stats:function(){return {glassProfile:G,finish:'Resident physical grains',finiteCharge:true,grainCount:L.uploadedCount,steps:completedSteps,stepSeconds:h,gridCells:cols*rows,neighborSearch:'Exact linked cells',solverBytes:cols*rows*4+L.maxParticles*20};},
+  stats:function(){return {glassProfile:G,finish:'Resident physical grains',finiteCharge:true,grainCount:L.uploadedCount,grainFriction:grainFriction,glassFriction:glassFriction,steps:completedSteps,stepSeconds:h,gridCells:cols*rows,neighborSearch:'Exact linked cells',solverBytes:cols*rows*4+L.maxParticles*20};},
   destroy:function(){if(retired)return;retired=true;slip.stats=previousStats;L.update=previousUpdate;L.draw=previousDraw;L.getTimingState=previousTiming;L.awakeCount=previousAwake;L.renderCanvas.style.visibility=previousVisibility;canvas.remove();renderContext.unconfigure();buffers.forEach(function(b){b.destroy();});}
  };
 }

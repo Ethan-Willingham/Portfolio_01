@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.174'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.175'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -508,7 +508,7 @@
    * zero (LIQUID_CALM_MAX = 0 in 020-state.js), so "production water feel"
    * is a one-time push of CALM 0 / GRID_VISC 0 / DAMPING 1 / MOTION 1
    * after the device is ready, not a per-frame state machine. ==== */
-  var hourglassScale=Math.max(2,Math.min(6,Number(bootParams.get('sand'))||(isMobile?2:3)));
+  var hourglassScale=Math.max(2,Math.min(6,Number(bootParams.get('sand'))||2));
   var LIQUID_MAX_PARTICLES = Math.max(isMobile ? 40000 : 100000,bootScene==='hourglass'?Math.ceil(8000*hourglassScale*hourglassScale):0);
   var LIQUID_DENSITY_REST = 4;              // mirrors the module's 1/PDELTA^2
   var LIQUID_OPS_MAX = 300000;

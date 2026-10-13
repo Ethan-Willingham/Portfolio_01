@@ -142,12 +142,13 @@ Captures and measurements go to `/tmp/sand-dam-review`.
 
 ## Hourglass
 
-The hourglass starts at 20% playback speed. Desktop uses 69,409 physical grains,
-about ten times the previous 6,785. Their diameter is 0.467 world units instead
-of 1.398, and their initial spacing is 1.03 diameters. The throat is 1.68 units
-wide instead of 5. Both the outline and collision walls use the same smooth
-profile. The drawn discs read the actual resident positions and use the contact
-radius; subpixel antialiasing preserves the area of each disc.
+The hourglass starts at 20% playback speed with 30,726 physical grains. Their
+diameter is 0.7 world units, half the original size, and their initial spacing
+is 1.03 diameters. The throat is 3.08 units wide, or 4.4 grain diameters, up
+from 3.6 diameters in the finer-grain version. Both the outline and collision
+walls use the same smooth profile. The drawn discs read the actual resident
+positions and use the contact radius; subpixel antialiasing preserves the area
+of each disc.
 
 This all-grain scene has its own WebGPU dry-contact path. A diameter-sized grid
 uses linked cells with no bucket cap or sampled neighbors. Each small ballistic
@@ -163,23 +164,29 @@ its time remainder, honors the playback and gravity controls, and restores the
 engine's update, draw and timing methods when retired. This remains a reduced
 granular model, without a calibrated sand constitutive law.
 
-The `sand` URL parameter selects a detail scale from 2 to 6. Desktop defaults to
-3; mobile defaults to 2. Smaller spacing increases the population without
-changing the filled region. Capacity grows only for an hourglass boot requesting
+Grain friction is 0.55 and glass friction is 0.32. The floor and ceiling now
+apply the same sliding friction as the curved walls. Impacts have no bounce,
+and the gentle shake adds 12 units of sideways velocity. These contact losses
+give the charge a calmer settling motion while preserving ballistic freefall.
+
+The `sand` URL parameter selects a detail scale from 2 to 6. Desktop and mobile
+default to 2. Smaller spacing increases the population without changing the
+filled region. Capacity grows only for an hourglass boot requesting
 more than the normal allocation. `?scene=hourglass&sand=4` selects about 123,000
 grains at one-quarter the old diameter. Scales 5 and 6 are stress settings.
 
 Run `node tools/test-hourglass.mjs` for GPU containment, inventory, packing,
-freefall, pair separation, slow-clock accounting, read-only drawing, pause,
-shake, fullscreen, resize, restart and scene retirement. Add `--mobile` for
+freefall, pair separation, floor friction, slow-clock accounting, read-only
+drawing, pause, shake, fullscreen, resize, restart and scene retirement. Add `--mobile` for
 mobile startup. Use `--benchmark` to measure 300 completed update-and-render
 workloads followed by 299 animation-frame intervals; the timings include the
 CPU submission and GPU completion wait, and are not isolated GPU timestamps.
 Set `HOURGLASS_SAND=4` (or another scale) to compare density. The harness owns
 Chrome for Testing and writes captures and measurements to
 `/tmp/hourglass-review`. The M1 Pro trial results are recorded in
-`docs/hourglass-benchmark-2026-10-12.json`. These desktop measurements do not
-predict phone speed. The 69,409-grain default held 60 fps; the 122,938-grain
+`docs/hourglass-benchmark-2026-10-12.json`. Those trials predate the half-size
+default and wider throat. These desktop measurements do not predict phone
+speed. The previous 69,409-grain default held 60 fps; the 122,938-grain
 trial reached 39 fps, and the 192,648 and 277,607 stress runs reached 19 and
 8 fps. Stress settings also hit the host's existing 50 ms frame-input clamp,
 so their simulated time falls behind wall time. They are not faster defaults.

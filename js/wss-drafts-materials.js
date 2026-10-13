@@ -30,7 +30,7 @@ register('hourglass','Sand','Hourglass','Watch the grains settle through the gla
  // supplies the actual grain contacts and the visible glass in WSSHourglass.
  d.hourglass=root.WSSHourglass.configure(o.grainScale);d.seedContains=root.WSSHourglass.contains;
  d.seedPitch=d.hourglass.pitch;d.seedInset=d.hourglass.radius*1.1;d.seedJitter=d.hourglass.radius*.02;d.initial=[initial(rect(256,72,208,94))];d.materialSlip=slip();d.materialAt=function(){return 'sand';};
- d.primary={kind:'material-jolt',speed:24,target:{x:360,y:351}};d.action='Shake gently';d.readingLabel='Finite sand';
+ d.primary={kind:'material-jolt',speed:12,target:{x:360,y:351}};d.action='Shake gently';d.readingLabel='Finite sand';
  d.measure={source:rect(240,48,240,152),receiver:rect(240,200,240,152)};
  d.boundaryNote='Finite physical grains. Exact GPU neighbor contacts and the drawn glass profile determine the flow. No refill or prescribed stream.';
  return d;

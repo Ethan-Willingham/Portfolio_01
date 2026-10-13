@@ -71,6 +71,7 @@ try{
  }else{
  let initial=await snapshot();console.log('INITIAL',initial);await capture('initial');
  assert.equal(await ev('__toy.stats().timeScale'),.2);assert.equal(await sim('timeInput.value'),'20');
+ if(!detail){const geometry=await ev('WSSHourglass.geometry()');assert.equal(geometry.radius*2,.7,'The default grains have half the original diameter');assert(Math.abs(geometry.neck*2-3.08)<1e-6,'The opening fits the larger grains with more clearance');}
  assert(initial.finite && initial.outside===0);const n=initial.n;await sim('render()');assert.deepEqual(await snapshot(),initial,'Drawing reads the resident state without changing physics');
  // Step the actual resident grains with the authored slow clock, preserving the population.
  for(let stage=0;stage<4;stage++){
@@ -89,11 +90,14 @@ try{
    for(let i=0;i<50;i++)L.update(1/60);t=L.simulationClock-t;const fall=await positions();
    const diameter=WSSHourglass.geometry().radius*2;L.uploadedCount=2;L.setSimParam('GRAVITY',0);
    d.queue.writeBuffer(L.buf.pos,0,new Float32Array([355,270,0,0,355+diameter*.5,270,0,0]));L.update(1/60);const pair=await positions();
-   return {fallError:Math.abs(fall[1]-(260+125*t*t)),velocityError:Math.abs(fall[3]-250*t),separation:pair[4]-pair[0],diameter,centerError:Math.abs((pair[0]+pair[4])*.5-(355+diameter*.25))};
+   const floorY=WSSHourglass.geometry().bottom-diameter*.5;L.uploadedCount=1;
+   d.queue.writeBuffer(L.buf.pos,0,new Float32Array([360,floorY-.01,18,40]));L.update(1/60);const landing=await positions();
+   return {fallError:Math.abs(fall[1]-(260+125*t*t)),velocityError:Math.abs(fall[3]-250*t),separation:pair[4]-pair[0],diameter,centerError:Math.abs((pair[0]+pair[4])*.5-(355+diameter*.25)),landing:{vx:landing[2],vy:landing[3],heightError:Math.abs(landing[1]-floorY)}};
   }finally{let e=d.createCommandEncoder();e.copyBufferToBuffer(backup,0,L.buf.pos,0,size);d.queue.submit([e.finish()]);await d.queue.onSubmittedWorkDone();L.uploadedCount=n;L.simulationClock=oldClock;L.setSimParam('GRAVITY',g);backup.destroy();read.destroy();}
  })()`);
  console.log('PHYSICS',physical);assert(physical.fallError<.01&&physical.velocityError<.005,'Freefall follows the declared gravity');assert(physical.separation>physical.diameter*.995&&physical.centerError<.001,'Two grains separate at their actual diameter without shifting their center');
- await clickTarget();console.log('SHAKE',await sim('machineState.lastMaterialImpulse'));assert.equal(await sim('Math.abs(machineState.lastMaterialImpulse.horizontalVelocityImpulse)'),24);
+ assert(physical.landing.vx>=0&&physical.landing.vx<6&&Math.abs(physical.landing.vy)<.001&&physical.landing.heightError<.001,'A grain loses sideways momentum on impact with the floor without bouncing');
+ await clickTarget();console.log('SHAKE',await sim('machineState.lastMaterialImpulse'));assert.equal(await sim('Math.abs(machineState.lastMaterialImpulse.horizontalVelocityImpulse)'),12);
  await sim('(function(){for(var i=0;i<60;i++)updateLiquidToy(1/60);render();})()');let shaken=await snapshot();assert(shaken.finite && shaken.outside===0 && shaken.n===n,'A gentle shake preserves containment and grain inventory');
  await ev('__toy.pause(false)');await pause(3000);await ev('__toy.pause(true)');await capture('desktop');
  const frozen=await snapshot();await pause(300);assert.deepEqual(await snapshot(),frozen,'Pause freezes native grain state');
