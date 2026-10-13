@@ -1,6 +1,6 @@
 # Water machines
 
-Release: toy v5.201. The 76 scenes formerly labeled Partly working now have
+Release: toy v5.202. The 76 scenes formerly labeled Partly working now have
 working controls, visible physical responses, and scene-specific browser checks.
 Twenty water-network scenes use finite-volume inventories, head and flow
 relations, and explicit pump work or losses. Other scenes use native water,

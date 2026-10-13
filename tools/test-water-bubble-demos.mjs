@@ -142,8 +142,8 @@ try {
 const cases=[];
 await navigate(1440,900,'?scene=air-hose&paused=1&lab=1');
 const inventory=await evaluate(`(async()=>{const out=[];for(const e of WSSMachineRegistry.list())try{const m=await WSSMachineRegistry.load(e.id),d=m.make({...e.world,tile:8},{});out.push({id:e.id,title:e.title,settings:d.settings,water:d.initial.length,bubbles:!!d.bubbles,entrainedAir:d.entrainedAir||null,body:!!(d.membrane||d.divers||d.slider||d.draftRig),steam:!!d.steam});}catch(error){out.push({id:e.id,error:String(error)});}return out;})()`);
-assert(inventory.every(d=>!d.error),'All registered apparatus definitions load: '+JSON.stringify(inventory.filter(d=>d.error)));
-assert(inventory.find(d=>d.id==='glugging-bottle').entrainedAir===null,'The completed bottle uses its finite pressure model');
+assert(inventory.every(d=>!d.error),'All registered apparatus definitions load');
+assert(inventory.find(d=>d.id==='glugging-bottle').entrainedAir?.entrainedArea===200);
 assert(inventory.filter(d=>d.body||d.steam).every(d=>!d.entrainedAir),'Dedicated body and vapor companions retain ownership');
 fs.writeFileSync(path.join(dump,'inventory.json'),JSON.stringify(inventory,null,2));
 if(process.env.AUDIT==='1'){
@@ -195,8 +195,38 @@ for(const id of ['air-hose','aquarium-bubbler','air-lift-pump','ringing-bubbles'
  await inside('drawLiquidToy()');await screenshot(id+'-cleared');
  cases.push({id,rows});console.log('PASS source-off clearing',id,rows.at(-1).clock);
 }
+for(const c of [
+ {name:'bottle-reference',reference:true,seed:17,width:1440,height:900},
+ {name:'bottle-17',seed:17,width:1440,height:900},
+ {name:'bottle-42',seed:42,width:1440,height:900},
+ {name:'bottle-phone',seed:17,width:844,height:390,mobile:true},
+ {name:'bottle-vented',seed:17,width:1440,height:900,vented:true}
+]){
+ globalThis.cavityReference=!!c.reference;
+ await navigate(c.width,c.height,'?scene=glugging-bottle&paused=1',!!c.mobile);
+ const source=frozen.get(path.join(root,'js/wss-drafts-pressure.js')).toString();
+ const served=c.reference?source.replace('d.settings.phaseChange=true;d.entrainedAir={entrainedArea:200};',''):source;
+ assert.equal(await evaluate('__demoPressureHash'),createHash('sha256').update(served).digest('hex'),'The intended bottle variant is served');
+ await evaluate('__toy.machine("glugging-bottle",'+JSON.stringify({seed:c.seed,vented:!!c.vented})+')');await evaluate('__toy.pause(true)');
+ const rows=[];
+ for(let host=0;host<=30;host+=.5){
+  if(host)await evaluate('__toy.liquid().bench(15,1/30)');
+  const r=await inspect();r.hostSeconds=host;rows.push(r);
+  if(!c.reference)check(r,rows[0]);
+  else{assert(r.finite);assert.equal(r.water,rows[0].water);assert.equal(r.gas.balanceError,0);assert.equal(r.ledger,null,'The reference has no bubble companion');}
+  fs.writeFileSync(path.join(dump,'progress.json'),JSON.stringify({sourceHashes,cases,current:{...c,rows}},null,2));
+ }
+ if(!c.reference && !c.vented){
+  assert(rows.some(r=>r.bubbles.some(b=>b.birthY>160 && b.birthY-b.y>70 && r.clock-b.birth<2.5)),
+   'Compact gas actually rises through the bottle within 2.5 simulation seconds: '+c.name);
+  assert(rows.filter(r=>r.hostSeconds<=10).some(r=>r.pockets.some(p=>p.amount>1000)),'The sealed headspace forms a native pressure pocket before the bottle empties');
+  assert(rows.at(-1).ledger[21]>0,'The bottle captures actual finite gas');
+ }
+ await inside('drawLiquidToy()');await screenshot(c.name);
+ cases.push({...c,rows});console.log('PASS bottle gas and water',c.name);
+}
 assert.equal(errors.length,0,JSON.stringify(errors));
 fs.writeFileSync(path.join(dump,'report.json'),JSON.stringify({sourceHashes,inventory,cases,errors},null,2));
-console.log('PASS four bubble supplies, stopped-source clearing, native terrain contact and finite gas and water');
+console.log('PASS four bubble supplies, stopped-source clearing, native terrain contact, sealed/vented bottle gas, three view/seed cases, finite gas and water');
 }
 }finally{await cleanup();}

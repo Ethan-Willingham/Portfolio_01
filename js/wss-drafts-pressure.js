@@ -31,16 +31,17 @@
     options=options||{};if(world.w!==720||world.h!==400||(world.tile||8)!==8)throw Error('Pressure drafts need a 720 by 400 world.');
     var d,r,receiver,opening;
     if(id==='glugging-bottle'){
-      d=base(id,'Glugging bottle','Open the air vent and compare the bottle draining through its mouth, draft.',options);
+      d=base(id,'Glugging bottle','Watch water leave while native air rises through the shared mouth. Open the side vent to drain faster.',options);
       d.settings.phaseChange=true;d.entrainedAir={entrainedArea:200};
       r=vessel(d,'Bottle',rect(272,48,176,176),true);receiver=vessel(d,'Basin',rect(16,312,688,72),false);
-      pipe(d,[point(364,204),point(364,292)],16,true);fill(d,rect(280,80,160,136));
-      d.vents.push(rect(440,64,8,16));opening={axis:'x',at:448,start:64,end:80};d.primary.opening=opening;d.primary.closed=!options.vented;
+      pipe(d,[point(364,204),point(364,292)],32,true);fill(d,rect(280,80,160,136));
+      d.vents.push(rect(440,64,8,16));opening={axis:'x',at:448,start:64,end:80};d.primary.opening=opening;d.primary.label='Air vent';d.primary.closed=!options.vented;
       d.boundaries.caps=options.vented?[]:[opening];d.action=options.vented?'Close air vent':'Open air vent';d.setup=options.vented?'vented':'ordinary';
       d.setups=[{id:'ordinary',label:'Shared mouth',options:{}},{id:'vented',label:'Air vent open',options:{vented:true}}];
       d.meters.push({id:'mouth',a:point(360,288),b:point(376,288),axis:'y',positive:1});
-      d.measure={source:r,receiver:receiver,gasProbe:point(352,64),outlet:point(368,296),sourceLevel:80,bore:16};
-      d.energyBudgetStatus+=' Compact detached gas uses the finite bubble transport model; the sealed headspace stays in the native pressure solver. Alternating counterflow and its timing are still unvalidated.';
+      d.measure={source:r,receiver:receiver,gasProbe:point(352,64),outlet:point(368,296),sourceLevel:80,bore:32};
+      d.boundaryNote='The finite bottle shares a 32-pixel mouth between outgoing native water and incoming native air. No air is injected into the bottle. A visitor-operated side vent gives room air a separate path; the native pressure model determines the different draining rates. Small detached pockets use the finite bubble transport model, while connected headspace stays in the native gas solver.';
+      d.energyBudgetStatus+=' Native mouth water and captured ambient gas drive intermittent counterflow without a flow timer. Detailed gas interface breakup and turbulent losses are unresolved.';
     }else if(id==='boyle-j-tube'){
       d=base(id,"Boyle's J-tube",'The taller water column squeezes the trapped air. Open its vent to compare, draft.',options);
       r=vessel(d,'Trapped air',rect(216,80,80,264),true);receiver=vessel(d,'Open arm',rect(424,32,80,312),false);

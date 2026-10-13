@@ -1175,9 +1175,9 @@
     "id": "glugging-bottle",
     "capability": "Bubbles",
     "title": "Glugging bottle",
-    "cue": "Open the mouth. Falling water lowers bottle pressure; air can enter through the same mouth. Compare with the top vent open.",
+    "cue": "Watch air and water share the bottle's mouth, then open the side vent for a faster drain.",
     "status": "WORKS",
-    "draft": true,
+    "draft": false,
     "accepted": true,
     "world": {
       "w": 720,
@@ -1186,18 +1186,16 @@
     "pool": false,
     "preview": "cup",
     "scripts": [
-      "wss-drafts-pressure",
-      "wss-pressure-labs"
+      "wss-drafts-pressure"
     ],
     "loaderDependencies": [
       "wss-boundaries",
       "wss-hands",
       "wss-native",
       "wss-sound",
-      "wss-drafts-pressure",
-      "wss-pressure-labs"
+      "wss-drafts-pressure"
     ],
-    "blocker": "",
+    "blocker": "Actual gas/water counterflow through the shared mouth has not been observed.",
     "behaviorPlan": {
       "seed": 17,
       "seconds": 6,
