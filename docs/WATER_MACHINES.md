@@ -56,26 +56,32 @@ reservoir pressure, which then stays fixed until the next input. The pressure
 difference drives an entrance with inertia and quadratic pressure loss.
 Closing the real mouth valve traps its existing charge. Reopening uses that
 charge. Instruments offers equal starting pressures and a closed initial mouth.
-Pause freezes the gas and vane motion; the pressure buttons remain usable.
+Pause freezes the gas and arrow motion; the pressure buttons remain usable.
 
-The arrow-shaped vanes are pinned diagnostic instruments. A sail 36 cm ahead
-of each pin receives drag from the local air relative to its own rotational
-motion. The [quadratic drag relation](https://www1.grc.nasa.gov/beginners-guide-to-aeronautics/drag-equation/)
-uses local density, an effective sail area of 0.03 square meters and a declared
-drag coefficient of 1.2. Its moment about the pin drives angular momentum.
-Each instrument has 0.0004 kg square meters of inertia, bearing drag of
-0.0001 Nm seconds and a weak torsion spring of 0.0000002 Nm per radian. The spring
-rests a quarter-turn from the outward field direction, so it also supplies a
-physical bias when the flow reverses. These are declared probe parameters.
+The arrows are free diagnostic probes carried by air drag. Each probe has
+0.002 kg of mass and 0.00004 kg square meters of angular inertia. A front sail
+has 0.03 square meters of effective area, 36 cm ahead of the center of mass;
+a rear sail has 0.006 square meters, 12 cm behind it. The
+[quadratic drag relation](https://www1.grc.nasa.gov/beginners-guide-to-aeronautics/drag-equation/)
+uses local density and a declared drag coefficient of 1.2. Each sail samples
+air at its own location relative to both the probe's translation and rotation.
+The summed forces accelerate the probe; their moments turn it. These are
+declared visualization-probe parameters, not measurements of airborne objects.
 
-An implicit angular-velocity solve balances drag torque, bearing drag and spring
-torque. Angle advances only by the resulting angular velocity. The painter
-reads that angle, with no target-angle interpolation or direction-triggered
-half-turn. Pins stay fixed and every vane stays visible. Closing the mouth stops
-airflow while residual vane motion dissipates. The probes have no feedback into
-the air model. The twenty-pixel vane glyphs always display their calculated
-angles, including with reduced motion enabled. They provide the simulation's
-essential response to the pressure input, without a separate visual animation.
+A coupled implicit solve balances linear and angular momentum. Position and
+angle advance only through those velocities. There are no pins or springs.
+The same arrows persist throughout a run, retaining positions, velocities and
+angles across reversals. They are never reseeded, wrapped or replaced. An arrow
+that leaves the visible region retains its state and can return with the air.
+A swept 0.4-meter contact envelope prevents passage through the actual walls
+or closed gate. Inelastic, frictionless contact removes inward normal velocity;
+a shutter closed on an arrow displaces it to the nearest exposed face. Tile
+seams inside a wall cannot serve as escape faces.
+
+Closing the mouth stops airflow while residual arrow momentum dissipates
+through relative drag. The probes have no feedback into the air model. The
+twenty-pixel glyphs display their calculated positions and angles, including
+with reduced motion enabled. Drawing never changes the physical state.
 
 The readout sits beside the simulation at normal screen resolution. Its
 large text shows actual airflow, while one centered pressure gauge shows which
@@ -103,17 +109,18 @@ turbulence, thermal exchange and a closed energy budget remain unresolved.
 Closing the ideal stationary valve does not model a moving shutter's work.
 
 Run `node tools/test-breathing-cave.cjs` for independent EOS, entrance momentum
-and vane force/torque checks, sampled mouth velocity versus gas transfer,
-nineteen reversals driven by test button inputs, fixed pins, continuous angular
+and arrow force/torque checks, sampled mouth velocity versus gas transfer,
+nineteen reversals driven by test button inputs, persistent identities, passage
+out of and back into the cave, swept gate contact, continuous travel and angular
 advance, closed-mouth energy dissipation, manual mass accounting and frame-size
 checks. The initial sixty-second control stays exactly still. A single input
-must visibly turn even the slowest chamber vane within three seconds. Run
+must move the chamber arrows and visibly turn even the slowest within three seconds. Run
 `DUMP=/tmp/breathing-cave-review node tools/test-breathing-cave.mjs` for owned
 Chrome for Testing playback at desktop and landscape mobile sizes, mouse and
 touch holds, outside-target release, keyboard holds, blur and touch cancellation
 on both pressure controls, pause, reduced motion and reset to
-equal pressures. The browser regression also checks normal-playback angular
-continuity and direction during pressure reversal, readable
+equal pressures. The browser regression also checks normal-playback position and angular
+continuity, persistent identities during pressure reversal, readable
 text contrast, semantic status and meter labels, separation from the apparatus,
 shorter landscape heights and narrow desktop layout. Screenshots and
 measurements go to that directory. The ordinary smoke scene also boots.

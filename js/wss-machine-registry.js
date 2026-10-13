@@ -1373,7 +1373,7 @@
     "id": "breathing-cave",
     "capability": "Smoke",
     "title": "Breathing cave",
-    "cue": "Raise inside or outside pressure, then watch the pivoted vanes turn with the air. Close the mouth to trap it.",
+    "cue": "Raise inside or outside pressure, then watch the arrows travel and turn with the air. Close the mouth to trap it.",
     "status": "WORKS",
     "draft": false,
     "accepted": true,
@@ -1395,7 +1395,7 @@
     "behaviorPlan": {
       "seed": 17,
       "seconds": 48,
-      "key": "Manual pressure inputs drive air through the real mouth; drag torque and angular inertia turn pinned vane instruments.",
+      "key": "Manual pressure inputs drive air through the real mouth; air drag drives travel and turning of persistent free arrows.",
       "action": "Raise either pressure; reverse the difference, then close and reopen the entrance.",
       "statusIfObserved": "WORKS"
     }

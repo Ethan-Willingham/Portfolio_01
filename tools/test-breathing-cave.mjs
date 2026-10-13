@@ -100,7 +100,7 @@ async function pressureHoldCheck(touch,prefix){
   if(touch)await call('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:liveTarget.x,y:liveTarget.y}]});
   else await call('Input.dispatchMouseEvent',{type:'mousePressed',button:'left',clickCount:1,x:liveTarget.x,y:liveTarget.y});
   await delay(1600);const live=await record(prefix+'-held');
-  check('holding during playback drives visible vane motion',live.speedMetersPerSecond>5 && live.vaneAngularTravel>30);
+  check('holding during playback drives visible vane motion',live.speedMetersPerSecond>5 && live.vaneAngularTravel>30 && live.vaneDistanceMeters>50 && live.movingVanes>30);
   if(touch)await call('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
   else await call('Input.dispatchMouseEvent',{type:'mouseReleased',button:'left',clickCount:1,x:liveTarget.x,y:liveTarget.y});
   await ev('__toy.pause(true);__toy.machine("breathing-cave",{})');await until('__toy.machineState()?.ready && !__toy.stats().loading');
@@ -123,7 +123,7 @@ async function indicatorCheck(name){
   const a=luminance(ui.color),b=luminance(ui.background);const contrast=(Math.max(a,b)+.05)/(Math.min(a,b)+.05);
   check(name+' indicator is readable, within view and clear of the apparatus',!ui.hidden && ui.panel.left>=0 && ui.panel.right<=ui.width && ui.panel.top>=ui.topEnd && ui.panel.bottom<=ui.height && ui.fontSize>=20 && contrast>=4.5 &&
     (ui.placement==='side'?ui.stage.right<ui.panel.left:ui.stage.bottom<ui.panel.top));
-  check(name+' has semantic pressure, status and vane labels',ui.meterRole==='meter' && ui.meterText===ui.pressure && ui.role==='status' && ui.tracer.includes('Vanes turn under airflow torque'));
+  check(name+' has semantic pressure, status and vane labels',ui.meterRole==='meter' && ui.meterText===ui.pressure && ui.role==='status' && ui.tracer.includes('Arrows travel and turn with the air'));
   console.log(name+' indicator',JSON.stringify(ui));return ui;
 }
 async function clickMouth(touch){
@@ -163,14 +163,14 @@ try{
     check('cave starts balanced with no automatic pressure or rotation',balanced.flowM3PerSecond===0 && balanced.massKg===balanced.initialMassKg && balanced.vaneAngularTravel===0);
     await indicatorCheck(prefix+'-balanced');
     if(process.env.PREVIEW_ONLY!=='1')await pressureHoldCheck(viewport.mobile,prefix);
-    await ev(`(()=>{const m=__toy.breathingCave(),tick=m.tick.bind(m);window.rotationAudit={maxFrameAngle:0,samples:0,pinsMoved:0};m.tick=function(dt){const old=m.vanes();tick(dt);m.vanes().forEach((v,i)=>{rotationAudit.maxFrameAngle=Math.max(rotationAudit.maxFrameAngle,Math.abs(v.angle-old[i].angle));if(v.x!==old[i].x || v.y!==old[i].y)rotationAudit.pinsMoved++;});rotationAudit.samples++;};})()`);
+    await ev(`(()=>{const m=__toy.breathingCave(),tick=m.tick.bind(m);window.rotationAudit={maxFrameAngle:0,samples:0,positionsMoved:0,identitiesChanged:0,maxFrameTravel:0};m.tick=function(dt){const old=m.vanes();tick(dt);m.vanes().forEach((v,i)=>{rotationAudit.maxFrameAngle=Math.max(rotationAudit.maxFrameAngle,Math.abs(v.angle-old[i].angle));if(v.x!==old[i].x || v.y!==old[i].y)rotationAudit.positionsMoved++;if(v.id!==old[i].id)rotationAudit.identitiesChanged++;rotationAudit.maxFrameTravel=Math.max(rotationAudit.maxFrameTravel,Math.hypot(v.x-old[i].x,v.y-old[i].y));});rotationAudit.samples++;};})()`);
     await ev('__toy.pause(true)');const before=await ev('__toy.breathingCave().stats()');
     await clickPressure('inside',viewport.mobile);const input=await ev('__toy.breathingCave().stats()');
     check('inside button adds real mass and exactly 10 hPa without changing outside',input.pumpedKg>0 && Math.abs(input.pressurePa-before.pressurePa-1000)<1e-6 && input.outsidePressurePa===before.outsidePressurePa);
     const singleStart=await ev('__toy.breathingCave().stats().seconds');await ev('__toy.pause(false)');
     await until('__toy.breathingCave().stats().seconds>'+String(singleStart+3));
-    const response=await ev('(()=>{const room=__toy.breathingCave().vanes().filter(v=>v.x<460),turns=room.map(v=>Math.abs(v.angle-v.restAngle)).sort((a,b)=>a-b);return {median:turns[Math.floor(turns.length/2)],min:turns[0]};})()');
-    check('single tap visibly turns the chamber vanes',response.median>Math.PI/4 && response.min>.1);console.log(prefix+' single tap response',JSON.stringify(response));await record(prefix+'-single-tap');
+    const response=await ev('(()=>{const room=__toy.breathingCave().vanes().filter(v=>v.x<460),turns=room.map(v=>Math.abs(v.angle-v.initialAngle)).sort((a,b)=>a-b);return {median:turns[Math.floor(turns.length/2)],min:turns[0],distance:__toy.breathingCave().stats().vaneDistanceMeters};})()');
+    check('single tap visibly moves and turns the chamber arrows',response.median>Math.PI/4 && response.min>.1 && response.distance>100);console.log(prefix+' single tap response',JSON.stringify(response));await record(prefix+'-single-tap');
     await clickPressure('inside',viewport.mobile);
     await until('__toy.breathingCave().stats().speedMetersPerSecond>5');await record(prefix+'-out');
     check('inside pressure drives outgoing air',(await indicatorCheck(prefix+'-out')).flow==='out');
@@ -186,9 +186,9 @@ try{
     await until('__toy.breathingCave().stats().speedMetersPerSecond < -5');await record(prefix+'-in');
     check('outside pressure drives incoming air',(await indicatorCheck(prefix+'-in')).flow==='in');if(process.env.PREVIEW_ONLY==='1')continue;
     const turningStart=await ev('__toy.breathingCave().stats().seconds');await until('__toy.breathingCave().stats().seconds>'+String(turningStart+1.5));await record(prefix+'-turned');
-    const audit=await ev('rotationAudit');check('vanes turn continuously at fixed pins in normal playback',audit.samples>100 && audit.maxFrameAngle<Math.PI/2 && audit.pinsMoved===0);console.log(prefix+' rotation audit',JSON.stringify(audit));
+    const audit=await ev('rotationAudit');check('arrows travel and turn continuously with persistent identities in normal playback',audit.samples>100 && audit.maxFrameAngle<Math.PI/2 && audit.positionsMoved>1000 && audit.identitiesChanged===0 && audit.maxFrameTravel<5);console.log(prefix+' rotation audit',JSON.stringify(audit));
     await ev('__toy.pause(true)');const clock=await ev('__toy.breathingCave().stats().seconds'),angles=await ev('JSON.stringify(__toy.breathingCave().vanes())');await delay(400);
-    check('pause freezes gas and vane angular momentum',await ev('__toy.breathingCave().stats().seconds')===clock && await ev('JSON.stringify(__toy.breathingCave().vanes())')===angles);check('pause is explicit in the indicator',(await indicatorCheck(prefix+'-paused')).paused);
+    check('pause freezes gas, arrow travel and angular momentum',await ev('__toy.breathingCave().stats().seconds')===clock && await ev('JSON.stringify(__toy.breathingCave().vanes())')===angles);check('pause is explicit in the indicator',(await indicatorCheck(prefix+'-paused')).paused);
     await clickMouth(viewport.mobile);
     const closed=await ev('__toy.breathingCave().stats()');check('actual entrance is closed',!closed.mouthOpen);
     await ev('__toy.pause(false)');await until('__toy.breathingCave().stats().seconds>'+String(clock+2));
@@ -209,7 +209,7 @@ try{
   await call('Emulation.setDeviceMetricsOverride',{width:600,height:800,mobile:false,deviceScaleFactor:1});await delay(400);await indicatorCheck('narrow-desktop');await record('narrow-desktop');
   await call('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'reduce'}]});
   await clickPressure('outside',false);await ev('__toy.pause(false)');await until('__toy.breathingCave().stats().seconds>2');await record('reduced-motion');
-  check('reduced motion still displays the actual vane response',await ev('__toy.breathingCave().stats().visualMotion==="turning-vanes" && __toy.breathingCave().stats().admittedKg>0 && __toy.breathingCave().stats().vaneAngularTravel>0'));
+  check('reduced motion still displays the actual vane response',await ev('__toy.breathingCave().stats().visualMotion==="moving-arrows" && __toy.breathingCave().stats().admittedKg>0 && __toy.breathingCave().stats().vaneAngularTravel>0'));
   const painted=await ev(`(()=>{const m=__toy.breathingCave(),canvas=document.createElement('canvas'),c=canvas.getContext('2d');let path=[],shaft=[];c.moveTo=(x,y)=>path=[[x,y]];c.lineTo=(x,y)=>path.push([x,y]);c.stroke=()=>shaft.push(path);m.draw(c,{scale:1,air:'white'});return shaft.every((p,i)=>Math.cos(Math.atan2(p[1][1]-p[0][1],p[1][0]-p[0][0])-m.vanes()[i].angle)>1-1e-8);})()`);
   check('reduced motion does not freeze the displayed angle at rest',painted);
   await call('Emulation.setEmulatedMedia',{features:[]});
