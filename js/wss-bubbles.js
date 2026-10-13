@@ -178,7 +178,7 @@ fn outsidePressure(q:vec2f,r:f32)->f32{
  if(any(bubbles[i]!=bubbles[i]) || any(material[i]!=material[i]) || material[i].y<=0. || material[i].x<=0.){atomicAdd(&ledger[9],1);}
 }
 `;
-  // Natural parcels collide with the same tile mask as the water. The air
+  // Gas parcels collide with the same tile mask as the water. The air
   // grid stores partial-cell area, which cannot locate a wall inside a cell.
   var NATIVE_COLLISION=`
 struct TerrainGrid {
@@ -248,12 +248,12 @@ fn recover(q:vec2f,r:f32)->vec2f{
   async function create(options){
     var L=options.liquid,A=options.air,device=L.device,queue=L.queue,U=GPUBufferUsage;
     if(!L.simActive || !A || !A.enabled || !A.buffers.transport)throw Error('Bubbles need native direct water transport and opt-in air.');
-    var n=options.maxParticles,count=A.width*A.height,buffers=[],entrained=options.entrainedArea>0;
+    var n=options.maxParticles,count=A.width*A.height,buffers=[],entrained=options.entrainedArea>0,nativeCollision=options.nativeCollision!==false;
     function buffer(label,size,usage){var value=device.createBuffer({label:'toy.bubbles.'+label,size:size,usage:usage});buffers.push(value);return value;}
     var params=buffer('params',80,U.UNIFORM|U.COPY_DST),bubbles=buffer('position',n*16,U.STORAGE|U.COPY_SRC),material=buffer('material',n*16,U.STORAGE|U.COPY_SRC),
       witness=buffer('witness',n*16,U.STORAGE|U.COPY_SRC),ledger=buffer('ledger',128,U.STORAGE|U.COPY_SRC|U.COPY_DST),previous=buffer('previous',count*4,U.STORAGE),current=buffer('current',count*4,U.STORAGE),natural=entrained?buffer('natural',count*16,U.STORAGE|U.COPY_DST):null,claims=entrained?buffer('claims',n*4,U.STORAGE):null;
     var code=SOURCE;
-    if(entrained){
+    if(nativeCollision){
       code=code.replace('fn clear(q:vec2f,r:f32)->bool{','fn coarseClear(q:vec2f,r:f32)->bool{')+NATIVE_COLLISION;
       code=code.replace('let velocity=carrierVelocity(q,radius)', 'q=recover(q,radius);let velocity=carrierVelocity(q,radius)')
         .replace('if(clear(candidate,radius))','if(clear(candidate,radius) && pathClear(q,candidate,radius))')
@@ -266,7 +266,7 @@ fn recover(q:vec2f,r:f32)->vec2f{
     var errors=info.messages.filter(function(m){return m.type==='error';});if(errors.length)throw Error(errors.map(function(m){return m.lineNum+': '+m.message;}).join('; '));
     var resources=[params,bubbles,material,witness,ledger,A.buffers.history,A.buffers.cells,A.buffers.geometry,A.buffers.labels,A.buffers.gas,previous,current,A.buffers.transport,L.buf.pos,L.buf.flag,L.buf.affine,natural,claims,L.buf.terrainMask,L.paramsBuf];
     var bindings={admit:[0,1,2,3,4,5,6,7],sparger:[0,2,3,4,6,7,8],strip:[0,4,5,10,11],assign:[0,1,2,3,4,6,7,8,11],inject:[0,4,9,11],finish:[0,4,5,10,11],advance:[0,1,2,4,5,6,7,12],coalesce:[0,1,2,4,7],contact:[0,1,2,4,7,13,14,15],inventory:[1,2,4],collectNatural:[0,5,6,7,8,10,16],validateNatural:[0,5,6,7,8,16],releaseClaims:[0,2,17],captureNatural:[0,1,2,3,4,5,10,16,17]},pipes={},groups={};
-    if(entrained)['admit','advance','coalesce','contact','validateNatural'].forEach(function(key){bindings[key]=bindings[key].concat([18,19]);});
+    if(nativeCollision)['admit','advance','coalesce','contact','validateNatural'].forEach(function(key){bindings[key]=bindings[key].concat([18,19]);});
     for(var name of Object.keys(bindings)){if(!entrained && ['collectNatural','validateNatural','releaseClaims','captureNatural'].includes(name))continue;pipes[name]=await device.createComputePipelineAsync({layout:'auto',compute:{module:module,entryPoint:name}});groups[name]=device.createBindGroup({layout:pipes[name].getBindGroupLayout(0),entries:bindings[name].map(function(binding){return {binding:binding,resource:{buffer:resources[binding]}};})});}
     var active=options.inject!==false,retired=false,clock=0,quantity=0,latest=new Int32Array(32),points=[],error=null;
     var reads=Array.from({length:3},function(){return {buffer:buffer('read',128+n*32,U.COPY_DST|U.MAP_READ),busy:false,captured:false};}),row=null;

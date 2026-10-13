@@ -531,6 +531,46 @@ a wall, expansion into a corner and swept contact. These checks supplement the
 existing pressure/radius, zero-gravity, headspace and finite-gas checks. They do
 not establish full quantitative acceptance of the fountain pressure solver.
 
+## Bubble audit across demos
+
+Toy v5.196 extends native terrain contact to every `WSSBubbles` companion,
+including Air hose, Aquarium bubbler, Air-lift pump and Ringing bubbles. Their
+ordinary source runs were clearing, but the inherited coarse collision path
+could pin a parcel after expansion beside a wall. Injected and natural gas now
+share the same overlap recovery and circular sweep. The gas source, pressure
+relation and buoyancy model are unchanged.
+
+Glugging bottle also enables finite natural gas transport. Compact detached
+pockets were moving too slowly through its water. The existing 200-square-pixel
+limit applies; a captured parcel carries its actual native gas amount. Large
+sealed headspaces remain native pressure pockets. Gas reaching a sealed
+headspace stays accounted for. There is no age cutoff or underwater gas deletion.
+This does not establish the bottle's complete glug cycle or calibrated
+counterflow through its narrow mouth.
+
+The audit inventoried 119 registered definitions, including 55 with seeded water
+and native particle pressure. A native-buffer survey advanced thirteen relevant
+apparatus for thirty seconds of host frame time: the four gas supplies, cup,
+siphon, large Heron fountain, glugging bottle, upside-down tank, Mariotte bottle,
+sewer gas trap, Roman inverted siphon and water tower. The ordinary cup, large
+fountain and inverted siphon did not show the small fountain's retained-empty-cell
+failure. Dynamic body and thermal mechanisms were inventoried but are outside
+this native-water-only survey. Their dedicated gas companions are unchanged.
+
+`node tools/test-water-bubble-demos.mjs` checks that all four supplies release
+all admitted gas after stopping, with exact water and gas counts and no native
+wall penetration. The bottle runs for thirty seconds of host frame time with two
+desktop seeds, a landscape phone and an open-vent control. It verifies an actual
+rise of more than seventy world pixels within 2.5 native simulation seconds,
+large sealed-headspace preservation, finite state and both gas ledgers. Source
+hashes and screenshots are saved under `/tmp/water-bubble-demos-review`.
+`AUDIT=1` runs the observational thirteen-apparatus survey; `SCENES` may select a
+comma-separated subset. The expanded component test in
+`tools/test-water-entrained-air.mjs` covers injected gas beside partial wall cells,
+expansion beside a wall and corner, swept contact, zero gravity and a sealed
+ceiling. These observations do not certify every apparatus mechanism or its
+mechanical work balance.
+
 ## Spatial oxygen and combustion
 
 The six fuel-burning scenes share a spatial oxygen solver: Candle in a jar,

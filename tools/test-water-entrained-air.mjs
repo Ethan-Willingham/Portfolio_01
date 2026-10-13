@@ -81,7 +81,7 @@ async function navigate(width, height, query = '?scene=falls', mobile = false, d
 
 // Prescribed gas and carrier fields isolate actual GPU transfer, slip, inventory
 // and wall contact. Full native Heron playback follows these component checks.
-async function componentFixture(kind) {
+async function componentFixture(kind, injected=false) {
   const check=(value,message)=>{if(!value)throw Error(message);};
   const adapter=await navigator.gpu.requestAdapter({powerPreference:'high-performance'});
   const device=await adapter.requestDevice({requiredLimits:{maxStorageBuffersPerShaderStage:10}}),queue=device.queue;
@@ -120,14 +120,30 @@ async function componentFixture(kind) {
     cells:buffer(count*32),labels:buffer(count*8),history:buffer(count*32),geometry:buffer(count*32),transport:buffer(count*48),gas:buffer(count*64)},setPhaseCompanion(){}};
   queue.writeBuffer(A.buffers.cells,0,cells);queue.writeBuffer(A.buffers.labels,0,labels);queue.writeBuffer(A.buffers.history,0,history);
   queue.writeBuffer(A.buffers.geometry,0,geometry);queue.writeBuffer(A.buffers.transport,0,transport);
-  const B=await WSSBubbles.create({liquid:L,air:A,width:160,height:160,maxParticles:n,inject:false,entrainedArea:200});
+  const B=await WSSBubbles.create({liquid:L,air:A,width:160,height:160,maxParticles:n,inject:false,gravity:L.simParamsHost[0],entrainedArea:injected?0:200});
   async function read(){const b=device.createBuffer({size:128+n*32,usage:GPUBufferUsage.COPY_DST|GPUBufferUsage.MAP_READ});
     try{const e=device.createCommandEncoder();e.copyBufferToBuffer(B.buffers.ledger,0,b,0,128);e.copyBufferToBuffer(B.buffers.position,0,b,128,n*16);e.copyBufferToBuffer(B.buffers.material,0,b,128+n*16,n*16);queue.submit([e.finish()]);await b.mapAsync(GPUMapMode.READ);const a=b.getMappedRange();return {ledger:Array.from(new Int32Array(a,0,32)),pos:Array.from(new Float32Array(a,128,4)),material:Array.from(new Float32Array(a,128+n*16,4))};}finally{b.unmap();b.destroy();}}
   try{
     let e=device.createCommandEncoder();B.beginFrame(e,{h:1/120,count:1,clock:0});B.finishGas(e);queue.submit([e.finish()]);
+    if(injected){
+      const x=(root%width+.5)*dx,y=(Math.floor(root/width)+.5)*dx;
+      const tension=.072*100000/101325/(.0254/(160/30)),r=WSSBubbles.radius(area,100000,100000,tension);
+      const ledger=new Int32Array(32);ledger[0]=amount;ledger[4]=1;
+      const seed=device.createComputePipeline({layout:'auto',compute:{module:device.createShaderModule({code:
+        '@group(0) @binding(0) var<storage,read_write> p:array<vec4f>;'+
+        '@group(0) @binding(1) var<storage,read_write> m:array<vec4f>;'+
+        '@compute @workgroup_size(1) fn main(){p[0]=vec4f('+x.toFixed(8)+','+y.toFixed(8)+',0.,0.);m[0]=vec4f('+amount.toFixed(8)+','+r.toFixed(8)+',1.,-1.);}'
+      }),entryPoint:'main'}});
+      const group=device.createBindGroup({layout:seed.getBindGroupLayout(0),entries:[
+        {binding:0,resource:{buffer:B.buffers.position}},{binding:1,resource:{buffer:B.buffers.material}}
+      ]});
+      const command=device.createCommandEncoder(),pass=command.beginComputePass();pass.setPipeline(seed);pass.setBindGroup(0,group);pass.dispatchWorkgroups(1);pass.end();queue.submit([command.finish()]);
+      queue.writeBuffer(B.buffers.ledger,0,ledger);
+    }
     const birth=await read(),excluded=['large','vapor','atmosphere'].includes(kind);
     if(excluded){check(birth.ledger[22]===0,'Large headspaces, vapor and atmosphere must retain their current representation');return {kind,excluded:true,errors};}
-    check(birth.ledger[22]===1 && birth.ledger[21]===amount,'Exactly the finite native gas amount transfers once '+JSON.stringify({birth,errors}));
+    if(!injected)check(birth.ledger[22]===1 && birth.ledger[21]===amount,'Exactly the finite native gas amount transfers once '+JSON.stringify({birth,errors}));
+    else check(birth.ledger[22]===0 && birth.ledger[0]===amount,'Injected gas retains its declared amount without natural capture');
     check(birth.material[0]===amount && birth.material[2]===1,'Gas has a live material parcel');
     const tension=.072*100000/101325/(.0254/(160/30)),absolute=kind==='compressed'?200000:100000;
     const expectedRadius=2*100000*area/Math.PI/(Math.sqrt(tension*tension+4*absolute*100000*area/Math.PI)+tension);
@@ -156,7 +172,7 @@ async function componentFixture(kind) {
     }
     // Capture runs again while the native root still reports the same amount.
     e=device.createCommandEncoder();B.collectGas(e);B.finishGas(e);queue.submit([e.finish()]);
-    check((await read()).ledger[22]===1,'An already represented root cannot be captured twice');
+    check((await read()).ledger[22]===(injected?0:1),'An already represented root cannot be captured twice');
     e=device.createCommandEncoder();B.afterSubstep(e,{count:1});queue.submit([e.finish()]);
     const moved=await read(),g=L.simParamsHost[0],slip=Math.sqrt(Math.PI*expectedRadius*g);
     check(Math.abs(moved.pos[0]-(birth.pos[0]+vx/120))<.00003,'Carrier advection in x');
@@ -226,6 +242,8 @@ try {
   const components=[];
   for(const kind of ['small','zero','advect','ceiling','large','vapor','atmosphere','compressed','unresolved','partial-wall','expansion-wall','expansion-corner','sweep-wall']){
     const row=await evaluate(`(${componentFixture.toString()})(${JSON.stringify(kind)})`);assert.deepEqual(row.errors,[]);components.push(row);console.log('COMPONENT',kind,'pass');}
+  for(const kind of ['partial-wall','expansion-wall','expansion-corner','sweep-wall','zero','ceiling']){
+    const row=await evaluate(`(${componentFixture.toString()})(${JSON.stringify(kind)},true)`);assert.deepEqual(row.errors,[]);components.push({...row,injected:true});console.log('COMPONENT injected',kind,'pass');}
   fs.writeFileSync(path.join(dump,'component-report.json'),JSON.stringify({sourceHashes,components},null,2));
   if(process.env.COMPONENT_ONLY==='1')process.exitCode=0;
   else {
