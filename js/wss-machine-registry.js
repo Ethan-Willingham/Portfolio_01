@@ -976,19 +976,19 @@
   {
     "id": "sand-dam",
     "capability": "Sand",
-    "title": "Wash the sand",
-    "cue": "Hold Pour to wash grains into the basin.",
+    "title": "Sand dam",
+    "cue": "Hold the tap. Watch water change the sand bank.",
     "status": "PARTLY",
     "draft": true,
     "world": {
-      "w": 720,
-      "h": 400
+      "w": 560,
+      "h": 280
     },
     "pool": false,
     "accepted": true,
     "preview": "cup",
     "scripts": [
-      "wss-drafts-materials"
+      "wss-sand-dam"
     ]
   },
   {

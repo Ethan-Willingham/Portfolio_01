@@ -47,23 +47,6 @@ register('air-lift-pump','Bubbles','Air-lift pump','Send bubbles up the riser to
  d.initial=[initial(rect(168,232,224,144)),initial(rect(432,240,16,96))];d.settings=pressure();d.primary={kind:'bubble-toggle'};d.action=o.inject===false?'Start the air':'Stop the air';
  d.bubbles={inject:o.inject!==false,hose:{x:440,y:320},rateArea:195,parcelArea:65,dragCoefficient:1,gravity:250};d.measure={source:source,receiver:receiver};return d;
 },['wss-bubbles']);
-register('sand-dam','Sand','Wash the sand','Hold Pour to wash grains into the basin.','PARTLY',function(w,o){
- var d=base('sand-dam','Wash the sand','Hold Pour to send water across the dry sand. Release to stop, then watch the grains collect in the basin on the right.',w,o);
- // Dry loose grains on an open level bed. Water and grains can
- // leave its right edge together; there are no retaining posts or refills.
- d.solids=[rect(64,192,8,112)];
- d.vessels=[box('receiver','Receiving basin',rect(504,328,192,56))];
- d.seedPitch=1.5;d.grainLook='sand';
- d.initial=[initial(rect(288,276,208,8))];
- d.materialAt=function(){return 'sand';};
- d.materialSlip={density:[1,.7733,2.65,2.65],drag:[4,600,600,4,4,4],separateGold:true,grainContacts:true,
-  bed:{line:[72,288,512,288],riffles:[0,8,8,0],count:0,thickness:16}};
- d.primary={kind:'pour',target:{x:336,y:152},control:rect(292,120,88,28)};d.action='Hold to pour';
- d.sandDam={bed:rect(72,288,440,16),profile:[{x:288,y:288},{x:288,y:276},{x:496,y:276},{x:496,y:288}],basin:rect(512,336,176,40)};
- d.measure={source:rect(72,192,440,96),receiver:d.sandDam.basin};
- d.boundaryNote='The sand starts dry. Holding Pour admits water at the marked source; release stops it. Native water, grain drag and frictional contacts move the finite sand inventory. The level bed and receiving basin are open, with no hidden barrier, grain refill or assigned path.';
- d.energyBudgetStatus='Separate material momentum, shared compressive pressure and equal/opposite water-grain drag with frictional grain contacts. This reduced 2D model has exploratory drag and unmeasured numerical work; it is not a calibrated erosion or permeability model.';return d;
-});
 register('hero-jug','Oil','Hero\'s wine-or-water jug','Switch the real outlet gates between two liquids.','PARTLY',function(w,o){
  var d=base('hero-jug','Hero\'s wine-or-water jug','A manual outlet selector chooses water or an oil proxy for wine; the air-vent mechanism is missing.',w,o),water=rect(128,64,192,184),oil=rect(400,64,192,184),cup=rect(288,312,144,72);
  d.vessels=[box('water','Water',water),box('oil','Oil proxy for wine',oil),box('cup','Receiving cup',cup)];d.pipes=[{points:[{x:288,y:224},{x:288,y:288},{x:360,y:288}],bore:32},{points:[{x:432,y:224},{x:432,y:288},{x:360,y:288}],bore:32}];

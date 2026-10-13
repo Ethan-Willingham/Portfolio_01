@@ -385,7 +385,7 @@
         if(!guide.hidden){
           guide.style.top=(Math.max(0,shell.querySelector('.toy-top').getBoundingClientRect().bottom-view.top)+12)+'px';
           var sand=toy.sandDamStats();
-          text('toy-sand-result',sand.admitted ? 'Sand collected in the basin: '+Math.round(sand.inBasin/Math.max(1,sand.total)*100)+'%' : 'Dry sand. Ready to pour.');
+          text('toy-sand-result',sand.pouring ? 'Water running. Release the tap to stop.' : sand.admitted ? 'Watch the wet face. The dashed line marks the starting sand.' : 'Dry sand. The dashed line marks the starting bank.');
         }
       }
       var liveKeys=new Set();

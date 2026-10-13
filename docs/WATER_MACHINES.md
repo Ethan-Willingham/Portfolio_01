@@ -137,28 +137,38 @@ interfaces. Drawing preserves exact position, auxiliary, affine, pressure,
 material and native inventory buffers. The game retains its existing renderer
 and physics defaults. Captures and measurements go outside the repository.
 
-## Sand wash
+## Sand dam
 
-The former sand dam is now called Wash the sand in the scene menu; its
-`sand-dam` URL remains valid. It starts with a finite, dry bed of individual
-sand-colored grains on an open level slab and an empty receiving basin.
-The labeled Hold to pour button starts water above the sand. Releasing stops
-admission, while the water and grains already in flight continue moving.
-A dashed outline marks the starting sand footprint. The visible collected
-percentage reads the actual resident grains in the basin.
+The `sand-dam` scene starts with a large, dry bank in one open tank. Its
+560 by 280 world keeps the bank and the upstream tap close in view on desktop
+and landscape mobile. The drawn spout ends at the native water admission
+point. Hold to pour admits water; pointer or key release stops admission.
+Water builds against the left face, disturbs grains and, with continued
+pouring, crosses the bank. A dashed outline records the authored starting
+profile. It is a reference, not a restored or enforced boundary.
 
-The scene uses the existing separate material momentum, water-grain drag and
-frictional contact model. The slab's native collision polygon and drawn edge
-use the same dimensions. There are no retaining posts, initial water, restored
-grain positions or assigned water trajectories. The shallow charge remains
-on the slab while dry. This remains a reduced model of washing grains, with
-exploratory drag, rather than a calibrated sand-dam or erosion experiment.
+This scene opts into discrete grain contacts in the demo's material companion.
+Grains keep their own velocity and receive force increments from the shared
+material grid, rather than having their velocity replaced by the grid mean.
+Only fluid parcels scatter compressive pressure. Grain volume still enters
+occupied volume, and water-grain drag exchanges opposite grid momentum.
+An exact diameter-sized linked grid visits every grain neighbor. Snapshot
+contacts resolve compression and Coulomb friction in velocity and position,
+with a 0.65 friction coefficient and a 1.8 world-unit grain diameter. Twelve
+contact iterations run per native water quantum. The drawn floor and native
+bed share their geometry; the swept wall origin survives the bed projection.
+There are no retaining posts, initial water, restored grain positions or
+assigned erosion paths. These choices are a reduced 2D experiment. Contact
+and projection work are unmeasured, and the scene has no calibrated soil,
+permeability or erosion law. The companion's other scenes retain their existing
+shaders and settings.
 
 Run `node tools/test-sand-dam.mjs` for real WebGPU desktop and landscape mobile
-checks. A dry comparison distinguishes water-driven grain movement from
-settling. Checks cover water and sand reaching the basin, a visible labeled
-hold control, release stopping admission, finite state and conserved sand.
-Captures and measurements go to `/tmp/sand-dam-review`.
+checks. A matched dry comparison distinguishes water-driven grain transport
+from settling, with a longer dry run to catch a collapsing pile. Checks cover
+bank height, upstream accumulation and downstream flow, the labeled held tap,
+release, pause, reset, finite state and conserved sand. Captures and measurements
+go to `/tmp/sand-dam-review`.
 
 ## Hourglass
 

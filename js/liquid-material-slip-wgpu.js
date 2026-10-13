@@ -319,7 +319,7 @@ fn bedGrains(@builtin(global_invocation_id) id:vec3<u32>){resolveBed(id.x,true);
 // A fourth momentum field is opt-in. The existing three-phase shader remains
 // byte-identical for jars and the other material scenes. Both grain classes use
 // native grain geometry; the preserved origin bits carry their mass identity.
-function sluiceSource(blackSand){
+function sluiceSource(blackSand,options){
  var code=SOURCE
   .replace('constants:vec4<f32>','constants:vec4<f32>,extraDrag:vec4<f32>,bed:vec4<f32>,riffles:vec4<f32>,bedOther:vec4<f32>')
   .replace('array<Species,3>','array<Species,4>')
@@ -343,6 +343,28 @@ function sluiceSource(blackSand){
    .replaceAll('a<2u','a==0u');
   collide=collide.replace('grainOnly&&a<2u','grainOnly&&a==0u').replaceAll('a>=2u','a>=1u');
  }
+ // In the discrete sand option, grain compression is resolved by contact
+ // constraints. Only fluid parcels scatter pore-pressure stress; grain
+ // volume still enters the fluid occupancy and the equal/opposite drag.
+ if(options && options.discreteGrains){
+  code=code.replace('let s=stencil(pos[i].xy);if(!s.valid){return;}',
+   'if(phase(flags[i])>=2u){aux[i].x=3.2;aux[i].y=0.;return;}\n let s=stencil(pos[i].xy);if(!s.valid){return;}');
+  code=code.replace(' // Restore the native water transport invariant before position changes:', `
+ if(a>=2u){
+  var force=vec2<f32>(0.0);
+  for(var y=0;y<3;y++){for(var x=0;x<3;x++){
+   let c=index(s,x,y);let q=decodeFx(atomicLoad(&cells[c].species[a].volume));let mass=q*cfg.density[a];
+   if(mass>0.0){
+    let old=vec2<f32>(decodeFx(atomicLoad(&cells[c].species[a].px)),decodeFx(atomicLoad(&cells[c].species[a].py)))/mass;
+    force+=s.wx[u32(x)]*s.wy[u32(y)]*(resolved[c*4u+a].xy-old);
+   }
+  }}
+  v=p.zw*(gp.dt*gp.inv)+force;C=vec4<f32>(0.0);
+ }
+ // Restore the native water transport invariant before position changes:`);
+
+ }
+ if(options && options.discreteGrains)collide=collide.replace('2.5/sqrt(3.2)*0.5','0.9').replace('pos[i]=vec4<f32>(p,v);aux[i].zw=p;', 'pos[i]=vec4<f32>(p,v);');
  return BED_GEOMETRY+code.replace('fn encodeFx', 'fn pairDrag(pair:u32)->f32{if(pair<3u){return cfg.drag[pair];}return cfg.extraDrag[pair-3u];}\nfn encodeFx')+collide;
 }
 // All contacting pairs are visited, without neighbor sampling. Snapshot
@@ -405,6 +427,64 @@ fn contacts(@builtin(global_invocation_id) id:vec3<u32>){
 }
 `;
 function contactSource(blackSand){return blackSand?CONTACT_SOURCE.replace('return cfg.density[select(2u,3u,((flags[i]>>2u)&3u)==3u)];','let origin=(flags[i]>>2u)&3u;if(origin==2u){return cfg.density[1u];}return cfg.density[select(2u,3u,origin==3u)];'):CONTACT_SOURCE;}
+// The dam's discrete contacts use their own exact, diameter-sized linked
+// cells. Fluid-grid sorting remains separate from this contact neighborhood.
+function discreteContactSource(width,height){
+ var diameter=1.8,cols=Math.ceil(width/diameter),rows=Math.ceil(height/diameter);
+ var code=CONTACT_SOURCE.replace('const DIAMETER:f32=2.5/1.7888543819998317;', 'const DIAMETER:f32=1.8;')
+  .replace('@group(0) @binding(6) var<storage,read> counts:array<u32>;', '@group(0) @binding(6) var<storage,read_write> heads:array<atomic<u32>>;')
+  .replace('@group(0) @binding(7) var<storage,read> starts:array<u32>;', '@group(0) @binding(7) var<storage,read_write> links:array<u32>;')
+  .replace('@group(0) @binding(8) var<storage,read> sorted:array<u32>;','@group(0) @binding(10) var<storage,read> origin:array<vec4<f32>>;')
+  .replace('return vec2<i32>(floor(p*gp.inv))-vec2<i32>(bitcast<i32>(gp.ox),bitcast<i32>(gp.oy));',
+   'return clamp(vec2<i32>(floor(p/'+diameter+')),vec2<i32>(0),vec2<i32>('+String(cols-1)+','+String(rows-1)+'));')
+  .replaceAll('q.x>=i32(gp.w)||q.y>=i32(gp.h)', 'q.x>='+cols+'||q.y>='+rows)
+  .replaceAll('let k=u32(q.y)*gp.w+u32(q.x);', 'let k=u32(q.y)*'+cols+'u+u32(q.x);')
+  .replaceAll('for(var slot=starts[k];slot<starts[k]+counts[k];slot++){', 'var entry=atomicLoad(&heads[k]);while(entry!=0u){')
+  .replaceAll('let j=sorted[slot];', 'let j=entry-1u;entry=links[j];')
+  .replace('let jn=-closing*inverse;', 'let jn=max(-closing,(DIAMETER-d)*0.8/gp.dt)*inverse;')
+  .replace('0.35*jn','0.65*jn')
+  .replace('shift+=normal*((DIAMETER-d)*inverse*invMass*pairScale);', `
+   shift+=normal*((DIAMETER-d)*inverse*invMass*pairScale);
+   let displacement=(p.xy-origin[i].xy)-(other.xy-origin[j].xy);
+   let slip=displacement-normal*dot(displacement,normal);let slipLength=length(slip);
+   if(slipLength>1e-8){shift-=slip/slipLength*min(slipLength,0.65*(DIAMETER-d))*inverse*invMass*pairScale;}
+  `)
+  .replace('pos[i]=vec4<f32>(p.xy+shift,p.zw+dv);', 'var velocity=p.zw+dv;let strength=dot(shift,shift);if(strength>1e-14){velocity-=shift*min(0.0,dot(velocity,shift))/strength;}pos[i]=wallContact(vec4<f32>(p.xy+shift,velocity));');
+ return code+`
+struct Walls {rects:array<vec4<f32>,2>,count:vec4<u32>};
+@group(0) @binding(11) var<uniform> walls:Walls;
+fn wallContact(input:vec4<f32>)->vec4<f32>{
+ var p=input.xy;var v=input.zw;
+ for(var k=0u;k<walls.count.x;k++){
+  let r=walls.rects[k];let low=r.xy;let high=r.xy+r.zw;
+  let nearest=clamp(p,low,high);let delta=p-nearest;let distance=length(delta);
+  var normal=vec2<f32>(0.0);var penetration=0.0;
+  if(distance>1e-8){if(distance>=DIAMETER*0.5){continue;}normal=delta/distance;penetration=DIAMETER*0.5-distance;}
+  else{
+   let distances=vec4<f32>(p.x-low.x,high.x-p.x,p.y-low.y,high.y-p.y);var face=0u;
+   for(var f=1u;f<4u;f++){if(distances[f]<distances[face]){face=f;}}
+   normal=array<vec2<f32>,4>(vec2<f32>(-1.,0.),vec2<f32>(1.,0.),vec2<f32>(0.,-1.),vec2<f32>(0.,1.))[face];
+   penetration=DIAMETER*0.5+distances[face];
+  }
+  p+=normal*penetration;let inward=min(0.0,dot(v,normal));v-=normal*inward;
+  let tangent=v-normal*dot(v,normal);let speed=length(tangent);
+  if(speed>1e-8){v-=tangent/speed*min(speed,-inward*0.65);}
+ }
+ return vec4<f32>(p,v);
+}
+@compute @workgroup_size(256)
+fn scatter(@builtin(global_invocation_id) id:vec3<u32>){
+ let i=id.x;if(i>=gp.count||!grain(i)){return;}
+ let c=cell(before[i].xy);let k=u32(c.y)*${cols}u+u32(c.x);
+ links[i]=atomicExchange(&heads[k],i+1u);
+}
+@compute @workgroup_size(256)
+fn clear(@builtin(global_invocation_id) id:vec3<u32>){
+ let i=id.x;if(i>=gp.count||!grain(i)){return;}
+ let c=cell(before[i].xy);atomicStore(&heads[u32(c.y)*${cols}u+u32(c.x)],0u);
+}
+`;
+}
 function dragPair(ma,mb,va,vb,h,rate){
  if(!(ma>0&&mb>0))return [va.slice(),vb.slice()];
  var sum=ma+mb,mean=va.map(function(v,i){return (ma*v+mb*vb[i])/sum;}),rel=va.map(function(v,i){return (v-vb[i])/(1+h*rate);});
@@ -428,8 +508,9 @@ function create(instance,options){
   if(!opts.bed)throw Error('A mixed-grain sluice requires its physical bed.');
   queue.writeBuffer(config,64,new Float32Array([drag[3],drag[4],drag[5],0].concat(opts.bed.line,opts.bed.riffles,[opts.bed.thickness,opts.bed.count,0,0])));
  }
- var module=device.createShaderModule({label:'liquid.materialSlip',code:phases===4?sluiceSource(opts.blackSand):SOURCE}),resources=[instance.paramsBuf,config,instance.buf.pos,instance.buf.affine,instance.buf.aux,instance.buf.flag,packed,velocity,instance.buf.cellMass,instance.buf.cellOilMass,instance.simParamsBuf,instance.buf.terrainMask,snapshot];
+ var module=device.createShaderModule({label:'liquid.materialSlip',code:phases===4?sluiceSource(opts.blackSand,opts):SOURCE}),resources=[instance.paramsBuf,config,instance.buf.pos,instance.buf.affine,instance.buf.aux,instance.buf.flag,packed,velocity,instance.buf.cellMass,instance.buf.cellOilMass,instance.simParamsBuf,instance.buf.terrainMask,snapshot];
  var bindings={clearCells:[0,1,6,7],scatter:[0,1,2,3,5,6,8,9],stress:[0,1,2,4,5,6,8,10],solve:[0,1,6,10,12],stabilizeGrid:[0,7,10,12],gridBoundary:[0,1,7,10,11],gather:[0,1,2,3,4,5,7,10],jolt:[0,1,2,5]},pipes={},groups={};
+ if(opts.discreteGrains)bindings.gather.push(6,12);
  if(phases===4){bindings.bedCollide=[0,1,2,4,5];bindings.bedGrains=[0,1,2,4,5];}
  Object.keys(bindings).forEach(function(name){
   var entries=bindings[name].map(function(binding){return {binding:binding,visibility:GPUShaderStage.COMPUTE,buffer:{type:binding===0||binding===1||binding===10?'uniform':binding===5||binding===11?'read-only-storage':'storage'}};});
@@ -437,15 +518,26 @@ function create(instance,options){
   pipes[name]=device.createComputePipeline({layout:device.createPipelineLayout({bindGroupLayouts:[layout]}),compute:{module:module,entryPoint:name}});
   groups[name]=device.createBindGroup({layout:layout,entries:bindings[name].map(function(binding){return {binding:binding,resource:{buffer:resources[binding]}};})});
  });
- var contactPipes={},contactGroups={},contactModule=null,contactBefore=null;
+ var contactPipes={},contactGroups={},contactModule=null,contactBefore=null,contactOrigin=null;
  if(opts.grainContacts){
   if(phases!==4)throw Error('Mixed grain contacts require four phases.');
   contactBefore=buffer('grainBefore',instance.maxParticles*16,GPUBufferUsage.STORAGE|GPUBufferUsage.COPY_DST);
   var degrees=buffer('grainDegrees',instance.maxParticles*4,GPUBufferUsage.STORAGE);
-  contactModule=device.createShaderModule({label:'liquid.slip.grainContacts',code:contactSource(opts.blackSand)});
+  var contactCode=opts.discreteGrains?discreteContactSource(width,height):contactSource(opts.blackSand);
+  contactModule=device.createShaderModule({label:'liquid.slip.grainContacts',code:contactCode});
   var cr=[instance.paramsBuf,config,instance.buf.pos,contactBefore,instance.buf.flag,degrees,instance.buf.cellCount,instance.buf.cellStart,instance.buf.sortedIdx,instance.buf.aux];
-  [['degrees',[0,3,4,5,6,7,8]],['contacts',[0,1,2,3,4,5,6,7,8,9]]].forEach(function(row){
-   var layout=device.createBindGroupLayout({entries:row[1].map(function(b){return {binding:b,visibility:GPUShaderStage.COMPUTE,buffer:{type:b<2?'uniform':b===2||b===5||b===9?'storage':'read-only-storage'}};})});
+  if(opts.discreteGrains){
+   var wallRects=opts.grainWalls||[];if(wallRects.length>2)throw Error('The dam supports two declared tank walls.');
+   var walls=buffer('damContactWalls',48,GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST),wallBytes=new ArrayBuffer(48);
+   wallRects.forEach(function(r,i){new Float32Array(wallBytes).set([r.x,r.y,r.width,r.height],i*4);});new Uint32Array(wallBytes)[8]=wallRects.length;
+   queue.writeBuffer(walls,0,wallBytes);cr[11]=walls;
+   contactOrigin=buffer('damContactOrigin',instance.maxParticles*16,GPUBufferUsage.STORAGE|GPUBufferUsage.COPY_DST);cr[10]=contactOrigin;
+   cr[6]=buffer('damContactHeads',Math.ceil(width/1.8)*Math.ceil(height/1.8)*4,GPUBufferUsage.STORAGE);
+   cr[7]=buffer('damContactLinks',instance.maxParticles*4,GPUBufferUsage.STORAGE);
+  }
+  var contactBindings=opts.discreteGrains?[['degrees',[0,3,4,5,6,7]],['contacts',[0,1,2,3,4,5,6,7,9,10,11]],['scatter',[0,3,4,6,7]],['clear',[0,3,4,6]]]:[['degrees',[0,3,4,5,6,7,8]],['contacts',[0,1,2,3,4,5,6,7,8,9]]];
+  contactBindings.forEach(function(row){
+   var layout=device.createBindGroupLayout({entries:row[1].map(function(b){return {binding:b,visibility:GPUShaderStage.COMPUTE,buffer:{type:b<2||b===11?'uniform':b===2||b===5||b===9||opts.discreteGrains&&(b===6||b===7)?'storage':'read-only-storage'}};})});
    contactPipes[row[0]]=device.createComputePipeline({layout:device.createPipelineLayout({bindGroupLayouts:[layout]}),compute:{module:contactModule,entryPoint:row[0]}});
    contactGroups[row[0]]=device.createBindGroup({layout:layout,entries:row[1].map(function(b){return {binding:b,resource:{buffer:cr[b]}};})});
   });
@@ -455,6 +547,7 @@ function create(instance,options){
   encode:function(encoder){
    if(!model.ready||destroyed)throw Error('Material slip is not ready.');
    if(instance.grid.cells>capacity)throw Error('Material-slip grid exceeds its declared world allocation.');
+   if(contactOrigin)encoder.copyBufferToBuffer(instance.buf.pos,0,contactOrigin,0,instance.uploadedCount*16);
    var pass=encoder.beginComputePass({label:'liquid.materialSlip.step'});
    ['clearCells','scatter','stress','solve','stabilizeGrid','gridBoundary','gather'].concat(phases===4?['bedCollide']:[]).forEach(function(name){pass.setPipeline(pipes[name]);pass.setBindGroup(0,groups[name]);pass.dispatchWorkgroups(Math.ceil((name==='clearCells'||name==='solve'||name==='stabilizeGrid'||name==='gridBoundary'?instance.grid.cells:instance.uploadedCount)/256));});pass.end();
   },
@@ -469,16 +562,18 @@ function create(instance,options){
   // native position/velocity constraints or their validated spatial search.
   beforeGrains:function(encoder){encoder.copyBufferToBuffer(instance.buf.affine,0,contactAffine,0,instance.uploadedCount*16);},
   afterGrains:function(encoder){encoder.copyBufferToBuffer(contactAffine,0,instance.buf.affine,0,instance.uploadedCount*16);},
-  stats:function(){return {grainClasses:opts.blackSand?['quartz','magnetite','gold']:phases===4?['quartz','gold']:['grain'],mixedGrainContacts:!!opts.grainContacts,enabled:!destroyed,ready:model.ready,error:model.error,densities:density.slice(),dragRates:drag.slice(),commonGravity:instance.simParamsHost[0],referenceArea:opts.cellSize*opts.cellSize/opts.restDensity,gridCapacity:capacity,method:'Separate APIC phase momentum, shared compressive volume stress, implicit equal/opposite drag. '+(opts.grainContacts?'Mass-weighted grain contacts and Coulomb friction. ':'')+'No calibrated viscosity, permeability, surface tension or Drucker-Prager sand law.'};},
+  stats:function(){return {grainClasses:opts.discreteGrains?['sand']:opts.blackSand?['quartz','magnetite','gold']:phases===4?['quartz','gold']:['grain'],discreteGrains:!!opts.discreteGrains,mixedGrainContacts:!!opts.grainContacts,enabled:!destroyed,ready:model.ready,error:model.error,densities:density.slice(),dragRates:drag.slice(),commonGravity:instance.simParamsHost[0],referenceArea:opts.cellSize*opts.cellSize/opts.restDensity,gridCapacity:capacity,method:(opts.discreteGrains?'Discrete grain inertia, fluid occupancy pressure, implicit equal/opposite grid drag and exact grain neighborhoods. ':'Separate APIC phase momentum, shared compressive volume stress, implicit equal/opposite drag. ')+(opts.grainContacts?'Mass-weighted grain contacts and Coulomb friction. ':'')+'No calibrated viscosity, permeability, surface tension or Drucker-Prager sand law.'};},
   destroy:function(){if(destroyed)return;destroyed=true;model.ready=false;if(instance.materialSlip===model)delete instance.materialSlip;instance.needsDenseClear=true;buffers.forEach(function(b){b.destroy();});}
  };
  if(opts.grainContacts)model.encodeGrainContacts=function(encoder){
+  for(var iteration=0;iteration<(opts.discreteGrains?3:1);iteration++){
   encoder.copyBufferToBuffer(instance.buf.pos,0,contactBefore,0,instance.uploadedCount*16);
   var pass=encoder.beginComputePass({label:'liquid.slip.mixedGrainContacts'});
-  ['degrees','contacts'].forEach(function(name){pass.setPipeline(contactPipes[name]);pass.setBindGroup(0,contactGroups[name]);pass.dispatchWorkgroups(Math.ceil(instance.uploadedCount/256));});pass.setPipeline(pipes.bedGrains);pass.setBindGroup(0,groups.bedGrains);pass.dispatchWorkgroups(Math.ceil(instance.uploadedCount/256));pass.end();
+  (opts.discreteGrains?['scatter','degrees','contacts','clear']:['degrees','contacts']).forEach(function(name){pass.setPipeline(contactPipes[name]);pass.setBindGroup(0,contactGroups[name]);pass.dispatchWorkgroups(Math.ceil(instance.uploadedCount/256));});pass.setPipeline(pipes.bedGrains);pass.setBindGroup(0,groups.bedGrains);pass.dispatchWorkgroups(Math.ceil(instance.uploadedCount/256));pass.end();
+  }
  };
  model.grainColors=opts.grainColors||null;
  return model;
 }
-root.LiquidMaterialSlipWGPU={create:create,source:SOURCE,sluiceSource:sluiceSource,contactSource:CONTACT_SOURCE,grainContactSource:contactSource,dragPair:dragPair};
+root.LiquidMaterialSlipWGPU={create:create,source:SOURCE,sluiceSource:sluiceSource,contactSource:CONTACT_SOURCE,grainContactSource:contactSource,discreteContactSource:discreteContactSource,dragPair:dragPair};
 })(typeof window!=='undefined'?window:globalThis);

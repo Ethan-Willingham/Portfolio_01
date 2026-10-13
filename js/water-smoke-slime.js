@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.182'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.183'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -254,6 +254,10 @@
         if(caveStyle.getPropertyValue('--cave-placement').trim()==='bottom')insetBottom+=caveBounds.height+padding;
         else insetRight+=caveBounds.width+padding;
       }
+    }
+    if(currentScene==='sand-dam'){
+      var sandGuide=document.getElementById('toy-sand-guide');
+      insetTop+=sandGuide && !sandGuide.hidden ? sandGuide.getBoundingClientRect().height+24 : 64;
     }
     var fitWidth=Math.max(1,cameraWidth-insetLeft-insetRight),fitHeight=Math.max(1,cameraHeight-insetTop-insetBottom);
     baseFitScale=Math.min(fitWidth/worldW,fitHeight/worldH);
@@ -440,7 +444,7 @@
   }
 
   function bakeWalls() {
-    var wallRatio=machineState && machineState.definition.sluice ? Math.min(3,Math.ceil(dpr*Math.max(1,fitScale))) : dpr;
+    var wallRatio=machineState && (machineState.definition.sluice || machineState.definition.sandDam) ? Math.min(3,Math.ceil(dpr*Math.max(1,fitScale))) : dpr;
     if(wallsCanvas.width!==Math.round(worldW*wallRatio) || wallsCanvas.height!==Math.round(worldH*wallRatio)){
       wallsCanvas.width=Math.round(worldW*wallRatio);wallsCanvas.height=Math.round(worldH*wallRatio);wallsBakedVersion=-1;
     }
@@ -510,7 +514,7 @@
    * is a one-time push of CALM 0 / GRID_VISC 0 / DAMPING 1 / MOTION 1
    * after the device is ready, not a per-frame state machine. ==== */
   var hourglassScale=Math.max(2,Math.min(6,Number(bootParams.get('sand'))||2));
-  var LIQUID_MAX_PARTICLES = Math.max(isMobile ? bootScene==='gold-sluice-box'?60000:40000 : 100000,bootScene==='hourglass'?Math.ceil(8000*hourglassScale*hourglassScale):0);
+  var LIQUID_MAX_PARTICLES = Math.max(isMobile ? (bootScene==='gold-sluice-box'||bootScene==='sand-dam')?60000:40000 : 100000,bootScene==='hourglass'?Math.ceil(8000*hourglassScale*hourglassScale):0);
   var LIQUID_DENSITY_REST = 4;              // mirrors the module's 1/PDELTA^2
   var LIQUID_OPS_MAX = 300000;
   var LIQUID_MACHINE_OPS_MAX = 900000;
@@ -15293,7 +15297,7 @@
       instrumentsCanvas.setAttribute('aria-hidden','true');stage.appendChild(instrumentsCanvas);
       instrumentsCtx=instrumentsCanvas.getContext('2d');
     }
-    var overlayDpr=machineState && machineState.definition.sluice ? Math.min(3,Math.ceil(dpr*Math.max(1,fitScale))) : toyThirsty ? Math.min(3,dpr*Math.max(1,fitScale)) : dpr;
+    var overlayDpr=machineState && (machineState.definition.sluice || machineState.definition.sandDam) ? Math.min(3,Math.ceil(dpr*Math.max(1,fitScale))) : toyThirsty ? Math.min(3,dpr*Math.max(1,fitScale)) : dpr;
     var overlayW=Math.round(worldW*overlayDpr),overlayH=Math.round(worldH*overlayDpr);
     if(instrumentsCanvas.width!==overlayW || instrumentsCanvas.height!==overlayH){instrumentsCanvas.width=overlayW;instrumentsCanvas.height=overlayH;machineOverlayCache=null;}
     instrumentsCanvas.style.width=worldW+'px';instrumentsCanvas.style.height=worldH+'px';
@@ -15363,7 +15367,7 @@
     }
     if(machineState){
       var definition=machineState.definition;
-      if(art && definition.primary.kind==='pour' && definition.primary.target && !definition.sluice)
+      if(art && definition.primary.kind==='pour' && definition.primary.target && !definition.sluice && !definition.sandDam)
         art.sourcePort(c,definition.primary.target.x,definition.primary.target.y);
       if(definition.primary.kind==='slime' && !machineState.primaryUsed){
         var waitingSlime=definition.slimes[definition.primary.index || 0];
@@ -15421,20 +15425,7 @@
         if(definition.setup==='vented')c.fillText('Open vent',heater.x+104,100);
       }
       if(toyBubbles){var hose=definition.bubbles.hose;if(art)art.airPort(c,hose.x,hose.y,{bottom:384,active:toyBubbles.stats().injecting});}
-      if(definition.sandDam){
-        c.save();c.textAlign='center';c.fillStyle=text;
-        // Draw the same flat slab used by the native polygon contacts.
-        // A tile wall's thick outline would cover these resting micrograins.
-        var bed=definition.sandDam.bed;c.fillStyle=palette.getPropertyValue('--bg-raised').trim();
-        c.fillRect(bed.x,bed.y,bed.width,bed.height);c.strokeStyle=palette.getPropertyValue('--rule-strong').trim();
-        c.lineWidth=1/fitScale;c.strokeRect(bed.x,bed.y,bed.width,bed.height);
-        c.fillStyle=palette.getPropertyValue('--app-brass-dim').trim();c.fillText('Sand',392,252);
-        c.strokeStyle=palette.getPropertyValue('--text-faint').trim();c.globalAlpha=.5;c.setLineDash([3,3]);
-        var profile=definition.sandDam.profile;c.beginPath();profile.forEach(function(p,i){if(i)c.lineTo(p.x,p.y);else c.moveTo(p.x,p.y);});c.stroke();
-        c.globalAlpha=1;c.setLineDash([]);c.fillStyle=palette.getPropertyValue('--text-faint').trim();
-        c.fillText('Dashed line: starting sand',300,324);
-        c.restore();
-      }
+      if(definition.sandDam && window.WSSSandDam)window.WSSSandDam.draw(c,definition,{palette:palette,scale:fitScale,pouring:machinePourHeld});
       if(definition.sluice){
         if(window.WSSSluiceControls)window.WSSSluiceControls.draw(c,definition,machineState.sluiceRun,{scale:fitScale,palette:palette,pouring:machinePourHeld});
       }
@@ -15729,7 +15720,7 @@
     var definition=machineState.definition;
     var spout=definition.primary.kind==='fire-pour' ? definition.fire.pour : definition.primary.target;
     machinePourFlow.x=spout.x;machinePourFlow.y=spout.y;
-    var cap=LIQUID_MAX_PARTICLES-8,rate=MACHINE_POUR_RATE;
+    var cap=LIQUID_MAX_PARTICLES-8,rate=definition.sandDam?definition.sandDam.pourRate:MACHINE_POUR_RATE;
     if(run){rate*=run.flow/100;cap=Math.min(cap,liquidCount+sluice.waterSupply-run.waterAdded);}
     var admitted=spawnWaterFlow(machinePourFlow,Math.min(h,.05),rate,12,0,110,cap);
     if(run){run.waterAdded+=admitted;if(run.waterAdded>=sluice.waterSupply || liquidCount>=LIQUID_MAX_PARTICLES-8){run.valve=false;machinePour(false);}}
