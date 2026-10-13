@@ -184,6 +184,41 @@ bank height, upstream accumulation and downstream flow, the labeled held tap,
 release, pause, reset, finite state and conserved sand. Captures and measurements
 go to `/tmp/sand-dam-review`.
 
+## Slime submarine
+
+The submarine has four held steering controls (WASD or the visible buttons),
+a ballast valve (B), and three numbered course rings. The compact tank uses the
+same 560 by 320 world and water charge on desktop and mobile. The gold point on
+the deforming hull marks the real valve. Opening it underwater admits native
+water. Closing it retains that water. Lifting the open hull above the pool lets
+water leave through the same opening. There is no pump or inventory reset.
+Dragging still uses the existing elastic grip.
+
+The control panel reports the fraction of the hull occupied by water and its
+center depth relative to the measured pool surface and floor. Rings light in
+order when the hull center enters their 25-unit radius. Restart course clears
+only those markers; the main restart restores the tank. The markers exert no
+forces and have no collision geometry.
+
+Steering is a declared external motor, with maximum force equal to 2.4 times
+the dry shell's weight. Diagonal input shares that limit. The force is applied
+to the existing Verlet material substeps, divided by the current shell and
+carried-water mass. It assigns neither a velocity nor a destination. Releasing
+input leaves existing inertia, gravity, water drag and the one-way buoyancy
+approximation. This is not a fluid-coupled propeller. Native water contact
+reactions, asynchronous parcel counts and approximate surface buoyancy retain
+the earlier model's limits; no calibrated submarine or closed energy claim is
+made. The blocked-valve comparison keeps the same motor and dry shell sealed.
+
+Held controls clear on pause, pointer cancellation, capture loss, inactivity,
+scene changes and reset. The panel shares the existing UI activity timer. It
+reserves room beside the tank or below it in a narrow window. The valve remains
+usable while paused, without advancing water. Run
+`node tools/test-slime-submarine.mjs` for owned Chrome for Testing checks of
+real steering, water inventory, ballast mass, keyboard and touch controls,
+input cleanup and responsive layout. Captures go to a temporary directory or
+`DUMP` when specified.
+
 ## Hourglass
 
 The hourglass runs at normal playback speed with about 30,000 physical grains.

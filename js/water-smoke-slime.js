@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.191'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.192'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -253,6 +253,15 @@
         var caveStyle=getComputedStyle(caveIndicator),caveBounds=caveIndicator.getBoundingClientRect();
         if(caveStyle.getPropertyValue('--cave-placement').trim()==='bottom')insetBottom+=caveBounds.height+padding;
         else insetRight+=caveBounds.width+padding;
+      }
+    }
+    var submarinePanel=document.getElementById('toy-submarine-controls');
+    if(submarinePanel){
+      submarinePanel.hidden=currentScene!=='slime-submarine';
+      if(!submarinePanel.hidden){
+        var submarineStyle=getComputedStyle(submarinePanel),submarineBounds=submarinePanel.getBoundingClientRect();
+        if(submarineStyle.getPropertyValue('--submarine-placement').trim()==='bottom')insetBottom+=submarineBounds.height+padding;
+        else insetRight+=submarineBounds.width+padding;
       }
     }
     if(currentScene==='sand-dam'){
@@ -13318,6 +13327,7 @@
   });
   inputEl.addEventListener('blur',function(){cancelHeldInput();hideKeyboardCursor();drawMachineOverlay();});
   inputEl.addEventListener('keydown',function(e){
+    if(e.defaultPrevented)return;
     if(e.ctrlKey || e.metaKey || e.altKey)return;
     var arrows={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]};
     var direction=arrows[e.key];
@@ -13987,6 +13997,7 @@
       applyWaterFeel(); syncSliderUI();
     });
     window.addEventListener('keydown', function (e) {
+      if(e.defaultPrevented)return;
       if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
       var map = { '1': 'draw', '2': 'erase', '3': 'water', '4': 'smoke', '5': 'slime', '6': 'poke' };
       if (map[e.key]) setTool(map[e.key]);
@@ -15102,6 +15113,7 @@
     else if(kind==='air-gripper-motor')body(2);
     else if(kind==='suction-prime' && d.suction){if(d.suction.phase===0 && d.divers){var stroke=toyDivers?toyDivers.stats().stroke:0;atRect({x:d.divers.piston.x+stroke+16,y:d.divers.piston.y+32,width:120,height:28},'primary','button');}else{var outlet=d.parts.find(function(part){return part.id==='delivery';});atRect(outlet.rect);}}
     else if(kind==='tesla-motor' && d.divers){atRect({x:d.divers.piston.x-32,y:d.divers.pistonRodEndY||112,width:d.divers.piston.width+64,height:28},'primary','button');}
+    else if(kind==='ballast-valve' && d.submarine)return [];
     else if((kind==='ballast-valve' || kind==='cuff-pump' || kind==='rocket-release') && p.target)atRect(p.target,'primary','button');
     else if(kind==='balloon-pop' || kind==='draft-squeeze' || kind==='draft-push' || kind==='creature-gas' || kind==='cork-release' || kind==='ballast-valve' || kind==='cuff-pump' || kind==='rocket-release')body(0);
     else if(kind==='slime'){
@@ -15519,7 +15531,7 @@
       if(toySauna)toySauna.draw(c,{accent:accent,text:text,coral:'#d9978c',clay:'#cf9f78'});
       if(toyFloatSlider)toyFloatSlider.draw(c);
       if(toyDraftRig)toyDraftRig.draw(c);
-      if(toyDraftRuntime && toyDraftRuntime.draw)toyDraftRuntime.draw(c);
+      if(toyDraftRuntime && toyDraftRuntime.draw)toyDraftRuntime.draw(c,{scale:fitScale,palette:palette});
       if(toySteam && definition.birds)window.WSSSingingPipe.draw(c,definition,toySteam.stats(),{accent:accent,text:text},fitScale);
       if(toyWave)toyWave.draw(c,{accent:accent,text:text});
       if(toySteam && !definition.birds){var steamDefinition=definition.steam,steamHeat=toySteam.stats();
@@ -15922,6 +15934,7 @@
   }
 
   function cancelHeldInput() {
+    if(toyDraftRuntime && toyDraftRuntime.releaseInput)toyDraftRuntime.releaseInput();
     releaseMachineControl();
     if(toySound)toySound.setActive(false);
     if (!pointerDown) return;
@@ -16265,6 +16278,20 @@
         return changed;
       },
       thermoscope:function(){return toyThermoscope;},
+      submarine:function(){return machineState && machineState.ready && machineState.definition.submarine ? toyDraftRuntime : null;},
+      submarineInput:function(name,active){
+        if(!machineState || !machineState.ready || !machineState.definition.submarine || !toyDraftRuntime)return false;
+        if(active && (userPaused || machineLoading || !demoActivity.active()))return false;
+        return toyDraftRuntime.setInput(name,active);
+      },
+      submarineValve:function(){
+        if(!machineState || !machineState.ready || !machineState.definition.submarine || !toyDraftRuntime)return false;
+        var result=toyDraftRuntime.primary();machineOverlayCache=null;render();drawMachineOverlay();updateReadout();return result;
+      },
+      submarineCourse:function(){
+        if(!machineState || !machineState.ready || !machineState.definition.submarine || !toyDraftRuntime)return false;
+        var result=toyDraftRuntime.restartCourse();machineOverlayCache=null;drawMachineOverlay();return result;
+      },
       balloons:function(){return toyBalloon;},
       divers:function(){return toyDivers;},
       floatSlider:function(){return toyFloatSlider;},

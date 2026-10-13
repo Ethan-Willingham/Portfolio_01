@@ -1836,13 +1836,13 @@
     "title": "Slime submarine",
     "status": "WORKS",
     "pool": false,
-    "cue": "Open the valve to flood its carried tank, then close it and drag the loaded skin.",
+    "cue": "Steer through three rings. Take on ballast, feel the weight, and lift the open hull to drain.",
     "draft": true,
     "world": {
-      "w": 720,
-      "h": 400
+      "w": 560,
+      "h": 320
     },
-    "blocker": "Emptying ballast and calibrated two-way buoyancy remain outside this reduced floodable-tank model.",
+    "blocker": "Steering is an external motor; calibrated two-way buoyancy and propeller flow remain outside this reduced model.",
     "dependencies": [
       "wss-drafts-bodies",
       "wss-water-balloons",

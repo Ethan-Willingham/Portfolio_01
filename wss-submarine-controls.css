@@ -1,0 +1,83 @@
+/* A readable control panel beside the tank, outside the transformed stage. */
+.toy-submarine-controls {
+  --submarine-placement: right;
+  position: absolute;
+  z-index: 11;
+  right: 16px;
+  top: calc((100% + var(--toy-top-height, 52px)) / 2);
+  transform: translateY(-50%);
+  box-sizing: border-box;
+  width: 280px;
+  max-height: calc(100% - var(--toy-top-height, 52px) - 24px);
+  overflow: auto;
+  padding: 18px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 12px;
+  background: var(--bg-raised);
+  color: var(--text);
+  font: 13px/1.4 var(--font-body);
+  scrollbar-width: thin;
+}
+.toy-submarine-controls[hidden] { display: none; }
+.submarine-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.submarine-heading h2 { margin: 0; color: var(--text-bright); font: 600 20px/1.2 var(--font-body); letter-spacing: -.02em; }
+#submarine-state { color: var(--app-brass); font-size: 11px; }
+.submarine-task { margin: 5px 0 16px; color: var(--text-dim); font-size: 12px; }
+.submarine-directions { display: grid; grid-template-columns: repeat(4, minmax(44px, 1fr)); gap: 6px; }
+.toy-app .toy-shell .toy-submarine-controls button {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 7px;
+  background: var(--d-bg);
+  color: var(--text);
+  font: 13px/1.2 var(--font-body);
+  touch-action: manipulation;
+}
+.toy-app .toy-shell .submarine-directions button { flex-direction: column; gap: 4px; padding: 7px 3px; min-height: 54px; touch-action: none; user-select: none; -webkit-user-select: none; }
+.toy-submarine-controls kbd { padding: 0; border: 0; background: transparent; color: var(--text-dim); font: 10px/1 var(--font-mono); }
+.toy-app .toy-shell .toy-submarine-controls button:hover { border-color: var(--line-mid); color: var(--text-bright); }
+.toy-app .toy-shell .toy-submarine-controls button[aria-pressed="true"] { border-color: var(--app-brass-dim); color: var(--app-brass); background: color-mix(in srgb, var(--app-brass) 10%, var(--bg-raised)); }
+.toy-app .toy-shell .toy-submarine-controls button:focus-visible { outline: 2px solid var(--app-brass); outline-offset: 2px; }
+.toy-app .toy-shell .toy-submarine-controls button:disabled { opacity: .45; cursor: default; }
+.submarine-readings { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0 7px; font-variant-numeric: tabular-nums; }
+.submarine-readings > div { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.submarine-readings span { color: var(--text-dim); font-size: 12px; }
+.submarine-readings output { color: var(--text); font: 14px/1.4 var(--font-mono); }
+.submarine-fill-track { height: 3px; margin: 0 0 10px; overflow: hidden; background: var(--rule); border-radius: 2px; }
+.submarine-fill-track i { display: block; width: 0; height: 100%; background: var(--app-brass); }
+.toy-app .toy-shell .submarine-valve { display: flex; justify-content: space-between; width: 100%; }
+.submarine-ballast-help { min-height: 2.8em; margin: 6px 0 0; color: var(--text-dim); font-size: 11px; line-height: 1.4; }
+.submarine-course { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; }
+.submarine-course p { margin: 0; color: var(--text-dim); font: 11px/1.4 var(--font-mono); }
+.toy-app .toy-shell .submarine-course button { background: transparent; padding: 8px; font-size: 12px; white-space: nowrap; }
+.toy-submarine-controls.is-complete .submarine-course p { color: var(--app-brass); }
+.submarine-help { margin: 12px 0 0; padding-top: 12px; border-top: 1px solid var(--rule); color: var(--text-dim); font-size: 11px; line-height: 1.5; }
+.submarine-accessible-help { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+@media (max-height: 560px) {
+  .toy-submarine-controls { right: 10px; width: 254px; padding: 12px; max-height: calc(100% - var(--toy-top-height, 52px) - 16px); }
+  .submarine-heading h2 { font-size: 17px; }
+  .submarine-task { margin: 4px 0 10px; font-size: 11px; }
+  .toy-app .toy-shell .submarine-directions button { min-height: 44px; padding: 4px 2px; gap: 2px; font-size: 12px; }
+  .submarine-readings { margin-top: 10px; margin-bottom: 6px; }
+  .submarine-fill-track { margin-bottom: 6px; }
+  .submarine-ballast-help { min-height: 2.8em; margin-top: 5px; font-size: 10px; }
+  .submarine-course { margin-top: 6px; }
+  .submarine-help { margin-top: 7px; padding-top: 7px; font-size: 10px; }
+}
+@media (max-width: 760px) and (max-aspect-ratio: 7/5) {
+  .toy-submarine-controls { --submarine-placement: bottom; top: auto; bottom: 12px; left: 12px; right: 12px; width: auto; max-height: calc(100% - var(--toy-top-height, 52px) - 32px); padding: 12px 16px; transform: none; }
+  .submarine-heading h2 { font-size: 18px; }
+  .submarine-task { margin-bottom: 10px; }
+  .toy-app .toy-shell .submarine-directions button { flex-direction: row; gap: 8px; min-height: 44px; }
+  .submarine-readings { margin-top: 10px; margin-bottom: 8px; }
+  .submarine-ballast-help { min-height: 1.4em; }
+  .submarine-course { margin-top: 6px; }
+  .submarine-help { margin-top: 7px; padding-top: 7px; }
+}
+
+/* The short landscape panel keeps every operative control on screen. */
+@media (max-height: 560px) and (min-aspect-ratio: 7/5) {
+  .submarine-help { display: none; }
+}

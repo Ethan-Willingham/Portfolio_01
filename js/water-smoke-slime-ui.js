@@ -7,6 +7,7 @@
     var shell = document.getElementById('toy');
     if (!toy || !shell || !document.getElementById('toy-fallback').hidden) return;
     // The app page is always full-window; its fullscreen button uses the browser's fullscreen.
+    var submarineControls=window.WSSSubmarineControls ? window.WSSSubmarineControls.create(toy,shell) : null;
     var appMode = document.body.classList.contains('toy-app');
     var oxygenView = window.WSSOxygenView ? window.WSSOxygenView.create(toy, shell) : null;
     if (oxygenView) toy.oxygenView = oxygenView;
@@ -555,6 +556,7 @@
       fitPanel();
     }
     function updateMeasurements() {
+      if(submarineControls)submarineControls.sync();
       if(sluiceControls)sluiceControls.update();
       if (oxygenView) oxygenView.update();
       var state = toy.stats(), native=nativeScene(state.scene),machine = /^(siphon|cup|heron)$/.test(state.scene) || native;
@@ -722,6 +724,7 @@
     }
 
     function sync() {
+      if(submarineControls)submarineControls.sync();
       syncCamera();
       var state = toy.stats();
       var native=nativeScene(state.scene),wind=state.scene==='smoke-wind-tunnel',cannon=state.scene==='smoke-ring-cannon'||wind,thermal=state.scene==='thermoscope',balloon=state.scene==='water-balloons',divers=state.scene==='cartesian-divers',bubbles=state.scene==='air-hose';shell.classList.toggle('is-native-machine',native);
@@ -922,7 +925,7 @@
     window.addEventListener('scroll', fitPanel, { passive: true });
     // Reading the existing sample never requests another GPU snapshot.
     var demoActivity = DemoActivity.create(shell);
-    demoActivity.onChange(function(active){if(!active)releaseCavePressure();});
+    demoActivity.onChange(function(active){if(!active){releaseCavePressure();if(submarineControls)submarineControls.release();}});
     demoActivity.setInterval(function () {
       if(document.hidden)return;
       if(shell.classList.contains('is-paused')!==toy.stats().paused)sync();else updateMeasurements();
