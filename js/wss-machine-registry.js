@@ -1791,11 +1791,11 @@
   },
   {
     "id": "water-rocket",
-    "capability": "Water slimes",
+    "capability": "Pressure and motion",
     "title": "Water rocket",
     "status": "WORKS",
     "pool": false,
-    "cue": "A native piston compresses trapped air. Release the nozzle to launch the carried water tank.",
+    "cue": "Fill, pressurize and launch a bottle. Compare the height of your flights.",
     "draft": true,
     "world": {
       "w": 720,
@@ -1803,30 +1803,22 @@
     },
     "blocker": "",
     "dependencies": [
-      "wss-water-balloons",
-      "wss-machines/water-balloons",
-      "wss-drafts-bodies",
-      "wss-cartesian-divers",
-      "wss-machines/cartesian-divers",
-      "wss-drafts-creatures",
+      "wss-water-rocket-model",
+      "wss-water-rocket-view",
       "wss-water-rocket"
     ],
     "behaviorPlan": {
-      "seconds": 6,
-      "actionAtSeconds": 2,
-      "action": "Release the charged native-pressure water tank",
-      "key": "Initial free launch rises in three seeds; the uncompressed control falls. Native water is conserved.",
+      "seconds": 16,
+      "actionAtSeconds": 3,
+      "action": "Pressurize, release and observe the full flight",
+      "key": "Pressure-driven momentum launches the bottle. It reaches an apex and lands; water mass is accounted for, pressure falls, pause freezes state and changing the fill changes the result.",
       "statusIfObserved": "WORKS"
     },
     "accepted": true,
     "preview": "cup",
     "scripts": [
-      "wss-water-balloons",
-      "wss-machines/water-balloons",
-      "wss-drafts-bodies",
-      "wss-cartesian-divers",
-      "wss-machines/cartesian-divers",
-      "wss-drafts-creatures",
+      "wss-water-rocket-model",
+      "wss-water-rocket-view",
       "wss-water-rocket"
     ]
   },

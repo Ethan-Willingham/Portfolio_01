@@ -4,6 +4,45 @@ Release: toy v5.57, shared water engine v28.179. The greedy cup, standalone
 siphon and Heron's fountain are in the public scene menu, with published behavior
 measurements. Full quantitative physical acceptance and steady 60 FPS remain unverified.
 
+## Water rocket
+
+The Water Rocket scene now uses a bottle with a launch stand, adjustable fill
+and pressure, and a complete charge, release, coast and landing sequence. Its
+separate flight model replaces the earlier native-pressure tank on a short
+vertical guide. It keeps the existing scene URL and menu entry. The default
+view shows feet, miles per hour and psi; Metric changes the displayed units.
+Slow motion shares the host's playback speed, and the global pause and activity
+controller freeze the existing state. Preparing another flight retains the
+session's previous height and best result. The toolbar reset clears the session.
+
+The rigid two-liter bottle has 0.145 kg dry mass, a 9 mm nozzle and a 105 mm
+body diameter. Water discharge uses a coefficient of 0.86; quadratic drag uses
+0.42 with ambient density 1.204 kg per cubic meter. These are declared model
+parameters. The compressor adds ideal-gas mass at fixed temperature while the
+latch holds the bottle. Release adds no impulse. Expanding dry air follows
+P V^1.4; Bernoulli outflow removes actual carried water mass and produces thrust
+from its exhaust momentum. Compressible air blowdown follows, including choked
+nozzle pressure thrust. A fixed 1 ms step integrates gravity, thrust and drag.
+The equations follow [Ohio University's water-rocket analysis](https://people.ohio.edu/urieli/thermo/property_tables/gas/adiabatic/rocket/rocket.html)
+and [NASA's thrust summary](https://www1.grc.nasa.gov/beginners-guide-to-aeronautics/thrust-equations-summary/).
+
+Every spray batch comes from expelled model water, partitioned into visible
+ballistic parcels. The camera follows calculated altitude and keeps the launch
+plane in view; the bottle is explicitly enlarged in flight. Spray breakup is a
+visual approximation. This scene does not use the shared native water solver.
+It assumes uniform dry air, constant ambient conditions and an upright vertical
+bottle, without slosh, wind, tumbling or interactions between expelled parcels.
+Landing ends the flight without rebound. Any residual water or pressure remains
+accounted for. This is an illustrative experiment, not a calibrated prediction
+for a real bottle or launcher.
+
+Run `node tools/test-water-rocket-model.cjs` for water and air mass accounting,
+adiabatic expansion, frame partition equivalence, parameter comparisons,
+zero-pressure behavior and landing. Run `node tools/test-water-rocket.mjs` for
+ordinary browser playback, real pointer, keyboard and touch controls, pause,
+slow motion, reset, scene retirement and responsive layouts. The harness owns
+Chrome for Testing and writes captures to `/tmp/water-rocket-review`.
+
 ## Sewer gas trap
 
 The wet bend blocks pale smoke arriving from the left. Click the water itself

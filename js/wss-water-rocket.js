@@ -1,53 +1,127 @@
-/* A native piston compresses trapped air in a guided, carried water tank. */
-(function(root){
-'use strict';function r(x,y,width,height){return{x:x,y:y,width:width,height:height};}
-function make(w,o){
- o=o||{};var d=root.WSSMachines['water-balloons'].make(w,{seed:o.seed}),p=root.WSSMachines['cartesian-divers'].make(w,{});
- d.name='water-rocket';d.title='Compressed-air water rocket';d.draft=true;delete d.source;d.draftGravity=1;
- d.slimes=[{x:360,y:224,radius:60}];d.initial=[{kind:'rect',rect:r(304,240,112,40)}];d.draftRig=[{body:0,kind:'rail',a:{x:360,y:96},b:{x:360,y:300}}];
- d.vessels=[{id:'basin',label:'Landing tray',rect:r(160,336,400,48),sealed:false}];d.membrane={slit:false,pressure:true};d.settings=Object.assign({},p.settings,{cellSize:4});
- d.divers={noBodies:true,dryGas:true,squeezed:o.pumped!==false,piston:r(280,180,160,8),stroke:32,speed:16,dragRate:0,viscosity:.6,pistonLabel:'Driven compressor',pistonRodEndY:144,pistonLabelY:136};d.rocket={pumped:o.pumped!==false};d.primary={kind:'rocket-release',target:r(432,112,120,28)};d.action='Release rocket';
- d.setup=o.pumped===false?'uncompressed':'compressed';d.setups=[{id:'compressed',label:'Compressed air',options:{}},{id:'uncompressed',label:'No compressor',options:{pumped:false}}];
- d.setupNote='The no-compressor comparison has the same water and nozzle, without compression work.';
- d.viewBounds=r(152,32,416,352);d.caption='The moving piston compresses trapped air above the water. Release the stand and bottom nozzle to launch the tank up its guide.';
- d.boundaryNote='A rigid-projected smooth water skin contains native water and actual native geometric air. The declared piston motor compresses that air against the water. A real upper skin opening vents the motor back to room air. The launch latch holds its center while charging; release removes only that latch and opens the fixed lower nozzle. Pressure on the piston and gas-facing casing, plus native liquid contact reactions, load the moving tank. An ideal keyed vertical guide constrains lateral position and rotation, with visible end stops; height follows those actual forces and gravity. No launch impulse, height target or jet velocity is assigned.';
- d.energyBudgetStatus='The piston motor supplies declared charging work and stops relative to the tank on release. Gas inventory and pressure use the native isothermal solver, with a coarse pressure shell around the exact smooth liquid skin. Actual pressure traction acts on the motor head and gas-facing casing. Native liquid contact impulses react on the carried casing. The tank is rigid-projected on an ideal guide. This sampled two-way recoil is approximate and is not a calibrated three-dimensional rocket or a closed energy budget.';return d;
-}
-var previous=root.WSSDraftRuntime;
-root.WSSDraftRuntime={create:function(c){
- if(!c.definition.rocket)return previous&&previous.create?previous.create(c):null;
- var d=c.definition,L=c.liquid,M=c.airModel,units=root.WaterMachinesInstruments.scale({width:720,density:1}),b=c.bodies[0],m=c.membrane,locked=true,retired=false,pending=false,last=-Infinity,clock=L.simulationClock;
- var area=0;for(var k=0;k<b.ringN;k++){var i=b.ring[k],j=b.ring[(k+1)%b.ringN];area+=b.px[i]*b.py[j]-b.px[j]*b.py[i];}area=Math.abs(area)*.5;
- var initial={x:b.cx,y:b.cy,area:area},peak=0,headForce=0,headSample=null,forces=[],sample=null,impulseY=0,nozzle=-1,rear=-1,ring=[],error=null;
- var count=M.width*M.height,bytes=count*56,read=L.device.createBuffer({label:'toy.rocket.native.pressure',size:bytes,usage:GPUBufferUsage.MAP_READ|GPUBufferUsage.COPY_DST});
- b.nativePointMass=area*.00128*.3/b.n;
- function outline(){var actual=c.skinRing(b),a=[];for(var k=0;k<20;k++){var u=k/20,q=actual.reduce(function(best,p){return Math.abs(p.param-u)<Math.abs(best.param-u)?p:best;},actual[0]);a.push({x:q.x,y:q.y,vx:q.vx||0,vy:q.vy||0,param:u});}return a;}
- function piston(){var p=d.divers.piston;return{x:p.x,y:p.y+c.divers.stats().stroke,width:p.width,height:p.height};}
- var staticSolid=new Float32Array(count),staticRoom=new Uint8Array(count),staticFaces=new Float32Array(count*4),terrainVersion=-1;
- function refreshStatic(){staticSolid.fill(0);staticRoom.fill(0);staticFaces.fill(0);terrainVersion=c.terrainVersion();
- for(var row=0;row<M.height;row++)for(var col=0;col<M.width;col++){var at=row*M.width+col,size=M.cellSize,occupied=0;for(var sy=0;sy<4;sy++)for(var sx=0;sx<4;sx++)if(c.terrain((col+(sx+.5)/4)*size,(row+(sy+.5)/4)*size))occupied++;staticSolid[at]=occupied/16;staticRoom[at]=occupied<16 && (row+.5)*size>=8 && (row+.5)*size<8+size*2?1:0;for(var side=0;side<4;side++){var n=0;for(var z=0;z<8;z++)if(!c.terrain(side<2?(col+(side===1?1:0))*size:(col+(z+.5)/8)*size,side<2?(row+(z+.5)/8)*size:(row+(side===3?1:0))*size))n++;staticFaces[at*4+side]=n/8;}}}
- function geometry(){if(terrainVersion!==c.terrainVersion())refreshStatic();ring=outline();var solid=staticSolid.slice(),room=staticRoom.slice(),vx=new Float32Array(count),vy=new Float32Array(count),faces=staticFaces.slice();
- var size=M.cellSize,bvx=0,bvy=0;ring.forEach(function(p){bvx+=p.vx;bvy+=p.vy;});bvx/=ring.length;bvy/=ring.length;
- var head=piston();function blocked(x,y){if(c.terrain(x,y)||x>=head.x&&x<=head.x+head.width&&y>=head.y&&y<=head.y+head.height)return true;if(x<b.bboxL-8||x>b.bboxR+8||y<b.bboxT-8||y>b.bboxB+8)return false;var best=Infinity,face=-1;for(var k=0;k<ring.length;k++){var a=ring[k],z=ring[(k+1)%ring.length],dx=z.x-a.x,dy=z.y-a.y,len=dx*dx+dy*dy,t=Math.max(0,Math.min(1,((x-a.x)*dx+(y-a.y)*dy)/len)),dist=Math.hypot(x-a.x-dx*t,y-a.y-dy*t);if(dist<best){best=dist;face=k;}}return best<4 && face!==rear && (locked || face!==nozzle);}
- var left=Math.max(0,Math.floor(Math.min(b.bboxL-8,head.x-4)/size)),right=Math.min(M.width-1,Math.ceil(Math.max(b.bboxR+8,head.x+head.width+4)/size)),top=Math.max(0,Math.floor(Math.min(b.bboxT-8,head.y-4)/size)),bottom=Math.min(M.height-1,Math.ceil(Math.max(b.bboxB+8,head.y+head.height+4)/size));
- for(var row=top;row<=bottom;row++)for(var col=left;col<=right;col++){var at=row*M.width+col,x=(col+.5)*size,y=(row+.5)*size;
-  var occupied=0;for(var sy=0;sy<4;sy++)for(var sx=0;sx<4;sx++)if(blocked((col+(sx+.5)/4)*size,(row+(sy+.5)/4)*size))occupied++;
-  solid[at]=occupied/16;room[at]=solid[at]<1&&y>=8&&y<8+size*2?1:0;if(occupied){vx[at]=bvx;vy[at]=bvy;}
-  for(var side=0;side<4;side++){var n=0;for(var s=0;s<8;s++){var xq=side<2?(col+(side===1?1:0))*size:(col+(s+.5)/8)*size,yq=side<2?(row+(s+.5)/8)*size:(row+(side===3?1:0))*size;if(!blocked(xq,yq))n++;}faces[at*4+side]=n/8;}
- }M.geometry(solid,room,vx,vy,faces);return true;}
- function capture(){var now=performance.now();if(retired||pending||now-last<40)return;last=now;pending=true;var at=L.simulationClock,pose=outline(),head=piston(),enc=L.device.createCommandEncoder();enc.copyBufferToBuffer(M.buffers.pressure,0,read,0,count*16);enc.copyBufferToBuffer(M.buffers.cells,0,read,count*16,count*32);enc.copyBufferToBuffer(M.buffers.labels,0,read,count*48,count*8);L.queue.submit([enc.finish()]);
- read.mapAsync(GPUMapMode.READ).then(function(){if(retired){read.unmap();return;}var f=new Float32Array(read.getMappedRange()),u=new Uint32Array(f.buffer);forces=[];
- for(var k=0;k<pose.length;k++){var a=pose[k],z=pose[(k+1)%pose.length],dx=z.x-a.x,dy=z.y-a.y,len=Math.hypot(dx,dy),nx=dy/len,ny=-dx/len,x=(a.x+z.x)/2,y=(a.y+z.y)/2;if(nx*(x-b.cx)+ny*(y-b.cy)<0){nx=-nx;ny=-ny;}var col=Math.floor((x-nx*12)/M.cellSize),row=Math.floor((y-ny*12)/M.cellSize),p=0,kind=0;
- if(col>=0&&row>=0&&col<M.width&&row<M.height){var cell=row*M.width+col;kind=u[count*4+cell*8+3];if(kind===2){var label=u[count*12+cell*2];if(label>0)p=f[(label-1)*4];}}
- peak=Math.max(peak,p);forces.push({k:k,p:p,kind:kind,nx:nx,ny:ny,len:len});}headForce=0;var headKinds=[];for(var j=0;j<20;j++){var x=head.x+(j+.5)*head.width/20,col=Math.floor(x/M.cellSize);function pAt(y){var row=Math.floor(y/M.cellSize);if(col<0||row<0||col>=M.width||row>=M.height)return 0;var at=row*M.width+col,kind=u[count*4+at*8+3];headKinds.push(kind);if(kind===1)return f[at*4];if(kind===2){var label=u[count*12+at*2];return label>0?f[(label-1)*4]:0;}return 0;}var below=pAt(head.y+head.height+M.cellSize*1.5),above=pAt(head.y-M.cellSize*1.5);headForce+=(above-below)*head.width/20*.00128;}headSample={head:head,kinds:headKinds};sample={clock:at,x:b.cx,y:b.cy};read.unmap();}).catch(function(e){error=e.message;}).finally(function(){pending=false;});}
- ring=outline();var lowest=-Infinity,highest=Infinity;for(var k=0;k<ring.length;k++){var y=(ring[k].y+ring[(k+1)%ring.length].y)*.5;if(y>lowest){lowest=y;nozzle=k;}if(y<highest){highest=y;rear=k;}}m.setStaticSlit(rear);geometry();
- return {geometry:geometry,primary:function(){if(!locked)return true;locked=false;d.divers.stroke=c.divers.stats().stroke;m.setSlit(true,nozzle);d.action='Rocket released';return true;},
- tick:function(){var dt=Math.max(0,L.simulationClock-clock);clock=L.simulationClock;d.divers.piston.x=b.cx-80;d.divers.piston.y=b.cy-44;d.divers.pistonRodEndY=b.cy-80;d.divers.pistonLabelY=b.cy-88;capture();d.rocketReading={locked:locked,pumped:d.rocket.pumped,compressionStroke:c.divers.stats().stroke,headForce:headForce,headSample:headSample,peakPressure:peak,dy:b.cy-initial.y,carried:m.stats().carriedInside,waterCount:m.stats().waterCount,impulseY:impulseY,error:error,forces:forces.map(function(e){return{k:e.k,p:e.p,kind:e.kind,ny:e.ny};})};d.readingLabel='Peak gas '+units.psi(peak).toFixed(2)+' psi';},
- load:function(body,h,ts){if(body!==b)return;var dt=h/ts;if(locked){var cx=0,cy=0,ox=0,oy=0;for(var i=0;i<b.n;i++){cx+=b.px[i];cy+=b.py[i];ox+=b.ox[i];oy+=b.oy[i];}cx/=b.n;cy/=b.n;ox/=b.n;oy/=b.n;for(var i=0;i<b.n;i++){b.px[i]+=initial.x-cx;b.py[i]+=initial.y-cy;b.ox[i]+=initial.x-ox;b.oy[i]+=initial.y-oy;}return;}
- if(!sample||L.simulationClock-sample.clock>.12||Math.hypot(b.cx-sample.x,b.cy-sample.y)>M.cellSize*2)return;
- var headDelta=headForce*dt*dt/(b.nativePointMass*b.n);for(var i=0;i<b.n;i++)b.py[i]+=headDelta;impulseY+=headForce*dt;
- forces.forEach(function(e){if(e.kind!==2||!locked&&e.k===nozzle)return;var i=b.ring[Math.floor(e.k*b.ringN/20)],j=b.ring[Math.floor((e.k+1)%20*b.ringN/20)],fy=e.p*e.ny*e.len*.00128,fx=e.p*e.nx*e.len*.00128,scale=.5*dt*dt/b.nativePointMass;b.px[i]+=fx*scale;b.py[i]+=fy*scale;b.px[j]+=fx*scale;b.py[j]+=fy*scale;impulseY+=fy*dt;});
- },draw:function(ctx){ctx.save();ctx.beginPath();if(locked){ctx.moveTo(b.bboxL-8,b.cy-12);ctx.lineTo(b.bboxL-8,b.cy+12);ctx.moveTo(b.bboxR+8,b.cy-12);ctx.lineTo(b.bboxR+8,b.cy+12);ctx.stroke();ctx.fillText(d.rocket.pumped?'Compressor on':'Compressor off',b.cx+72,b.cy-44);ctx.fillText('Launch stand',b.cx-36,b.bboxB+18);}ctx.restore();},stats:function(){return d.rocketReading;},destroy:function(){retired=true;read.destroy();delete b.nativePointMass;}};
-}};
-root.WSSMachines=root.WSSMachines||{};root.WSSMachines['water-rocket']={make:make};root.WSSWaterRocket={make:make};
-})(typeof window!=='undefined'?window:globalThis);
+/* Bottle-rocket experiment. The scene uses its own reduced flight model. */
+(function (root) {
+  'use strict';
+  function make(world, options) {
+    options = options || {};
+    return {
+      name: 'water-rocket', title: 'Water rocket', draft: true, waterRocketModel: true,
+      setup: 'launch', setups: [], action: 'Pressurize', primary: {kind: 'rocket-console'},
+      readingLabel: 'Bottle rocket', quietApparatus: true,
+      rocketOptions: {fillFraction: options.fillFraction || .35, targetPressurePsi: options.targetPressurePsi || 60},
+      vessels: [], pipes: [], solids: [], vents: [], parts: [], slimes: [], initial: [], marks: [], meters: [],
+      settings: {enabled: false}, boundaries: null,
+      viewBounds: {x: 0, y: 0, width: 720, height: 400},
+      caption: 'Choose the water fill and air pressure, pressurize the bottle, then release it. Compare the height of successive flights.',
+      source: {title: 'NASA: flight of a water rocket', url: 'https://www1.grc.nasa.gov/beginners-guide-to-aeronautics/flight-of-a-water-rocket/'},
+      boundaryNote: 'This scene replaces the earlier guided tank with a reduced, vertical bottle-rocket model. A 2-liter bottle carries a finite water charge and ideal gas. A compressor adds air while the launch latch holds it. After release, adiabatic expansion drives water through a nozzle; expelled momentum produces thrust. Compressible air blowdown follows. Gravity and quadratic drag determine the flight. The water spray represents the expelled batches, traveling ballistically. The bottle is enlarged in flight so its contents remain legible.',
+      energyBudgetStatus: 'The compressor supplies external work. This model assumes uniform dry air, a rigid bottle, vertical flight, fixed discharge and drag coefficients, and no wind or tumbling. Water parcels in the spray have no mutual collisions, and landing ends the flight without a bounce. It is an illustrative simulation, not a prediction for a real bottle or launch setup. The shared native water solver is not used by this scene.'
+    };
+  }
+  var previous = root.WSSDraftRuntime;
+  root.WSSDraftRuntime = {create: function (context) {
+    if (!context.definition.waterRocketModel) return previous && previous.create ? previous.create(context) : null;
+    var definition = context.definition, model = root.WSSWaterRocketModel.create(definition.rocketOptions);
+    var shell = document.getElementById('toy'), viewport = document.getElementById('toy-viewport');
+    var panel = document.createElement('section');
+    panel.id = 'toy-water-rocket'; panel.className = 'rocket-experiment'; panel.setAttribute('aria-label', 'Water rocket launch experiment');
+    panel.innerHTML = '<aside class="rocket-console">' +
+      '<header class="rocket-heading"><p class="rocket-eyebrow">Pressure / propulsion</p><h2>Water <br>rocket.</h2><p class="rocket-intro">A bottle, some water,<br>and a pocket of compressed air.</p></header>' +
+      '<div class="rocket-setup"><label for="rocket-fill"><span>Water fill</span><output id="rocket-fill-value">35%</output></label><input id="rocket-fill" type="range" min="15" max="75" step="5" value="35"><div class="rocket-range-ends"><span>More air</span><span>More water</span></div>' +
+      '<label for="rocket-pressure"><span>Launch pressure</span><output id="rocket-target-value">60 psi</output></label><input id="rocket-pressure" type="range" min="20" max="90" step="5" value="60"><div class="rocket-range-ends"><span id="rocket-pressure-min">20 psi</span><span id="rocket-pressure-max">90 psi</span></div></div>' +
+      '<div class="rocket-launch"><button id="rocket-primary" type="button">Pressurize</button><div class="rocket-charge-track" aria-hidden="true"><i id="rocket-charge-fill"></i></div><p id="rocket-guidance" role="status" aria-live="polite">Choose your fill, then charge the bottle.</p></div>' +
+      '<div class="rocket-options"><label for="rocket-slow"><input id="rocket-slow" type="checkbox">Slow motion</label><button id="rocket-units" type="button" aria-pressed="false">Metric</button></div>' +
+      '<div class="rocket-record"><span id="rocket-record-label">The experiment</span><strong id="rocket-record-value">How high will it go?</strong><p id="rocket-record-note">Try less water on your next flight. It changes both the propellant and the weight.</p></div></aside>' +
+      '<div class="rocket-scene"><div class="rocket-telemetry" aria-label="Flight measurements">' +
+      '<div><span>Altitude</span><p><output id="rocket-altitude">0.0</output><small id="rocket-altitude-unit">ft</small></p></div>' +
+      '<div><span>Speed</span><p><output id="rocket-speed">0.0</output><small id="rocket-speed-unit">mph</small></p></div>' +
+      '<div><span>Tank pressure</span><p><output id="rocket-pressure-value">0</output><small id="rocket-pressure-unit">psi</small></p></div>' +
+      '<div class="rocket-peak"><span>Peak height</span><p><output id="rocket-peak">0.0</output><small id="rocket-peak-unit">ft</small></p></div></div>' +
+      '<div class="rocket-drawing"><canvas id="rocket-canvas" aria-hidden="true"></canvas><div class="rocket-flight-tag"><span id="rocket-stage-label">On the launch pad</span><span id="rocket-flight-time">T + 0.00 s</span></div></div>' +
+      '<footer class="rocket-flight-strip"><ol aria-label="Flight stages"><li data-flight-stage="prepare">01 <span>Prepare</span></li><li data-flight-stage="charge">02 <span>Pressurize</span></li><li data-flight-stage="launch">03 <span>Launch</span></li><li data-flight-stage="flight">04 <span>Flight</span></li></ol><span class="rocket-model-note">Calculated flight / 2 L bottle</span></footer></div>';
+    viewport.appendChild(panel); shell.classList.add('has-water-rocket');
+    var method = document.createElement('div'); method.className = 'rocket-method';
+    method.innerHTML = '<h3>Water out, bottle up</h3><p>Compressed air drives water through the nozzle. The departing mass pushes the bottle upward. As the air expands, its pressure falls. Air escapes after the water is gone.</p>' +
+      '<h3>Then gravity takes over</h3><p>When thrust ends, the bottle keeps climbing on its momentum. Gravity and air drag slow it, then it falls. Changing the fill changes both the available propellant and the weight.</p>' +
+      '<dl><div><dt>Bottle capacity</dt><dd>2 liters</dd></div><div><dt>Empty mass</dt><dd id="rocket-model-mass">5.1 oz</dd></div><div><dt>Nozzle diameter</dt><dd id="rocket-model-nozzle">0.35 in</dd></div><div><dt>Water discharge coefficient</dt><dd>0.86</dd></div><div><dt>Drag coefficient</dt><dd>0.42</dd></div></dl>' +
+      '<h3>What this model leaves out</h3><p>The bottle stays upright in still air. Its air has one pressure and temperature; there is no sloshing, tumbling or wind. The spray represents expelled water moving under gravity, with approximate breakup and no collisions between droplets. Landing ends the flight without a bounce.</p>' +
+      '<p>The bottle is enlarged in flight so you can see it. The altitude scale follows its calculated position. This is an illustrative simulation, not a prediction for a real bottle or launcher.</p>' +
+      '<p class="rocket-method-links"><a href="https://www1.grc.nasa.gov/beginners-guide-to-aeronautics/flight-of-a-water-rocket/" target="_blank" rel="noopener">NASA: water rocket flight</a><a href="https://people.ohio.edu/urieli/thermo/property_tables/gas/adiabatic/rocket/rocket.html" target="_blank" rel="noopener">The flight equations</a></p>';
+    document.getElementById('toy-panel-instruments').appendChild(method);
+    var canvas = panel.querySelector('canvas'), view = root.WSSWaterRocketView.create(canvas);
+    var fill = panel.querySelector('#rocket-fill'), pressure = panel.querySelector('#rocket-pressure');
+    var primary = panel.querySelector('#rocket-primary'), slow = panel.querySelector('#rocket-slow');
+    fill.value = Math.round(definition.rocketOptions.fillFraction * 100); pressure.value = definition.rocketOptions.targetPressurePsi;
+    var metric = false, best = 0, previousPeak = 0, flightCount = 0, recorded = false, retired = false, lastPhase = '';
+    var label = {ready: 'On the launch pad', charging: 'Building pressure', armed: 'Ready for release', powered: 'Under thrust', coasting: 'Coasting upward', descending: 'Falling back', landed: 'Flight complete'};
+    var guidance = {ready: 'Choose your fill, then charge the bottle.', charging: 'The latch holds the bottle as air goes in.', armed: 'The bottle is charged. Release the latch.', powered: 'Escaping mass pushes the bottle upward.', coasting: 'The thrust is gone. Momentum carries it upward.', descending: 'Past the highest point. Gravity brings it back.', landed: 'Change the fill and try another flight.'};
+    function text(id, value) {var element = panel.querySelector('#' + id); if (element.textContent !== value) element.textContent = value;}
+    function paused() {return !!(root.__toy && root.__toy.stats().paused);}
+    function setOptions() {
+      model.reset({fillFraction: +fill.value / 100, targetPressurePsi: +pressure.value});
+      recorded = false; view.destroy(); view = root.WSSWaterRocketView.create(canvas); sync(); render();
+    }
+    function action() {
+      if (paused()) return true;
+      if (model.state.phase === 'ready') model.charge();
+      else if (model.state.phase === 'armed') model.launch();
+      else if (model.state.phase === 'landed') setOptions();
+      sync(); render(); return true;
+    }
+    function sync() {
+      var s = model.state, phase = s.phase, locked = phase !== 'ready', stopped = paused();
+      definition.waterRocketReading = s;
+      panel.dataset.phase = phase; panel.classList.toggle('is-paused', stopped);
+      slow.checked = !!(root.__toy && root.__toy.stats().timeScale === .25);
+      fill.disabled = pressure.disabled = locked;
+      var button = phase === 'ready' ? 'Pressurize' : phase === 'charging' ? 'Pressurizing' : phase === 'armed' ? 'Launch rocket' : phase === 'landed' ? 'Prepare next flight' : 'Flight in progress';
+      definition.action = button; text('rocket-primary', button);
+      primary.disabled = stopped || (phase !== 'ready' && phase !== 'armed' && phase !== 'landed');
+      text('rocket-fill-value', fill.value + '%');
+      text('rocket-target-value', metric ? (+pressure.value * 6.894757).toFixed(0) + ' kPa' : pressure.value + ' psi');
+      pressure.setAttribute('aria-valuetext', metric ? (+pressure.value * 6.894757).toFixed(0) + ' kilopascals' : pressure.value + ' pounds per square inch');
+      fill.setAttribute('aria-valuetext', fill.value + ' percent water');
+      text('rocket-pressure-min', metric ? '138 kPa' : '20 psi'); text('rocket-pressure-max', metric ? '621 kPa' : '90 psi');
+      text('rocket-altitude', (s.altitude * (metric ? 1 : 3.28084)).toFixed(1));
+      text('rocket-speed', (Math.abs(s.velocity) * (metric ? 1 : 2.236936)).toFixed(1));
+      text('rocket-pressure-value', (s.pressurePa / (metric ? 1000 : 6894.757)).toFixed(0));
+      text('rocket-peak', (s.peakAltitude * (metric ? 1 : 3.28084)).toFixed(1));
+      ['altitude','peak'].forEach(function(id) {text('rocket-' + id + '-unit', metric ? 'm' : 'ft');});
+      method.querySelector('#rocket-model-mass').textContent = metric ? '145 g' : '5.1 oz';
+      method.querySelector('#rocket-model-nozzle').textContent = metric ? '9 mm' : '0.35 in';
+      text('rocket-speed-unit', metric ? 'm/s' : 'mph'); text('rocket-pressure-unit', metric ? 'kPa' : 'psi');
+      text('rocket-flight-time', 'T + ' + s.flightTime.toFixed(2) + ' s');
+      text('rocket-stage-label', stopped ? 'Paused' : label[phase]);
+      if (lastPhase !== phase || stopped) {text('rocket-guidance', stopped ? 'Paused. Resume from the toolbar to continue.' : guidance[phase]); lastPhase = stopped ? '' : phase;}
+      panel.querySelector('#rocket-charge-fill').style.width = Math.min(100, s.pressurePa / (+pressure.value * 6894.757) * 100) + '%';
+      var stage = phase === 'ready' ? 'prepare' : phase === 'charging' ? 'charge' : phase === 'armed' || phase === 'powered' ? 'launch' : 'flight';
+      panel.querySelectorAll('[data-flight-stage]').forEach(function(item) {item.classList.toggle('is-active', item.dataset.flightStage === stage);});
+      if (phase === 'landed' && !recorded) {previousPeak = s.peakAltitude; best = Math.max(best, previousPeak); flightCount++; recorded = true;}
+      if (flightCount) {
+        var distance = (previousPeak * (metric ? 1 : 3.28084)).toFixed(1) + (metric ? ' m' : ' ft');
+        text('rocket-record-label', 'Flight ' + String(flightCount).padStart(2, '0'));
+        text('rocket-record-value', distance + ' at the top');
+        text('rocket-record-note', 'Best this session: ' + (best * (metric ? 1 : 3.28084)).toFixed(1) + (metric ? ' m.' : ' ft.') + ' Keep the pressure and change the fill to compare.');
+      }
+    }
+    function render() {
+      if (retired) return;
+      sync();
+      var bounds = canvas.parentElement.getBoundingClientRect();
+      view.render(model.state, {width: bounds.width, height: bounds.height, unit: metric ? 'metric' : 'imperial', previousPeak: recorded ? 0 : previousPeak, best: best, paused: paused(), slow: slow.checked, fillFraction: +fill.value / 100});
+    }
+    fill.addEventListener('input', setOptions); pressure.addEventListener('input', setOptions); primary.addEventListener('click', action);
+    panel.querySelector('#rocket-units').addEventListener('click', function (event) {metric = !metric; event.currentTarget.setAttribute('aria-pressed', String(metric)); render();});
+    slow.addEventListener('change', function () {root.__toy.set('time', slow.checked ? .25 : 1); render();});
+    var resize = new ResizeObserver(render); resize.observe(panel);
+    var pauseObserver = new MutationObserver(render); pauseObserver.observe(shell, {attributes: true, attributeFilter: ['class']});
+    var runtime = {
+      smoke: false, primary: action, clock: function () {return model.state.elapsed;},
+      tick: function (dt) {model.step(dt * (root.__toy ? root.__toy.stats().timeScale : 1)); sync();}, render: render,
+      stats: function () {return model.snapshot();},
+      destroy: function () {retired = true; resize.disconnect(); pauseObserver.disconnect(); view.destroy(); panel.remove(); method.remove(); shell.classList.remove('has-water-rocket'); if (root.WSSWaterRocket.active === runtime) root.WSSWaterRocket.active = null;}
+    };
+    root.WSSWaterRocket.active = runtime; render(); return runtime;
+  }};
+  root.WSSMachines = root.WSSMachines || {};
+  root.WSSMachines['water-rocket'] = {make: make}; root.WSSWaterRocket = {make: make, active: null};
+})(typeof window !== 'undefined' ? window : globalThis);

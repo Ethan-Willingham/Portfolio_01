@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.192'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.193'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -14396,6 +14396,12 @@
       .finally(function(){if(model===airModel && state===machineState)instrumentPending=false;});
   }
   function instrumentTick(now){
+    if(toyDraftRuntime && machineState && machineState.ready && machineState.definition.waterRocketModel){
+      var rocket=toyDraftRuntime.stats();machineState.readings={ready:true,caption:machineState.definition.caption,action:machineState.definition.action,
+        particleCount:0,sampleAgeMs:0,draftRuntime:rocket,clockSeconds:rocket.flightTime,
+        scaleText:'A 2-liter bottle in vertical flight. Height follows the flight model; the bottle drawing is enlarged as the camera pulls back.',
+        numericalStatus:machineState.definition.boundaryNote,energyBudgetStatus:machineState.definition.energyBudgetStatus,error:buildError};return;
+    }
     if(toyBreathingCave && machineState && machineState.ready){
       var cave=toyBreathingCave.stats();machineState.readings={ready:true,cave:cave,caption:machineState.definition.caption,action:machineState.definition.action,
         particleCount:0,sampleAgeMs:0,gasPressurePsi:cave.gaugePressurePa/6894.757293168,roomAbsolutePressurePsi:cave.outsidePressurePa/6894.757293168,
@@ -15062,7 +15068,7 @@
   function machineControlTargets(){
     if(!machineState || !machineState.definition.primary)return [];
     var d=machineState.definition,p=d.primary,kind=p.kind;
-    if(kind==='creature-fixture' || kind==='hourglass-grab')return [];
+    if(kind==='creature-fixture' || kind==='hourglass-grab' || kind==='rocket-console')return [];
     var disabled=!machineState.ready || machineLoading || handsPending ||
       ((kind==='balloon-pop' || kind==='slime') && machineState.primaryUsed) ||
       (kind==='cork-release' && d.corkReading && !d.corkReading.locked) ||
