@@ -33,10 +33,30 @@ function drawCoffee(c,s,text,accent,water,rule){
  c.fillStyle=text;c.font='12px "Commit Mono", monospace';c.fillText('Coffee bowl',360,79);c.fillText('Sealed lower flask',220,218);c.fillText((upper.v*1000).toFixed(2)+' L',360,177);c.fillText((lower.v*1000).toFixed(2)+' L',360,346);
  c.font='11px "Commit Mono", monospace';c.fillText(s.heater?'Heater on':'Cooling',202,385);c.fillText(s.notice,519,385);c.font='10px "Commit Mono", monospace';c.fillText('Finite-volume model. Heating lifts water; cooling draws it back through the same tube.',360,409);c.restore();
 }
+function drawHeart(c,s,text,accent,water,rule){
+ var source=s.nodes[0],heart=s.nodes[1],air=s.nodes[2],x=s.x/.028,sy=source.y+source.h*(1-source.v/source.capacity),ay=air.y+air.h*(1-air.v/air.capacity);
+ c.save();c.lineCap='round';c.lineJoin='round';c.textAlign='center';
+ c.strokeStyle=rule;c.lineWidth=12;c.beginPath();c.moveTo(216,267);c.lineTo(290,267);c.moveTo(422,267);c.lineTo(504,267);c.stroke();
+ c.strokeStyle=water;c.globalAlpha=.85;c.lineWidth=4;
+ if(s.flows.inlet>1e-9){c.beginPath();c.moveTo(216,267);c.lineTo(290,267);c.stroke();}
+ if(s.flows.outlet>1e-9){c.beginPath();c.moveTo(422,267);c.lineTo(504,267);c.stroke();}c.globalAlpha=1;
+ c.fillStyle=accent;c.beginPath();c.moveTo(257,256);c.lineTo(270,267);c.lineTo(257,278);c.closePath();c.fill();
+ c.beginPath();c.moveTo(464,256);c.lineTo(477,267);c.lineTo(464,278);c.closePath();c.fill();
+ c.strokeStyle=accent;c.lineWidth=2;c.strokeRect(source.x,source.y,source.w,source.h);c.strokeRect(air.x,air.y,air.w,air.h);
+ c.fillStyle=water;c.globalAlpha=.48;c.fillRect(source.x+2,sy,source.w-4,source.y+source.h-sy-2);c.fillRect(air.x+2,ay,air.w-4,air.y+air.h-ay-2);c.globalAlpha=1;
+ var radius=67-17*x,top=191+9*x,bottom=343-15*x;
+ function skin(){c.beginPath();c.moveTo(356,top+28);c.bezierCurveTo(320-radius*.7,top-18,356-radius*1.65,top+45,356-radius,top+88);c.bezierCurveTo(356-radius*.7,bottom-25,343,bottom,356,bottom);c.bezierCurveTo(369,bottom,356+radius*.7,bottom-25,356+radius,top+88);c.bezierCurveTo(356+radius*1.65,top+45,392+radius*.7,top-18,356,top+28);c.closePath();}
+ skin();c.save();c.clip();c.fillStyle=water;c.globalAlpha=.55;var fill=heart.v/heart.capacity;c.fillRect(280,bottom-(bottom-top)*fill,152,(bottom-top)*fill+2);c.restore();c.strokeStyle=accent;c.lineWidth=3;skin();c.stroke();
+ c.fillStyle=text;c.font='12px "Commit Mono", monospace';c.fillText('Finite supply',140,110);c.fillText('Elastic slime heart',356,164);c.fillText('Air accumulator',576,78);
+ c.font='11px "Commit Mono", monospace';c.fillText((source.v*1000).toFixed(2)+' L',140,378);c.fillText((heart.v*1000).toFixed(3)+' L',356,366);c.fillText((air.v*1000).toFixed(3)+' L',576,378);
+ c.fillText('Inlet check',253,291);c.fillText('Outlet check',468,291);c.fillText(s.notice,360,393);
+ c.font='10px "Commit Mono", monospace';c.fillText('Hold to contract. Release to refill through the inlet.',360,411);c.restore();
+}
 function drawModel(c,s){
  var text=color('--text','#e8e2d6'),accent=color('--accent','#d4c4a0'),water=color('--toy-water','#8fb3c7'),rule=color('--rule-strong','#5a675c');
  if(s.id==='glass-toilet'){drawToilet(c,s,text,accent,water,rule);return;}
  if(s.id==='vacuum-coffee'){drawCoffee(c,s,text,accent,water,rule);return;}
+ if(s.id==='slime-heart'){drawHeart(c,s,text,accent,water,rule);return;}
  c.save();c.font='12px "Commit Mono", monospace';c.textAlign='center';
  s.links.forEach(function(l){var a=l.a,b=l.b,ax=a.x+a.w,ay=a.y+a.h*.7,bx=b.x,by=b.y+b.h*.7;c.strokeStyle=rule;c.lineWidth=8;c.beginPath();c.moveTo(ax,ay);c.lineTo((ax+bx)/2,ay);c.lineTo((ax+bx)/2,by);c.lineTo(bx,by);c.stroke();if(Math.abs(l.q)>1e-9){c.strokeStyle=water;c.lineWidth=Math.min(5,1+Math.abs(l.q)*16000);c.stroke();var x=(ax+bx)/2,dir=l.q>0?1:-1;c.fillStyle=water;c.beginPath();c.moveTo(x,by-5);c.lineTo(x+dir*8,by);c.lineTo(x,by+5);c.fill();}});
  s.nodes.forEach(function(n){var fill=n.h*Math.max(0,Math.min(1,n.v/n.capacity));c.strokeStyle=accent;c.lineWidth=2;c.strokeRect(n.x,n.y,n.w,n.h);c.globalAlpha=.43;c.fillStyle=water;c.fillRect(n.x+2,n.y+n.h-fill,n.w-4,Math.max(0,fill-2));c.globalAlpha=1;c.fillStyle=text;c.fillText(n.label,n.x+n.w/2,n.y-9);c.fillText((n.v*1000).toFixed(n.capacity>.002?2:3)+' L',n.x+n.w/2,n.y+n.h-10);});

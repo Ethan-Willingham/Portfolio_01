@@ -61,8 +61,8 @@ function halfAdder(o){
   link(s,a,gate,qa);link(s,b,gate,qb);link(s,gate,out,qo);s.notice='A '+(qa*1e6).toFixed(0)+' + B '+(qb*1e6).toFixed(0)+' mL/s    '+(s.carryOpen?'Carry gate open':'Sum gate open');
  });
 }
-function heart(){
- var s=base('slime-heart'),source=node('source','Venous reservoir',64,128,152,232,.75,1,.12,.003),heart=node('heart','Elastic heart',280,194,152,150,.08,.16,.1,.002),air=node('air','Air accumulator',504,94,144,266,.005,.45,.35,.002);s.nodes=[source,heart,air];s.squeeze=false;s.x=0;s.vx=0;s.pressure=0;s.pumped=0;s.inletTotal=0;s.strokeWorkJ=0;s.flows={};
+function heart(o){
+ o=o||{};var s=base('slime-heart'),source=node('source','Venous reservoir',64,128,152,232,clamp(Number.isFinite(o.sourceL)?o.sourceL:.75,.65,.85),1,.12,.003),heart=node('heart','Elastic heart',280,194,152,150,.08,.16,.1,.002),air=node('air','Air accumulator',504,94,144,266,.005,.45,.35,.002);s.nodes=[source,heart,air];s.squeeze=false;s.x=0;s.vx=0;s.pressure=0;s.pumped=0;s.inletTotal=0;s.strokeWorkJ=0;s.flows={};
  control(s,'squeeze','Hold to squeeze',function(held){s.squeeze=held;},true);
  return finalize(s,function(dt){var p=(heart.v-(.00008-.002*s.x))/3e-9;s.pressure=p;var force=(s.squeeze?48:0)-500*s.x-18*s.vx-.002*p;s.vx+=force/.4*dt;var x=clamp(s.x+s.vx*dt,0,.028);if(x===0&&s.vx<0||x===.028&&s.vx>0)s.vx=0;s.strokeWorkJ+=s.squeeze?48*(x-s.x):0;s.x=x;
   var inlet=Math.max(0,orifice(RHO*G*(head(source)-.1)-p,.000014)),outlet=Math.max(0,orifice(p-RHO*G*(head(air)-.1)-((ATM*.00044/Math.max(.00004,air.capacity-air.v))-ATM),.000014));
