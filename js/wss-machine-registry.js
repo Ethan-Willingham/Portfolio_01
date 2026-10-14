@@ -2773,15 +2773,15 @@
     "id": "marly-machine",
     "title": "Machine de Marly",
     "capability": "Floating things",
-    "status": "WORKS",
-    "cue": "A river-driven wheel powers a piston pump. Close the river or apply the brake to compare.",
+    "status": "WITHDRAWN",
+    "cue": "Withdrawn while the waterwheel and pump are rebuilt on the native water solver.",
     "world": {
       "w": 720,
       "h": 400
     },
     "pool": false,
     "draft": true,
-    "accepted": true,
+    "accepted": false,
     "scripts": [
       "wss-marly-model",
       "wss-marly-machine"
