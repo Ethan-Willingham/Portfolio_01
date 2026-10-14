@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.243'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.244'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -291,6 +291,7 @@
     }))cancelHeldInput();
     buildViewProjection=projection;
     if (userPaused && waterState === 'on') {drawLiquidToy();if(toyDraftRuntime && toyDraftRuntime.render)toyDraftRuntime.render();}
+    if(instrumentsCanvas)drawMachineOverlay();
   }
   function cameraState(){
     return {zoom:viewZoom,panX:viewPanX,panY:viewPanY,scale:fitScale,baseScale:baseFitScale,
@@ -321,6 +322,24 @@
   }
   window.addEventListener('resize', fitStage);
   window.addEventListener('scroll',fitStage,{passive:true});
+  // Moving between displays can change DPR without changing the CSS viewport.
+  // Re-arm the query after each change, including while playback is paused.
+  var labelDensityQuery=null,labelWatchedDpr=0;
+  function labelDensityChanged(){watchLabelDensity();fitStage();}
+  function watchLabelDensity(){
+    var nextDpr=window.devicePixelRatio || 1;
+    if(labelDensityQuery && labelWatchedDpr===nextDpr)return;
+    if(labelDensityQuery)labelDensityQuery.removeEventListener('change',labelDensityChanged);
+    labelWatchedDpr=nextDpr;
+    labelDensityQuery=window.matchMedia('(resolution: '+nextDpr+'dppx)');
+    labelDensityQuery.addEventListener('change',labelDensityChanged);
+  }
+  watchLabelDensity();
+  if(window.ResizeObserver)new ResizeObserver(function(){fitStage();}).observe(viewport);
+  if(document.fonts)document.fonts.ready.then(function(){
+    machineOverlayCache=null;pressureViewCache=null;
+    if(instrumentsCanvas)drawMachineOverlay();
+  });
 
   // ---- Game-compat globals -------------------------------------------
   // The engine copies below were written against the game's IIFE scope.
@@ -15466,23 +15485,30 @@
   function drawMachineOverlay(){
     var parts=machineBuilder ? machineBuilder.getParts() : [];
     if(!machineState && !buildGesture && !pressureColors && !(airPressureColors && airModel && airModel.enabled) && !parts.length && !keyboardCursorVisible){
-      if(instrumentsCtx && instrumentsDirty){instrumentsCtx.clearRect(0,0,worldW,worldH);instrumentsDirty=false;}
+      if(instrumentsCtx && instrumentsDirty){instrumentsCtx.setTransform(1,0,0,1,0,0);instrumentsCtx.clearRect(0,0,instrumentsCanvas.width,instrumentsCanvas.height);instrumentsDirty=false;}
       machineOverlayCache=null;
       return;
     }
     if(!instrumentsCanvas){
       instrumentsCanvas=document.createElement('canvas');instrumentsCanvas.width=canvas.width;instrumentsCanvas.height=canvas.height;
       instrumentsCanvas.style.cssText='position:absolute;inset:0;pointer-events:none;z-index:7;';
-      instrumentsCanvas.setAttribute('aria-hidden','true');stage.appendChild(instrumentsCanvas);
+      instrumentsCanvas.id='toy-instruments-canvas';
+      instrumentsCanvas.setAttribute('aria-hidden','true');viewport.appendChild(instrumentsCanvas);
       instrumentsCtx=instrumentsCanvas.getContext('2d');
     }
-    var overlayDpr=machineState && (machineState.definition.sluice || machineState.definition.sandDam || machineState.definition.fire || machineState.definition.draftBurner || machineState.definition.ballastRailway) ? Math.min(3,Math.ceil(dpr*Math.max(1,fitScale))) : toyThirsty ? Math.min(3,dpr*Math.max(1,fitScale)) : dpr;
-    var overlayW=Math.round(worldW*overlayDpr),overlayH=Math.round(worldH*overlayDpr);
+    // Rasterize annotations in viewport pixels, outside the scaled world.
+    // Simulation resolution stays independent from text resolution and zoom.
+    var displayDpr=window.devicePixelRatio || 1;
+    watchLabelDensity();
+    var viewWidth=viewport.clientWidth,viewHeight=viewport.clientHeight;
+    var overlayW=Math.max(1,Math.round(viewWidth*displayDpr)),overlayH=Math.max(1,Math.round(viewHeight*displayDpr));
     if(instrumentsCanvas.width!==overlayW || instrumentsCanvas.height!==overlayH){instrumentsCanvas.width=overlayW;instrumentsCanvas.height=overlayH;machineOverlayCache=null;}
-    instrumentsCanvas.style.width=worldW+'px';instrumentsCanvas.style.height=worldH+'px';
+    instrumentsCanvas.style.width=viewWidth+'px';instrumentsCanvas.style.height=viewHeight+'px';
+    var pixelScaleX=overlayW/Math.max(1,viewWidth),pixelScaleY=overlayH/Math.max(1,viewHeight);
+    var stageLeft=parseFloat(stage.style.left)||0,stageTop=parseFloat(stage.style.top)||0;
     var burstView=machineState && machineState.definition.boundaries && machineState.definition.boundaries.burstDisk && toyBoundary ? toyBoundary.stats().burstDisk : null;
     var detailAnnotations=!machineState || !machineState.definition.quietApparatus || !document.getElementById('toy-panel-instruments').hidden;
-    var overlayKey=[detailAnnotations,toyDraftRuntime && toyDraftRuntime.clock ? toyDraftRuntime.clock() : 0,toyThirsty || toyWave || toyDraftRuntime || machineState && machineState.definition.sluice?liquidWGPU.simulationClock:0,wallsVersion,pressureColors,airPressureColors,fitScale,viewPanX,viewPanY,cameraWidth,cameraHeight,currentScene,highlightedValve,handsSelection && handsSelection.index].join(':');
+    var overlayKey=[displayDpr,stageLeft,stageTop,viewWidth,viewHeight,detailAnnotations,toyDraftRuntime && toyDraftRuntime.clock ? toyDraftRuntime.clock() : 0,toyThirsty || toyWave || toyDraftRuntime || machineState && machineState.definition.sluice?liquidWGPU.simulationClock:0,wallsVersion,pressureColors,airPressureColors,fitScale,viewPanX,viewPanY,cameraWidth,cameraHeight,currentScene,highlightedValve,handsSelection && handsSelection.index].join(':');
     if(burstView)overlayKey+=':'+burstView.opened+':'+burstView.fault;
     if(toyThermoscope)overlayKey+=':'+toyThermoscope.heatPower;
     if(toyFire){var overlayHeat=toyFire.stats();overlayKey+=':'+overlayHeat.burning+':'+overlayHeat.airStarved+':'+overlayHeat.extinguished+':'+overlayHeat.smothered;}
@@ -15494,16 +15520,17 @@
     if(toyFloatSlider)overlayKey+=':'+toyFloatSlider.stats().y.toFixed(3);
     if(!buildGesture && !keyboardCursorVisible && machineOverlayCache && machineOverlayCache.key===overlayKey && machineOverlayCache.sample===instrumentSample)return;
     machineOverlayCache=!buildGesture && !keyboardCursorVisible ? {key:overlayKey,sample:instrumentSample} : null;
-    var c=instrumentsCtx;c.setTransform(overlayDpr,0,0,overlayDpr,0,0);c.clearRect(0,0,worldW,worldH);instrumentsDirty=true;
+    var c=instrumentsCtx;c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,overlayW,overlayH);
+    c.setTransform(pixelScaleX*fitScale,0,0,pixelScaleY*fitScale,pixelScaleX*stageLeft,pixelScaleY*stageTop);instrumentsDirty=true;
     var palette=getComputedStyle(document.documentElement);
     var accent=palette.getPropertyValue('--accent').trim(),text=palette.getPropertyValue('--text').trim();
     if(instrumentSample && airModel && airModel.enabled && window.WaterMachinesInstruments && (pressureColors || airPressureColors)){
       // Paint only on a new readback or view change. Playback composites one
       // cached image, instead of walking the pressure grid every frame.
-      var key=[pressureColors,airPressureColors,dpr,fitScale,worldW,worldH,accent,text].join(':');
+      var key=[pressureColors,airPressureColors,displayDpr,fitScale,worldW,worldH,accent,text].join(':');
       if(!pressureViewCache || pressureViewCache.snapshot!==instrumentSample || pressureViewCache.key!==key){
         if(!pressureViewCanvas)pressureViewCanvas=document.createElement('canvas');
-        var pressureDpr=dpr*Math.min(1,fitScale),pw=Math.round(worldW*pressureDpr),ph=Math.round(worldH*pressureDpr);
+        var pressureDpr=Math.min(displayDpr,2)*Math.min(1,fitScale),pw=Math.round(worldW*pressureDpr),ph=Math.round(worldH*pressureDpr);
         if(pressureViewCanvas.width!==pw || pressureViewCanvas.height!==ph){pressureViewCanvas.width=pw;pressureViewCanvas.height=ph;}
         var pc=pressureViewCanvas.getContext('2d');pc.setTransform(pw/worldW,0,0,ph/worldH,0,0);pc.clearRect(0,0,worldW,worldH);
         var snapshot=instrumentSample,dx=snapshot.cellSize,I=window.WaterMachinesInstruments;
@@ -15523,19 +15550,26 @@
             pc.globalAlpha=.025+.115*Math.min(1,Math.abs(psi)/.35);
             pc.fillStyle=psi<0 ? negative : accent;pc.fillRect(run.x,run.y,run.width,run.height);
           });
-          pc.globalAlpha=1;pc.textAlign='center';pc.textBaseline='middle';pc.font=(11/fitScale)+'px "Commit Mono", monospace';
           airView.labels.forEach(function(label){
             var pocket=airView.pockets.get(label.root),psi=units.psi(pocket.pressure);
             label.text=V.pressureText(psi,pocket.vapor);
-            var width=pc.measureText(label.text).width+14/fitScale,height=22/fitScale;
-            pc.globalAlpha=.9;pc.fillStyle=palette.getPropertyValue('--bg-raised').trim();
-            pc.fillRect(label.x-width*.5,label.y-height*.5,width,height);
-            pc.globalAlpha=1;pc.fillStyle=text;pc.fillText(label.text,label.x,label.y);
           });
         }
         pc.globalAlpha=1;pressureViewCache={snapshot:snapshot,key:key,air:airView};
       }
       c.drawImage(pressureViewCanvas,0,0,worldW,worldH);
+      // Cached pressure colors may be resampled; pressure text is drawn once
+      // into the final display layer, just like the apparatus annotations.
+      if(pressureViewCache.air){
+        c.save();c.textAlign='center';c.textBaseline='middle';c.font=(11/fitScale)+'px "Commit Mono", monospace';
+        pressureViewCache.air.labels.forEach(function(label){
+          var width=c.measureText(label.text).width+14/fitScale,height=22/fitScale;
+          c.globalAlpha=.9;c.fillStyle=palette.getPropertyValue('--bg-raised').trim();
+          c.fillRect(label.x-width*.5,label.y-height*.5,width,height);
+          c.globalAlpha=1;c.fillStyle=text;c.fillText(label.text,label.x,label.y);
+        });
+        c.restore();
+      }
     }
     var art=window.WSSApparatusArt;
     c.lineWidth=1;c.strokeStyle=accent;c.fillStyle=text;c.font=(12/fitScale)+'px "Commit Mono", monospace';
