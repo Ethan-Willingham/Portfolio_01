@@ -48,7 +48,9 @@ async function capture(name){
   const screenshot=await call('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
   fs.writeFileSync(path.join(output,name+'.png'),Buffer.from(screenshot.data,'base64'));
   const brief={...sample};for(const key of ['flightSamples','exhaustEvents'])if(Array.isArray(brief[key]))brief[key]=brief[key].length;
-  console.log(name,JSON.stringify(brief));return sample;
+  console.log(name,JSON.stringify(brief));
+  console.log(name+' native',JSON.stringify(await evaluate('WSSWaterRocket.active.waterStats()')));
+  return sample;
 }
 async function point(selector){
   const target=await evaluate(`(()=>{const e=document.querySelector(${JSON.stringify(selector)});if(!e)return null;const r=e.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2,width:r.width,height:r.height,disabled:e.disabled,label:e.getAttribute('aria-label') || e.textContent};})()`);
@@ -79,16 +81,22 @@ async function keyboardRange(selector){
   check(selector+' can return to its original setting',await evaluate(`+document.querySelector(${JSON.stringify(selector)}).value`)===before.value);
 }
 async function layout(name){
-  const result=await evaluate(`(()=>{const root=document.getElementById('toy-water-rocket');const ids=['rocket-primary','rocket-fill','rocket-pressure','rocket-slow','rocket-altitude','rocket-pressure-value'];return {hidden:root.hidden,phase:root.dataset.phase,width:innerWidth,height:innerHeight,headerBottom:document.querySelector('.toy-top').getBoundingClientRect().bottom,scroll:document.documentElement.scrollWidth,controls:ids.map(id=>{const e=document.getElementById(id);const r=e.getBoundingClientRect(),s=getComputedStyle(e);return {id,left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height,font:parseFloat(s.fontSize),visible:s.display!=='none' && s.visibility!=='hidden'};})};})()`);
+  const result=await evaluate(`(()=>{const root=document.getElementById('toy-water-rocket');const ids=['rocket-pump','rocket-latch','rocket-fill','rocket-slow','rocket-altitude','rocket-pressure-value'];return {hidden:root.hidden,phase:root.dataset.phase,width:innerWidth,height:innerHeight,headerBottom:document.querySelector('.toy-top').getBoundingClientRect().bottom,scroll:document.documentElement.scrollWidth,controls:ids.map(id=>{const e=document.getElementById(id);const r=e.getBoundingClientRect(),s=getComputedStyle(e);return {id,left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height,font:parseFloat(s.fontSize),visible:s.display!=='none' && s.visibility!=='hidden'};})};})()`);
   check(name+' controls remain visible inside the viewport and below the header',!result.hidden && result.scroll<=result.width+1 && result.controls.every(c=>c.visible && c.width>0 && c.height>0 && c.left>=-1 && c.right<=result.width+1 && c.top>=result.headerBottom-1 && c.bottom<=result.height+1));
-  const primary=result.controls.find(c=>c.id==='rocket-primary');
-  check(name+' primary button is a 44-pixel touch target',primary.width>=44 && primary.height>=44);
+  const actions=result.controls.filter(c=>c.id==='rocket-pump'||c.id==='rocket-latch');
+  check(name+' apparatus controls are 44-pixel touch targets',actions.every(c=>c.width>=44 && c.height>=44));
   console.log(name+' layout',JSON.stringify(result));return result;
 }
 async function readyToLaunch(touch){
-  await until('document.getElementById("rocket-primary").textContent.includes("Pressurize")');
-  await click('#rocket-primary',touch);
-  await until('document.getElementById("rocket-primary").textContent.includes("Launch rocket") && !document.getElementById("rocket-primary").disabled');
+  await until('!document.getElementById("rocket-pump").disabled');
+  const target=await point('#rocket-pump');
+  if(touch) await call('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:target.x,y:target.y}]});
+  else await call('Input.dispatchMouseEvent',{type:'mousePressed',button:'left',clickCount:1,x:target.x,y:target.y});
+  await delay(3000);
+  if(touch) await call('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+  else await call('Input.dispatchMouseEvent',{type:'mouseReleased',button:'left',clickCount:1,x:target.x,y:target.y});
+  await until('!document.getElementById("rocket-latch").disabled');
+  check('holding the apparatus pump raises actual tank pressure', (await stats()).pressurePa>100000);
 }
 async function pauseCheck(prefix){
   await click('#toy-pause');await until('__toy.stats().paused');
@@ -153,19 +161,28 @@ try{
     await until('!document.getElementById("toy-water-rocket").hidden');
     check(prefix+' loads the requested scene at ordinary playback speed',await evaluate('__toy.stats().scene==="water-rocket" && __toy.stats().timeScale===1'));
     await layout(prefix);await capture(prefix+'-setup');
+    const originalWater=await evaluate('WSSWaterRocket.active.waterStats()');
+    check(prefix+' initializes shared native water in the bottle',originalWater.particles>2500 && originalWater.resident===originalWater.particles && originalWater.emitted===0);
     await activityCheck(prefix);
-    await keyboardRange('#rocket-fill');await keyboardRange('#rocket-pressure');
+    await keyboardRange('#rocket-fill');
     await readyToLaunch(viewport.mobile);await capture(prefix+'-ready');
-    const launchWall=Date.now();await click('#rocket-primary',viewport.mobile);
+    const launchWall=Date.now();await click('#rocket-latch',viewport.mobile);
     await until('WSSWaterRocket.active.stats().altitude>1');
     await capture(prefix+'-flight');const pausedSeconds=await pauseCheck(prefix);
-    await until('document.getElementById("rocket-primary").textContent.includes("Prepare next flight")',45000);
+    const flyingWater=await evaluate('WSSWaterRocket.active.waterStats()');
+    const flyingModel=await stats();
+    check(prefix+' exhaust transfers conserved native particles',flyingWater.particles===originalWater.particles && flyingWater.emitted>0 && flyingWater.resident<originalWater.resident && flyingWater.readbackAge<.5 && Math.abs(flyingWater.resident*flyingWater.quantumKg-flyingModel.waterMass)<=flyingWater.quantumKg*1.1);
+    await until('WSSWaterRocket.active.stats().phase==="descending"',30000);
+    await capture(prefix+'-descending');
+    await until('WSSWaterRocket.active.stats().phase==="landed"',45000);
     const result=await capture(prefix+'-landed');
+    const landedWater=await evaluate('WSSWaterRocket.active.waterStats()');
+    check(prefix+' native water remains conserved through landing',landedWater.particles===originalWater.particles && landedWater.emitted===originalWater.particles);
     check(prefix+' completes a finite flight and returns to ground',result.peakAltitude>1 && Math.abs(result.altitude)<.01 && Number.isFinite(result.velocity));
     const wallFlight=(Date.now()-launchWall)/1000-pausedSeconds;
     check(prefix+' flight uses ordinary elapsed time',result.flightTime>0 && result.flightTime<=wallFlight*1.12 && result.flightTime>=wallFlight*.5);
-    await click('#rocket-primary',viewport.mobile);
-    await until('document.getElementById("rocket-primary").textContent.includes("Pressurize")');
+    await click('#rocket-next',viewport.mobile);
+    await until('WSSWaterRocket.active.stats().phase==="ready"');
     check(prefix+' next flight restores its water and clears altitude',await evaluate('WSSWaterRocket.active.stats().altitude===0'));
     let before=await stats();await delay(700);let after=await stats();const ordinaryDelta=after.elapsed-before.elapsed;
     await click('#rocket-slow',viewport.mobile);
@@ -174,7 +191,7 @@ try{
     check(prefix+' slow motion changes elapsed physics time',ordinaryDelta>.2 && slowDelta/ordinaryDelta>.15 && slowDelta/ordinaryDelta<.4);
     await click('#rocket-slow',viewport.mobile);
     await readyToLaunch(viewport.mobile);await evaluate('window.__retiredRocket=WSSWaterRocket.active');await click('#toy-restart',viewport.mobile);
-    await until('!!WSSWaterRocket.active && __toy.machineState()?.ready && !__toy.stats().loading && document.getElementById("rocket-primary").textContent.includes("Pressurize")');
+    await until('!!WSSWaterRocket.active && __toy.machineState()?.ready && !__toy.stats().loading && WSSWaterRocket.active.stats().phase==="ready"');
     check(prefix+' global restart reconstructs one fresh scene',await evaluate('document.querySelectorAll("#toy-water-rocket").length===1 && WSSWaterRocket.active.stats().altitude===0'));
     check(prefix+' restart retires the previous runtime',await evaluate('WSSWaterRocket.active!==__retiredRocket'));
     const retired=await evaluate('__retiredRocket.stats()');await delay(350);

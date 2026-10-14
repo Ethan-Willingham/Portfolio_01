@@ -13,42 +13,54 @@ across every device remain unverified.
 
 ## Water rocket
 
-The Water Rocket scene now uses a bottle with a launch stand, adjustable fill
-and pressure, and a complete charge, release, coast and landing sequence. Its
-separate flight model replaces the earlier native-pressure tank on a short
-vertical guide. It keeps the existing scene URL and menu entry. The default
-view shows feet, miles per hour and psi; Metric changes the displayed units.
-Slow motion shares the host's playback speed, and the global pause and activity
-controller freeze the existing state. Preparing another flight retains the
-session's previous height and best result. The toolbar reset clears the session.
+The rocket is controlled at the apparatus. Set the fill beside the cutaway
+bottle, hold the foot pump to add real air mass, then release the collar. The
+pressure readout reports the bottle's current gauge pressure, with no preset
+pressure slider or automatic charging. Letting go stops the pump. A new flight
+reseeds the chosen water charge; the toolbar reset clears the session record.
+Desktop and landscape mobile use the same arrangement. The default readouts
+are feet, miles per hour and psi; Metric changes the displayed units. Slow
+motion and global pause share the host playback controller.
 
 The rigid two-liter bottle has 0.145 kg dry mass, a 9 mm nozzle and a 105 mm
 body diameter. Water discharge uses a coefficient of 0.86; quadratic drag uses
-0.42 with ambient density 1.204 kg per cubic meter. These are declared model
-parameters. The compressor adds ideal-gas mass at fixed temperature while the
-latch holds the bottle. Release adds no impulse. Expanding dry air follows
-P V^1.4; Bernoulli outflow removes actual carried water mass and produces thrust
-from its exhaust momentum. Compressible air blowdown follows, including choked
-nozzle pressure thrust. A fixed 1 ms step integrates gravity, thrust and drag.
+0.42 with ambient density 1.204 kg per cubic meter. The pump adds ideal-gas
+mass at fixed temperature while the latch holds the bottle. Release adds no
+impulse. Expanding dry air follows P V^1.4. Bernoulli outflow removes carried
+water mass and produces thrust from its exhaust momentum. Compressible air
+blowdown follows, including choked nozzle pressure thrust. A fixed 1 ms step
+integrates gravity, thrust and drag. At impact the bottle records contact speed,
+rebounds slightly and tips to rest under a damped angular contact model. This
+is approximate ground behavior, not a calibrated structural collision.
 The equations follow [Ohio University's water-rocket analysis](https://people.ohio.edu/urieli/thermo/property_tables/gas/adiabatic/rocket/rocket.html)
 and [NASA's thrust summary](https://www1.grc.nasa.gov/beginners-guide-to-aeronautics/thrust-equations-summary/).
 
-Every spray batch comes from expelled model water, partitioned into visible
-ballistic parcels. The camera follows calculated altitude and keeps the launch
-plane in view; the bottle is explicitly enlarged in flight. Spray breakup is a
-visual approximation. This scene does not use the shared native water solver.
-It assumes uniform dry air, constant ambient conditions and an upright vertical
-bottle, without slosh, wind, tumbling or interactions between expelled parcels.
-Landing ends the flight without rebound. Any residual water or pressure remains
-accounted for. This is an illustrative experiment, not a calibrated prediction
-for a real bottle or launcher.
+The visible blue liquid is exclusively resident particle state in the shared
+WebGPU water solver. A fixed bottle-local native reservoir holds the finite
+charge. Each model-exhaust mass quantum relocates exactly one of those native
+particles to the nozzle with the calculated exit velocity. The solver owns its
+subsequent transport and ground contact. A dedicated native relocation
+operation preserves GPU particle identity and asynchronous mirror consistency.
+The model accounts for water mass and the native inventory keeps a constant
+particle count. There is no drawn fill polygon or generated spray streak.
+
+The native reservoir is a bottle-local frame mapped into the enlarging visual
+bottle, so bottle acceleration does not create resolved slosh. The shared fluid
+world is a 2D local section with horizontally compressed display at wide camera
+scales. A display envelope omits upward native solver outliers that would give
+downward-emitted water implausible extra height; it does not create water or
+alter its resident particles. Gas pressure, air blowdown, bottle attitude and
+impact remain reduced models. The scene assumes constant ambient conditions
+and no wind. It is an illustrative experiment, not a calibrated prediction
+for a real launcher.
 
 Run `node tools/test-water-rocket-model.cjs` for water and air mass accounting,
-adiabatic expansion, frame partition equivalence, parameter comparisons,
-zero-pressure behavior and landing. Run `node tools/test-water-rocket.mjs` for
-ordinary browser playback, real pointer, keyboard and touch controls, pause,
-slow motion, reset, scene retirement and responsive layouts. The harness owns
-Chrome for Testing and writes captures to `/tmp/water-rocket-review`.
+adiabatic expansion, frame partition equivalence, pressure/fill comparisons,
+pump stop behavior and landing. Run `node tools/test-water-rocket.mjs` for
+ordinary browser playback, pointer, keyboard and touch controls, native water
+inventory and readback, pause, slow motion, reset, scene retirement and
+responsive layouts. The harness owns Chrome for Testing and writes captures to
+`/tmp/water-rocket-review`.
 
 ## Water-ballast cliff railway
 

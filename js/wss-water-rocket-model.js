@@ -30,6 +30,7 @@
     gravity: 9.80665,
     pascalsPerPsi: 6894.757293168,
     compressorMassFlow: 0.0014,
+    pumpStrokeMass: 0.00025,
     fixedStep: 0.001
   });
   var criticalRatio = Math.pow(2 / (C.gamma + 1), C.gamma / (C.gamma - 1));
@@ -97,6 +98,12 @@
         exhaustPhase: 'none',
         exhaustEvents: [],
         flightSamples: []
+        ,impactSpeed: 0,
+        attitude: 0.035,
+        angularVelocity: 0,
+        contactTime: 0,
+        reboundHeight: 0,
+        reboundVelocity: 0
       });
       accumulator = 0;
       released = false;
@@ -110,8 +117,31 @@
     }
 
     function charge() {
-      if (state.phase !== 'ready') return false;
-      state.phase = state.targetPressurePa > state.pressurePa ? 'charging' : 'armed';
+      if (state.phase !== 'ready' && state.phase !== 'armed') return false;
+      if (state.pressurePa >= state.targetPressurePa - 1) {
+        if (state.phase === 'ready') {state.phase = 'armed'; return true;}
+        return false;
+      }
+      state.phase = 'charging';
+      return true;
+    }
+
+    function pumpStroke() {
+      if (state.phase !== 'charging') return false;
+      var targetMass = (C.atmosphericPressure + state.targetPressurePa) * state.airVolume /
+        (C.airGasConstant * C.ambientTemperature);
+      var injected = Math.min(C.pumpStrokeMass, Math.max(0, targetMass - state.airMass));
+      state.airMass += injected;
+      state.injectedAirMass += injected;
+      state.absolutePressurePa = state.airMass * C.airGasConstant * C.ambientTemperature / state.airVolume;
+      refreshMass();
+      if (state.airMass >= targetMass - 1e-14) state.phase = 'armed';
+      return injected > 0;
+    }
+
+    function stopCharge() {
+      if (state.phase !== 'charging') return false;
+      state.phase = state.pressurePa > 1 ? 'armed' : 'ready';
       return true;
     }
 
@@ -250,7 +280,7 @@
           state.phase = 'armed';
         }
         refreshMass();
-      } else if (released && state.phase !== 'landed') {
+      } else if (released && state.phase !== 'landed' && state.phase !== 'settling') {
         var previousMass = state.mass;
         if (state.pressurePa > 0.01) {
           if (state.waterVolume > 1e-12) dischargeWater(h);
@@ -264,6 +294,11 @@
         state.acceleration = (state.thrust + state.drag) / midpointMass - C.gravity;
         var nextVelocity = state.velocity + state.acceleration * h;
         var nextAltitude = state.altitude + (state.velocity + nextVelocity) * h / 2;
+        var desiredAttitude = nextVelocity < -0.8 ? Math.PI : 0;
+        var turn = 2.4 * Math.sin(desiredAttitude - state.attitude) *
+          Math.min(1, Math.abs(nextVelocity) / 8) - 1.8 * state.angularVelocity;
+        state.angularVelocity += turn * h;
+        state.attitude += state.angularVelocity * h;
         if (airborne || nextAltitude > 0) state.maxSpeed = Math.max(state.maxSpeed, Math.abs(nextVelocity));
         state.peakThrust = Math.max(state.peakThrust, state.thrust);
         state.totalImpulse += state.thrust * h;
@@ -276,7 +311,11 @@
           state.velocity = 0;
           state.acceleration = 0;
           if (airborne || state.thrust <= 0) {
-            state.phase = 'landed';
+            state.impactSpeed = Math.abs(nextVelocity);
+            state.phase = airborne ? 'settling' : 'landed';
+            state.contactTime = 0;
+            state.reboundHeight = 0;
+            state.reboundVelocity = airborne ? Math.min(2.2, state.impactSpeed * 0.08) : 0;
             state.thrust = 0;
             state.drag = 0;
           }
@@ -289,6 +328,25 @@
         if (state.flightTime + 1e-10 >= nextSample || state.phase === 'landed') {
           sampleFlight();
           nextSample += 0.04;
+        }
+      } else if (state.phase === 'settling') {
+        state.contactTime += h;
+        state.reboundVelocity -= C.gravity * h;
+        state.reboundHeight = Math.max(0, state.reboundHeight + state.reboundVelocity * h);
+        if (state.reboundHeight === 0) state.reboundVelocity = 0;
+        // The bottle tips about its point of contact. This is a damped
+        // rigid-body approximation, with no scripted upright reset.
+        var lean = state.attitude >= 0 ? 1 : -1;
+        var target = lean * Math.PI / 2;
+        var torque = 14 * Math.sin(target - state.attitude) - 7 * state.angularVelocity;
+        state.angularVelocity += torque * h;
+        state.attitude += state.angularVelocity * h;
+        if (state.contactTime > 1.8 && state.reboundHeight === 0 &&
+            Math.abs(state.angularVelocity) < 0.08 && Math.abs(state.attitude - target) < 0.04) {
+          state.attitude = target;
+          state.angularVelocity = 0;
+          state.phase = 'landed';
+          sampleFlight();
         }
       }
       state.elapsed += h;
@@ -313,7 +371,8 @@
     }
 
     reset(options);
-    return { state: state, step: step, charge: charge, launch: launch, reset: reset, snapshot: snapshot };
+    return { state: state, step: step, charge: charge, pumpStroke: pumpStroke, stopCharge: stopCharge,
+      launch: launch, reset: reset, snapshot: snapshot };
   }
 
   var api = { create: create, constants: C };

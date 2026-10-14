@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.245'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.246'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -14968,8 +14968,28 @@
       toySauna=ownSauna;
       SmokeFluid.setThermalStyle({glow:.18,waterCooling:3});
     }
+    var rocketWater = definition.waterRocketModel ? {
+      reset: function(grains) {
+        clearLiquid();
+        for(var ri=0;ri<grains.length;ri++)addLiquidParticle('water',grains[ri].x,grains[ri].y,0,0,0);
+        liquidWGPU.setSimParam('GRAVITY', 39.2266);
+        return liquidCount;
+      },
+      relocate: function(index,x,y,vx,vy) {
+        if(index<0||index>=liquidCount)return false;
+        liquidX[index]=x;liquidY[index]=y;liquidVX[index]=vx;liquidVY[index]=vy;
+        liquidG00[index]=liquidG01[index]=liquidG10[index]=liquidG11[index]=0;
+        liquidAeration[index]=0;liquidSleeping[index]=liquidFrozen[index]=0;liquidRestFrames[index]=0;
+        liquidMutationSeq++;
+        if(canRecordLiquidOp(8))liquidOps.push(5,index,x,y,vx,vy,liquidType[index],liquidOrigin[index]);
+        else liquidOpsOverflow=true;
+        return true;
+      },
+      snapshot: particleInstrumentSample,
+      readbackAge: function(){return liquidWGPU.getReadbackAge();}
+    } : null;
     if(definition.draft && window.WSSDraftRuntime){
-      var ownDraftRuntime=await window.WSSDraftRuntime.create({definition:definition,liquid:liquidWGPU,airModel:airModel,nativeBoundary:toyBoundary,sound:toySound,steam:toySteam,bubbles:toyBubbles,wave:toyWave,fire:toyFire,oxygen:toyOxygen,sampleParticles:particleInstrumentSample,timeScale:function(){return timeMul;},builder:machineBuilder,solidAt:function(x,y){return tileAt(Math.floor(y/TILE),Math.floor(x/TILE))!==null;},membrane:toyBalloon,divers:toyDivers,terrain:function(x,y){return tileAt(Math.floor(y/TILE),Math.floor(x/TILE))!==null;},terrainVersion:function(){return wallsVersion;},bodyGravity:function(){return JELLO_GRAVITY;},SmokeFluid:SmokeFluid,bodies:jelloBodies,setManualValve:setManualValve,growBody:growDrinkingSlime,skinRing:function(body){if(body.waterBalloon)return toyBalloonCurveRing(body);var g=toySolidSkinGuest(body),ring=[];if(g && (body.airContactSkin || body.snorkelSkin))return toyBalloonCurveGeometry(body,body.surfaceSlime.fluidControls);if(g)for(var k=0;k<g.pts.length;k+=4)ring.push({x:g.pts[k],y:g.pts[k+1],vx:g.pts[k+2],vy:g.pts[k+3]});return ring;},removeBody:function(body){if(surfaceSlimeGrip&&surfaceSlimeGrip.body===body)jelloGrabEnd();var index=jelloBodies.indexOf(body);if(index>=0)jelloBodies.splice(index,1);jelloCount=jelloTotalPoints();}});
+      var ownDraftRuntime=await window.WSSDraftRuntime.create({definition:definition,liquid:liquidWGPU,rocketWater:rocketWater,airModel:airModel,nativeBoundary:toyBoundary,sound:toySound,steam:toySteam,bubbles:toyBubbles,wave:toyWave,fire:toyFire,oxygen:toyOxygen,sampleParticles:particleInstrumentSample,timeScale:function(){return timeMul;},builder:machineBuilder,solidAt:function(x,y){return tileAt(Math.floor(y/TILE),Math.floor(x/TILE))!==null;},membrane:toyBalloon,divers:toyDivers,terrain:function(x,y){return tileAt(Math.floor(y/TILE),Math.floor(x/TILE))!==null;},terrainVersion:function(){return wallsVersion;},bodyGravity:function(){return JELLO_GRAVITY;},SmokeFluid:SmokeFluid,bodies:jelloBodies,setManualValve:setManualValve,growBody:growDrinkingSlime,skinRing:function(body){if(body.waterBalloon)return toyBalloonCurveRing(body);var g=toySolidSkinGuest(body),ring=[];if(g && (body.airContactSkin || body.snorkelSkin))return toyBalloonCurveGeometry(body,body.surfaceSlime.fluidControls);if(g)for(var k=0;k<g.pts.length;k+=4)ring.push({x:g.pts[k],y:g.pts[k+1],vx:g.pts[k+2],vy:g.pts[k+3]});return ring;},removeBody:function(body){if(surfaceSlimeGrip&&surfaceSlimeGrip.body===body)jelloGrabEnd();var index=jelloBodies.indexOf(body);if(index>=0)jelloBodies.splice(index,1);jelloCount=jelloTotalPoints();}});
       if(request!==machineRequest){if(ownDraftRuntime)ownDraftRuntime.destroy();return null;}
       toyDraftRuntime=ownDraftRuntime;
     }

@@ -1,5 +1,5 @@
-/* Water rocket launch plate. This view never advances the flight solver.
- * Every spray parcel represents water in the solver's exhaustEvents. */
+/* Water rocket launch plate. All visible liquid is sampled from the shared
+ * native WebGPU water solver; this view never invents a water parcel. */
 (function () {
   'use strict';
 
@@ -33,7 +33,6 @@
       water: '#8fb3c7', coral: '#d9978c', copper: '#cf9f78'
     };
     var width = 0, height = 0, dpr = 0, disposed = false;
-    var parcels = [], lastEventId = -1, lastEventTime = -1, lastFlightTime = 0;
     var lastElapsed = null, lastPhase = null, cameraRange = 2.4;
     var scene = null;
 
@@ -78,37 +77,11 @@
       for (var i = 0; i < cumulative.length; i++) if (cumulative[i] >= requested) return slices[i];
       return -250;
     }
-    function consumeExhaust(state) {
+    function trackTime(state) {
       var now = finite(state.elapsed, state.flightTime || 0);
-      if (state.flightTime < lastFlightTime - .0001 || (state.phase === 'ready' && lastPhase !== 'ready') || (lastElapsed !== null && now < lastElapsed)) {
-        parcels.length = 0; lastEventId = -1; lastEventTime = -1;
-        cameraRange = 2.4;
-      }
-      var events = state.exhaustEvents || [];
-      for (var i = 0; i < events.length; i++) {
-        var event = events[i];
-        if (event.kind !== 'water' || !(event.mass > 0)) continue;
-        if (event.id != null ? event.id <= lastEventId : event.time <= lastEventTime) continue;
-        lastEventId = event.id == null ? lastEventId : event.id;
-        lastEventTime = event.time;
-        // The three streaks partition this actual emitted mass. The small
-        // symmetric spread depicts jet breakup, not a horizontal rocket force.
-        var spread = Math.min(2.1, event.exhaustVelocity * .041);
-        var scatter = Math.sin((event.id == null ? event.time * 1000 : event.id) * 127.1) * 43758.5453;
-        scatter -= Math.floor(scatter);
-        for (var k = -1; k <= 1; k++) {
-          parcels.push({ time: finite(event.elapsed, now - Math.max(0, state.flightTime - event.time)),
-            y: event.altitude, vy: event.velocity - event.exhaustVelocity,
-            vx: k * spread * (.12 + .88 * scatter), mass: event.mass / 3,
-            slot: k, id: event.id == null ? event.time * 1000 : event.id });
-        }
-      }
-      // Water is no longer drawn once the parcel reaches the launch plane.
-      parcels = parcels.filter(function (p) {
-        var age = Math.max(0, now - p.time);
-        return p.y + p.vy * age - .5 * GRAVITY * age * age >= -.015 && age < 15;
-      });
-      lastFlightTime = state.flightTime || 0; lastPhase = state.phase;
+      if ((state.phase === 'ready' && lastPhase !== 'ready') ||
+          (lastElapsed !== null && now < lastElapsed)) cameraRange = 2.4;
+      lastPhase = state.phase;
       return now;
     }
     function landscape(ground, ppm) {
@@ -171,7 +144,7 @@
       landscape(ground, ppm);
       var plateY = height > 440 ? 31 : 23;
       if (width > 680) label('VERTICAL FLIGHT', width - 28, plateY, 9, c.faint, 'right');
-      if (!isResting) label('Rocket enlarged in flight', 28, height - 21, 9, c.faint);
+      if (!isResting && state.phase !== 'landed' && state.phase !== 'settling') label('Rocket enlarged in flight', 28, height - 21, 9, c.faint);
     }
     function ruler(state, options, ground, ppm) {
       var unitScale = options.unit === 'imperial' ? 3.280839895 : 1;
@@ -232,6 +205,7 @@
     }
     function rocket(x, y, size, state, options, resting) {
       ctx.save(); ctx.translate(x, y); ctx.scale(size, size);
+      ctx.translate(0, -160); ctx.rotate(finite(state.attitude, 0)); ctx.translate(0, 160);
       var waterFraction = clamp(finite(state.waterVolume, 0) / finite(state.bottleVolume, .002), 0, 1);
       var surface = fillLevel(waterFraction);
       // Back fin, then two broad translucent side fins.
@@ -252,21 +226,16 @@
       glass.addColorStop(.45, alpha(c.deep, .10)); glass.addColorStop(.86, alpha(c.text, .10)); glass.addColorStop(1, alpha(c.text, .22));
       ctx.fillStyle = glass; ctx.fill();
       ctx.save(); bottlePath(); ctx.clip();
-      if (waterFraction > .0001) {
-        var water = ctx.createLinearGradient(0, surface, 0, -16);
-        water.addColorStop(0, alpha(c.water, .74)); water.addColorStop(.3, alpha(c.water, .49)); water.addColorStop(1, alpha(c.water, .30));
-        ctx.beginPath(); ctx.moveTo(-55, surface);
-        for (var wx = -55; wx <= 55; wx += 2) {
-          var wave = Math.sin(wx / 21 + state.elapsed * 1.8) * (resting ? 1.05 : .35);
-          ctx.lineTo(wx, surface + wave);
+      var native = options.nativeWater, resident = Math.min(options.residentWater || 0, native ? native.count : 0);
+      if (resident) {
+        ctx.fillStyle = alpha(c.water, .75);
+        for (var wi = 0; wi < resident; wi++) {
+          var nx = native.x[wi], ny = native.y[wi];
+          if (!Number.isFinite(nx) || !Number.isFinite(ny)) continue;
+          var bx = -44 + (nx - 100) * 88 / 120;
+          var by = -19 - (348 - ny) * 231 / 145;
+          ctx.beginPath(); ctx.arc(bx, by, 1.75, 0, Math.PI * 2); ctx.fill();
         }
-        ctx.lineTo(55, 0); ctx.lineTo(-55, 0); ctx.closePath(); ctx.fillStyle = water; ctx.fill();
-        ctx.beginPath(); ctx.moveTo(-49, surface);
-        ctx.bezierCurveTo(-20, surface - 2, 19, surface + 2, 49, surface);
-        ctx.strokeStyle = alpha(c.bright, .77); ctx.lineWidth = 1.4; ctx.stroke();
-        // Refracted bands remain inside the actual water volume.
-        ctx.strokeStyle = alpha(c.water, .25); ctx.lineWidth = 3;
-        ctx.beginPath(); ctx.moveTo(-37, surface + 11); ctx.bezierCurveTo(-30, surface + 22, -26, -56, -12, -33); ctx.stroke();
       }
       for (var rib = -225; rib < -75; rib += 29) {
         ctx.beginPath(); ctx.moveTo(-47, rib); ctx.bezierCurveTo(-18, rib + 6, 20, rib + 6, 47, rib);
@@ -314,24 +283,25 @@
       }
       ctx.restore();
     }
-    function exhaust(now, ground, ppm, rocketX) {
-      ctx.save(); ctx.lineCap = 'round';
-      for (var i = 0; i < parcels.length; i++) {
-        var p = parcels[i], age = Math.max(0, now - p.time);
-        var altitude = p.y + p.vy * age - .5 * GRAVITY * age * age;
-        var x = rocketX + p.vx * age * ppm, y = ground - altitude * ppm;
-        var oldAge = Math.max(0, age - (age < .024 ? .004 : .001));
-        var previousY = p.y + p.vy * oldAge - .5 * GRAVITY * oldAge * oldAge;
-        if (y < -10 || y > ground + 2 || x < 0 || x > width) continue;
-        // Mass controls opacity and width, so tiny integration steps never
-        // produce a full-strength jet on their own.
-        var strength = clamp(p.mass * 1800, .08, .7);
-        ctx.strokeStyle = alpha(p.slot === 0 ? c.bright : c.water, strength);
-        ctx.lineWidth = clamp(Math.cbrt(p.mass * 1e6) * .12, .6, 2.2);
-        ctx.beginPath(); ctx.moveTo(rocketX + p.vx * oldAge * ppm, ground - previousY * ppm);
-        ctx.lineTo(x, y); ctx.stroke();
+    function nativeExhaust(native, resident, birthAltitudes, state, ground, ppm, rocketX) {
+      if (!native || !native.count) return;
+      var radius = clamp(ppm * .08, .65, 1.7);
+      ctx.fillStyle = alpha(c.water, .48);
+      for (var i = Math.max(0, resident); i < native.count; i++) {
+        var nx = native.x[i], ny = native.y[i];
+        if (!Number.isFinite(nx) || !Number.isFinite(ny)) continue;
+        var altitude = (348 - ny) / 4;
+        // The native 2D contact solve can occasionally send a droplet upward
+        // with numerical energy. Water left this downward nozzle at its birth
+        // altitude, so keep only parcels inside a modest splash envelope.
+        if (altitude > Math.max(finite(birthAltitudes && birthAltitudes[i], 0), .5) + .8) continue;
+        // The native 2D fluid domain is a local launch-pad cross-section.
+        // Compress its horizontal display scale under the height-following
+        // camera so a small splash does not masquerade as a wide field.
+        var x = rocketX + (nx - 360) / 4 * ppm * .06, y = ground - altitude * ppm;
+        if (x < -5 || x > width + 5 || y < -5 || y > ground + 5) continue;
+        circle(x, y, radius, c.water);
       }
-      ctx.restore();
     }
     function trail(state, ground, ppm, rocketX) {
       if (!state.flightSamples || state.flightSamples.length < 2) return;
@@ -355,7 +325,7 @@
         canvas.width = Math.round(width * dpr); canvas.height = Math.round(height * dpr);
       }
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      var now = consumeExhaust(state), elapsedStep = lastElapsed === null ? 0 : clamp(now - lastElapsed, 0, .1);
+      var now = trackTime(state), elapsedStep = lastElapsed === null ? 0 : clamp(now - lastElapsed, 0, .1);
       lastElapsed = now;
       var resting = state.phase === 'ready' || state.phase === 'charging' || state.phase === 'armed';
       var ground = height - (height > 440 ? 78 : 45);
@@ -375,13 +345,18 @@
       var ppm = (ground - 66) / Math.max(.5, cameraRange);
       var rocketX = width * (width < 600 ? .50 : .52);
       var rocketY = ground - currentAltitude * ppm;
+      if (state.phase === 'settling' || state.phase === 'landed') {
+        var angle = finite(state.attitude, 0);
+        var lowestLocal = -160 + 160 * Math.abs(Math.cos(angle)) + 78 * Math.abs(Math.sin(angle));
+        rocketY = ground - rocketSize * lowestLocal - finite(state.reboundHeight, 0) * ppm;
+      }
       scene = { rocketX: rocketX, ground: ground, ppm: ppm };
       background(state, options, ground, ppm, rocketX, readySize);
       ruler(state, options, ground, ppm);
       trail(state, ground, ppm, rocketX);
       var padSize = resting ? readySize : Math.max(.3, Math.min(readySize, ppm / 125));
       pad(rocketX, ground, padSize, state);
-      exhaust(now, ground, ppm, rocketX);
+      nativeExhaust(options.nativeWater, options.residentWater, options.waterBirthAltitudes, state, ground, ppm, rocketX);
       rocket(rocketX, rocketY, rocketSize, state, options, resting);
       if (resting && height > 440) {
         label('BOTTLE SECTION', rocketX, ground - 337 * readySize, 9, c.faint, 'center');
@@ -396,8 +371,14 @@
       if (state.phase === 'landed' && height > 330) {
         label('FLIGHT COMPLETE', rocketX, ground + 44, 10, c.gold, 'center');
       }
+      return {
+        pump: {x: clamp(rocketX - 127 * readySize, 74, width - 80), y: clamp(ground - 98 * readySize, 88, height - 58)},
+        latch: {x: clamp(rocketX + 78 * readySize, 80, width - 84), y: clamp(ground - 15 * readySize, 90, height - 54)},
+        fill: {x: clamp(rocketX + 116 * readySize, 115, width - 115), y: clamp(ground - 171 * readySize, 100, height - 110)},
+        next: {x: clamp(rocketX + 230 * readySize, 80, width - 80), y: clamp(ground - 108 * readySize, 100, height - 60)}
+      };
     }
-    function destroy() { disposed = true; parcels.length = 0; scene = null; }
+    function destroy() { disposed = true; scene = null; }
     return { render: render, destroy: destroy };
   }
   window.WSSWaterRocketView = { create: create };

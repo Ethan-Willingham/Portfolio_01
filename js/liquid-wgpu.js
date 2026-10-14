@@ -11318,9 +11318,9 @@ fn machinePointExitClear(a:vec2<f32>,b:vec2<f32>,r:f32)->bool {
       if(tag===1&&k+7<=ops.length){rows[n]=-1;edits[n]=0;types[n]=ops[k+5];n++;k+=7;}
       else if(tag===2&&k+2<=ops.length&&slot>=0&&slot<n&&Number.isInteger(slot)){
         n--;rows[slot]=rows[n];edits[slot]=edits[n];types[slot]=types[n];k+=2;
-      }else if((tag===3||tag===4)&&slot>=0&&slot<n&&Number.isInteger(slot)&&k+(tag===3?7:4)<=ops.length){
+      }else if((tag===3||tag===4||tag===5)&&slot>=0&&slot<n&&Number.isInteger(slot)&&k+(tag===3?7:tag===5?8:4)<=ops.length){
         if(tag===4&&types[slot]===5&&ops[k+2]!==5)edits[slot]|=4;
-        edits[slot]|=tag===3?1:2;types[slot]=ops[k+(tag===3?5:2)];k+=tag===3?7:4;
+        edits[slot]|=tag===3?1:tag===5?8:2;types[slot]=ops[k+(tag===3?5:tag===5?6:2)];k+=tag===3?7:tag===5?8:4;
       }else return null;
     }
     return n===liveCount?{rows:rows,edits:edits}:null;
@@ -11359,8 +11359,8 @@ fn machinePointExitClear(a:vec2<f32>,b:vec2<f32>,r:f32)->bool {
           var source=mapping.rows[i],edit=mapping.edits[i];
           if(source>=0){
             var p=source*4;
-            a.x[i]=pos[p];a.y[i]=pos[p+1];
-            if(!(edit&1)){a.vx[i]=pos[p+2];a.vy[i]=pos[p+3];}
+            if(!(edit&8)){a.x[i]=pos[p];a.y[i]=pos[p+1];}
+            if(!(edit&9)){a.vx[i]=pos[p+2];a.vy[i]=pos[p+3];}
             if(!(edit&4)){a.g00[i]=affine[p];a.g01[i]=affine[p+1];a.g10[i]=affine[p+2];a.g11[i]=affine[p+3];}
             a.density[i]=aux[p];if(!(edit&5))a.aeration[i]=aux[p+1];
             if(!edit){var f=flag[source];a.type[i]=(f&3)|((f>>4)&4);a.origin[i]=(f>>2)&3;
@@ -11468,6 +11468,13 @@ fn main() {
         flag[i] = flag[cnt];
       }
       k = k + 2u;
+    } else if (tag == 5u) {     // RELOCATE: move one conserved native parcel
+      let i = u32(ops[k + 1u]);
+      pos[i] = vec4<f32>(ops[k + 2u], ops[k + 3u], ops[k + 4u], ops[k + 5u]);
+      affine[i] = vec4<f32>(0.0);
+      aux[i] = vec4<f32>(aux[i].x, 0.0, 0.0, 0.0);
+      flag[i] = (u32(ops[k + 6u]) & 3u) | ((u32(ops[k + 6u]) & 4u) << 4u) | ((u32(ops[k + 7u]) & 3u) << 2u);
+      k = k + 8u;
     } else if (tag == 3u) {     // POKE: suction nudge (vx/vy + aeration + wake)
       let i = u32(ops[k + 1u]);
       pos[i] = vec4<f32>(pos[i].x, pos[i].y, ops[k + 2u], ops[k + 3u]);
@@ -11629,7 +11636,7 @@ fn removeRows(@builtin(global_invocation_id) id:vec3u) {
     }
     while (cursor < length) {
       var tag = ops[cursor];
-      var size = tag === 1 || tag === 3 ? 7 : tag === 2 ? 2 : tag === 4 ? 4 : 0;
+      var size = tag === 1 || tag === 3 ? 7 : tag === 2 ? 2 : tag === 4 ? 4 : tag === 5 ? 8 : 0;
       if (!size || cursor + size > length) throw new Error('Water material mutation log is truncated or corrupt.');
       for (var field = cursor; field < cursor + size; field++) {
         if (!Number.isFinite(ops[field]) || !Number.isFinite(Math.fround(ops[field]))) {
@@ -11649,7 +11656,7 @@ fn removeRows(@builtin(global_invocation_id) id:vec3u) {
         if (!integer(ops[cursor + 1], 0, count - 1)) throw new Error('Water material particle index is invalid.');
         if (tag === 2) count--;
         else {
-          var typeOffset = tag === 3 ? 5 : 2;
+          var typeOffset = tag === 3 ? 5 : tag === 5 ? 6 : 2;
           if (!integer(ops[cursor + typeOffset], 0, 5) || !integer(ops[cursor + typeOffset + 1], 0, 3)) {
             throw new Error('Water material edit flags are invalid.');
           }
@@ -11718,6 +11725,9 @@ fn removeRows(@builtin(global_invocation_id) id:vec3u) {
       } else if (tag === 4) {
         if (!(ops[k + 1] >= 0 && ops[k + 1] < cnt)) { ok = false; break; }
         k += 4;
+      } else if (tag === 5) {
+        if (!(ops[k + 1] >= 0 && ops[k + 1] < cnt)) { ok = false; break; }
+        k += 8;
       } else { ok = false; break; }
     }
     if (!ok || k !== n || cnt !== target) {

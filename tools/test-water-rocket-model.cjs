@@ -52,6 +52,8 @@ function flight(options) {
   assert.equal(model.state.phase, 'landed', 'all supported launches return to ground');
   close(model.state.altitude, 0, 0, 'landing plane');
   close(model.state.velocity, 0, 0, 'ground stops the bottle');
+  if (model.state.peakAltitude > 0.1) assert.ok(Math.abs(model.state.attitude) > 1.5, 'the bottle tips onto its side after contact');
+  assert.ok(model.state.impactSpeed >= 0, 'ground contact records the impact speed');
   close(eventMass, model.state.waterExpelledMass, 2e-11, 'render events account for every expelled water parcel');
   assert.ok(eventMomentum <= model.state.totalImpulse + 1e-10, 'water momentum fits total thrust impulse');
   return { model, airPhase, seen };
@@ -121,6 +123,15 @@ assert.equal(reuse.state.flightSamples.length, 0);
 close(reuse.state.waterVolume, 0.001, 0, 'reset applies new fill');
 reuse.reset();
 close(reuse.state.targetPressurePsi, 40, 0, 'reset preserves chosen settings');
+const handPump = create({targetPressurePsi:90});
+handPump.charge();
+handPump.pumpStroke();
+handPump.stopCharge();
+assert.equal(handPump.state.phase,'armed','one pump stroke leaves a releasable bottle');
+assert.ok(handPump.state.pressurePa>0,'one physical pump stroke adds air');
+const heldPressure=handPump.state.pressurePa;
+handPump.step(1);
+close(handPump.state.pressurePa,heldPressure,1e-8,'letting go stops pumping');
 assert.throws(() => reuse.step(NaN), RangeError);
 assert.throws(() => reuse.step(-1), RangeError);
 
