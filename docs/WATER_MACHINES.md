@@ -1622,18 +1622,28 @@ then admits no further water. These are recorded examples, not fixed recovery
 percentages or deterministic trajectories. The ordinary three-phase shader
 remains byte-identical; the shared rendering and Sluice boot regression passes.
 
-## Adjustable thermoscope heat
+## Adjustable thermoscope temperature
 
-The thermoscope has an open heat scale beside its bulb, from off to 20x its original
-output, with the current native gas temperature in degrees Fahrenheit. Changing
-output scales the heat deposited inside the marked heater patch. Advection and
-room cooling still act on that field; native gas-volume samples feed the existing
-ideal-gas pressure solver and move the water. There is no assigned water level.
-Turning the heater off cools toward 68 degrees Fahrenheit; this control does not
-refrigerate the bulb below room temperature. Clicking the heater restores the
-last nonzero output. Restart resets to 1x, and the unheated comparison starts off.
-Changing the slider while paused sets the output without advancing physics.
+The open scale beside the bulb runs from cooling on the left to heating on
+the right. Its midpoint switches off external heat exchange, returning the
+air toward room temperature (68 degrees Fahrenheit). New runs start there.
+The live reading shows the actual gas temperature, which takes time to respond.
 
-Run `node tools/test-thermoscope-heat.mjs` for native temperature and water-column
-responses, heating and cooling, pause, heater-toggle memory, restart, keyboard
-and touch input, scene cleanup and responsive control bounds.
+The signed control scales heat added to or removed from the marked patch, from
+minus 20x to plus 20x the original output. The advected field supports local
+temperatures down to minus 112 degrees Fahrenheit in this scene only. Colder
+air sinks, warmer air rises, and native gas-volume samples feed the existing
+ideal-gas pressure solve. Cooling contracts the gas and pulls water up; heating
+expands it and pushes water down. There is no assigned water level or pressure.
+Room exchange relaxes the signed temperature difference at 0.5 per simulation
+second. Refrigeration is an external heat sink. This remains an illustrative
+model without calibrated energy accounting, freezing or boiling of the water.
+Other scenes retain their room-temperature floor. Clicking the exchanger
+returns to room exchange or restores the last nonzero signed setting.
+
+Run `node tools/test-thermoscope-heat.mjs` for below-room cooling, room return,
+heating, native water responses, pause, keyboard and touch controls, reset and
+scene cleanup. The shared smoke engine remains synchronized with Sluice.
+
+`node tools/test-thermoscope-temperature.cjs` checks the opt-in cold range,
+unchanged default thermal bounds and feature-off GPU commands, and the gas law.

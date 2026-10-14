@@ -81,9 +81,11 @@
       thermoscopeControl.style.left=Math.max(14,Math.min(view.width-width-14,left))+'px';
       thermoscopeControl.style.top=Math.max(toolbar+12,Math.min(view.height-thermoscopeControl.offsetHeight-12,top))+'px';
       thermoscopeHeat.value=String(heat.heatPower);
-      thermoscopeHeat.style.setProperty('--heat-progress',(100*heat.heatPower/20)+'%');
-      thermoscopeHeat.setAttribute('aria-valuetext',heat.heated?heat.heatPower.toFixed(1)+' times normal heat':'Off, cooling toward room temperature');
-      text('toy-thermoscope-power',heat.heated?heat.heatPower.toFixed(1)+'x':'Off');
+      var position=50+2.5*heat.heatPower;
+      thermoscopeHeat.style.setProperty('--heat-start',Math.min(50,position)+'%');
+      thermoscopeHeat.style.setProperty('--heat-end',Math.max(50,position)+'%');
+      thermoscopeHeat.setAttribute('aria-valuetext',heat.heatPower===0?'Room temperature, 68 degrees Fahrenheit':(heat.heatPower<0?'Cooling':'Heating')+' at '+Math.abs(heat.heatPower).toFixed(1)+' times normal output');
+      text('toy-thermoscope-power',heat.heatPower===0?'68°F':(heat.heatPower>0?'+':'')+heat.heatPower.toFixed(1)+'x');
       var reading=toy.instruments().thermoscope;
       text('toy-thermoscope-air',reading && Number.isFinite(reading.temperatureF)?'Air '+Math.round(reading.temperatureF)+'°F':'Air temperature: waiting');
     }

@@ -1015,11 +1015,11 @@ fn transportAffine(p:vec2<f32>,fallback:vec2<f32>,native:vec4<f32>,dt:f32)->vec4
 
   // Optional current smoke temperatures share the existing gas binding. The
   // reference amount remains n*R*T_room, so heating never creates gas.
-  function thermalSource(source) {
+  function thermalSource(source,minimumKelvin) {
     var extra = /* wgsl */ `
 fn smokeKelvin(c:u32)->f32 {
   let tail=((cfg.cells+3u)/4u)*4u;
-  return clamp(bitcast<f32>(phaseGet(tail+c/4u,c%4u)),293.15,1172.6);
+  return clamp(bitcast<f32>(phaseGet(tail+c/4u,c%4u)),${minimumKelvin},1172.6);
 }
 fn temperatureRatio(c:u32)->f32 {
   let weight=atomicLoad(&gas[c].allocatedVolume);
@@ -1102,6 +1102,8 @@ fn collectThermalMean(@builtin(global_invocation_id) id:vec3<u32>){
     var history = storage('history',count * 32);
     var phaseOffset=(count+2)*64;
     var thermal=options.smokeTemperature===true;
+    var minimumKelvin=options.minimumTemperatureK===undefined?293.15:options.minimumTemperatureK;
+    if(!Number.isFinite(minimumKelvin) || minimumKelvin<193.15 || minimumKelvin>293.15)throw new Error('Invalid minimum smoke temperature.');
     var thermalOffset=phaseOffset+Math.ceil(count/4)*64;
     var gasSize=thermalOffset+(thermal ? Math.ceil(count/16)*64 : 0);
     var gas = storage('gas',gasSize);
@@ -1113,7 +1115,7 @@ fn collectThermalMean(@builtin(global_invocation_id) id:vec3<u32>){
       mac=global.LiquidAirMAC.create(instance,{width:width,height:height,dx:dx,config:config,geometry:geometry,cells:fields});
       buffers.push(mac.buffer,mac.terrainBuffer);
     }
-    var shaderSource=thermal ? thermalSource(SOURCE) : SOURCE;
+    var shaderSource=thermal ? thermalSource(SOURCE,minimumKelvin) : SOURCE;
     if(redBlack)shaderSource=shaderSource.replace('const RED_BLACK:bool=false;', 'const RED_BLACK:bool=true;');
     if(options.nonlinearGas===true)shaderSource=shaderSource.replace('const NONLINEAR_GAS:bool=false;', 'const NONLINEAR_GAS:bool=true;');
     if(options.vaporClosure===true)shaderSource=shaderSource.replace('const VAPOR_CLOSURE:bool=false;', 'const VAPOR_CLOSURE:bool=true;');
@@ -1166,7 +1168,7 @@ fn collectThermalMean(@builtin(global_invocation_id) id:vec3<u32>){
       width:width,height:height,cellSize:dx,iterations:iterations,geometryStride:8,redBlack:redBlack,
       settings:{density:floats[5],soundSpeed:floats[6],atmospherePressure:floats[7],minimumPressure:floats[8],threshold:floats[9],
         volumeScale:volumeScale,diagonalScale:floats[11],fluxScale:floats[12],neighborScale:floats[13],pressureTolerance:floats[14],
-        particlePressure:!mac && options.particlePressure === true,projectedVelocity:floats[15]>0,directGather:!!directGather,collapseEmptyCells:collapseEmptyCells,geometricGas:options.geometricGas===true,boundaryReconstruction:options.boundaryReconstruction===true,nonlinearGas:options.nonlinearGas===true,vaporClosure:options.vaporClosure===true,smokeTemperature:thermal,ambientTemperatureK:293.15},
+        particlePressure:!mac && options.particlePressure === true,projectedVelocity:floats[15]>0,directGather:!!directGather,collapseEmptyCells:collapseEmptyCells,geometricGas:options.geometricGas===true,boundaryReconstruction:options.boundaryReconstruction===true,nonlinearGas:options.nonlinearGas===true,vaporClosure:options.vaporClosure===true,smokeTemperature:thermal,ambientTemperatureK:293.15,minimumTemperatureK:minimumKelvin},
       buffers:{geometry:geometry,cells:fields,labels:labels,history:history,gas:gas,pressure:pressureA,transport:transport,phase:gas,mac:mac ? mac.buffer : null},phaseOffset:phaseOffset,
       enabled:false,particlePressure:!mac && options.particlePressure === true,
       frameGeometry:directTransport,
@@ -1188,7 +1190,7 @@ fn collectThermalMean(@builtin(global_invocation_id) id:vec3<u32>){
         if(!values || values.length!==count)throw new Error('Smoke temperature field dimensions differ.');
         var field=new Float32Array(count);
         for(var c=0;c<count;c++){
-          if(!Number.isFinite(values[c]) || values[c]<Math.fround(293.15) || values[c]>Math.fround(1172.6))throw new Error('Smoke temperature must be finite and within the declared thermal range.');
+          if(!Number.isFinite(values[c]) || values[c]<Math.fround(minimumKelvin) || values[c]>Math.fround(1172.6))throw new Error('Smoke temperature must be finite and within the declared thermal range.');
           field[c]=values[c];
         }
         instance.queue.writeBuffer(gas,thermalOffset,field);
@@ -1424,5 +1426,5 @@ fn collectThermalMean(@builtin(global_invocation_id) id:vec3<u32>){
     return model;
   }
 
-  global.LiquidAirWGPU = {create:create,shaderSource:SOURCE,thermalShaderSource:function(){return thermalSource(SOURCE);}};
+  global.LiquidAirWGPU = {create:create,shaderSource:SOURCE,thermalShaderSource:function(minimumKelvin){return thermalSource(SOURCE,minimumKelvin===undefined?293.15:minimumKelvin);}};
 })(typeof window !== 'undefined' ? window : globalThis);

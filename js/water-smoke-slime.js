@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.242'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.243'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -2350,8 +2350,8 @@
       '    velocity = mix(velocity, mean, 1.0 - exp(-viscosity * dt));\n' +
       '  }\n' +
       '  if (any(notEqual(materialForces, vec3(0.0)))) {\n' +
-      '    float heat = max(0.0, texture2D(uDye, vUv).a);\n' +
-      '    force.y += materialForces.x * heat / (1.0 + heat) - materialForces.y * density(vUv);\n' +
+      '    float heat = texture2D(uDye, vUv).a;\n' +
+      '    force.y += materialForces.x * heat / (1.0 + abs(heat)) - materialForces.y * density(vUv);\n' +
       // An optional chiral force follows the dye boundary. It stirs actual
       // velocity, which the pressure solve projects with all other forces.
       '    if (materialForces.z != 0.0) {\n' +
@@ -3371,15 +3371,17 @@
 
     // A declared rectangular heat patch adds heat only inside its marked
     // footprint. Buoyancy and advection move it after injection.
-    function heatSource (bounds, heat, color) {
-      if(!ready || !(heat>0))return;
+    function heatSource (bounds, heat, color, minimumAlpha) {
+      if(!ready || !Number.isFinite(heat) || heat===0)return;
+      minimumAlpha=Number.isFinite(minimumAlpha)?Math.max(-1,Math.min(0,minimumAlpha)):0;
       if(!heatSourceProgram)heatSourceProgram=new Program(compileShader(gl.VERTEX_SHADER,BASE_VS),compileShader(gl.FRAGMENT_SHADER,
-        'precision highp float; precision highp sampler2D; varying vec2 vUv; uniform sampler2D uDye; uniform vec2 lower; uniform vec2 upper; uniform float heat; uniform vec3 color; void main(){vec4 base=texture2D(uDye,vUv); float covered=step(lower.x,vUv.x)*step(lower.y,vUv.y)*step(vUv.x,upper.x)*step(vUv.y,upper.y); gl_FragColor=vec4(base.rgb+covered*color,min(64.0,base.a+covered*heat));}'));
+        'precision highp float; precision highp sampler2D; varying vec2 vUv; uniform sampler2D uDye; uniform vec2 lower; uniform vec2 upper; uniform float heat; uniform float minimumAlpha; uniform vec3 color; void main(){vec4 base=texture2D(uDye,vUv); float covered=step(lower.x,vUv.x)*step(lower.y,vUv.y)*step(vUv.x,upper.x)*step(vUv.y,upper.y); gl_FragColor=vec4(base.rgb+covered*color,clamp(base.a+covered*heat,minimumAlpha,64.0));}'));
       gl.disable(gl.BLEND);heatSourceProgram.bind();
       uniform1i(heatSourceProgram.uniforms.uDye,dye.read.attach(0));
       uniform2f(heatSourceProgram.uniforms.lower,bounds.x,bounds.y);
       uniform2f(heatSourceProgram.uniforms.upper,bounds.x+bounds.width,bounds.y+bounds.height);
       uniform1f(heatSourceProgram.uniforms.heat,heat);
+      uniform1f(heatSourceProgram.uniforms.minimumAlpha,minimumAlpha);
       uniform3f(heatSourceProgram.uniforms.color,color.r,color.g,color.b);
       blit(dye.write);dye.swap();
     }
@@ -3387,13 +3389,15 @@
     // Read the current advected temperature, not the water particle mirror.
     // This lazy RGBA8 target supports WebGL 1 too. Sixteen sample points per
     // pressure cell approximate its area mean; RG packs a 16-bit heat value.
-    function sampleTemperature (width, height) {
+    function sampleTemperature (width, height, minimumKelvin) {
       if(!ready)return null;
       if(!Number.isInteger(width) || !Number.isInteger(height) || width<1 || height<1 || width*height>500000)
         throw new Error('Invalid smoke temperature sampling grid.');
+      minimumKelvin=Number.isFinite(minimumKelvin)?Math.max(193.15,Math.min(293.15,minimumKelvin)):293.15;
+      var minimumHeat=(minimumKelvin-293.15)/100,heatRange=(1172.6-minimumKelvin)/100;
       if(!temperatureProgram){
         temperatureProgram=new Program(compileShader(gl.VERTEX_SHADER,BASE_VS),compileShader(gl.FRAGMENT_SHADER,
-          'precision highp float; precision highp sampler2D; varying vec2 vUv; uniform sampler2D uDye; uniform vec2 cellSize; void main(){float heat=0.0; for(int y=0;y<4;y++){for(int x=0;x<4;x++){vec2 offset=(vec2(float(x),float(y))+0.5)/4.0-0.5; heat+=texture2D(uDye,vUv+offset*cellSize).a/16.0;}} float q=floor(clamp(heat/8.7945,0.0,1.0)*65535.0+0.5); gl_FragColor=vec4(mod(q,256.0)/255.0,floor(q/256.0)/255.0,0.0,1.0);}'));
+          'precision highp float; precision highp sampler2D; varying vec2 vUv; uniform sampler2D uDye; uniform vec2 cellSize; uniform vec2 heatInterval; void main(){float heat=0.0; for(int y=0;y<4;y++){for(int x=0;x<4;x++){vec2 offset=(vec2(float(x),float(y))+0.5)/4.0-0.5; heat+=texture2D(uDye,vUv+offset*cellSize).a/16.0;}} float q=floor(clamp((heat-heatInterval.x)/heatInterval.y,0.0,1.0)*65535.0+0.5); gl_FragColor=vec4(mod(q,256.0)/255.0,floor(q/256.0)/255.0,0.0,1.0);}'));
       }
       if(!temperatureSample || temperatureSample.width!==width || temperatureSample.height!==height){
         if(temperatureSample){gl.deleteTexture(temperatureSample.texture);gl.deleteFramebuffer(temperatureSample.fbo);}
@@ -3403,13 +3407,14 @@
       gl.disable(gl.BLEND);temperatureProgram.bind();
       uniform1i(temperatureProgram.uniforms.uDye,dye.read.attach(0));
       uniform2f(temperatureProgram.uniforms.cellSize,1/width,1/height);
+      uniform2f(temperatureProgram.uniforms.heatInterval,minimumHeat,heatRange);
       blit(temperatureSample);
       gl.readPixels(0,0,width,height,gl.RGBA,gl.UNSIGNED_BYTE,temperatureBytes);
       // Textures are Y-up; pressure-cell rows are world Y-down. The material
       // calibration is 100 kelvin per unit of actual smoke temperature alpha.
       for(var y=0;y<height;y++)for(var x=0;x<width;x++){
         var j=((height-1-y)*width+x)*4,q=temperatureBytes[j]+256*temperatureBytes[j+1];
-        temperatureValues[y*width+x]=293.15+879.45*q/65535;
+        temperatureValues[y*width+x]=minimumKelvin+(1172.6-minimumKelvin)*q/65535;
       }
       gl.bindFramebuffer(gl.FRAMEBUFFER,null);
       return {width:width,height:height,kelvin:temperatureValues};
@@ -3596,9 +3601,9 @@
       if(above!=null)cfg.wind_above_y=smokeUV(0,(1-above)*worldH).y;
       try{smokeEngine.step(dt);}finally{cfg.wind_x=wind;cfg.wind_above_y=above;}
     },
-    heatSource:function(rect,heat,color){
+    heatSource:function(rect,heat,color,minimumAlpha){
       var p=smokeUV(rect.x*worldW,(1-rect.y-rect.height)*worldH);
-      smokeEngine.heatSource({x:p.x,y:p.y-rect.height*worldH/smokeDomain.h,width:rect.width*worldW/smokeDomain.w,height:rect.height*worldH/smokeDomain.h},heat,color);
+      smokeEngine.heatSource({x:p.x,y:p.y-rect.height*worldH/smokeDomain.h,width:rect.width*worldW/smokeDomain.w,height:rect.height*worldH/smokeDomain.h},heat,color,minimumAlpha);
     },
     setMovingBodies:function(bodies,x,y,w,h,dt,obW,obH){smokeEngine.setMovingBodies(bodies,smokeDomain.x,smokeDomain.y,smokeDomain.w,smokeDomain.h,dt,obW,obH);},
     setLiquidField:function(x,y,vx,vy,count,ox,oy,w,h,density,frozen){smokeEngine.setLiquidField(x,y,vx,vy,count,smokeDomain.x,smokeDomain.y,smokeDomain.w,smokeDomain.h,density,frozen,liquidWGPU?liquidWGPU.getReadbackAge():0);},
@@ -3626,15 +3631,16 @@
       }
       return {width:field.width,height:field.height,values:smokeFlowValues,dt:field.dt};
     },
-    sampleTemperature:function(w,h){
-      var field=smokeEngine.sampleTemperature(w,h);if(!field)return null;
+    sampleTemperature:function(w,h,minimumKelvin){
+      minimumKelvin=Number.isFinite(minimumKelvin)?minimumKelvin:293.15;
+      var field=smokeEngine.sampleTemperature(w,h,minimumKelvin);if(!field)return null;
       if(!smokeTemperatureValues || smokeTemperatureValues.length!==w*h)smokeTemperatureValues=new Float32Array(w*h);
       for(var y=0;y<h;y++)for(var x=0;x<w;x++){
         var uv=smokeUV((x+.5)*worldW/w,(y+.5)*worldH/h);
         if(uv.x<0 || uv.x>1 || uv.y<0 || uv.y>1){smokeTemperatureValues[y*w+x]=293.15;continue;}
         smokeSample(field.kelvin,w,h,1,uv.x,1-uv.y,smokeTemperatureValues,y*w+x);
         // Round only once and retain the native solver's declared interval.
-        smokeTemperatureValues[y*w+x]=Math.max(Math.fround(293.15),Math.min(Math.fround(1172.6),smokeTemperatureValues[y*w+x]));
+        smokeTemperatureValues[y*w+x]=Math.max(Math.fround(minimumKelvin),Math.min(Math.fround(1172.6),smokeTemperatureValues[y*w+x]));
       }
       return {width:w,height:h,kelvin:smokeTemperatureValues};
     }
@@ -3766,7 +3772,7 @@
     if(toyFireSmokeDraft){smokeAwakeT=SMOKE_IDLE_HOLD;toyFireSmokeDraft.prepare(toyFire ? fireFrameDt : dt*timeMul);}
     SmokeFluid.step(toyFire ? fireFrameDt : toyThermoscope ? thermoscopeDt : toySteam ? steamFrameDt : dt * timeMul);
     if(toyThermoscope && airModel && airModel.enabled){
-      var temperature=SmokeFluid.sampleTemperature(airModel.width,airModel.height);
+      var temperature=SmokeFluid.sampleTemperature(airModel.width,airModel.height,airModel.settings.minimumTemperatureK);
       if(temperature){airModel.setSmokeTemperature(temperature.kelvin);toyThermoscope.sampleClock=liquidWGPU.simulationClock;}
     }
     if(toyCannon)toyCannon.capture(dt*timeMul,jelloBodies);
@@ -14897,12 +14903,12 @@
       colors:{accent:diverPalette.getPropertyValue('--accent').trim(),text:diverPalette.getPropertyValue('--text').trim()}});airPressureColors=false;airGeometryVersion=-1;airGeometryTick();}
     if(definition.thermoscope){
       if(!smokeActive)throw new Error('The thermoscope needs the smoke temperature field.');
-      toyThermoscope={heated:definition.thermoscope.heated,heatPower:definition.thermoscope.heated?1:0,lastHeatPower:1,sampleClock:null};
+      toyThermoscope={heated:definition.thermoscope.heated,heatPower:definition.thermoscope.heatPower,lastHeatPower:definition.thermoscope.heatPower || 1,sampleClock:null};
       thermoscopeClock=liquidWGPU.simulationClock;thermoscopeDt=0;thermoscopeAcc=0;
       SmokeFluid.setThermalStyle({glow:0});
       SmokeFluid.setPhysics({HEAT:0,COOLING:definition.thermoscope.cooling,BUOYANCY:definition.thermoscope.buoyancy},0);
       smokeAwakeT=SMOKE_IDLE_HOLD;airPressureColors=false;
-      var initialTemperature=SmokeFluid.sampleTemperature(model.width,model.height);
+      var initialTemperature=SmokeFluid.sampleTemperature(model.width,model.height,model.settings.minimumTemperatureK);
       if(initialTemperature)model.setSmokeTemperature(initialTemperature.kelvin);
     }
     if(toyBoundary){
@@ -15044,7 +15050,7 @@
     }
     if(primary.kind==='fire-pour' || primary.kind==='pour')return false;
     if(primary.kind==='heat-toggle'){
-      return setThermoscopeHeat(toyThermoscope.heated?0:toyThermoscope.lastHeatPower);
+      return setThermoscopeHeat(toyThermoscope.heatPower!==0?0:toyThermoscope.lastHeatPower);
     }
     if(primary.kind==='smoke-push'){smokeAwakeT=SMOKE_IDLE_HOLD;return toyCannon.push(point && point.y);}
     if(primary.kind==='smoke-fan'){smokeAwakeT=SMOKE_IDLE_HOLD;machineOverlayCache=null;return toyCannon.toggle();}
@@ -15995,10 +16001,10 @@
 
   function setThermoscopeHeat(value){
     if(!toyThermoscope || !machineState || !Number.isFinite(value))return false;
-    toyThermoscope.heatPower=Math.max(0,Math.min(20,value));
+    toyThermoscope.heatPower=Math.max(-20,Math.min(20,value));
     toyThermoscope.heated=toyThermoscope.heatPower>0;
-    if(toyThermoscope.heated)toyThermoscope.lastHeatPower=toyThermoscope.heatPower;
-    machineState.definition.action=toyThermoscope.heated?'Cool the bulb':'Warm the bulb';
+    if(toyThermoscope.heatPower!==0)toyThermoscope.lastHeatPower=toyThermoscope.heatPower;
+    machineState.definition.action=toyThermoscope.heatPower!==0?'Room temperature':'Warm the bulb';
     machineOverlayCache=null;
     if(!rafId)drawMachineOverlay();
     return true;
@@ -16010,11 +16016,11 @@
     var clock=liquidWGPU.simulationClock,h=Math.max(0,clock-thermoscopeClock);
     thermoscopeClock=clock;thermoscopeDt=h;
     var t=machineState.definition.thermoscope;
-    if(!toyThermoscope.heated){thermoscopeAcc=0;return;}
+    if(toyThermoscope.heatPower===0){thermoscopeAcc=0;return;}
     thermoscopeAcc+=h;
     var n=Math.min(3,Math.floor(thermoscopeAcc/SMOKE_EMITTER_DT));thermoscopeAcc-=n*SMOKE_EMITTER_DT;
-    // Warm clear air through the temperature channel, with no smoke tracer.
-    for(var i=0;i<n;i++)SmokeFluid.heatSource({x:(t.x-t.width*.5)/worldW,y:1-(t.y+t.height*.5)/worldH,width:t.width/worldW,height:t.height/worldH},t.alphaPerSample*toyThermoscope.heatPower,{r:0,g:0,b:0});
+    // Signed heat exchange warms or chills clear air, with no smoke tracer.
+    for(var i=0;i<n;i++)SmokeFluid.heatSource({x:(t.x-t.width*.5)/worldW,y:1-(t.y+t.height*.5)/worldH,width:t.width/worldW,height:t.height/worldH},t.alphaPerSample*toyThermoscope.heatPower,{r:0,g:0,b:0},-1);
   }
 
   function steamTick(){

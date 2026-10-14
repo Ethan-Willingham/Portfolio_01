@@ -75,7 +75,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.211';
+  var GAME_VERSION = 'v28.212';
   // Water-removal comparison for performance recording. Require a fresh
   // no-save run so the diagnostic cannot alter a stored world. Snow keeps
   // its ordinary emission, contacts, slime boundaries and rendering.
@@ -47419,8 +47419,8 @@
       '    velocity = mix(velocity, mean, 1.0 - exp(-viscosity * dt));\n' +
       '  }\n' +
       '  if (any(notEqual(materialForces, vec3(0.0)))) {\n' +
-      '    float heat = max(0.0, texture2D(uDye, vUv).a);\n' +
-      '    force.y += materialForces.x * heat / (1.0 + heat) - materialForces.y * density(vUv);\n' +
+      '    float heat = texture2D(uDye, vUv).a;\n' +
+      '    force.y += materialForces.x * heat / (1.0 + abs(heat)) - materialForces.y * density(vUv);\n' +
       // An optional chiral force follows the dye boundary. It stirs actual
       // velocity, which the pressure solve projects with all other forces.
       '    if (materialForces.z != 0.0) {\n' +
@@ -48440,15 +48440,17 @@
 
     // A declared rectangular heat patch adds heat only inside its marked
     // footprint. Buoyancy and advection move it after injection.
-    function heatSource (bounds, heat, color) {
-      if(!ready || !(heat>0))return;
+    function heatSource (bounds, heat, color, minimumAlpha) {
+      if(!ready || !Number.isFinite(heat) || heat===0)return;
+      minimumAlpha=Number.isFinite(minimumAlpha)?Math.max(-1,Math.min(0,minimumAlpha)):0;
       if(!heatSourceProgram)heatSourceProgram=new Program(compileShader(gl.VERTEX_SHADER,BASE_VS),compileShader(gl.FRAGMENT_SHADER,
-        'precision highp float; precision highp sampler2D; varying vec2 vUv; uniform sampler2D uDye; uniform vec2 lower; uniform vec2 upper; uniform float heat; uniform vec3 color; void main(){vec4 base=texture2D(uDye,vUv); float covered=step(lower.x,vUv.x)*step(lower.y,vUv.y)*step(vUv.x,upper.x)*step(vUv.y,upper.y); gl_FragColor=vec4(base.rgb+covered*color,min(64.0,base.a+covered*heat));}'));
+        'precision highp float; precision highp sampler2D; varying vec2 vUv; uniform sampler2D uDye; uniform vec2 lower; uniform vec2 upper; uniform float heat; uniform float minimumAlpha; uniform vec3 color; void main(){vec4 base=texture2D(uDye,vUv); float covered=step(lower.x,vUv.x)*step(lower.y,vUv.y)*step(vUv.x,upper.x)*step(vUv.y,upper.y); gl_FragColor=vec4(base.rgb+covered*color,clamp(base.a+covered*heat,minimumAlpha,64.0));}'));
       gl.disable(gl.BLEND);heatSourceProgram.bind();
       uniform1i(heatSourceProgram.uniforms.uDye,dye.read.attach(0));
       uniform2f(heatSourceProgram.uniforms.lower,bounds.x,bounds.y);
       uniform2f(heatSourceProgram.uniforms.upper,bounds.x+bounds.width,bounds.y+bounds.height);
       uniform1f(heatSourceProgram.uniforms.heat,heat);
+      uniform1f(heatSourceProgram.uniforms.minimumAlpha,minimumAlpha);
       uniform3f(heatSourceProgram.uniforms.color,color.r,color.g,color.b);
       blit(dye.write);dye.swap();
     }
@@ -48456,13 +48458,15 @@
     // Read the current advected temperature, not the water particle mirror.
     // This lazy RGBA8 target supports WebGL 1 too. Sixteen sample points per
     // pressure cell approximate its area mean; RG packs a 16-bit heat value.
-    function sampleTemperature (width, height) {
+    function sampleTemperature (width, height, minimumKelvin) {
       if(!ready)return null;
       if(!Number.isInteger(width) || !Number.isInteger(height) || width<1 || height<1 || width*height>500000)
         throw new Error('Invalid smoke temperature sampling grid.');
+      minimumKelvin=Number.isFinite(minimumKelvin)?Math.max(193.15,Math.min(293.15,minimumKelvin)):293.15;
+      var minimumHeat=(minimumKelvin-293.15)/100,heatRange=(1172.6-minimumKelvin)/100;
       if(!temperatureProgram){
         temperatureProgram=new Program(compileShader(gl.VERTEX_SHADER,BASE_VS),compileShader(gl.FRAGMENT_SHADER,
-          'precision highp float; precision highp sampler2D; varying vec2 vUv; uniform sampler2D uDye; uniform vec2 cellSize; void main(){float heat=0.0; for(int y=0;y<4;y++){for(int x=0;x<4;x++){vec2 offset=(vec2(float(x),float(y))+0.5)/4.0-0.5; heat+=texture2D(uDye,vUv+offset*cellSize).a/16.0;}} float q=floor(clamp(heat/8.7945,0.0,1.0)*65535.0+0.5); gl_FragColor=vec4(mod(q,256.0)/255.0,floor(q/256.0)/255.0,0.0,1.0);}'));
+          'precision highp float; precision highp sampler2D; varying vec2 vUv; uniform sampler2D uDye; uniform vec2 cellSize; uniform vec2 heatInterval; void main(){float heat=0.0; for(int y=0;y<4;y++){for(int x=0;x<4;x++){vec2 offset=(vec2(float(x),float(y))+0.5)/4.0-0.5; heat+=texture2D(uDye,vUv+offset*cellSize).a/16.0;}} float q=floor(clamp((heat-heatInterval.x)/heatInterval.y,0.0,1.0)*65535.0+0.5); gl_FragColor=vec4(mod(q,256.0)/255.0,floor(q/256.0)/255.0,0.0,1.0);}'));
       }
       if(!temperatureSample || temperatureSample.width!==width || temperatureSample.height!==height){
         if(temperatureSample){gl.deleteTexture(temperatureSample.texture);gl.deleteFramebuffer(temperatureSample.fbo);}
@@ -48472,13 +48476,14 @@
       gl.disable(gl.BLEND);temperatureProgram.bind();
       uniform1i(temperatureProgram.uniforms.uDye,dye.read.attach(0));
       uniform2f(temperatureProgram.uniforms.cellSize,1/width,1/height);
+      uniform2f(temperatureProgram.uniforms.heatInterval,minimumHeat,heatRange);
       blit(temperatureSample);
       gl.readPixels(0,0,width,height,gl.RGBA,gl.UNSIGNED_BYTE,temperatureBytes);
       // Textures are Y-up; pressure-cell rows are world Y-down. The material
       // calibration is 100 kelvin per unit of actual smoke temperature alpha.
       for(var y=0;y<height;y++)for(var x=0;x<width;x++){
         var j=((height-1-y)*width+x)*4,q=temperatureBytes[j]+256*temperatureBytes[j+1];
-        temperatureValues[y*width+x]=293.15+879.45*q/65535;
+        temperatureValues[y*width+x]=minimumKelvin+(1172.6-minimumKelvin)*q/65535;
       }
       gl.bindFramebuffer(gl.FRAMEBUFFER,null);
       return {width:width,height:height,kelvin:temperatureValues};

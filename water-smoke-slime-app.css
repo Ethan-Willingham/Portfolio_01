@@ -5,14 +5,15 @@
 .toy-thermoscope-control label { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; color: var(--text-faint); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; }
 .toy-thermoscope-control output { color: var(--app-brass); font-size: 13px; letter-spacing: 0; text-transform: none; font-variant-numeric: tabular-nums; }
 .toy-thermoscope-control input { appearance: none; -webkit-appearance: none; display: block; width: 100%; height: 44px; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; cursor: ew-resize; touch-action: pan-y; }
-.toy-thermoscope-control input::-webkit-slider-runnable-track { height: 3px; border-radius: 2px; background: linear-gradient(to right,var(--app-brass) 0 var(--heat-progress,5%),var(--rule-strong) var(--heat-progress,5%) 100%); }
-.toy-thermoscope-control input::-moz-range-track { height: 3px; border-radius: 2px; background: var(--rule-strong); }
-.toy-thermoscope-control input::-moz-range-progress { height: 3px; border-radius: 2px; background: var(--app-brass); }
+.toy-thermoscope-control input::-webkit-slider-runnable-track { height: 3px; border-radius: 2px; background: linear-gradient(to right,var(--rule-strong) 0 var(--heat-start,50%),var(--app-brass) var(--heat-start,50%) var(--heat-end,50%),var(--rule-strong) var(--heat-end,50%) 100%); }
+.toy-thermoscope-control input::-moz-range-track { height: 3px; border-radius: 2px; background: linear-gradient(to right,var(--rule-strong) 0 var(--heat-start,50%),var(--app-brass) var(--heat-start,50%) var(--heat-end,50%),var(--rule-strong) var(--heat-end,50%) 100%); }
+.toy-thermoscope-control input::-moz-range-progress { background: transparent; }
 .toy-thermoscope-control input::-webkit-slider-thumb { appearance: none; -webkit-appearance: none; width: 16px; height: 22px; margin-top: -9.5px; border: 1px solid var(--app-brass); border-radius: 3px; background: linear-gradient(to right,var(--app-brass) 0 6px,var(--bg-raised) 6px 8px,var(--app-brass) 8px 100%); box-shadow: 0 1px 3px rgb(0 0 0 / .35); }
 .toy-thermoscope-control input::-moz-range-thumb { width: 14px; height: 20px; border: 1px solid var(--app-brass); border-radius: 3px; background: linear-gradient(to right,var(--app-brass) 0 6px,var(--bg-raised) 6px 8px,var(--app-brass) 8px 100%); }
 .toy-thermoscope-control input:hover::-webkit-slider-thumb { border-color: var(--text); }
 .toy-thermoscope-control input:focus-visible { outline: none; }
-.toy-thermoscope-scale { display: flex; justify-content: space-between; margin-top: -7px; padding-top: 9px; background: repeating-linear-gradient(to right,var(--rule-strong) 0 1px,transparent 1px 25%) left top / calc(100% - 1px) 5px no-repeat; color: var(--text-faint); font-size: 9px; }
+.toy-thermoscope-scale { position: relative; display: flex; justify-content: space-between; margin-top: -7px; padding-top: 9px; background: repeating-linear-gradient(to right,var(--rule-strong) 0 1px,transparent 1px 25%) left top / calc(100% - 1px) 5px no-repeat; color: var(--text-faint); font-size: 9px; }
+.toy-thermoscope-scale::before { content: ""; position: absolute; left: 50%; top: -3px; height: 8px; border-left: 1px solid var(--app-brass); }
 #toy-thermoscope-air { margin: 14px 0 0; color: var(--text-dim); font-size: 11px; font-variant-numeric: tabular-nums; }
 
 .toy-thermoscope-control input:focus-visible::-webkit-slider-thumb { outline: 2px solid var(--app-brass); outline-offset: 4px; }

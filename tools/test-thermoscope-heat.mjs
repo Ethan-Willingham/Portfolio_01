@@ -81,8 +81,14 @@ try{
   }
   await load('thermoscope',1440,900);
   assert.equal(await evaluate('document.getElementById("toy-thermoscope-control").hidden'),false);
-  assert.equal(await evaluate('__toy.thermoscope().heatPower'),1);
-  await setHeat(.1);thermal.low=await advance(5);console.log('LOW',JSON.stringify(thermal.low));
+  assert.equal(await evaluate('__toy.thermoscope().heatPower'),0);
+  thermal.low=await advance(5);console.log('LOW',JSON.stringify(thermal.low));
+  await load('thermoscope',1440,900);
+  await setHeat(-20);thermal.cold=await advance(5);console.log('COLD',JSON.stringify(thermal.cold));
+  assert(thermal.cold.temperatureK<thermal.low.temperatureK-.2,'Cold side chills actual gas below room temperature');
+  assert(thermal.cold.columnLevel<thermal.low.columnLevel-1,'Cold side draws actual water up the tube');
+  await setHeat(0);thermal.roomReturn=await advance(8);
+  assert(thermal.roomReturn.temperatureK>thermal.cold.temperatureK+.1,'Center lets cold air warm back toward room temperature');
   await load('thermoscope',1440,900);
   await setHeat(20);thermal.high=await advance(5);console.log('HIGH',JSON.stringify(thermal.high));
   assert(thermal.high.temperatureK>thermal.low.temperatureK+2,'Higher output warms actual gas substantially');
@@ -109,20 +115,28 @@ try{
       await send('Emulation.setTouchEmulationEnabled',{enabled:true});
       await send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:bounds.x,y:bounds.y}]});
       await send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await delay(150);
-      assert(await evaluate('__toy.thermoscope().heatPower')>10,'Touch changes heat');
+      assert(await evaluate('__toy.thermoscope().heatPower')>5,'Touch changes heat');
     }else{
       await send('Input.dispatchMouseEvent',{type:'mousePressed',x:bounds.x,y:bounds.y,button:'left',clickCount:1});
       await send('Input.dispatchMouseEvent',{type:'mouseReleased',x:bounds.x,y:bounds.y,button:'left',clickCount:1});await delay(100);
-      assert(await evaluate('__toy.thermoscope().heatPower')>10,'Pointer changes heat');
+      assert(await evaluate('__toy.thermoscope().heatPower')>5,'Pointer changes heat');
     }
     const capture=await send('Page.captureScreenshot',{format:'png'});fs.writeFileSync(path.join(output,`thermoscope-${width}x${height}.png`),Buffer.from(capture.data,'base64'));
   }
   await send('Emulation.setTouchEmulationEnabled',{enabled:false});
-  await load('thermoscope',1440,900);assert.equal(await evaluate('__toy.thermoscope().heatPower'),1,'Restart clears output');
+  await load('thermoscope',1440,900);assert.equal(await evaluate('__toy.thermoscope().heatPower'),0,'Restart centers output at room temperature');
   await evaluate('__toy.machine("thermoscope",{unheated:true})');await delay(500);assert.equal(await evaluate('__toy.thermoscope().heatPower'),0,'Unheated comparison starts off');
   await load('falls',1440,900);await delay(300);
   assert.equal(await evaluate('document.getElementById("toy-thermoscope-control").hidden'),true,'Control retires with scene');
   assert.equal(await evaluate('__toy.thermoscopeHeat(10)'),false,'Retired control cannot modify another scene');
+  // The smoke engine is shared with Sluice, so boot its rebuilt bundle too.
+  await send('Page.navigate',{url:'http://127.0.0.1:'+server.address().port+'/grand-motherload.html?nosave=1'});
+  const bootDeadline=Date.now()+60000;
+  while(!await evaluate('!!window.SluiceLoading && document.getElementById("game-intro").dataset.state==="ready" && !SluiceLoading.active()')){
+    const fault=await evaluate('window.__bootErr || null');assert.equal(fault,null,'Sluice boot has no error');
+    if(Date.now()>bootDeadline)throw Error('Rebuilt Sluice bundle did not boot');await delay(100);
+  }
+  await delay(1000);assert.equal(await evaluate('window.__bootErr || null'),null);
   assert.equal(errors.length,0,'No uncaught browser exceptions');
   fs.writeFileSync(path.join(output,'report.json'),JSON.stringify({pass:true,thermal,checks,errors},null,2));
   console.log('PASS thermoscope heat, native water response, pause, toggle memory, keyboard, pointer, touch, restart and scene cleanup');

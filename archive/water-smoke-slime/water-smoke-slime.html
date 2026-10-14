@@ -26,7 +26,7 @@
   <link rel="preload" href="/assets/fonts/commit_mono_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/water-smoke-slime.css?v=v5.186">
-  <link rel="stylesheet" href="/water-smoke-slime-app.css?v=v5.242">
+  <link rel="stylesheet" href="/water-smoke-slime-app.css?v=v5.243">
   <link rel="stylesheet" href="/wss-submarine-controls.css?v=v5.192">
   <link rel="stylesheet" href="/water-rocket.css?v=v5.193">
 </head>
@@ -75,11 +75,11 @@
         </aside>
         <div class="toy-scene-actions" id="toy-scene-actions" role="group" aria-label="Apparatus controls"></div>
         <aside class="toy-thermoscope-control" id="toy-thermoscope-control" aria-label="Bulb heater" hidden>
-          <label for="toy-thermoscope-heat">Heat <output id="toy-thermoscope-power" for="toy-thermoscope-heat">1.0x</output></label>
-          <input id="toy-thermoscope-heat" type="range" min="0" max="20" step="0.1" value="1" aria-describedby="toy-thermoscope-help">
-          <div class="toy-thermoscope-scale"><span>Off</span><span>20x</span></div>
+          <label for="toy-thermoscope-heat">Temperature <output id="toy-thermoscope-power" for="toy-thermoscope-heat">Room</output></label>
+          <input id="toy-thermoscope-heat" type="range" min="-20" max="20" step="0.1" value="0" aria-describedby="toy-thermoscope-help">
+          <div class="toy-thermoscope-scale"><span>Cold</span><span>Room</span><span>Hot</span></div>
           <p id="toy-thermoscope-air">Air temperature: waiting</p>
-          <p id="toy-thermoscope-help" class="toy-sr-only">Turn down to cool toward room temperature.</p>
+          <p id="toy-thermoscope-help" class="toy-sr-only">The middle returns toward room temperature. Move left to chill the air or right to heat it.</p>
         </aside>
         <aside class="toy-cave-indicator" id="toy-cave-indicator" aria-label="Cave airflow and pressure" hidden>
           <div class="toy-cave-heading"><span>Airflow</span><span id="toy-cave-paused" hidden>Paused</span></div>
@@ -271,13 +271,13 @@
   </section>
 
   <!-- Shared water engine; the stamp follows GAME_VERSION. -->
-  <script src="/js/liquid-wgpu.js?v=v28.211"></script>
+  <script src="/js/liquid-wgpu.js?v=v28.212"></script>
   <script src="/js/liquid-material-slip-wgpu.js?v=v5.197"></script>
   <script src="/js/smoke-presets.js?v=4"></script>
   <script src="/js/water-rainbow.js?v=2"></script>
   <script src="/js/liquid-air-model.js?v=v5.186"></script>
   <script src="/js/liquid-air-mac-wgpu.js?v=v5.186"></script>
-  <script src="/js/liquid-air-wgpu.js?v=v5.186"></script>
+  <script src="/js/liquid-air-wgpu.js?v=v5.243"></script>
   <script src="/js/water-machines-builder.js?v=v5.186"></script>
   <script src="/js/wss-bubbles.js?v=v5.196"></script>
   <script src="/js/water-machines-scenes.js?v=v5.186"></script>
@@ -285,13 +285,13 @@
   <script src="/js/water-machines-pressure-view.js?v=v5.186"></script>
   <script src="/js/wss-machine-registry.js?v=v5.241"></script>
   <script src="/js/wss-apparatus-art.js?v=v5.186"></script>
-  <script src="/js/water-smoke-slime.js?v=v5.242"></script>
+  <script src="/js/water-smoke-slime.js?v=v5.243"></script>
   <script src="/js/wss-oxygen-view.js?v=v5.186-activity1"></script>
   <script src="/js/wss-sluice-transfer.js?v=v5.238"></script>
   <script src="/js/wss-sluice-calibration.js?v=v5.242"></script>
   <script src="/js/wss-sluice-controls.js?v=v5.242"></script>
   <script src="/js/wss-submarine-controls.js?v=v5.192"></script>
-  <script src="/js/water-smoke-slime-ui.js?v=v5.242"></script>
+  <script src="/js/water-smoke-slime-ui.js?v=v5.243"></script>
   <script src="/js/smoke-presets-ui.js?v=4"></script>
 </body>
 </html>
