@@ -1648,7 +1648,7 @@ remains byte-identical; the shared rendering and Sluice boot regression passes.
 
 ## Adjustable thermoscope heat
 
-The thermoscope has a visible heat-output slider from off to 20x its original
+The thermoscope has an open heat scale beside its bulb, from off to 20x its original
 output, with the current native gas temperature in degrees Fahrenheit. Changing
 output scales the heat deposited inside the marked heater patch. Advection and
 room cooling still act on that field; native gas-volume samples feed the existing

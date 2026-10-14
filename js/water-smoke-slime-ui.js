@@ -69,11 +69,23 @@
       var state=toy.stats(),heat=toy.thermoscope();
       thermoscopeControl.hidden=state.scene!=='thermoscope' || state.loading || !heat;
       if(thermoscopeControl.hidden)return;
+      var view=document.getElementById('toy-viewport').getBoundingClientRect();
+      var glass=document.getElementById('toy-stage').getBoundingClientRect(),scale=toy.camera().scale;
+      var heater=toy.machineState().definition.thermoscope;
+      var upright=view.width<640 && view.height>view.width;
+      var width=upright?Math.min(220,view.width-28):Math.min(220,Math.max(152,128*scale));
+      thermoscopeControl.style.width=width+'px';
+      var left=glass.left-view.left+(upright?heater.x*scale-width*.5:(heater.x+88)*scale);
+      var top=glass.top-view.top+(upright?toy.world().h*scale+12:heater.y*scale-36);
+      var toolbar=shell.querySelector('.toy-top').getBoundingClientRect().bottom-view.top;
+      thermoscopeControl.style.left=Math.max(14,Math.min(view.width-width-14,left))+'px';
+      thermoscopeControl.style.top=Math.max(toolbar+12,Math.min(view.height-thermoscopeControl.offsetHeight-12,top))+'px';
       thermoscopeHeat.value=String(heat.heatPower);
+      thermoscopeHeat.style.setProperty('--heat-progress',(100*heat.heatPower/20)+'%');
       thermoscopeHeat.setAttribute('aria-valuetext',heat.heated?heat.heatPower.toFixed(1)+' times normal heat':'Off, cooling toward room temperature');
       text('toy-thermoscope-power',heat.heated?heat.heatPower.toFixed(1)+'x':'Off');
       var reading=toy.instruments().thermoscope;
-      text('toy-thermoscope-air',reading && Number.isFinite(reading.temperatureF)?'Air '+Math.round(reading.temperatureF)+' degrees F':'Air temperature: waiting');
+      text('toy-thermoscope-air',reading && Number.isFinite(reading.temperatureF)?'Air '+Math.round(reading.temperatureF)+'°F':'Air temperature: waiting');
     }
     var actionButtons = new Map();
     var activeHeldButton = null;
@@ -399,6 +411,7 @@
       actionLayer.appendChild(button);return button;
     }
     function syncMachineControls(){
+      syncThermoscope();
       if(!toy.machineControls || !actionLayer)return;
       var state=toy.stats();
       if(activeHeldButton && (state.paused || state.tool!=='poke'))releaseHeldControl();

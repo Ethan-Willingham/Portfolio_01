@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.240'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.241'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -264,15 +264,9 @@
         else insetRight+=submarineBounds.width+padding;
       }
     }
-    var thermoscopePanel=document.getElementById('toy-thermoscope-control');
-    if(thermoscopePanel){
-      thermoscopePanel.hidden=currentScene!=='thermoscope';
-      if(!thermoscopePanel.hidden){
-        var thermoscopeStyle=getComputedStyle(thermoscopePanel),thermoscopeBounds=thermoscopePanel.getBoundingClientRect();
-        if(thermoscopeStyle.getPropertyValue('--thermoscope-placement').trim()==='bottom')insetBottom+=thermoscopeBounds.height+padding;
-        else insetRight+=thermoscopeBounds.width+padding;
-      }
-    }
+    // Narrow upright views put the open heater scale below the apparatus.
+    // Wider views anchor it beside the bulb without taking a sidebar.
+    if(currentScene==='thermoscope' && w<640 && cameraHeight>w)insetBottom+=104;
     if(currentScene==='sand-dam'){
       var sandGuide=document.getElementById('toy-sand-guide');
       insetTop+=sandGuide && !sandGuide.hidden ? sandGuide.getBoundingClientRect().height+24 : 64;
@@ -15600,7 +15594,6 @@
             c.fillText('Pour',f.pour.x,f.pour.y-12/fitScale);c.restore();
           }}}
       if(toyThermoscope){var heater=definition.thermoscope;
-        c.fillText(toyThermoscope.heated?'Heat '+toyThermoscope.heatPower.toFixed(1)+'x':'Cooling',heater.x+88,heater.y-10);
         if(art)art.heater(c,{x:heater.x-16,y:heater.y-8,width:32,height:16},{heated:toyThermoscope.heated,glow:true});
         if(definition.setup==='vented')c.fillText('Open vent',heater.x+104,100);
       }
