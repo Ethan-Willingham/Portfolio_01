@@ -1635,3 +1635,19 @@ held source admits 9,615 measured water parcels before the test releases it,
 then admits no further water. These are recorded examples, not fixed recovery
 percentages or deterministic trajectories. The ordinary three-phase shader
 remains byte-identical; the shared rendering and Sluice boot regression passes.
+
+## Adjustable thermoscope heat
+
+The thermoscope has a visible heat-output slider from off to 20x its original
+output, with the current native gas temperature in degrees Fahrenheit. Changing
+output scales the heat deposited inside the marked heater patch. Advection and
+room cooling still act on that field; native gas-volume samples feed the existing
+ideal-gas pressure solver and move the water. There is no assigned water level.
+Turning the heater off cools toward 68 degrees Fahrenheit; this control does not
+refrigerate the bulb below room temperature. Clicking the heater restores the
+last nonzero output. Restart resets to 1x, and the unheated comparison starts off.
+Changing the slider while paused sets the output without advancing physics.
+
+Run `node tools/test-thermoscope-heat.mjs` for native temperature and water-column
+responses, heating and cooling, pause, heater-toggle memory, restart, keyboard
+and touch input, scene cleanup and responsive control bounds.

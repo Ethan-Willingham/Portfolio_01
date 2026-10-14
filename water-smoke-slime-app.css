@@ -1,5 +1,17 @@
 :root { --toy-grain-gold: #dfc288; }
 
+.toy-thermoscope-control { position: absolute; z-index: 10; top: calc(var(--toy-top-height,52px) + 12px); right: 12px; width: clamp(160px,23vw,260px); box-sizing: border-box; padding: 12px; border: 1px solid var(--rule); border-radius: 8px; background: var(--bg-raised); color: var(--text-dim); font: 12px/1.4 var(--font-body); }
+.toy-thermoscope-control label { display: flex; justify-content: space-between; gap: 8px; color: var(--text); }
+.toy-thermoscope-control output { color: var(--accent); font-family: var(--font-mono); }
+.toy-thermoscope-control input { display: block; width: 100%; min-height: 44px; margin: 0; accent-color: var(--accent); cursor: ew-resize; }
+.toy-thermoscope-scale { display: flex; justify-content: space-between; color: var(--text-faint); font-size: 10px; }
+.toy-thermoscope-control p { margin: 8px 0 0; }
+#toy-thermoscope-air { color: var(--text); font-family: var(--font-mono); }
+#toy-thermoscope-help { font-size: 11px; }
+@media (max-width: 600px) and (orientation: portrait) {
+  .toy-thermoscope-control { --thermoscope-placement: bottom; top: auto; bottom: 12px; right: 12px; width: calc(100% - 24px); }
+}
+
 /* One operator station, with the same controls at every viewport size. */
 .sluice-console { position: absolute; z-index: 21; bottom: 0; left: 0; right: 0; padding: 10px clamp(12px,3vw,40px) 8px; border-top: 1px solid var(--rule-strong); background: var(--bg-raised); color: var(--text-dim); }
 .sluice-console[hidden], .sluice-workbench[hidden], .sluice-inspector[hidden], .sluice-pan[hidden] { display: none; }

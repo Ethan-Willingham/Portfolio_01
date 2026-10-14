@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.238'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.239'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -262,6 +262,15 @@
         var submarineStyle=getComputedStyle(submarinePanel),submarineBounds=submarinePanel.getBoundingClientRect();
         if(submarineStyle.getPropertyValue('--submarine-placement').trim()==='bottom')insetBottom+=submarineBounds.height+padding;
         else insetRight+=submarineBounds.width+padding;
+      }
+    }
+    var thermoscopePanel=document.getElementById('toy-thermoscope-control');
+    if(thermoscopePanel){
+      thermoscopePanel.hidden=currentScene!=='thermoscope';
+      if(!thermoscopePanel.hidden){
+        var thermoscopeStyle=getComputedStyle(thermoscopePanel),thermoscopeBounds=thermoscopePanel.getBoundingClientRect();
+        if(thermoscopeStyle.getPropertyValue('--thermoscope-placement').trim()==='bottom')insetBottom+=thermoscopeBounds.height+padding;
+        else insetRight+=thermoscopeBounds.width+padding;
       }
     }
     if(currentScene==='sand-dam'){
@@ -14626,7 +14635,7 @@
       mouthWet:nativeSample ? mouthWet : null,thumbHeld:state.thumbHeld,
       mouthDistanceInches:Number.isFinite(mouthDistance) ? units.inches(mouthDistance) : null,
       gasPressurePsi:gas && gas.pressure!==null ? units.psi(gas.pressure) : null,
-      thermoscope:definition.thermoscope ? {heated:toyThermoscope.heated,temperatureF:thermalPocket ? (thermalPocket.temperatureK-273.15)*1.8+32 : null,
+      thermoscope:definition.thermoscope ? {heated:toyThermoscope.heated,heatPower:toyThermoscope.heatPower,temperatureF:thermalPocket ? (thermalPocket.temperatureK-273.15)*1.8+32 : null,
         temperatureK:thermalPocket ? thermalPocket.temperatureK : null,sampleClock:toyThermoscope.sampleClock,pocket:thermalPocket || null,
         columnLevel:source.level,reservoirLevel:receiver.level,vented:definition.setup==='vented'} : null,
       pressurePsi:grid && grid.pressure!==null ? units.psi(grid.pressure) : null,
@@ -14888,7 +14897,7 @@
       colors:{accent:diverPalette.getPropertyValue('--accent').trim(),text:diverPalette.getPropertyValue('--text').trim()}});airPressureColors=false;airGeometryVersion=-1;airGeometryTick();}
     if(definition.thermoscope){
       if(!smokeActive)throw new Error('The thermoscope needs the smoke temperature field.');
-      toyThermoscope={heated:definition.thermoscope.heated,sampleClock:null};
+      toyThermoscope={heated:definition.thermoscope.heated,heatPower:definition.thermoscope.heated?1:0,lastHeatPower:1,sampleClock:null};
       thermoscopeClock=liquidWGPU.simulationClock;thermoscopeDt=0;thermoscopeAcc=0;
       SmokeFluid.setThermalStyle({glow:0});
       SmokeFluid.setPhysics({HEAT:0,COOLING:definition.thermoscope.cooling,BUOYANCY:definition.thermoscope.buoyancy},0);
@@ -15035,9 +15044,7 @@
     }
     if(primary.kind==='fire-pour' || primary.kind==='pour')return false;
     if(primary.kind==='heat-toggle'){
-      toyThermoscope.heated=!toyThermoscope.heated;
-      definition.action=toyThermoscope.heated?'Cool the bulb':'Warm the bulb';
-      machineOverlayCache=null;return true;
+      return setThermoscopeHeat(toyThermoscope.heated?0:toyThermoscope.lastHeatPower);
     }
     if(primary.kind==='smoke-push'){smokeAwakeT=SMOKE_IDLE_HOLD;return toyCannon.push(point && point.y);}
     if(primary.kind==='smoke-fan'){smokeAwakeT=SMOKE_IDLE_HOLD;machineOverlayCache=null;return toyCannon.toggle();}
@@ -15471,7 +15478,7 @@
     var detailAnnotations=!machineState || !machineState.definition.quietApparatus || !document.getElementById('toy-panel-instruments').hidden;
     var overlayKey=[detailAnnotations,toyDraftRuntime && toyDraftRuntime.clock ? toyDraftRuntime.clock() : 0,toyThirsty || toyWave || toyDraftRuntime || machineState && machineState.definition.sluice?liquidWGPU.simulationClock:0,wallsVersion,pressureColors,airPressureColors,fitScale,viewPanX,viewPanY,cameraWidth,cameraHeight,currentScene,highlightedValve,handsSelection && handsSelection.index].join(':');
     if(burstView)overlayKey+=':'+burstView.opened+':'+burstView.fault;
-    if(toyThermoscope)overlayKey+=':'+toyThermoscope.heated;
+    if(toyThermoscope)overlayKey+=':'+toyThermoscope.heatPower;
     if(toyFire){var overlayHeat=toyFire.stats();overlayKey+=':'+overlayHeat.burning+':'+overlayHeat.airStarved+':'+overlayHeat.extinguished+':'+overlayHeat.smothered;}
     if(toySauna)overlayKey+=':'+Math.floor(liquidWGPU.simulationClock*12);
     if(toyBubbles)overlayKey+=':'+toyBubbles.captureClock;
@@ -15588,7 +15595,7 @@
             c.fillText('Pour',f.pour.x,f.pour.y-12/fitScale);c.restore();
           }}}
       if(toyThermoscope){var heater=definition.thermoscope;
-        c.fillText(toyThermoscope.heated?'Heater on':'Cooling',heater.x+88,heater.y-10);
+        c.fillText(toyThermoscope.heated?'Heat '+toyThermoscope.heatPower.toFixed(1)+'x':'Cooling',heater.x+88,heater.y-10);
         if(art)art.heater(c,{x:heater.x-16,y:heater.y-8,width:32,height:16},{heated:toyThermoscope.heated,glow:true});
         if(definition.setup==='vented')c.fillText('Open vent',heater.x+104,100);
       }
@@ -15987,6 +15994,17 @@
     SmokeFluid.setThermalStyle({glow:toySauna?.15:1,waterCooling:24});
   }
 
+  function setThermoscopeHeat(value){
+    if(!toyThermoscope || !machineState || !Number.isFinite(value))return false;
+    toyThermoscope.heatPower=Math.max(0,Math.min(20,value));
+    toyThermoscope.heated=toyThermoscope.heatPower>0;
+    if(toyThermoscope.heated)toyThermoscope.lastHeatPower=toyThermoscope.heatPower;
+    machineState.definition.action=toyThermoscope.heated?'Cool the bulb':'Warm the bulb';
+    machineOverlayCache=null;
+    if(!rafId)drawMachineOverlay();
+    return true;
+  }
+
   function thermoscopeTick(){
     if(!toyThermoscope || !machineState || !smokeActive)return;
     smokeAwakeT=SMOKE_IDLE_HOLD;
@@ -15997,7 +16015,7 @@
     thermoscopeAcc+=h;
     var n=Math.min(3,Math.floor(thermoscopeAcc/SMOKE_EMITTER_DT));thermoscopeAcc-=n*SMOKE_EMITTER_DT;
     // Warm clear air through the temperature channel, with no smoke tracer.
-    for(var i=0;i<n;i++)SmokeFluid.heatSource({x:(t.x-t.width*.5)/worldW,y:1-(t.y+t.height*.5)/worldH,width:t.width/worldW,height:t.height/worldH},t.alphaPerSample,{r:0,g:0,b:0});
+    for(var i=0;i<n;i++)SmokeFluid.heatSource({x:(t.x-t.width*.5)/worldW,y:1-(t.y+t.height*.5)/worldH,width:t.width/worldW,height:t.height/worldH},t.alphaPerSample*toyThermoscope.heatPower,{r:0,g:0,b:0});
   }
 
   function steamTick(){
@@ -16384,6 +16402,7 @@
         return changed;
       },
       thermoscope:function(){return toyThermoscope;},
+      thermoscopeHeat:setThermoscopeHeat,
       submarine:function(){return machineState && machineState.ready && machineState.definition.submarine ? toyDraftRuntime : null;},
       submarineInput:function(name,active){
         if(!machineState || !machineState.ready || !machineState.definition.submarine || !toyDraftRuntime)return false;

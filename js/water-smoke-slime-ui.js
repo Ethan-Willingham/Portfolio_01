@@ -59,6 +59,22 @@
     }
     var playback = shell.querySelector('.toy-playback');
     var actionLayer = document.getElementById('toy-scene-actions');
+    var thermoscopeControl=document.getElementById('toy-thermoscope-control');
+    var thermoscopeHeat=document.getElementById('toy-thermoscope-heat');
+    if(thermoscopeHeat)thermoscopeHeat.addEventListener('input',function(){
+      toy.thermoscopeHeat(Number(thermoscopeHeat.value));syncThermoscope();
+    });
+    function syncThermoscope(){
+      if(!thermoscopeControl)return;
+      var state=toy.stats(),heat=toy.thermoscope();
+      thermoscopeControl.hidden=state.scene!=='thermoscope' || state.loading || !heat;
+      if(thermoscopeControl.hidden)return;
+      thermoscopeHeat.value=String(heat.heatPower);
+      thermoscopeHeat.setAttribute('aria-valuetext',heat.heated?heat.heatPower.toFixed(1)+' times normal heat':'Off, cooling toward room temperature');
+      text('toy-thermoscope-power',heat.heated?heat.heatPower.toFixed(1)+'x':'Off');
+      var reading=toy.instruments().thermoscope;
+      text('toy-thermoscope-air',reading && Number.isFinite(reading.temperatureF)?'Air '+Math.round(reading.temperatureF)+' degrees F':'Air temperature: waiting');
+    }
     var actionButtons = new Map();
     var activeHeldButton = null;
     var caveIndicator=document.getElementById('toy-cave-indicator');
@@ -558,6 +574,7 @@
       fitPanel();
     }
     function updateMeasurements() {
+      syncThermoscope();
       if(submarineControls)submarineControls.sync();
       if(sluiceControls)sluiceControls.update();
       if (oxygenView) oxygenView.update();
@@ -736,6 +753,7 @@
     }
 
     function sync() {
+      syncThermoscope();
       if(submarineControls)submarineControls.sync();
       syncCamera();
       var state = toy.stats();
