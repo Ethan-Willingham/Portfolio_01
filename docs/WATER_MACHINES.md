@@ -102,11 +102,26 @@ Testing process and writes screenshots and measurements to
 `/tmp/ballast-railway-review`.
 ## Machine de Marly
 
-The volume-ledger cutaway was withdrawn because its water was drawn by Canvas
-instead of simulated by the shared native liquid solver. Its model and browser
-tests remain in the repository temporarily as a record of the rejected design;
-they are not evidence of a native-water machine. The replacement must move
-actual resident water particles through the pump and into the elevated tank.
+The river source injects resident water into the existing MLS-MPM liquid solver. Its
+measured upstream velocity supplies a momentum-flux load to four solid wheel paddles.
+The wheel has inertia, bearing drag and an 8:1 gear ratio to a piston. The wheel
+angle constrains the piston boundary of the existing spray-bottle apparatus. Two
+pressure-operated check valves route real water from the low source through the
+pump and lift pipe into an upper receiver. The wheel can be braked, and the river
+supply can be stopped. The still-river setup starts with the same water and pump
+but cannot turn the wheel or deliver water. The receiver readout counts resident
+particles within the raised vessel, with no painted water or volume ledger.
+
+This is a reduced two-dimensional wheel load: the liquid solver handles actual
+water positions, velocities, collisions and pumping, but does not expose exact
+reciprocal impact impulses on the shaft. The measured upstream momentum flux
+approximates that load. The powered river boundary adds mass and energy. Neither
+the paddle reaction nor the whole machine's energy balance is exact, and this is
+one pumping stage rather than the full historic installation.
+
+Run `node tools/test-marly-machine.cjs` for the native-water browser regression.
+It checks delivery, the dry comparison, braking, scene cleanup and landscape touch
+layout in an owned Chrome for Testing process.
 
 ## Sewer gas trap
 

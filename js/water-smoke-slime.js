@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.246'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.247'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -15677,8 +15677,8 @@
         if(b.tap && art)art.flowControl(c,b.tap,{enabled:!toyBoundary || toyBoundary.stats().tapEnabled});
         if(b.drain && detailAnnotations){
           c.setLineDash([3,3]);c.strokeRect(b.drain.x,b.drain.y,b.drain.width,b.drain.height);
-          if(b.tap){c.beginPath();c.moveTo(56,b.drain.y);c.lineTo(56,b.tap.y);c.lineTo(b.tap.x-b.tap.width*.5,b.tap.y);c.stroke();c.fillText('Powered return',64,b.tap.y-10);}
-          c.setLineDash([]);c.fillText('Recycling collector',b.drain.x+8,b.drain.y-8);
+          if(b.tap){c.beginPath();c.moveTo(56,b.drain.y);c.lineTo(56,b.tap.y);c.lineTo(b.tap.x-b.tap.width*.5,b.tap.y);c.stroke();c.fillText(definition.name==='marly-machine'?'River inflow':'Powered return',64,b.tap.y-10);}
+          c.setLineDash([]);c.fillText(definition.name==='marly-machine'?'Source overflow':'Recycling collector',b.drain.x+8,b.drain.y-8);
         }
         if(definition.primary.kind==='thumb'){
           var o=definition.primary.opening;c.lineWidth=machineState.thumbHeld ? 4 : 1;c.beginPath();c.moveTo(o.start,o.at);c.lineTo(o.end,o.at);c.stroke();c.lineWidth=1;

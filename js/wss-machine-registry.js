@@ -2773,17 +2773,22 @@
     "id": "marly-machine",
     "title": "Machine de Marly",
     "capability": "Floating things",
-    "status": "WITHDRAWN",
-    "cue": "Withdrawn while the waterwheel and pump are rebuilt on the native water solver.",
+    "status": "WORKS",
+    "cue": "River water turns the wheel, gears work the piston, and native water climbs to the upper receiver. Brake the wheel or stop the river to compare.",
     "world": {
       "w": 720,
       "h": 400
     },
     "pool": false,
     "draft": true,
-    "accepted": false,
+    "accepted": true,
     "scripts": [
-      "wss-marly-model",
+      "wss-drafts-fluid-machines",
+      "wss-drafts-bodies",
+      "wss-cartesian-divers",
+      "wss-machines/cartesian-divers",
+      "wss-drafts-creatures",
+      "wss-body-machines",
       "wss-marly-machine"
     ],
     "preview": "cup"

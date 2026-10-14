@@ -8,7 +8,7 @@
 var M=root.WSSMachines=root.WSSMachines||{};
 var ids=['cup-synchronization','intermittent-fountain','binary-staircase','mariotte-bottle','banu-musa-fountain','bottle-glass-pitch','fountain-music','galileo-well','vacuum-siphon','bramah-press','hero-vending','hero-drinking-animal','jazari-peacock','moniac','lukyanov-integrator','parts-budget-puzzles','pneumatica-campaign','garden-automation','fire-brigade','water-chain-reaction'];
 var labels={
-'cup-synchronization':'Coupled self-flushing cups','intermittent-fountain':'Intermittent fountain','binary-staircase':'Binary staircase','mariotte-bottle':'Mariotte constant bottle','banu-musa-fountain':'Banu Musa changing fountain','bottle-glass-pitch':'Bottles and glasses','fountain-music':'Playable fountain show','galileo-well':"Galileo's suction well",'vacuum-siphon':'Siphon in a vacuum','bramah-press':"Bramah's hydraulic press",'hero-vending':"Hero's vending machine",'hero-drinking-animal':"Hero's drinking animal",'jazari-peacock':"Al-Jazari's peacock washer",'moniac':'MONIAC water economy','lukyanov-integrator':'Lukyanov water integrator','marly-machine':'Machine de Marly','parts-budget-puzzles':'Parts-budget puzzles','pneumatica-campaign':'Pneumatica campaign','garden-automation':'Automate the garden','fire-brigade':'Fire brigade','water-chain-reaction':'Water chain reaction'};
+'cup-synchronization':'Coupled self-flushing cups','intermittent-fountain':'Intermittent fountain','binary-staircase':'Binary staircase','mariotte-bottle':'Mariotte constant bottle','banu-musa-fountain':'Banu Musa changing fountain','bottle-glass-pitch':'Bottles and glasses','fountain-music':'Playable fountain show','galileo-well':"Galileo's suction well",'vacuum-siphon':'Siphon in a vacuum','bramah-press':"Bramah's hydraulic press",'hero-vending':"Hero's vending machine",'hero-drinking-animal':"Hero's drinking animal",'jazari-peacock':"Al-Jazari's peacock washer",'moniac':'MONIAC water economy','lukyanov-integrator':'Lukyanov water integrator','parts-budget-puzzles':'Parts-budget puzzles','pneumatica-campaign':'Pneumatica campaign','garden-automation':'Automate the garden','fire-brigade':'Fire brigade','water-chain-reaction':'Water chain reaction'};
 function rect(x,y,width,height){return{x:x,y:y,width:width,height:height};}
 function tank(id,label,x,y,w,h,f){return{id:id,label:label,rect:rect(x,y,w,h),volume:w*(h-12)*(f||0),capacity:w*(h-12)};}
 function edge(id,a,b,bore,extra){return Object.assign({id:id,a:a,b:b,bore:bore,open:true,length:80,flow:0},extra||{});}
@@ -66,9 +66,6 @@ function model(id,o){
   }else if(id==='lukyanov-integrator'){
     for(var l=0;l<4;l++)T('t'+l,'Layer '+(l+1),65+l*169,115,132,240,l===0?.65:.25);
     for(l=0;l<3;l++)E('diffuse'+l,'t'+l,'t'+(l+1),5,{conductance:2.2});primary='Apply heat pulse';K('resistance','Change resistance',540,115);
-  }else if(id==='marly-machine'){
-    T('river','Upstream river',50,212,242,118,.80);T('tail','Downstream river',328,305,150,70,.10);T('upper','Upper reservoir',525,72,130,175,.05);
-    E('wheel','river','tail',18,{open:false});E('pump','river','upper',10,{pump:260,open:false,wheelDriven:true});E('spill','upper','tail',3,{threshold:.86});primary='Engage river wheel';u.running=false;
   }else if(id==='parts-budget-puzzles'){
     T('source','Source',62,95,190,255,.9);T('middle','Intermediate',285,170,150,180,0);T('receiver','Goal',472,210,175,140,0);
     E('part0','source','middle',9,{open:false});E('part1','middle','receiver',9,{open:false});E('part2','source','receiver',6,{open:false});primary='Place first link';K('part1','Place second link',358,115);K('part2','Place shortcut (2 parts)',541,115);u.budget=2;
@@ -93,7 +90,7 @@ function make(id,w,o){
   if(id==='bottle-glass-pitch')vessels=[];
   var pipes=[];
   var entry=root.WSSMachineRegistry&&root.WSSMachineRegistry.lookup(id),caption=entry&&entry.cue||'Operate the apparatus. Water moves through its measured levels, pressure differences, valves and pumps.';
-  var energyNote=id==='marly-machine'?'External river inflow and outflow are recorded. Falling river water drives the wheel; its available head and a stated 58 percent efficiency limit the lifted flow.':id==='moniac'?'This is a water analog of monetary flow, not a calibrated economic forecast. Declared return pumps recirculate its conserved working water.':id==='binary-staircase'?'Each input removes a measured water pulse from the finite supply. A two-pulse tipping bucket passes half its water upward and returns half to supply, conserving the count fluid.':id==='garden-automation'?'Gravity supplies the irrigation head. Flow resistance dissipates it, while the declared soil-uptake sink removes finite water from the system. No plant metabolism or closed energy budget is modeled.':id==='hero-vending'?'The coin falls under gravity and loads a spring and damper. Its lever opens the water valve; water then drains from a finite raised supply. The mechanical linkage and pipe loss are reduced, without a closed energy budget.':'Pumps and hand inputs supply declared external work. Gravity and pressure set flow direction; friction dissipates energy. This model is not a closed account of heat, sound or detailed fluid momentum.';
+  var energyNote=id==='moniac'?'This is a water analog of monetary flow, not a calibrated economic forecast. Declared return pumps recirculate its conserved working water.':id==='binary-staircase'?'Each input removes a measured water pulse from the finite supply. A two-pulse tipping bucket passes half its water upward and returns half to supply, conserving the count fluid.':id==='garden-automation'?'Gravity supplies the irrigation head. Flow resistance dissipates it, while the declared soil-uptake sink removes finite water from the system. No plant metabolism or closed energy budget is modeled.':id==='hero-vending'?'The coin falls under gravity and loads a spring and damper. Its lever opens the water valve; water then drains from a finite raised supply. The mechanical linkage and pipe loss are reduced, without a closed energy budget.':'Pumps and hand inputs supply declared external work. Gravity and pressure set flow direction; friction dissipates energy. This model is not a closed account of heat, sound or detailed fluid momentum.';
   if(id==='cup-synchronization')energyNote='A declared return pump lifts finite water from the shared basin into both cups. Their siphons drain it back. The cross-connection transfers water by head difference without a separate motor; port loss dissipates energy. This is a reduced hydraulic model.';
   if(id==='intermittent-fountain')energyNote='A declared return pump refills the finite trigger cup. When its measured level reaches the siphon crest, the pump pauses and gravity sends water through the jet tube back to the basin. The siphon breaks at the lower reset level. This is a reduced hydraulic model without resolved bubbles or spray.';
   if(id==='bottle-glass-pitch')energyNote='Finite water flows by gravity into both vessels. Bottle pitch follows a Helmholtz air-cavity estimate; glass pitch follows an approximate added-water modal mass. The audible tones are synthesized on demand and do not feed back into water motion.';
@@ -129,7 +126,6 @@ function create(c){
     else if(id==='hero-drinking-animal')d.action=s.pressed?'Stop suction':'Start suction';
     else if(id==='jazari-peacock')d.action=s.running?'Stop washer':'Start washer';
     else if(id==='moniac')d.action=byEdge.spend.bore>7?'Lower spending':'Raise spending';
-    else if(id==='marly-machine')d.action=s.running?'Stop river wheel':'Engage river wheel';
     else if(id==='garden-automation')d.action=s.running?'Stop moisture control':'Start moisture control';
     else if(id==='fire-brigade')d.action=s.running?'Stop hose':'Start hose';
     else if(id==='water-chain-reaction')d.action=byEdge.trigger0.open?'Close starter gate':'Open starter gate';
@@ -148,7 +144,6 @@ function create(c){
     else if(id==='jazari-peacock')d.readingLabel=s.mode?'Bowl draining':'Serving until bowl fills';
     else if(id==='moniac')d.readingLabel='Treasury '+Math.round(fraction(by.t0)*100)+'%, household '+Math.round(fraction(by.t2)*100)+'%';
     else if(id==='lukyanov-integrator')d.readingLabel='Layer temperatures represented by water levels';
-    else if(id==='marly-machine')d.readingLabel=(s.running?'River wheel turning':'Wheel stopped')+', upper '+Math.round(fraction(by.upper)*100)+'%';
     else if(id==='parts-budget-puzzles')d.readingLabel=(completed?'Receiver filled. ': 'Reach the receiver. ')+'Parts '+s.budget+' left';
     else if(id==='pneumatica-campaign')d.readingLabel=completed?'Campaign complete':'Stage '+(Math.min(3,s.stage)+1)+' of 4';
     else if(id==='garden-automation')d.readingLabel=(s.running?'Moisture control on':'Moisture control off')+', '+n.slice(1).map(function(a){return Math.round(fraction(a)*100)+'%';}).join(' / ');
@@ -214,7 +209,6 @@ function create(c){
     }
     if(id==='hero-drinking-animal')byEdge.straw.open=s.pressed;
     if(id==='jazari-peacock'){if(fraction(by.bowl)>.72)s.mode=1;if(fraction(by.bowl)<.12)s.mode=0;byEdge.serve.open=s.running&&!s.mode;byEdge.empty.open=s.running&&!!s.mode;}
-    if(id==='marly-machine'){byEdge.wheel.open=s.running;byEdge.pump.open=s.running&&by.river.volume>by.river.capacity*.06;}
     if(id==='pneumatica-campaign'){s.readyGate1=fraction(by.one)>=.40;s.readyGate2=fraction(by.two)>=.25;}
     if(id==='garden-automation')e.forEach(function(x){if(/^irrigate/.test(x.id))x.open=s.running&&fraction(by[x.b])<(s.mode?.65:.45);});
     if(id==='water-chain-reaction'){byEdge.trigger1.open=fraction(by.stage0)>.08;byEdge.trigger2.open=fraction(by.stage1)>.08;}
@@ -229,12 +223,9 @@ function create(c){
       var flow=x.conductance?x.conductance*head:x.bore*.45*Math.sign(head)*Math.sqrt(2*250*Math.abs(head));
       if(x.check&&flow<0)flow=0;
       var requested=flow*dt;
-      if(x.wheelDriven)requested=Math.min(Math.max(0,requested),Math.max(0,byEdge.wheel.flow)*dt*Math.max(0,nodeHead(by.river)-nodeHead(by.tail))*.58/Math.max(1,x.pump));
       var moved=requested>=0?move(a,b,requested):move(b,a,-requested);x.flow=(requested>=0?1:-1)*moved/dt;
-      if(x.id==='wheel'&&moved>0){s.energy+=moved*Math.max(0,nodeHead(by.river)-nodeHead(by.tail))*250;}
-      if(x.pump&&moved>0&&!x.wheelDriven){energy+=moved*x.pump*250;s.energy+=moved*x.pump*250;}
+      if(x.pump&&moved>0){energy+=moved*x.pump*250;s.energy+=moved*x.pump*250;}
     });
-    if(id==='marly-machine'){var tail=by.tail,drained=Math.min(tail.volume,dt*1000);tail.volume-=drained;removed+=drained;var river=by.river,received=Math.min(river.capacity-river.volume,dt*1000);river.volume+=received;added+=received;}
     if(id==='fire-brigade')for(var k=0;k<3;k++){var fire=by['fire'+k],v=Math.min(fire.volume,dt*300,s.heat[k]*800);fire.volume-=v;removed+=v;s.heat[k]=Math.max(0,s.heat[k]-v/800);}
     if(id==='garden-automation')for(k=0;k<3;k++){var soil=by['soil'+k],uptake=Math.min(soil.volume,dt*5);soil.volume-=uptake;removed+=uptake;}
     if(id==='parts-budget-puzzles'&&fraction(by.receiver)>.5)completed=true;
@@ -328,7 +319,6 @@ function create(c){
       ctx.fillStyle=ink;ctx.beginPath();ctx.arc(316,184,5,0,Math.PI*2);ctx.fill();
       if(s.coin>0){ctx.beginPath();ctx.arc(350,96+Math.min(1,s.coin)*80,8,0,Math.PI*2);ctx.fill();}
     }
-    if(d.name==='marly-machine'){var wheel=byEdge.wheel,angle=t*Math.min(8,Math.abs(wheel.flow)/110);ctx.strokeStyle=ink;ctx.lineWidth=3;ctx.beginPath();ctx.arc(310,315,25,0,Math.PI*2);ctx.stroke();for(var k=0;k<6;k++){var theta=angle+k*Math.PI/3;ctx.beginPath();ctx.moveTo(310,315);ctx.lineTo(310+25*Math.cos(theta),315+25*Math.sin(theta));ctx.stroke();}}
     if(d.name==='fire-brigade'){for(var f=0;f<3;f++)if(s.heat[f]>.001){var fire=by['fire'+f].rect;ctx.fillStyle=ink;ctx.globalAlpha=.4+.6*s.heat[f];ctx.beginPath();ctx.arc(fire.x+fire.width*.5,fire.y+fire.height*.35,7+14*s.heat[f],0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;}}
     ctx.font='13px "Commit Mono", monospace';ctx.textAlign='center';ctx.fillStyle=ink;ctx.fillText(d.readingLabel||'',d.name==='intermittent-fountain'?610:360,15);ctx.restore();}
   setMessage();return{smoke:false,tick:tick,draw:draw,clock:function(){return t;},stats:stats,primary:function(){return activate('primary');},controls:function(){return[{id:'primary',label:d.action,x:d.name==='bottle-glass-pitch'?92:d.name==='bramah-press'?180:364,y:d.name==='bottle-glass-pitch'?28:46,width:130,height:36,kind:'runtime',pointerMode:'button',disabled:d.name==='parts-budget-puzzles'&&(s.budget<1||byEdge.part0.open)||d.name==='pneumatica-campaign'&&byEdge.gate0.open}].concat(controls.map(function(x){return{id:x.id,label:x.label,x:x.x,y:x.y,width:x.width,height:x.height,kind:'runtime',pointerMode:'button',disabled:d.name==='parts-budget-puzzles'&&(byEdge[x.id].open||s.budget<(x.id==='part2'?2:1))||d.name==='pneumatica-campaign'&&(byEdge[x.id].open||!(x.id==='gate1'?s.readyGate1:s.readyGate2))};}));},activate:function(id){return activate(id);},release:function(){},setActive:function(active){audioActive=!!active;if(audio){if(audioActive)audio.resume();else audio.suspend();}updateMusic();},destroy:function(){voices.forEach(function(v){v.oscillator.stop();});voices=[];if(audio)audio.close();audio=null;}};
