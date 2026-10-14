@@ -45,6 +45,8 @@ function healthy(r){
     assert(Math.hypot(p.x-r.railway.tanks[i].x,p.y-r.railway.tanks[i].y)<.01,'the actual water tank moves with the carriage');
   });
   assert(Math.abs(r.railway.cableError)<.01,'the common cable retains its length');
+  assert(Number.isFinite(r.railway.canonicalMomentum+r.railway.couplingImpulse),'the coupled water and car momenta stay finite');
+  assert(Math.abs(r.railway.momentumResidual)<.01,'the water and car momentum equals the integrated cable momentum');
   assert.equal(r.boundary.present+r.boundary.parked,r.boundary.count,'the native inventory is conserved');
   assert(!r.status.includes('Waiting for pressure'),'status describes the railway');
 }
@@ -163,6 +165,13 @@ async function verifyNativeBallast(name){
       const cycles=mobile?1:2;
       const completed=await waitFor(r=>r.railway.cycles>=cycles,cycles+' complete round trips');
       assert(completed.railway.trips>=cycles*2,'every cycle has two completed trips');
+      assert(completed.railway.couplingImpulseAbs>1000,'native water transfers momentum back to the cars');
+      assert(completed.railway.gravityImpulseAbs>1000,'gravity supplies the descending ballast impulse');
+      assert(Math.abs(completed.railway.bearingImpulse)>0,'bearing drag is accounted for');
+      completed.railway.arrivalLoads.slice(0,cycles*2).forEach((arrival,i)=>{
+        const departure=completed.railway.departureLoads[i],car=departure.topCar;
+        assert(arrival.counts[car]>=departure.counts[car]*.8,'the closed moving hull retains its real water load');
+      });
       await capture('cycles-complete');
       const liveSamples=samples.filter(s=>s.view===prefix && s.railway.trips>=0);
       assert(liveSamples.some(s=>s.railway.velocity>.5) && liveSamples.some(s=>s.railway.velocity<-.5),'observed actual motion in both directions');
@@ -208,7 +217,7 @@ async function verifyNativeBallast(name){
       await context.close();
     }
     assert.deepEqual(errors,[]);
-    console.log('PASS: independent native ballast counts, cable constraint, dry control, repeated round trips, stop/start water, pause, restart and scene cleanup with desktop and landscape touch.');
+    console.log('PASS: independent native ballast counts and momentum, two-way impulse, cable constraint, ballast retention, dry control, repeated round trips, stop/start water, pause, restart and scene cleanup with desktop and landscape touch.');
   }finally{
     fs.writeFileSync(path.join(output,'measurements.json'),JSON.stringify({reports,samples,errors},null,2));
     if(browser)await browser.close();await new Promise(resolve=>server.close(resolve));
