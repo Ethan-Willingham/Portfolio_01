@@ -156,18 +156,27 @@ Testing and saves screenshots and measurements to `/tmp/sewer-trap-review`.
 
 ## Breathing cave
 
-The cave starts with equal pressure and still air. Two visible buttons raise
-inside or outside pressure by 10 hPa per press. Holding either button for more
-than 250 ms keeps raising that side by 40 hPa per active second. Mouse and touch
-use pointer capture; Space and Enter hold the focused button. Release, lost
-capture, touch cancellation, focus loss, inactivity or a scene change clears the
-hold. A release click adds no second step. Inside inputs add recorded
-ideal-gas mass at fixed temperature. Outside inputs change the surrounding
-reservoir pressure, which then stays fixed until the next input. The pressure
-difference drives an entrance with inertia and quadratic pressure loss.
-Closing the real mouth valve traps its existing charge. Reopening uses that
-charge. Instruments offers equal starting pressures and a closed initial mouth.
-Pause freezes the gas and arrow motion; the pressure buttons remain usable.
+The cave starts with equal pressure and still air. Two independent sliders set
+inside and outside pressure from 900 to 1200 hPa in 0.25 hPa steps. They work
+with mouse, touch and native keyboard range controls. Each slider displays its
+absolute setting; the centered gauge compares them and the large readout shows
+actual airflow. The outside value sets the surrounding reservoir. An ideal
+inside pressure controller adds or removes recorded isothermal air mass to hold
+its setting, including during flow. The net controller mass enters the gas
+ledger. This is an adjustable pressure experiment with externally supplied
+pressure control. The pressure difference drives the inertial entrance with
+quadratic loss. Closing the real mouth stops gas exchange; reopening uses the
+chosen pressure combination. Pause freezes gas and arrow motion; sliders and
+smoke emission remain usable. Reset starts both sliders at 1013.25 hPa.
+
+Click or tap clear space in the cave view to add a smoke puff. The click deposits
+one unit of passive concentration in a Gaussian patch restricted to locally
+connected clear cells. Conservative upwind transport moves it across the same
+faces and with the same velocity as the airflow. Adaptive Courant steps keep
+concentration nonnegative. Solid faces carry no smoke. Smoke is never reseeded
+or faded on reversal; the existing concentration moves back with the air.
+The smoke supplies no heat, buoyancy or pressure feedback. Its gray opacity
+shows concentration; arrows still report the moving probe bodies.
 
 The arrows are free diagnostic probes carried by air drag. Each probe has
 0.002 kg of mass and 0.00004 kg square meters of angular inertia. A front sail
@@ -204,11 +213,12 @@ the same layout on desktop and touch screens at the same viewport size.
 
 This scene has a separate large scale: one world pixel is one meter, with ten
 meters of section depth. Both pressures start at 101325 Pa. There is no automatic
-weather cycle. The pressure mechanism follows the [National Park Service explanation
+weather cycle. Natural barometric cave breathing follows the [National Park Service explanation
 of Wind Cave](https://www.nps.gov/wica/learn/education/what-causes-the-wind-of-wind-cave.htm).
 
 A backward Euler entrance solve couples neck momentum, pressure loss and the
-isothermal gas equation. Neck inertia and loss use mean entrance density; the
+isothermal gas equation in the finite-inventory comparison, or the maintained
+inside setting in the interactive scene. Neck inertia and loss use mean entrance density; the
 signed drive selects the upwind gas density for actual mass transfer. A
 finite-volume potential field distributes the
 resulting compression or expansion through the actual clear cells. Solid faces
@@ -228,8 +238,8 @@ checks. The initial sixty-second control stays exactly still. A single input
 must move the chamber arrows and visibly turn even the slowest within three seconds. Run
 `DUMP=/tmp/breathing-cave-review node tools/test-breathing-cave.mjs` for owned
 Chrome for Testing playback at desktop and landscape mobile sizes, mouse and
-touch holds, outside-target release, keyboard holds, blur and touch cancellation
-on both pressure controls, pause, reduced motion and reset to
+touch slider drags, keyboard pressure adjustment, independent combinations,
+click and tap smoke emission, smoke transport and reversal, pause, reduced motion and reset to
 equal pressures. The browser regression also checks normal-playback position and angular
 continuity, persistent identities during pressure reversal, readable
 text contrast, semantic status and meter labels, separation from the apparatus,

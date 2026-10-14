@@ -10,6 +10,8 @@
     var version=-1,sourceCells=0,volume=0,area=0,mass=0,initialMass=0,admitted=0,escaped=0,
       seconds=0,speed=0,flow=0,outside=spec.ambientPa,pressure=outside,maxResidual=0,steps=0,unitMouthFlux=0;
     var fieldResidual=0,fieldIterations=0,error=null,initialized=false,clip=null,pumped=0;
+    var insideTarget=spec.controlPressure===false?null:spec.ambientPa;
+    var smoke=new Float64Array(n),smokeNext=new Float64Array(n),smokeAdded=0,smokeClicks=0,revision=0;
     var markers=[],angularTravel=0,distanceTravel=0,maxAngularStep=0,maxPositionStep=0,vane=spec.arrow;
     function inChamber(x,y){var r=spec.chamber;return x>=r.x && x<r.x+r.width && y>=r.y && y<r.y+r.height;}
     function neighbors(i,visit){
@@ -202,6 +204,7 @@
     function increasePressure(side,amount){
       if(amount===undefined)amount=spec.pressureStepPa;
       if(side!=='inside' && side!=='outside' || !(amount>0) || !Number.isFinite(amount) || error)return false;
+      if(insideTarget!==null)return setPressure(side,(side==='inside'?insideTarget:outside)+amount);
       if(side==='outside')outside+=amount;
       else{
         var added=amount*volume/(spec.gasConstant*spec.temperature);
@@ -209,13 +212,59 @@
       }
       return true;
     }
+    function regulateInside(){
+      if(insideTarget===null)return;
+      var targetMass=insideTarget*volume/(spec.gasConstant*spec.temperature);
+      pumped+=targetMass-mass;mass=targetMass;pressure=insideTarget;
+    }
+    function setPressure(side,value){
+      if(side!=='inside' && side!=='outside' || !Number.isFinite(value) || value<spec.pressureMinPa || value>spec.pressureMaxPa || error)return false;
+      if(side==='outside')outside=value;
+      else{insideTarget=value;regulateInside();}
+      revision++;return true;
+    }
+    function addSmoke(x,y){
+      if(!Number.isFinite(x+y) || x<0 || y<0 || x>=world.w || y>=world.h || world.solidAt(x,y) || error)return false;
+      if(version!==world.version())rebuild();
+      var weights=[],total=0,sigma=12,seen=new Uint8Array(n),queue=[Math.floor(y/h)*w+Math.floor(x/h)];seen[queue[0]]=1;
+      for(var head=0;head<queue.length;head++){
+        var i=queue[head],col=i%w,row=Math.floor(i/w),distance=((col+.5)*h-x)**2+((row+.5)*h-y)**2;
+        if(solid[i] || distance>9*sigma*sigma)continue;
+        var weight=Math.exp(-distance/(2*sigma*sigma));weights.push({i:i,weight:weight});total+=weight;
+        neighbors(i,function(j){if(!seen[j] && !solid[j]){seen[j]=1;queue.push(j);}});
+      }
+      if(!(total>0))return false;
+      weights.forEach(function(item){smoke[item.i]+=item.weight/total;});
+      smokeAdded++;smokeClicks++;revision++;return true;
+    }
+    function moveSmoke(dt){
+      if(!smokeAdded || !flowPerDepth)return;
+      var rate=0;
+      for(var i=0;i<n;i++)rate=Math.max(rate,Math.abs(flowPerDepth)/h*(Math.abs(fx[i])+Math.abs(fy[i])+(i%w?Math.abs(fx[i-1]):0)+(i>=w?Math.abs(fy[i-w]):0)));
+      while(dt>1e-12){
+        var step=Math.min(dt,rate>0 ? .9/rate : dt);dt-=step;smokeNext.set(smoke);
+        for(var i=0;i<n;i++){
+          // Conservative upwind transport across the same solid-free faces
+          // used by the gas velocity. Smoke has no buoyancy or gas feedback.
+          if(i%w<w-1 && fx[i]){
+            var velocity=fx[i]*flowPerDepth,transfer=velocity*step/h*smoke[velocity>=0?i:i+1];
+            smokeNext[i]-=transfer;smokeNext[i+1]+=transfer;
+          }
+          if(i<n-w && fy[i]){
+            var velocity=fy[i]*flowPerDepth,transfer=velocity*step/h*smoke[velocity>=0?i:i+w];
+            smokeNext[i]-=transfer;smokeNext[i+w]+=transfer;
+          }
+        }
+        var swap=smoke;smoke=smokeNext;smokeNext=swap;
+      }
+    }
     function tick(dt){
       if(version!==world.version())rebuild();
       if(!(dt>0) || error)return;
       var remaining=dt;
       while(remaining>1e-10){
         var step=Math.min(1/120,remaining);remaining-=step;seconds+=step;
-        pressure=spec.ambientPa+(mass-initialMass)*spec.gasConstant*spec.temperature/volume;
+        regulateInside();pressure=insideTarget===null?spec.ambientPa+(mass-initialMass)*spec.gasConstant*spec.temperature/volume:insideTarget;
         if(area>0 && sourceCells){
           var rt=spec.gasConstant*spec.temperature;
           // Neck inertia uses mean density. Upwind transfer density is chosen
@@ -223,17 +272,17 @@
           // wrong donor merely because the density changed across the mouth.
           var neckDensity=(pressure+outside)*.5/rt,inertia=neckDensity*spec.neckLength/step;
           var drive=pressure-outside+inertia*speed,rho=(drive>=0?pressure:outside)/rt;
-          var linear=inertia+step*rt*rho*area/volume,quadratic=.5*neckDensity*spec.lossCoefficient;
+          var linear=inertia+(insideTarget===null?step*rt*rho*area/volume:0),quadratic=.5*neckDensity*spec.lossCoefficient;
           // Stable backward Euler of the entrance momentum plus gas EOS.
           speed=drive===0?0:Math.sign(drive)*2*Math.abs(drive)/(linear+Math.sqrt(linear*linear+4*quadratic*Math.abs(drive)));
           var transferred=rho*area*speed*step;mass-=transferred;
           if(transferred>=0)escaped+=transferred;else admitted-=transferred;
-          pressure=spec.ambientPa+(mass-initialMass)*rt/volume;flow=area*speed;
+          pressure=spec.ambientPa+(mass-initialMass)*rt/volume;regulateInside();flow=area*speed;
           // The chamber's density is uniform. Its compression/expansion
           // divergence carries precisely the computed mass crossing its neck.
           flowPerDepth=(transferred/step)/(mass/volume)/spec.depth;
         }else{flow=0;speed=0;flowPerDepth=0;}
-        moveArrows(step);
+        moveSmoke(step);moveArrows(step);
         if(error)return;
         maxResidual=Math.max(maxResidual,Math.abs(mass-initialMass-pumped-admitted+escaped));steps++;
         if(!(mass>0) || !Number.isFinite(mass+speed)){error='The cave gas state is invalid.';return;}
@@ -241,7 +290,8 @@
     }
     function stats(){
       if(version!==world.version())rebuild();
-      var turning=0,moving=0,nonfinite=0,contacts=0;
+      var turning=0,moving=0,nonfinite=0,contacts=0,smokeMass=0,smokeX=0,smokeY=0,smokeMinimum=Infinity;
+      for(var i=0;i<n;i++){smokeMass+=smoke[i];smokeX+=smoke[i]*(i%w+.5)*h;smokeY+=smoke[i]*(Math.floor(i/w)+.5)*h;smokeMinimum=Math.min(smokeMinimum,smoke[i]);}
       markers.forEach(function(marker){
         if(!Number.isFinite(marker.x+marker.y+marker.vx+marker.vy+marker.angle+marker.omega)){nonfinite++;return;}
         if(Math.abs(marker.omega)>.01)turning++;
@@ -255,7 +305,9 @@
         mouthOpen:area>0 && sourceCells>0,vaneCount:markers.length,turningVanes:turning,movingVanes:moving,
         vaneAngularTravel:angularTravel,maxAngularStep:maxAngularStep,nonfiniteVanes:nonfinite,
         vaneDistanceMeters:distanceTravel,maxPositionStep:maxPositionStep,wallContacts:contacts,
-        visualMotion:'moving-arrows',pressureHoldRatePaPerSecond:spec.pressureHoldRatePaPerSecond,
+        visualMotion:'moving-arrows',insideTargetPa:insideTarget,pressureMinPa:spec.pressureMinPa,pressureMaxPa:spec.pressureMaxPa,
+        smokeMass:smokeMass,smokeAdded:smokeAdded,smokeClicks:smokeClicks,smokeMinimum:smokeMinimum,
+        smokeCentroid:smokeMass?{x:smokeX/smokeMass,y:smokeY/smokeMass}:null,revision:revision,
         fieldResidual:fieldResidual,unitMouthFlux:unitMouthFlux,fieldIterations:fieldIterations,steps:steps,error:error};
     }
     function draw(c,palette){
@@ -269,6 +321,14 @@
         }
       }
       var scale=palette.scale || 1,size=20/scale,head=5/scale;
+      c.save();c.clip(clip);
+      for(var i=0;i<n;i++)if(smoke[i]>1e-5 && !solid[i]){
+        var x=(i%w+.5)*h,y=(Math.floor(i/w)+.5)*h,r=h*1.2;
+        var cloud=c.createRadialGradient(x,y,0,x,y,r);
+        cloud.addColorStop(0,palette.smoke || palette.text || palette.accent);cloud.addColorStop(1,'transparent');
+        c.fillStyle=cloud;c.globalAlpha=.65*(1-Math.exp(-smoke[i]*65));c.fillRect(x-r,y-r,2*r,2*r);
+      }
+      c.restore();
       c.save();c.clip(clip);c.strokeStyle=c.fillStyle=palette.air || palette.accent;c.lineWidth=1.6/scale;c.lineCap='round';
       markers.forEach(function(marker){
         var x=marker.x,y=marker.y;
@@ -282,7 +342,8 @@
       });
       c.restore();
     }
-    return {tick:tick,stats:stats,draw:draw,sampleVelocity:sampleVelocity,increasePressure:increasePressure,
+    return {tick:tick,stats:stats,draw:draw,sampleVelocity:sampleVelocity,increasePressure:increasePressure,setPressure:setPressure,addSmoke:addSmoke,
+      smokeCells:function(){return Array.from(smoke);},
       vanes:function(){return markers.map(function(marker){return Object.assign({},marker);});},
       destroy:function(){clip=null;markers.length=0;}};
   }

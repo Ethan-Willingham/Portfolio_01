@@ -26,7 +26,7 @@
   <link rel="preload" href="/assets/fonts/commit_mono_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/water-smoke-slime.css?v=v5.186">
-  <link rel="stylesheet" href="/water-smoke-slime-app.css?v=v5.239">
+  <link rel="stylesheet" href="/water-smoke-slime-app.css?v=v5.240">
   <link rel="stylesheet" href="/wss-submarine-controls.css?v=v5.192">
   <link rel="stylesheet" href="/water-rocket.css?v=v5.193">
 </head>
@@ -84,17 +84,17 @@
         <aside class="toy-cave-indicator" id="toy-cave-indicator" aria-label="Cave airflow and pressure" hidden>
           <div class="toy-cave-heading"><span>Airflow</span><span id="toy-cave-paused" hidden>Paused</span></div>
           <h2 id="toy-cave-flow" role="status" aria-live="polite" aria-atomic="true">Starting</h2>
-          <div class="toy-cave-controls" aria-label="Raise pressure">
-            <button type="button" data-cave-pressure="inside" aria-pressed="false" aria-label="Raise inside pressure. Tap for 10 hectopascals or hold to keep raising it."><span>Inside</span><span>Hold to raise</span></button>
-            <button type="button" data-cave-pressure="outside" aria-pressed="false" aria-label="Raise outside pressure. Tap for 10 hectopascals or hold to keep raising it."><span>Outside</span><span>Hold to raise</span></button>
+          <div class="toy-cave-controls" aria-label="Set pressures">
+            <label for="toy-cave-inside"><span>Inside pressure <output id="toy-cave-inside-value" for="toy-cave-inside">1013.25 hPa</output></span><input id="toy-cave-inside" type="range" data-cave-pressure="inside" min="900" max="1200" step="0.25" value="1013.25" aria-valuetext="1013.25 hPa"></label>
+            <label for="toy-cave-outside"><span>Outside pressure <output id="toy-cave-outside-value" for="toy-cave-outside">1013.25 hPa</output></span><input id="toy-cave-outside" type="range" data-cave-pressure="outside" min="900" max="1200" step="0.25" value="1013.25" aria-valuetext="1013.25 hPa"></label>
           </div>
           <div class="toy-cave-pressure">
             <p id="toy-cave-pressure-text">Waiting for pressure</p>
             <div class="toy-cave-meter" id="toy-cave-meter" role="meter" aria-label="Cave pressure relative to outside" aria-valuemin="-60" aria-valuemax="60" aria-valuenow="0" aria-valuetext="Waiting for pressure"><i class="toy-cave-meter-fill"></i></div>
             <div class="toy-cave-meter-labels" aria-hidden="true"><span>Cave higher</span><span>Equal</span><span>Outside higher</span></div>
           </div>
-          <p class="toy-cave-context" id="toy-cave-context">Raise either pressure to start the airflow.</p>
-          <p class="toy-cave-tracer">Arrows travel and turn with the air.</p>
+          <p class="toy-cave-context" id="toy-cave-context">Set different pressures to move the air.</p>
+          <p class="toy-cave-tracer">Click the cave to add smoke.</p>
         </aside>
         <aside class="toy-oxygen-legend" id="toy-oxygen-legend" aria-labelledby="toy-oxygen-heading" hidden>
           <div class="toy-oxygen-heading"><h2 id="toy-oxygen-heading">Oxygen</h2><span>by volume</span></div>
@@ -283,14 +283,14 @@
   <script src="/js/water-machines-scenes.js?v=v5.186"></script>
   <script src="/js/water-machines-instruments.js?v=v5.186"></script>
   <script src="/js/water-machines-pressure-view.js?v=v5.186"></script>
-  <script src="/js/wss-machine-registry.js?v=v5.238"></script>
+  <script src="/js/wss-machine-registry.js?v=v5.240"></script>
   <script src="/js/wss-apparatus-art.js?v=v5.186"></script>
-  <script src="/js/water-smoke-slime.js?v=v5.239"></script>
+  <script src="/js/water-smoke-slime.js?v=v5.240"></script>
   <script src="/js/wss-oxygen-view.js?v=v5.186-activity1"></script>
   <script src="/js/wss-sluice-transfer.js?v=v5.238"></script>
   <script src="/js/wss-sluice-controls.js?v=v5.238"></script>
   <script src="/js/wss-submarine-controls.js?v=v5.192"></script>
-  <script src="/js/water-smoke-slime-ui.js?v=v5.239"></script>
+  <script src="/js/water-smoke-slime-ui.js?v=v5.240"></script>
   <script src="/js/smoke-presets-ui.js?v=4"></script>
 </body>
 </html>

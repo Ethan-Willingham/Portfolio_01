@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.239'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.240'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -13206,6 +13206,11 @@
     pvx = 0; pvy = 0; lastMoveT = performance.now();
     pointerWaterFlow.acc = 0;
     pointerControl=false;pointerClickAction=null;pointerStartX=x;pointerStartY=y;
+    if(toyBreathingCave){
+      pointerControl=true;
+      if(!toggleValveAt(x,y) && toyBreathingCave.addSmoke(x,y)){instrumentTick(performance.now());drawMachineOverlay();updateReadout();}
+      return;
+    }
     if (tool === 'poke') {
       if(toyDraftRuntime && toyDraftRuntime.grab && machineState && machineState.definition.hourglass){
         pointerApparatus=!userPaused && toyDraftRuntime.grab(x,y);pointerControl=true;return;
@@ -15483,7 +15488,7 @@
     if(toySauna)overlayKey+=':'+Math.floor(liquidWGPU.simulationClock*12);
     if(toyBubbles)overlayKey+=':'+toyBubbles.captureClock;
     if(toySteam && machineState && machineState.definition.birds)overlayKey+=':'+machineState.definition.steam.whistleLengthInches+':'+pointerPipe;
-    if(toyBreathingCave)overlayKey+=':'+toyBreathingCave.stats().steps;
+    if(toyBreathingCave){var caveFrame=toyBreathingCave.stats();overlayKey+=':'+caveFrame.steps+':'+caveFrame.revision;}
     if(toyCannon && toyCannon.overlayKey)overlayKey+=':'+toyCannon.overlayKey();
     if(toyFloatSlider)overlayKey+=':'+toyFloatSlider.stats().y.toFixed(3);
     if(!buildGesture && !keyboardCursorVisible && machineOverlayCache && machineOverlayCache.key===overlayKey && machineOverlayCache.sample===instrumentSample)return;
@@ -15552,7 +15557,7 @@
           c.ellipse(waitingSlime.x,waitingSlime.y,waitingSlime.radius*.72,waitingSlime.radius*.68,0,Math.PI*1.12,Math.PI*1.52);c.stroke();c.restore();
         }
       }
-      if(toyBreathingCave)toyBreathingCave.draw(c,{accent:accent,text:text,air:palette.getPropertyValue('--app-brass').trim(),scale:fitScale});
+      if(toyBreathingCave)toyBreathingCave.draw(c,{accent:accent,text:text,air:palette.getPropertyValue('--app-brass').trim(),smoke:palette.getPropertyValue('--text-dim').trim(),scale:fitScale});
       if(toyThirsty){
         var drink=toyThirsty.stats(),tray=definition.vessels[0].rect;
         c.save();c.textAlign='center';c.font=(14/fitScale)+'px \"Segoe UI\", sans-serif';
@@ -16395,9 +16400,9 @@
       oxygen:function(){return toyOxygen || (toyDraftRuntime && toyDraftRuntime.oxygen ? toyDraftRuntime.oxygen : null);},
       fireSmokeDraft:function(){return toyFireSmokeDraft;},
       breathingCave:function(){return toyBreathingCave;},
-      cavePressure:function(side,amount){
+      caveSetPressure:function(side,value){
         if(!toyBreathingCave || !machineState || !machineState.ready)return false;
-        var changed=toyBreathingCave.increasePressure(side,amount);
+        var changed=toyBreathingCave.setPressure(side,value);
         if(changed){instrumentTick(performance.now());drawMachineOverlay();updateReadout();}
         return changed;
       },

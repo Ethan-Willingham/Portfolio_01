@@ -5,6 +5,7 @@ require('../js/wss-machines/breathing-cave.js');require('../js/wss-breathing-cav
 function setup(options={}){
   const walls=new Uint8Array(90*50);let version=0,closed=!!options.closed;
   const d=WSSMachines['breathing-cave'].make({w:720,h:400,tile:8},options);
+  d.cave.controlPressure=!!options.controlPressure;
   const b=B.create({width:90,height:50,tile:8,walls,onChange:()=>version++});
   d.vessels.forEach(v=>b.vessel(v.rect,v.sealed));d.pipes.forEach(p=>b.strokePipe(p.points,p.bore));
   const gate=d.cave.gate;
@@ -138,4 +139,38 @@ assert.ok(Math.abs(a.massKg-b.massKg)<1e-5 && Math.abs(a.vaneAngularTravel-b.van
 assert.ok(Math.abs(a.vaneDistanceMeters-b.vaneDistanceMeters)<1e-5,'physical travel is frame-size invariant');
 assert.ok(s.model.vanes().every(v=>v.distance>1),'every arrow has physically travelled');
 console.log(JSON.stringify({minSpeed:min,maxSpeed:max,reversals,maxRotationStep,roundTripArrows:[...entered].filter(id=>exited.has(id)).length,minTapTurnDegrees:turns[0]*180/Math.PI,medianTapTurnDegrees:turns[Math.floor(turns.length/2)]*180/Math.PI,medianTapTravelMeters:distances[Math.floor(distances.length/2)],quiet,manual:s.model.stats()},null,2));
-console.log('PASS: no automatic forcing; independent gas, entrance and arrow momentum; manual pressure; continuous physical travel and rotation; persistent IDs; wall collision; closure and dissipation; frame-size invariance.');
+const controlled=setup({controlPressure:true});
+assert.equal(controlled.model.setPressure('inside',104000),true);
+assert.equal(controlled.model.setPressure('outside',100000),true);
+assert.equal(controlled.model.setPressure('inside',NaN),false);
+assert.equal(controlled.model.setPressure('outside',89999),false);
+assert.equal(controlled.model.setPressure('inside',120001),false);
+assert.equal(controlled.model.addSmoke(512,220),true);
+assert.equal(controlled.model.addSmoke(116,200),false,'walls do not emit smoke');
+assert.equal(controlled.model.addSmoke(NaN,220),false);
+const emitted=controlled.model.stats();
+let oldSpeed=0;
+for(let i=0;i<240;i++){
+  controlled.model.tick(1/120);const a=controlled.model.stats();healthy(a);
+  assert.equal(a.pressurePa,104000);assert.equal(a.outsidePressurePa,100000);
+  const rho=(a.pressurePa+a.outsidePressurePa)/2/(controlled.d.cave.gasConstant*controlled.d.cave.temperature);
+  assert.ok(Math.abs(rho*controlled.d.cave.neckLength*(a.speedMetersPerSecond-oldSpeed)*120-a.gaugePressurePa+.5*rho*controlled.d.cave.lossCoefficient*a.speedMetersPerSecond*Math.abs(a.speedMetersPerSecond))<1e-6,'controlled pressure still obeys entrance momentum');
+  oldSpeed=a.speedMetersPerSecond;
+  assert.ok(Math.abs(a.smokeMass-a.smokeAdded)<1e-10 && a.smokeMinimum>=-1e-12,'smoke transport conserves nonnegative concentration');
+  const cells=controlled.model.smokeCells();for(let k=0;k<cells.length;k++)if(controlled.solidAt((k%90+.5)*8,(Math.floor(k/90)+.5)*8))assert.equal(cells[k],0,'solid faces carry no smoke');
+}
+const outgoing=controlled.model.stats();assert.ok(outgoing.smokeCentroid.x>emitted.smokeCentroid.x+20);
+controlled.model.setPressure('outside',108000);run(controlled,5);
+const incoming=controlled.model.stats();assert.equal(incoming.smokeClicks,1);assert.ok(incoming.smokeCentroid.x<outgoing.smokeCentroid.x,'existing smoke returns without re-emission');
+controlled.close(true);const frozenSmoke=controlled.model.smokeCells();run(controlled,2);assert.deepEqual(controlled.model.smokeCells(),frozenSmoke,'closed mouth freezes smoke when airflow stops');
+controlled.model.setPressure('inside',98000);assert.equal(controlled.model.stats().pressurePa,98000,'sliders lower pressure as well as raising it');healthy(controlled.model.stats());
+controlled.close(false);
+for(const [inside,outside] of [[90000,120000],[120000,90000],[100000,100000]]){
+  controlled.model.setPressure('inside',inside);controlled.model.setPressure('outside',outside);
+  const state=run(controlled,2);healthy(state);assert.equal(state.pressurePa,inside);assert.equal(state.outsidePressurePa,outside);
+  assert.ok(Math.abs(state.smokeMass-state.smokeAdded)<1e-9 && state.smokeMinimum>=-1e-12,'extreme slider combinations keep smoke transport conservative and stable');
+}
+const wallPuff=setup({controlPressure:true});wallPuff.close(true);assert.equal(wallPuff.model.addSmoke(126,200),true);
+const cells=wallPuff.model.smokeCells();for(let k=0;k<cells.length;k++)if((k%90+.5)*8<120)assert.equal(cells[k],0,'puff emission cannot appear on the other side of a wall');
+console.log(JSON.stringify({emitted,outgoing,incoming},null,2));
+console.log('PASS: finite and controlled gas accounting; independent gas, entrance and arrow momentum; persistent travel; wall collision; pressure combinations; conservative smoke, reversal and closure.');
