@@ -20,12 +20,13 @@ export async function checkStation({load,sample,evaluate,send,sleep,dump}){
 
  await send('Emulation.setDeviceMetricsOverride',{width:1440,height:900,mobile:false,deviceScaleFactor:1});
  await load();await sleep(150);await pause();
- const beforeInspect=await sample();await click('#sluice-inspect');assert.equal(await evaluate('__toy.camera().zoom'),2.8);
+ const beforeInspect=await sample();assert.equal(await evaluate('__toy.camera().zoom'),3.4,'the first riffles start large enough to inspect');
  await click('#sluice-next');assert.equal(await evaluate('document.getElementById("sluice-pocket").textContent'),'Pocket 2 of 10');
  const pan=await rect('.sluice-pan');await send('Input.dispatchMouseEvent',{type:'mousePressed',button:'left',clickCount:1,...pan});
  await send('Input.dispatchMouseEvent',{type:'mouseMoved',button:'left',buttons:1,x:pan.x+50,y:pan.y+12});await send('Input.dispatchMouseEvent',{type:'mouseReleased',button:'left',clickCount:1,x:pan.x+50,y:pan.y+12});
  assert.deepEqual(await sample(),beforeInspect,'paused inspection only moves the camera');
  await shot('station-inspect');await click('#sluice-fit');assert.equal(await evaluate('__toy.camera().zoom'),1);
+ await click('#sluice-inspect');assert.equal(await evaluate('__toy.camera().zoom'),3.4,'the closer view can be restored');
 
  // The visible slow control and source share the native simulation clock.
  await click('#sluice-setup');await click('#sluice-slow');await click('#sluice-close');await input('sluice-flow','125');await evaluate("__sluiceTest('stopLoop()')");

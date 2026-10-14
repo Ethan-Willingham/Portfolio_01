@@ -54,6 +54,17 @@
 .sluice-workbench output { font: 12px var(--font-mono); color: var(--app-brass); }
 .sluice-workbench select { width: 100%; min-height: 44px; margin: 8px 0 12px; padding: 6px 8px; border: 1px solid var(--rule-strong); background: var(--bg); color: var(--text); border-radius: 6px; }
 .sluice-workbench .sluice-check { justify-content: flex-start; min-height: 44px; font-size: 12px; }
+.sluice-calibration { margin-top: 18px; padding-top: 12px; border-top: 1px solid var(--rule-strong); }
+.sluice-calibration h3 { margin: 0; color: var(--text); font: 500 15px/1.3 var(--font-body); }
+.sluice-calibration #sluice-field-status { color: var(--toy-grain-gold); }
+.sluice-calibration form { display: grid; gap: 10px; margin-top: 12px; }
+.sluice-calibration form label { display: grid; gap: 5px; font-size: 12px; }
+.sluice-field-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+.sluice-calibration input, .sluice-calibration select { box-sizing: border-box; width: 100%; min-height: 44px; margin: 0; padding: 7px 9px; border: 1px solid var(--rule-strong); border-radius: 6px; background: var(--bg); color: var(--text); font: 13px var(--font-body); }
+.sluice-calibration #sluice-field-result { padding: 10px; border: 1px solid var(--rule-strong); border-radius: 6px; color: var(--text); }
+.sluice-calibration ol { padding-left: 20px; color: var(--text-dim); font: 11px/1.5 var(--font-mono); }
+.sluice-calibration li { margin-bottom: 6px; overflow-wrap: anywhere; }
+.sluice-calibration .sluice-run-actions { flex-wrap: wrap; }
 .sluice-check input { width: 18px; height: 18px; accent-color: var(--app-brass); }
 .sluice-run-actions { display: flex; gap: 12px; margin-top: 12px; }
 .toy-app .toy-shell .sluice-workbench #sluice-run { flex: 1; color: var(--bg-raised); background: var(--app-brass); border-color: var(--app-brass); }
@@ -63,6 +74,7 @@
 .sluice-contents th:first-child { text-align: left; }
 .sluice-contents tbody tr:last-child { color: var(--toy-grain-gold); }
 .sluice-inspector { position: absolute; top: calc(var(--toy-top-height,52px) + 8px); left: 50%; transform: translateX(-50%); z-index: 22; display: flex; gap: 6px; align-items: center; padding: 4px 6px; border: 1px solid var(--rule); border-radius: 8px; background: var(--bg-raised); }
+.toy-app .toy-shell .sluice-inspector button { padding-inline: 8px; }
 #sluice-pocket { padding: 0 6px; white-space: nowrap; color: var(--text-dim); font: 11px var(--font-mono); }
 .sluice-pan { position: absolute; z-index: 8; top: var(--toy-top-height,52px); bottom: var(--sluice-console-height,210px); left: 0; right: 0; touch-action: none; cursor: grab; }
 .sluice-pan:active { cursor: grabbing; }

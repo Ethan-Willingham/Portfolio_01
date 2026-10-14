@@ -85,7 +85,7 @@ function create(toy,shell){
  var box=document.createElement('section');box.className='sluice-console';box.hidden=true;box.setAttribute('aria-label','Gold sluice controls');
  box.innerHTML=`
   <div class="sluice-console-head"><div class="sluice-live-result"><b id="sluice-phase">Wash the paydirt</b><span id="sluice-summary">A sample is waiting in the box.</span></div>
-   <div class="sluice-view-controls"><button id="sluice-mark" type="button" aria-pressed="true">Show gold</button><button id="sluice-inspect" type="button" aria-pressed="false">Inspect</button><button id="sluice-water" type="button" title="Close both valves">Stop</button><button id="sluice-setup" type="button" aria-expanded="false" aria-controls="sluice-workbench">Contents / setup</button></div>
+   <div class="sluice-view-controls"><button id="sluice-mark" type="button" aria-pressed="true">Show gold</button><button id="sluice-inspect" type="button" aria-pressed="false">Close view</button><button id="sluice-water" type="button" title="Close both valves">Stop</button><button id="sluice-setup" type="button" aria-expanded="false" aria-controls="sluice-workbench">Contents / setup</button></div>
   </div>
   <div class="sluice-console-main">
    <div class="sluice-operation"><label class="sluice-flow-label" for="sluice-flow"><span><b>1. Water valve</b><output id="sluice-flow-value">Off</output></span><input id="sluice-flow" type="range" min="0" max="150" step="5" value="0" aria-label="Water flow"/><span class="sluice-scale"><span>Off</span><span>Gentle</span><span>Strong</span></span></label><div class="sluice-hopper-bottom"><small id="sluice-water-left">Tank 100%</small><button id="sluice-refill" type="button">Refill tank</button></div></div>
@@ -113,10 +113,31 @@ function create(toy,shell){
   <label class="sluice-check"><input id="sluice-charge" type="checkbox" checked/>Start with a sample on the bed</label>
   <p id="sluice-previous" hidden></p>
   <div class="sluice-run-actions"><button id="sluice-defaults" type="button">Defaults</button><button id="sluice-run" type="button">New run</button></div>
-  <p class="sluice-shortcuts">W water · G one scoop · S slow · I inspect<br/>Space pauses. The same grain mix returns each run. <a id="sluice-dimensions-source" href="https://www.keene.store/?Product_Code=A52&amp;Screen=PROD" target="_blank" rel="noopener">Dimensions source</a></p>`;
+  <p class="sluice-shortcuts">W water · G one scoop · S slow · I close view<br/>Space pauses. The same grain mix returns each run. <a id="sluice-dimensions-source" href="https://www.keene.store/?Product_Code=A52&amp;Screen=PROD" target="_blank" rel="noopener">Dimensions source</a></p>
+  <section class="sluice-calibration" aria-labelledby="sluice-calibration-heading">
+   <h3 id="sluice-calibration-heading">Field recovery calibration</h3>
+   <p id="sluice-field-status">No measured field runs. A real-world recovery forecast is unavailable.</p>
+   <p>The animation's water percentage and grain count are not gallons or pounds. Record controlled runs from your actual box, with known gold added and gold weighed after cleanup. Keep the mat and riffles the same. These records stay in this browser.</p>
+   <form id="sluice-field-form">
+    <label for="sluice-field-liner">Actual mat and riffles<input id="sluice-field-liner" type="text" maxlength="80" placeholder="Describe the installed lining" required></label>
+    <label for="sluice-field-size">Gold size class<select id="sluice-field-size"><option value="coarse">Over 0.85 mm</option><option value="medium">0.50 to 0.85 mm</option><option value="fine">0.25 to 0.50 mm</option><option value="very-fine">0.15 to 0.25 mm</option><option value="ultra-fine">Under 0.15 mm</option></select></label>
+    <div class="sluice-field-grid">
+     <label for="sluice-field-slope">Measured slope, degrees<input id="sluice-field-slope" type="number" min="0.1" max="15" step="0.1" value="8.5" required></label>
+     <label for="sluice-field-flow">Water, US gal/min<input id="sluice-field-flow" type="number" min="0.01" max="1000" step="any" required></label>
+     <label for="sluice-field-feed">Paydirt, lb/min<input id="sluice-field-feed" type="number" min="0.01" max="2000" step="any" required></label>
+     <label for="sluice-field-in">Known gold added, mg<input id="sluice-field-in" type="number" min="0.01" step="any" required></label>
+     <label for="sluice-field-out">Gold in concentrate, mg<input id="sluice-field-out" type="number" min="0" step="any" required></label>
+    </div>
+    <div class="sluice-run-actions"><button type="submit">Record measured run</button><button id="sluice-field-estimate" type="button">Estimate this setup</button></div>
+   </form>
+   <p id="sluice-field-result" role="status">Three repeated runs at the same settings or eight spanning the requested settings are needed before an empirical estimate appears.</p>
+   <ol id="sluice-field-list" aria-label="Measured field runs"></ol>
+   <div class="sluice-run-actions"><button id="sluice-field-export" type="button">Download field runs</button><button id="sluice-field-remove" type="button">Remove last run</button></div>
+   <p>The <a href="https://ygsftp.gov.yk.ca/ygsftp/publications/tech/fine_gold_recovery_sluiceboxes.pdf" target="_blank" rel="noopener">Yukon pilot study</a> measured an 8-foot sluice with different lining and operating rates. It informs which variables matter, but it cannot calibrate this 51-inch box without matching field tests.</p>
+  </section>`;
  shell.appendChild(bench);
  var inspect=document.createElement('div');inspect.className='sluice-inspector';inspect.hidden=true;
- inspect.innerHTML='<button type="button" id="sluice-prev" aria-label="Inspect previous pocket">Previous</button><span id="sluice-pocket">Pocket 1 of 6</span><button type="button" id="sluice-next" aria-label="Inspect next pocket">Next</button><button type="button" id="sluice-fit">Whole bed</button>';
+ inspect.innerHTML='<button type="button" id="sluice-prev" aria-label="View previous section">Prev</button><span id="sluice-pocket">Pocket 1 of 6</span><button type="button" id="sluice-next" aria-label="View next section">Next</button><button type="button" id="sluice-fit" aria-label="View whole sluice bed">Whole bed</button>';
  shell.appendChild(inspect);
  var pan=document.createElement('div');pan.className='sluice-pan';pan.hidden=true;pan.setAttribute('aria-hidden','true');document.getElementById('toy-viewport').appendChild(pan);
  function el(id){return document.getElementById('sluice-'+id);}
@@ -124,20 +145,57 @@ function create(toy,shell){
  var audio=sound();
  var state=null,active=false,lastRun=null,lastData=null,pocket=0,inspectOn=false,drag=null,feedingPointer=null,feedingKey=null;
  var pendingSlope=null,pendingHeight=6,lastHeight=0,previous=null,previousSpeed=1;
+ var calibration=root.WSSSluiceCalibration,fieldKey='wss-sluice-field-runs-v1',fieldTrials=[];
+ try{var stored=JSON.parse(localStorage.getItem(fieldKey)||'[]');if(Array.isArray(stored))fieldTrials=stored.map(function(row){try{return calibration.validate(row);}catch(error){return null;}}).filter(Boolean);}catch(error){}
+ function fieldQuery(){return {lengthInches:+el('length').value,liner:el('field-liner').value,goldClass:el('field-size').value,
+  slopeDeg:+el('field-slope').value,flowGpm:+el('field-flow').value,feedLbMin:+el('field-feed').value};}
+ function fieldPercent(value){return (100*value).toFixed(1)+'%';}
+ function renderField(){
+  text(el('field-status'),fieldTrials.length?fieldTrials.length+' measured run'+(fieldTrials.length===1?'':'s')+' saved in this browser. The selected box length is '+el('length').value+' inches.':'No measured field runs. A real-world recovery forecast is unavailable.');
+  var list=el('field-list');list.replaceChildren();fieldTrials.slice(-6).forEach(function(row){var item=document.createElement('li');item.textContent=row.lengthInches+' in, '+row.liner+', '+row.goldClass+', '+row.flowGpm+' gal/min, '+row.feedLbMin+' lb/min, '+row.slopeDeg+' degrees: '+fieldPercent(row.goldRecoveredMg/row.goldInMg);list.appendChild(item);});
+  el('field-remove').disabled=!fieldTrials.length;el('field-export').disabled=!fieldTrials.length;
+ }
+ function saveField(){localStorage.setItem(fieldKey,JSON.stringify(fieldTrials));renderField();}
+ function estimateField(){
+  try{
+   var result=calibration.estimate(fieldTrials,fieldQuery()),message;
+   if(result.status==='repeat')message='Measured-run estimate: '+fieldPercent(result.rate)+' recovered. The '+result.count+' near-identical tests ranged from '+fieldPercent(result.low)+' to '+fieldPercent(result.high)+'. This range is not a confidence interval.';
+   else if(result.status==='interpolated')message='Interpolated field estimate: '+fieldPercent(result.rate)+' recovered. Held-out error band: '+fieldPercent(result.low)+' to '+fieldPercent(result.high)+' from '+result.count+' tests. This is not a confidence interval.';
+   else if(result.status==='outside')message='No estimate. The requested '+({flowGpm:'water flow',feedLbMin:'paydirt feed',slopeDeg:'slope'}[result.field])+' is outside the measured range ('+result.min+' to '+result.max+').';
+   else if(result.status==='gap')message='No estimate. No measured run is close enough to these settings.';
+   else if(result.status==='need-runs')message='No estimate yet. Record three near-identical tests or at least eight covering these settings; '+result.count+' matching run'+(result.count===1?' is':'s are')+' saved.';
+   else message='No measured run matches this box length, lining and gold size class.';
+   text(el('field-result'),message);
+  }catch(error){text(el('field-result'),error.message);}
+ }
+ el('field-form').addEventListener('submit',function(event){
+  event.preventDefault();
+  try{var row=calibration.validate(Object.assign(fieldQuery(),{goldInMg:+el('field-in').value,goldRecoveredMg:+el('field-out').value}));
+   fieldTrials.push(row);saveField();estimateField();
+  }catch(error){text(el('field-result'),error.message);}
+ });
+ el('field-estimate').addEventListener('click',estimateField);
+ el('field-remove').addEventListener('click',function(){fieldTrials.pop();try{saveField();text(el('field-result'),'Last measured run removed.');}catch(error){text(el('field-result'),'Local storage could not save this change.');}});
+ el('field-export').addEventListener('click',function(){var blob=new Blob([JSON.stringify({kind:'sluice-field-runs',version:1,runs:fieldTrials},null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='sluice-field-runs.json';link.click();setTimeout(function(){URL.revokeObjectURL(url);},1000);});
+ el('length').addEventListener('change',renderField);renderField();
  function setBench(on){bench.hidden=!on;setup.setAttribute('aria-expanded',String(on));if(on){releaseFeed();el('close').focus({preventScroll:true});}else setup.focus({preventScroll:true});}
  function releaseFeed(){toy.sluiceControl('feed',false);}
  function stopInputs(){releaseFeed();toy.sluiceControl('valve',false);update();}
  function toggleWater(){if(!active)return;var d=toy.sluice();if(!d)return;if(!d.valve)toy.pause(false);toy.sluiceControl('valve',!d.valve);update();}
  function scoop(){if(!active || !state || !state.hopper || state.cleanup || toy.stats().loading)return;toy.pause(false);toy.sluiceControl('scoop',120);update();}
  function toggleSlow(){if(!active)return;toy.set('time',toy.stats().timeScale<.5?1:.25);update();}
+ function focusOn(x,y){
+  toy.setCamera({zoom:3.4,panX:0,panY:0});var cam=toy.camera(),world=toy.world();
+  toy.setCamera({panX:(world.w*.5-x)*cam.scale,panY:(world.h*.5-y)*cam.scale});
+ }
  function inspectPocket(){
   if(!active)return;
-  var d=toy.machineState().definition.sluice;pocket%=d.sections.length;var section=d.sections[pocket],x=section.x,y=section.y;
-  toy.setCamera({zoom:2.8,panX:0,panY:0});var cam=toy.camera();
-  var world=toy.world();toy.setCamera({panX:(world.w*.5-x)*cam.scale,panY:(world.h*.5-y)*cam.scale});
-  text(el('pocket'),(d.riffles?'Pocket ':'Section ')+(pocket+1)+' of '+d.sections.length);
+  var d=toy.machineState().definition.sluice,n=d.sections.length;pocket=(pocket+n+1)%(n+1);
+  if(pocket===n){focusOn(d.collection.x+d.collection.width/2,d.collection.y+d.collection.height/2);text(el('pocket'),'Concentrate pan');}
+  else{var section=d.sections[pocket];focusOn(pocket===0?260:section.x,section.y);text(el('pocket'),(d.riffles?'Pocket ':'Section ')+(pocket+1)+' of '+n);}
  }
  function setInspect(on){inspectOn=on;inspect.hidden=!on;pan.hidden=!on;pressed(zoom,on);drag=null;
+  text(zoom,on?'Close view':'Closer view');
   if(on)inspectPocket();else toy.setCamera({zoom:1,panX:0,panY:0});
  }
  water.addEventListener('click',stopInputs);
@@ -147,7 +205,7 @@ function create(toy,shell){
  el('rinse').addEventListener('click',function(){releaseFeed();toy.pause(false);toy.sluiceControl('flow',100);update();});
  el('cleanup').addEventListener('click',async function(){
   stopInputs();
-  try{if(toy.sluice().cleanup)await toy.sluiceTransfer('collect');else toy.sluiceControl('cleanup',true);setInspect(false);update();}
+  try{if(toy.sluice().cleanup)await toy.sluiceTransfer('collect');else{toy.sluiceControl('cleanup',true);pocket=toy.machineState().definition.sluice.sections.length;setInspect(true);}update();}
   catch(error){text(el('guidance'),error.message);}
  });
  el('empty-tailings').addEventListener('click',async function(){try{stopInputs();await toy.sluiceTransfer('tailings');update();}catch(error){text(el('guidance'),error.message);}});
@@ -164,7 +222,7 @@ function create(toy,shell){
  });el('close').addEventListener('click',function(){setBench(false);});
  shell.addEventListener('click',function(e){if(e.target.closest('[data-panel]')){bench.hidden=true;setup.setAttribute('aria-expanded','false');}});
  el('fit').addEventListener('click',function(){setInspect(false);});
- el('prev').addEventListener('click',function(){var n=toy.machineState().definition.sluice.sections.length;pocket=(pocket+n-1)%n;inspectPocket();});
+ el('prev').addEventListener('click',function(){var n=toy.machineState().definition.sluice.sections.length+1;pocket=(pocket+n-1)%n;inspectPocket();});
  el('next').addEventListener('click',function(){pocket++;inspectPocket();});
  el('slope').addEventListener('input',function(){pendingSlope=+this.value;text(el('slope-value'),pendingSlope.toFixed(1)+' degrees');});
  el('riffle').addEventListener('input',function(){pendingHeight=+this.value;var label=(pendingHeight/24).toFixed(2)+' in';text(el('riffle-value'),label);this.setAttribute('aria-valuetext',label);});
@@ -174,12 +232,21 @@ function create(toy,shell){
   var before=toy.sluice(),seed=toy.machineState().seed;this.disabled=true;stopInputs();
   try{
    await toy.machine('gold-sluice-box',{lengthInches:+el('length').value,slope:pendingSlope,riffleHeight:pendingHeight,matched:el('materials').value==='matched',initialCharge:el('charge').checked,seed:seed});
-   previous=before;setInspect(false);setBench(false);toy.pause(false);update();
+   previous=before;pocket=0;setInspect(true);setBench(false);toy.pause(false);update();
   }catch(error){text(el('guidance'),error.message);}finally{this.disabled=false;}
  });
- pan.addEventListener('pointerdown',function(e){if(e.button!==0)return;e.preventDefault();var c=toy.camera();drag={id:e.pointerId,x:e.clientX,y:e.clientY,panX:c.panX,panY:c.panY};pan.setPointerCapture(e.pointerId);});
+ pan.addEventListener('pointerdown',function(e){if(e.button!==0)return;e.preventDefault();var c=toy.camera(),rect=document.getElementById('toy-stage').getBoundingClientRect();drag={id:e.pointerId,x:e.clientX,y:e.clientY,worldX:(e.clientX-rect.left)/c.scale,worldY:(e.clientY-rect.top)/c.scale,panX:c.panX,panY:c.panY};pan.setPointerCapture(e.pointerId);});
  pan.addEventListener('pointermove',function(e){if(!drag || drag.id!==e.pointerId)return;toy.setCamera({panX:drag.panX+e.clientX-drag.x,panY:drag.panY+e.clientY-drag.y});});
- ['pointerup','pointercancel','lostpointercapture'].forEach(function(name){pan.addEventListener(name,function(){drag=null;});});
+ pan.addEventListener('pointerup',function(e){
+  if(!drag || drag.id!==e.pointerId)return;
+  if(Math.hypot(e.clientX-drag.x,e.clientY-drag.y)<8){
+   var x=drag.worldX,y=drag.worldY,feedPoint=toy.machineState().definition.sluice.feed;
+   if(Math.abs(x-120)<=24 && Math.abs(y-64)<=24)toggleWater();
+   else if(Math.abs(x-feedPoint.x)<=24 && Math.abs(y-(feedPoint.y-24))<=22)scoop();
+  }
+  drag=null;
+ });
+ ['pointercancel','lostpointercapture'].forEach(function(name){pan.addEventListener(name,function(){drag=null;});});
  window.addEventListener('blur',stopInputs);document.addEventListener('visibilitychange',function(){if(document.hidden)stopInputs();});
  window.addEventListener('pagehide',audio.stop);
  window.addEventListener('keydown',function(e){
@@ -198,6 +265,7 @@ function create(toy,shell){
    if(live)previousSpeed=stats.timeScale;
    if(!live){audio.stop();pressed(el('sound'),false);bench.hidden=true;inspect.hidden=true;pan.hidden=true;inspectOn=false;drag=null;lastRun=null;lastData=null;feedingPointer=null;feedingKey=null;toy.setCamera({zoom:1,panX:0,panY:0});toy.set('time',previousSpeed);}
    toy.resize();
+   if(live){pocket=0;setInspect(true);}
   }
   if(!live)return;
   state=toy.sluice();if(!state)return;

@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.241'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.242'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -316,6 +316,7 @@
       px=keyboardX;py=keyboardY;
     }
     bakeWalls();drawMachineOverlay();
+    window.dispatchEvent(new Event('toy-camera-change'));
     return cameraState();
   }
   window.addEventListener('resize', fitStage);

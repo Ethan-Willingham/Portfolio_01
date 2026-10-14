@@ -113,8 +113,9 @@ try{
   assert.equal(await evaluate('document.getElementById("toy-native-setup").options.length'),3);
   const panel=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});fs.writeFileSync(path.join(dump,'landscape-instruments.png'),Buffer.from(panel.data,'base64'));
   await evaluate('document.querySelector("#toy-panel-instruments [data-close]").click()');
+  await evaluate('document.getElementById("sluice-fit").click()');await sleep(100);
   const target=await evaluate(`(()=>{const r=document.querySelector('.toy-scene-action[data-control="primary"]').getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2,width:r.width,height:r.height};})()`);
-  assert(target.width>=44&&target.height>=44,'the jug has a 44-pixel touch target');
+  assert(target.width>=44&&target.height>=44,'the jug has a 44-pixel touch target: '+JSON.stringify(target));
   await send('Input.dispatchMouseEvent',{type:'mousePressed',button:'left',clickCount:1,x:target.x,y:target.y});await send('Input.dispatchMouseEvent',{type:'mouseReleased',button:'left',clickCount:1,x:target.x,y:target.y});
   assert.equal(await evaluate('__toy.sluice().valve'),true,'clicking the visible pipe opens its metered valve');
   await evaluate('__toy.pause(false)');await sleep(2000);await send('Input.dispatchMouseEvent',{type:'mousePressed',button:'left',clickCount:1,x:target.x,y:target.y});await send('Input.dispatchMouseEvent',{type:'mouseReleased',button:'left',clickCount:1,x:target.x,y:target.y});
@@ -134,6 +135,9 @@ try{
  }
  if(!process.env.GOLD_CASES || process.env.GOLD_CASES.split(',').includes('operations')){
   const {checkOperations}=await import('./gold-sluice-operation-checks.mjs');await checkOperations({load,sample,evaluate,send,sleep,dump});
+ }
+ if(!process.env.GOLD_CASES || process.env.GOLD_CASES.split(',').includes('field')){
+  const {checkFieldCalibration}=await import('./gold-sluice-field-checks.mjs');await checkFieldCalibration({load,evaluate,send,sleep,dump});
  }
  if(!process.env.GOLD_CASES || process.env.GOLD_CASES.split(',').includes('audio')){
   const {checkAudioLifecycle}=await import('./gold-sluice-station-checks.mjs');await checkAudioLifecycle({load,evaluate,sleep,send});

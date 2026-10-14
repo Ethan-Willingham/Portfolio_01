@@ -467,6 +467,7 @@
     document.addEventListener('visibilitychange',function(){if(document.hidden)releaseHeldControl();});
     document.getElementById('toy-pause').addEventListener('click',releaseHeldControl);
     window.addEventListener('resize',syncMachineControls);
+    window.addEventListener('toy-camera-change',syncMachineControls);
     document.getElementById('toy-native-setup').addEventListener('change',async function(){
       var scene=toy.stats().scene,value=this.value;this.disabled=true;releaseHeldControl();
       try{
