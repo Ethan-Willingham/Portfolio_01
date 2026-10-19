@@ -17,7 +17,7 @@ async function close(){if(app){const owned=app;app=null;await owned.close();}}
   await fs.mkdir(out,{recursive:true});profile=await fs.mkdtemp(path.join(os.tmpdir(),'widewake-native-profile-'));
   let p=await launch();
   assert.match(await p.innerText('#title-version'),/Desktop edition/);assert.ok(await p.locator('#title-quit').isVisible());
-  assert.equal(await p.evaluate(()=>localStorage.getItem('widewake-save-v1')),null);
+  assert.equal(await p.evaluate(()=>localStorage.getItem('widewake-save-v2')),null);
   const runtime=await app.evaluate(({app,BrowserWindow})=>({version:process.versions.electron,platform:process.platform,arch:process.arch,packaged:app.isPackaged,name:app.getName(),profile:app.getPath('userData'),prefs:BrowserWindow.getAllWindows()[0].webContents.getLastWebPreferences()}));
   assert.equal(runtime.name,'Widewake');assert.equal(runtime.profile,profile);assert.equal(runtime.packaged,!!process.env.WIDEWAKE_DESKTOP_EXECUTABLE);
   assert.equal(runtime.prefs.nodeIntegration,false);assert.equal(runtime.prefs.contextIsolation,true);assert.equal(runtime.prefs.sandbox,true);
@@ -27,7 +27,7 @@ async function close(){if(app){const owned=app;app=null;await owned.close();}}
   assert.equal(await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows().length),1);
   const forbidden=await p.evaluate(async()=>{const result=[];for(const url of ['widewake://game/main.cjs','widewake://game/%2e%2e%2fpackage.json','widewake://other/widewake.html','https://example.com/']){try{const r=await fetch(url);result.push(r.ok);}catch{result.push(false);}}return result;});assert.deepEqual(forbidden,[false,false,false,false]);
   await p.click('#title-fullscreen');await p.waitForFunction(()=>document.getElementById('title-fullscreen').textContent==='Leave full screen');
-  assert.equal(await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].isFullScreen()),true);await app.evaluate(({BrowserWindow})=>{BrowserWindow.getAllWindows()[0].webContents.sendInputEvent({type:'keyDown',keyCode:'F11'});});await p.waitForFunction(()=>document.getElementById('title-fullscreen').textContent==='Full screen');
+  assert.equal(await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].isFullScreen()),true);await app.evaluate(({BrowserWindow})=>{BrowserWindow.getAllWindows()[0].webContents.sendInputEvent({type:'keyDown',keyCode:'F11'});});await p.waitForFunction(()=>document.getElementById('title-fullscreen').textContent==='Full screen');await p.waitForFunction(()=>__widewake.activity.active());
   await p.screenshot({path:path.join(out,'desktop-title.png')});
   check('offline title, single profile owner, isolated renderer, bundled-resource boundary and full screen');
 

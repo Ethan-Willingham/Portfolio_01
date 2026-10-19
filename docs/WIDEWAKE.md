@@ -319,9 +319,9 @@ with the hardware/browser and actual living counts, not a boast about BELTFED.
 
 ## Save contract
 
-`widewake-save-v1` is a versioned localStorage record. The previous valid save is
-retained at `widewake-save-backup-v1`. Corrupt primary saves can fall back to the
-backup. A saved voyage waits at the title with a summary of the fleet and charter.
+`widewake-save-v2` is the current localStorage slot, with the previous valid
+save at `widewake-save-backup-v2`. The portable JSON campaign schema remains
+version 1. Corrupt primary saves can fall back to the backup. A saved voyage waits at the title with a summary of the fleet and charter.
 Continue resumes play; no simulation runs behind the title or settings. Import
 validates the campaign shape, numbers, identities, manifests,
 upgrades and limits before replacing the live fleet. Storage failure is surfaced
@@ -334,6 +334,36 @@ are validated too. Original
 version-1 saves migrate with defaults for the new fields. An older active watch
 labels its cargo counter as loaded since resuming, because earlier saves did not
 record a reliable watch total.
+
+From v0.11, one browser window owns the device save. The session holds an
+exclusive [Web Lock](https://developer.mozilla.org/en-US/docs/Web/API/Web_Locks_API)
+until the page leaves or explicitly hands over. Another window starts at the
+title with Continue here. The current owner pauses, saves synchronously and
+releases the lock before the requester reads the latest fleet. No lock is stolen.
+Failed writes deny the handoff and leave the live fleet available for export.
+BroadcastChannel carries requests, with storage events as a fallback. A bounded
+request timeout uses the activity scheduler; there is no background heartbeat.
+Leaving during a request cannot resume the game in the background. Returning
+through browser history reloads the latest fleet and stays at the title.
+
+Browsers without usable Web Locks permit play and export but never write the
+shared save. A history-restored page whose last write failed also keeps its
+unsaved in-memory fleet in export-only mode. This protects both that fleet and
+any progress made in another window. The desktop edition uses its existing
+single-instance profile lock and can write normally. Imported files and new
+voyages require ownership. A pending restart confirmation closes on handoff.
+Settings changed in a viewing window do not save its stale campaign.
+
+The v1 storage pair is read only when neither v2 slot exists. Merely visiting or
+leaving a legacy title does not migrate it. Starting play, importing, or changing
+a saved preference writes the new primary before retiring observed old copies.
+A still-open older client can continue writing its v1 slot without overwriting
+v2. If storage is full during migration, only the other legacy copy may be
+removed for one retry; the validated source remains intact until the new primary
+succeeds. Ordinary writes also commit the primary first. A backup failure reports
+that the primary succeeded, and a primary failure leaves the good backup alone.
+The browser's atomic localStorage write is the durability boundary; there is no
+claim of protection against erased browser data or device failure.
 
 From v0.10, an optional versioned `sea` record retains enemy identities, hulls,
 targets, phases and cooldowns; ramming and admiral attack windups; moving shots;
@@ -383,6 +413,7 @@ node tools/widewake/test-feedback.cjs
 node tools/widewake/test-trade-planning.cjs
 node tools/widewake/test-playthrough.cjs
 node tools/widewake/test-sea-save.cjs
+node tools/widewake/test-save-store.cjs
 node tools/widewake/test-reload-campaigns.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-browser.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-front.cjs
@@ -392,6 +423,7 @@ NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-chart.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-controller.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-fleet-view.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-sea-browser.cjs
+NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-save-tabs.cjs
 ```
 
 The front, chart, work, controller, fleet-view, sea and audio harnesses also support

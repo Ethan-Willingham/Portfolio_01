@@ -42,7 +42,7 @@ The exact owner constraints and source links are in `WIDEWAKE.md`.
 | Sound | Original score, spatial cues, mixer, bounded voices and suspended/interrupted recovery | Listening on speakers/headphones, broader regional atmosphere, long-session comfort and battle priority review |
 | Interface and access | Keyboard, mouse, touch and standard controller flows; focus, editable settings and release gates | Physical controllers, remapping, button-label coverage, readable text and non-color threat cues |
 | Mobile | Chromium and WebKit touch emulation | Full-screen portrait and landscape flows, safe areas, browser-height changes, sustained performance and physical-device validation |
-| Saves and recovery | Full active-sea records, matching complete campaigns across 674 reloads, browser/native interruption and backup recovery | Multiple browser tabs, interrupted writes, upgrades across future formats and long-session recovery |
+| Saves and recovery | Full active-sea records, 674 matching campaign reloads, exclusive browser writer, explicit handoff, primary-first writes and legacy migration | Future format upgrades, erased storage, supported platform/cloud integration and long-session recovery |
 | Performance | Five-minute 1,200-enemy browser run on M1 Pro with sound active and stable retained memory | Constrained-device budgets, longer sessions, loading cost and input latency |
 | Shipping | Public web build, tested offline Mac app, Windows package and asset inventory | Windows execution, signing, font clearance, Steam services, release QA and store materials |
 
@@ -554,3 +554,68 @@ Next: check competing browser tabs and interrupted writes, then return to the
 first-voyage and late-game feel review. Human pacing, physical devices, remapping,
 final art, distribution rights and Steam/platform work remain open. This pass
 does not complete the production goal.
+
+
+## Pass 9, one fleet across browser windows, v0.11
+
+Two-window play reproduced a real rollback in Chromium and WebKit. A captain
+bought up to 22 sugar, then leaving an older window restored its 17-sugar fleet.
+The browser shell now grants one window the device save. Continue here asks the
+current window to pause and save, then loads that latest fleet after ownership
+has transferred. An older window cannot save on close, change the campaign by
+editing preferences, finish an obsolete restart confirmation, or import into a
+fleet it no longer owns.
+
+Writes now commit the primary before its backup. A failed primary leaves the
+previous backup intact; a failed backup reports the successful primary honestly.
+The storage slot moves to v2 while portable campaign JSON remains version 1.
+This separates already-open older releases, which cannot participate in the new
+handoff protocol. A valid old save migrates on play or a deliberate edit. Dense
+migration can make room by removing only the other legacy copy, retaining the
+validated source until the new primary succeeds.
+
+Evidence:
+
+- Real same-origin browser windows reproduce and prevent the original rollback,
+  perform two-way handoffs, and preserve complete admiral battles, protected
+  fishing and oil operations. Concurrent requests produce one writer.
+- Both engines cover closed owners, history restoration, leaving during a
+  request, denied saves with emergency export, retry, blocked or missing locks,
+  the storage-event fallback, import ownership and canceled stale confirmations.
+  A returned page with unsaved RAM keeps that fleet for export without replacing
+  progress made elsewhere. Unsupported locking permits export-only play.
+- Legacy checks cover a dense sea with both old copies, an old client writing
+  after migration, visiting and leaving an untouched title, loading the latest
+  old-version fleet on Continue, and importing before the first migrated voyage.
+  Focused storage checks cover quota retries, retained valid sources, changed
+  old copies, corrupt current data and partial backup failure.
+- Phone review found a handoff notice competing with the footer at 667 by 375.
+  The short title keeps a compact logo and two-line fleet summary, with the
+  chapter still available in the voyage. The normal notice and all controls fit;
+  longer recovery messages can scroll inside the menu. Portrait and landscape
+  screenshots were inspected. Touch targets remain at least 44 pixels.
+
+The desktop check found a separate focus defect: leaving macOS full screen could
+leave the activity scheduler disabled while the document reported focus. The
+native host now resynchronizes activity after full-screen, show and restore
+transitions. This resumes scheduling without removing a deliberate game pause.
+The staged and packaged Mac arm64 apps pass the native checks, including earned
+trade and protected fishing, active-battle close/reopen, native import/export,
+minimize/suspend, and failed-write recovery. Mac and Windows packages contain the
+same 24 game files, 699,991 bytes before the runtime. Packaged asset digests and
+host sources match the checkout. Windows execution remains unverified; binaries
+remain local. Final Chromium and WebKit launcher checks pass, including the short
+menu and touch layouts.
+
+Whole-game review: the dedicated launcher remains the entry point and all
+handoff/recovery flows stay inside the game. Trade, fleets, combat, fishing, oil
+and campaign state transfer together. Helm, economy, content, provisional art
+and audio retain their existing tuning; this pass changes persistence and the
+short-screen menu, not difficulty. The dense save and ordinary launcher checks
+remain part of regression coverage. This work closes a concrete progress-loss
+bug, not the production goal.
+
+Next: return to unassisted first-voyage clarity, steering and arrival feel, then
+ordinary late-game combat and reasons to revisit the world. Keep reviewing the
+whole ledger. Human pacing, physical devices, remapping, final art, distribution
+rights and Steam/platform work remain open.

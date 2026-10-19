@@ -31,7 +31,7 @@ let browser;const errors=[],check=message=>console.log('PASS '+message);
  await reach('#volume');await tap(0);const volume=await p.inputValue('#volume');await tap(15);assert.ok(Number(await p.inputValue('#volume'))>Number(volume));await tap(1);assert.equal(await p.inputValue('#volume'),volume);assert.ok(await p.locator('#settings-dialog').isVisible());
  await reach('.ww-controller-settings summary');await tap(0);await reach('#controller-deadzone');await tap(0);await tap(12);assert.equal(await p.inputValue('#controller-deadzone'),'0.19');await tap(0);
  await reach('#controller-labels');await tap(0);await tap(13);await tap(13);await tap(0);assert.match(await p.locator('.ww-pad-help').first().innerText(),/Cross/);await tap(1);
- assert.equal(await p.evaluate(()=>localStorage.getItem('widewake-save-v1')),null);assert.equal(await p.evaluate(()=>JSON.parse(localStorage.getItem('widewake-preferences-v1')).controllerDeadzone),.19);
+ assert.equal(await p.evaluate(()=>localStorage.getItem('widewake-save-v2')),null);assert.equal(await p.evaluate(()=>JSON.parse(localStorage.getItem('widewake-preferences-v1')).controllerDeadzone),.19);
  await p.screenshot({path:path.join(out,'title-controller.png')});
  check('radial analog input, validated settings, pad-only title, editable sliders, undo and button labels');
  // Starting a fresh voyage while holding A may open one screen only.
@@ -96,6 +96,6 @@ let browser;const errors=[],check=message=>console.log('PASS '+message);
  const cold=await coldContext.newPage();cold.on('pageerror',e=>errors.push(e.message));await cold.goto(base+'/widewake.html?test');await cold.waitForTimeout(1800);const coldResult=await cold.evaluate(()=>coldResult);assert.equal(coldResult.active,false);
  console.log('Cold audio',JSON.stringify(coldResult));if(process.env.WIDEWAKE_TEST_ENGINE!=='webkit')assert.equal(coldResult.state,'suspended');
  if(['suspended','interrupted'].includes(coldResult.state)){assert.equal(coldResult.notice,true);await cold.click('#title-screen .ww-audio-notice');await cold.waitForFunction(()=>__widewake.sound.ctx.state==='running');assert.equal(await cold.evaluate(()=>__widewake.game.s.settings.sound),true);}
- assert.equal(await cold.evaluate(()=>localStorage.getItem('widewake-save-v1')),null);await coldContext.close();check('cold controller input respects browser audio policy and offers a real click to enable sound');
+ assert.equal(await cold.evaluate(()=>localStorage.getItem('widewake-save-v2')),null);await coldContext.close();check('cold controller input respects browser audio policy and offers a real click to enable sound');
  assert.deepEqual(errors,[]);console.log('Controller browser checks complete. Screenshots: '+out);
 }finally{await browser?.close();await new Promise(r=>server.close(r));}})().catch(err=>{console.error(err);process.exitCode=1;});

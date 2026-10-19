@@ -49,6 +49,13 @@ from the website's fleet. Export JSON from either edition and import it into the
 other. No new save format is introduced. Version updates retain the same origin
 and profile location. Only one instance can own a profile.
 
+Full-screen, show and restore transitions resynchronize the activity scheduler
+with the native window. They retain a deliberate game pause.
+
+The v0.11 app migrates the older local save pair into its v2 storage slot on
+play or a deliberate edit. Portable JSON remains version 1. Browser window
+ownership does not restrict the app, which already owns its profile exclusively.
+
 Use v0.10 or later on both sides for active-battle continuation. The shared
 1,500,000-byte file limit accommodates the full bounded sea and convoy tracks.
 Native import/export and OS-close tests cover a damaged admiral with pending

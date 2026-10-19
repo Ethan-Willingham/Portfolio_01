@@ -85,12 +85,13 @@ if(ownsProfile)app.whenReady().then(async()=>{
   win.webContents.on('will-navigate',(event,url)=>{if(url!==ORIGIN+'/widewake.html'&&url!==ORIGIN+'/widewake.html?test'){event.preventDefault();openExternal(url);}});
   win.webContents.on('will-attach-webview',event=>event.preventDefault());
   win.webContents.on('before-input-event',(event,input)=>{if(input.type==='keyDown'&&input.key==='F11'&&!input.isAutoRepeat){event.preventDefault();win.setFullScreen(!win.isFullScreen());}});
-  for(const event of ['enter-full-screen','leave-full-screen'])win.on(event,()=>win.webContents.send('widewake:fullscreen',win.isFullScreen()));
   const activity=active=>{if(!win.isDestroyed()&&!win.webContents.isDestroyed())win.webContents.send('widewake:activity',active);};
+  const syncActivity=()=>activity(win.isFocused()&&win.isVisible()&&!win.isMinimized());
+  for(const event of ['enter-full-screen','leave-full-screen'])win.on(event,()=>{win.webContents.send('widewake:fullscreen',win.isFullScreen());syncActivity();});
   for(const event of ['blur','minimize','hide'])win.on(event,()=>activity(false));
-  win.on('focus',()=>activity(true));
+  for(const event of ['focus','restore','show'])win.on(event,syncActivity);
   for(const event of ['suspend','lock-screen'])powerMonitor.on(event,()=>activity(false));
-  for(const event of ['resume','unlock-screen'])powerMonitor.on(event,()=>activity(win.isFocused()&&win.isVisible()&&!win.isMinimized()));
+  for(const event of ['resume','unlock-screen'])powerMonitor.on(event,syncActivity);
   win.on('close',closeWithSave);
   win.once('ready-to-show',()=>win.show());
   await win.loadURL(ORIGIN+'/widewake.html'+(process.argv.includes('--test')?'?test':''));

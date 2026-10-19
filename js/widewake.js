@@ -1,11 +1,12 @@
 /* Browser shell, input, local saves, and game feedback. */
 (function(){
   'use strict';
-  const D=WidewakeData,W=WidewakeWorld,C=WidewakeCore,R=WidewakeRender,desktop=window.WidewakeDesktop;
+  const D=WidewakeData,W=WidewakeWorld,C=WidewakeCore,R=WidewakeRender,S=WidewakeSaves,desktop=window.WidewakeDesktop;
   const $=id=>document.getElementById(id),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const money=n=>Math.round(n).toLocaleString('en-US'),by=(a,id)=>a.find(x=>x.id===id),SAVE='widewake-save-v1',BACKUP='widewake-save-backup-v1',PREFS='widewake-preferences-v1';
+  const money=n=>Math.round(n).toLocaleString('en-US'),by=(a,id)=>a.find(x=>x.id===id),PREFS='widewake-preferences-v1';
   const compactCoins=new Intl.NumberFormat('en-US',{notation:'compact',maximumFractionDigits:1}),orderMoney=n=>n>=10000?compactCoins.format(n):money(n);
   let game,renderer,tab='trade',quantity=5,selected=null,lastMode=null,lastUI=0,lastPortFrame=0,saveAvailable=true,sound=null,clock=0,accumulator=0,last=0,routeWorker=null,routeId=0,pendingRoute=null,atTitle=true,hasVoyage=false,loadNotice='';
+  let store,session,untouchedSave=true,restoreLocalOnly=false,saveDirty=false,handoffBusy=false,sessionNotice='',backupWarning=false,pendingPreferences={};
   let chartRoute=null,chartGood='sugar',chartBuyNew=false,chartQuantity=9999,chartSort='near',chartOffers=[],tradeRequest=null,chartDistances=null;
   const front=new WidewakeFront($('title-sea'),$('title-logo'));
   const modalOrder=[];
@@ -33,29 +34,56 @@
     if(renderer){if(kind==='hurt'&&detail?.flagship){renderer.hitT=.65;const dx=detail.fromX===null?0:W.dx(game.player.x,detail.fromX),dy=detail.fromY===null?0:detail.fromY-game.player.y;renderer.hitBearing=Math.hypot(dx,dy)>8?Math.atan2(dy,dx):null;}
       if(!game.s.settings.reduceMotion&&(kind==='burst'||kind==='hurt'&&detail?.flagship))renderer.shake=kind==='burst'?2:1.5;}
   };}
-  function save(){if(!game||!hasVoyage)return;try{const current=JSON.stringify(game.snapshot());if(new TextEncoder().encode(current).byteLength>C.MAX_SAVE_BYTES)throw new Error('Save too large');const old=localStorage.getItem(SAVE);if(old){try{new C.Game(game.earth,JSON.parse(old));localStorage.setItem(BACKUP,old);}catch{}}localStorage.setItem(SAVE,current);saveAvailable=true;$('save-status').textContent='Saved on this device';game.autoSaveTimer=0;}catch{saveAvailable=false;$('save-status').textContent='Export a save to keep progress';}}
-  function load(earth){for(const key of [SAVE,BACKUP]){try{const text=localStorage.getItem(key);if(text){const result=new C.Game(earth,JSON.parse(text));if(key===BACKUP)loadNotice='Recovered your last working save.';return result;}}catch{loadNotice='The saved fleet could not be read. You can import an exported save in Settings.';}}return null;}
+  function save(forceMigration=false){
+    if(!game||!hasVoyage)return true;
+    if(!session?.owner)return false;
+    if(store.legacy&&untouchedSave&&!forceMigration)return true;
+    try{
+      if(!session.writable)throw Error('Autosave unavailable');
+      const result=store.write(JSON.stringify(game.snapshot()));backupWarning=!result.backup;saveAvailable=true;
+      $('save-status').textContent=backupWarning?'Saved / backup unavailable':'Saved on this device';game.autoSaveTimer=0;return true;
+    }catch{saveAvailable=false;backupWarning=false;$('save-status').textContent='Export a save to keep progress';return false;}
+  }
+  function load(){
+    const result=store.read();loadNotice=result.recovered?'Recovered your last working save.':result.damaged?'The saved fleet could not be read. You can import an exported save in Settings.':'';
+    if(result.unavailable)saveAvailable=false;return result.value;
+  }
+  function refreshSavedFleet(){
+    const earth=game.earth,saved=load();untouchedSave=true;hasVoyage=!!saved;game=saved||new C.Game(earth);
+    if(!saved)Object.assign(game.s.settings,preferences());Object.assign(game.s.settings,pendingPreferences);if(session.owner)pendingPreferences={};
+    pendingRoute=null;tradeRequest=null;selected=null;chartRoute=null;wireGame();renderer=new R.Renderer($('ocean'),game);game.paused=true;lastMode=null;saveDirty=false;applyPreferences();renderUI(true);
+  }
+  async function takeFleet(){
+    if(handoffBusy)return false;handoffBusy=true;sessionNotice='Saving the voyage in the other window...';renderTitle();
+    try{
+      const result=await session.request();
+      if(!result.ok){sessionNotice=result.reason==='unsaved'?'The other window could not save. Export your fleet there before switching.':result.reason==='inactive'?'Return here and choose Continue again.':'The other window has not responded. Close it, then try again.';return false;}
+      if(result.changed)refreshSavedFleet();sessionNotice='';return activity.active();
+    }finally{handoffBusy=false;renderTitle();if(sessionNotice)$('title-storage').scrollIntoView({block:'nearest'});}
+  }
+  function continueVoyage(){if(session.owner){if(store.legacy&&untouchedSave)refreshSavedFleet();enterVoyage();}else takeFleet().then(ok=>{if(ok&&hasVoyage)enterVoyage();});}
   function preferences(){
     let text;try{text=localStorage.getItem(PREFS);}catch{saveAvailable=false;return null;}
     try{const p=JSON.parse(text||'null');if(!p||typeof p!=='object')return null;const clean={};for(const k of ['sound','shake','autoFire','reduceMotion','controllerRumble'])if(typeof p[k]==='boolean')clean[k]=p[k];for(const k of ['volume','music','effects','ambience'])if(Number.isFinite(p[k]))clean[k]=Math.max(0,Math.min(k==='volume'?.5:1,p[k]));if(Number.isFinite(p.cameraZoom))clean.cameraZoom=Math.max(.2,Math.min(8,p.cameraZoom));if(Number.isFinite(p.controllerDeadzone))clean.controllerDeadzone=Math.max(.1,Math.min(.35,p.controllerDeadzone));if(['auto','xbox','playstation'].includes(p.controllerLabels))clean.controllerLabels=p.controllerLabels;return clean;}catch{return null;}
   }
   function applyPreferences(){document.body.classList.toggle('ww-reduce-motion',!!game.s.settings.reduceMotion);if(game.s.settings.reduceMotion)renderer.shake=0;sound?.applyMix();updateInputHints();}
-  function preferenceChanged(){applyPreferences();try{localStorage.setItem(PREFS,JSON.stringify(game.s.settings));}catch{saveAvailable=false;}save();renderUI(true);}
+  function preferenceChanged(key){if(!session.owner||store.legacy&&untouchedSave)pendingPreferences[key]=game.s.settings[key];if(session.owner&&store.legacy&&untouchedSave)refreshSavedFleet();if(session.owner)untouchedSave=false;applyPreferences();try{localStorage.setItem(PREFS,JSON.stringify(game.s.settings));}catch{saveAvailable=false;}save(true);renderUI(true);}
   function renderTitle(){
-    $('continue-voyage').hidden=!hasVoyage;$('title-save').hidden=!hasVoyage;$('start-voyage').classList.toggle('ww-primary',!hasVoyage);
-    if(hasVoyage){const place=by(D.ports,game.s.lastPort)?.name||'Havana',chapter=game.charterStatus();$('title-save').innerHTML='<strong>'+(game.mode==='sea'?'At sea / last harbor '+esc(place):esc(port().name)+' / at anchor')+'</strong>'+esc(game.hull().name)+' / '+(game.fleet.length+1)+' boats / day '+game.s.day+'<br>'+(chapter?'Charter '+chapter.number+': '+esc(chapter.title):'The voyage home, complete');}
-    $('title-storage').textContent=!saveAvailable?'Device storage is unavailable. Export your fleet before leaving.':loadNotice;
+    $('continue-voyage').hidden=!hasVoyage;$('continue-voyage').firstElementChild.textContent=handoffBusy?'Saving voyage...':session.owner?'Continue voyage':'Continue here';for(const id of ['continue-voyage','start-voyage','import-save','confirm-reset'])$(id).disabled=handoffBusy;$('title-save').hidden=!hasVoyage;$('start-voyage').classList.toggle('ww-primary',!hasVoyage);
+    if(hasVoyage){const place=by(D.ports,game.s.lastPort)?.name||'Havana',chapter=game.charterStatus();$('title-save').innerHTML='<strong>'+(game.mode==='sea'?'At sea / last harbor '+esc(place):esc(port().name)+' / at anchor')+'</strong>'+esc(game.hull().name)+' / '+(game.fleet.length+1)+' boats / day '+game.s.day+'<span class="ww-title-chapter">'+(chapter?'Charter '+chapter.number+': '+esc(chapter.title):'The voyage home, complete')+'</span>';}
+    $('title-storage').textContent=sessionNotice||(!session.owner?'Continuing here pauses the other window.':session.localOnly?'Autosave is unavailable in this browser. Export your fleet before leaving.':!saveAvailable?'Device storage is unavailable. Export your fleet before leaving.':backupWarning?'Your fleet is saved. There is no room for a backup copy.':loadNotice);$('title-storage').classList.toggle('ww-session-notice',!session.owner&&saveAvailable);
     $('title-version').textContent=D.version+' / '+(desktop?'Desktop':'Web')+' edition';
   }
-  function showTitle(){
-    save();sound?.clearEffects();pendingRoute=null;tradeRequest=null;document.querySelectorAll('dialog[open]').forEach(el=>el.close());modalOrder.length=0;atTitle=true;game.paused=true;clearInput();lastMode=null;$('toasts').replaceChildren();renderUI(true);front.draw(clock,game.s.settings.reduceMotion);$('continue-voyage').focus({preventScroll:true});
+  function showTitle(persist=true){
+    if(persist)save();sound?.clearEffects();pendingRoute=null;tradeRequest=null;document.querySelectorAll('dialog[open]').forEach(el=>el.close());modalOrder.length=0;atTitle=true;game.paused=true;clearInput();lastMode=null;$('toasts').replaceChildren();renderUI(true);front.draw(clock,game.s.settings.reduceMotion);$('continue-voyage').focus({preventScroll:true});
   }
   function enterVoyage(fresh=false){
+    if(!session.owner||!activity.active())return;untouchedSave=false;
     if(fresh){const settings={...game.s.settings};game=new C.Game(game.earth);game.s.settings=settings;wireGame();renderer=new R.Renderer($('ocean'),game);tab='trade';selected=null;pendingRoute=null;document.querySelectorAll('[data-tab]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.tab===tab)));}
     document.querySelectorAll('dialog[open]').forEach(el=>el.close());modalOrder.length=0;atTitle=false;hasVoyage=true;game.paused=false;clearInput();lastMode=null;loadNotice='';applyPreferences();commit();wakeSound();
     if(fresh)modal('departure-dialog');else if(game.mode==='port'&&!document.querySelector('dialog[open]'))$('cast-off').focus({preventScroll:true});
   }
-  function requestNewVoyage(){if(hasVoyage){$('reset-message').textContent='';modal('reset-dialog');}else enterVoyage(true);}
+  function requestNewVoyage(){const begin=()=>{if(hasVoyage){$('reset-message').textContent='';modal('reset-dialog');}else enterVoyage(true);};if(session.owner)begin();else takeFleet().then(ok=>{if(ok)begin();});}
   function commit(){save();renderUI(true);}
   function port(){return by(game.ports,game.s.port);}
   function goodsIcon(id){return '<canvas class="ww-icon" data-icon="'+esc(id)+'" width="24" height="24" aria-hidden="true"></canvas>';}
@@ -122,12 +150,12 @@
   }
   function clearInput(){controller?.reset();keys.clear();aimScreen=null;if(renderer)renderer.aim=null;input.x=input.y=touch.x=touch.y=0;input.fire=input.boost=false;input.aim=null;fireId=null;if(stickId!==null&&$('joystick').hasPointerCapture(stickId))$('joystick').releasePointerCapture(stickId);stickId=null;$('joystick').firstElementChild.style.transform='';$('joystick').classList.remove('ww-full-steam');}
   function modal(id){clearInput();sound?.clearEffects();game.paused=true;const el=$(id);if(!el.open){el.showModal();modalOrder.push(id);}}
-  function closeModal(id){if(id==='recovery-dialog'&&game.s.recovery){game.s.recovery.unread=false;save();}$(id).close();const index=modalOrder.lastIndexOf(id);if(index>=0)modalOrder.splice(index,1);if(id==='chart-dialog'){pendingRoute=null;chartRoute=null;tradeRequest=null;}game.paused=atTitle||!!document.querySelector('dialog[open]');clearInput();if(game.mode==='sea'&&!game.paused)$('ocean').focus({preventScroll:true});}
+  function closeModal(id){if(id==='recovery-dialog'&&game.s.recovery){game.s.recovery.unread=false;save();}$(id).close();const index=modalOrder.lastIndexOf(id);if(index>=0)modalOrder.splice(index,1);if(id==='chart-dialog'){pendingRoute=null;chartRoute=null;tradeRequest=null;}game.paused=atTitle||!session.owner||!!document.querySelector('dialog[open]');clearInput();if(game.mode==='sea'&&!game.paused)$('ocean').focus({preventScroll:true});}
   function openSettings(){
-    if(!game)return;$('autofire').checked=game.s.settings.autoFire;$('volume').value=game.s.settings.volume;$('sound-enabled').checked=game.s.settings.sound;$('camera-shake').checked=game.s.settings.shake;$('reduced-motion').checked=!!game.s.settings.reduceMotion;for(const k of ['music','effects','ambience'])$(k+'-volume').value=game.s.settings[k];updateMixLabels();$('controller-deadzone').value=game.s.settings.controllerDeadzone;updateDeadzoneLabel();$('controller-rumble').checked=game.s.settings.controllerRumble;$('controller-labels').value=game.s.settings.controllerLabels;
+    if(!game)return;if(session.owner&&store.legacy&&untouchedSave)refreshSavedFleet();$('autofire').checked=game.s.settings.autoFire;$('volume').value=game.s.settings.volume;$('sound-enabled').checked=game.s.settings.sound;$('camera-shake').checked=game.s.settings.shake;$('reduced-motion').checked=!!game.s.settings.reduceMotion;for(const k of ['music','effects','ambience'])$(k+'-volume').value=game.s.settings[k];updateMixLabels();$('controller-deadzone').value=game.s.settings.controllerDeadzone;updateDeadzoneLabel();$('controller-rumble').checked=game.s.settings.controllerRumble;$('controller-labels').value=game.s.settings.controllerLabels;
     $('settings-title').textContent=atTitle?'Settings':'Paused';$('settings-caption').textContent=atTitle?'Make yourself at home':'A moment at anchor';$('settings-return').textContent=atTitle?'Return':'Resume';$('return-title').hidden=atTitle;$('export-save').disabled=!hasVoyage;$('new-game').hidden=atTitle;
     $('quit-game').textContent=hasVoyage?'Save & quit':'Quit';
-    save();$('save-message').textContent=!saveAvailable?'Device storage is unavailable. Export a save before leaving.':hasVoyage?'Your fleet is saved on this device. Export a copy to keep it elsewhere.':'Your voyage will save on this device. You can also import an exported fleet.';modal('settings-dialog');
+    save();$('save-message').textContent=!session.owner?'This fleet is open in another window. Choose Continue here before importing.':session.localOnly?'Autosave is unavailable in this browser. Export a save before leaving.':backupWarning?'Your fleet is saved, but its backup could not be updated. Export a copy to keep.':!saveAvailable?'Device storage is unavailable. Export a save before leaving.':hasVoyage?'Your fleet is saved on this device. Export a copy to keep it elsewhere.':'Your voyage will save on this device. You can also import an exported fleet.';modal('settings-dialog');
   }
   function controllerContext(){const top=modalOrder.at(-1);return{sea:!atTitle&&game.mode==='sea'&&!game.paused,port:!top&&!atTitle&&game.mode==='port',scope:top?$(top):atTitle?$('title-screen'):$('game')};}
   function setInputMode(mode){if(mode===inputMode)return;inputMode=mode;if(mode==='controller'&&fireId===null){aimScreen=null;input.aim=null;}if(mode!=='controller')controller?.stopRumble();updateInputHints();}
@@ -153,9 +181,9 @@
   controller=new WidewakeController.Controller({settings:()=>game.s.settings,using:()=>inputMode==='controller',context:controllerContext,action:controllerAction,status:text=>{$('controller-status').textContent=text;},connected:updateInputHints,describe:updateInputHints,use:()=>{setInputMode('controller');if(!sound||sound.needsResume()&&navigator.userActivation?.hasBeenActive)wakeSound();},lost:used=>{if(used){autoPause();toast('Controller disconnected. Reconnect, release the controls, then resume.','warn');}}});
   for(const scope of [...document.querySelectorAll('dialog'),$('title-screen')]){const help=document.createElement('p');help.className='ww-pad-help';scope.append(help);}
   function updateDeadzoneLabel(){const amount=Math.round(Number($('controller-deadzone').value)*100);$('controller-deadzone-value').textContent=amount+'%';$('controller-deadzone').setAttribute('aria-valuetext',amount+' percent');}
-  $('controller-deadzone').oninput=e=>{game.s.settings.controllerDeadzone=Number(e.target.value);updateDeadzoneLabel();preferenceChanged();};
-  $('controller-rumble').onchange=e=>{game.s.settings.controllerRumble=e.target.checked;controller.stopRumble();preferenceChanged();};
-  $('controller-labels').onchange=e=>{game.s.settings.controllerLabels=e.target.value;preferenceChanged();};
+  $('controller-deadzone').oninput=e=>{game.s.settings.controllerDeadzone=Number(e.target.value);updateDeadzoneLabel();preferenceChanged('controllerDeadzone');};
+  $('controller-rumble').onchange=e=>{game.s.settings.controllerRumble=e.target.checked;controller.stopRumble();preferenceChanged('controllerRumble');};
+  $('controller-labels').onchange=e=>{game.s.settings.controllerLabels=e.target.value;preferenceChanged('controllerLabels');};
   document.querySelectorAll('.ww-audio-notice').forEach(el=>el.onclick=()=>{wakeSound();if(sound?.ctx.state!=='running')el.textContent='Click or tap once here to enable sound in this browser.';});
   function allDestinations(){return [...game.ports.map(p=>({...p,kind:'port'})),...game.sites.map(s=>({...s,kind:s.type})),...game.bossSites.map(b=>({...b,kind:'boss'})),...game.signals.map(s=>({...s,signalKind:s.kind,kind:'signal'}))];}
   function sailingTime(seconds){return seconds<60?'About '+Math.max(5,Math.round(seconds/5)*5)+'s sailing':'About '+Math.ceil(seconds/60)+' min sailing';}
@@ -244,14 +272,14 @@
     switch(a.dataset.action){case'buy':game.trade(id,quantity===-1?9999:quantity,true);break;case'sell':game.trade(id,quantity===-1?9999:quantity,false);break;case'boat':game.buyBoat(id);break;case'sell-boat':game.sellBoat(Number(id));break;case'hull':game.buyHull(id);break;case'upgrade':game.upgrade(id);break;case'repair':game.repair();break;case'equip':game.equip(id);break;case'contract':game.acceptContract(id);break;case'deliver':game.deliver(id);break;case'compare':openChart(null,port().cheap);break;case'route':openChart({...by(game.ports,id),kind:'port'});break;case'boss-route':openChart({...by(game.bossSites,id),kind:'boss'});break;}
     commit();
   });
-  $('continue-voyage').onclick=()=>enterVoyage();$('start-voyage').onclick=requestNewVoyage;$('title-settings').onclick=openSettings;$('title-handbook').onclick=()=>modal('handbook-dialog');$('settings-handbook').onclick=()=>modal('handbook-dialog');$('title-credits').onclick=()=>modal('credits-dialog');$('return-title').onclick=showTitle;$('first-course').onclick=()=>{closeModal('departure-dialog');openChart({...by(game.ports,'nassau'),kind:'port'});};
+  $('continue-voyage').onclick=continueVoyage;$('start-voyage').onclick=requestNewVoyage;$('title-settings').onclick=openSettings;$('title-handbook').onclick=()=>modal('handbook-dialog');$('settings-handbook').onclick=()=>modal('handbook-dialog');$('title-credits').onclick=()=>modal('credits-dialog');$('return-title').onclick=()=>showTitle();$('first-course').onclick=()=>{closeModal('departure-dialog');openChart({...by(game.ports,'nassau'),kind:'port'});};
   $('cast-off').onclick=()=>{game.sail();commit();};$('harbor-chart').onclick=()=>openChart();$('sea-chart').onclick=()=>openChart();$('settings-open').onclick=openSettings;$('sea-pause').onclick=openSettings;
   $('convoy-open').onclick=()=>convoy.open();
   $('voyage-open').onclick=()=>{tab='voyage';document.querySelectorAll('[data-tab]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.tab===tab)));$('port-panel').scrollTop=0;renderPanel();};
-  function toggleSound(enabled){game.s.settings.sound=enabled;wakeSound();preferenceChanged();}
-  $('sound-toggle').onclick=()=>{if(!game)return;if(audioNeedsGesture)wakeSound();else toggleSound(!game.s.settings.sound);};$('sound-enabled').onchange=e=>toggleSound(e.target.checked);$('autofire').onchange=e=>{game.s.settings.autoFire=e.target.checked;preferenceChanged();};$('volume').oninput=e=>{game.s.settings.volume=Number(e.target.value);wakeSound();sound?.play('tap');preferenceChanged();updateMixLabels();};$('camera-shake').onchange=e=>{game.s.settings.shake=e.target.checked;preferenceChanged();};$('reduced-motion').onchange=e=>{game.s.settings.reduceMotion=e.target.checked;preferenceChanged();};
+  function toggleSound(enabled){game.s.settings.sound=enabled;wakeSound();preferenceChanged('sound');}
+  $('sound-toggle').onclick=()=>{if(!game)return;if(audioNeedsGesture)wakeSound();else toggleSound(!game.s.settings.sound);};$('sound-enabled').onchange=e=>toggleSound(e.target.checked);$('autofire').onchange=e=>{game.s.settings.autoFire=e.target.checked;preferenceChanged('autoFire');};$('volume').oninput=e=>{game.s.settings.volume=Number(e.target.value);wakeSound();sound?.play('tap');preferenceChanged('volume');updateMixLabels();};$('camera-shake').onchange=e=>{game.s.settings.shake=e.target.checked;preferenceChanged('shake');};$('reduced-motion').onchange=e=>{game.s.settings.reduceMotion=e.target.checked;preferenceChanged('reduceMotion');};
   function updateMixLabels(){for(const key of ['volume','music','effects','ambience']){const slider=$(key==='volume'?'volume':key+'-volume'),amount=Math.round(Number(slider.value)*(key==='volume'?200:100));$(key==='volume'?'volume-value':key+'-value').textContent=amount+'%';slider.setAttribute('aria-valuetext',amount+' percent');}}
-  for(const key of ['music','effects','ambience'])$(key+'-volume').oninput=e=>{game.s.settings[key]=Number(e.target.value);wakeSound();preferenceChanged();updateMixLabels();if(key==='effects')sound?.play('tap');};
+  for(const key of ['music','effects','ambience'])$(key+'-volume').oninput=e=>{game.s.settings[key]=Number(e.target.value);wakeSound();preferenceChanged(key);updateMixLabels();if(key==='effects')sound?.play('tap');};
   function fireBroadside(){if(game.burst())commit();}
   $('broadside').onclick=fireBroadside;$('field-repair').onclick=()=>{game.fieldRepair();commit();};$('formation').onclick=()=>formation();$('context-action').onclick=contextAction;$('zoom-in').onclick=()=>renderer.setZoom(1.2);$('zoom-out').onclick=()=>renderer.setZoom(1/1.2);
   $('destination-list').onchange=e=>selectDestination(allDestinations().find(p=>p.id===e.target.value));
@@ -276,13 +304,15 @@
   for(const id of ['chart-good','chart-order','chart-quantity','chart-sort'])$(id).onchange=()=>{chartGood=$('chart-good').value;chartBuyNew=$('chart-order').value==='buy';chartQuantity=Number($('chart-quantity').value);chartSort=$('chart-sort').value;chartOffers=game.tradeProspects(chartGood,chartQuantity,chartBuyNew);selectDestination(selected,false);};
   document.querySelectorAll('dialog').forEach(el=>{el.addEventListener('cancel',e=>{e.preventDefault();closeModal(el.id);});el.addEventListener('click',e=>{if(e.target===el){const b=el.getBoundingClientRect();if(e.clientX<b.left||e.clientX>b.right||e.clientY<b.top||e.clientY>b.bottom)closeModal(el.id);}});});
   async function exportSave(messageId='save-message'){
+    if(!session.owner&&saveDirty)refreshSavedFleet();
     const text=JSON.stringify(game.snapshot());
     if(desktop){try{const result=await desktop.exportSave(text);$(messageId).textContent=result.status==='saved'?'Saved '+result.name+'. Keep this file to restore the fleet.':result.status==='canceled'?'Export canceled.':'Export failed: '+result.message;}catch{$(messageId).textContent='Export failed. Try again before quitting.';}return;}
     const blob=new Blob([text],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='widewake-day-'+game.s.day+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);$(messageId).textContent='Save exported. Keep this file to restore the fleet.';
   }
-  function restoreSave(text,name){if(new TextEncoder().encode(text).byteLength>C.MAX_SAVE_BYTES)throw new Error('That file is too large to be a Widewake save.');game=new C.Game(game.earth,JSON.parse(text));hasVoyage=true;pendingRoute=null;selected=null;wireGame();renderer=new R.Renderer($('ocean'),game);game.paused=true;lastMode=null;applyPreferences();commit();$('export-save').disabled=false;$('save-message').textContent='Fleet restored from '+name+'.';}
+  function restoreSave(text,name){if(!session.owner)throw Error('Continue here before importing your fleet.');if(new TextEncoder().encode(text).byteLength>C.MAX_SAVE_BYTES)throw new Error('That file is too large to be a Widewake save.');game=new C.Game(game.earth,JSON.parse(text));hasVoyage=true;untouchedSave=false;pendingPreferences={};pendingRoute=null;selected=null;wireGame();renderer=new R.Renderer($('ocean'),game);game.paused=true;lastMode=null;applyPreferences();commit();$('export-save').disabled=false;$('save-message').textContent='Fleet restored from '+name+'.';}
   $('export-save').onclick=()=>exportSave();$('reset-export').onclick=()=>exportSave('reset-message');
   $('import-save').onclick=async()=>{
+    if(!session.owner){if(await takeFleet()){openSettings();$('save-message').textContent='Ready here. Choose Import save to select your file.';}return;}
     if(desktop){try{const result=await desktop.importSave();if(result.status==='loaded')restoreSave(result.text,result.name);else $('save-message').textContent=result.status==='canceled'?'Import canceled.':'Import failed: '+result.message;}catch(err){$('save-message').textContent='Import failed: '+err.message;}return;}
     if(inputMode==='controller'&&!navigator.userActivation?.isActive){$('save-message').textContent='Click Import save with a mouse or touch to open the browser file picker.';return;}$('save-file').click();
   };
@@ -317,8 +347,9 @@
   $('joystick').addEventListener('pointerdown',e=>{if(stickId!==null||game.paused)return;wakeSound();stickId=e.pointerId;e.currentTarget.setPointerCapture(e.pointerId);moveStick(e);});$('joystick').addEventListener('pointermove',e=>{if(e.pointerId===stickId)moveStick(e);});for(const type of ['pointerup','pointercancel','lostpointercapture'])$('joystick').addEventListener(type,()=>{stickId=null;touch.x=touch.y=0;$('joystick').firstElementChild.style.transform='';$('joystick').classList.remove('ww-full-steam');});
   function autoPause(){clearInput();if(!atTitle&&game?.mode==='sea'&&!document.querySelector('dialog[open]'))openSettings();save();}
   window.addEventListener('widewake-activity',e=>{window.dispatchEvent(new Event(e.detail?'focus':'blur'));if(!e.detail){autoPause();sound?.suspend();}});
-  activity.onChange(active=>{last=0;accumulator=0;if(!active){autoPause();sound?.suspend();}});
-  window.addEventListener('pagehide',save);window.addEventListener('resize',()=>{if(renderer&&game.mode==='sea')renderer.resize();if(game&&inputMode==='controller'&&!controllerContext().sea)controller.focus(document.activeElement);});
+  activity.onChange(active=>{last=0;accumulator=0;if(!active){autoPause();sound?.suspend();}else if(game&&saveDirty&&!session.owner&&!handoffBusy&&atTitle&&!document.querySelector('dialog[open]'))refreshSavedFleet();});
+  window.addEventListener('pagehide',()=>{save();restoreLocalOnly=!!session?.owner&&hasVoyage&&!saveAvailable;session?.close();});
+  window.addEventListener('pageshow',async e=>{if(!e.persisted||!game)return;const localOnly=session.localOnly||restoreLocalOnly;if(localOnly)session.localOnly=true;await session.open();if(!localOnly)refreshSavedFleet();else if(restoreLocalOnly)sessionNotice='This restored window holds unsaved progress. Export it before leaving. Autosave is off here.';showTitle(false);});window.addEventListener('resize',()=>{if(renderer&&game.mode==='sea')renderer.resize();if(game&&inputMode==='controller'&&!controllerContext().sea)controller.focus(document.activeElement);});
   function loop(ms){const dt=Math.min(.1,(ms-(last||ms))/1000);last=ms;clock+=dt;
     const pad=game?controller.update(clock):{x:0,y:0,fire:false,boost:false,aim:null};if(game){sound?.update(audioScene());updateAudioNotice();}
     if(game&&atTitle){front.draw(clock,game.s.settings.reduceMotion);}else if(game){input.x=(keys.has('KeyD')||keys.has('ArrowRight')?1:0)-(keys.has('KeyA')||keys.has('ArrowLeft')?1:0)+touch.x+pad.x;input.y=(keys.has('KeyS')||keys.has('ArrowDown')?1:0)-(keys.has('KeyW')||keys.has('ArrowUp')?1:0)+touch.y+pad.y;input.boost=keys.has('ShiftLeft')||keys.has('ShiftRight')||Math.hypot(touch.x,touch.y)>.94||pad.boost;input.fire=fireId!==null||pad.fire;
@@ -330,10 +361,13 @@
     }activity.requestFrame(loop);
   }
   async function start(){try{
-    const res=await fetch('assets/widewake/earth-land.geojson');if(!res.ok)throw new Error('The coastline file could not be loaded.');const geojson=await res.json(),earth=new W.Earth(geojson);const saved=load(earth);hasVoyage=!!saved;game=saved||new C.Game(earth);if(!saved)game.s.settings={...game.s.settings,...preferences()};if(typeof game.s.settings.reduceMotion!=='boolean')game.s.settings.reduceMotion=matchMedia('(prefers-reduced-motion:reduce)').matches;wireGame();renderer=new R.Renderer($('ocean'),game);game.paused=true;applyPreferences();$('loading').hidden=true;renderUI(true);front.draw(0,game.s.settings.reduceMotion);$(hasVoyage?'continue-voyage':'start-voyage').focus({preventScroll:true});activity.requestFrame(loop);
-    try{routeWorker=new Worker('js/widewake-route-worker.js?v=0.10.0');routeWorker.postMessage({type:'init',geojson});routeWorker.onmessage=e=>{if(tradeRequest&&e.data.id===tradeRequest.id){if(e.data.distances)tradeDistancesFinished(e.data.distances);else{tradeRequest=null;$('trade-prospects').textContent='Trade routes could not be checked. Close and reopen the chart to retry.';}return;}if(pendingRoute&&e.data.id===pendingRoute.id)routeFinished(e.data.path,e.data.message);};routeWorker.onerror=()=>{routeWorker.terminate();routeWorker=null;tradeRequest=null;if(pendingRoute)routeFinished(null,'The route planner failed. Choose the destination again.');requestTradeDistances();};}catch{routeWorker=null;}
+    const res=await fetch('assets/widewake/earth-land.geojson');if(!res.ok)throw new Error('The coastline file could not be loaded.');const geojson=await res.json(),earth=new W.Earth(geojson);
+    store=new S.Store({storage:{getItem:key=>localStorage.getItem(key),setItem:(key,text)=>localStorage.setItem(key,text),removeItem:key=>localStorage.removeItem(key)},limit:C.MAX_SAVE_BYTES,validate:text=>{if(new TextEncoder().encode(text).byteLength>C.MAX_SAVE_BYTES)throw Error('Save too large');return new C.Game(earth,JSON.parse(text));}});
+    session=new S.Session({standalone:!!desktop,schedule:(fn,ms)=>activity.setTimeout(fn,ms),cancel:id=>activity.clearTimeout(id),canTake:()=>activity.active(),onYield:()=>{autoPause();game.paused=true;return !hasVoyage||saveAvailable;},onLost:()=>{sessionNotice='Your voyage is now open in another window.';showTitle(false);},onStorage:()=>{saveDirty=true;if(game&&!session.owner&&activity.active()&&!handoffBusy&&atTitle&&!document.querySelector('dialog[open]'))refreshSavedFleet();}});
+    await session.open();const saved=load();hasVoyage=!!saved;game=saved||new C.Game(earth);if(!saved)game.s.settings={...game.s.settings,...preferences()};if(typeof game.s.settings.reduceMotion!=='boolean')game.s.settings.reduceMotion=matchMedia('(prefers-reduced-motion:reduce)').matches;wireGame();renderer=new R.Renderer($('ocean'),game);game.paused=true;applyPreferences();$('loading').hidden=true;renderUI(true);front.draw(0,game.s.settings.reduceMotion);$(hasVoyage?'continue-voyage':'start-voyage').focus({preventScroll:true});activity.requestFrame(loop);
+    try{routeWorker=new Worker('js/widewake-route-worker.js?v=0.11.0');routeWorker.postMessage({type:'init',geojson});routeWorker.onmessage=e=>{if(tradeRequest&&e.data.id===tradeRequest.id){if(e.data.distances)tradeDistancesFinished(e.data.distances);else{tradeRequest=null;$('trade-prospects').textContent='Trade routes could not be checked. Close and reopen the chart to retry.';}return;}if(pendingRoute&&e.data.id===pendingRoute.id)routeFinished(e.data.path,e.data.message);};routeWorker.onerror=()=>{routeWorker.terminate();routeWorker=null;tradeRequest=null;if(pendingRoute)routeFinished(null,'The route planner failed. Choose the destination again.');requestTradeDistances();};}catch{routeWorker=null;}
     // A deliberately opt-in inspection surface for deterministic browser checks.
-    if(new URLSearchParams(location.search).has('test'))window.__widewake={get game(){return game;},get renderer(){return renderer;},get activity(){return activity;},get atTitle(){return atTitle;},get sound(){return sound;},get controller(){return controller;},get input(){return {...input};},get chartRoute(){return chartRoute;},save,render:()=>renderUI(true),step:(seconds,input={})=>{for(let i=0;i<seconds*60;i++)game.step(1/60,input);renderUI(true);},setState:s=>{game=new C.Game(earth,s);atTitle=false;hasVoyage=true;document.querySelectorAll('dialog[open]').forEach(el=>el.close());modalOrder.length=0;wireGame();renderer=new R.Renderer($('ocean'),game);lastMode=null;renderUI(true);},openChart};
+    if(new URLSearchParams(location.search).has('test'))window.__widewake={get game(){return game;},get renderer(){return renderer;},get activity(){return activity;},get session(){return session;},get atTitle(){return atTitle;},get sound(){return sound;},get controller(){return controller;},get input(){return {...input};},get chartRoute(){return chartRoute;},save,render:()=>renderUI(true),step:(seconds,input={})=>{for(let i=0;i<seconds*60;i++)game.step(1/60,input);renderUI(true);},setState:s=>{game=new C.Game(earth,s);atTitle=false;hasVoyage=true;untouchedSave=false;document.querySelectorAll('dialog[open]').forEach(el=>el.close());modalOrder.length=0;wireGame();renderer=new R.Renderer($('ocean'),game);lastMode=null;renderUI(true);},openChart};
   }catch(err){$('loading').innerHTML='<p>The chart could not be opened.</p><small>'+esc(err.message)+'</small><button id="retry-load">Try again</button>';$('retry-load').onclick=()=>location.reload();}}
   start();
 })();
