@@ -34,8 +34,8 @@ The exact owner constraints and source links are in `WIDEWAKE.md`.
 | Helm and camera | Acceleration, coastal collision, checked route preview and retained destination after manual detours | Review turning, arrival, coasts and camera at every hull size and input method |
 | Combat | Real projectiles, admiral tells, directional hits, reticles, recoil and distinct impacts | Review dense threat reading and formation decisions; verify difficulty with varied builds, not one scripted captain |
 | Trade | Exact bulk quotes, water-route comparisons, explicit order loading, reserved holds and no instant resale exploit | Review market pacing, discovery of trade routes, and late-game reasons to trade |
-| Convoy | Per-vessel manifests, assignments, reserves, guard status and physical movement | Review recovery after losses, large-fleet selection, convoy stragglers and clear causes of failure |
-| Fishing and oil | Real protected workers, different grounds, rare catches | Review risk and yield, repeated-operation variety, rarity weighting, and reasons to change sites |
+| Convoy | Per-vessel cargo and guards, saved loss causes, exact recovery receipt and next actions | Large-fleet selection, convoy stragglers and build-dependent survival |
+| Fishing and oil | Five work rhythms across 18 sites, moving schools, checked approach warnings and weighted regional catches | Longer play across fleet builds, risk/reward pacing and worthwhile repeat visits |
 | Progression | Six solvable charters and three admirals; earned simulated campaign | More human play, build diversity, optional pursuits and free-play depth; eliminate grind or runaway snowballing |
 | Earth and discovery | Real coastlines, 24 ports, 18 work sites and 15 signals | Review recognizable regions, travel interest, geography seams, legible chart and destination discovery |
 | Art | Chunky native sprites and harbor scenes; 24 distinct briefs saved | Make compositions and silhouettes more individual; final image generation remains deferred by the owner |
@@ -307,3 +307,72 @@ and fishing and oil should give more reasons to change sites and tactics. Keep
 reviewing all areas each pass. Physical-device play, human pacing/listening,
 controller remapping, final art, desktop packaging and platform integration still
 belong to the release gates. Image generation remains deferred.
+
+
+## Pass 5, working watches and fleet recovery, v0.7
+
+Defeat previously gave a generic claim that a quarter of the purse was taken.
+That was false for small purses, where harbor relief instead keeps the company
+viable. Lost boats had no durable manifest or cause beyond a short message.
+Fishing and oil both used the same one-minute stationary timer; the rarity
+labels did not affect species probability.
+
+The new recovery screen records actual fees, relief, lost cargo and sunk boats.
+It keeps earned progression and leads into an affordable trading run or fleet
+review. Its unread state survives closing the browser. The Log retains the
+receipt, loss history and last working watch. The recovery economy is unchanged.
+
+Working grounds now have five rhythms: shoal nets, moving cold schools, deep
+hauls, steady pumping and pressure cycles. The starter yields remain 60 fish
+and 80 oil; deep fishing and higher-threat wells take 72 working seconds for
+72 fish and 96 oil per boat. Coast-checked drift keeps workers moving physically.
+Forecasts change with the day and stay fixed during a watch. Larger hauls favor
+different raider types, and directions are announced before a wave appears.
+Rare catches now have rarity weights and favored grounds.
+
+Review found and corrected three connected issues. A warning initially pointed
+into blocked land, so the lookout now chooses a clear-water sector first.
+Parking the flagship near a harbor could suppress attacks on its workboats;
+working waves now remain active outside that harbor. On phones, stacked messages
+could hide the watch and boats. The watch replaces the charter while working,
+one notification takes priority, and the approach warning is shown once. Ground
+labels also stop colliding with named workboats.
+
+Evidence:
+
+- Twelve work/recovery checks cover exact odd cargo losses, all purse boundaries,
+  invalid imports, all 18 grounds' station paths and yields, moving workers,
+  complete and interrupted watches, forecast/approach saves, old-watch migration,
+  clear-water waves, harbor shelter and weighted species.
+- Chromium and WebKit exercise defeat, pending receipt reload, keyboard/controller
+  dismissal, retained history, trade planning, all five chart profiles and both
+  phone orientations. The 360 by 640 and 667 by 375 reviews keep the approach
+  readable and the 44-pixel recovery actions reachable.
+- Core, convoy/voyage, feedback and trade checks pass. Controller play still
+  completes the earned first trade, a protected fishing watch and return. Audio
+  and mobile notification checks pass. WebKit launcher and chart checks retain
+  the save, pause, import, rotation and route-failure behavior.
+- The ordinary-progression captain completes six charters in 41.6 simulated
+  minutes, with nine boats, 935 kills and 43,186 coins. Last Light is defeated
+  in a frigate. Different random catches and enemy approaches change income;
+  this one captain is evidence of viability, not a balance certification.
+- The connected browser run lands 60 fish with the starter cutter, escort and
+  purchased trawler, then continues through charter, rescue, merchant and ending
+  flows. Its 240-frame desktop sample with 1,200 enemies, 21 support boats and
+  audio active records 8.3 ms median and 9.7 ms p95 on the M1 Pro with Chrome for
+  Testing 148 at 1440 by 900. Lookout planning across all sites takes under 1.6 ms
+  in a separate Node sample. These remain short desktop checks.
+
+Whole-game review: launch still opens as a game, with no portfolio wrapper.
+Trading now connects to an explicit recovery route. Helm and convoy positioning
+matter at moving grounds, and combat warnings are tied to actual approaches.
+Campaign work objectives remain earned and solvable. Earth routes, existing
+harbor compositions and music did not need new content in this pass; the visual
+and sound changes serve working status. Save migrations, mobile views, focus and
+failure handling were checked around the additions. Final art remains deferred.
+
+Next: review large-fleet combat reading, including worker names that can still
+overlap a nearby hull, progression across different builds and long-session stability, then carry those findings into the desktop release path.
+Physical-device play, human pacing and listening, controller remapping, final art,
+desktop packaging and platform integration remain open release requirements.
+The persistent production goal remains active.

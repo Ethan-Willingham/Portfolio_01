@@ -64,6 +64,8 @@ distinct interim backgrounds while that art pass is deferred.
 - `js/widewake-core.js`: pure JavaScript campaign and fixed-step simulation.
 - `js/widewake-voyage.js`: charters, sea stories, rescue operations, encounter
   rewards, and their validated save state. No DOM dependencies.
+- `js/widewake-work.js`: working-ground forecasts, moving schools, timed loads,
+  raider approaches, weighted rare species, and validated watch state.
 - `js/widewake-render.js`: small canvas sprites, sea rendering, chart, port scenes.
 - `js/widewake-convoy.js`: vessel selection, cargo transfers, hold reservations,
   guard orders, and fleet buttons that retain keyboard focus.
@@ -125,7 +127,8 @@ import data.
   flagship. Automatic orders divide them between active workboats or protect a
   stranded crew during a rescue. When work ends they rejoin the flagship.
 - Production vessels move onto station before their timer starts. Operations
-  stop if the player leaves the area or the workboat sinks. Loaded cargo remains.
+  stop if the player leaves the area or the final workboat sinks. Loaded cargo
+  remains on surviving boats. Each watch keeps its forecast until it finishes.
 - Each market shows purchase and sale prices, the fleet's holdings, local exports,
   demand, quantity controls, and executable trade totals on button hover.
 - Choosing a good's name opens trade comparisons on the chart. Owned cargo is
@@ -163,6 +166,52 @@ import data.
 - Touch has steering and combat buttons; the desktop layout remains usable on
   landscape touch devices. Portrait remains a supported compact layout for this
   game; Sluice's separate landscape policy does not automatically apply here.
+
+## Working grounds and losses, v0.7
+
+All 18 sites use physical workers with their own holds. Matching boats join the
+watch together. Guards follow those boats; the captain continues steering and
+fighting. No manual fishing or pumping action is required after deployment.
+
+| Ground | Working time | Load per boat | Defensive consequence |
+| --- | --- | --- | --- |
+| Warm shoals | 60 seconds | 3 fish every 3 seconds, 60 total | Hold the ground against the day's raider mix |
+| Cold banks | 60 seconds | 3 fish every 3 seconds, 60 total | Follow a school along a checked 140-unit water track |
+| Deep water | 72 seconds | 12 fish every 12 seconds, 72 total | Larger, slower hauls while gunboats try to stand off |
+| Gulf pumping | 60 seconds | 4 oil every 3 seconds, 80 total | Defend a stationary tender |
+| Higher-threat wells | 72 seconds | 16 oil every 12 seconds, 96 total | Fast packs approach between pressure cycles |
+
+Travel onto station can add time. Full holds stop work early; a complete watch
+pays 100 + 75 times site danger in coins. Recalling, leaving the protection area
+or losing every worker does not earn this bonus. The log retains the last watch's
+loaded quantity, result and payment. Cargo lost with a boat is recorded separately.
+
+The chart describes the site's load pattern, useful cargo room, daily forecast
+and favored species. Forecasts stay fixed during a watch and survive saving.
+They change approach width, bearing and the enemy mix at ordinary grounds.
+Deep grounds favor gunboats; pressure wells favor fast raiders. A sound, compass
+bearing and water marker warn three seconds before a wave. The lookout checks
+clear water before announcing a direction. Coasts can change the preferred
+alternating approach. Keeping the flagship inside a harbor ring does not disable
+attacks on its workers outside the harbor.
+
+Rare species use relative weights of 6 for Uncommon, 3 for Rare and 1 for
+Legendary. A ground's favored species has twice its usual weight. Warm, cold and
+deep regional pools remain separate. The first qualifying catch after twelve
+seconds is still guaranteed if the captain has never found a rare species.
+
+A sunk support boat leaves a bounded loss record: its identity, final damage
+source, day and actual hold. If the flagship goes down, surviving hulls are towed
+back to the last port and repaired. Coins become max(260, floor(coins * 0.75));
+each remaining cargo quantity is halved and rounded down. A recovery receipt
+shows the actual fee or relief grant, salvagers' cargo, and boats already lost
+on that voyage. It offers Fleet and trade planning without spending anything.
+Dismissal is saved, and the receipt can be reopened from Log.
+
+On small screens, the working watch replaces the distant charter objective.
+One notification remains visible at a time, with discoveries taking priority.
+The approach warning belongs to the watch rather than duplicating a toast.
+Active ground labels yield to named workers so the words do not overlap.
 
 ## Controller play
 
@@ -249,7 +298,11 @@ upgrades and limits before replacing the live fleet. Storage failure is surfaced
 and export remains available. Saves include individual boat positions and wakes,
 the course and autopilot, formation, guard orders, reserved holds, action
 cooldowns, hulls, cargo, progression, collections, charters and an active sea
-operation. Original version-1 saves migrate with defaults for the new fields.
+operation. Watch saves include forecast day, loaded cargo, drift, approach and
+next-wave timing. Recovery receipts and recent losses are validated too. Original
+version-1 saves migrate with defaults for the new fields. An older active watch
+labels its cargo counter as loaded since resuming, because earlier saves did not
+record a reliable watch total.
 Transient projectiles and enemy
 formations are regenerated after loading; they are not a replay format.
 
@@ -261,6 +314,7 @@ services through the browser shell, rather than rewriting the economy.
 
 ```sh
 node tools/widewake/test-core.cjs
+node tools/widewake/test-work.cjs
 node tools/widewake/test-routes.cjs
 node tools/widewake/test-voyage.cjs
 node tools/widewake/test-feedback.cjs
@@ -268,12 +322,13 @@ node tools/widewake/test-trade-planning.cjs
 node tools/widewake/test-playthrough.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-browser.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-front.cjs
+NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-work-browser.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-audio.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-chart.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-controller.cjs
 ```
 
-The front, chart, controller and audio harnesses also support `WIDEWAKE_TEST_ENGINE=webkit`.
+The front, chart, work, controller and audio harnesses also support `WIDEWAKE_TEST_ENGINE=webkit`.
 Audio checks render actual samples offline, verify independent mute, finite
 levels and stereo position, then exercise input, inactivity and node cleanup in
 the running game. They do not substitute for listening on speakers/headphones.

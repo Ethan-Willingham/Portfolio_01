@@ -4,6 +4,7 @@
   const D=root.WidewakeData||(typeof require==='function'?require('./widewake-data.js'):null);
   const W=root.WidewakeWorld||(typeof require==='function'?require('./widewake-world.js'):null);
   const V=root.WidewakeVoyage||(typeof require==='function'?require('./widewake-voyage.js'):null);
+  const Work=root.WidewakeWork||(typeof require==='function'?require('./widewake-work.js'):null);
   const {dx,wrap,distance,point,geo,clamp,SpatialHash}=W;
   const TAU=Math.PI*2, SAVE_VERSION=1;
   const count=c=>Object.values(c||{}).reduce((a,b)=>a+b,0);
@@ -18,7 +19,7 @@
     upgrades:{guns:0,hull:0,engine:0,hold:0},cargo:{sugar:12},fleet:[{uid:1,type:'escort',name:'Wren',hp:180,cargo:{}}],nextUid:2,
     items:[],equipped:[],fishbook:{},visits:['havana'],bosses:[],claimed:[],deliveries:[],completedContracts:[],impact:{},
     stats:{kills:0,profit:0,fish:0,oil:0,operations:0,sugar:0,miles:0,rare:0},
-    settings:{sound:true,volume:.22,music:.35,ambience:.5,effects:.8,autoFire:true,shake:true,controllerDeadzone:.18,controllerRumble:true,controllerLabels:'auto'},journal:[],location:null,production:null,formation:'screen',course:null,wake:[],voyage:V.fresh(),atSea:false,seed:hash(Date.now())};}
+    settings:{sound:true,volume:.22,music:.35,ambience:.5,effects:.8,autoFire:true,shake:true,controllerDeadzone:.18,controllerRumble:true,controllerLabels:'auto'},journal:[],lossHistory:[],tripLosses:[],recovery:null,workReport:null,location:null,production:null,formation:'screen',course:null,wake:[],voyage:V.fresh(),atSea:false,seed:hash(Date.now())};}
   function validate(raw){
     if(!raw||raw.version!==SAVE_VERSION)throw new Error('This chart belongs to a different save version.');
     const s=fresh();
@@ -57,7 +58,14 @@
     s.wake=raw.wake?track(raw.wake,1000):[];s.course=null;
     if(raw.course){const c=raw.course;if(!c.target||typeof c.autopilot!=='boolean')throw new Error('Invalid course.');s.course={route:track(c.route,2048),target:{...position(c.target),name:String(c.target.name||'Ocean waypoint').slice(0,80),...(typeof c.target.id==='string'?{id:c.target.id.slice(0,60)}:{})},autopilot:c.autopilot};}
     s.cooldowns={burst:0,repair:0};for(const k of ['burst','repair'])if(raw.cooldowns?.[k]!==undefined){if(!finite(raw.cooldowns[k],0,60))throw new Error('Invalid cooldown.');s.cooldowns[k]=raw.cooldowns[k];}
-    s.production=raw.production&&by(D.sites,raw.production.site)&&finite(raw.production.progress,0,1000)?{site:raw.production.site,progress:raw.production.progress,wave:finite(raw.production.wave,0,1000)?raw.production.wave:0,uid:raw.production.uid,uids:Array.isArray(raw.production.uids)?raw.production.uids.filter(id=>ids.has(id)).slice(0,24):[raw.production.uid]}:null;
+    const loss=record=>{if(!record||!Number.isInteger(record.uid)||record.uid<1||record.uid>=s.nextUid||ids.has(record.uid)||!by(D.boats,record.type)||!Number.isInteger(record.day)||record.day<1||record.day>s.day||!['ramming','mortar','cannon','damage'].includes(record.cause))throw new Error('Invalid lost vessel record.');const held=cargo(record.cargo);if(count(held)>by(D.boats,record.type).hold)throw new Error('Invalid lost cargo.');return {uid:record.uid,type:record.type,day:record.day,cause:record.cause,cargo:held};};
+    const losses=list=>{if(!Array.isArray(list)||list.length>24)throw new Error('Invalid fleet loss history.');const out=list.map(loss);if(new Set(out.map(f=>f.uid)).size!==out.length)throw new Error('Duplicate lost vessel.');return out;};
+    s.lossHistory=losses(raw.lossHistory??[]);s.tripLosses=raw.tripLosses??[];
+    if(!Array.isArray(s.tripLosses)||s.tripLosses.length>24||new Set(s.tripLosses).size!==s.tripLosses.length||s.tripLosses.some(uid=>!s.lossHistory.some(f=>f.uid===uid)))throw new Error('Invalid voyage losses.');
+    s.tripLosses=[...s.tripLosses];s.recovery=null;
+    if(raw.recovery){const r=raw.recovery;if(!by(D.ports,r.port)||!Number.isInteger(r.day)||r.day<1||r.day>s.day||!finite(r.fee,0,1e10)||!finite(r.grant,0,260)||typeof r.unread!=='boolean')throw new Error('Invalid recovery receipt.');s.recovery={day:r.day,port:r.port,fee:r.fee,grant:r.grant,unread:r.unread,cargo:cargo(r.cargo),lost:losses(r.lost)};}
+    s.workReport=Work.validateReport(raw.workReport);
+    s.production=Work.validateProduction(raw.production,ids,s.day);
     s.voyage=V.validate(raw.voyage);
     if(s.production&&s.voyage.active)throw new Error('Two sea operations cannot run at once.');
     return s;
@@ -76,7 +84,7 @@
       if(this.mode==='sea'&&this.s.course){this.route=this.s.course.route;this.target=this.s.course.target;this.autopilot=this.s.course.autopilot&&this.route.length>0;}
       if(this.s.production&&this.mode==='sea'){
         const site=by(this.sites,this.s.production.site),boat=this.fleet.find(f=>f.uid===this.s.production.uid&&f.hp>0&&f.type===(site?.type==='fish'?'trawler':'oilrig'));
-        if(site&&boat&&distance(this.player,site)<1100){const workers=this.fleet.filter(f=>f.type===boat.type&&f.hp>0&&(f===boat||(this.s.production.uids||[]).includes(f.uid)));this.production={site,boat,workers,progress:this.s.production.progress,wave:this.s.production.wave};for(const f of workers)if(!f.data.location)Object.assign(f,this.station(f));}
+        if(site&&boat&&distance(this.player,site)<1100){const workers=this.fleet.filter(f=>f.type===boat.type&&f.hp>0&&(f===boat||(this.s.production.uids||[]).includes(f.uid)));this.production=this.prepareWork(site,boat,workers,this.s.production);this.spawnTimer=this.s.production.timer;for(const f of workers)if(!f.data.location)Object.assign(f,this.station(f));}
       }
       this.setupVoyage();
     }
@@ -184,7 +192,7 @@
       {id:'world',name:'The whole wide world',text:'Visit all 24 ports.',progress:this.s.visits.length,total:24,reward:25000,xp:2500}
     ];}
     checkGoals(){for(const g of this.goals())if(!this.s.claimed.includes(g.id)&&g.progress>=g.total){this.s.claimed.push(g.id);this.s.coins+=g.reward;this.s.xp+=g.xp;this.log(g.name+': '+g.reward+' coins earned.','complete');}}
-    sail(){if(this.mode!=='port')return false;this.s.location={...by(this.ports,this.s.port)};this.s.wake=[];for(const f of this.s.fleet){f.location=null;f.wake=[];}this.mode='sea';this.s.atSea=true;this.setupFleet();this.spawnTimer=8;this.time=0;this.event('WASD to sail. Guns fire automatically. M opens the world chart.','depart');this.change();return true;}
+    sail(){if(this.mode!=='port')return false;this.s.tripLosses=[];this.s.location={...by(this.ports,this.s.port)};this.s.wake=[];for(const f of this.s.fleet){f.location=null;f.wake=[];}this.mode='sea';this.s.atSea=true;this.setupFleet();this.spawnTimer=8;this.time=0;this.event('WASD to sail. Guns fire automatically. M opens the world chart.','depart');this.change();return true;}
     nearestPort(){let best=null,d=Infinity;for(const p of this.ports){const pd=distance(this.player,p);if(pd<d){d=pd;best=p;}}return{port:best,distance:d};}
     dock(){if(this.mode!=='sea')return false;const near=this.nearestPort();if(near.distance>190){this.event('Move within the harbor ring to dock.','warn');return false;}
       this.finishProduction(false);this.finishEncounter(false);this.mode='port';this.s.atSea=false;this.s.port=this.s.lastPort=near.port.id;this.player.x=near.port.x;this.player.y=near.port.y;
@@ -200,14 +208,14 @@
       const type=site.type==='fish'?'trawler':'oilrig',workers=this.fleet.filter(f=>f.type===type&&f.hp>0),boat=workers[0];
       if(!boat){this.event('This site needs a '+by(D.boats,type).name.toLowerCase()+'.','warn');return false;}
       if(this.cargoSpace(site.type)<4){this.event('Make room for '+site.type+' in the fleet cargo holds first.','warn');return false;}
-      this.cancelCourse();this.production={site,boat,workers,progress:0,wave:0};this.spawnTimer=5;this.log((workers.length===1?boat.data.name:workers.length+' workboats')+' moving onto '+site.name+'. Keep the raiders away.');return true;
+      this.cancelCourse();this.production=this.prepareWork(site,boat,workers);this.spawnTimer=5;this.log((workers.length===1?boat.data.name:workers.length+' workboats')+' moving onto '+site.name+'. Keep the raiders away.');return true;
     }
-    station(boat){const op=this.production,i=op.workers.indexOf(boat),x=wrap(op.site.x+(i%3-1)*45),y=op.site.y+Math.floor(i/3)*45;return this.earth.water(x,y,15)?{x,y}:{x:op.site.x,y:op.site.y};}
-    finishProduction(success){if(!this.production)return;const p=this.production;
-      if(success){this.s.stats.operations++;this.s.voyage.worked[p.site.id]=(this.s.voyage.worked[p.site.id]||0)+1;this.s.coins+=100+p.site.danger*75;this.s.xp+=70+p.site.danger*30;this.log('Work complete at '+p.site.name+'. Cargo secured. '+(100+p.site.danger*75)+' coins paid.','complete');}
-      else this.event('Production stopped. Cargo already loaded stays aboard.');this.production=null;this.s.production=null;this.change();
+    finishProduction(success,reason='recall'){if(!this.production)return;const p=this.production,paid=success?p.plan.pay:0;
+      this.s.workReport={site:p.site.id,day:this.s.day,result:success?'complete':reason,loaded:p.loaded,paid,sinceResume:p.loadedFromResume};
+      if(success){this.s.stats.operations++;this.s.voyage.worked[p.site.id]=(this.s.voyage.worked[p.site.id]||0)+1;this.s.coins+=paid;this.s.xp+=70+p.site.danger*30;this.log('Work complete at '+p.site.name+'. '+p.loaded+' '+p.site.type+' loaded'+(p.loadedFromResume?' since resuming':'')+'. '+paid+' coins paid.','complete');}
+      else this.log(({recall:'Workboats recalled.',distance:'Beyond the protection area. Workboats returning.',full:'The holds are full. Workboats returning.',lost:'All working boats were lost.'})[reason]+' '+(reason==='lost'?'Cargo on sunk boats is gone.':'Cargo already aboard stays with its boat.'),reason==='lost'||reason==='distance'?'warn':'info');
+      this.production=null;this.s.production=null;this.spawnTimer=Math.max(8,this.spawnTimer);this.change();
     }
-    rareCatch(site){const region=site.region,pool=D.fish.filter(f=>f.region===region);const f=pool[Math.floor(this.random()*pool.length)];if(!f)return;const first=!this.s.fishbook[f.id];this.s.fishbook[f.id]=(this.s.fishbook[f.id]||0)+1;this.s.stats.rare++;this.s.coins+=f.value;this.s.xp+=80;this.log('Rare catch: '+f.name+'. The naturalist paid '+f.value+' coins.','rare',{discovery:'fish',item:f.id,first,coins:f.value});this.change();}
     salvage(item){if(!this.s.items.includes(item)){this.s.items.push(item);this.log('Recovered '+by(D.relics,item).name+'. Fit it at a shipyard.','rare',{discovery:'relic',item,first:true});}else this.s.coins+=220;this.change();}
     burst(){if(this.mode!=='sea'||this.paused||this.burstCD>0)return false;this.burstCD=9;const p=this.player,n=16+this.hull().guns*4;
       for(let i=0;i<n;i++)this.shoot(p,i/n*TAU,42*(1+this.s.upgrades.guns*.2),false,{speed:420,life:1.6,splash:35,quiet:true});this.effect({x:p.x,y:p.y,t:.35,max:.35,size:70,type:'broadside'});this.event('All guns!','burst');return true;}
@@ -218,10 +226,10 @@
       if(!opts.quiet&&this.time-(from.lastShotCue??-1)>.08){from.lastShotCue=this.time;this.cue(hostile?'enemy-shot':from===this.player?'shot':'escort-shot',{x:from.x,y:from.y});}
       this.bullets.push({x:wrap(from.x+Math.cos(angle)*19),y:from.y+Math.sin(angle)*19,px:from.x,py:from.y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,damage,hostile,life:opts.life||1.6,splash:opts.splash||0,radius:hostile?4:3});
     }
-    spawn(kind='skiff',center=this.player,force=false){if(this.enemies.length>=1200)return null;
+    spawn(kind='skiff',center=this.player,force=false,position=null){if(this.enemies.length>=1200)return null;
       const defs={skiff:{hp:38,speed:100,range:150,damage:7,rate:1.8,radius:10,reward:18},gunner:{hp:75,speed:78,range:330,damage:12,rate:2.3,radius:13,reward:30},rammer:{hp:95,speed:145,range:0,damage:22,rate:1.8,radius:13,reward:28},armored:{hp:250,speed:65,range:380,damage:23,rate:2.5,radius:19,reward:65},boss:{hp:3000,speed:55,range:420,damage:25,rate:.8,radius:34,reward:2000}};
       const def=defs[kind],a=this.random()*TAU,r=force?450+this.random()*500:720+this.random()*430;
-      let q={x:wrap(center.x+Math.cos(a)*r),y:center.y+Math.sin(a)*r};if(!this.earth.water(q.x,q.y,30)){if(!force)return null;q=this.earth.nearestWater(q,30);}
+      let q=position||{x:wrap(center.x+Math.cos(a)*r),y:center.y+Math.sin(a)*r};if(!this.earth.water(q.x,q.y,30)){if(!force)return null;q=this.earth.nearestWater(q,30);}
       const scale=1+Math.max(0,this.danger-1)*.12;
       const e={...q,...def,type:kind,id:this.nextEnemy++,angle:a+Math.PI,cd:.7+this.random(),hp:def.hp*scale,maxHp:def.hp*scale,hit:0,dead:false,target:0};this.enemies.push(e);return e;
     }
@@ -262,10 +270,17 @@
       this.effect({x:ship.x,y:ship.y,t:.24,max:.24,size:18,type:'hurt'});this.cue('hurt',{x:ship.x,y:ship.y,uid:ship.uid,flagship:ship===this.player,fromX:source?wrap(source.x-(source.vx||0)*.25):null,fromY:source?source.y-(source.vy||0)*.25:null});
       if(ship.hp>0&&ship.hp<ship.maxHp*.3&&!ship.distress){ship.distress=true;this.event((ship===this.player?'Flagship':ship.data.name)+' is taking on water. Patch the hulls or pull back.','warn');}
       if(ship.temporary){if(ship.hp<=0){this.event(ship.data.name+' was lost.','warn');this.finishEncounter(false);}return;}
-      if(ship.hp<=0&&ship!==this.player){this.releaseGuards(ship.uid);this.log(ship.data.name+' sank. Its cargo was lost.','warn');this.effect({x:ship.x,y:ship.y,t:.8,max:.8,size:45,type:'blast'});this.cue('sink',{x:ship.x,y:ship.y});if(this.production?.workers.includes(ship)){this.production.workers=this.production.workers.filter(f=>f!==ship);if(this.production.workers.length)this.production.boat=this.production.workers[0];else this.finishProduction(false);}this.s.fleet=this.s.fleet.filter(f=>f.uid!==ship.uid);this.change();}
+      if(ship.hp<=0&&ship!==this.player){
+        const record={uid:ship.uid,type:ship.type,day:this.s.day,cause:source?.type?'ramming':source?.delay?'mortar':source?.hostile?'cannon':'damage',cargo:{...ship.data.cargo}};
+        this.s.lossHistory.push(record);this.s.lossHistory=this.s.lossHistory.slice(-24);this.s.tripLosses.push(ship.uid);this.s.tripLosses=this.s.tripLosses.filter(uid=>this.s.lossHistory.some(f=>f.uid===uid));
+        this.releaseGuards(ship.uid);this.log(ship.data.name+' sank. Its cargo was lost.','warn');this.effect({x:ship.x,y:ship.y,t:.8,max:.8,size:45,type:'blast'});this.cue('sink',{x:ship.x,y:ship.y});if(this.production?.workers.includes(ship)){this.production.workers=this.production.workers.filter(f=>f!==ship);if(this.production.workers.length)this.production.boat=this.production.workers[0];else this.finishProduction(false,'lost');}this.s.fleet=this.s.fleet.filter(f=>f.uid!==ship.uid);this.change();}
     }
-    rescue(){this.finishEncounter(false);const home=by(this.ports,this.s.lastPort);this.s.coins=Math.max(260,Math.floor(this.s.coins*.75));for(const f of this.cargoShips())for(const k of Object.keys(f.cargo))f.cargo[k]=Math.floor(f.cargo[k]*.5);
-      this.s.hp=this.hpMax();for(const f of this.s.fleet)f.hp=by(D.boats,f.type).hp;this.s.port=home.id;this.s.atSea=false;this.s.location=null;this.mode='port';this.enemies=[];this.bullets=[];this.drops=[];this.hazards=[];this.production=null;this.route=[];this.target=null;this.autopilot=false;this.setupFleet();this.log('Towed to '+home.name+'. Salvagers took a quarter of your coins and half the remaining cargo.');this.change();}
+    rescue(){this.finishEncounter(false);this.finishProduction(false,'recall');const home=by(this.ports,this.s.lastPort),before=this.s.coins,cargo={};this.s.coins=Math.max(260,Math.floor(before*.75));
+      for(const f of this.cargoShips())for(const k of Object.keys(f.cargo)){const kept=Math.floor(f.cargo[k]*.5);if(f.cargo[k]>kept)cargo[k]=(cargo[k]||0)+f.cargo[k]-kept;f.cargo[k]=kept;}
+      this.s.recovery={day:this.s.day,port:home.id,fee:Math.max(0,before-this.s.coins),grant:Math.max(0,this.s.coins-before),cargo,lost:this.s.lossHistory.filter(f=>this.s.tripLosses.includes(f.uid)).map(f=>({...f,cargo:{...f.cargo}})),unread:true};
+      this.s.hp=this.hpMax();for(const f of this.s.fleet)f.hp=by(D.boats,f.type).hp;this.s.port=home.id;this.s.atSea=false;this.s.location=null;this.mode='port';this.enemies=[];this.bullets=[];this.drops=[];this.hazards=[];this.production=null;this.route=[];this.target=null;this.autopilot=false;this.setupFleet();
+      const r=this.s.recovery;this.log('Towed to '+home.name+'. '+(r.fee?r.fee+' coins paid for recovery.':r.grant?'Harbor relief added '+r.grant+' coins.':'No recovery fee.')+' '+count(cargo)+' cargo units taken by salvagers. Surviving hulls repaired.');this.change();}
+    lostVesselName(record){return names[(record.uid-1)%names.length];}
     step(dt,input={}){
       if(this.mode!=='sea'||this.paused)return;dt=clamp(dt,0,.05);this.time+=dt;this.s.seconds+=dt;this.burstCD=Math.max(0,this.burstCD-dt);this.repairCD=Math.max(0,this.repairCD-dt);
       const oldDay=this.s.day;this.s.day=1+Math.floor(this.s.seconds/120);if(oldDay!==this.s.day){for(const k in this.s.impact)this.s.impact[k]*=.5;this.uiDirty=true;}
@@ -347,6 +362,7 @@
         if(hit&&!b.hostile){this.damage(hit,b.damage);if(b.splash)this.grid.query(b.x,b.y,b.splash,e=>{if(e!==hit&&e.hp>0&&distance(e,b)<b.splash)this.damage(e,b.damage*.6);});}
         if(hit||b.life<=0||this.earth.land(b.x,b.y)){this.bullets[i]=this.bullets[this.bullets.length-1];this.bullets.pop();}
       }
+      if(p.hp<=0){this.rescue();return;}
       for(let i=this.drops.length-1;i>=0;i--){const d=this.drops[i];d.t-=dt;const dist=distance(p,d);
         const patient=d.kind==='repair'?allies.filter(f=>f.hp>0&&f.hp<f.maxHp&&distance(p,f)<350).sort((a,b)=>a.hp/a.maxHp-b.hp/b.maxHp)[0]:null;
         const usable=d.kind==='cargo'?this.cargoSpace(d.item)>0:d.kind==='repair'?!!patient:true;
@@ -355,19 +371,13 @@
         if(usable&&dist<35){if(d.kind==='relic')this.salvage(d.item);else if(d.kind==='repair'){const hp=Math.min(patient.maxHp-patient.hp,35);patient.hp+=hp;this.cue('pickup',{kind:'repair',hp:Math.round(hp),name:patient===p?'Flagship':patient.data.name,x:patient.x,y:patient.y});this.effect({x:patient.x,y:patient.y,t:.5,max:.5,size:28,type:'repair'});}else {const qty=this.addCargo(d.item,1+Math.floor(this.random()*3));this.s.coins+=12;this.cue('pickup',{kind:'cargo',item:d.item,qty,coins:12,x:p.x,y:p.y});}d.t=0;this.uiDirty=true;}
         if(d.t<=0){this.drops[i]=this.drops[this.drops.length-1];this.drops.pop();}
       }
-      this.spawnTimer-=dt;if(this.spawnTimer<=0){if(!safe&&!this.encounter){const n=this.production?3+this.production.site.danger*2+Math.floor(this.production.progress/20)+(this.production.workers.length-1)*3:2+this.danger*2+Math.floor(this.s.fleet.length*.7);this.wave(n,this.production?.boat||p);}this.spawnTimer=this.production?9:24+this.random()*18;}
+      this.spawnTimer-=dt;
+      if(this.production&&this.spawnTimer<=3&&!this.production.approach)this.workApproach();
+      if(this.spawnTimer<=0){if(!this.encounter&&(this.production||!safe)){if(this.production)this.workWave();else this.wave(2+this.danger*2+Math.floor(this.s.fleet.length*.7),p);}this.spawnTimer=this.production?this.production.plan.waves:24+this.random()*18;}
       this.stepVoyage(dt);
       for(const b of this.bossSites)if(!this.s.bosses.includes(b.id)&&distance(p,b)<450&&!this.enemies.some(e=>e.bossId===b.id)){
         const e=this.spawn('boss',b,true);if(e){Object.assign(e,{x:b.x,y:b.y,hp:b.hp,maxHp:b.hp,reward:b.reward,bossId:b.id,name:b.name});this.wave(12+b.rank*3,b);this.log(b.name+' is closing in.');}}
-      if(this.production){const op=this.production;if(op.boat.hp<=0)this.finishProduction(false);
-        else if(distance(p,op.site)>1100){this.event('Too far from the working boat. Production stopped.','warn');this.finishProduction(false);}
-        else if(distance(op.boat,this.station(op.boat))<35){const prev=op.progress;op.progress+=dt;const tick=Math.floor(op.progress/3);
-          if(tick>Math.floor(prev/3)){let qty=0;for(const worker of op.workers)if(distance(worker,this.station(worker))<45)qty+=this.addCargo(op.site.type,op.site.type==='fish'?3:4,worker.uid);this.s.stats[op.site.type]+=qty;
-            if(op.site.type==='fish'&&(tick===4&&this.s.stats.rare===0||this.random()<.075*this.modifier('rare')))this.rareCatch(op.site);
-            if(!qty){this.event('The holds are full. Work stopped.');this.finishProduction(false);}this.change();}
-          if(this.production&&op.progress>=60)this.finishProduction(true);
-        }
-      }
+      this.stepWork(dt);
       for(let i=this.effects.length-1;i>=0;i--)if((this.effects[i].t-=dt)<=0)this.effects.splice(i,1);
       for(let i=this.events.length-1;i>=0;i--)if((this.events[i].t-=dt)<=0)this.events.splice(i,1);
       if(p.hp<=0){this.rescue();return;}
@@ -378,13 +388,13 @@
     snapshot(){
       this.snapshotVoyage();
       this.s.hp=this.player.hp;this.s.atSea=this.mode==='sea';this.s.location={x:this.player.x,y:this.player.y,angle:this.player.angle};
-      this.s.production=this.production?{site:this.production.site.id,progress:this.production.progress,wave:this.production.wave,uid:this.production.boat.uid,uids:this.production.workers.map(f=>f.uid)}:null;
+      this.s.production=this.production?{site:this.production.site.id,progress:this.production.progress,wave:this.production.wave,uid:this.production.boat.uid,uids:this.production.workers.map(f=>f.uid),planDay:this.production.plan.day,loaded:this.production.loaded,loadedFromResume:this.production.loadedFromResume,timer:clamp(this.spawnTimer,0,60),approach:this.production.approach,drift:this.production.drift}:null;
       this.s.formation=this.formation;this.s.cooldowns={burst:this.burstCD,repair:this.repairCD};this.s.wake=this.mode==='sea'?this.wake:[];
       this.s.course=this.mode==='sea'&&this.target?{route:this.route,target:this.target,autopilot:this.autopilot}:null;
       for(const f of this.fleet){f.data.hp=f.hp;f.data.location=this.mode==='sea'?{x:f.x,y:f.y,angle:f.angle}:null;f.data.wake=this.mode==='sea'&&cargoTypes.includes(f.type)?f.wake:[];}
       return JSON.parse(JSON.stringify(this.s));
     }
   }
-  V.install(Game);
+  V.install(Game);Work.install(Game);
   const api={Game,fresh,validate,rng,hash,count,SAVE_VERSION};if(typeof module!=='undefined'&&module.exports)module.exports=api;root.WidewakeCore=api;
 })(typeof globalThis!=='undefined'?globalThis:this);
