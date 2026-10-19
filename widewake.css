@@ -229,3 +229,10 @@
 #convoy-list button{flex:0 0 auto}
 
 .ww-convoy-repair{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-top:12px}.ww-convoy-repair small{font:10px/1.5 var(--font-body);color:var(--text-faint)}
+
+.ww-helm-status:empty{display:none}.ww-helm-status{display:block;margin-top:10px;color:var(--text)}
+.ww-game #helm-toggle{border-color:var(--ww-gold)}
+
+@media(pointer:coarse){.ww-sea-actions button{min-width:44px}}
+
+@media(pointer:coarse) and (max-height:560px) and (orientation:landscape){.ww-sea-objective{top:12px;left:210px;right:165px;max-width:none}}

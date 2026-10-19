@@ -145,8 +145,13 @@ import data.
 - The chart previews a checked water route before departure. Nearby opportunities
   use water-route distance, not distance across land. Estimates account for the
   flagship's hull, engine and speed fittings; combat and turns can add time.
-  Taking the helm keeps the destination marked. Reopening the chart plans from
-  the actual new position. Production and encounter commands still cancel it.
+  Taking the helm keeps the destination marked. Resume course, H or a left-stick
+  click finds a new water route from the actual position without opening the
+  chart. Take helm cancels automatic steering. Starting work, opening a modal,
+  leaving the window or transferring the save cancels a pending route request.
+  Arrival has its own quiet cue and harbor status. The first manual departure
+  suggests the charter destination; a chart opened at a working ground offers
+  the nearest harbor for the return. Passing a waypoint keeps forward throttle.
 - Charter guidance checks the actual fleet before sending a captain to fish or
   extract oil. Missing workboats link to their Fleet listing, including after a
   loss. Site previews report matching workers and usable cargo space. Convoy
@@ -408,6 +413,7 @@ distributing binaries.
 node tools/widewake/test-core.cjs
 node tools/widewake/test-work.cjs
 node tools/widewake/test-routes.cjs
+node tools/widewake/test-helm.cjs
 node tools/widewake/test-voyage.cjs
 node tools/widewake/test-feedback.cjs
 node tools/widewake/test-trade-planning.cjs
@@ -420,13 +426,14 @@ NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-front.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-work-browser.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-audio.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-chart.cjs
+NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-helm-browser.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-controller.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-fleet-view.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-sea-browser.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-save-tabs.cjs
 ```
 
-The front, chart, work, controller, fleet-view, sea and audio harnesses also support
+The front, chart, helm, work, controller, fleet-view, sea and audio harnesses also support
 `WIDEWAKE_TEST_ENGINE=webkit`.
 Audio checks render actual samples offline, verify independent mute, finite
 levels and stereo position, then exercise input, inactivity and node cleanup in
@@ -434,7 +441,11 @@ the running game. They do not substitute for listening on speakers/headphones.
 Chart checks cover review without departure, exact explicit purchases, stale
 route replies, worker failure and fallback, retained destinations, missing boats,
 guard status and touch layouts. Route previews and market comparisons are
-transient UI state, not new save fields.
+transient UI state, not new save fields. Helm checks delay actual worker replies
+to exercise cancellation, steering races, focus, title, fleet replacement,
+protected work and cross-window handoff. Both engines cover keyboard, button
+and left-stick-click control, failed workers, invalid routes and small touch
+layouts, including the pending state.
 
 Fleet-view checks exercise a 24-vessel fleet, strip paging, urgent selection,
 sorting, exact port repair, clear labels and edge markers, fitted camera, aim

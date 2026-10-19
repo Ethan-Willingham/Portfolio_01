@@ -31,7 +31,7 @@ The exact owner constraints and source links are in `WIDEWAKE.md`.
 | --- | --- | --- |
 | Launch and identity | Dedicated title, saved-fleet summary, new/continue, settings, help and return flow | Maintain cohesive identity through every view; iterate beyond the initial title scene |
 | First voyage | Real-time starter sailing reviewed; guidance checks workboats; earned trade and fishing complete | Observe an unassisted human session; keep controls, profit and purchases understandable without a long manual |
-| Helm and camera | Acceleration, coastal collision, checked routes, fitted phone view and persistent relative zoom | Review turning, arrival, coasts and camera at every hull size and input method |
+| Helm and camera | Direct manual control, one-action course resumption, continuous waypoint throttle, accurate arrival cues and fitted phone view | Review turning, arrival, coasts and camera at every hull size and input method |
 | Combat | Real projectiles, admiral tells, nearby contact map, clear priority labels and directional damage | Review threat reading in ordinary late-game fights and formation decisions through human play |
 | Trade | Exact bulk quotes, water-route comparisons, explicit order loading, reserved holds and no instant resale exploit | Review market pacing, discovery of trade routes, and late-game reasons to trade |
 | Convoy | Physical cargo and guards, exact losses, paged selection, hull/cargo sort, SOS priority and port repair | Convoy stragglers and build-dependent survival through extended play |
@@ -619,3 +619,76 @@ Next: return to unassisted first-voyage clarity, steering and arrival feel, then
 ordinary late-game combat and reasons to revisit the world. Keep reviewing the
 whole ledger. Human pacing, physical devices, remapping, final art, distribution
 rights and Steam/platform work remain open.
+
+
+## Pass 10, taking and returning the helm, v0.12
+
+A fresh manual departure exposed a misleading chart default: it pointed back to
+Havana while the charter asked for Nassau. A short steering correction also
+required reopening the chart, and the same "open the chart to resume" message
+remained after arrival. The chart now suggests the current charter destination
+when appropriate. At a fishing or oil ground it still offers the nearest harbor
+for the return, including after the charter has advanced.
+
+Resume course and Take helm are available on the ocean, on H, and on a standard
+controller's left-stick click. Resumption asks the worker for a new water route
+from the actual position. It checks the first leg again when the result arrives.
+The check uses the flagship's collision radius; an initially larger clearance
+incorrectly rejected a valid course after steering beside the Havana shore.
+Manual input, cancel, chart, convoy, pause, blur, title, state replacement, work
+and save handoff invalidate pending requests. A late reply cannot take control.
+The fallback planner remains available after a worker error.
+
+Passed waypoints now select the next leg in the same simulation step, removing
+a one-frame throttle drop. Acceleration, manual turn speed, hull speeds and
+collision behavior retain their existing tuning. Arrival has a quiet two-note
+cue and distinguishes a harbor from a marked course. The helm button retains
+keyboard focus through HUD updates. The short landscape touch view places the
+objective between the hull and chart so course text cannot cover the joystick;
+sea controls meet the 44-pixel target, including Pause. Singular boat counts
+also read correctly after losing companions.
+
+Play and verification:
+
+- An ordinary local voyage sold the starting sugar in Nassau, bought a trawler,
+  reached Bahama Bank using the new takeover/resume control, returned and bought
+  the brig. Leaving the first watch unattended during development lost both
+  companions. That unattended interval is not evidence about active balance.
+- With earned replacements, the brig completed a real-time 60-fish watch using
+  movement, automatic guns, broadside and repairs. Both companions had full hulls
+  when the watch ended. A little sunfish and brass fire control were recovered.
+  The convoy returned to Nassau, sold the 60 fish for 2,286 coins, fitted recovered
+  parts and repaired for 18 coins. No resources or invulnerability were injected.
+- Core, work, voyage, feedback, all 42 routes, Gibraltar in both directions,
+  Iceland recovery, date-line passage and exact active-sea continuation pass.
+  Three earned campaign styles still finish, with identical final saves across
+  675 reloads: balanced 41.9 minutes, merchant 42.0, gunline 42.6. These timings
+  belong to automated captains and do not establish human pacing.
+- Chromium and WebKit pass the delayed-worker helm checks, including stale
+  ownership, held controller buttons and preserved keyboard focus. Portrait
+  360 by 640 and 390 by 844, and landscape 667 by 375 and 844 by 390, include
+  pending and resumed controls with inspected screenshots. The chart and full
+  controller flows pass, as does the connected browser trade/work/story loop.
+- The browser battle check retained 1,200 enemies and 21 companions with sound;
+  this run measured 10.2 ms p95 on the local M1 Pro. It is a short desktop check,
+  not a physical-phone performance claim.
+- The packaged Mac arm64 app passes native H takeover/resumption through its
+  bundled worker, first trade and fishing, full screen, minimize/suspend, native
+  files, failed-save recovery and active-sea close/reopen. Mac and Windows x64
+  packages match all 24 source assets, 704,781 bytes, and their host scripts.
+  Windows execution is still unverified. Binaries remain local.
+
+Whole-game review: launch stays a full-window game; trade, the upgrade payoff,
+real cargo, guard behavior, fishing, discoveries and the return to port were
+played together. Oil and late campaign continuation were checked in the work
+and earned-campaign suites. This pass does not alter prices, drop rates, work
+rhythms, campaign content, harbor art or the score. Deferred art remains deferred.
+The new information fits touch play without obscuring steering, and resumption
+obeys the existing pause and save ownership rules.
+
+Next: ordinary middle- and late-game combat with larger convoys, stragglers at
+arrival, and the reasons to revisit ports after the charters. Review how early
+milestone and rare-catch payments affect choices across several starting seeds.
+Continue the entire ledger. Unassisted human sessions, physical controllers and
+phones, remapping, final art, distribution rights and Steam/platform work remain
+open. This increment does not complete the production goal.

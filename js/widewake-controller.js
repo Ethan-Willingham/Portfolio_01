@@ -22,7 +22,7 @@
     status(text){if(text===this.lastStatus)return;this.lastStatus=text;this.options.status(text);}
     reset(){this.blocked=true;this.direction='';this.editing=null;this.aim=null;this.stopRumble();}
     stopRumble(){try{const result=this.pad?.vibrationActuator?.reset?.();result?.catch?.(()=>{});}catch{}}
-    labels(){const choice=this.settings().controllerLabels||'auto',ps=choice==='playstation'||choice==='auto'&&/dualsense|dualshock|playstation|054c/i.test(this.pad?.id||'');return ps?{confirm:'Cross',back:'Circle',burst:'Square',repair:'Triangle',chart:'L1',convoy:'R1',boost:'L2',fire:'R2',pause:'Options'}:{confirm:'A',back:'B',burst:'X',repair:'Y',chart:'LB',convoy:'RB',boost:'LT',fire:'RT',pause:'Menu'};}
+    labels(){const choice=this.settings().controllerLabels||'auto',ps=choice==='playstation'||choice==='auto'&&/dualsense|dualshock|playstation|054c/i.test(this.pad?.id||'');return ps?{confirm:'Cross',back:'Circle',burst:'Square',repair:'Triangle',chart:'L1',convoy:'R1',boost:'L2',fire:'R2',pause:'Options',helm:'L3'}:{confirm:'A',back:'B',burst:'X',repair:'Y',chart:'LB',convoy:'RB',boost:'LT',fire:'RT',pause:'Menu',helm:'L3'};}
     pulse(kind,now){
       if(!this.options.using()||!this.settings().controllerRumble||!this.pad||now-this.lastPulse<.12)return;
       const cue={shot:[35,0,.07],hurt:[90,.35,.2],burst:[130,.45,.3],rare:[90,.08,.18]}[kind];if(!cue)return;
@@ -94,7 +94,7 @@
         return empty;
       }
       this.editing=null;this.markFocus(null);
-      const action=pressed[1]?'pause':pressed[4]?'chart':pressed[5]?'convoy':pressed[0]?'context':pressed[2]?'burst':pressed[3]?'repair':pressed[8]?'help':pressed[12]?'zoom-in':pressed[13]?'zoom-out':pressed[14]?'formation-previous':pressed[15]?'formation-next':null;
+      const action=pressed[1]?'pause':pressed[4]?'chart':pressed[5]?'convoy':pressed[0]?'context':pressed[2]?'burst':pressed[3]?'repair':pressed[8]?'help':pressed[10]?'helm':pressed[12]?'zoom-in':pressed[13]?'zoom-out':pressed[14]?'formation-previous':pressed[15]?'formation-next':null;
       if(action){this.options.action(action);if(!this.options.context().sea)return empty;}
       if(right.x||right.y){const length=Math.hypot(right.x,right.y);this.aim={x:right.x/length,y:right.y/length};}
       return{x:left.x,y:left.y,boost:(pad.buttons[6]?.value||0)>.25,fire:!!(right.x||right.y)||(pad.buttons[7]?.value||0)>.25,aim:this.aim};

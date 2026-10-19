@@ -100,6 +100,7 @@
       else if(kind==='pickup'){this.pluck(detail.kind==='repair'?72:76,at,.065,'effects',pan);}
       else if(kind==='dock'){[60,67,72].forEach((note,i)=>this.pluck(note,at+i*.16,.09));}
       else if(kind==='depart'){this.tone({at,frequency:220,slide:196,duration:.65,volume:.045,type:'triangle',filter:700});this.noiseVoice({at,duration:.28,volume:.10,frequency:1900});}
+      else if(kind==='arrival'){this.pluck(67,at,.065);this.pluck(74,at+.18,.055);}
       else if(kind==='ready'){this.tone({at,frequency:660,duration:.08,volume:.04,type:'triangle'});}
       else if(kind==='tap'){this.tone({at,frequency:480,slide:340,duration:.045,volume:.05,type:'triangle'});}
       else if(kind==='info'){this.pluck(67,at,.035);}

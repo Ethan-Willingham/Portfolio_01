@@ -205,7 +205,17 @@
       if(!this.s.visits.includes(near.port.id)){this.s.visits.push(near.port.id);this.s.xp+=85;this.s.coins+=100;this.log('First arrival in '+near.port.name+'. A 100 coin harbor grant.');}
       this.s.hp=this.player.hp;for(const f of this.fleet)f.data.hp=f.hp;this.enemies.length=0;this.bullets.length=0;this.drops.length=0;this.hazards.length=0;this.route=[];this.autopilot=false;this.target=null;this.cue('dock');this.change();return true;
     }
-    navigate(target){if(this.mode!=='sea')this.sail();const path=this.earth.route(this.player,target);if(!path){this.event('No safe water route found. Choose a nearby waypoint.','warn');return false;}this.route=path;this.target={...target};this.autopilot=true;this.event('Course set for '+(target.name||'the marked water')+'. Steer to take the helm.');this.change();return true;}
+    navigate(target){if(this.mode!=='sea')this.sail();return this.followCourse(target,this.earth.route(this.player,target));}
+    followCourse(target,path){
+      if(this.mode!=='sea'||!path?.length||!this.earth.clear(this.player,path[0],this.player.radius)){this.event('No safe water route found. Choose a nearby waypoint.','warn');return false;}
+      this.route=path.map(p=>({...p}));this.target={...target};this.autopilot=true;this.navLeg=null;this.navProbeTime=0;this.navProbeDistance=0;this.navBlocked=0;
+      this.event('Course set for '+(target.name||'the marked water')+'. Steer to take the helm.');this.change();return true;
+    }
+    takeHelm(){if(!this.autopilot)return false;this.autopilot=false;this.route=[];this.uiDirty=true;return true;}
+    courseStatus(){
+      if(!this.target)return null;const target=this.target,port=by(this.ports,target.id),site=by(this.sites,target.id),signal=by(this.signals,target.id),range=port?190:site?240:signal?220:24;
+      const arrived=distance(this.player,target)<range;return{name:target.name||'Ocean waypoint',state:this.autopilot?'sailing':arrived?'arrived':'manual',port:!!port,seconds:this.autopilot?this.routeEstimate(this.route).seconds:null};
+    }
     cancelCourse(){this.autopilot=false;this.route=[];this.target=null;this.uiDirty=true;}
     nearbySite(){return this.sites.find(s=>distance(this.player,s)<240)||null;}
     startProduction(){if(this.mode!=='sea')return false;if(this.production){this.finishProduction(false);return true;}
@@ -290,10 +300,13 @@
       if(this.mode!=='sea'||this.paused)return;dt=clamp(dt,0,.05);this.time+=dt;this.s.seconds+=dt;this.burstCD=Math.max(0,this.burstCD-dt);this.repairCD=Math.max(0,this.repairCD-dt);
       const oldDay=this.s.day;this.s.day=1+Math.floor(this.s.seconds/120);if(oldDay!==this.s.day){for(const k in this.s.impact)this.s.impact[k]*=.5;this.uiDirty=true;}
       const p=this.player;let ix=input.x||0,iy=input.y||0;const manual=Math.hypot(ix,iy)>.1;
-      if(manual&&this.autopilot){this.autopilot=false;this.route=[];this.uiDirty=true;}
+      if(manual)this.takeHelm();
       let approach=Infinity;
-      if(this.autopilot&&this.route.length){const q=this.route[0],d=distance(p,q);approach=d;if(d<3||d<16&&(this.route.length===1||this.earth.clear(p,this.route[1],17))){this.route.shift();if(!this.route.length){this.autopilot=false;this.event('Arrived at '+(this.target?.name||'your waypoint')+'.');}}
-        else {ix=dx(p.x,q.x)/d;iy=(q.y-p.y)/d;}}
+      if(this.autopilot)while(this.route.length){const q=this.route[0],d=distance(p,q);approach=d;
+        if(d<3||d<16&&(this.route.length===1||this.earth.clear(p,this.route[1],17))){
+          this.route.shift();if(!this.route.length){this.autopilot=false;this.event('Arrived at '+(this.target?.name||'your waypoint')+'.'+(by(this.ports,this.target?.id)?' Dock when ready.':''),'arrival');}
+        }else{ix=dx(p.x,q.x)/d;iy=(q.y-p.y)/d;break;}
+      }
       const magnitude=Math.hypot(ix,iy);if(magnitude>0){ix/=Math.max(1,magnitude);iy/=Math.max(1,magnitude);const wanted=Math.atan2(iy,ix);p.angle+=clamp(angleDiff(p.angle,wanted),-3.5*dt,3.5*dt);}
       const cruise=this.hull().speed*(1+this.s.upgrades.engine*.08)*this.modifier('speed')*(input.boost?1.35:1),speed=this.autopilot?Math.min(cruise,approach*1.6):cruise;
       const blend=1-Math.exp(-dt*(this.autopilot?7:3.5));p.vx+=(ix*speed-p.vx)*blend;p.vy+=(iy*speed-p.vy)*blend;
