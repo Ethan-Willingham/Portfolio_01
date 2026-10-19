@@ -39,8 +39,8 @@ The exact owner constraints and source links are in `WIDEWAKE.md`.
 | Progression | Six solvable charters and three admirals; earned simulated campaign | More human play, build diversity, optional pursuits and free-play depth; eliminate grind or runaway snowballing |
 | Earth and discovery | Real coastlines, 24 ports, 18 work sites and 15 signals | Review recognizable regions, travel interest, geography seams, legible chart and destination discovery |
 | Art | Chunky native sprites and harbor scenes; 24 distinct briefs saved | Make compositions and silhouettes more individual; final image generation remains deferred by the owner |
-| Sound | Original sparse score, sea/engine ambience, distinct spatial cues, independent mixer and bounded voices | Listening on speakers/headphones, broader regional atmosphere, long-session comfort and battle priority review |
-| Interface and access | Keyboard, mouse and touch; dialog focus and pause | Controller operation, readable text, target size, focus order, settings, reduced motion and non-color threat cues |
+| Sound | Original score, spatial cues, mixer, bounded voices and suspended/interrupted recovery | Listening on speakers/headphones, broader regional atmosphere, long-session comfort and battle priority review |
+| Interface and access | Keyboard, mouse, touch and standard controller flows; focus, editable settings and release gates | Physical controllers, remapping, button-label coverage, readable text and non-color threat cues |
 | Mobile | Chromium and WebKit touch emulation | Full-screen portrait and landscape flows, safe areas, browser-height changes, sustained performance and physical-device validation |
 | Saves and recovery | Validated imports, backup, actual fleet positions and courses | Launch without overwriting a fleet, storage errors, version migration, safe updates and long-session recovery |
 | Performance | Short 1,200-enemy browser run on M1 Pro with sound active | Long-session and constrained-device budgets, memory stability, loading cost and input latency |
@@ -235,3 +235,75 @@ Next: make travel and repeated operations more varied, review fleet losses and
 recovery, and develop the controller flow. The full release gates remain open,
 including listening, extended human play, final assets, desktop distribution and
 physical-device verification. Deferred image generation stays deferred.
+
+
+## Pass 4, controllers through the voyage
+
+Version 0.6.0 adds standard-layout controller input across the title, services,
+chart, fleet orders and sailing. Analog steering and aiming use a radial dead
+zone. The right stick aims and fires; triggers support held fire and full steam.
+Face buttons dock, work, fire a broadside and repair. The D-pad changes zoom and
+formation. Controller menus support directional movement, ordered shoulder
+navigation, editable lists and sliders, acceptance and undo. Port shoulders
+switch services. Prompts follow the last input and saved button-name preference.
+
+The review found concrete gaps beyond the missing gamepad API. Closed details
+panels could report rectangles for controls that were impossible to focus,
+trapping navigation. Up/down could leave a service for an unrelated harbor
+button. A price change or emptied manifest could discard focus. Rotating a small
+viewport could leave its selected control outside the dialog. Those cases now
+have explicit behavior, with visible focus, editing hints and scrolling. WebKit
+also drew native dropdowns smaller than the requested touch target; the shared
+select treatment now enforces a 44-pixel minimum.
+
+Pause, modal transitions, disconnection and inactivity clear held controls.
+Reconnection requires neutral sticks and released buttons. Holding confirmation
+through a transition cannot activate the next screen. There is no controller
+polling timer outside the existing activity loop. Optional haptics are brief,
+rate-limited and stopped on pause or input handoff. The controller aim marker
+adapts to the viewport without changing cannon range.
+
+Cold-start testing separates simulated controller input from the automation
+framework's user activation. Chromium correctly withheld sound until a real
+click. WebKit exposed an interrupted context, which now receives the same
+explicit recovery handling as a suspended one. Interrupted audio allocates no
+new cues and can be explicitly suspended while the page is inactive. Sound stays
+available to enable when a browser blocks it. Deliberate zero volume and the
+Sound toggle retain their separate meanings. Browser full screen and file import
+explain when a click or tap is required.
+
+Evidence:
+
+- Chromium and WebKit complete controller-driven new voyage, cargo purchase,
+  reviewed course, manual fire and steering, broadside, zoom, formation, docking,
+  Nassau sale, trawler purchase, named guard assignment, protected fishing and
+  return. Ordinary fixed-step travel is accelerated for the checks; money,
+  health and victories are not injected into this connected route.
+- Both engines cover held confirmations, nested pause, dropdown and slider undo,
+  preferences before starting, empty cargo rows, saved-title return, mixed input,
+  disconnect/reconnect, unknown layouts, denied controller access, stopped
+  background polling and focus at 360 by 640 and 667 by 375. Controller hardware
+  is simulated; physical sticks, vibration and Steam Input remain unverified.
+- The launcher, chart, audio, core and voyage checks pass. Mouse and touch remain
+  usable, saved fleets and imports retain their validation, and the campaign
+  captain still completes six charters in 41.5 simulated minutes. The final run
+  has ten vessels, 976 kills and 31,693 coins, with Last Light defeated in a frigate.
+- The connected browser regression includes work, sea stories and ending flows.
+  Its isolated 240-frame sample with 1,200 enemies, 21 support boats and audio
+  active records 8.3 ms median and 9.6 ms p95 on the M1 Pro with Chrome for Testing
+  148 at 1440 by 900. This is still a short desktop sample.
+
+Whole-game review: the launcher and every ordinary service are reachable from
+one controller. Trading and charter decisions lead into the same earned sea
+loop. Helm, aiming and fleet commands gained input safeguards. Fishing remains
+survivable with an ordinary starter fleet; oil production rules, geography,
+campaign balance and interim harbor compositions remain unchanged. Saves gained
+validated preferences rather than a new format. Mobile menus and audio recovery
+received fixes found during this pass. The web build is still in development.
+
+Next: improve repeated-operation variety and fleet-loss recovery. In particular,
+a defeat should show the actual losses and a clear route back into useful work,
+and fishing and oil should give more reasons to change sites and tactics. Keep
+reviewing all areas each pass. Physical-device play, human pacing/listening,
+controller remapping, final art, desktop packaging and platform integration still
+belong to the release gates. Image generation remains deferred.

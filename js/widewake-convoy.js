@@ -28,7 +28,7 @@
     open(uid=0){this.uid=uid;this.to=null;this.render();$('convoy-feedback').textContent='';this.show();}
     render(){
       const g=this.game(),ships=[g.player,...g.fleet.filter(f=>f.hp>0)],ship=ships.find(f=>f.uid===this.uid)||g.player;this.uid=ship.uid;
-      const active=document.activeElement,key=active?.dataset.convoyField,action=active?.dataset.convoyAction,good=active?.dataset.good,focusUid=active?.dataset.uid;
+      const active=document.activeElement,hadFocus=$('convoy-dialog').contains(active),key=active?.dataset.convoyField,action=active?.dataset.convoyAction,good=active?.dataset.good,focusUid=active?.dataset.uid;
       const name=f=>f.uid===0?g.hull().name:f.data.name,capacity=f=>f.uid===0?g.holdMax():f.spec.hold,atPort=g.mode==='port';
       const others=ships.filter(f=>f!==ship);if(!others.some(f=>f.uid===this.to))this.to=others[0]?.uid??null;
       $('convoy-caption').textContent=atPort?'At anchor / cargo and orders':'Sea paused / orders take effect on return';
@@ -50,7 +50,7 @@
       $('convoy-detail').innerHTML=html;
       const canvas=$('convoy-portrait'),ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;ctx.drawImage(R.shipSprite(ship.type),8,0,48,48);
       const focus=key?$('convoy-detail').querySelector('[data-convoy-field="'+key+'"]'):[...$('convoy-dialog').querySelectorAll('[data-convoy-action]')].find(e=>e.dataset.convoyAction===action&&e.dataset.good===good&&e.dataset.uid===focusUid);
-      if(focus&&!focus.disabled)focus.focus({preventScroll:true});
+      if(focus&&!focus.disabled)focus.focus({preventScroll:true});else if(hadFocus)$('convoy-list').querySelector('[data-uid="'+this.uid+'"]')?.focus({preventScroll:true});
       g.highlightUid=ship.uid;g.highlightUntil=g.time+7;
     }
     updateStrip(){

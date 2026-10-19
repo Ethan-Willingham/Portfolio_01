@@ -33,11 +33,12 @@
     applyMix(fast=false){if(!this.ctx)return;const s=this.settings(),now=this.ctx.currentTime;this.target(this.master.gain,s.sound===false?0:clamp(Number(s.volume)||0,0,.5)*2,now,fast);
       for(const k of ['effects','music','ambience'])this.target(this.buses[k].gain,clamp(Number.isFinite(s[k])?s[k]:k==='music'?.35:k==='ambience'?.5:.8,0,1)*(k==='music'&&this.scene.battle?.32:1),now,fast);
     }
-    wake(){if(!this.ctx||!this.active()||this.settings().sound===false||this.settings().volume<=0)return;this.applyMix();if(this.ctx.state==='suspended')this.ctx.resume().catch(()=>{});}
-    suspend(){if(this.ctx?.state==='running')this.ctx.suspend().catch(()=>{});}
+    needsResume(){return this.ctx?.state==='suspended'||this.ctx?.state==='interrupted';}
+    wake(){if(!this.ctx||!this.active()||this.settings().sound===false||this.settings().volume<=0)return;this.applyMix();if(this.needsResume())this.ctx.resume().catch(()=>{});}
+    suspend(){if(this.ctx?.state==='running'||this.ctx?.state==='interrupted')this.ctx.suspend().catch(()=>{});}
     clearEffects(){for(const voice of this.voices)if(voice.bus==='effects'){voice.gain.gain.cancelScheduledValues(this.ctx.currentTime);voice.gain.gain.setTargetAtTime(0,this.ctx.currentTime,.025);}}
     update(scene){
-      this.scene=scene;if(!this.ctx||!this.active()||this.ctx.state==='suspended'&&!this.offline||this.ctx.state==='closed')return;
+      this.scene=scene;if(!this.ctx||!this.active()||this.ctx.state!=='running'&&!this.offline||this.ctx.state==='closed')return;
       const now=this.ctx.currentTime;if(now-this.lastUpdate<.07)return;this.lastUpdate=now;this.applyMix();
       const sailing=scene.mode==='sea'&&!scene.paused,speed=clamp(scene.speed||0,0,1.5),swell=.78+Math.sin(now*.53)*.13+Math.sin(now*.17)*.09;
       this.target(this.waterGain.gain,(scene.mode==='title'?.018:scene.mode==='port'?.025:sailing?.036+speed*.017:.015)*swell,now);
@@ -79,7 +80,7 @@
     pluck(note,at,volume,bus='effects',pan=0){this.tone({at,frequency:pitch(note),duration:1.1,volume,type:'triangle',filter:1600,bus,pan});this.tone({at,frequency:pitch(note+12),duration:.19,volume:volume*.14,type:'sine',bus,pan});}
     gull(at){this.tone({at,frequency:1050,slide:680,duration:.32,volume:.022,type:'sine',bus:'ambience',pan:.55});this.tone({at:at+.38,frequency:960,slide:700,duration:.26,volume:.015,type:'sine',bus:'ambience',pan:.55});}
     play(kind,detail={}){
-      if(!this.ctx||!this.active()||this.settings().sound===false||this.settings().volume<=0||this.settings().effects===0||this.ctx.state==='suspended'&&!this.offline||this.ctx.state==='closed')return false;
+      if(!this.ctx||!this.active()||this.settings().sound===false||this.settings().volume<=0||this.settings().effects===0||this.ctx.state!=='running'&&!this.offline||this.ctx.state==='closed')return false;
       const at=detail.at??this.ctx.currentTime,interval=({shot:.12,'enemy-shot':.28,'escort-shot':.2,impact:.075,sink:.18,hurt:.14,burst:.5,pickup:.13,warn:1.5,repair:.4,complete:.8,rare:.8})[kind]??.07;
       if(at-(this.lastPlayed[kind]??-100)<interval||this.voices.size>52){this.stats.skipped++;return false;}this.lastPlayed[kind]=at;this.stats.played++;
       const pan=clamp(detail.pan||0,-.85,.85),v=clamp(detail.volume??1,0,1);

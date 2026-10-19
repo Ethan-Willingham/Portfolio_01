@@ -188,3 +188,23 @@
 #destination-list,.ww-chart-trade{scroll-margin-top:110px}
 
 .ww-load-order{width:100%;margin-top:12px}.ww-chart-side>#trade-load-note,.ww-chart-side>.ww-load-order{grid-column:1/-1}.ww-chart-side .ww-primary{scroll-margin-bottom:18px}
+
+/* The same menus remain reachable from a controller, including scrolled services. */
+.ww-pad-help,.ww-port-pad-help,.ww-controller-only{display:none}
+.using-controller .ww-pad-help,.using-controller .ww-port-pad-help,.using-controller .ww-controller-only{display:block}
+.using-controller .ww-desktop-help,.using-controller .ww-touch-help{display:none}
+.ww-game .ww-pad-focus{outline:2px solid var(--ww-gold)!important;outline-offset:3px;scroll-margin:10px}
+.ww-game .ww-pad-editing{outline-style:dashed!important;background-color:var(--bg-raised)}
+.ww-pad-help,.ww-port-pad-help{font:10px/1.6 var(--font-mono);color:var(--ww-gold);padding:10px 2px 0;margin-top:18px;border-top:1px solid var(--rule)}
+.ww-port-pad-help{padding:8px 16px;margin:0;flex-shrink:0}
+.ww-title-screen>.ww-pad-help{position:absolute;right:32px;top:20px;width:225px;margin:0;padding:10px;background:var(--bg-raised);border:1px solid var(--rule)}
+.ww-controller-settings{margin-top:18px;border-top:1px solid var(--rule)}
+.ww-controller-settings summary{cursor:pointer;padding:14px 0;min-height:44px;color:var(--ww-gold);font:12px var(--font-mono)}
+.ww-controller-settings .ww-note{font-size:11px;margin:5px 0 12px}.ww-controller-settings select{max-width:155px}
+.ww-game .ww-audio-notice{font:10px/1.5 var(--font-mono);text-align:left;max-width:320px;margin:10px 0;padding:8px 10px;color:var(--ww-gold);border-color:var(--ww-gold)}
+.using-controller .ww-joystick{display:none!important}.using-controller .ww-controls{display:block;font-size:10px;line-height:1.5}.using-controller kbd{display:inline}
+@media(max-width:650px){.ww-title-screen>.ww-pad-help{right:20px;top:14px;width:calc(100% - 44px);padding:7px 10px;font-size:9px}.ww-port-pad-help,.ww-pad-help{font-size:9px}.using-controller .ww-controls{max-width:95vw;font-size:9px;margin-inline:auto}}
+@media(max-height:560px) and (orientation:landscape){.ww-title-screen>.ww-pad-help{width:40%;right:20px;top:15px}.ww-port-pad-help{font-size:8px;padding:5px 16px}.using-controller .ww-controls{display:none}.ww-title-menu .ww-audio-notice{font-size:9px;margin:8px 0 0}}
+
+.ww-dialog,.ww-panel,#convoy-list{scroll-padding:12px}.ww-chart-dialog{scroll-padding-top:100px}
+.ww-game select{appearance:none;min-height:44px;padding-right:30px;background-image:linear-gradient(45deg,transparent 50%,var(--text-dim) 50%),linear-gradient(135deg,var(--text-dim) 50%,transparent 50%);background-position:right 15px center,right 11px center;background-size:4px 4px;background-repeat:no-repeat}

@@ -73,6 +73,8 @@ distinct interim backgrounds while that art pass is deferred.
 - `js/widewake-audio.js`: original synthesized music, sea and harbor ambience,
   spatial action cues, separate mix buses and bounded voice cleanup. No timers,
   external recordings or asset downloads.
+- `js/widewake-controller.js`: standard-layout gamepad polling, analog dead zones,
+  menu navigation, input release gates and optional haptics. It owns no scheduler.
 - `js/widewake.js`: browser input, UI, feedback, local persistence, import/export.
   Uses the shared `js/demo-activity.js` controller to stop scheduling offscreen,
   hidden, or unfocused. Held input clears, audio suspends, and battle pause stays
@@ -162,6 +164,56 @@ import data.
   landscape touch devices. Portrait remains a supported compact layout for this
   game; Sluice's separate landscape policy does not automatically apply here.
 
+## Controller play
+
+The web edition accepts devices reported with the browser's standard gamepad
+mapping. Unknown raw layouts are identified in Settings rather than guessed.
+Only the active game's existing frame loop polls input. Disconnecting the active
+controller pauses sailing, clears held inputs and stops vibration. Reconnection
+and returning from an inactive window require releasing controls and explicitly
+resuming. A held confirmation cannot activate the next screen.
+
+| At sea | Action |
+| --- | --- |
+| Left stick | Analog steering, takes over from the helmsman |
+| Right stick | Aim and fire; release for automatic fire |
+| Right trigger | Fire along the last aim, or ahead if none |
+| Left trigger | Full steam |
+| A / Cross | Dock, deploy/recall workboats, investigate or leave a sea operation |
+| X / Square | Broadside |
+| Y / Triangle | Field repair |
+| Left shoulder | Chart |
+| Right shoulder | Convoy |
+| D-pad up / down | Zoom |
+| D-pad left / right | Previous / next formation |
+| Menu / Options, B / Circle | Pause |
+| View / Share | Handbook |
+
+In menus, the D-pad or left stick moves focus. A/Cross activates the selected
+control. Select a slider or dropdown to edit it, then confirm to accept or use
+B/Circle to restore its starting value. Left/right shoulders visit controls in
+order inside dialogs and switch services at port. Up/down within a service stays
+in that service; moving up from its first row returns to the selected tab. Closed
+panels are excluded from navigation. Focus follows transactions and rerendered
+manifests and scrolls into view after viewport changes. The chart's destination
+list reaches every port, work site, admiral and signal without a pointer.
+
+Settings include a radial stick dead zone from 10 to 35 percent, optional
+vibration and automatic or explicit A/B/X/Y or PlayStation button names. These
+preferences migrate with defaults in old saves and also persist before a voyage
+is started. Prompts follow the last used input. Vibration requests are short and
+rate-limited; unsupported actuators do not prevent play. The aiming reticle stays
+within the smaller viewport dimension without changing gun range.
+
+Browser sound, full screen and file pickers may require an actual click or tap.
+The game explains this when relevant. Suspended and interrupted audio sessions
+are resumed explicitly and allocate no new cues while stopped. A blocked audio context leaves Sound
+available to enable instead of claiming that the muted voyage is audible.
+Controller checks use simulated standard devices in Chromium and WebKit; they do
+not establish physical controller compatibility, vibration feel or Steam Input
+support. Those remain release work. The mapping follows the
+[W3C Gamepad standard](https://www.w3.org/TR/gamepad/).
+
 ## World model
 
 Longitude and latitude map to a wrapped equirectangular world. Distances and
@@ -218,9 +270,10 @@ NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-browser.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-front.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-audio.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-chart.cjs
+NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-controller.cjs
 ```
 
-The front, chart and audio harnesses also support `WIDEWAKE_TEST_ENGINE=webkit`.
+The front, chart, controller and audio harnesses also support `WIDEWAKE_TEST_ENGINE=webkit`.
 Audio checks render actual samples offline, verify independent mute, finite
 levels and stereo position, then exercise input, inactivity and node cleanup in
 the running game. They do not substitute for listening on speakers/headphones.
