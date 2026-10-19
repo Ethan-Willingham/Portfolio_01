@@ -19,6 +19,16 @@
     const unit=small?.26:1.5;
     for(let x=-l*.39;x<l*.29;x+=unit*1.8)g.box(x,0,h+.17,unit*.08,w*.72,.025,small?'#756b52':'#697b79','#697b79');
     for(let i=0;i<shape.length;i++){const j=(i+1)%shape.length;beam([shape[i][0]*l*.97,shape[i][1]*w*.97,h+.3],[shape[j][0]*l*.97,shape[j][1]*w*.97,h+.3],small?.045:.16,material.rim);}
+    if(type==='raider3'){
+      // A low iron prow, broad copper boiler and open stern distinguish the ram
+      // at fleet distance. Its warn/dash motion is driven by the combat state.
+      g.face([[l*.05,-w*.42,h+.5],[l*.56,0,h+1.8],[l*.05,w*.42,h+.5]],'#bea074');
+      for(const side of [-1,1])beam([l*.06,side*w*.42,h+.6],[l*.56,0,h+1.9],.5,'#dfc191');
+      cylinder(-l*.15,0,h,3.3,4.4,'#9f6b4c');cylinder(-l*.15,0,h+4.4,3.4,.4,'#cca67b');
+      cylinder(-l*.3,0,h,1.2,7,'#504c45');g.box(-l*.32,0,h+7.1,3.2,3.2,.4,'#a89a7d','#51483e');
+      for(const y of [-w*.34,w*.34])g.box(l*.02,y,h,9,1.4,1.8,'#524d46','#3d403d');
+      return new Float32Array(g.out);
+    }
     if(enemy){g.box(-l*.08,0,h,l*.3,w*.56,2.2,'#9e8071','#674f4c');g.box(-l*.03,0,h+2.25,l*.22,w*.48,.4,'#b29e86','#725d50');g.box(l*.22,0,h,2.7,2.1,1.8,'#474c50','#303b41');beam([l*.21,0,h+2],[l*.45,0,h+2.3],.35,'#a6a596');return new Float32Array(g.out);}
     if(small){
       g.box(-.4,0,h+.2,3.1,1.5,.08,'#655c48','#655c48');for(const x of [-1.15,.9])g.box(x,0,h+.26,.36,1.6,.22,'#c7b58b','#857458');
@@ -139,7 +149,7 @@
     constructor(view){this.view=view;this.gl=view.gl;this.entries={};this.pending=[];this.bytes=0;const gl=this.gl;
       // Each heading occupies its own array layer. Complete mip chains can never
       // sample a neighbouring heading, including when a distant hull is one pixel.
-      for(const [type,spec] of Object.entries({...root.WidewakeBattle.roles,...view.battle.visualRoles,...view.artSpecs,raider0:{length:13,height:4},raider1:{length:16,height:4},raider2:{length:23,height:4}})){
+      for(const [type,spec] of Object.entries({...root.WidewakeBattle.roles,...view.battle.visualRoles,...view.artSpecs,...Object.fromEntries(root.WidewakeBattle.enemies.map((spec,i)=>['raider'+i,spec]))})){
         const mesh=view.meshes[type];if(!mesh)continue;let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity,range=0;const frames=spec.frames||(type.startsWith('raider')?32:64),ppu=spec.ppu||(type==='launch'?8:spec.length>70?1.25:spec.length>50?1.65:type.startsWith('raider')?1.5:2);
         for(let f=0;f<frames;f++){const c=Math.cos(f/frames*TAU),s=Math.sin(f/frames*TAU);for(let i=0;i<mesh.length;i+=6){const x=mesh[i]*c-mesh[i+1]*s,y=mesh[i]*s+mesh[i+1]*c,z=mesh[i+2],px=(x-y)*Math.SQRT1_2,py=(x+y)*Math.SQRT1_2*.5-z*Math.sqrt(.75);minX=Math.min(minX,px);maxX=Math.max(maxX,px);minY=Math.min(minY,py);maxY=Math.max(maxY,py);range=Math.max(range,Math.abs((x+y)*.6123724+z*.5)+1);}}
         const w=Math.ceil(((maxX-minX)*ppu+4)/4)*4,h=Math.ceil(((maxY-minY)*ppu+4)/4)*4,levels=1+Math.floor(Math.log2(Math.max(w,h)));

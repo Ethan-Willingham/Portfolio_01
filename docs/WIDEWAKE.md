@@ -64,6 +64,14 @@ a yellow ring covering it. All campaign weapons fire automatically, including
 bank salvos. There is no aiming or fire action; moving and positioning the fleet
 are the player's combat inputs. Preserve bounded cost as fleets grow.
 
+The latest combat instruction asks for the whole fleet firing into large swarms,
+with performance and readability preserved, plus an explicit in-game button to
+skip straight into endgame combat. v0.25 adds **Endgame combat** to the title and
+pause menus. This is an intentional temporary testing shortcut, with a preset
+fleet and a separate three-minute watch. It does not grant campaign progress or
+replace the voyage save. The title artwork is preserved. Shared lead aiming,
+area targeting and weapon sound also improve the normal voyage.
+
 The subsequent graphics correction asks for Factorio's level of sprite detail
 and animation, not its industrial theme. Keep original nautical designs. The
 owner also explicitly asks for regular production pushes of verified milestones.
@@ -115,6 +123,11 @@ Open `widewake.html` and choose **New voyage** or **Continue**. Trading, fleet
 progression, combat, fishing and oil production now happen in Bracken Reach.
 The old `widewake-estuary.html` bookmark redirects here. No trial selection or
 Earth campaign remains in the normal play flow. The title art is unchanged.
+
+Choose **Endgame combat** on the title to test 24 fully armed boats against
+16,384 active raiders. E or the fleet button switches between following and
+holding position to load workboats. Steering and positioning are the combat
+inputs. Menu returns to the saved voyage; the run can also finish or restart.
 
 For local play, serve the repository over HTTP:
 

@@ -86,3 +86,20 @@ body:has(.reach-dialog[open]) :is(.reach-controls,.reach-actions,#reach-course,#
 @media(max-width:560px) and (orientation:portrait){.chart-layout{grid-template-rows:minmax(130px,1fr) auto}}
 
 .ledger-dialog .ww-pad-focus{outline-color:#27657a!important}
+
+/* The endgame shortcut uses the normal helm, with one quiet watch instrument. */
+.in-combat .depth-status{display:none!important}
+#combat-status{position:absolute;top:26px;left:50%;transform:translateX(-50%);width:250px;pointer-events:none;text-shadow:0 1px 3px #081a29;color:#e5e6d0}
+#combat-status>div{display:flex;justify-content:space-between;align-items:baseline;gap:18px}
+#combat-order{font:400 13px var(--font-body)}#combat-clock{font:12px var(--font-mono)}
+#combat-progress{width:100%;display:block;height:3px;border:0;background:#264a59;margin:9px 0 7px;accent-color:#c5d1b3}
+#combat-progress::-webkit-progress-bar{background:#264a59}#combat-progress::-webkit-progress-value{background:#c5d1b3}
+#combat-tally{font:10px var(--font-mono);color:#a9c7c6}
+#reach.in-combat #reach-notice{top:100px;background:#102934bd;border:0;font-size:12px;max-width:80%;padding:7px 13px}
+.combat-result{width:min(450px,calc(100vw - 32px));background:#102934f5;padding:30px;border:0;border-top:2px solid #d5c58e}
+.combat-result header{padding-bottom:18px}.combat-result header small{font:10px var(--font-mono);color:#a9c7c6}.combat-result h2{margin:9px 0 0}.combat-result header>[data-icon]{color:#bbd3c4}
+#combat-result-stats{display:flex;justify-content:space-between;gap:15px;padding:20px 0 28px;color:#b9ccbf;font:10px var(--font-body)}#combat-result-stats strong{display:block;font:21px var(--font-mono);color:#eee6cd;margin-bottom:6px}
+.combat-result>button{width:100%;margin-top:8px}
+body:has(.reach-dialog[open]) #combat-status{visibility:hidden}
+@media(max-width:560px) and (orientation:portrait){#combat-status{top:92px;width:calc(100% - 48px)}#reach.in-combat #reach-notice{top:165px}.in-combat .reach-actions{bottom:150px}.combat-result{padding:24px 20px}#combat-result-stats{gap:10px}#combat-result-stats strong{font-size:19px}}
+@media(max-height:500px) and (orientation:landscape){#combat-status{top:17px;width:215px;left:55%}#combat-order{font-size:11px}#combat-tally{font-size:9px}#reach.in-combat #reach-notice{top:79px;font-size:11px}.combat-result{padding:18px 24px}#combat-result-stats{padding:10px 0 15px}}

@@ -4,11 +4,13 @@ Owner instruction, 2026-10-19: make the new ocean part of the game, retire the o
 world, and bring the graphics into one consistent visual system. This explicitly
 supersedes the earlier instruction to keep the new ocean in separate trials.
 
-Version 0.24 opens the approved title illustration, then starts at Tern Yard in
+Version 0.25 opens the approved title illustration, then starts at Tern Yard in
 Bracken Reach. Continue loads this same world. There is no Earth campaign or
 trial chooser in the normal play flow. An old `widewake-estuary.html` bookmark
 redirects to the game. `?test` retains the isolated navigation harness; the battle
-page remains an engineering benchmark, without a main-menu entry.
+page remains an engineering benchmark. The owner explicitly requested a public
+endgame shortcut; the title and pause menus now launch a new automatic combat
+watch in the main shell, separately from that older manual-control harness.
 
 ## Current connected loop
 
@@ -46,9 +48,56 @@ Open sea has a constant-time clearance path. Friendly hulls retain exact
 oriented clearance and pier collision.
 
 Campaign admission is bounded to 2,048 raiders, with progressive watch waves.
-The separate 16,384-enemy battle test still verifies the shared renderer and
-combat buffers. That test is not evidence of 16,384 terrain-aware campaign
-enemies. Larger fronts in constrained waterways need their own measured pass.
+The new endgame button starts a 16,384-enemy open-water watch. The older
+battle harness also verifies the shared renderer and combat buffers. Neither
+is evidence of 16,384 terrain-aware campaign enemies. Larger fronts in constrained waterways need their own measured pass.
+
+## Endgame combat, v0.25
+
+The title and pause menus both have **Endgame combat**, by explicit owner request.
+It opens directly into a three-minute workboat defense with 24 armed friendly
+boats, 16,384 raiders, five changing fronts, short flanking raids, repair crates
+and a result/retry/return flow. The four workboats load actual holds while on
+station. E or the fleet button recalls the fleet to follow the flagship, pausing
+production, or holds the current position and resumes work when boats arrive.
+
+The endgame loadout is disposable and does not unlock campaign equipment. An
+active voyage is saved before entry and retained in memory. The combat mode
+never calls the voyage writer. Return restores the same voyage. Reload, title
+exit or desktop quit leaves the normal Continue save available. If ownership
+moves to another window, the stale retained voyage is discarded. The title art,
+layout styling and background remain unchanged apart from the requested button.
+
+Rapid cannons fire short bursts; flak fires pairs; mortars fire staggered salvos
+at dense pockets. The flagship automatically releases its gun banks when an
+enemy crosses their arc. Shared targeting leads moving boats, divides same-tick
+shots between targets, and temporarily reserves impact cells so multiple area
+weapons spread their shells. Campaign weapons use the same targeting without
+receiving the test loadout's fire rates or free upgrades.
+
+Iron rams have a separate 34 m silhouette. They slow for an 0.8-second wind-up,
+show a short dashed lane, then charge along that fixed heading. They cannot
+home during the charge. They seek working boats but hit the first friendly hull
+in their path. Sparse repair crates heal surviving boats when the flagship
+sails within 95 m. They cannot revive a lost boat.
+
+The normal helm, reverse, camera, gamepad and touch controls are reused. There
+is no click-to-fire, aiming, or active broadside button. The chart is absent in
+this open-water watch. A pennant identifies the flagship without covering it;
+workboat hull bars, one watch progress bar and a quiet tally carry the essentials.
+No per-enemy names or damage numbers cover the swarm. Only committed ram lanes
+receive warnings. Reduced motion suppresses hit tints, recoil and edge flashes.
+
+Simulation buffers are fixed: 32,768 enemy capacity, 8,192 rounds including a
+1,024-round hostile reserve, 2,048 effects, 24 wake histories and 16 repair crates.
+Enemy admission is capped at 48 per tick. A shared cell grid handles queries;
+there is no all-pairs fleet/enemy separation. The new targeting and ram state
+bring combat typed arrays to 3,342,848 bytes, independent of kills or elapsed
+session time. Effect, audio and notification budgets remain bounded.
+
+The open-water test is deliberately a powerful fleet. Campaign difficulty,
+terrain-aware large raids and earned midgame loadouts still need playtesting.
+It is not the finished Steam balance or proof of physical-phone performance.
 
 ## Interface contract, v0.23
 
@@ -149,7 +198,9 @@ Earth-port backgrounds or restore the retired world.
   `widewake.css` retains the approved title styling.
 - `js/widewake-reach-game.js`: pure campaign, market, progression, fleet movement,
   work, terrain-aware combat and validated persistence.
-- `js/widewake-reach.js`: title, menus, controls, chart, audio and save ownership.
+- `js/widewake-reach.js`: title, menus, controls, chart, audio, combat entry and save ownership.
+- `js/widewake-combat.js`: disposable endgame watch, loadout, fronts and repair drops.
+- `js/widewake-combat-view.js`: fleet camera, flagship pennant, workboat bars and ram lanes.
 - `js/widewake-reach-ui.js`: original interface marks, cargo art and vessel previews.
 - `js/widewake-estuary-core.js`: authored waterways, field and route clearance.
 - `js/widewake-estuary-view.js`, `js/widewake-estuary-worker.js`: bounded terrain,
@@ -177,6 +228,8 @@ A second window must hand off ownership before it can write.
 ## Verification
 
 ```sh
+node tools/widewake/test-combat.cjs
+node tools/widewake/test-combat-browser.cjs
 node tools/widewake/test-driving.cjs
 node tools/widewake/test-driving-browser.cjs
 node tools/widewake/test-reach-game.cjs

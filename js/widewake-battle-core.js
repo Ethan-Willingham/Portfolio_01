@@ -22,6 +22,12 @@
     hostile:{range:480,interval:5,speed:290,damage:13,splash:0,pierce:1,kind:3}
   });
   const BROADSIDE=Object.freeze({rounds:48,interval:1/60,cooldown:12,range:1250,damage:140,splash:110,pierce:1,speed:690,kind:1});
+  const enemies=Object.freeze([
+    {length:13,width:5,height:4,hp:24},
+    {length:16,width:5,height:4,hp:38},
+    {length:23,width:8,height:5,hp:95},
+    {length:34,width:12,height:7,hp:1800}
+  ]);
   const angleDelta=(to,from)=>Math.atan2(Math.sin(to-from),Math.cos(to-from));
   function helmStep(s,input,dt){
     // Surge, sway and yaw, for the bounded friendly fleet only. Velocity stays
@@ -61,24 +67,26 @@
   class Raiders{
     constructor(capacity=LIMITS.raiders){
       this.capacity=Math.min(LIMITS.raiders,capacity);this.count=0;this.dead=0;this.sequence=1;
-      for(const key of ['x','y','px','py','vx','vy','hp','cooldown'])this[key]=new Float32Array(this.capacity);
+      for(const key of ['x','y','px','py','vx','vy','hp','cooldown','hitUntil','charge','chargeX','chargeY','reserved'])this[key]=new Float32Array(this.capacity);
       this.id=new Uint32Array(this.capacity);this.kind=new Uint8Array(this.capacity);this.target=new Uint8Array(this.capacity);
       this.next=new Int32Array(this.capacity);this.head=new Int32Array(LIMITS.cells);this.population=new Uint16Array(LIMITS.cells);
       this.cellX=new Int16Array(LIMITS.cells);this.cellY=new Int16Array(LIMITS.cells);this.targetCell=new Uint8Array(LIMITS.cells);this.stamp=new Int32Array(LIMITS.cells);this.stamp.fill(-1);
       this.head.fill(-1);this.peak=0;this.hits=new Int32Array(64);this.hitDistances=new Float32Array(64);
+      this.blastUntil=new Float32Array(LIMITS.cells);
     }
-    add(x,y,kind,rand){if(this.count>=this.capacity)return false;const i=this.count++;this.x[i]=this.px[i]=x;this.y[i]=this.py[i]=y;this.vx[i]=this.vy[i]=0;this.kind[i]=kind;this.hp[i]=kind===2?95:kind===1?38:24;this.id[i]=this.sequence++;this.cooldown[i]=.4+rand()*4;this.target[i]=0;this.peak=Math.max(this.peak,this.count);return true;}
-    compact(){for(let i=this.count-1;i>=0;i--)if(this.hp[i]<=0){const last=--this.count;for(const k of ['x','y','px','py','vx','vy','hp','cooldown','id','kind','target'])this[k][i]=this[k][last];}this.dead=0;}
+    add(x,y,kind,rand){if(this.count>=this.capacity)return false;const i=this.count++;this.x[i]=this.px[i]=x;this.y[i]=this.py[i]=y;this.vx[i]=this.vy[i]=0;this.kind[i]=kind;this.hp[i]=enemies[kind].hp;this.id[i]=this.sequence++;this.cooldown[i]=.4+rand()*4;this.target[i]=0;this.hitUntil[i]=this.charge[i]=this.chargeX[i]=this.chargeY[i]=this.reserved[i]=0;this.peak=Math.max(this.peak,this.count);return true;}
+    compact(){for(let i=this.count-1;i>=0;i--)if(this.hp[i]<=0){const last=--this.count;for(const k of ['x','y','px','py','vx','vy','hp','cooldown','id','kind','target','hitUntil','charge','chargeX','chargeY','reserved'])this[k][i]=this[k][last];}this.dead=0;}
     index(){this.head.fill(-1);this.population.fill(0);const inv=1/LIMITS.cellSize;for(let i=0;i<this.count;i++){if(this.hp[i]<=0)continue;const cx=Math.floor(this.x[i]*inv),cy=Math.floor(this.y[i]*inv),key=hash(cx,cy);this.next[i]=this.head[key];this.head[key]=i;this.population[key]++;}}
-    nearest(x,y,r){let best=-1,distance=r*r;const cell=LIMITS.cellSize;for(let cy=Math.floor((y-r)/cell);cy<=Math.floor((y+r)/cell);cy++)for(let cx=Math.floor((x-r)/cell);cx<=Math.floor((x+r)/cell);cx++)for(let i=this.head[hash(cx,cy)];i!==-1;i=this.next[i]){if(this.hp[i]<=0||Math.floor(this.x[i]/cell)!==cx||Math.floor(this.y[i]/cell)!==cy)continue;const dx=this.x[i]-x,dy=this.y[i]-y,d=dx*dx+dy*dy;if(d<distance){distance=d;best=i;}}return best;}
-    denseTarget(x,y,r){
+    nearest(x,y,r,available=false){let best=-1,distance=r*r;const cell=LIMITS.cellSize;for(let cy=Math.floor((y-r)/cell);cy<=Math.floor((y+r)/cell);cy++)for(let cx=Math.floor((x-r)/cell);cx<=Math.floor((x+r)/cell);cx++)for(let i=this.head[hash(cx,cy)];i!==-1;i=this.next[i]){if(this.hp[i]<=0||available&&this.reserved[i]>=this.hp[i]||Math.floor(this.x[i]/cell)!==cx||Math.floor(this.y[i]/cell)!==cy)continue;const dx=this.x[i]-x,dy=this.y[i]-y,d=dx*dx+dy*dy;if(d<distance){distance=d;best=i;}}return best;}
+    denseTarget(x,y,r,time=-1){
       const cell=LIMITS.cellSize,r2=r*r;let best=-1,score=0;
       for(let cy=Math.floor((y-r)/cell);cy<=Math.floor((y+r)/cell);cy++)for(let cx=Math.floor((x-r)/cell);cx<=Math.floor((x+r)/cell);cx++){
-        const key=hash(cx,cy),dx=(cx+.5)*cell-x,dy=(cy+.5)*cell-y,d2=dx*dx+dy*dy,value=this.population[key]/(1+d2/r2);
+        const key=hash(cx,cy),dx=(cx+.5)*cell-x,dy=(cy+.5)*cell-y,d2=dx*dx+dy*dy,value=this.population[key]/(1+d2/r2)*(time>=0&&this.blastUntil[key]>time?.08:1);
         if(d2>r2||value<=score)continue;
         for(let i=this.head[key];i!==-1;i=this.next[i])if(this.hp[i]>0&&Math.floor(this.x[i]/cell)===cx&&Math.floor(this.y[i]/cell)===cy&&(this.x[i]-x)**2+(this.y[i]-y)**2<r2){best=i;score=value;break;}
       }return best;
     }
+    reserveBlast(x,y,r,until){const cell=LIMITS.cellSize;for(let cy=Math.floor((y-r)/cell);cy<=Math.floor((y+r)/cell);cy++)for(let cx=Math.floor((x-r)/cell);cx<=Math.floor((x+r)/cell);cx++)this.blastUntil[hash(cx,cy)]=until;}
     acquire(x,y,ships,tick){
       const cx=Math.floor(x/LIMITS.cellSize),cy=Math.floor(y/LIMITS.cellSize),key=hash(cx,cy),stamp=Math.floor(tick/8);
       if(this.stamp[key]===stamp&&this.cellX[key]===cx&&this.cellY[key]===cy&&ships[this.targetCell[key]]?.hp>0)return this.targetCell[key];
@@ -91,6 +99,7 @@
       for(let i=0;i<this.count;i++){
         if(this.hp[i]<=0)continue;this.px[i]=this.x[i];this.py[i]=this.y[i];const target=this.acquire(this.x[i],this.y[i],ships,battle.tick),s=ships[target];this.target[i]=target;if(!s||s.hp<=0)continue;
         const dx=s.x-this.x[i],dy=s.y-this.y[i],d2=dx*dx+dy*dy,d=Math.sqrt(d2)||1;this.cooldown[i]-=dt;
+        if(this.kind[i]===3){this.ram(i,s,d,dt,battle);continue;}
         if(Math.hypot(s.x-this.x[i],s.y-this.y[i])<s.radius+6){if(this.cooldown[i]<=0){battle.hurt(s,this.kind[i]===1?16:8);this.cooldown[i]=1.2;battle.kill(i,false);}continue;}
         // A shared density gradient, not an all-pairs separation pass. Steering
         // is staggered, while motion and actual collision remain at 60 Hz.
@@ -106,11 +115,25 @@
         if(this.kind[i]===2&&d<480&&this.cooldown[i]<=0&&(!battle.clearShot||battle.clearShot(this.x[i],this.y[i],s.x,s.y))){battle.shots.fire(this.x[i],this.y[i],s.x,s.y,weapons.hostile,0);this.cooldown[i]=4+(this.id[i]%7)*.2;}
       }
     }
+    ram(i,s,d,dt,battle){
+      // A ram commits to one visible heading. It cannot bend toward the player
+      // during the dash. Only this sparse enemy class has an attack state.
+      if(battle.endgame){
+        let nearest=Infinity;for(const boat of battle.ships){if(boat.hp<=0)continue;const distance=Math.hypot(boat.x-this.x[i],boat.y-this.y[i]);if(distance<boat.radius+13){battle.hurt(boat,360);battle.kill(i,false);return;}if(boat.working&&distance<nearest){s=boat;d=nearest=distance;}}
+      }else if(d<s.radius+13){battle.hurt(s,180);battle.kill(i,false);return;}
+      if(this.charge[i]<=0&&this.cooldown[i]<=0&&d<620){
+        const dx=s.x+s.vx*.6-this.x[i],dy=s.y+s.vy*.6-this.y[i],length=Math.hypot(dx,dy)||1;
+        this.chargeX[i]=dx/length;this.chargeY[i]=dy/length;this.charge[i]=1.8;
+      }
+      if(this.charge[i]>0){this.charge[i]=Math.max(0,this.charge[i]-dt);const speed=this.charge[i]>1?3:145;this.vx[i]=this.chargeX[i]*speed;this.vy[i]=this.chargeY[i]*speed;if(!this.charge[i])this.cooldown[i]=2.8;}
+      else{this.vx[i]=(s.x-this.x[i])/d*48;this.vy[i]=(s.y-this.y[i])/d*48;}
+      if(battle.moveEnemy)battle.moveEnemy(i,dt);else{this.x[i]+=this.vx[i]*dt;this.y[i]+=this.vy[i]*dt;}
+    }
     segment(x0,y0,x1,y1,radius){
-      const cell=LIMITS.cellSize,minX=Math.floor((Math.min(x0,x1)-radius-7)/cell),maxX=Math.floor((Math.max(x0,x1)+radius+7)/cell),minY=Math.floor((Math.min(y0,y1)-radius-7)/cell),maxY=Math.floor((Math.max(y0,y1)+radius+7)/cell),vx=x1-x0,vy=y1-y0,v2=vx*vx+vy*vy||1;let count=0;
+      const cell=LIMITS.cellSize,minX=Math.floor((Math.min(x0,x1)-radius-12)/cell),maxX=Math.floor((Math.max(x0,x1)+radius+12)/cell),minY=Math.floor((Math.min(y0,y1)-radius-12)/cell),maxY=Math.floor((Math.max(y0,y1)+radius+12)/cell),vx=x1-x0,vy=y1-y0,v2=vx*vx+vy*vy||1;let count=0;
       for(let cy=minY;cy<=maxY;cy++)for(let cx=minX;cx<=maxX;cx++)for(let i=this.head[hash(cx,cy)];i!==-1;i=this.next[i]){
         if(this.hp[i]<=0||Math.floor(this.x[i]/cell)!==cx||Math.floor(this.y[i]/cell)!==cy)continue;const ex=this.x[i]-x0,ey=this.y[i]-y0,t=clamp((ex*vx+ey*vy)/v2,0,1),rx=ex-vx*t,ry=ey-vy*t;
-        if(rx*rx+ry*ry>(radius+(this.kind[i]===2?7:4))**2)continue;
+        if(rx*rx+ry*ry>(radius+(this.kind[i]===3?12:this.kind[i]===2?7:4))**2)continue;
         // Only the nearest few contacts matter to a piercing round. Insert in
         // travel order, independent of the grid's linked-list order.
         if(count===64&&t>=this.hitDistances[63])continue;let at=Math.min(count,63);while(at>0&&t<this.hitDistances[at-1]){if(at<64){this.hits[at]=this.hits[at-1];this.hitDistances[at]=this.hitDistances[at-1];}at--;}
@@ -147,6 +170,47 @@
       }
     }
   }
+  function intercept(out,x,y,tx,ty,vx,vy,speed,mortar=false){
+    const dx=tx-x,dy=ty-y,a=vx*vx+vy*vy-speed*speed,b=2*(dx*vx+dy*vy),c=dx*dx+dy*dy;
+    let t=mortar?.75+Math.sqrt(c)/900:Math.sqrt(c)/Math.max(1,speed);
+    if(!mortar&&Math.abs(a)>.001){const discriminant=b*b-4*a*c;if(discriminant>=0){const root=Math.sqrt(discriminant),first=(-b-root)/(2*a),second=(-b+root)/(2*a);t=first>0?first:second>0?second:t;}}
+    t=clamp(t,0,2.5);out.x=tx+vx*t*(mortar?.65:1);out.y=ty+vy*t*(mortar?.65:1);out.flight=t;return out;
+  }
+  function fireFleet(battle,dt){
+    const a=battle.raiders,point=battle.aimPoint||(battle.aimPoint={x:0,y:0,flight:0});
+    a.reserved.fill(0,0,a.count);
+    for(const m of battle.mounts){
+      m.flash=Math.max(0,m.flash-dt);m.recoil*=Math.exp(-dt*15);m.cooldown-=dt;
+      const s=battle.ships[m.ship];if(s.hp<=0||m.cooldown>0)continue;
+      const spec=battle.weaponSpec?.(m,s)||weapons[m.weapon],area=m.weapon==='mortar'||m.weapon==='flak';
+      let target=area?a.denseTarget(s.x,s.y,spec.range,battle.time):a.nearest(s.x,s.y,spec.range,true);
+      if(target<0&&!area)target=a.nearest(s.x,s.y,spec.range);
+      if(target<0){m.cooldown=.1+(m.ship%3)*.015;continue;}
+      const x=s.x+Math.cos(s.angle)*m.along,y=s.y+Math.sin(s.angle)*m.along;
+      intercept(point,x,y,a.x[target],a.y[target],a.vx[target],a.vy[target],spec.speed,m.weapon==='mortar');
+      if(m.weapon!=='mortar'&&battle.clearShot&&!battle.clearShot(x,y,point.x,point.y)){m.cooldown=.15;continue;}
+      m.angle=Math.atan2(point.y-y,point.x-x);
+      const scale=clamp(s.width/24,.12,.85),muzzle=10*scale;
+      if(battle.shots.fire(x+Math.cos(m.angle)*muzzle,y+Math.sin(m.angle)*muzzle,point.x,point.y,spec,0,s.id,spec.range+120,Math.min(8,s.height*.28)+.2+4*scale)){
+        a.reserved[target]+=spec.damage;
+        if(area)a.reserveBlast(point.x,point.y,spec.splash*.7,battle.time+point.flight+.1);
+        m.flash=.055;m.recoil=area?5:2.8;s.flash=.055;s.turret=m.angle;
+        if(battle.fired){battle.fired[s.id]++;battle.weaponShots[spec.kind]++;}
+        if(area||m.along<=0||s.id===0)battle.sound(m.weapon,x,y);
+      }
+      if(spec.burst){m.burstLeft=(m.burstLeft||spec.burst)-1;m.cooldown+=m.burstLeft?spec.spacing:spec.interval;}
+      else m.cooldown+=spec.interval;
+    }
+  }
+  function autoBroadside(battle){
+    const s=battle.player,a=battle.raiders;
+    if(s.type==='launch'||s.hp<=0||battle.burstCooldown>0||battle.tick%12)return;
+    const c=Math.cos(s.angle),sn=Math.sin(s.angle),range=BROADSIDE.range*.75;
+    for(const side of [-1,1]){const i=a.nearest(s.x-sn*range*.5*side,s.y+c*range*.5*side,range*.5);if(i<0)continue;
+      const dx=a.x[i]-s.x,dy=a.y[i]-s.y,d=Math.hypot(dx,dy);
+      if(d<range&&Math.abs(dx*c+dy*sn)<d*.4&&(!battle.clearShot||battle.clearShot(s.x,s.y,a.x[i],a.y[i]))){battle.broadside();break;}
+    }
+  }
   const shipNames=['Flagship','Wren','Kestrel','Pipit','Gannet','Tern','Moth','Nettle','Plover','Curlew','Heron','Finch','Snipe','Thunder','Cinder','Ash','Rook','Ward','Sparrow','Minnow','Lark','Petrel','Cormorant','Mender'];
   class Battle{
     constructor({population=16384,seed=48476,duration=180}={}){
@@ -170,7 +234,7 @@
     }
     sound(kind,x,y){if(this.soundBudget>=8){if(kind==='hurt'||kind==='loss')this.sounds[0]={kind,x,y};return;}this.soundBudget++;this.sounds.push({kind,x,y});}
     impact(x,y,player=false){if(this.impactBudget++<16)this.effects.add(x,y,9,1);if(player){this.lastHit.x=x;this.lastHit.y=y;this.lastHit.time=this.time;this.sound('impact',x,y);}}
-    damage(i,n){if(this.raiders.hp[i]<=0)return;this.raiders.hp[i]-=n;if(this.raiders.hp[i]<=0)this.kill(i,true);}
+    damage(i,n){if(this.raiders.hp[i]<=0)return;this.raiders.hp[i]-=n;this.raiders.hitUntil[i]=this.time+.09;if(this.raiders.hp[i]<=0)this.kill(i,true);}
     kill(i,reward=true){const a=this.raiders;if(a.hp[i]===-999)return;a.hp[i]=-999;a.dead++;if(reward)this.kills++;
       if(this.deathBudget<24){this.deathBudget++;this.effects.add(a.x[i],a.y[i],12+(a.kind[i]===2?15:0),2);}if(reward&&this.kills%32===0)this.sound('sink',a.x[i],a.y[i]);
     }
@@ -190,10 +254,10 @@
       this.raiders.compact();
       // Replacements are actual new vessels, not healed targets. Limit admission
       // per tick so clearing a large pocket cannot create one expensive spike.
-      for(let n=0,missing=this.population-this.raiders.count;n<Math.min(48,missing);n++)this.spawn();
+      if(this.reinforce)this.reinforce(dt);else for(let n=0,missing=this.population-this.raiders.count;n<Math.min(48,missing);n++)this.spawn();
       this.raiders.index();this.raiders.step(dt,this);this.raiders.index();
       const a=this.raiders;
-      for(const mount of this.mounts){const s=this.ships[mount.ship];mount.flash=Math.max(0,mount.flash-dt);mount.recoil*=Math.exp(-dt*15);if(s.hp<=0)continue;const spec=weapons[mount.weapon];mount.cooldown-=dt;if(mount.cooldown>0)continue;
+      if(this.automatic){autoBroadside(this);fireFleet(this,dt);}else for(const mount of this.mounts){const s=this.ships[mount.ship];mount.flash=Math.max(0,mount.flash-dt);mount.recoil*=Math.exp(-dt*15);if(s.hp<=0)continue;const spec=weapons[mount.weapon];mount.cooldown-=dt;if(mount.cooldown>0)continue;
         const manual=s===p&&input.fire&&input.aim;let target=-1;
         if(!manual)target=mount.weapon==='mortar'||mount.weapon==='flak'?a.denseTarget(s.x,s.y,spec.range):a.nearest(s.x,s.y,spec.range);
         if(!manual&&target<0){mount.cooldown=.12;continue;}
@@ -212,5 +276,5 @@
     memoryBytes(){let n=0;for(const part of [this.raiders,this.shots,this.effects])for(const value of Object.values(part))if(ArrayBuffer.isView(value))n+=value.byteLength;return n;}
     report(){return{seconds:this.time,workSeconds:this.workTime,raiders:this.raiders.count-this.raiders.dead,targetRaiders:this.population,peakRaiders:this.raiders.peak,kills:this.kills,spawned:this.spawned,ships:this.ships.filter(s=>s.hp>0).length,lost:this.lost,shots:this.shots.count,peakShots:this.shots.peak,rejectedShots:this.shots.rejected,effects:this.effects.count,bufferBytes:this.memoryBytes(),produced:{...this.produced},result:this.result};}
   }
-  const api={Battle,Raiders,Shots,Effects,roles,weapons,LIMITS,BROADSIDE,helmStep,broadsideRound,broadsideFootprint,rayReach,angleDelta,random};root.WidewakeBattle=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
+  const api={Battle,Raiders,Shots,Effects,roles,enemies,weapons,LIMITS,BROADSIDE,helmStep,broadsideRound,broadsideFootprint,rayReach,angleDelta,random,intercept,fireFleet,autoBroadside};root.WidewakeBattle=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

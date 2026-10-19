@@ -41,7 +41,7 @@ production readiness for the replacement.
 | Launch and identity | Owner-approved title, current version and direct New ocean access, independent navy/cyan identity, scene-led harbor and focused services | Preserve the approved title; maintain cohesive identity through the remaining views |
 | First voyage | Real-time starter sailing reviewed; guidance checks workboats; earned trade and fishing complete | Observe an unassisted human session; keep controls, profit and purchases understandable without a long manual |
 | Helm and camera | Trials have weighted handling, interpolated motion and anchored zoom; three hull sizes complete the estuary routes with bank and pier clearance, reverse and tow | Add constrained-water convoy orders; review small-screen fleet readability, controller integration and calm travel |
-| Combat | Separate trial targets 16,384 raiders against 24 finite friendly hulls, with real shots, kills, replacement fronts and workboats | Review weapon feel, incoming-front variety, salvage load, geography and earned progression before campaign integration |
+| Combat | Main-game Endgame combat button starts a disposable watch: 16,384 raiders, 24 armed boats, changing fronts, rams, repair crates and automatic weapon rhythms | Human feel review, earned loadouts, terrain-aware large fronts and campaign difficulty |
 | Trade | Regional warehouse depth, earned merchant expansion, exact bulk quotes, water routes and reserved holds | Review market pacing, discovery of trade routes, and late-game reasons to trade |
 | Convoy | Checked coastal recovery, physical harbor arrivals, all 24 ports with a full wide convoy, saved routes and distance inspection | Extended survival with different guard assignments and fleet builds; review arrival feedback in ordinary play |
 | Fishing and oil | Five work rhythms across 18 sites, optional double/triple watches, carried rare catches and safe-return payment | Longer play across fleet builds, risk/reward pacing and worthwhile repeat visits |
@@ -1515,3 +1515,63 @@ also fills all 24 wake histories before this capacity fixture. Its report lives
 with the v0.24 visual evidence. These are local browser measurements, not a claim
 of physical-phone or Steam production readiness. Human handling feedback,
 long-session device testing and the remaining whole-game work are still needed.
+
+
+## v0.25: the endgame button and fleet combat
+
+The owner explicitly requested a public shortcut into full fleet combat. The
+title and pause menus now offer Endgame combat. It uses the current ocean and
+helm inside the main game, with a preset 24-boat fleet, 16,384 active enemies,
+real production, five changing attack fronts, flanking raids, repair pickups
+and win/loss/retry/return flows. Voyage storage remains separate. The title art
+and its established styling are unchanged.
+
+Cannons now have short burst rhythms, flak fires pairs, mortars stagger their
+shots, and both flagship banks fire automatically when enemies enter their arcs.
+Every friendly role has a defense, including the repair tender. Shared weapons
+lead moving targets and divide shots between targets; mortar and flak crews
+reserve impact cells to avoid wasting every salvo on one group. The normal
+campaign receives the targeting and sound improvements without the preset
+endgame fire rates. Derived weapon specs are cached outside save data.
+
+The new iron ram has original hull geometry, a visible wind-up and a committed
+charge lane. The player's steering can evade the charge. Rams seek workboats
+but collide with other friendly hulls on the way. Repair crates reward leaving
+the safe center and do not revive sunken boats. The fleet follow/hold order
+changes actual workboat movement and production, rather than a display timer.
+
+The camera leaves the swarm in view while a small pennant marks the flagship.
+Health bars are reserved for workers and damaged escorts. Threat rounds stay
+coral, friendly fire stays warm, and flak/mortar sounds have distinct attacks.
+Short hit tints and water pressure rings show contact without filling the sea
+with damage text. The HUD contains hull condition, the watch and its tally,
+movement, one fleet order and Zoom. There are no manual firing controls.
+
+The seeded pure-simulation watch completes 180 seconds, all five phases and
+177,989 real kills, with finite hull damage and cargo. It verifies all 24 boats
+fire, same-seed determinism, inert manual aim input, actual follow/hold pauses,
+repair collection, ram commitment, win/loss and frozen results. Combat typed
+arrays stay at 3,342,848 bytes. New enemies are admitted at most 48 per tick;
+rounds, effects, crates, wakes and sounds have fixed limits.
+
+The main-game Chromium pass measures 9.7 ms frame p95 with 6,521 enemies visible,
+and 13.0 ms at four-times CPU throttling with 10,436 visible. Both retain the
+16,384 simulation target and all 24 boats; 32 to 34 draw calls and at most 20
+audio voices were recorded in those samples. These are M1 Pro browser results,
+not physical-handset measurements. Chromium and WebKit verify the actual public
+button, movement, fleet orders, pause/context recovery, win/retry/loss/return,
+reload and voyage isolation. Phone layouts use real browser touch events in
+Chromium and pointer input on WebKit's touch layout. Canvas retains the same
+population rather than reducing combat behind its fallback.
+
+The full-buffer fixture also runs the new automatic combat object, keeping
+16,384 live enemies while refilling all 8,192 shots and 2,048 effects. It records
+7,743 visible rounds and 1,488 wake segments across all 24 histories. Simulation
+plus rendering takes 6.4 ms CPU p95, with 10.1 ms frame p95, in that local fixture.
+The shared art checks retain the 32 MiB atlas budget and smooth heading blends.
+
+The shortcut is intentionally powerful and easy to enter. Its test equipment
+is not campaign progression. Human combat feel review, campaign balance, large
+raids in constrained waterways, physical-device runs and the rest of the
+whole-game production ledger remain open. This pass is not a production-ready
+Steam release claim.
