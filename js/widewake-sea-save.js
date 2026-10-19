@@ -13,6 +13,8 @@
   const assert=(ok,message='Invalid active sea.')=>{if(!ok)throw Error(message);};
   const point=p=>{assert(p&&finite(p.x,0,W.W)&&finite(p.y,0,W.H),'Invalid sea position.');return{x:p.x,y:p.y};};
   const ready=n=>Math.max(0,n??0);
+  const routeRead=(v,o)=>point({x:v.getFloat64(o,true),y:v.getFloat64(o+8,true)});
+  const routeWrite=(v,o,p)=>{v.setFloat64(o,p.x,true);v.setFloat64(o+8,p.y,true);};
   function encode(list,size,write){
     const bytes=new Uint8Array(list.length*size),view=new DataView(bytes.buffer);list.forEach((item,i)=>write(view,i*size,item));
     let binary='';for(let i=0;i<bytes.length;i+=4096)binary+=String.fromCharCode(...bytes.subarray(i,i+4096));return btoa(binary);
@@ -64,7 +66,7 @@
     const hazards=raw.hazards.map(h=>{const p=point(h);assert(finite(h.radius,1,200)&&finite(h.damage,0,1000)&&finite(h.delay,.01,10)&&finite(h.elapsed,0,h.delay),'Invalid mortar timing.');return{...p,radius:h.radius,damage:h.damage,delay:h.delay,elapsed:h.elapsed};});
     const living=new Set([0,...state.fleet.map(f=>f.uid),...(state.voyage.active&&D.signals.find(s=>s.id===state.voyage.active.id)?.kind==='rescue'?[-1]:[])]),seen=new Set();
     assert(Array.isArray(raw.friendly)&&raw.friendly.length===living.size,'Invalid convoy motion.');
-    const friendly=raw.friendly.map(f=>{assert(living.has(f.uid)&&!seen.has(f.uid)&&finite(f.vx,-5000,5000)&&finite(f.vy,-5000,5000)&&finite(f.cd,0,60)&&typeof f.distress==='boolean'&&finite(f.navTimer,0,60)&&(f.anchorUid===null||integer(f.anchorUid,-1,1e10)),'Invalid convoy motion.');seen.add(f.uid);return{uid:f.uid,vx:f.vx,vy:f.vy,cd:f.cd,distress:f.distress,navTimer:f.navTimer,anchorUid:f.anchorUid,detour:f.detour?point(f.detour):null};});
+    const friendly=raw.friendly.map(f=>{assert(living.has(f.uid)&&!seen.has(f.uid)&&finite(f.vx,-5000,5000)&&finite(f.vy,-5000,5000)&&finite(f.cd,0,60)&&typeof f.distress==='boolean'&&finite(f.navTimer,0,60)&&(f.anchorUid===null||integer(f.anchorUid,-1,1e10)),'Invalid convoy motion.');seen.add(f.uid);decode(f.navRoute??'',16,128,routeRead);return{navRoute:f.navRoute??'',uid:f.uid,vx:f.vx,vy:f.vy,cd:f.cd,distress:f.distress,navTimer:f.navTimer,anchorUid:f.anchorUid,detour:f.detour?point(f.detour):null};});
     const nav=raw.nav;assert(nav&&finite(nav.probeTime,0,60)&&finite(nav.probeDistance,0,W.W*2)&&finite(nav.blocked,0,60)&&typeof nav.hasLeg==='boolean','Invalid helm continuation.');
     const saved={version:1,random:raw.random,time:raw.time,spawn:raw.spawn,nextEnemy:raw.nextEnemy,enemies:raw.enemies,shots:raw.shots,drops:raw.drops,hazards,friendly,nav:{probeTime:nav.probeTime,probeDistance:nav.probeDistance,blocked:nav.blocked,hasLeg:nav.hasLeg}};
     decoded.set(saved,parsed);return saved;
@@ -79,7 +81,7 @@
       shots:encode(shots,SHOT_BYTES,(v,o,b)=>{[b.x,b.y,b.vx,b.vy,b.damage,b.life,b.splash??0].forEach((n,i)=>v.setFloat64(o+i*8,n,true));v.setUint8(o+56,b.hostile?1:0);}),
       drops:encode(loot,DROP_BYTES,(v,o,d)=>{v.setFloat64(o,d.x,true);v.setFloat64(o+8,d.y,true);v.setFloat64(o+16,d.t,true);v.setUint8(o+24,drops.indexOf(d.kind));v.setUint8(o+25,d.kind==='repair'?0:(d.kind==='relic'?D.relics:D.goods).findIndex(item=>item.id===d.item));}),
       hazards:g.hazards.map(h=>({...h})),
-      friendly:[g.player,...g.fleet.filter(f=>f.hp>0),...(g.encounter?.boat?[g.encounter.boat]:[])].map(f=>({uid:f.uid,vx:f.vx??0,vy:f.vy??0,cd:Math.min(60,ready(f.cd)),distress:!!f.distress,navTimer:Math.min(60,ready(f.navTimer)),anchorUid:f.anchorUid??null,detour:f.detour?{...f.detour}:null})),
+      friendly:[g.player,...g.fleet.filter(f=>f.hp>0),...(g.encounter?.boat?[g.encounter.boat]:[])].map(f=>({uid:f.uid,vx:f.vx??0,vy:f.vy??0,cd:Math.min(60,ready(f.cd)),distress:!!f.distress,navTimer:Math.min(60,ready(f.navTimer)),anchorUid:f.anchorUid??null,navRoute:encode(f.navRoute||[],16,routeWrite),detour:f.detour?{...f.detour}:null})),
       nav:{probeTime:ready(g.navProbeTime),probeDistance:ready(g.navProbeDistance),blocked:ready(g.navBlocked),hasLeg:!!g.navLeg&&g.navLeg===g.route[0]}};
   }
   function restore(g){
@@ -89,7 +91,7 @@
     // Validation already decoded these records. Transfer them once to the game.
     Object.assign(g,decoded.get(sea)||contents(sea));decoded.delete(sea);g.hazards=sea.hazards.map(h=>({...h}));g.time=sea.time;g.spawnTimer=sea.spawn;g.nextEnemy=sea.nextEnemy;
     g.navProbeTime=sea.nav.probeTime;g.navProbeDistance=sea.nav.probeDistance;g.navBlocked=sea.nav.blocked;g.navLeg=sea.nav.hasLeg?g.route[0]:null;
-    for(const f of [g.player,...g.fleet,...(g.encounter?.boat?[g.encounter.boat]:[])]){const saved=sea.friendly.find(s=>s.uid===f.uid);if(saved)Object.assign(f,{vx:saved.vx,vy:saved.vy,cd:saved.cd,distress:saved.distress,navTimer:saved.navTimer,anchorUid:saved.anchorUid,detour:saved.detour?{...saved.detour}:null});}
+    for(const f of [g.player,...g.fleet,...(g.encounter?.boat?[g.encounter.boat]:[])]){const saved=sea.friendly.find(s=>s.uid===f.uid);if(saved)Object.assign(f,{vx:saved.vx,vy:saved.vy,cd:saved.cd,distress:saved.distress,navTimer:saved.navTimer,anchorUid:saved.anchorUid,navRoute:decode(saved.navRoute,16,128,routeRead),detour:saved.detour?{...saved.detour}:null});}
     g.random.restore(sea.random);g.grid.rebuild(g.enemies);
   }
   const api={specs,validate,snapshot,restore,contents,MAX_SAVE_BYTES};if(typeof module!=='undefined'&&module.exports)module.exports=api;root.WidewakeSeaSave=api;

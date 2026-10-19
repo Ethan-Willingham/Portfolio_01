@@ -17,7 +17,7 @@ function dense(){
   for(let i=0;i<3500;i++)g.shoot(g.enemies[i%1200],i*.1,18,i%2===0,{life:3.8,speed:240,quiet:true});
   for(let i=0;i<4096;i++)g.drops.push({x:W.wrap(g.player.x+(i%60-30)*4),y:g.player.y+(Math.floor(i/60)-30)*4,t:35,kind:i%5===0?'relic':'cargo',item:i%5===0?'magnet':'iron'});
   const track=n=>Array.from({length:n},(_,i)=>({x:W.wrap(g.player.x+Math.sin(i)*1000),y:g.player.y+Math.cos(i)*1000}));
-  g.wake=track(1000);for(const f of g.fleet)if(['trawler','oilrig','freighter'].includes(f.type))f.wake=track(240);
+  g.wake=track(1000);for(const f of g.fleet){f.navRoute=track(128);if(['trawler','oilrig','freighter'].includes(f.type))f.wake=track(240);}
   g.route=track(2048);g.target={...g.route.at(-1),name:'Open Pacific'};g.autopilot=true;g.navLeg=g.route[0];g.navProbeTime=.625;g.navProbeDistance=1000;g.navBlocked=.2;
   return g;
 }

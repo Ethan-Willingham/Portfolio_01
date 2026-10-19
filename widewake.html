@@ -13,21 +13,21 @@
   <meta property="og:image" content="https://ethanwillingham.com/assets/widewake/cover.png">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="preload" href="assets/fonts/commit_mono_regular.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="widewake.css?v=0.12.0">
+  <link rel="stylesheet" href="widewake.css?v=0.13.0">
   <script defer src="js/demo-activity.js"></script>
-  <script defer src="js/widewake-data.js?v=0.12.0"></script>
-  <script defer src="js/widewake-world.js?v=0.12.0"></script>
-  <script defer src="js/widewake-voyage.js?v=0.12.0"></script>
-  <script defer src="js/widewake-work.js?v=0.12.0"></script>
-  <script defer src="js/widewake-sea-save.js?v=0.12.0"></script>
-  <script defer src="js/widewake-core.js?v=0.12.0"></script>
-  <script defer src="js/widewake-render.js?v=0.12.0"></script>
-  <script defer src="js/widewake-convoy.js?v=0.12.0"></script>
-  <script defer src="js/widewake-front.js?v=0.12.0"></script>
-  <script defer src="js/widewake-controller.js?v=0.12.0"></script>
-  <script defer src="js/widewake-audio.js?v=0.12.0"></script>
-  <script defer src="js/widewake-saves.js?v=0.12.0"></script>
-  <script defer src="js/widewake.js?v=0.12.0"></script>
+  <script defer src="js/widewake-data.js?v=0.13.0"></script>
+  <script defer src="js/widewake-world.js?v=0.13.0"></script>
+  <script defer src="js/widewake-voyage.js?v=0.13.0"></script>
+  <script defer src="js/widewake-work.js?v=0.13.0"></script>
+  <script defer src="js/widewake-sea-save.js?v=0.13.0"></script>
+  <script defer src="js/widewake-core.js?v=0.13.0"></script>
+  <script defer src="js/widewake-render.js?v=0.13.0"></script>
+  <script defer src="js/widewake-convoy.js?v=0.13.0"></script>
+  <script defer src="js/widewake-front.js?v=0.13.0"></script>
+  <script defer src="js/widewake-controller.js?v=0.13.0"></script>
+  <script defer src="js/widewake-audio.js?v=0.13.0"></script>
+  <script defer src="js/widewake-saves.js?v=0.13.0"></script>
+  <script defer src="js/widewake.js?v=0.13.0"></script>
 </head>
 <body class="ww-body at-title">
   <main id="game" class="ww-game" aria-label="Widewake game">
@@ -53,7 +53,7 @@
         <button class="ww-audio-notice" hidden>Click or tap to enable sound in this browser.</button>
         <p id="title-storage" class="ww-title-storage" role="status"></p>
       </div>
-      <footer class="ww-title-footer"><span id="title-version">0.12.0 / Web edition</span><div><button id="title-fullscreen">Full screen</button><button id="title-credits">Credits</button><button id="title-quit" hidden>Quit</button></div></footer>
+      <footer class="ww-title-footer"><span id="title-version">0.13.0 / Web edition</span><div><button id="title-fullscreen">Full screen</button><button id="title-credits">Credits</button><button id="title-quit" hidden>Quit</button></div></footer>
     </section>
     <section id="harbor" class="ww-harbor" hidden aria-label="Harbor">
       <div class="ww-harbor-left">
@@ -84,7 +84,7 @@
     <dialog id="recovery-dialog" class="ww-dialog ww-recovery" aria-labelledby="recovery-title"><div class="ww-dialog-head"><div><p id="recovery-caption" class="ww-eyebrow"></p><h2 id="recovery-title"></h2></div><button data-close="recovery-dialog">To the harbor</button></div><div id="recovery-body"></div><div class="ww-save-actions"><button class="ww-primary" data-action="recovery-trade">Plan a trading run</button><button data-action="recovery-fleet">Review the fleet</button></div><p class="ww-note">The receipt stays in your captain's log.</p></dialog>
     <dialog id="signal-dialog" class="ww-dialog ww-settings" aria-labelledby="signal-title"><div class="ww-dialog-head"><div><p class="ww-eyebrow">Signal at sea / paused</p><h2 id="signal-title"></h2></div><button data-close="signal-dialog">Leave</button></div><p id="signal-story" class="ww-letter"></p><div id="signal-choices"></div></dialog>
     <dialog id="ending-dialog" class="ww-dialog ww-ending" aria-labelledby="ending-title"><p class="ww-eyebrow">The long wake home / campaign complete</p><h2 id="ending-title">Havana, again.</h2><canvas id="ending-art" width="384" height="216" aria-label="Your flagship at the Havana quay"></canvas><p class="ww-letter">Mara has kept your old berth. She walks the length of the quay, counting the boats, then looks up at the flagship. “You can probably afford your own gunboat now.”</p><div id="ending-stats" class="ww-convoy-stats"></div><p class="ww-note">Your fleet, cargo and collections are saved. The ports are still trading. There is more ocean whenever you want it.</p><button class="ww-primary" data-close="ending-dialog">Keep sailing</button></dialog>
-    <dialog id="convoy-dialog" class="ww-dialog ww-convoy-dialog" aria-labelledby="convoy-title"><div class="ww-dialog-head"><div><p id="convoy-caption" class="ww-eyebrow"></p><h2 id="convoy-title">Your convoy</h2></div><button data-close="convoy-dialog">Return <kbd>C</kbd></button></div><div class="ww-convoy-toolbar"><label for="convoy-sort">List boats by<select id="convoy-sort"><option value="fleet">Fleet order</option><option value="hull">Hull condition</option><option value="cargo">Cargo aboard</option></select></label><p id="convoy-summary" class="ww-note"></p></div><div class="ww-convoy-layout"><nav id="convoy-list" aria-label="Select a vessel"></nav><section id="convoy-detail" aria-label="Vessel manifest and orders"></section></div><p id="convoy-feedback" class="ww-note" role="status" aria-live="polite"></p></dialog>
+    <dialog id="convoy-dialog" class="ww-dialog ww-convoy-dialog" aria-labelledby="convoy-title"><div class="ww-dialog-head"><div><p id="convoy-caption" class="ww-eyebrow"></p><h2 id="convoy-title">Your convoy</h2></div><button data-close="convoy-dialog">Return <kbd>C</kbd></button></div><div class="ww-convoy-toolbar"><label for="convoy-sort">List boats by<select id="convoy-sort"><option value="fleet">Fleet order</option><option value="hull">Hull condition</option><option value="cargo">Cargo aboard</option><option value="distance">Distance from flagship</option></select></label><p id="convoy-summary" class="ww-note"></p></div><div class="ww-convoy-layout"><nav id="convoy-list" aria-label="Select a vessel"></nav><section id="convoy-detail" aria-label="Vessel manifest and orders"></section></div><p id="convoy-feedback" class="ww-note" role="status" aria-live="polite"></p></dialog>
     <dialog id="chart-dialog" class="ww-dialog ww-chart-dialog" aria-labelledby="chart-title"><div class="ww-dialog-head"><div><p class="ww-eyebrow">The whole wide world</p><h2 id="chart-title">Your chart</h2></div><button data-close="chart-dialog" aria-label="Close chart">Close <kbd>M</kbd></button></div><div class="ww-chart-layout"><div class="ww-chart-main"><div class="ww-chart-map"><canvas id="world-chart" width="1000" height="500" aria-label="Map of Earth. Select a port, fishing ground, oil field, or admiral. The destination list provides the same controls."></canvas><p class="ww-map-legend"><span class="port-dot">Ports</span><span class="fish-dot">Fishing</span><span class="oil-dot">Oil</span><span class="boss-dot">Admirals</span><span class="signal-dot">Sea signals</span><span>Click open water to set a waypoint.</span></p></div><details id="chart-trade" class="ww-chart-trade"><summary>Trade opportunities</summary><div class="ww-trade-filters"><label>Goods<select id="chart-good"></select></label><label>Cargo<select id="chart-order"><option value="aboard">Already aboard</option><option value="buy">Buy at this port</option></select></label><label>Units<select id="chart-quantity"><option value="1">1</option><option value="5">5</option><option value="10">10</option><option value="9999">All that fit</option></select></label><label>Find<select id="chart-sort"><option value="near">Nearby gains</option><option value="gain">Largest gain</option></select></label></div><div id="trade-prospects"></div><p id="trade-quote-note" class="ww-quote-note"></p></details></div><aside class="ww-chart-side"><label for="destination-list" class="ww-eyebrow">Choose a destination</label><select id="destination-list"></select><div id="destination-detail"></div><div id="route-preview" class="ww-route-preview" role="status" aria-live="polite"></div><button id="load-trade-order" class="ww-load-order" hidden></button><p id="trade-load-note" class="ww-quote-note" role="status" hidden></p><button id="plot-course" class="ww-primary">Plot course</button><p class="ww-chart-tip">Your helmsman follows a water route. Steer to take over at any time. Resume course returns the helm from your current position. Dock when you enter a port's harbor ring.</p></aside></div></dialog>
     <dialog id="settings-dialog" class="ww-dialog ww-settings" aria-labelledby="settings-title">
       <div class="ww-dialog-head"><div><p id="settings-caption" class="ww-eyebrow">A moment at anchor</p><h2 id="settings-title">Paused</h2></div><button id="settings-return" data-close="settings-dialog">Resume</button></div>

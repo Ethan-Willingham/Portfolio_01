@@ -34,7 +34,7 @@ The exact owner constraints and source links are in `WIDEWAKE.md`.
 | Helm and camera | Direct manual control, one-action course resumption, continuous waypoint throttle, accurate arrival cues and fitted phone view | Review turning, arrival, coasts and camera at every hull size and input method |
 | Combat | Real projectiles, admiral tells, nearby contact map, clear priority labels and directional damage | Review threat reading in ordinary late-game fights and formation decisions through human play |
 | Trade | Exact bulk quotes, water-route comparisons, explicit order loading, reserved holds and no instant resale exploit | Review market pacing, discovery of trade routes, and late-game reasons to trade |
-| Convoy | Physical cargo and guards, exact losses, paged selection, hull/cargo sort, SOS priority and port repair | Convoy stragglers and build-dependent survival through extended play |
+| Convoy | Checked coastal recovery, physical harbor arrivals, all 24 ports with a full wide convoy, saved routes and distance inspection | Extended survival with different guard assignments and fleet builds; review arrival feedback in ordinary play |
 | Fishing and oil | Five work rhythms across 18 sites, moving schools, checked approach warnings and weighted regional catches | Longer play across fleet builds, risk/reward pacing and worthwhile repeat visits |
 | Progression | Six charters completed by balanced, merchant and gunline earned captains | Human pacing, optional pursuits and free-play depth; eliminate grind or runaway snowballing |
 | Earth and discovery | Real coastlines, 24 ports, 18 work sites and 15 signals | Review recognizable regions, travel interest, geography seams, legible chart and destination discovery |
@@ -42,7 +42,7 @@ The exact owner constraints and source links are in `WIDEWAKE.md`.
 | Sound | Original score, spatial cues, mixer, bounded voices and suspended/interrupted recovery | Listening on speakers/headphones, broader regional atmosphere, long-session comfort and battle priority review |
 | Interface and access | Keyboard, mouse, touch and standard controller flows; focus, editable settings and release gates | Physical controllers, remapping, button-label coverage, readable text and non-color threat cues |
 | Mobile | Chromium and WebKit touch emulation | Full-screen portrait and landscape flows, safe areas, browser-height changes, sustained performance and physical-device validation |
-| Saves and recovery | Full active-sea records, 674 matching campaign reloads, exclusive browser writer, explicit handoff, primary-first writes and legacy migration | Future format upgrades, erased storage, supported platform/cloud integration and long-session recovery |
+| Saves and recovery | Full active-sea records, 676 matching campaign reloads, exclusive browser writer, explicit handoff, primary-first writes and legacy migration | Future format upgrades, erased storage, supported platform/cloud integration and long-session recovery |
 | Performance | Five-minute 1,200-enemy browser run on M1 Pro with sound active and stable retained memory | Constrained-device budgets, longer sessions, loading cost and input latency |
 | Shipping | Public web build, tested offline Mac app, Windows package and asset inventory | Windows execution, signing, font clearance, Steam services, release QA and store materials |
 
@@ -692,3 +692,91 @@ milestone and rare-catch payments affect choices across several starting seeds.
 Continue the entire ledger. Unassisted human sessions, physical controllers and
 phones, remapping, final art, distribution rights and Steam/platform work remain
 open. This increment does not complete the production goal.
+
+
+## Pass 11, getting the whole convoy home, v0.13
+
+The larger-fleet review found a serious gap in earlier campaign verification.
+Some escorts stopped on a coast thousands of world units behind the flagship.
+Docking then gathered all boats, hiding the failure and carrying their cargo into
+port. One balanced run left Wren near Iceland on the Lisbon arrival; its final
+Havana arrival left three boats in southern South America. A gunline run left
+nine there. Earlier successful campaigns did not establish physical fleet travel.
+
+Companions now use their actual hull clearance, retain checked coastal routes,
+and return to direct formation legs when visible. They no longer depend on a
+reachable point surviving in the flagship's trimmed wake. A finer local grid
+connects narrow water pockets to the ocean graph when the broad route fails.
+The Magellan pocket is checked in both directions. Tight turns continue far
+enough to reach the next safe waypoint instead of stopping just short of it.
+Only one companion starts a route search per simulation step. The worker shares
+checked grid data and prewarms recovery routes from distant saved positions.
+
+Docking requires every living boat to reach the harbor approach. Its radius
+allows the widest full formation at the flagship ring's outer edge. Waiting
+names appear at the helm, the dock button explains its state, and the convoy
+desk prioritizes an endangered hull, then a waiting boat. Distance sort, actual
+coordinates and selected-boat pointers help find it. The pointer placement now
+handles tall portrait and short landscape HUDs. An interactive rescue arrival
+also exposed a vessel name overlapping the signal name; ship labels now reserve
+space for visible harbor, site, signal and approach text.
+
+Companion routes are saved as bounded Float64 records. Old saves lacking them
+remain readable. New orders, deployment and recall clear obsolete destinations.
+The largest staged battle, with complete tracks and 128 route points for every
+companion, occupies 1,018,674 bytes. Its primary and backup consume about 4.07 MB
+of UTF-16 storage, within the existing allowance. The file limit was not raised.
+
+Play and verification:
+
+- Imported an earned v0.12 Havana-arrival save through the normal browser UI.
+  Watched Wren, Sparrow and Mackerel sail from southern South America into the
+  harbor approach. Docking then became available. All nine boats and their
+  19 cargo units arrived, and the final charter reported nine boats home.
+- Continued that fleet to the hospital-launch rescue. Automatic escorts changed
+  their protection target, completed the operation and returned to formation.
+  The nine boats reached New York, its twelfth visited port, with full hulls.
+  The 27 cargo units sold for 1,608 coins, leaving 48,169 coins and empty holds.
+  This was an earned late-game fleet at a low-threat rescue, not a new balance
+  result for an early fleet. No resources were injected into this review save.
+- A quiet maximum-fleet fixture sailed all 24 boats, in wide formation with a
+  named guard, into all 24 ports over 132,831 simulation steps. The ordinary
+  balanced, merchant and gunline captains still finish with identical saved
+  outcomes across 676 reloads: 41.7, 42.2 and 42.7 simulated minutes respectively.
+  Every surviving boat is checked before docking. Neither fixture is a claim
+  about human pacing or long-term enjoyment.
+- Focused checks cover both actual coast traps, conserved cargo and damage,
+  narrow-channel routes, per-step planning limits, exact saved motion using a
+  fresh Earth instance, old records, invalid route data, widest-formation
+  arrival, rejected docking and changed work/guard orders. Core, helm, routes,
+  trade, work, voyage, feedback, storage and full campaign checks pass.
+- Chromium and WebKit cover a loaded stranded fleet, worker cache sharing,
+  actual catch-up, blocked and successful docking, full-fleet distance sorting,
+  selected pointers, dense-save backup/import/export and phone layouts at
+  360 by 640, 390 by 844, 667 by 375 and 844 by 390. Screenshots were inspected.
+  The warmed recovery measured about 1 ms for its slowest simulation step on
+  this M1 Pro. A cold long-distance route can still cost over 100 ms; the worker
+  reduces that initial cost for a loaded save. This is not a phone benchmark.
+
+The packaged Mac arm64 app passes the earned trade and fishing loop, native
+helm/worker flow, full screen and minimize behavior, failed-save handling, native
+file round trips and active-sea OS-close continuation. Mac and Windows x64
+packages match all 24 source assets, 712,063 bytes, and their host scripts.
+Windows execution is unverified. The browser stress check retained 1,200
+living enemies and 21 companions with sound at 9.8 ms p95 on this M1 Pro; it was
+a short desktop check. Packages remain local development artifacts.
+
+Whole-game review: title and menus remain a dedicated game. Actual fleet travel,
+cargo return, rescue protection, final charter, continued sailing, a new port
+and exact sales were reviewed together. Automated fishing and oil checks cover
+changed worker routing. Harbor compositions and the score are unchanged; image
+generation remains deferred. Early low-threat operations become easy with an
+earned late fleet. That can express progression, but optional high-threat trips
+and repeat trade need a stronger reason to spend an established company's money.
+
+Next: compare ordinary late-game fights and protected work across fleet builds,
+then improve optional voyage choices and rewards without flattening regional
+trade or making early waters scale mechanically with the player. Continue the
+whole ledger, including sound, mobile and small interactions. Physical-device
+validation, unassisted human sessions, remapping, final art, distribution rights
+and Steam integration remain open. This increment does not complete the goal.

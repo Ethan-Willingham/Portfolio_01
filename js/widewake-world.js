@@ -26,7 +26,7 @@
   }
   class Earth{
     constructor(json){
-      this.polygons=[];this.bins=new Map();this.grid=null;this.edges=new Int8Array(64800*9);this.links=new Map();
+      this.polygons=[];this.bins=new Map();this.grid=null;this.edges=new Int8Array(64800*9);this.links=new Map();this.coastRoutes=new Map();
       for(const f of json.features){const polys=f.geometry.type==='Polygon'?[f.geometry.coordinates]:f.geometry.coordinates;
         for(const rings of polys){
           const outer=rings[0];let minX=180,maxX=-180,minY=90,maxY=-90;
@@ -83,23 +83,47 @@
         this.links.set(from,[{to,via,cost}]);this.links.set(to,[{to:from,via:via.slice().reverse(),cost}]);
       }}
     }
-    cell(p){this.makeGrid();const cx=Math.floor(wrap(p.x)/SCALE),cy=Math.floor(p.y/SCALE);
+    cell(p,clearance=15){this.makeGrid();const cx=Math.floor(wrap(p.x)/SCALE),cy=Math.floor(p.y/SCALE);
       let best=-1,bd=Infinity;for(let r=0;r<9;r++){for(let oy=-r;oy<=r;oy++)for(let ox=-r;ox<=r;ox++){
         const x=(cx+ox+360)%360,y=cy+oy;if(y<0||y>=180)continue;const id=y*360+x;if(!this.grid[id])continue;
-        const q=this.cellPoint(id),d=distance(p,q);if(d<bd&&this.clear(p,q)){best=id;bd=d;}
+        const q=this.cellPoint(id),d=distance(p,q);if(d<bd&&this.clear(p,q,clearance)){best=id;bd=d;}
       }if(best>=0)return best;}return -1;
     }
     cellPoint(id){return {x:((id%360)+.5)*SCALE,y:(Math.floor(id/360)+.5)*SCALE};}
-    route(start,end){
-      end=this.nearestWater(end,25);if(this.clear(start,end))return [end];
-      const from=this.cell(start),to=this.cell(end);if(from<0||to<0)return null;
+    // A coarse water cell can sit inside a narrow channel with no straight
+    // connection to its neighbors. Refine only those failed routes, keeping
+    // the checked coastal corridors separate from the ordinary ocean graph.
+    rememberCoast(id,links){this.coastRoutes.set(id,links);if(this.coastRoutes.size>64)this.coastRoutes.delete(this.coastRoutes.keys().next().value);}
+    coastalConnection(id,accepts){
+      const cached=this.coastRoutes.get(id)||[],known=cached.find(link=>accepts(link.to));if(known)return known;
+      const origin=this.cellPoint(id),step=SCALE/8,span=24,width=span*2+1,center=span*width+span;
+      const cost=new Float64Array(width*width);cost.fill(Infinity);cost[center]=0;
+      const prev=new Int32Array(width*width);prev.fill(-1);const closed=new Uint8Array(width*width),heap=new Heap(),links=[];
+      const at=n=>({x:wrap(origin.x+(n%width-span)*step),y:origin.y+(Math.floor(n/width)-span)*step});
+      heap.push({id:center,f:0});
+      while(heap.a.length){const n=heap.pop().id;if(closed[n])continue;closed[n]=1;const x=n%width,y=Math.floor(n/width),a=at(n);
+        if(n!==center&&(x-span)%8===0&&(y-span)%8===0){const cx=Math.floor(a.x/SCALE),cy=Math.floor(a.y/SCALE),to=cy*360+cx;
+          if(this.grid[to]){const via=[];let q=n;while(q!==center){via.push(at(q));q=prev[q];}via.reverse();const link={to,via,cost:cost[n]/SCALE};links.push(link);if(accepts(to)){if(links.length>cached.length)this.rememberCoast(id,links);return link;}}
+        }
+        for(let oy=-1;oy<=1;oy++)for(let ox=-1;ox<=1;ox++){
+          const nx=x+ox,ny=y+oy;if(!ox&&!oy||nx<0||nx>=width||ny<0||ny>=width||(nx-span)**2+(ny-span)**2>span*span)continue;
+          const next=ny*width+nx,ng=cost[n]+step*(ox&&oy?Math.SQRT2:1);if(closed[next]||ng>=cost[next])continue;
+          const b=at(next);if(!this.water(b.x,b.y,18)||!this.clear(a,b,18))continue;
+          cost[next]=ng;prev[next]=n;heap.push({id:next,f:ng});
+        }
+      }
+      this.rememberCoast(id,links);return null;
+    }
+    route(start,end,clearance=15,anchorage=25,coast=new Map(),attempt=0){
+      end=this.nearestWater(end,anchorage);if(this.clear(start,end,clearance))return [end];
+      const from=this.cell(start,clearance),to=this.cell(end,clearance);if(from<0||to<0)return null;
       const g=new Float64Array(64800);g.fill(Infinity);g[from]=0;
       const prev=new Int32Array(64800);prev.fill(-1);const special=new Map(),closed=new Uint8Array(64800),heap=new Heap();
       const target=this.cellPoint(to),heuristic=id=>distance(this.cellPoint(id),target)/SCALE;
-      heap.push({id:from,f:heuristic(from)});let found=false;
-      while(heap.a.length){const id=heap.pop().id;if(closed[id])continue;if(id===to){found=true;break;}closed[id]=1;
+      heap.push({id:from,f:heuristic(from)});let found=false,visited=0;
+      while(heap.a.length){const id=heap.pop().id;if(closed[id])continue;if(id===to){found=true;break;}closed[id]=1;visited++;
         const x=id%360,y=Math.floor(id/360),a=this.cellPoint(id);
-        for(const link of this.links.get(id)||[]){const n=link.to,ng=g[id]+link.cost;if(!closed[n]&&ng<g[n]){g[n]=ng;prev[n]=id;special.set(n,link.via);heap.push({id:n,f:ng+heuristic(n)});}}
+        for(const link of [...(this.links.get(id)||[]),...(coast.get(id)||[])]){const n=link.to,ng=g[id]+link.cost;if(!closed[n]&&ng<g[n]){g[n]=ng;prev[n]=id;special.set(n,link.via);heap.push({id:n,f:ng+heuristic(n)});}}
         for(let oy=-1;oy<=1;oy++)for(let ox=-1;ox<=1;ox++){
           if((!ox&&!oy)||y+oy<5||y+oy>173)continue;const nx=(x+ox+360)%360,n=(y+oy)*360+nx;
           if(!this.grid[n]||closed[n])continue;
@@ -111,7 +135,18 @@
           g[n]=ng;prev[n]=id;special.delete(n);heap.push({id:n,f:ng+heuristic(n)});
         }
       }
-      if(!found)return null;
+      if(!found){
+        if(attempt>=2)return null;
+        // Usually one end is in the main ocean and the other is in a small
+        // pocket. Search the pocket first and stop at the first valid bridge.
+        for(const id of visited<512?[from,to]:[to,from]){
+          const link=this.coastalConnection(id,n=>id===from?!closed[n]:!!closed[n]);if(!link)continue;
+          if(!coast.has(id))coast.set(id,[]);coast.get(id).push(link);
+          if(!coast.has(link.to))coast.set(link.to,[]);coast.get(link.to).push({to:id,via:[this.cellPoint(id),...link.via.slice(0,-1)].reverse(),cost:link.cost});
+          return this.route(start,end,clearance,anchorage,coast,attempt+1);
+        }
+        return null;
+      }
       const raw=[end];let id=to;while(id!==from&&id>=0){raw.push(this.cellPoint(id));if(special.has(id))raw.push(...special.get(id).slice().reverse());id=prev[id];}raw.push(this.cellPoint(from));raw.reverse();
       const result=[];let origin=start,i=0;
       while(i<raw.length){let next=i;for(let j=i+1;j<raw.length&&j<i+24;j++){if(this.clear(origin,raw[j],24))next=j;else break;}result.push(raw[next]);origin=raw[next];i=next+1;}

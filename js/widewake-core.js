@@ -7,9 +7,24 @@
   const Work=root.WidewakeWork||(typeof require==='function'?require('./widewake-work.js'):null);
   const Sea=root.WidewakeSeaSave||(typeof require==='function'?require('./widewake-sea-save.js'):null);
   const {dx,wrap,distance,point,geo,clamp,SpatialHash}=W;
-  const TAU=Math.PI*2, SAVE_VERSION=1;
+  const TAU=Math.PI*2, SAVE_VERSION=1, HARBOR_APPROACH=1200;
   const count=c=>Object.values(c||{}).reduce((a,b)=>a+b,0);
   const angleDiff=(a,b)=>Math.atan2(Math.sin(b-a),Math.cos(b-a));
+  // Direct formation legs stay live. Coast detours are retained until the current
+  // destination is visible again, with at most one route search in each step.
+  function fleetSteering(earth,f,target,budget){
+    const path=f.navRoute||(f.navRoute=[]);
+    while(path.length){const d=distance(f,path[0]);if(d<3||d<12&&(!path[1]||earth.clear(f,path[1],f.radius))){path.shift();f.detour=path[0]||null;if(!path.length)f.navTimer=0;}else break;}
+    if(f.navTimer>0)return path[0]||f.detour||target;
+    f.navTimer=.45;f.detour=null;
+    if(earth.clear(f,target,f.radius)){f.navRoute=[];return target;}
+    if(path.length&&earth.clear(f,path[0],f.radius))return f.detour=path[0];
+    if(budget.used){f.navTimer=0;return f.detour={x:f.x,y:f.y};}
+    budget.used=true;const route=earth.route(f,target,f.radius,f.radius);f.navRoute=route?route.slice(0,128):[];
+    if(!route)f.navTimer=2;
+    return f.detour=f.navRoute[0]||{x:f.x,y:f.y};
+  }
+
   const hash=(s)=>{let h=2166136261;for(const c of String(s)){h^=c.charCodeAt(0);h=Math.imul(h,16777619);}return h>>>0;};
   function rng(seed){let a=seed>>>0;const next=()=>{a=(a+0x6D2B79F5)>>>0;let t=a;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};next.state=()=>a;next.restore=state=>{a=state>>>0;};return next;}
   const by=(list,id)=>list.find(x=>x.id===id);
@@ -130,7 +145,7 @@
     reserveHold(uid,reserved){const f=this.s.fleet.find(f=>f.uid===uid);if(this.mode!=='port'||!f||!workGood(f.type)||typeof reserved!=='boolean')return false;f.reserve=reserved;this.uiDirty=true;return true;}
     canGuard(ship){return !!ship&&guardTypes.includes(ship.type);}
     guardOptions(){return [this.player,...this.fleet.filter(f=>f.hp>0&&cargoTypes.includes(f.type))];}
-    setGuard(uid,target){const f=this.fleet.find(f=>f.uid===uid);if(!this.canGuard(f)||target!==null&&!this.guardOptions().some(t=>t.uid===target))return false;f.data.guardUid=target;f.detour=null;f.navTimer=0;this.uiDirty=true;return true;}
+    setGuard(uid,target){const f=this.fleet.find(f=>f.uid===uid);if(!this.canGuard(f)||target!==null&&!this.guardOptions().some(t=>t.uid===target))return false;f.data.guardUid=target;f.detour=null;f.navRoute=[];f.navTimer=0;this.uiDirty=true;return true;}
     guardAnchor(ship){
       if(!this.canGuard(ship))return this.player;
       if(ship.data.guardUid!=null)return this.guardOptions().find(f=>f.uid===ship.data.guardUid)||this.player;
@@ -138,7 +153,7 @@
       const guards=this.fleet.filter(f=>f.hp>0&&this.canGuard(f)&&f.data.guardUid==null);return workers[Math.max(0,guards.indexOf(ship))%workers.length];
     }
     orderText(ship){if(ship===this.player)return this.autopilot?'Following course':'Under your helm';if(this.production?.workers.includes(ship))return 'Working '+this.production.site.name;const anchor=this.guardAnchor(ship);if(anchor!==this.player)return 'Guarding '+anchor.data.name;return this.canGuard(ship)&&ship.data.guardUid===0?'Guarding flagship':'Following flagship';}
-    releaseGuards(uid){for(const f of this.fleet)if(f.data.guardUid===uid){f.data.guardUid=null;f.navTimer=0;f.detour=null;}}
+    releaseGuards(uid){for(const f of this.fleet)if(f.data.guardUid===uid){f.data.guardUid=null;f.navTimer=0;f.detour=null;f.navRoute=[];}}
     removeCargo(id,qty){let left=Math.min(Math.floor(qty),this.quantity(id)),n=left;for(const f of this.cargoShips()){const q=Math.min(f.cargo[id]||0,left);f.cargo[id]=(f.cargo[id]||0)-q;left-=q;if(!left)break;}return n;}
     market(portId=this.s.port,goodId,impact=this.s.impact[portId+':'+goodId]||0){const p=by(D.ports,portId),g=by(D.goods,goodId),r=rng(hash(portId+goodId+Math.floor(this.s.day/2)));
       const event=this.marketEvent(portId),mult=p.cheap===goodId?.56:p.wanted===goodId?1.55:1;
@@ -200,7 +215,9 @@
     checkGoals(){for(const g of this.goals())if(!this.s.claimed.includes(g.id)&&g.progress>=g.total){this.s.claimed.push(g.id);this.s.coins+=g.reward;this.s.xp+=g.xp;this.log(g.name+': '+g.reward+' coins earned.','complete');}}
     sail(){if(this.mode!=='port')return false;this.s.tripLosses=[];this.s.location={...by(this.ports,this.s.port)};this.s.wake=[];for(const f of this.s.fleet){f.location=null;f.wake=[];}this.mode='sea';this.s.atSea=true;this.setupFleet();this.spawnTimer=8;this.time=0;this.navLeg=null;this.navProbeTime=0;this.navProbeDistance=0;this.navBlocked=0;this.event('WASD to sail. Guns fire automatically. M opens the world chart.','depart');this.change();return true;}
     nearestPort(){let best=null,d=Infinity;for(const p of this.ports){const pd=distance(this.player,p);if(pd<d){d=pd;best=p;}}return{port:best,distance:d};}
+    harborStragglers(port=this.nearestPort().port){return this.fleet.filter(f=>f.hp>0&&distance(f,port)>HARBOR_APPROACH).sort((a,b)=>distance(b,port)-distance(a,port));}
     dock(){if(this.mode!=='sea')return false;const near=this.nearestPort();if(near.distance>190){this.event('Move within the harbor ring to dock.','warn');return false;}
+      const waiting=this.harborStragglers(near.port);if(waiting.length){this.event('Waiting for '+waiting[0].data.name+(waiting.length>1?' and '+(waiting.length-1)+' more':'')+' to reach the harbor approach. Open Convoy to find the distant boats.','warn');return false;}
       this.finishProduction(false);this.finishEncounter(false);this.mode='port';this.s.atSea=false;this.s.port=this.s.lastPort=near.port.id;this.player.x=near.port.x;this.player.y=near.port.y;
       if(!this.s.visits.includes(near.port.id)){this.s.visits.push(near.port.id);this.s.xp+=85;this.s.coins+=100;this.log('First arrival in '+near.port.name+'. A 100 coin harbor grant.');}
       this.s.hp=this.player.hp;for(const f of this.fleet)f.data.hp=f.hp;this.enemies.length=0;this.bullets.length=0;this.drops.length=0;this.hazards.length=0;this.route=[];this.autopilot=false;this.target=null;this.cue('dock');this.change();return true;
@@ -224,13 +241,13 @@
       const type=site.type==='fish'?'trawler':'oilrig',workers=this.fleet.filter(f=>f.type===type&&f.hp>0),boat=workers[0];
       if(!boat){this.event('This site needs a '+by(D.boats,type).name.toLowerCase()+'.','warn');return false;}
       if(this.cargoSpace(site.type)<4){this.event('Make room for '+site.type+' in the fleet cargo holds first.','warn');return false;}
-      this.cancelCourse();this.production=this.prepareWork(site,boat,workers);this.spawnTimer=5;this.log((workers.length===1?boat.data.name:workers.length+' workboats')+' moving onto '+site.name+'. Keep the raiders away.');return true;
+      this.cancelCourse();this.production=this.prepareWork(site,boat,workers);for(const f of workers){f.navRoute=[];f.detour=null;f.navTimer=0;}this.spawnTimer=5;this.log((workers.length===1?boat.data.name:workers.length+' workboats')+' moving onto '+site.name+'. Keep the raiders away.');return true;
     }
     finishProduction(success,reason='recall'){if(!this.production)return;const p=this.production,paid=success?p.plan.pay:0;
       this.s.workReport={site:p.site.id,day:this.s.day,result:success?'complete':reason,loaded:p.loaded,paid,sinceResume:p.loadedFromResume};
       if(success){this.s.stats.operations++;this.s.voyage.worked[p.site.id]=(this.s.voyage.worked[p.site.id]||0)+1;this.s.coins+=paid;this.s.xp+=70+p.site.danger*30;this.log('Work complete at '+p.site.name+'. '+p.loaded+' '+p.site.type+' loaded'+(p.loadedFromResume?' since resuming':'')+'. '+paid+' coins paid.','complete');}
       else this.log(({recall:'Workboats recalled.',distance:'Beyond the protection area. Workboats returning.',full:'The holds are full. Workboats returning.',lost:'All working boats were lost.'})[reason]+' '+(reason==='lost'?'Cargo on sunk boats is gone.':'Cargo already aboard stays with its boat.'),reason==='lost'||reason==='distance'?'warn':'info');
-      this.production=null;this.s.production=null;this.spawnTimer=Math.max(8,this.spawnTimer);this.change();
+      for(const f of p.workers){f.navRoute=[];f.detour=null;f.navTimer=0;}this.production=null;this.s.production=null;this.spawnTimer=Math.max(8,this.spawnTimer);this.change();
     }
     salvage(item){if(!this.s.items.includes(item)){this.s.items.push(item);this.log('Recovered '+by(D.relics,item).name+'. Fit it at a shipyard.','rare',{discovery:'relic',item,first:true});}else this.s.coins+=220;this.change();}
     burst(){if(this.mode!=='sea'||this.paused||this.burstCD>0)return false;this.burstCD=9;const p=this.player,n=16+this.hull().guns*4;
@@ -334,6 +351,7 @@
       }
       const allies=[p,...this.fleet.filter(f=>f.hp>0),...(this.encounter?.boat?[this.encounter.boat]:[])];
       for(const ally of allies){ally.hit=Math.max(0,(ally.hit||0)-dt);ally.flash=Math.max(0,(ally.flash||0)-dt);if(ally.hp>=ally.maxHp*.5)ally.distress=false;}
+      const fleetRoutes={used:false};
       for(let i=this.fleet.length-1;i>=0;i--){const f=this.fleet[i];if(f.hp<=0){this.fleet.splice(i,1);continue;}
         const working=this.production?.workers.includes(f),spread=this.formation==='tight'?55:this.formation==='screen'?105:145;
         const row=Math.floor(i/4)+1,side=i%4-1.5,ax=Math.cos(p.angle),ay=Math.sin(p.angle);
@@ -342,15 +360,11 @@
         let tx=working?station.x:wrap(p.x-ax*(row*spread+40)-ay*side*spread),ty=working?station.y:p.y-ay*(row*spread+40)+ax*side*spread;
         if(guarding){const angle=f.uid*2.399963,range=f.type==='repair'?65:spread;tx=wrap(anchor.x+Math.cos(angle)*range);ty=anchor.y+Math.sin(angle)*range;}
         if(!this.earth.water(tx,ty,15)){tx=anchor.x;ty=anchor.y;}
-        if(f.anchorUid!==anchor.uid){f.anchorUid=anchor.uid;f.detour=null;f.navTimer=0;}
+        if(f.anchorUid!==anchor.uid){f.anchorUid=anchor.uid;f.detour=null;f.navRoute=[];f.navTimer=0;}
         f.navTimer=(f.navTimer||0)-dt;
-        if(f.navTimer<=0){f.navTimer=.45;f.detour=null;if(!this.earth.clear(f,{x:tx,y:ty},15)){
-          const wake=guarding?anchor.wake:this.wake;let nearest=0,best=Infinity;for(let j=0;j<wake.length;j++){const d=distance(f,wake[j]);if(d<best){best=d;nearest=j;}}
-          for(let j=nearest;j<Math.min(wake.length,nearest+18);j++){if(this.earth.clear(f,wake[j],15))f.detour=wake[j];else break;}
-        }}
-        if(f.detour){tx=f.detour.x;ty=f.detour.y;}
+        const waypoint=fleetSteering(this.earth,f,{x:tx,y:ty},fleetRoutes);tx=waypoint.x;ty=waypoint.y;
         const vx=dx(f.x,tx),vy=ty-f.y,d=Math.hypot(vx,vy),fs=f.spec.speed*(1+this.s.upgrades.engine*.08)*this.modifier('speed');
-        const oldFx=f.x,oldFy=f.y;if(d>6){const a=Math.atan2(vy,vx);f.angle+=clamp(angleDiff(f.angle,a),-3*dt,3*dt);const v=Math.min(fs*(d>450?1.8:1),d*2.2);this.earth.move(f,f.x+vx/d*v*dt,f.y+vy/d*v*dt);}f.vx=dx(oldFx,f.x)/dt;f.vy=(f.y-oldFy)/dt;
+        const oldFx=f.x,oldFy=f.y;if(d>(f.navRoute?.length?2:6)){const a=Math.atan2(vy,vx);f.angle+=clamp(angleDiff(f.angle,a),-3*dt,3*dt);const v=Math.min(fs*(d>450?1.8:1),d*2.2);this.earth.move(f,f.x+vx/d*v*dt,f.y+vy/d*v*dt);}f.vx=dx(oldFx,f.x)/dt;f.vy=(f.y-oldFy)/dt;
         if(cargoTypes.includes(f.type)&&distance(f,f.wake[f.wake.length-1])>35){f.wake.push({x:f.x,y:f.y});if(f.wake.length>240)f.wake.shift();}
         f.cd-=dt;if(f.cd<=0){let enemy=null;if(guarding){const threat=this.grid.nearest(anchor.x,anchor.y,350);if(threat&&distance(f,threat)<f.spec.range)enemy=threat;}enemy=enemy||this.grid.nearest(f.x,f.y,f.spec.range);if(enemy){const a=Math.atan2(enemy.y-f.y,dx(f.x,enemy.x));this.shoot(f,a,f.spec.damage*(1+this.s.upgrades.guns*.1),false,{splash:f.type==='destroyer'?35:0});f.cd=f.spec.rate;}else f.cd=.15;}
         if(f.type==='repair')for(const ally of allies)if(distance(f,ally)<300)ally.hp=Math.min(ally.maxHp,ally.hp+dt*3.8);
@@ -415,5 +429,5 @@
     }
   }
   V.install(Game);Work.install(Game);
-  const api={Game,fresh,validate,rng,hash,count,SAVE_VERSION,MAX_SAVE_BYTES:Sea.MAX_SAVE_BYTES};if(typeof module!=='undefined'&&module.exports)module.exports=api;root.WidewakeCore=api;
+  const api={Game,fresh,validate,rng,hash,count,SAVE_VERSION,HARBOR_APPROACH,MAX_SAVE_BYTES:Sea.MAX_SAVE_BYTES};if(typeof module!=='undefined'&&module.exports)module.exports=api;root.WidewakeCore=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

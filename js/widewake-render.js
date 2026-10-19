@@ -19,10 +19,15 @@
   }
   function edgeAnchor(x,y,w,h,blocks){
     const a=Math.atan2(y-h/2,x-w/2),ux=Math.cos(a),uy=Math.sin(a),r=Math.min((w/2-12)/Math.max(.001,Math.abs(ux)),(h/2-12)/Math.max(.001,Math.abs(uy)));
-    for(let inward=0;inward<Math.min(w,h)/2;inward+=12)for(const side of [0,-12,12,-24,24]){
+    for(let inward=0;inward<r;inward+=12)for(const side of [0,-12,12,-24,24]){
       const px=Math.max(10,Math.min(w-10,w/2+ux*(r-inward)-uy*side)),py=Math.max(10,Math.min(h-10,h/2+uy*(r-inward)+ux*side)),box={left:px-7,right:px+7,top:py-7,bottom:py+7};
       if(!blocks.some(b=>intersects(box,b)))return{x:px,y:py,angle:a};
-    }return null;
+    }
+    // Short touch layouts can cover the entire radial line. Find the closest
+    // remaining sea space; the arrow still points toward the actual vessel.
+    let best=null,cost=Infinity;const ex=w/2+ux*r,ey=h/2+uy*r;
+    for(let py=12;py<h-10;py+=12)for(let px=12;px<w-10;px+=12){const d=(px-ex)**2+(py-ey)**2;if(d>=cost)continue;const box={left:px-7,right:px+7,top:py-7,bottom:py+7};if(!blocks.some(b=>intersects(box,b))){cost=d;best={x:px,y:py,angle:a};}}
+    return best;
   }
   function canvas(w,h){const c=document.createElement('canvas');c.width=w;c.height=h;return c;}
   function poly(c,points,color){c.fillStyle=color;c.beginPath();points.forEach((p,i)=>i?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1]));c.closePath();c.fill();}
@@ -173,21 +178,22 @@
       const startX=Math.floor((this.cam.x-w/2/z)/95)*95,startY=Math.floor((this.cam.y-h/2/z)/90)*90;
       c.fillStyle='#9eb89d24';for(let y=startY;y<this.cam.y+h/2/z;y+=90)for(let x=startX;x<this.cam.x+w/2/z;x+=95){const v=Math.sin(x*.017+y*.033),xx=x+v*32,yy=y+Math.sin(ambientTime*.7+x*.005)*9;if(g.earth.land(xx,yy))continue;const px=sx(xx)|0,py=sy(yy)|0,ww=5+Math.floor((v+1)*4);c.fillRect(px,py,ww,1);c.fillRect(px+ww-1,py-1,3,1);}
       if(g.route.length){c.strokeStyle='#d4c4a055';c.lineWidth=1;c.setLineDash([3,5]);c.beginPath();c.moveTo(sx(p.x),sy(p.y));for(const q of g.route)c.lineTo(sx(q.x),sy(q.y));c.stroke();c.setLineDash([]);}
+      this.landmarkLabels=[];const worldLabel=(...args)=>this.landmarkLabels.push(this.label(...args));
       for(const port of g.ports){const x=sx(port.x),y=sy(port.y);if(x<-100||x>w+100||y<-100||y>h+100)continue;
-        c.strokeStyle='#c6bc9344';c.lineWidth=1;c.setLineDash([3,5]);c.beginPath();c.arc(x,y,185*z,0,Math.PI*2);c.stroke();c.setLineDash([]);c.fillStyle=P.wood;c.fillRect(x-14,y-4,28,7);c.fillStyle=P.cream;c.fillRect(x-8,y-12,10,8);c.fillStyle=P.gold;c.fillRect(x+5,y-16,2,13);c.fillRect(x+7,y-16,7,4);this.label(c,port.name,x,y-25,P.cream);}
+        c.strokeStyle='#c6bc9344';c.lineWidth=1;c.setLineDash([3,5]);c.beginPath();c.arc(x,y,185*z,0,Math.PI*2);c.stroke();c.setLineDash([]);c.fillStyle=P.wood;c.fillRect(x-14,y-4,28,7);c.fillStyle=P.cream;c.fillRect(x-8,y-12,10,8);c.fillStyle=P.gold;c.fillRect(x+5,y-16,2,13);c.fillRect(x+7,y-16,7,4);worldLabel(c,port.name,x,y-25,P.cream);}
       for(const site of [...g.sites,...g.bossSites.filter(b=>!g.s.bosses.includes(b.id)&&!g.enemies.some(e=>e.bossId===b.id&&e.hp>0))]){const x=sx(site.x),y=sy(site.y);if(x<-100||x>w+100||y<-100||y>h+100)continue;const color=site.type==='fish'?P.blue:site.type==='oil'?'#b2b29b':P.coral;
-        c.strokeStyle=color+'66';c.setLineDash([2,6]);c.beginPath();c.arc(x,y,(110+Math.sin(ambientTime)*3)*z,0,Math.PI*2);c.stroke();c.setLineDash([]);c.fillStyle=color;c.fillRect(x-2,y-2,5,5);if(g.production?.site.id!==site.id)this.label(c,site.name,x,y-15,color);
+        c.strokeStyle=color+'66';c.setLineDash([2,6]);c.beginPath();c.arc(x,y,(110+Math.sin(ambientTime)*3)*z,0,Math.PI*2);c.stroke();c.setLineDash([]);c.fillStyle=color;c.fillRect(x-2,y-2,5,5);if(g.production?.site.id!==site.id)worldLabel(c,site.name,x,y-15,color);
         if(site.type==='fish'){c.globalAlpha=.5;for(let i=0;i<8;i++){const a=i*.8+ambientTime*.1,rr=(25+i*7)*z;c.fillRect((x+Math.cos(a)*rr)|0,(y+Math.sin(a)*rr*.5)|0,3,1);}c.globalAlpha=1;}}
       if(g.production){const op=g.production;
         if(op.plan.id==='drift'){const origin=g.workOrigin(op,0),station=g.station(op.boat);c.strokeStyle=P.blue;c.setLineDash([2,4]);c.beginPath();c.moveTo(sx(origin.x),sy(origin.y));c.lineTo(sx(origin.x+op.drift.x),sy(origin.y+op.drift.y));c.stroke();c.setLineDash([]);c.strokeRect(sx(station.x)-6,sy(station.y)-6,12,12);}
-        if(op.approach){const a=op.approach.angle,x=sx(op.site.x),y=sy(op.site.y),r=175*z,tx=x+Math.cos(a)*r,ty=y+Math.sin(a)*r;c.strokeStyle=P.coral;c.fillStyle=P.coral;c.lineWidth=2;c.beginPath();c.arc(x,y,r,a-.3,a+.3);c.stroke();c.beginPath();c.moveTo(tx-Math.cos(a)*14,ty-Math.sin(a)*14);c.lineTo(tx+Math.cos(a+.8)*8,ty+Math.sin(a+.8)*8);c.lineTo(tx+Math.cos(a-.8)*8,ty+Math.sin(a-.8)*8);c.closePath();c.fill();this.label(c,WidewakeWork.bearing(a),tx+Math.cos(a)*24,ty+Math.sin(a)*24,P.coral);c.lineWidth=1;}
+        if(op.approach){const a=op.approach.angle,x=sx(op.site.x),y=sy(op.site.y),r=175*z,tx=x+Math.cos(a)*r,ty=y+Math.sin(a)*r;c.strokeStyle=P.coral;c.fillStyle=P.coral;c.lineWidth=2;c.beginPath();c.arc(x,y,r,a-.3,a+.3);c.stroke();c.beginPath();c.moveTo(tx-Math.cos(a)*14,ty-Math.sin(a)*14);c.lineTo(tx+Math.cos(a+.8)*8,ty+Math.sin(a+.8)*8);c.lineTo(tx+Math.cos(a-.8)*8,ty+Math.sin(a-.8)*8);c.closePath();c.fill();worldLabel(c,WidewakeWork.bearing(a),tx+Math.cos(a)*24,ty+Math.sin(a)*24,P.coral);c.lineWidth=1;}
       }
       for(const drop of g.drops){const x=sx(drop.x),y=sy(drop.y);c.fillStyle=drop.kind==='relic'?P.gold:drop.kind==='repair'?'#9ec79a':'#b69d72';c.fillRect(x-3,y-3+Math.sin(ambientTime*3),6,5);c.fillStyle=P.ink;c.fillRect(x-1,y-2+Math.sin(ambientTime*3),2,4);}
       for(const signal of g.signals){if(g.s.voyage.resolved[signal.id])continue;const x=sx(signal.x),y=sy(signal.y);if(x<-60||x>w+60||y<-60||y>h+60)continue;
         c.strokeStyle=P.gold;c.setLineDash([2,5]);c.beginPath();c.arc(x,y,100*z,0,Math.PI*2);c.stroke();c.setLineDash([]);
         if(signal.kind==='wreck'){c.save();c.translate(x,y);c.rotate(.4);c.globalAlpha=.65;c.drawImage(shipSprite('freighter'),-30*z,-24*z,60*z,48*z);c.fillStyle=P.sea;c.fillRect(-32*z,2*z,65*z,22*z);c.restore();}
         else{c.fillStyle=P.wood;c.fillRect(x-2,y-2,5,8);c.fillStyle=P.gold;c.fillRect(x+2,y-6,7,4);c.fillStyle=P.cream;c.fillRect(x+1,y-7,1,13);}
-        if(g.encounter?.signal.id!==signal.id)this.label(c,signal.name,x,y-22,P.gold);
+        if(g.encounter?.signal.id!==signal.id)worldLabel(c,signal.name,x,y-22,P.gold);
       }
       for(const h of g.hazards){const x=sx(h.x),y=sy(h.y),radius=h.radius*z;c.fillStyle='#ca887329';c.beginPath();c.arc(x,y,radius,0,Math.PI*2);c.fill();c.strokeStyle=P.coral;c.lineWidth=1;c.stroke();c.beginPath();c.arc(x,y,radius*(1-h.elapsed/h.delay),0,Math.PI*2);c.stroke();c.beginPath();c.moveTo(x-4,y);c.lineTo(x+4,y);c.moveTo(x,y-4);c.lineTo(x,y+4);c.stroke();}
       for(const e of g.enemies){const x=sx(e.x),y=sy(e.y);if(x<-100||x>w+100||y<-100||y>h+100)continue;
@@ -222,18 +228,18 @@
       if(this.aim){const x=sx(this.aim.x),y=sy(this.aim.y),px=sx(p.x),py=sy(p.y);c.strokeStyle=P.cream;c.lineWidth=1;c.globalAlpha=.7;c.setLineDash([1,5]);c.beginPath();c.moveTo(px,py);c.lineTo(x,y);c.stroke();c.setLineDash([]);c.globalAlpha=1;this.reticle(c,x,y,6,P.cream);}
       else if(g.s.settings.autoFire&&g.aimTarget?.hp>0){const a=g.aimTarget,x=sx(a.x),y=sy(a.y);if(x>0&&x<w&&y>0&&y<h)this.reticle(c,x,y,Math.max(7,a.radius*z+3),P.gold);}
       if(this.hitT>0){const x=sx(p.x),y=sy(p.y),a=this.hitBearing;c.globalAlpha=Math.min(1,this.hitT*2);c.strokeStyle=P.coral;c.lineWidth=2;c.beginPath();if(a===null)c.arc(x,y,24,0,Math.PI*2);else{c.arc(x,y,26,a-.35,a+.35);c.stroke();const mx=x+Math.cos(a)*31,my=y+Math.sin(a)*31;poly(c,[[mx,my],[mx-Math.cos(a-.6)*5,my-Math.sin(a-.6)*5],[mx-Math.cos(a+.6)*5,my-Math.sin(a+.6)*5]],P.coral);}c.stroke();c.globalAlpha=1;}
-      for(const f of g.fleet){const critical=f.hp<f.maxHp*.3,selected=g.highlightUid===f.uid&&g.highlightUntil>g.time;if(!critical&&!selected)continue;const x=sx(f.x),y=sy(f.y);if(x>=0&&x<w&&y>=0&&y<h&&!this.obstacles.some(b=>intersects({left:x-5,top:y-5,right:x+5,bottom:y+5},b)))continue;const anchor=edgeAnchor(x,y,w,h,[...this.obstacles,...shipBlocks]);if(!anchor)continue;const color=critical?P.coral:P.gold;c.save();c.translate(anchor.x,anchor.y);c.rotate(anchor.angle);poly(c,[[6,0],[-3,-4],[-3,4]],color);c.restore();shipBlocks.push({left:anchor.x-7,top:anchor.y-7,right:anchor.x+7,bottom:anchor.y+7});edgeRequests.push({uid:f.uid,text:f.data.name+(critical?' / SOS':''),x:anchor.x,y:anchor.y,radius:7,color,priority:selected?100:91});}
+      for(const f of g.fleet){const critical=f.hp<f.maxHp*.3,selected=g.highlightUid===f.uid&&g.highlightUntil>g.time;if(!critical&&!selected)continue;const x=sx(f.x),y=sy(f.y);if(x>=0&&x<w&&y>=0&&y<h&&!this.obstacles.some(b=>intersects({left:x-5,top:y-5,right:x+5,bottom:y+5},b)))continue;const anchor=edgeAnchor(x,y,w,h,[...this.obstacles,...this.landmarkLabels,...shipBlocks]);if(!anchor)continue;const color=critical?P.coral:P.gold;c.save();c.translate(anchor.x,anchor.y);c.rotate(anchor.angle);poly(c,[[6,0],[-3,-4],[-3,4]],color);c.restore();shipBlocks.push({left:anchor.x-7,top:anchor.y-7,right:anchor.x+7,bottom:anchor.y+7});edgeRequests.push({uid:f.uid,text:f.data.name+(critical?' / SOS':''),x:anchor.x,y:anchor.y,radius:7,color,priority:selected?100:91});}
       // Labels occupy their own clear space after hulls and projectiles render.
       // Stable preferred slots avoid a name changing sides every frame.
       this.edgeMarkers=edgeRequests;const requests=[...labelRequests.filter(q=>!edgeRequests.some(e=>e.uid===q.uid)),...edgeRequests];c.font='7px "Commit Mono", monospace';for(const item of requests){item.width=c.measureText(item.text).width+6;item.previous=this.labelSlots.get(item.uid);}
-      this.labels=packLabels(requests,[...this.obstacles,...shipBlocks],{left:5,top:5,right:w-5,bottom:h-5},w<400?5:10);this.labelSlots=new Map(this.labels.map(q=>[q.uid,q.index]));
+      this.labels=packLabels(requests,[...this.obstacles,...this.landmarkLabels,...shipBlocks],{left:5,top:5,right:w-5,bottom:h-5},w<400?5:10);this.labelSlots=new Map(this.labels.map(q=>[q.uid,q.index]));
       for(const q of this.labels){const endX=W.clamp(q.x,q.left,q.right),endY=W.clamp(q.y,q.top,q.bottom),a=Math.atan2(endY-q.y,endX-q.x);c.strokeStyle=q.color;c.globalAlpha=.45;c.lineWidth=1;c.beginPath();c.moveTo(q.x+Math.cos(a)*q.radius,q.y+Math.sin(a)*q.radius);c.lineTo(endX,endY);c.stroke();c.globalAlpha=1;this.label(c,q.text,q.labelX,q.labelY,q.color);}
       // Day cycles dim gently; ports remain legible and the sun never blocks combat.
       const night=Math.max(0,Math.sin(g.s.seconds/90))*0.13;if(night){c.fillStyle='rgba(15,28,35,'+night+')';c.fillRect(0,0,w,h);}
       c.restore();
     }
     reticle(c,x,y,r,color){x=Math.round(x);y=Math.round(y);r=Math.round(r);c.strokeStyle=color;c.lineWidth=1;for(const dx of [-1,1])for(const dy of [-1,1]){c.beginPath();c.moveTo(x+dx*(r-3),y+dy*r);c.lineTo(x+dx*r,y+dy*r);c.lineTo(x+dx*r,y+dy*(r-3));c.stroke();}}
-    label(c,text,x,y,color){c.font='7px "Commit Mono", monospace';c.textAlign='center';c.fillStyle='#182d2bd9';const width=c.measureText(text).width;c.fillRect(x-width/2-3,y-7,width+6,11);c.fillStyle=color;c.fillText(text,Math.round(x),Math.round(y));}
+    label(c,text,x,y,color){c.font='7px "Commit Mono", monospace';c.textAlign='center';c.fillStyle='#182d2bd9';const width=c.measureText(text).width;c.fillRect(x-width/2-3,y-7,width+6,11);c.fillStyle=color;c.fillText(text,Math.round(x),Math.round(y));return{left:x-width/2-3,top:y-7,right:x+width/2+3,bottom:y+4};}
     chart(cv,selected,mini=false,preview=null){const c=cv.getContext('2d'),w=cv.width,h=cv.height,g=this.game; c.imageSmoothingEnabled=false;c.fillStyle='#263f38';c.fillRect(0,0,w,h);
       const z=mini?.04:w/W.W,cam=mini?g.player:{x:W.W/2,y:W.H/2};this.land(c,cam,z,w,h,true);
       const sx=x=>mini?w/2+W.dx(cam.x,x)*z:x/W.W*w,sy=y=>mini?h/2+(y-cam.y)*z:y/W.H*h;

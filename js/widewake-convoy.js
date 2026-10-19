@@ -1,7 +1,7 @@
 /* Fleet inspection and orders. The sea pauses while this desk is open. */
 (function(root){
   'use strict';
-  const D=WidewakeData,C=WidewakeCore,R=WidewakeRender;
+  const D=WidewakeData,C=WidewakeCore,R=WidewakeRender,W=WidewakeWorld;
   const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const $=id=>document.getElementById(id),by=(list,id)=>list.find(x=>x.id===id);
   class Convoy{
@@ -29,7 +29,7 @@
         this.render();if(field==='guard')$('convoy-feedback').textContent='Orders saved. The crew will move when you resume.';
       });
     }
-    open(uid=null){const g=this.game(),urgent=[g.player,...g.fleet].filter(f=>f.hp>0&&f.hp/f.maxHp<.3).sort((a,b)=>a.hp/a.maxHp-b.hp/b.maxHp);this.uid=uid??urgent[0]?.uid??0;this.to=null;this.render();$('convoy-feedback').textContent='';this.show();this.revealSelection();}
+    open(uid=null){const g=this.game(),urgent=[g.player,...g.fleet].filter(f=>f.hp>0&&f.hp/f.maxHp<.3).sort((a,b)=>a.hp/a.maxHp-b.hp/b.maxHp);const near=g.nearestPort(),waiting=g.mode==='sea'&&near.distance<190?g.harborStragglers(near.port):[];this.uid=uid??urgent[0]?.uid??waiting[0]?.uid??0;this.to=null;this.render();$('convoy-feedback').textContent='';this.show();this.revealSelection();}
     revealSelection(){$('convoy-list').querySelector('[data-uid="'+this.uid+'"]')?.scrollIntoView({block:'nearest',inline:'nearest',behavior:'instant'});}
     updatePaging(){const strip=$('fleet-strip');$('fleet-previous').disabled=strip.scrollLeft<2;$('fleet-next').disabled=strip.scrollLeft+strip.clientWidth>=strip.scrollWidth-2;}
 
@@ -37,13 +37,17 @@
       const g=this.game(),ships=[g.player,...g.fleet.filter(f=>f.hp>0)],ship=ships.find(f=>f.uid===this.uid)||g.player;this.uid=ship.uid;
       const active=document.activeElement,sortFocus=active===$('convoy-sort'),hadFocus=$('convoy-dialog').contains(active),key=active?.dataset.convoyField,action=active?.dataset.convoyAction,good=active?.dataset.good,focusUid=active?.dataset.uid;
       const name=f=>f.uid===0?g.hull().name:f.data.name,capacity=f=>f.uid===0?g.holdMax():f.spec.hold,atPort=g.mode==='port';
-      const ordered=ships.slice().sort(this.sort==='hull'?(a,b)=>a.hp/a.maxHp-b.hp/b.maxHp||a.uid-b.uid:this.sort==='cargo'?(a,b)=>C.count(b.data.cargo)-C.count(a.data.cargo)||a.uid-b.uid:(a,b)=>a.uid-b.uid);const urgent=ships.filter(f=>f.hp/f.maxHp<.3);$('convoy-sort').value=this.sort;$('convoy-summary').textContent=ships.length+' boats / '+urgent.length+' critical / '+ships.filter(f=>f.hp<f.maxHp).length+' need repairs';
+      const near=g.nearestPort(),waiting=!atPort&&near.distance<190?g.harborStragglers(near.port):[];
+      const ordered=ships.slice().sort(this.sort==='distance'&&!atPort?(a,b)=>W.distance(g.player,b)-W.distance(g.player,a)||a.uid-b.uid:this.sort==='hull'?(a,b)=>a.hp/a.maxHp-b.hp/b.maxHp||a.uid-b.uid:this.sort==='cargo'?(a,b)=>C.count(b.data.cargo)-C.count(a.data.cargo)||a.uid-b.uid:(a,b)=>a.uid-b.uid);const urgent=ships.filter(f=>f.hp/f.maxHp<.3);$('convoy-sort').value=this.sort;$('convoy-summary').textContent=ships.length+' boats / '+urgent.length+' critical / '+ships.filter(f=>f.hp<f.maxHp).length+' need repairs'+(waiting.length?' / '+waiting.length+' approaching harbor':'');
       const others=ships.filter(f=>f!==ship);if(!others.some(f=>f.uid===this.to))this.to=others[0]?.uid??null;
       $('convoy-caption').textContent=atPort?'At anchor / cargo and orders':'Sea paused / orders take effect on return';
       const listScroll={left:$('convoy-list').scrollLeft,top:$('convoy-list').scrollTop};$('convoy-list').innerHTML=ordered.map(f=>'<button data-convoy-action="select" data-uid="'+f.uid+'" aria-pressed="'+(f===ship)+'"><strong>'+esc(name(f))+'</strong><small>'+(f.uid===0?'Flagship':f.spec.name)+'</small><span>'+Math.ceil(f.hp/f.maxHp*100)+'% hull &middot; '+C.count(f.data.cargo)+' cargo</span></button>').join('');
       $('convoy-list').scrollLeft=listScroll.left;$('convoy-list').scrollTop=listScroll.top;
       const spec=ship.uid===0?g.hull():ship.spec,ratio=Math.max(0,ship.hp/ship.maxHp),work=ship.type==='trawler'?'fish':ship.type==='oilrig'?'oil':null;
       let html='<div class="ww-convoy-heading"><canvas id="convoy-portrait" width="64" height="48" aria-hidden="true"></canvas><div><h3>'+esc(name(ship))+'</h3><p>'+esc(ship.uid===0?'Flagship':spec.name)+'</p></div></div><p class="ww-note">'+esc(spec.description)+'</p><div class="ww-convoy-stats"><span><strong>'+Math.ceil(ship.hp)+' / '+ship.maxHp+'</strong>Hull condition</span><span><strong>'+C.count(ship.data.cargo)+' / '+capacity(ship)+'</strong>Cargo aboard</span></div><div class="ww-progress"><i style="width:'+ratio*100+'%;background:var('+(ratio<.3?'--ww-red':'--ww-green')+')"></i></div>';
+      if(!atPort&&ship.uid!==0){const pos=W.geo(ship.x,ship.y),bearing=WidewakeWork.bearing(Math.atan2(ship.y-g.player.y,W.dx(g.player.x,ship.x))),apart=W.distance(g.player,ship)>1000,approaching=waiting.includes(ship);
+        html+='<p class="ww-note ww-convoy-position">'+(approaching?'Outside the harbor approach. Keep the flagship here while this boat returns. ':apart?'Away from the flagship, bearing '+bearing+'. ':'Close to the flagship. ')+(ship.navRoute?.length?'Sailing around the coast. ':'')+Math.abs(pos.lat).toFixed(1)+'° '+(pos.lat>=0?'N':'S')+', '+Math.abs(pos.lon).toFixed(1)+'° '+(pos.lon>=0?'E':'W')+'.</p>';
+      }
       if(atPort){const cost=g.repairCost();html+='<div class="ww-convoy-repair"><button data-convoy-action="repair" '+(!cost||g.s.coins<cost?'disabled':'')+'>'+(cost?'Repair fleet / '+cost+'c':'Hulls sound')+'</button><small>'+(g.s.coins<cost?'Need '+(cost-g.s.coins)+' more coins.':'Repairs every surviving boat at this port.')+'</small></div>';}
       if(g.canGuard(ship)){
         html+='<label class="ww-field-label" for="convoy-guard">Protect</label><select id="convoy-guard" data-convoy-field="guard"><option value="auto" '+(ship.data.guardUid==null?'selected':'')+'>Automatic workboat screen</option>'+g.guardOptions().map(f=>'<option value="'+f.uid+'" '+(ship.data.guardUid===f.uid?'selected':'')+'>'+esc(f.uid===0?'Flagship':name(f)+' / '+f.spec.name)+'</option>').join('')+'</select><p class="ww-note ww-order-help">Automatic escorts follow you on voyages and spread between working boats during production. A named assignment stays with that boat.</p>';
@@ -67,8 +71,8 @@
       const g=this.game(),ships=g.fleet.filter(f=>f.hp>0),key=ships.map(f=>f.uid).join(',');
       if(key!==this.stripKey){this.stripKey=key;$('fleet-strip').innerHTML=ships.map(f=>'<button class="ww-fleet-token" data-fleet-uid="'+f.uid+'"><strong></strong><span></span><div class="ww-progress"><i></i></div><small></small></button>').join('');}
       const strip=$('fleet-strip'),overflow=strip.scrollWidth>$('fleet-row').clientWidth+1;$('fleet-previous').hidden=$('fleet-next').hidden=!overflow;this.updatePaging();const criticalCount=[g.player,...ships].filter(f=>f.hp/f.maxHp<.3).length;$('convoy-alert').hidden=!criticalCount;$('convoy-alert').textContent=criticalCount+' SOS';$('convoy-open').classList.toggle('ww-convoy-urgent',criticalCount>0);
-      for(const f of ships){const button=$('fleet-strip').querySelector('[data-fleet-uid="'+f.uid+'"]');if(!button)continue;const critical=f.hp<f.maxHp*.3,working=g.production?.workers.includes(f),anchor=g.guardAnchor(f),behind=WidewakeWorld.distance(g.player,f)>650&&!working&&anchor===g.player;
-        button.classList.toggle('ww-critical',critical);button.classList.toggle('ww-working',!!working);button.querySelector('strong').textContent=f.data.name;button.querySelector('span').textContent=C.count(f.data.cargo);button.querySelector('i').style.width=Math.max(0,f.hp/f.maxHp*100)+'%';button.querySelector('small').textContent=critical?'Hull critical':working?'Working':anchor!==g.player?'Guard: '+anchor.data.name:behind?'Catching up':Math.ceil(f.hp/f.maxHp*100)+'% hull';button.title=f.data.name+', '+f.spec.name+'. '+Math.ceil(f.hp/f.maxHp*100)+'% hull, '+C.count(f.data.cargo)+' / '+f.spec.hold+' cargo. '+g.orderText(f)+'. Inspect and give orders.';button.setAttribute('aria-label',button.title);
+      for(const f of ships){const button=$('fleet-strip').querySelector('[data-fleet-uid="'+f.uid+'"]');if(!button)continue;const critical=f.hp<f.maxHp*.3,working=g.production?.workers.includes(f),anchor=g.guardAnchor(f),behind=W.distance(g.player,f)>1000&&!working;
+        button.classList.toggle('ww-critical',critical);button.classList.toggle('ww-working',!!working);button.querySelector('strong').textContent=f.data.name;button.querySelector('span').textContent=C.count(f.data.cargo);button.querySelector('i').style.width=Math.max(0,f.hp/f.maxHp*100)+'%';button.querySelector('small').textContent=critical?'Hull critical':working?'Working':behind?'Catching up':anchor!==g.player?'Guard: '+anchor.data.name:Math.ceil(f.hp/f.maxHp*100)+'% hull';button.title=f.data.name+', '+f.spec.name+'. '+Math.ceil(f.hp/f.maxHp*100)+'% hull, '+C.count(f.data.cargo)+' / '+f.spec.hold+' cargo. '+g.orderText(f)+'. Inspect and give orders.';button.setAttribute('aria-label',button.title);
       }
     }
   }

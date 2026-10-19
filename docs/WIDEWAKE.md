@@ -224,6 +224,36 @@ One notification remains visible at a time, with discoveries taking priority.
 The approach warning belongs to the watch rather than duplicating a toast.
 Active ground labels yield to named workers so the words do not overlap.
 
+## Coastal convoy navigation, v0.13
+
+Companions follow clear formation legs with their actual 13-unit hull clearance.
+If the coast blocks the next leg, each boat retains a checked water route until
+it can rejoin directly. Route searches are limited to one companion per simulation
+step. Narrow coastal pockets disconnected from the broad ocean grid get a local
+60-unit grid connection; both directions through the Magellan regression are
+checked against the actual coastline. The worker shares checked navigation data
+and prewarms routes for distant boats in a loaded save. Coastal caches are bounded.
+
+Retained companion routes use up to 128 Float64 points in compact save records.
+Reaching the end of a partial route triggers another check. Guard changes,
+workboat deployment and recall discard obsolete destinations. The boats retain
+their cargo, damage and real positions during recovery. No arrival teleport is
+used to repair a stranded save.
+
+The flagship still docks inside the 190-unit harbor ring. Every surviving
+companion must be within the 1,200-unit harbor approach, which accommodates the
+widest full convoy even at the outer edge of the flagship ring. Rejected docking
+cannot clear enemies or salvage, stop work, award a visit or move cargo. The helm
+names the waiting boat. Convoy opens on an endangered hull first, then the most
+distant waiting boat. Distance sorting, position text and the selected boat's
+directional marker help locate it. Return from the desk resumes its sailing.
+
+Earlier full-campaign checks only required the flagship to arrive. They could
+pass while docking gathered distant boats instantly. The v0.13 captain checks
+every survivor before docking, and the maximum-fleet geography tour takes all
+24 boats through all 24 ports. Those checks cover arrival integrity; they do not
+establish combat balance or human enjoyment.
+
 ## Fleet reading and camera, v0.8
 
 The default camera fits roughly 1,400 world units across the smaller canvas
@@ -234,7 +264,8 @@ conversion uses each canvas axis's actual scale, including odd viewport sizes.
 
 Selected boats, critical hulls, working boats, rescue targets and admirals can
 request labels. A bounded priority layout places them clear of friendly hulls,
-the HUD and one another, retaining the previous clear slot when possible.
+the HUD, harbor and signal names, and one another, retaining the previous clear
+slot when possible.
 Selected and endangered boats take precedence when space is tight. Leader lines
 connect displaced names to their hulls. Critical or selected companions outside
 the view, including those covered by the HUD, get directional markers. Health
@@ -243,7 +274,8 @@ bars and the fleet summary remain available when there is no room for a name.
 The small chart shows the nearby coast, friendly vessels, hostile contacts and
 the flagship's heading. Opening it still presents the complete Earth chart.
 The fleet strip has reachable previous/next controls when it overflows. Convoy
-opens on the weakest critical hull, or the flagship when none is critical; an
+opens on the weakest critical hull, then a boat delaying harbor arrival, then
+the flagship; an
 explicit vessel selection takes precedence. Its desk sorts by fleet order, hull
 condition or cargo without changing formation order. At port it also quotes and
 performs the same whole-fleet repair offered by Fleet services.
@@ -387,7 +419,8 @@ migration before reordering these catalogs. Validated records are transferred
 once to the restored simulation. Caps are 1,200 enemies, 3,500 shots, 4,096 salvage
 items and 64 mortar markers. The common web/native file limit is 1,500,000 UTF-8
 bytes. Compact exports avoid enlarging the file with formatting. The maximum
-tested battle with complete tracks occupies about 955 KB, leaving room for its
+tested battle with complete tracks and full companion routes occupies about
+1.02 MB, leaving room for its
 local backup. Storage failure remains visible and export stays available.
 
 Pre-v0.10 saves contain no active combat records. They retain the old one-time
@@ -414,6 +447,8 @@ node tools/widewake/test-core.cjs
 node tools/widewake/test-work.cjs
 node tools/widewake/test-routes.cjs
 node tools/widewake/test-helm.cjs
+node tools/widewake/test-convoy-navigation.cjs
+node tools/widewake/test-convoy-tour.cjs
 node tools/widewake/test-voyage.cjs
 node tools/widewake/test-feedback.cjs
 node tools/widewake/test-trade-planning.cjs
@@ -429,6 +464,7 @@ NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-chart.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-helm-browser.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-controller.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-fleet-view.cjs
+NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-convoy-browser.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-sea-browser.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-save-tabs.cjs
 ```
@@ -565,6 +601,11 @@ earned first charter, wreck decisions, real rescue combat, merchant payment,
 mortar tells, homecoming and continuing play. Desktop and touch dialogs and
 ocean views are inspected as screenshots. The earlier release's performance
 numbers are historical; use the latest browser report for the current build.
+
+The captain can export its earned milestone saves with
+`WIDEWAKE_CAPTAIN_OUTPUT=/absolute/output/folder`. Those JSON files are suitable
+for normal Import save and interactive reviews. This option does not grant
+money, health or objectives. Exported checkpoints should stay outside the repo.
 
 ## References
 
