@@ -49,6 +49,11 @@ from the website's fleet. Export JSON from either edition and import it into the
 other. No new save format is introduced. Version updates retain the same origin
 and profile location. Only one instance can own a profile.
 
+Use v0.10 or later on both sides for active-battle continuation. The shared
+1,500,000-byte file limit accommodates the full bounded sea and convoy tracks.
+Native import/export and OS-close tests cover a damaged admiral with pending
+mortars and a maximum-size battle, in addition to an earned fishing watch.
+
 The OS close button, application Quit and in-game Quit ask the game to save its
 current snapshot before closing and flush browser storage. A failed write keeps
 the game open by default so the captain can export. If the renderer is unresponsive,

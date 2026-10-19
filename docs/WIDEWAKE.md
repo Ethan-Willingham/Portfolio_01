@@ -66,6 +66,8 @@ distinct interim backgrounds while that art pass is deferred.
   rewards, and their validated save state. No DOM dependencies.
 - `js/widewake-work.js`: working-ground forecasts, moving schools, timed loads,
   raider approaches, weighted rare species, and validated watch state.
+- `js/widewake-sea-save.js`: bounded active combat records, validation and exact
+  continuation of motion, attacks, salvage and the simulation sequence.
 - `js/widewake-render.js`: small canvas sprites, sea rendering, chart, port scenes.
 - `js/widewake-convoy.js`: vessel selection, cargo transfers, hold reservations,
   guard orders, hull/cargo sorting, port repair, and paged fleet buttons that
@@ -332,14 +334,40 @@ are validated too. Original
 version-1 saves migrate with defaults for the new fields. An older active watch
 labels its cargo counter as loaded since resuming, because earlier saves did not
 record a reliable watch total.
-Transient projectiles and enemy
-formations are regenerated after loading; they are not a replay format.
+
+From v0.10, an optional versioned `sea` record retains enemy identities, hulls,
+targets, phases and cooldowns; ramming and admiral attack windups; moving shots;
+mortar markers; floating salvage; friendly momentum and navigation probes; and
+encounter wave timing. Loading a partly cleared patrol does not spawn its initial
+wave again. The random stream and enemy sequence also persist in port, so a
+break does not reroll the next crossing. Cosmetic flashes and particles are not
+saved. Sunk companions leave the live formation immediately. Coastal restore
+uses the same hull clearance as movement.
+
+Dense arrays use base64 little-endian fixed records with Float64 simulation
+values: 101 bytes per enemy, 57 per projectile and 26 per salvage item. The
+version-1 catalog indices follow the order of enemy/ability kinds and the data
+module's goods, relics, admirals and signals. Append entries or provide a format
+migration before reordering these catalogs. Validated records are transferred
+once to the restored simulation. Caps are 1,200 enemies, 3,500 shots, 4,096 salvage
+items and 64 mortar markers. The common web/native file limit is 1,500,000 UTF-8
+bytes. Compact exports avoid enlarging the file with formatting. The maximum
+tested battle with complete tracks occupies about 955 KB, leaving room for its
+local backup. Storage failure remains visible and export stays available.
+
+Pre-v0.10 saves contain no active combat records. They retain the old one-time
+encounter reconstruction on initial load, then use full sea continuation on the
+next save. Missing historical projectiles or enemy damage cannot be recovered.
+Loading and backup selection check that the saved game can actually be restored,
+including its operation and location, before accepting it.
 
 Exported JSON is portable between the web and desktop builds. The desktop app
 retains the same core and stable save schema, with a separate local profile.
 Native pickers report completed export, cancellation and failure. Window closing
 saves the current fleet before quitting; a failed write leaves it open by default.
-The packaged-app check includes an exact mid-watch close and reopen. Steam Cloud
+The packaged-app check includes exact mid-watch and active-admiral close/reopen,
+plus a maximum-size sea export and import. Use v0.10 or later in both editions
+to retain these combat records. Steam Cloud
 and platform services still need a deliberate adapter. See
 `widewake-desktop/README.md` for builds and `widewake-desktop/ASSETS.md` before
 distributing binaries.
@@ -354,6 +382,8 @@ node tools/widewake/test-voyage.cjs
 node tools/widewake/test-feedback.cjs
 node tools/widewake/test-trade-planning.cjs
 node tools/widewake/test-playthrough.cjs
+node tools/widewake/test-sea-save.cjs
+node tools/widewake/test-reload-campaigns.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-browser.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-front.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-work-browser.cjs
@@ -361,9 +391,10 @@ NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-audio.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-chart.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-controller.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-fleet-view.cjs
+NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-sea-browser.cjs
 ```
 
-The front, chart, work, controller, fleet-view and audio harnesses also support
+The front, chart, work, controller, fleet-view, sea and audio harnesses also support
 `WIDEWAKE_TEST_ENGINE=webkit`.
 Audio checks render actual samples offline, verify independent mute, finite
 levels and stereo position, then exercise input, inactivity and node cleanup in
@@ -384,8 +415,12 @@ with the first sample, rather than counting transient allocations as leaks.
 The earned captain accepts `WIDEWAKE_CAPTAIN_SEED` and
 `WIDEWAKE_FLEET_STYLE=balanced|merchant|gunline`. Each style finishes through real
 purchases, travel, trade and combat. Periodic snapshots are validated every
-twelve simulated seconds. That checks save shape and limits; it does not reload
-every encounter or certify all continuation boundaries.
+twelve simulated seconds and at trading stops. `WIDEWAKE_CAPTAIN_RELOAD=1`
+reconstructs the game at each of these checkpoints. The comparison harness runs
+three fleet styles with and without reloads and requires identical final save
+values. The focused sea suite additionally compares individual simulation frames
+through attacks, losses, pickup and protected work. These are deterministic
+continuation checks, not human balance or enjoyment assessments.
 
 Browser tests must use `/Users/ethan/.local/bin/agent-chrome-for-testing` or an
 explicit testing-browser override. Never launch the owner's personal Chrome with

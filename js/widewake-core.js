@@ -5,12 +5,13 @@
   const W=root.WidewakeWorld||(typeof require==='function'?require('./widewake-world.js'):null);
   const V=root.WidewakeVoyage||(typeof require==='function'?require('./widewake-voyage.js'):null);
   const Work=root.WidewakeWork||(typeof require==='function'?require('./widewake-work.js'):null);
+  const Sea=root.WidewakeSeaSave||(typeof require==='function'?require('./widewake-sea-save.js'):null);
   const {dx,wrap,distance,point,geo,clamp,SpatialHash}=W;
   const TAU=Math.PI*2, SAVE_VERSION=1;
   const count=c=>Object.values(c||{}).reduce((a,b)=>a+b,0);
   const angleDiff=(a,b)=>Math.atan2(Math.sin(b-a),Math.cos(b-a));
   const hash=(s)=>{let h=2166136261;for(const c of String(s)){h^=c.charCodeAt(0);h=Math.imul(h,16777619);}return h>>>0;};
-  function rng(seed){let a=seed>>>0;return()=>{a+=0x6D2B79F5;let t=a;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};}
+  function rng(seed){let a=seed>>>0;const next=()=>{a=(a+0x6D2B79F5)>>>0;let t=a;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};next.state=()=>a;next.restore=state=>{a=state>>>0;};return next;}
   const by=(list,id)=>list.find(x=>x.id===id);
   const names=['Wren','Plover','Moth','Kestrel','Minnow','Nettle','Sparrow','Mackerel','Pipit','Dipper','Lark','Tern','Petrel','Curlew','Gannet','Sandpiper','Cormorant','Heron','Gull','Swift','Finch','Snipe','Osprey','Egret'];
   const guardTypes=['escort','destroyer','repair'],cargoTypes=['trawler','oilrig','freighter'];
@@ -19,7 +20,7 @@
     upgrades:{guns:0,hull:0,engine:0,hold:0},cargo:{sugar:12},fleet:[{uid:1,type:'escort',name:'Wren',hp:180,cargo:{}}],nextUid:2,
     items:[],equipped:[],fishbook:{},visits:['havana'],bosses:[],claimed:[],deliveries:[],completedContracts:[],impact:{},
     stats:{kills:0,profit:0,fish:0,oil:0,operations:0,sugar:0,miles:0,rare:0},
-    settings:{cameraZoom:1,sound:true,volume:.22,music:.35,ambience:.5,effects:.8,autoFire:true,shake:true,controllerDeadzone:.18,controllerRumble:true,controllerLabels:'auto'},journal:[],lossHistory:[],tripLosses:[],recovery:null,workReport:null,location:null,production:null,formation:'screen',course:null,wake:[],voyage:V.fresh(),atSea:false,seed:hash(Date.now())};}
+    settings:{cameraZoom:1,sound:true,volume:.22,music:.35,ambience:.5,effects:.8,autoFire:true,shake:true,controllerDeadzone:.18,controllerRumble:true,controllerLabels:'auto'},journal:[],lossHistory:[],tripLosses:[],recovery:null,workReport:null,location:null,production:null,formation:'screen',course:null,wake:[],voyage:V.fresh(),sea:null,randomState:null,enemySequence:1,atSea:false,seed:hash(Date.now())};}
   function validate(raw){
     if(!raw||raw.version!==SAVE_VERSION)throw new Error('This chart belongs to a different save version.');
     const s=fresh();
@@ -30,6 +31,8 @@
     if(!by(D.ports,raw.port)||!by(D.ports,raw.lastPort)||!by(D.hulls,raw.hull))throw new Error('The save has an unknown port or hull.');
     const cargo=c=>{if(!c||Array.isArray(c)||typeof c!=='object')throw new Error('Invalid cargo manifest.');const out={};for(const [k,v]of Object.entries(c)){if(!by(D.goods,k)||!Number.isInteger(v)||v<0||v>100000)throw new Error('Invalid cargo manifest.');out[k]=v;}return out;};
     Object.assign(s,raw);s.cargo=cargo(raw.cargo);
+    s.randomState=raw.randomState??null;s.enemySequence=raw.enemySequence??1;
+    if(s.randomState!==null&&(!Number.isInteger(s.randomState)||!finite(s.randomState,0,0xffffffff))||!Number.isInteger(s.enemySequence)||!finite(s.enemySequence,1,1e12))throw new Error('Invalid simulation sequence.');
     if(!Array.isArray(raw.fleet)||raw.fleet.length>24)throw new Error('Invalid fleet.');
     const ids=new Set();s.fleet=raw.fleet.map(f=>{if(!by(D.boats,f.type)||!finite(f.hp,0,1e5)||!Number.isInteger(f.uid)||f.uid<1||ids.has(f.uid))throw new Error('Invalid vessel.');ids.add(f.uid);
       if(f.guardUid!=null&&(!Number.isInteger(f.guardUid)||f.guardUid<0)||f.reserve!==undefined&&typeof f.reserve!=='boolean')throw new Error('Invalid vessel orders.');
@@ -69,16 +72,17 @@
     s.production=Work.validateProduction(raw.production,ids,s.day);
     s.voyage=V.validate(raw.voyage);
     if(s.production&&s.voyage.active)throw new Error('Two sea operations cannot run at once.');
+    s.sea=Sea.validate(raw.sea,s);
     return s;
   }
   class Game{
     constructor(earth,saved){
-      this.earth=earth;this.s=saved?validate(saved):fresh();this.random=rng(this.s.seed+Math.floor(this.s.seconds*100));
+      this.earth=earth;this.s=saved?validate(saved):fresh();this.random=rng(this.s.randomState??this.s.seed+Math.floor(this.s.seconds*100));
       this.ports=D.ports.map(p=>({...p,...earth.nearestWater(point(p.lon,p.lat),45)}));
       this.sites=D.sites.map(p=>({...p,...earth.nearestWater(point(p.lon,p.lat),100)}));
       this.bossSites=D.bosses.map(p=>({...p,...earth.nearestWater(point(p.lon,p.lat),100)}));
       this.enemies=[];this.bullets=[];this.drops=[];this.effects=[];this.hazards=[];this.events=[];this.grid=new SpatialHash();
-      this.mode=this.s.atSea?'sea':'port';this.paused=false;this.time=0;this.spawnTimer=8;this.autoSaveTimer=0;this.route=[];this.target=null;this.autopilot=false;this.burstCD=0;this.repairCD=0;this.formation='screen';this.nextEnemy=1;this.production=null;this.danger=1;this.uiDirty=true;this.onEvent=null;
+      this.mode=this.s.atSea?'sea':'port';this.paused=false;this.time=0;this.spawnTimer=8;this.autoSaveTimer=0;this.route=[];this.target=null;this.autopilot=false;this.burstCD=0;this.repairCD=0;this.formation='screen';this.nextEnemy=this.s.enemySequence;this.production=null;this.danger=1;this.uiDirty=true;this.onEvent=null;
       this.setupFleet();
       this.formation=this.s.formation;
       this.burstCD=this.s.cooldowns?.burst||0;this.repairCD=this.s.cooldowns?.repair||0;
@@ -88,6 +92,7 @@
         if(site&&boat&&distance(this.player,site)<1100){const workers=this.fleet.filter(f=>f.type===boat.type&&f.hp>0&&(f===boat||(this.s.production.uids||[]).includes(f.uid)));this.production=this.prepareWork(site,boat,workers,this.s.production);this.spawnTimer=this.s.production.timer;for(const f of workers)if(!f.data.location)Object.assign(f,this.station(f));}
       }
       this.setupVoyage();
+      Sea.restore(this);
     }
     get rank(){let n=1;for(let i=1;i<D.ranks.length;i++)if(this.s.xp>=D.ranks[i])n=i+1;return n;}
     get fleetLimit(){return Math.min(24,3+this.rank*2);}
@@ -101,7 +106,7 @@
       this.player={...pos,angle:loc.angle??-Math.PI/2,vx:0,vy:0,hp:Math.min(this.s.hp,this.hpMax()),maxHp:this.hpMax(),radius:15,cd:0,type:this.s.hull,uid:0,trail:[],data:this.s};
       this.wake=this.s.atSea&&this.s.wake.length?this.s.wake.map(p=>({...p})):[{x:pos.x,y:pos.y}];
       this.fleet=this.s.fleet.map((data,i)=>{
-        const spec=by(D.boats,data.type),saved=this.s.atSea?data.location:null,q=this.earth.nearestWater(saved||{x:wrap(pos.x+(i%3-1)*55),y:pos.y+70+Math.floor(i/3)*55},15);
+        const spec=by(D.boats,data.type),saved=this.s.atSea?data.location:null,q=this.earth.nearestWater(saved||{x:wrap(pos.x+(i%3-1)*55),y:pos.y+70+Math.floor(i/3)*55},saved?13:15);
         return{...q,angle:saved?.angle??this.player.angle,hp:Math.min(data.hp,spec.hp),maxHp:spec.hp,radius:13,cd:i*.16,type:data.type,uid:data.uid,trail:[],wake:this.s.atSea&&data.wake?.length?data.wake.map(p=>({...p})):[{...q}],data,spec,vx:0,vy:0};
       });
     }
@@ -193,7 +198,7 @@
       {id:'world',name:'The whole wide world',text:'Visit all 24 ports.',progress:this.s.visits.length,total:24,reward:25000,xp:2500}
     ];}
     checkGoals(){for(const g of this.goals())if(!this.s.claimed.includes(g.id)&&g.progress>=g.total){this.s.claimed.push(g.id);this.s.coins+=g.reward;this.s.xp+=g.xp;this.log(g.name+': '+g.reward+' coins earned.','complete');}}
-    sail(){if(this.mode!=='port')return false;this.s.tripLosses=[];this.s.location={...by(this.ports,this.s.port)};this.s.wake=[];for(const f of this.s.fleet){f.location=null;f.wake=[];}this.mode='sea';this.s.atSea=true;this.setupFleet();this.spawnTimer=8;this.time=0;this.event('WASD to sail. Guns fire automatically. M opens the world chart.','depart');this.change();return true;}
+    sail(){if(this.mode!=='port')return false;this.s.tripLosses=[];this.s.location={...by(this.ports,this.s.port)};this.s.wake=[];for(const f of this.s.fleet){f.location=null;f.wake=[];}this.mode='sea';this.s.atSea=true;this.setupFleet();this.spawnTimer=8;this.time=0;this.navLeg=null;this.navProbeTime=0;this.navProbeDistance=0;this.navBlocked=0;this.event('WASD to sail. Guns fire automatically. M opens the world chart.','depart');this.change();return true;}
     nearestPort(){let best=null,d=Infinity;for(const p of this.ports){const pd=distance(this.player,p);if(pd<d){d=pd;best=p;}}return{port:best,distance:d};}
     dock(){if(this.mode!=='sea')return false;const near=this.nearestPort();if(near.distance>190){this.event('Move within the harbor ring to dock.','warn');return false;}
       this.finishProduction(false);this.finishEncounter(false);this.mode='port';this.s.atSea=false;this.s.port=this.s.lastPort=near.port.id;this.player.x=near.port.x;this.player.y=near.port.y;
@@ -228,8 +233,7 @@
       this.bullets.push({x:wrap(from.x+Math.cos(angle)*19),y:from.y+Math.sin(angle)*19,px:from.x,py:from.y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,damage,hostile,life:opts.life||1.6,splash:opts.splash||0,radius:hostile?4:3});
     }
     spawn(kind='skiff',center=this.player,force=false,position=null){if(this.enemies.length>=1200)return null;
-      const defs={skiff:{hp:38,speed:100,range:150,damage:7,rate:1.8,radius:10,reward:18},gunner:{hp:75,speed:78,range:330,damage:12,rate:2.3,radius:13,reward:30},rammer:{hp:95,speed:145,range:0,damage:22,rate:1.8,radius:13,reward:28},armored:{hp:250,speed:65,range:380,damage:23,rate:2.5,radius:19,reward:65},boss:{hp:3000,speed:55,range:420,damage:25,rate:.8,radius:34,reward:2000}};
-      const def=defs[kind],a=this.random()*TAU,r=force?450+this.random()*500:720+this.random()*430;
+      const def=Sea.specs[kind],a=this.random()*TAU,r=force?450+this.random()*500:720+this.random()*430;
       let q=position||{x:wrap(center.x+Math.cos(a)*r),y:center.y+Math.sin(a)*r};if(!this.earth.water(q.x,q.y,30)){if(!force)return null;q=this.earth.nearestWater(q,30);}
       const scale=1+Math.max(0,this.danger-1)*.12;
       const e={...q,...def,type:kind,id:this.nextEnemy++,angle:a+Math.PI,cd:.7+this.random(),hp:def.hp*scale,maxHp:def.hp*scale,hit:0,dead:false,target:0};this.enemies.push(e);return e;
@@ -274,7 +278,7 @@
       if(ship.hp<=0&&ship!==this.player){
         const record={uid:ship.uid,type:ship.type,day:this.s.day,cause:source?.type?'ramming':source?.delay?'mortar':source?.hostile?'cannon':'damage',cargo:{...ship.data.cargo}};
         this.s.lossHistory.push(record);this.s.lossHistory=this.s.lossHistory.slice(-24);this.s.tripLosses.push(ship.uid);this.s.tripLosses=this.s.tripLosses.filter(uid=>this.s.lossHistory.some(f=>f.uid===uid));
-        this.releaseGuards(ship.uid);this.log(ship.data.name+' sank. Its cargo was lost.','warn');this.effect({x:ship.x,y:ship.y,t:.8,max:.8,size:45,type:'blast'});this.cue('sink',{x:ship.x,y:ship.y});if(this.production?.workers.includes(ship)){this.production.workers=this.production.workers.filter(f=>f!==ship);if(this.production.workers.length)this.production.boat=this.production.workers[0];else this.finishProduction(false,'lost');}this.s.fleet=this.s.fleet.filter(f=>f.uid!==ship.uid);this.change();}
+        this.releaseGuards(ship.uid);this.log(ship.data.name+' sank. Its cargo was lost.','warn');this.effect({x:ship.x,y:ship.y,t:.8,max:.8,size:45,type:'blast'});this.cue('sink',{x:ship.x,y:ship.y});if(this.production?.workers.includes(ship)){this.production.workers=this.production.workers.filter(f=>f!==ship);if(this.production.workers.length)this.production.boat=this.production.workers[0];else this.finishProduction(false,'lost');}this.s.fleet=this.s.fleet.filter(f=>f.uid!==ship.uid);this.fleet=this.fleet.filter(f=>f!==ship);this.change();}
     }
     rescue(){this.finishEncounter(false);this.finishProduction(false,'recall');const home=by(this.ports,this.s.lastPort),before=this.s.coins,cargo={};this.s.coins=Math.max(260,Math.floor(before*.75));
       for(const f of this.cargoShips())for(const k of Object.keys(f.cargo)){const kept=Math.floor(f.cargo[k]*.5);if(f.cargo[k]>kept)cargo[k]=(cargo[k]||0)+f.cargo[k]-kept;f.cargo[k]=kept;}
@@ -388,14 +392,15 @@
     segmentHit(b,e){const vx=dx(b.px,b.x),vy=b.y-b.py,ex=dx(b.px,e.x),ey=e.y-b.py,t=clamp((ex*vx+ey*vy)/(vx*vx+vy*vy||1),0,1);return(ex-vx*t)**2+(ey-vy*t)**2<(e.radius+b.radius)**2;}
     snapshot(){
       this.snapshotVoyage();
-      this.s.hp=this.player.hp;this.s.atSea=this.mode==='sea';this.s.location={x:this.player.x,y:this.player.y,angle:this.player.angle};
+      this.s.hp=this.player.hp;this.s.atSea=this.mode==='sea';this.s.location=this.s.atSea?{x:this.player.x,y:this.player.y,angle:this.player.angle}:null;
       this.s.production=this.production?{site:this.production.site.id,progress:this.production.progress,wave:this.production.wave,uid:this.production.boat.uid,uids:this.production.workers.map(f=>f.uid),planDay:this.production.plan.day,loaded:this.production.loaded,loadedFromResume:this.production.loadedFromResume,timer:clamp(this.spawnTimer,0,60),approach:this.production.approach,drift:this.production.drift}:null;
       this.s.formation=this.formation;this.s.cooldowns={burst:this.burstCD,repair:this.repairCD};this.s.wake=this.mode==='sea'?this.wake:[];
       this.s.course=this.mode==='sea'&&this.target?{route:this.route,target:this.target,autopilot:this.autopilot}:null;
       for(const f of this.fleet){f.data.hp=f.hp;f.data.location=this.mode==='sea'?{x:f.x,y:f.y,angle:f.angle}:null;f.data.wake=this.mode==='sea'&&cargoTypes.includes(f.type)?f.wake:[];}
+      this.s.randomState=this.random.state();this.s.enemySequence=this.nextEnemy;this.s.sea=Sea.snapshot(this);
       return JSON.parse(JSON.stringify(this.s));
     }
   }
   V.install(Game);Work.install(Game);
-  const api={Game,fresh,validate,rng,hash,count,SAVE_VERSION};if(typeof module!=='undefined'&&module.exports)module.exports=api;root.WidewakeCore=api;
+  const api={Game,fresh,validate,rng,hash,count,SAVE_VERSION,MAX_SAVE_BYTES:Sea.MAX_SAVE_BYTES};if(typeof module!=='undefined'&&module.exports)module.exports=api;root.WidewakeCore=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

@@ -42,7 +42,7 @@ The exact owner constraints and source links are in `WIDEWAKE.md`.
 | Sound | Original score, spatial cues, mixer, bounded voices and suspended/interrupted recovery | Listening on speakers/headphones, broader regional atmosphere, long-session comfort and battle priority review |
 | Interface and access | Keyboard, mouse, touch and standard controller flows; focus, editable settings and release gates | Physical controllers, remapping, button-label coverage, readable text and non-color threat cues |
 | Mobile | Chromium and WebKit touch emulation | Full-screen portrait and landscape flows, safe areas, browser-height changes, sustained performance and physical-device validation |
-| Saves and recovery | Validated imports, backup, 628 campaign snapshots and exact native mid-watch close/reopen | Fix the verified admiral-health reset on reload; review active combat continuation and long-session recovery |
+| Saves and recovery | Full active-sea records, matching complete campaigns across 674 reloads, browser/native interruption and backup recovery | Multiple browser tabs, interrupted writes, upgrades across future formats and long-session recovery |
 | Performance | Five-minute 1,200-enemy browser run on M1 Pro with sound active and stable retained memory | Constrained-device budgets, longer sessions, loading cost and input latency |
 | Shipping | Public web build, tested offline Mac app, Windows package and asset inventory | Windows execution, signing, font clearance, Steam services, release QA and store materials |
 
@@ -494,3 +494,63 @@ ordinary battles and sea operations. Keep working through the whole ledger.
 Signing, proprietary font clearance, Windows/Linux/Steam Deck execution,
 Steamworks/cloud integration, final art, remapping and physical/human play remain
 open. This desktop increment does not complete the production goal.
+
+## Pass 8, leaving and returning to the same battle, v0.10
+
+The damaged-admiral check exposed a wider persistence gap: ordinary attackers,
+projectiles, warnings and floating loot vanished on reload, and an active patrol
+recreated its entire initial wave. The sea now saves its bounded combat state,
+attack timing, convoy momentum and random sequence. Patrol survivors resume in
+place. Fishing and oil watches retain their actual raiders as well as their
+existing work progress. Port saves preserve the sequence for the next crossing.
+
+Long campaign comparisons found an escort moving on load near a coastline. Its
+restore clearance was 15 units while its actual hull clearance was 13. These now
+agree. Sunk companions also leave the formation immediately, so a reload cannot
+change a surviving boat's formation slot for a frame. Port snapshots discard the
+unused sea pose. An active admiral has one sea label; its old anchorage label no
+longer sits above the moving vessel's name.
+
+Evidence:
+
+- Focused checks compare simulation frames through all three admirals, their
+  phases and pending attacks, ramming, moving cannonballs, mortar deadlines,
+  patrol completion, rescues, protected fishing/oil, salvage pickup, sinking and
+  coastal movement. Defeated admirals and completed operations cannot pay twice.
+- Three earned automated captains each finish with identical final save values
+  when run continuously and when reconstructed every 12 simulated seconds and
+  at trading stops. Balanced seed 12345 takes 41.6 simulated minutes with 223
+  reloads, merchant seed 91 takes 42.0 with 225, and gunline seed 744 takes 42.3
+  with 226. All six runs finish the six charters through actual purchases, travel,
+  trade, protection and combat. The resumed runs total 674 reloads. These runs
+  establish continuity, not human enjoyment or target-device performance.
+- A deliberately dense valid fixture holds 1,200 enemies, 3,500 shots, 4,096
+  salvage items, 23 companion boats and complete navigation tracks in 955,503
+  bytes. Primary and backup fit in local storage. Twelve paused browser saves
+  measure 20.5 ms median / 27 ms slowest in Chromium and 18 / 22 ms in WebKit on
+  the development Mac. These are storage costs, not sustained frame-rate claims.
+- Chromium and WebKit cover desktop, 360 by 640 portrait and 667 by 375 landscape
+  battle reloads, paused title return, full-size exports/imports, malformed data
+  and backup recovery. An operation that parses but cannot resume at its saved
+  location is rejected before loading; a subsequent failed primary write leaves
+  the good backup intact. Launcher, preferences, touch, rotation and unavailable
+  storage checks also pass in both engines. Screenshots were inspected.
+- The packaged Mac arm64 app repeats the earned trade/fishing loop and exact
+  window-close continuation with an admiral's pending mortars and the dense sea.
+  Its native picker accepts the larger portable save. Mac arm64 and Windows x64
+  packages rebuild with 23 served game files, about 687 KB before the runtime.
+  Windows execution remains unverified and the packages remain local.
+
+Whole-game review: launch and pause continue to provide the dedicated game
+experience. Helm, combat, convoy, trade, work, progression and discoveries now
+survive breaks together instead of only preserving campaign totals. Art and
+audio remain interim, with the duplicate-label correction serving battle reading.
+Input and mobile flows were checked around reload and import; no new control
+scheme was introduced. Dense save costs and native close behavior were measured.
+Original version-1 saves still load, but their missing historical combat state
+cannot be recreated retroactively.
+
+Next: check competing browser tabs and interrupted writes, then return to the
+first-voyage and late-game feel review. Human pacing, physical devices, remapping,
+final art, distribution rights and Steam/platform work remain open. This pass
+does not complete the production goal.

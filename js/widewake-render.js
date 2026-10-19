@@ -175,7 +175,7 @@
       if(g.route.length){c.strokeStyle='#d4c4a055';c.lineWidth=1;c.setLineDash([3,5]);c.beginPath();c.moveTo(sx(p.x),sy(p.y));for(const q of g.route)c.lineTo(sx(q.x),sy(q.y));c.stroke();c.setLineDash([]);}
       for(const port of g.ports){const x=sx(port.x),y=sy(port.y);if(x<-100||x>w+100||y<-100||y>h+100)continue;
         c.strokeStyle='#c6bc9344';c.lineWidth=1;c.setLineDash([3,5]);c.beginPath();c.arc(x,y,185*z,0,Math.PI*2);c.stroke();c.setLineDash([]);c.fillStyle=P.wood;c.fillRect(x-14,y-4,28,7);c.fillStyle=P.cream;c.fillRect(x-8,y-12,10,8);c.fillStyle=P.gold;c.fillRect(x+5,y-16,2,13);c.fillRect(x+7,y-16,7,4);this.label(c,port.name,x,y-25,P.cream);}
-      for(const site of [...g.sites,...g.bossSites.filter(b=>!g.s.bosses.includes(b.id))]){const x=sx(site.x),y=sy(site.y);if(x<-100||x>w+100||y<-100||y>h+100)continue;const color=site.type==='fish'?P.blue:site.type==='oil'?'#b2b29b':P.coral;
+      for(const site of [...g.sites,...g.bossSites.filter(b=>!g.s.bosses.includes(b.id)&&!g.enemies.some(e=>e.bossId===b.id&&e.hp>0))]){const x=sx(site.x),y=sy(site.y);if(x<-100||x>w+100||y<-100||y>h+100)continue;const color=site.type==='fish'?P.blue:site.type==='oil'?'#b2b29b':P.coral;
         c.strokeStyle=color+'66';c.setLineDash([2,6]);c.beginPath();c.arc(x,y,(110+Math.sin(ambientTime)*3)*z,0,Math.PI*2);c.stroke();c.setLineDash([]);c.fillStyle=color;c.fillRect(x-2,y-2,5,5);if(g.production?.site.id!==site.id)this.label(c,site.name,x,y-15,color);
         if(site.type==='fish'){c.globalAlpha=.5;for(let i=0;i<8;i++){const a=i*.8+ambientTime*.1,rr=(25+i*7)*z;c.fillRect((x+Math.cos(a)*rr)|0,(y+Math.sin(a)*rr*.5)|0,3,1);}c.globalAlpha=1;}}
       if(g.production){const op=g.production;

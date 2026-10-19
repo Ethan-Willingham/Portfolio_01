@@ -1,6 +1,7 @@
 const assert=require('node:assert/strict'),fs=require('node:fs/promises'),path=require('node:path'),os=require('node:os');
 const {_electron:electron}=require('playwright');
 const {spawn}=require('node:child_process');
+const {boss,dense}=require('../tools/widewake/sea-fixtures.cjs');
 const out=process.env.WIDEWAKE_TEST_OUTPUT||path.join(__dirname,'test-output');
 let app,profile;const errors=[],requests=[];
 const check=text=>console.log('PASS '+text);
@@ -64,6 +65,20 @@ async function close(){if(app){const owned=app;app=null;await owned.close();}}
   p=await launch();assert.ok(await p.locator('#continue-voyage').isVisible());const resumed=await p.evaluate(()=>({coins:__widewake.game.s.coins,fish:__widewake.game.quantity('fish'),seconds:__widewake.game.s.seconds,progress:__widewake.game.production.progress}));assert.deepEqual(resumed,before);
   await p.click('#continue-voyage');assert.equal(await p.evaluate(()=>__widewake.game.production.site.id),'bahama-bank');
   check('earned first trade, purchased trawler, offline route worker, protected fishing and exact OS-close continuation');
+
+  await p.click('#sea-pause');const earnedWatch=await p.evaluate(()=>__widewake.game.snapshot());
+  for(const [name,fixture]of [['admiral',boss('iron-king').snapshot()],['dense-battle',dense().snapshot()]]){
+    const file=path.join(out,name+'-import.json');fixture.settings.sound=false;await fs.writeFile(file,JSON.stringify(fixture));
+    await app.evaluate(({dialog},file)=>{dialog.showOpenDialog=async()=>({canceled:false,filePaths:[file]});},file);await p.click('#import-save');await p.waitForFunction(()=>document.getElementById('save-message').textContent.startsWith('Fleet restored'));
+    const expected=await p.evaluate(()=>__widewake.game.snapshot());assert.equal(expected.sea.version,1);
+    const exportFile=path.join(out,name+'-export.json');await app.evaluate(({dialog},file)=>{dialog.showSaveDialog=async()=>({canceled:false,filePath:file});},exportFile);await p.click('#export-save');await p.waitForFunction(()=>document.getElementById('save-message').textContent.startsWith('Saved '));assert.deepEqual(JSON.parse(await fs.readFile(exportFile,'utf8')),expected);
+    if(name==='dense-battle')assert.ok((await fs.stat(exportFile)).size>500000);
+    const exiting=app.waitForEvent('close');await app.evaluate(({BrowserWindow})=>{BrowserWindow.getAllWindows()[0].close();});await exiting;app=null;p=await launch();
+    assert.equal(await p.evaluate(()=>__widewake.game.paused),true);assert.deepEqual(await p.evaluate(()=>__widewake.game.snapshot()),expected);await p.click('#title-settings');
+  }
+  const earnedFile=path.join(out,'earned-watch.json');await fs.writeFile(earnedFile,JSON.stringify(earnedWatch));await app.evaluate(({dialog},file)=>{dialog.showOpenDialog=async()=>({canceled:false,filePaths:[file]});},earnedFile);await p.click('#import-save');await p.waitForFunction(()=>document.getElementById('save-message').textContent.startsWith('Fleet restored'));assert.deepEqual(await p.evaluate(()=>__widewake.game.snapshot()),earnedWatch);
+  await p.click('#settings-return');await p.click('#continue-voyage');
+  check('native files and OS-close continuation preserve an admiral attack and the maximum active sea');
 
   await app.evaluate(({dialog})=>{globalThis.closeWarnings=[];dialog.showMessageBox=async(_win,options)=>{closeWarnings.push(options.title);return{response:0};};});
   await p.evaluate(()=>{window.originalSetItem=Storage.prototype.setItem;Storage.prototype.setItem=()=>{throw new DOMException('Unavailable','QuotaExceededError');};});

@@ -2,6 +2,7 @@
 const {app,BrowserWindow,Menu,protocol,session,ipcMain,dialog,shell,powerMonitor}=require('electron');
 const fs=require('node:fs/promises'),path=require('node:path');
 const {ORIGIN,CSP,localURL,assetPath,externalURL,requestAllowed}=require('./policy.cjs');
+const {MAX_SAVE_BYTES}=require('./game/js/widewake-sea-save.js');
 const value=name=>process.argv.find(arg=>arg.startsWith(name+'='))?.slice(name.length+1);
 app.setName('Widewake');
 app.setPath('userData',value('--profile')?path.resolve(value('--profile')):path.join(app.getPath('appData'),'Widewake'));
@@ -17,7 +18,7 @@ const openExternal=url=>{if(externalURL(url))shell.openExternal(url).catch(()=>{
 // One narrow file operation per explicit picker. No filesystem API reaches the game.
 ipcMain.handle('widewake:export',async(event,text)=>{
   if(!trusted(event)||fileDialog)return{status:'canceled'};
-  if(typeof text!=='string'||Buffer.byteLength(text)>500000)return fail('The save is too large to export.');
+  if(typeof text!=='string'||Buffer.byteLength(text)>MAX_SAVE_BYTES)return fail('The save is too large to export.');
   let state;try{state=JSON.parse(text);}catch{return fail('The save could not be read.');}
   fileDialog=true;
   try{
@@ -35,7 +36,7 @@ ipcMain.handle('widewake:import',async event=>{
     const choice=await dialog.showOpenDialog(win,{title:'Import a fleet',filters:[{name:'Widewake save',extensions:['json']}],properties:['openFile']});
     if(choice.canceled||!choice.filePaths[0])return{status:'canceled'};
     const file=choice.filePaths[0],stat=await fs.stat(file);
-    if(!stat.isFile()||stat.size>500000)return fail('That file is too large to be a Widewake save.');
+    if(!stat.isFile()||stat.size>MAX_SAVE_BYTES)return fail('That file is too large to be a Widewake save.');
     return{status:'loaded',name:path.basename(file),text:await fs.readFile(file,'utf8')};
   }catch(error){return fail(error);}finally{fileDialog=false;}
 });

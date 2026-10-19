@@ -12,7 +12,7 @@
     for(const [id,result]of Object.entries(raw.resolved)){if(!by(D.signals,id)||!['recovered','cargo','rescued','cleared','traded'].includes(result))throw new Error('Invalid encounter record.');s.resolved[id]=result;}
     for(const [id,n]of Object.entries(raw.worked)){if(!by(D.sites,id)||!Number.isInteger(n)||n<0||n>1e6)throw new Error('Invalid working grounds.');s.worked[id]=n;}
     if(!Array.isArray(raw.deliveries)||raw.deliveries.some(id=>!D.charters.some(c=>c.steps.some(step=>step.kind==='delivery'&&step.key===id))))throw new Error('Invalid charter delivery.');s.deliveries=[...new Set(raw.deliveries)];
-    if(raw.active){const a=raw.active,signal=by(D.signals,a.id);if(!signal||signal.kind==='trader'||s.resolved[a.id]||!Number.isFinite(a.progress)||a.progress<0||a.progress>60||!Number.isFinite(a.hp)||a.hp<0||a.hp>1000)throw new Error('Invalid active encounter.');s.active={id:a.id,progress:a.progress,hp:a.hp};}
+    if(raw.active){const a=raw.active,signal=by(D.signals,a.id),wave=a.wave??8;if(!signal||signal.kind==='trader'||s.resolved[a.id]||!Number.isFinite(a.progress)||a.progress<0||a.progress>60||!Number.isFinite(a.hp)||a.hp<0||a.hp>1000||!Number.isFinite(wave)||wave<0||wave>12)throw new Error('Invalid active encounter.');s.active={id:a.id,progress:a.progress,hp:a.hp,wave};}
     return s;
   }
   function install(Game){Object.assign(Game.prototype,{
@@ -59,7 +59,8 @@
     },
     beginEncounter(signal,saved){
       const hp=650,boat=signal.kind==='rescue'?{x:signal.x,y:signal.y,angle:-.5,hp:saved?.hp??hp,maxHp:hp,radius:16,type:'freighter',uid:-1,temporary:true,data:{name:signal.boatName,cargo:{}},wake:[{x:signal.x,y:signal.y}],vx:0,vy:0}:null;
-      this.encounter={signal,boat,progress:saved?.progress||0,wave:8};this.spawnTimer=10;this.encounterWave(signal.kind==='battle'?8+signal.danger*4:3+signal.danger*2);
+      this.encounter={signal,boat,progress:saved?.progress||0,wave:saved?.wave??8};
+      if(!saved||!this.s.sea){this.spawnTimer=10;this.encounterWave(signal.kind==='battle'?8+signal.danger*4:3+signal.danger*2);}
     },
     encounterWave(n){const op=this.encounter;if(!op)return;for(let i=0;i<n;i++){const kind=op.signal.danger>=3&&i%5===0?'armored':i%3===0?'rammer':i%2===0?'gunner':'skiff',e=this.spawn(kind,op.signal,true);if(e)e.encounterId=op.signal.id;}},
     finishEncounter(success){
@@ -76,7 +77,7 @@
       }
       const signal=this.nearbySignal();if(signal&&this.signalNotice!==signal.id){this.signalNotice=signal.id;this.event('Signal nearby: '+signal.name+'. Approach to investigate.');}
     },
-    snapshotVoyage(){this.s.voyage.active=this.encounter?{id:this.encounter.signal.id,progress:this.encounter.progress,hp:this.encounter.boat?.hp||0}:null;}
+    snapshotVoyage(){this.s.voyage.active=this.encounter?{id:this.encounter.signal.id,progress:this.encounter.progress,hp:this.encounter.boat?.hp||0,wave:Math.max(0,Math.min(12,this.encounter.wave))}:null;}
   });}
   const api={fresh,validate,install};if(typeof module!=='undefined'&&module.exports)module.exports=api;root.WidewakeVoyage=api;
 })(typeof globalThis!=='undefined'?globalThis:this);
