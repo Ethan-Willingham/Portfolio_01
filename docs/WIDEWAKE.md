@@ -35,6 +35,11 @@ blog-like headings. Preserve important prices, risks, damage and accessibility
 while reducing noise. The user asked to make this correction, then resume the
 whole-game production passes.
 
+The owner subsequently approved the title screen and explicitly asked to leave
+it as it is. Preserve its art, composition and presentation. The same instruction
+asks for progressive access to harbor services: future areas remain visible as
+locked previews, while the first voyage presents fewer active decisions.
+
 Interface references reviewed for this correction:
 [Balatro's official shop screenshot](https://www.playbalatro.com/press-kit/Screenshots/Balatro_ui_3840x2160_2.png),
 [DREDGE's official media](https://www.dredge.game/), and
@@ -124,6 +129,27 @@ chart suggests Nassau. Buy extra sugar if desired, sail there, and sell it.
 The first delivery milestone pays an additional 400 coins. A fishing trawler is
 750 coins; the Bahama Bank is nearby. The first rare catch is guaranteed during
 the first operation so the collection system is encountered naturally.
+
+From v0.17, a fresh harbor opens Trade and Voyage. Fleet hiring opens at captain
+rank 2, which the first Nassau trade guarantees and early combat can also earn.
+Shipyard opens after hauling 12 fish or reaching rank 3. Jobs opens after the
+first charter or at rank 4. Log opens on reaching another port, with earlier
+access if a discovery or loss gives it something important to record. These are
+earned thresholds, not day timers or a requirement to follow only one route.
+
+Locked services retain their places, names and lock marks. Selecting one opens
+a short requirement preview and a relevant next action. Fleet and Shipyard
+previews also provide Your boats, so repairs, hold transfers and guard orders
+remain available from the beginning. The browser action dispatcher checks the
+same service rules before hiring, upgrading, fitting or accepting new jobs.
+Future rank-gated vessels show their name and required rank, with detailed shop
+cards revealed when eligible. Charter history and sea reports expand on demand.
+
+Availability is derived from validated progress without changing the save
+format. Existing vessel acquisition history, upgrades, fittings and accepted or
+completed contracts retain corresponding access. Spending money, selling boats
+or losing a convoy cannot revoke an earned service. Unlock feedback is brief,
+waits until port, and never opens a modal or moves focus onto a purchase.
 
 The campaign has 24 ports, 10 trade goods, 18 resource sites, 5 flagship hulls,
 6 support boat roles, 4 repeatable upgrade tracks, 7 salvage fittings, 9 rare
@@ -507,6 +533,7 @@ node tools/widewake/test-reload-campaigns.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-browser.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-front.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-interface.cjs
+NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-harbor.cjs
 node tools/widewake/test-long-work.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-long-work-browser.cjs
 # Generate an earned checkpoint with test-playthrough before this extended review:

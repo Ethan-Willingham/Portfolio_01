@@ -285,6 +285,27 @@
 .ww-service-open .ww-tabs button:before{display:none}.ww-service-open .ww-tabs button[aria-pressed=true]{border-bottom-color:var(--accent);color:var(--accent);background:#263c58}
 .ww-service-open .ww-panel{display:block;min-height:0;flex:1;overflow:auto;overscroll-behavior:contain;padding:18px 20px 24px}
 .ww-service-open .ww-next{display:none}.ww-service-open .ww-port-heading{max-width:42vw}
+.ww-service-lock{display:inline-block;position:relative;width:10px;height:9px;flex:none;border:2px solid currentColor;border-radius:1px;margin-top:5px}
+.ww-service-lock:before{content:'';position:absolute;left:0;right:0;top:-7px;height:6px;border:2px solid currentColor;border-bottom:0;border-radius:4px 4px 0 0}
+.ww-tabs button>.ww-service-lock{position:absolute;top:8px;right:8px;color:var(--text-dim)}
+.ww-tabs button[data-locked=true]{background:#101b32ce;border-color:#354861;color:#9aabc2;box-shadow:none}
+.ww-tabs button[data-locked=true]:before{opacity:.35}
+.ww-tabs button[data-locked=true]:hover,.ww-tabs button[data-locked=true][aria-pressed=true]{background:#25364e;border-color:#839bb7;color:var(--text)}
+.ww-tabs button[data-new=true]:after{content:'';position:absolute;top:8px;right:8px;width:6px;height:6px;background:var(--ww-gold);box-shadow:0 0 0 2px #101b32}
+.ww-service-open .ww-tabs button[data-locked=true]{background:none;border-color:transparent;color:#9aabc2}
+.ww-service-open .ww-tabs button[data-locked=true][aria-pressed=true]{background:#26364e;border-bottom-color:#a4b9d2}
+.ww-service-open .ww-tabs button>.ww-service-lock{top:1px;right:2px;width:6px;height:6px;border-width:1px}
+.ww-service-open .ww-tabs button>.ww-service-lock:before{top:-5px;height:4px;border-width:1px}
+.ww-service-open .ww-tabs button[data-new=true]:after{top:3px;right:3px;width:4px;height:4px}
+.ww-locked-service{max-width:390px;padding:8px 0}
+.ww-locked-title{display:flex;align-items:center;gap:10px;margin:0 0 10px;font:700 16px var(--font-body);color:var(--text-dim)}
+.ww-locked-purpose{margin:0 0 24px;color:var(--text);font-size:13px;line-height:1.5}
+.ww-unlock-requirement{display:grid;grid-template-columns:1fr auto;gap:8px 12px;align-items:center}
+.ww-unlock-requirement strong{font:600 13px var(--font-body)}.ww-unlock-requirement small{font:10px var(--font-mono);color:var(--text-dim)}
+.ww-unlock-requirement .ww-progress{grid-column:1/-1;height:3px}.ww-unlock-or{font:11px var(--font-body);color:var(--text-dim);margin:12px 0}
+.ww-unlock-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:26px}.ww-unlock-actions button{min-height:44px;font-size:12px}
+.ww-stock-locked{display:flex;align-items:center;gap:12px;min-height:52px;padding:12px 0;border-bottom:1px solid var(--rule);color:var(--text-dim)}
+.ww-stock-locked strong{font:600 13px var(--font-body)}.ww-stock-locked small{margin-left:auto;font:10px var(--font-mono)}
 .ww-panel h3{font:700 22px var(--font-body)}.ww-panel h4{font:700 14px var(--font-body)}.ww-card{padding:15px 0;gap:14px}.ww-card p{font:12px/1.5 var(--font-body)}.ww-card-art{background:#101b3277;width:76px;height:64px;border-radius:3px}.ww-card-art canvas{width:72px;height:54px}.ww-card small{font-size:10px}.ww-section-label{font:700 11px var(--font-body);color:var(--text);margin:24px 0 10px}.ww-panel summary{cursor:pointer;padding:12px 0;font-size:13px;color:var(--text-dim)}
 .ww-market-tags{display:flex;justify-content:space-between;gap:12px;font-size:11px;margin-bottom:14px;color:var(--text-dim)}.ww-market-tags b{color:var(--ww-gold);margin-left:4px}
 .ww-goods-picker{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin-bottom:20px}.ww-goods-picker button{position:relative;display:flex;align-items:center;flex-direction:column;gap:4px;padding:8px 2px;background:#101b3299;border-color:#364c68;min-width:0;font-size:11px;font-weight:400}.ww-goods-picker canvas{width:32px;height:32px;image-rendering:pixelated}.ww-goods-picker button[aria-pressed=true]{background:#2c536f;border-color:var(--accent);color:#fff}.ww-goods-picker button b{position:absolute;right:4px;top:3px;color:var(--ww-gold);font:10px var(--font-mono);background:#101b32bb;padding:2px}
@@ -350,3 +371,10 @@
 
 /* Sticky modal headings start at the scroll edge, including compact layouts. */
 .ww-dialog.ww-chart-dialog,.ww-dialog.ww-work-dialog{padding-top:0}
+/* Unlock previews keep their next action in view on short phone screens. */
+@media(max-height:480px) and (orientation:landscape){
+ .ww-locked-service{max-width:none;display:grid;grid-template-columns:1fr 1fr;gap:10px 24px;padding:2px 0}
+ .ww-locked-title{grid-column:1;grid-row:1;margin:0;font-size:14px}.ww-locked-purpose{grid-column:2;grid-row:1;margin:0;font-size:12px}
+ .ww-unlock-requirements{grid-column:1;grid-row:2}.ww-unlock-requirement{gap:6px 8px}.ww-unlock-requirement strong{font-size:12px}.ww-unlock-requirement small{font-size:9px}.ww-unlock-or{margin:6px 0}
+ .ww-unlock-actions{grid-column:2;grid-row:2;margin:0;align-content:start;align-items:start}.ww-unlock-actions button{padding:8px 12px}
+}

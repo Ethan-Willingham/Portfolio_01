@@ -13,21 +13,21 @@
   <meta property="og:image" content="https://ethanwillingham.com/assets/widewake/cover.png">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="preload" href="assets/fonts/commit_mono_regular.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="widewake.css?v=0.16.0">
+  <link rel="stylesheet" href="widewake.css?v=0.17.0">
   <script defer src="js/demo-activity.js"></script>
-  <script defer src="js/widewake-data.js?v=0.16.0"></script>
-  <script defer src="js/widewake-world.js?v=0.16.0"></script>
-  <script defer src="js/widewake-voyage.js?v=0.16.0"></script>
-  <script defer src="js/widewake-work.js?v=0.16.0"></script>
-  <script defer src="js/widewake-sea-save.js?v=0.16.0"></script>
-  <script defer src="js/widewake-core.js?v=0.16.0"></script>
-  <script defer src="js/widewake-render.js?v=0.16.0"></script>
-  <script defer src="js/widewake-convoy.js?v=0.16.0"></script>
-  <script defer src="js/widewake-front.js?v=0.16.0"></script>
-  <script defer src="js/widewake-controller.js?v=0.16.0"></script>
-  <script defer src="js/widewake-audio.js?v=0.16.0"></script>
-  <script defer src="js/widewake-saves.js?v=0.16.0"></script>
-  <script defer src="js/widewake.js?v=0.16.0"></script>
+  <script defer src="js/widewake-data.js?v=0.17.0"></script>
+  <script defer src="js/widewake-world.js?v=0.17.0"></script>
+  <script defer src="js/widewake-voyage.js?v=0.17.0"></script>
+  <script defer src="js/widewake-work.js?v=0.17.0"></script>
+  <script defer src="js/widewake-sea-save.js?v=0.17.0"></script>
+  <script defer src="js/widewake-core.js?v=0.17.0"></script>
+  <script defer src="js/widewake-render.js?v=0.17.0"></script>
+  <script defer src="js/widewake-convoy.js?v=0.17.0"></script>
+  <script defer src="js/widewake-front.js?v=0.17.0"></script>
+  <script defer src="js/widewake-controller.js?v=0.17.0"></script>
+  <script defer src="js/widewake-audio.js?v=0.17.0"></script>
+  <script defer src="js/widewake-saves.js?v=0.17.0"></script>
+  <script defer src="js/widewake.js?v=0.17.0"></script>
 </head>
 <body class="ww-body at-title">
   <main id="game" class="ww-game" aria-label="Widewake game">
@@ -53,7 +53,7 @@
         <button class="ww-audio-notice" hidden>Enable sound</button>
         <p id="title-storage" class="ww-title-storage" role="status"></p>
       </div>
-      <footer class="ww-title-footer"><span id="title-version">0.16.0 / Web edition</span><div><button id="title-fullscreen">Full screen</button><button id="title-credits">Credits</button><button id="title-quit" hidden>Quit</button></div></footer>
+      <footer class="ww-title-footer"><span id="title-version">0.17.0 / Web edition</span><div><button id="title-fullscreen">Full screen</button><button id="title-credits">Credits</button><button id="title-quit" hidden>Quit</button></div></footer>
     </section>
     <section id="harbor" class="ww-harbor" hidden aria-label="Harbor">
       <div class="ww-harbor-left">
@@ -66,7 +66,7 @@
       <section class="ww-management" aria-label="Port services">
         <div class="ww-service-heading" hidden><button id="service-back">&lt; Harbor</button><h2 id="service-title">Trade</h2></div>
         <div class="ww-wallet"><div><span class="ww-eyebrow">Coins</span><strong id="coins">780</strong><small>c</small></div><div class="ww-cargo-readout"><span id="hold-usage"></span><div class="ww-progress"><i id="hold-bar"></i></div><small id="hold-detail">Cargo across the fleet</small></div></div>
-        <nav class="ww-tabs" aria-label="Port services"><button data-tab="trade" aria-pressed="true">Trade</button><button data-tab="fleet" aria-pressed="false">Fleet</button><button data-tab="yard" aria-pressed="false">Shipyard</button><button data-tab="voyage" aria-pressed="false">Voyage</button><button data-tab="jobs" aria-pressed="false">Jobs</button><button data-tab="log" aria-pressed="false">Log</button></nav>
+        <nav class="ww-tabs" aria-label="Port services"><button data-tab="trade" aria-pressed="true"><span>Trade</span><span class="ww-service-lock" aria-hidden="true" hidden></span></button><button data-tab="fleet" aria-pressed="false"><span>Fleet</span><span class="ww-service-lock" aria-hidden="true" hidden></span></button><button data-tab="yard" aria-pressed="false"><span>Shipyard</span><span class="ww-service-lock" aria-hidden="true" hidden></span></button><button data-tab="voyage" aria-pressed="false"><span>Voyage</span><span class="ww-service-lock" aria-hidden="true" hidden></span></button><button data-tab="jobs" aria-pressed="false"><span>Jobs</span><span class="ww-service-lock" aria-hidden="true" hidden></span></button><button data-tab="log" aria-pressed="false"><span>Log</span><span class="ww-service-lock" aria-hidden="true" hidden></span></button></nav>
         <div id="port-panel" class="ww-panel" tabindex="-1"></div>
         <p id="port-controller-help" class="ww-port-pad-help"></p><footer class="ww-port-footer"><span id="captain-rank"></span><span id="save-status">Saved on this device</span></footer>
       </section>

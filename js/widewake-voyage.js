@@ -35,6 +35,25 @@
       return{...step,progress:Math.min(progress,total),total,done:progress>=total};
     },
     charterStatus(){const c=this.charter();if(!c)return null;const steps=c.steps.map(s=>this.charterStep(s));return{...c,steps,ready:steps.every(s=>s.done),number:this.s.voyage.charters.length+1};},
+    harborService(id){
+      const s=this.s,company=s.voyage.charters.length>0,expanded=s.nextUid>2||s.hull!=='cutter',refitted=s.hull!=='cutter'||Object.values(s.upgrades).some(n=>n>0)||s.items.length>0;
+      // Use permanent achievements and acquisition history. Spending money,
+      // retiring a boat or losing a fleet must never close an earned service.
+      const rank=n=>({text:'Captain rank '+n,progress:Math.min(s.xp,D.ranks[n-1]),total:D.ranks[n-1],unit:'XP'});
+      const services={
+        trade:{name:'Trade',open:true},
+        voyage:{name:'Voyage',open:true},
+        fleet:{name:'Fleet',open:this.rank>=2||s.stats.sugar>=6||expanded||company,
+          purpose:'Hire workboats and escorts.',requirements:[rank(2)],guide:{target:'nassau',label:'Chart Nassau'}},
+        yard:{name:'Shipyard',open:s.stats.fish>=12||this.rank>=3||refitted||company,
+          purpose:'Upgrade your flagship and fit salvaged gear.',requirements:[{text:'Haul 12 fish',progress:Math.min(s.stats.fish,12),total:12,unit:'fish'},rank(3)],guide:{service:'voyage',label:'View charter'}},
+        jobs:{name:'Jobs',open:company||this.rank>=4||s.deliveries.length>0||s.completedContracts.length>0,
+          purpose:'Take delivery contracts and admiral bounties.',requirements:[{text:'Complete your first charter',progress:Number(company),total:1},rank(4)],guide:{service:'voyage',label:'View charter'}},
+        log:{name:'Log',open:s.visits.length>1||s.stats.rare>0||s.items.length>0||s.lossHistory.length>0||!!s.recovery||expanded||company,
+          purpose:'Your discoveries, milestones and voyage records.',requirements:[{text:'Reach a second port',progress:Math.min(s.visits.length,2),total:2,unit:'ports'}],guide:{target:'nassau',label:'Chart Nassau'}}
+      };
+      const service=services[id];return service?{id,...service,open:!!service.open}:null;
+    },
     charterGuidance(step=this.charterStatus()?.steps.find(s=>!s.done)){
       if(!step)return{service:'voyage',label:'Complete charter',text:'Complete this charter at any port\u2019s voyage desk.'};
       const worker=step.kind==='work'||step.kind==='stat'&&step.key==='fish'?'trawler':step.kind==='stat'&&step.key==='oil'?'oilrig':null;

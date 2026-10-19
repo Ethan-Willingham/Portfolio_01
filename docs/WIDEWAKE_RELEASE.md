@@ -29,18 +29,18 @@ The exact owner constraints and source links are in `WIDEWAKE.md`.
 
 | Area | Current evidence | Next work / release requirement |
 | --- | --- | --- |
-| Launch and identity | Independent navy/cyan identity, scene-led harbor, focused services, dedicated title and return flow | Maintain cohesive identity through every view; iterate beyond the initial title scene |
+| Launch and identity | Owner-approved title, independent navy/cyan identity, scene-led harbor and focused services | Preserve the approved title; maintain cohesive identity through the remaining views |
 | First voyage | Real-time starter sailing reviewed; guidance checks workboats; earned trade and fishing complete | Observe an unassisted human session; keep controls, profit and purchases understandable without a long manual |
 | Helm and camera | Direct manual control, one-action course resumption, continuous waypoint throttle, accurate arrival cues and fitted phone view | Review turning, arrival, coasts and camera at every hull size and input method |
 | Combat | Distinct enemy silhouettes, warnings matching actual shot lanes, nearby contacts, priority labels and directional damage | Review threat reading, audible windups and formation decisions through human play |
 | Trade | Regional warehouse depth, earned merchant expansion, exact bulk quotes, water routes and reserved holds | Review market pacing, discovery of trade routes, and late-game reasons to trade |
 | Convoy | Checked coastal recovery, physical harbor arrivals, all 24 ports with a full wide convoy, saved routes and distance inspection | Extended survival with different guard assignments and fleet builds; review arrival feedback in ordinary play |
 | Fishing and oil | Five work rhythms across 18 sites, optional double/triple watches, carried rare catches and safe-return payment | Longer play across fleet builds, risk/reward pacing and worthwhile repeat visits |
-| Progression | Six charters completed by balanced, merchant and gunline earned captains | Human pacing, optional pursuits and free-play depth; eliminate grind or runaway snowballing |
+| Progression | Six earned charters; staged harbor access with alternate rank routes and legacy access preserved | Human pacing, optional pursuits and free-play depth; eliminate grind or runaway snowballing |
 | Earth and discovery | Real coastlines, 24 ports, 18 work sites and 15 signals | Review recognizable regions, travel interest, geography seams, legible chart and destination discovery |
 | Art | Chunky native sprites and harbor scenes; 24 distinct briefs saved | Make compositions and silhouettes more individual; final image generation remains deferred by the owner |
 | Sound | Original score, spatial cues, mixer, bounded voices and suspended/interrupted recovery | Listening on speakers/headphones, broader regional atmosphere, long-session comfort and battle priority review |
-| Interface and access | Selected-item trading, contextual sea actions, optional details; keyboard, touch and standard controller flows | Physical controllers, remapping, button-label coverage, readable text and non-color threat cues |
+| Interface and access | Locked service previews, compact future stock, selected-item trading and contextual sea actions; keyboard, touch and standard controller flows | Physical controllers, remapping, button-label coverage, readable text and non-color threat cues |
 | Mobile | Chromium and WebKit touch emulation | Full-screen portrait and landscape flows, safe areas, browser-height changes, sustained performance and physical-device validation |
 | Saves and recovery | Full active-sea records, 676 matching v0.15 campaign reloads, exclusive browser writer, explicit handoff, primary-first writes and legacy migration | Future format upgrades, erased storage, supported platform/cloud integration and long-session recovery |
 | Performance | Five-minute 1,200-enemy browser run on M1 Pro with sound active and stable retained memory | Constrained-device budgets, longer sessions, loading cost and input latency |
@@ -1021,3 +1021,65 @@ Next: review the last admiral and optional pursuits through ordinary play, with
 attention to audible danger and the choice between escaping, defending and
 replacing a fleet. Mixed trading routes and repeated work income still need
 comparison. The production goal remains active.
+
+## Pass 15, earned harbor services, v0.17
+
+The owner asked for fewer available decisions at the beginning, visible locked
+areas and earned progression. They also approved the title screen and explicitly
+asked to keep it. Its markup, art renderer and styling are unchanged, apart from
+the version label.
+
+Fresh voyages open Trade and Voyage. Fleet hiring opens at rank 2, Shipyard after
+hauling 12 fish or reaching rank 3, and Jobs after the first charter or at rank 4.
+Log opens at a second port or when an earlier discovery or loss needs a record.
+The rank alternatives let trading and fighting captains progress without taking
+every charter step in order. Existing acquisition history, upgrades, fittings
+and delivery contracts preserve the corresponding access. Losses and spending
+cannot close an earned service. The saved format is unchanged.
+
+Locked services keep their place and a lock mark. Selecting one shows the
+requirement, progress and a next action. Your boats remains available inside the
+Fleet and Shipyard previews for repairs, transfers and guard orders. Unlocks
+wait until port for brief feedback, without a modal or stolen focus. A newly
+revealed shop never moves a held confirmation onto a purchase. Future vessels
+have compact name/rank rows; charter history and sea reports expand on demand.
+
+Play and verification:
+
+- Played a separate fresh voyage through the ordinary interface. Early fighting
+  and the first Nassau arrival opened Fleet and Log. Sold the twelve sugar,
+  hired a trawler for 750 coins, protected its standard Bahama Bank watch, and
+  returned all three boats. Rare catches paid 680 coins. Repairs cost 43 coins,
+  the brig cost 2,800, and the first charter opened Jobs. Selling 57 fish paid
+  2,622 coins, leaving 4,273 coins and nine units of other cargo. No resources or
+  completed objectives were injected into this review voyage.
+- Chromium and WebKit cover visible locks, short previews, permanent access,
+  alternate paths, legacy contracts, rejected stale purchase actions, repairs,
+  focus preservation and save/reload. All six desktop and phone viewport sizes
+  fit; short landscape previews keep their next actions visible without scrolling.
+- The browser and controller earned loops still reach fishing and the first
+  charter. The title checks cover launch, continue, restart, import, nested pause,
+  touch input and small viewports. The core, voyage and sea-save suites pass.
+- The balanced earned captain completes six charters in 41.7 simulated minutes
+  with 223 reconstructions. Its final hash matches v0.16 exactly. A short browser
+  run retained 1,200 enemies and 21 companions with sound at 9.1 ms p95 on this
+  M1 Pro. These are scripted desktop checks, not physical-phone or human pacing
+  evidence.
+
+The packaged Mac app passes offline trading, fishing, native files, failure
+handling and exact active-sea OS-close continuation. Mac arm64 and Windows x64
+packages match all 23 game assets, 729,584 bytes, and their host scripts. Windows
+execution is still unverified. These remain local development builds.
+
+Whole-game review: the first voyage now connects access, charter guidance,
+purchases, work, damage, repairs, cargo sales and the next service. The approved
+title, Earth, combat, economy, sound and save format remain intact. No images
+were generated. The live Jobs review exposed another pacing question: early
+offers can list distant Pacific destinations beside Havana, without the actual
+sailing time or required buying capital in the offer. Review those contract
+choices before broadening their rewards or adding more explanatory text.
+
+Next: return to the last admiral, audible threat cues and optional pursuits;
+include contract usefulness and actual route costs in the trade pass. Physical
+devices, unassisted human sessions, remapping, final art, distribution rights
+and Steam integration remain open. The production goal remains active.

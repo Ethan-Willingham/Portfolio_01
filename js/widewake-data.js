@@ -166,7 +166,7 @@
   // Specimens share physical holds with trade goods, but are never market stock
   // or random salvage. Keep the commodity catalog and saved drop indices stable.
   const cargoGoods=[...goods,...fish.map(f=>({id:'catch-'+f.id,name:f.name,color:f.color,icon:'fish',specimen:f.id,resource:'fish',value:f.value}))];
-  const data={version:'0.16.0',goods,cargoGoods,ports,hulls,boats,relics,fish,sites,bosses,upgrades,signals,charters,ranks,attacks};
+  const data={version:'0.17.0',goods,cargoGoods,ports,hulls,boats,relics,fish,sites,bosses,upgrades,signals,charters,ranks,attacks};
   if(typeof module!=='undefined'&&module.exports)module.exports=data;
   root.WidewakeData=data;
 })(typeof globalThis!=='undefined'?globalThis:this);
