@@ -56,8 +56,8 @@
     updateStrip(){
       const g=this.game(),ships=g.fleet.filter(f=>f.hp>0),key=ships.map(f=>f.uid).join(',');
       if(key!==this.stripKey){this.stripKey=key;$('fleet-strip').innerHTML=ships.map(f=>'<button class="ww-fleet-token" data-fleet-uid="'+f.uid+'"><strong></strong><span></span><div class="ww-progress"><i></i></div><small></small></button>').join('');}
-      for(const f of ships){const button=$('fleet-strip').querySelector('[data-fleet-uid="'+f.uid+'"]');if(!button)continue;const critical=f.hp<f.maxHp*.3,working=g.production?.workers.includes(f);
-        button.classList.toggle('ww-critical',critical);button.classList.toggle('ww-working',!!working);button.querySelector('strong').textContent=f.data.name;button.querySelector('span').textContent=C.count(f.data.cargo);button.querySelector('i').style.width=Math.max(0,f.hp/f.maxHp*100)+'%';button.querySelector('small').textContent=critical?'Hull critical':working?'Working':Math.ceil(f.hp/f.maxHp*100)+'% hull';button.title=f.data.name+', '+f.spec.name+'. '+g.orderText(f)+'. Inspect and give orders.';
+      for(const f of ships){const button=$('fleet-strip').querySelector('[data-fleet-uid="'+f.uid+'"]');if(!button)continue;const critical=f.hp<f.maxHp*.3,working=g.production?.workers.includes(f),anchor=g.guardAnchor(f),behind=WidewakeWorld.distance(g.player,f)>650&&!working&&anchor===g.player;
+        button.classList.toggle('ww-critical',critical);button.classList.toggle('ww-working',!!working);button.querySelector('strong').textContent=f.data.name;button.querySelector('span').textContent=C.count(f.data.cargo);button.querySelector('i').style.width=Math.max(0,f.hp/f.maxHp*100)+'%';button.querySelector('small').textContent=critical?'Hull critical':working?'Working':anchor!==g.player?'Guard: '+anchor.data.name:behind?'Catching up':Math.ceil(f.hp/f.maxHp*100)+'% hull';button.title=f.data.name+', '+f.spec.name+'. '+Math.ceil(f.hp/f.maxHp*100)+'% hull, '+C.count(f.data.cargo)+' / '+f.spec.hold+' cargo. '+g.orderText(f)+'. Inspect and give orders.';button.setAttribute('aria-label',button.title);
       }
     }
   }

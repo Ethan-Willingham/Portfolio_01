@@ -30,11 +30,11 @@ The exact owner constraints and source links are in `WIDEWAKE.md`.
 | Area | Current evidence | Next work / release requirement |
 | --- | --- | --- |
 | Launch and identity | Dedicated title, saved-fleet summary, new/continue, settings, help and return flow | Maintain cohesive identity through every view; iterate beyond the initial title scene |
-| First voyage | Earned starter trade and protected fishing complete in browser checks | Observe an unassisted first session; make controls, profit and the first purchase understandable without a long manual |
-| Helm and camera | Acceleration, damping, route handoff, coastal collision and zoom work | Review turning, arrival, taking the helm, coasts and camera at every hull size and input method |
+| First voyage | Real-time starter sailing reviewed; guidance checks workboats; earned trade and fishing complete | Observe an unassisted human session; keep controls, profit and purchases understandable without a long manual |
+| Helm and camera | Acceleration, coastal collision, checked route preview and retained destination after manual detours | Review turning, arrival, coasts and camera at every hull size and input method |
 | Combat | Real projectiles, admiral tells, directional hits, reticles, recoil and distinct impacts | Review dense threat reading and formation decisions; verify difficulty with varied builds, not one scripted captain |
-| Trade | Exact quotes, visible order quantities, reserved-hold explanation and no instant resale exploit | Reveal route opportunities; review market pacing and late-game reasons to trade |
-| Convoy | Per-vessel manifests, assignments, reserves and physical movement | Review recovery after losses, large-fleet selection, convoy stragglers and clear causes of failure |
+| Trade | Exact bulk quotes, water-route comparisons, explicit order loading, reserved holds and no instant resale exploit | Review market pacing, discovery of trade routes, and late-game reasons to trade |
+| Convoy | Per-vessel manifests, assignments, reserves, guard status and physical movement | Review recovery after losses, large-fleet selection, convoy stragglers and clear causes of failure |
 | Fishing and oil | Real protected workers, different grounds, rare catches | Review risk and yield, repeated-operation variety, rarity weighting, and reasons to change sites |
 | Progression | Six solvable charters and three admirals; earned simulated campaign | More human play, build diversity, optional pursuits and free-play depth; eliminate grind or runaway snowballing |
 | Earth and discovery | Real coastlines, 24 ports, 18 work sites and 15 signals | Review recognizable regions, travel interest, geography seams, legible chart and destination discovery |
@@ -171,3 +171,67 @@ and fleet readability. Review all areas again, including failure recovery and
 the late-game loop. Listening review, longer varied play, final port art,
 controller support, desktop packaging and physical mobile verification remain
 required. Numeric audio checks are not a claim of musical or listening quality.
+
+## Pass 3, the captain's next decision, v0.5
+
+A fresh real-time sail from Havana to Nassau exposed a gap after the sugar sale:
+the next charter action pointed at the fishing ground with no help hiring its
+required trawler. The chart also showed only unit prices and straight-line travel
+time. Those are weak tools for a game about bulk cargo and real coastlines.
+
+Goods names now open trade comparisons. The captain can compare cargo already
+aboard or a new purchase, choose an order size, and look for nearby gains or the
+largest gain. Owned cargo compares complete sale proceeds with the current or
+last port. New cargo subtracts the actual affordable purchase quote. Every unit
+uses the existing supply curve. Selection and preview are read-only; a separate
+purchase action names the departure port and loads exactly the reviewed order before sailing. Prices are
+explicitly today's quotes and may change during travel.
+
+Nearby opportunities use actual water routes. The first review of the feature
+had ranked San Francisco as nearby across land; the corrected worker calculates
+all destination sailing distances. A selected route is drawn and timed before
+the departure button becomes available. Closing the chart or changing a
+destination cannot let an old reply cast the fleet off. Worker errors remain
+visible at anchor; unavailable workers use the existing geometry in scheduled
+chunks. Manual steering keeps the intended destination through save/reload and
+lets the captain plot again from the new position. After work clears the course,
+the chart suggests the nearest harbor, including the last port.
+
+Missing fishing or oil boats now lead to the correct Fleet listing. This guidance
+also recovers after a boat sinks. Work-site previews report the available workers
+and compatible hold space. Escort buttons show who they guard; distant followers
+say they are catching up. Their accessible labels include hull condition, role,
+cargo and orders. The chart keeps Close visible when scrolling and reduces the
+map when the comparison list is expanded, so its three options fit on desktop.
+
+Evidence:
+
+- Core, voyage and feedback suites still pass. Five new planning scenarios check
+  every port's bulk sale against unit-by-unit execution, read-only comparisons,
+  purchases limited by purse and holds, routes around South America, engine-aware
+  estimates, retained destinations and workboat guidance after a loss.
+- Chromium and WebKit chart runs cover a real reviewed purchase, the earned
+  Nassau sale, trawler purchase, guarded fishing, stale route replies, failed and
+  unavailable workers, and portrait/landscape touch layouts. Screenshots include
+  360 by 640, 667 by 375 and 800 by 600. Selecting a route cannot buy cargo or
+  depart until its separate action is pressed.
+- The launcher suite passes with clickable goods names and the new chart flow.
+  The connected browser suite completes trade, production, campaign, convoy and
+  save flows. Its audio-enabled 1,200-enemy sample remains at 9.6 ms p95 on the
+  M1 Pro with Chrome for Testing 148 at 1440 by 900.
+- The earned simulated campaign again returns home in 41.5 minutes, with 976
+  kills and 31,693 coins. No reward, price or difficulty increases were used to
+  make the revised guidance pass. This is solvability evidence, not a human
+  judgment of pacing or enjoyment.
+
+Whole-game review: launch and audio remain intact; steering now preserves route
+intent; combat and protected production continue through the same connected
+checks; trade, charter decisions and fleet orders are easier to inspect. Earth
+geography now informs comparison rankings as well as actual sailing. Portrait
+and short landscape layouts were reviewed around the larger chart. Save format,
+core combat balance and interim art remain unchanged.
+
+Next: make travel and repeated operations more varied, review fleet losses and
+recovery, and develop the controller flow. The full release gates remain open,
+including listening, extended human play, final assets, desktop distribution and
+physical-device verification. Deferred image generation stays deferred.

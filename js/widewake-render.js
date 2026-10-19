@@ -203,7 +203,7 @@
     }
     reticle(c,x,y,r,color){x=Math.round(x);y=Math.round(y);r=Math.round(r);c.strokeStyle=color;c.lineWidth=1;for(const dx of [-1,1])for(const dy of [-1,1]){c.beginPath();c.moveTo(x+dx*(r-3),y+dy*r);c.lineTo(x+dx*r,y+dy*r);c.lineTo(x+dx*r,y+dy*(r-3));c.stroke();}}
     label(c,text,x,y,color){c.font='7px "Commit Mono", monospace';c.textAlign='center';c.fillStyle='#182d2bd9';const width=c.measureText(text).width;c.fillRect(x-width/2-3,y-7,width+6,11);c.fillStyle=color;c.fillText(text,Math.round(x),Math.round(y));}
-    chart(cv,selected,mini=false){const c=cv.getContext('2d'),w=cv.width,h=cv.height,g=this.game; c.imageSmoothingEnabled=false;c.fillStyle='#263f38';c.fillRect(0,0,w,h);
+    chart(cv,selected,mini=false,preview=null){const c=cv.getContext('2d'),w=cv.width,h=cv.height,g=this.game; c.imageSmoothingEnabled=false;c.fillStyle='#263f38';c.fillRect(0,0,w,h);
       const z=mini?.0035:w/W.W,cam=mini?g.player:{x:W.W/2,y:W.H/2};this.land(c,cam,z,w,h,true);
       const sx=x=>mini?w/2+W.dx(cam.x,x)*z:x/W.W*w,sy=y=>mini?h/2+(y-cam.y)*z:y/W.H*h;
       if(!mini){c.strokeStyle='#aab39417';c.lineWidth=1;for(let lon=30;lon<360;lon+=30){const x=lon/360*w;c.beginPath();c.moveTo(x,0);c.lineTo(x,h);c.stroke();}for(let lat=30;lat<180;lat+=30){const y=lat/180*h;c.beginPath();c.moveTo(0,y);c.lineTo(w,y);c.stroke();}
@@ -214,7 +214,7 @@
       for(const b of g.bossSites)if(!g.s.bosses.includes(b.id)){const x=sx(b.x),y=sy(b.y);c.strokeStyle=P.coral;c.beginPath();c.moveTo(x-4,y-4);c.lineTo(x+4,y+4);c.moveTo(x+4,y-4);c.lineTo(x-4,y+4);c.stroke();}
       for(const p of g.ports){const x=sx(p.x),y=sy(p.y);c.fillStyle=g.s.visits.includes(p.id)?P.gold:'#c9c1a1';c.fillRect(x-2,y-2,mini?3:5,mini?3:5);if(!mini&&['havana','rio','cape-town','yokohama','sydney','honolulu','reykjavik','mumbai'].includes(p.id)){c.font='9px "Commit Mono", monospace';c.textAlign='left';c.fillStyle=P.cream;c.fillText(p.name,x+5,y-5);}}
       if(selected){const x=sx(selected.x),y=sy(selected.y);c.strokeStyle=P.gold;c.lineWidth=1;c.beginPath();c.arc(x,y,8,0,Math.PI*2);c.stroke();if(!mini){c.font='10px "Commit Mono", monospace';c.textAlign=x>w*.7?'right':'left';c.fillStyle=P.gold;c.fillText(selected.name||'Waypoint',x+(x>w*.7?-12:12),y+12);}}
-      if(g.route.length){c.strokeStyle='#dfc28899';c.lineWidth=1;c.setLineDash([3,3]);let prev=g.player;c.beginPath();c.moveTo(sx(prev.x),sy(prev.y));for(const q of g.route){if(Math.abs(q.x-prev.x)>W.W/2)c.moveTo(sx(q.x),sy(q.y));else c.lineTo(sx(q.x),sy(q.y));prev=q;}c.stroke();c.setLineDash([]);}
+      const course=preview||g.route;if(course.length){c.strokeStyle='#dfc28899';c.lineWidth=1;c.setLineDash([3,3]);let prev=g.player;c.beginPath();c.moveTo(sx(prev.x),sy(prev.y));for(const q of course){if(Math.abs(q.x-prev.x)>W.W/2)c.moveTo(sx(q.x),sy(q.y));else c.lineTo(sx(q.x),sy(q.y));prev=q;}c.stroke();c.setLineDash([]);}
       const px=sx(g.player.x),py=sy(g.player.y);c.fillStyle=P.cream;poly(c,[[px,py-5],[px-4,py+4],[px+4,py+4]],P.cream);c.strokeStyle=P.ink;c.strokeRect(px-1,py-1,2,2);
       if(mini){for(const f of g.fleet){c.fillStyle=f.hp<f.maxHp*.3?P.coral:P.blue;c.fillRect(sx(f.x)-1,sy(f.y)-1,2,2);}if(g.encounter?.boat){c.fillStyle=P.gold;c.fillRect(sx(g.encounter.boat.x)-1,sy(g.encounter.boat.y)-1,3,3);}}
     }

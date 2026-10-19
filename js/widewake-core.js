@@ -133,13 +133,21 @@
     marketEvent(portId=this.s.port){const p=by(D.ports,portId),r=rng(hash('news'+portId+Math.floor(this.s.day/3))),good=D.goods[Math.floor(r()*D.goods.length)],mult=r()<.5?.78:1.3;return{good:good.id,mult,text:mult>1?'A shortage is pushing up the price of '+good.name.toLowerCase()+'.':'A supply ship brought extra '+good.name.toLowerCase()+'. Prices are down.'};}
     // Price every unit through the same market curve. A batch must cost the
     // same as individual trades, so moving the price cannot fund a round trip.
-    quoteTrade(id,requested,buy=true){
-      if(!by(D.goods,id)||!Number.isFinite(requested)||requested<=0)return{qty:0,total:0};
-      const price=this.market(this.s.port,id),limit=Math.floor(Math.min(requested,buy?Math.min(price.stock,this.cargoSpace(id)):this.quantity(id))),impact=this.s.impact[this.s.port+':'+id]||0;
+    quoteMarket(portId,id,requested,buy=false,budget=Infinity){
+      if(!by(D.ports,portId)||!by(D.goods,id)||!Number.isFinite(requested)||requested<=0)return{qty:0,total:0};
+      const price=this.market(portId,id),limit=Math.floor(Math.min(requested,buy?price.stock:1e5)),impact=this.s.impact[portId+':'+id]||0;
       let qty=0,total=0;
-      for(;qty<limit;qty++){const unit=this.market(this.s.port,id,impact+(buy?qty:-qty))[buy?'buy':'sell'];if(buy&&total+unit>this.s.coins)break;total+=unit;}
+      for(;qty<limit;qty++){const unit=this.market(portId,id,impact+(buy?qty:-qty))[buy?'buy':'sell'];if(buy&&total+unit>budget)break;total+=unit;}
       return{qty,total};
     }
+    quoteTrade(id,requested,buy=true){if(!Number.isFinite(requested)||requested<=0)return{qty:0,total:0};return this.quoteMarket(this.s.port,id,Math.min(requested,buy?this.cargoSpace(id):this.quantity(id)),buy,buy?this.s.coins:Infinity);}
+    tradeProspects(id,requested,buyNew=false){
+      const order=buyNew?this.quoteTrade(id,requested,true):this.quoteTrade(id,requested,false);
+      if(!order.qty||buyNew&&this.mode!=='port')return[];
+      return this.ports.filter(p=>p.id!==this.s.port).map(port=>{const sale=this.quoteMarket(port.id,id,order.qty);return{port,qty:order.qty,buyNew,cost:buyNew?order.total:0,local:buyNew?0:order.total,sale:sale.total,gain:sale.total-order.total,distance:distance(this.player,port)};});
+    }
+    cruisingSpeed(){return this.hull().speed*(1+this.s.upgrades.engine*.08)*this.modifier('speed');}
+    routeEstimate(path,from=this.player){let length=0,previous=from;for(const point of path){length+=distance(previous,point);previous=point;}return{distance:length,seconds:Math.ceil(length/this.cruisingSpeed()+Math.max(0,path.length-1)*1.5)};}
     trade(id,requested,buy=true){if(this.mode!=='port'||!by(D.goods,id))return false;const {qty,total}=this.quoteTrade(id,requested,buy);
       if(!qty){if(buy)this.event('Not enough coins, stock, or cargo room.','warn');return false;}
       if(buy){this.s.coins-=total;this.addCargo(id,qty);}
@@ -260,7 +268,7 @@
       if(this.mode!=='sea'||this.paused)return;dt=clamp(dt,0,.05);this.time+=dt;this.s.seconds+=dt;this.burstCD=Math.max(0,this.burstCD-dt);this.repairCD=Math.max(0,this.repairCD-dt);
       const oldDay=this.s.day;this.s.day=1+Math.floor(this.s.seconds/120);if(oldDay!==this.s.day){for(const k in this.s.impact)this.s.impact[k]*=.5;this.uiDirty=true;}
       const p=this.player;let ix=input.x||0,iy=input.y||0;const manual=Math.hypot(ix,iy)>.1;
-      if(manual&&this.autopilot)this.cancelCourse();
+      if(manual&&this.autopilot){this.autopilot=false;this.route=[];this.uiDirty=true;}
       let approach=Infinity;
       if(this.autopilot&&this.route.length){const q=this.route[0],d=distance(p,q);approach=d;if(d<3||d<16&&(this.route.length===1||this.earth.clear(p,this.route[1],17))){this.route.shift();if(!this.route.length){this.autopilot=false;this.event('Arrived at '+(this.target?.name||'your waypoint')+'.');}}
         else {ix=dx(p.x,q.x)/d;iy=(q.y-p.y)/d;}}

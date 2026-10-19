@@ -35,6 +35,15 @@
       return{...step,progress:Math.min(progress,total),total,done:progress>=total};
     },
     charterStatus(){const c=this.charter();if(!c)return null;const steps=c.steps.map(s=>this.charterStep(s));return{...c,steps,ready:steps.every(s=>s.done),number:this.s.voyage.charters.length+1};},
+    charterGuidance(step=this.charterStatus()?.steps.find(s=>!s.done)){
+      if(!step)return{service:'voyage',label:'Complete charter',text:'Complete this charter at any port\u2019s voyage desk.'};
+      const worker=step.kind==='work'||step.kind==='stat'&&step.key==='fish'?'trawler':step.kind==='stat'&&step.key==='oil'?'oilrig':null;
+      if(worker&&!this.s.fleet.some(f=>f.type===worker)){
+        const spec=by(D.boats,worker);return{service:'fleet',focus:worker,label:worker==='trawler'?'Find a trawler':'Find an oil tender',text:'Hire '+(worker==='trawler'?'a fishing trawler':'an oil tender')+' from Fleet at a port. '+spec.cost.toLocaleString('en-US')+' coins'+(this.rank<spec.rank?', captain rank '+spec.rank:'')+'.'};
+      }
+      if(step.kind==='stat'&&step.key==='sugar'&&this.s.port==='nassau'&&this.mode==='port')return{service:'trade',focus:'sugar',label:'Sell sugar',text:step.text};
+      return{...step,label:step.service==='yard'?'Shipyard':step.target?'Chart':'Voyage',text:step.text};
+    },
     charterDelivery(key){const step=this.charter()?.steps.find(s=>s.kind==='delivery'&&s.key===key);if(!step||this.mode!=='port'||this.s.port!==step.port||this.s.voyage.deliveries.includes(key)||this.quantity(step.good)<step.qty)return false;this.removeCargo(step.good,step.qty);this.s.voyage.deliveries.push(key);this.log('Charter cargo delivered: '+step.qty+' '+by(D.goods,step.good).name.toLowerCase()+'.');this.change();return true;},
     claimCharter(){const c=this.charterStatus();if(!c?.ready||this.mode!=='port')return false;this.s.voyage.charters.push(c.id);this.s.coins+=c.reward;this.s.xp+=c.xp;this.log('Charter complete: '+c.title+'. '+c.reward+' coins paid.');this.event(c.id==='home'?'Home again. The campaign is complete. The ocean and your fleet are still yours.':'A new charter is waiting at the voyage desk.','rare');this.change();return true;},
     nearbySignal(){return this.signals.find(s=>!this.s.voyage.resolved[s.id]&&W.distance(this.player,s)<220)||null;},

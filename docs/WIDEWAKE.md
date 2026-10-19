@@ -126,6 +126,20 @@ import data.
   stop if the player leaves the area or the workboat sinks. Loaded cargo remains.
 - Each market shows purchase and sale prices, the fleet's holdings, local exports,
   demand, quantity controls, and executable trade totals on button hover.
+- Choosing a good's name opens trade comparisons on the chart. Owned cargo is
+  compared with selling at the current or last port; a new order subtracts its
+  actual purchase cost. Both use complete bulk quotes. The captain can explicitly
+  buy the reviewed order while still at anchor. Comparing or selecting a route
+  never spends coins. These are today's prices, not a guaranteed arrival price.
+- The chart previews a checked water route before departure. Nearby opportunities
+  use water-route distance, not distance across land. Estimates account for the
+  flagship's hull, engine and speed fittings; combat and turns can add time.
+  Taking the helm keeps the destination marked. Reopening the chart plans from
+  the actual new position. Production and encounter commands still cancel it.
+- Charter guidance checks the actual fleet before sending a captain to fish or
+  extract oil. Missing workboats link to their Fleet listing, including after a
+  loss. Site previews report matching workers and usable cargo space. Convoy
+  buttons identify guard assignments and distant boats that are catching up.
 - Disabled purchases show their price or rank requirement. Empty holds and a
   lack of workboats produce an explicit reason rather than silently doing nothing.
 - Audio is locally synthesized, with master, music, effects and sea/harbor levels.
@@ -198,16 +212,22 @@ node tools/widewake/test-core.cjs
 node tools/widewake/test-routes.cjs
 node tools/widewake/test-voyage.cjs
 node tools/widewake/test-feedback.cjs
+node tools/widewake/test-trade-planning.cjs
 node tools/widewake/test-playthrough.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-browser.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-front.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-audio.cjs
+NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-chart.cjs
 ```
 
-The front and audio harnesses also support `WIDEWAKE_TEST_ENGINE=webkit`.
+The front, chart and audio harnesses also support `WIDEWAKE_TEST_ENGINE=webkit`.
 Audio checks render actual samples offline, verify independent mute, finite
 levels and stereo position, then exercise input, inactivity and node cleanup in
 the running game. They do not substitute for listening on speakers/headphones.
+Chart checks cover review without departure, exact explicit purchases, stale
+route replies, worker failure and fallback, retained destinations, missing boats,
+guard status and touch layouts. Route previews and market comparisons are
+transient UI state, not new save fields.
 
 Browser tests must use `/Users/ethan/.local/bin/agent-chrome-for-testing` or an
 explicit testing-browser override. Never launch the owner's personal Chrome with

@@ -13,17 +13,17 @@
   <meta property="og:image" content="https://ethanwillingham.com/assets/widewake/cover.png">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="preload" href="assets/fonts/commit_mono_regular.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="widewake.css?v=0.4.0">
+  <link rel="stylesheet" href="widewake.css?v=0.5.0">
   <script defer src="js/demo-activity.js"></script>
-  <script defer src="js/widewake-data.js?v=0.4.0"></script>
-  <script defer src="js/widewake-world.js?v=0.4.0"></script>
-  <script defer src="js/widewake-voyage.js?v=0.4.0"></script>
-  <script defer src="js/widewake-core.js?v=0.4.0"></script>
-  <script defer src="js/widewake-render.js?v=0.4.0"></script>
-  <script defer src="js/widewake-convoy.js?v=0.4.0"></script>
-  <script defer src="js/widewake-front.js?v=0.4.0"></script>
-  <script defer src="js/widewake-audio.js?v=0.4.0"></script>
-  <script defer src="js/widewake.js?v=0.4.0"></script>
+  <script defer src="js/widewake-data.js?v=0.5.0"></script>
+  <script defer src="js/widewake-world.js?v=0.5.0"></script>
+  <script defer src="js/widewake-voyage.js?v=0.5.0"></script>
+  <script defer src="js/widewake-core.js?v=0.5.0"></script>
+  <script defer src="js/widewake-render.js?v=0.5.0"></script>
+  <script defer src="js/widewake-convoy.js?v=0.5.0"></script>
+  <script defer src="js/widewake-front.js?v=0.5.0"></script>
+  <script defer src="js/widewake-audio.js?v=0.5.0"></script>
+  <script defer src="js/widewake.js?v=0.5.0"></script>
 </head>
 <body class="ww-body at-title">
   <main id="game" class="ww-game" aria-label="Widewake game">
@@ -48,7 +48,7 @@
         </nav>
         <p id="title-storage" class="ww-title-storage" role="status"></p>
       </div>
-      <footer class="ww-title-footer"><span id="title-version">0.4.0 / Web edition</span><div><button id="title-fullscreen">Full screen</button><button id="title-credits">Credits</button></div></footer>
+      <footer class="ww-title-footer"><span id="title-version">0.5.0 / Web edition</span><div><button id="title-fullscreen">Full screen</button><button id="title-credits">Credits</button></div></footer>
     </section>
     <section id="harbor" class="ww-harbor" hidden aria-label="Harbor">
       <div class="ww-harbor-left">
@@ -79,7 +79,7 @@
     <dialog id="signal-dialog" class="ww-dialog ww-settings" aria-labelledby="signal-title"><div class="ww-dialog-head"><div><p class="ww-eyebrow">Signal at sea / paused</p><h2 id="signal-title"></h2></div><button data-close="signal-dialog">Leave</button></div><p id="signal-story" class="ww-letter"></p><div id="signal-choices"></div></dialog>
     <dialog id="ending-dialog" class="ww-dialog ww-ending" aria-labelledby="ending-title"><p class="ww-eyebrow">The long wake home / campaign complete</p><h2 id="ending-title">Havana, again.</h2><canvas id="ending-art" width="384" height="216" aria-label="Your flagship at the Havana quay"></canvas><p class="ww-letter">Mara has kept your old berth. She walks the length of the quay, counting the boats, then looks up at the flagship. “You can probably afford your own gunboat now.”</p><div id="ending-stats" class="ww-convoy-stats"></div><p class="ww-note">Your fleet, cargo and collections are saved. The ports are still trading. There is more ocean whenever you want it.</p><button class="ww-primary" data-close="ending-dialog">Keep sailing</button></dialog>
     <dialog id="convoy-dialog" class="ww-dialog ww-convoy-dialog" aria-labelledby="convoy-title"><div class="ww-dialog-head"><div><p id="convoy-caption" class="ww-eyebrow"></p><h2 id="convoy-title">Your convoy</h2></div><button data-close="convoy-dialog">Return <kbd>C</kbd></button></div><div class="ww-convoy-layout"><nav id="convoy-list" aria-label="Select a vessel"></nav><section id="convoy-detail" aria-label="Vessel manifest and orders"></section></div><p id="convoy-feedback" class="ww-note" role="status" aria-live="polite"></p></dialog>
-    <dialog id="chart-dialog" class="ww-dialog ww-chart-dialog" aria-labelledby="chart-title"><div class="ww-dialog-head"><div><p class="ww-eyebrow">The whole wide world</p><h2 id="chart-title">Your chart</h2></div><button data-close="chart-dialog" aria-label="Close chart">Close <kbd>M</kbd></button></div><div class="ww-chart-layout"><div class="ww-chart-map"><canvas id="world-chart" width="1000" height="500" aria-label="Map of Earth. Select a port, fishing ground, oil field, or admiral. The destination list provides the same controls."></canvas><p class="ww-map-legend"><span class="port-dot">Ports</span><span class="fish-dot">Fishing</span><span class="oil-dot">Oil</span><span class="boss-dot">Admirals</span><span class="signal-dot">Sea signals</span><span>Click open water to set a waypoint.</span></p></div><aside class="ww-chart-side"><label for="destination-list" class="ww-eyebrow">Choose a destination</label><select id="destination-list"></select><div id="destination-detail"></div><button id="plot-course" class="ww-primary">Plot course</button><p class="ww-chart-tip">Your helmsman follows a water route. Use WASD to take over at any time. Dock when you enter a port's harbor ring.</p></aside></div></dialog>
+    <dialog id="chart-dialog" class="ww-dialog ww-chart-dialog" aria-labelledby="chart-title"><div class="ww-dialog-head"><div><p class="ww-eyebrow">The whole wide world</p><h2 id="chart-title">Your chart</h2></div><button data-close="chart-dialog" aria-label="Close chart">Close <kbd>M</kbd></button></div><div class="ww-chart-layout"><div class="ww-chart-main"><div class="ww-chart-map"><canvas id="world-chart" width="1000" height="500" aria-label="Map of Earth. Select a port, fishing ground, oil field, or admiral. The destination list provides the same controls."></canvas><p class="ww-map-legend"><span class="port-dot">Ports</span><span class="fish-dot">Fishing</span><span class="oil-dot">Oil</span><span class="boss-dot">Admirals</span><span class="signal-dot">Sea signals</span><span>Click open water to set a waypoint.</span></p></div><details id="chart-trade" class="ww-chart-trade"><summary>Trade opportunities</summary><div class="ww-trade-filters"><label>Goods<select id="chart-good"></select></label><label>Cargo<select id="chart-order"><option value="aboard">Already aboard</option><option value="buy">Buy at this port</option></select></label><label>Units<select id="chart-quantity"><option value="1">1</option><option value="5">5</option><option value="10">10</option><option value="9999">All that fit</option></select></label><label>Find<select id="chart-sort"><option value="near">Nearby gains</option><option value="gain">Largest gain</option></select></label></div><div id="trade-prospects"></div><p id="trade-quote-note" class="ww-quote-note"></p></details></div><aside class="ww-chart-side"><label for="destination-list" class="ww-eyebrow">Choose a destination</label><select id="destination-list"></select><div id="destination-detail"></div><div id="route-preview" class="ww-route-preview" role="status" aria-live="polite"></div><button id="load-trade-order" class="ww-load-order" hidden></button><p id="trade-load-note" class="ww-quote-note" role="status" hidden></p><button id="plot-course" class="ww-primary">Plot course</button><p class="ww-chart-tip">Your helmsman follows a water route. Use WASD to take over at any time. Dock when you enter a port's harbor ring.</p></aside></div></dialog>
     <dialog id="settings-dialog" class="ww-dialog ww-settings" aria-labelledby="settings-title">
       <div class="ww-dialog-head"><div><p id="settings-caption" class="ww-eyebrow">A moment at anchor</p><h2 id="settings-title">Paused</h2></div><button id="settings-return" data-close="settings-dialog">Resume</button></div>
       <div class="ww-setting-row"><label for="sound-enabled">Sound</label><input type="checkbox" id="sound-enabled" checked></div>
@@ -95,8 +95,8 @@
       <button id="return-title" class="ww-return-title">Save &amp; return to title</button>
     </dialog>
     <dialog id="handbook-dialog" class="ww-dialog ww-handbook" aria-labelledby="handbook-title"><div class="ww-dialog-head"><div><p class="ww-eyebrow">The captain's handbook</p><h2 id="handbook-title">Make a living at sea</h2></div><button data-close="handbook-dialog">Return</button></div><div class="ww-handbook-grid">
-      <section><h3>The helm</h3><p class="ww-desktop-help"><kbd>WASD</kbd> or arrows steer. Hold <kbd>Shift</kbd> for full steam. Click and hold on the ocean to aim your guns. Scroll to zoom.</p><p class="ww-touch-help">Drag the steering pad to sail. Push it to the rim for full steam. Your guns aim and fire automatically. Hold a second finger on open water to aim and fire yourself. Use + and &minus; to zoom.</p><p>Open the world chart to choose a destination. The helmsman follows a water route. Steer to take over whenever you want.</p></section>
-      <section><h3>A profitable hold</h3><p>Your first 12 sacks of sugar are already aboard. Nassau pays well for them. Open Trade there and sell your cargo.</p><p>Buy local exports, then find a port that wants them. Order buttons show the total price. Workboat holds reserve space for fish or oil; change this in Convoy while docked.</p></section>
+      <section><h3>The helm</h3><p class="ww-desktop-help"><kbd>WASD</kbd> or arrows steer. Hold <kbd>Shift</kbd> for full steam. Click and hold on the ocean to aim your guns. Scroll to zoom.</p><p class="ww-touch-help">Drag the steering pad to sail. Push it to the rim for full steam. Your guns aim and fire automatically. Hold a second finger on open water to aim and fire yourself. Use + and &minus; to zoom.</p><p>Open the world chart to choose a destination. The helmsman follows a water route. Steer to take over whenever you want. Your destination stays marked; open the chart to set a fresh course from your new position.</p></section>
+      <section><h3>A profitable hold</h3><p>Your first 12 sacks of sugar are already aboard. Nassau pays well for them. Open Trade there and sell your cargo.</p><p>Buy local exports, then find a port that wants them. Order buttons show the total price. Choose a good’s name to compare buyers and sailing times on the chart. You can review and buy a new order there before departure. Quotes can change while you sail. Workboat holds reserve space for fish or oil; change this in Convoy while docked.</p></section>
       <section><h3>Keep the fleet afloat</h3><p>Guns and escorts fire automatically. Broadside fires every gun at once, then needs nine seconds to reload. Patch hulls repairs the fleet for 100 coins.</p><p>Use Convoy to assign guards to particular boats. Red hull bars need attention. A sunken support boat takes its cargo with it.</p></section>
       <section><h3>Work and discovery</h3><p>A trawler fishes; an oil tender pumps crude. Bring one to the matching site and deploy it. Protect it until the operation finishes.</p><p>Sea signals mark wrecks, traders and crews in trouble. The Voyage desk links your first trade to a journey around the world. Follow it at your own pace.</p></section>
     </div><p class="ww-handbook-keys ww-desktop-help"><kbd>M</kbd> Chart &nbsp; <kbd>C</kbd> Convoy &nbsp; <kbd>E</kbd> Dock / work / investigate &nbsp; <kbd>Space</kbd> Broadside &nbsp; <kbd>R</kbd> Repair &nbsp; <kbd>F</kbd> Formation &nbsp; <kbd>Esc</kbd> Pause</p></dialog>
