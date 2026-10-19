@@ -33,7 +33,7 @@
   const workGood=type=>type==='trawler'?'fish':type==='oilrig'?'oil':null;
   function fresh(){return {version:SAVE_VERSION,coins:780,xp:0,day:1,seconds:0,port:'havana',lastPort:'havana',hull:'cutter',hp:200,
     upgrades:{guns:0,hull:0,engine:0,hold:0},cargo:{sugar:12},fleet:[{uid:1,type:'escort',name:'Wren',hp:180,cargo:{}}],nextUid:2,
-    items:[],equipped:[],fishbook:{},visits:['havana'],bosses:[],claimed:[],deliveries:[],completedContracts:[],impact:{},
+    items:[],equipped:[],fishbook:{},landedFish:{},catchReport:null,workRecords:{},visits:['havana'],bosses:[],claimed:[],deliveries:[],completedContracts:[],impact:{},
     stats:{kills:0,profit:0,fish:0,oil:0,operations:0,sugar:0,miles:0,rare:0},
     settings:{cameraZoom:1,sound:true,volume:.22,music:.35,ambience:.5,effects:.8,autoFire:true,shake:true,controllerDeadzone:.18,controllerRumble:true,controllerLabels:'auto'},journal:[],lossHistory:[],tripLosses:[],recovery:null,workReport:null,location:null,production:null,formation:'screen',course:null,wake:[],voyage:V.fresh(),sea:null,randomState:null,enemySequence:1,atSea:false,seed:hash(Date.now())};}
   function validate(raw){
@@ -44,7 +44,7 @@
     const track=(points,max)=>{if(!Array.isArray(points)||points.length>max)throw new Error('Invalid navigation track.');return points.map(position);};
     for(const k of ['coins','xp','day','seconds','hp','nextUid','seed'])if(!finite(raw[k],0,1e10))throw new Error('The save has an invalid '+k+'.');
     if(!by(D.ports,raw.port)||!by(D.ports,raw.lastPort)||!by(D.hulls,raw.hull))throw new Error('The save has an unknown port or hull.');
-    const cargo=c=>{if(!c||Array.isArray(c)||typeof c!=='object')throw new Error('Invalid cargo manifest.');const out={};for(const [k,v]of Object.entries(c)){if(!by(D.goods,k)||!Number.isInteger(v)||v<0||v>100000)throw new Error('Invalid cargo manifest.');out[k]=v;}return out;};
+    const cargo=c=>{if(!c||Array.isArray(c)||typeof c!=='object')throw new Error('Invalid cargo manifest.');const out={};for(const [k,v]of Object.entries(c)){if(!by(D.cargoGoods,k)||!Number.isInteger(v)||v<0||v>100000)throw new Error('Invalid cargo manifest.');out[k]=v;}return out;};
     Object.assign(s,raw);s.cargo=cargo(raw.cargo);
     s.randomState=raw.randomState??null;s.enemySequence=raw.enemySequence??1;
     if(s.randomState!==null&&(!Number.isInteger(s.randomState)||!finite(s.randomState,0,0xffffffff))||!Number.isInteger(s.enemySequence)||!finite(s.enemySequence,1,1e12))throw new Error('Invalid simulation sequence.');
@@ -63,6 +63,7 @@
     s.equipped=s.equipped.filter(id=>s.items.includes(id)).slice(0,3);
     s.stats={...fresh().stats};for(const k of Object.keys(s.stats)){if(!finite(raw.stats?.[k],0,1e12))throw new Error('Invalid logbook.');s.stats[k]=raw.stats[k];}
     s.fishbook={};for(const f of D.fish)if(finite(raw.fishbook?.[f.id],1,1e7))s.fishbook[f.id]=Math.floor(raw.fishbook[f.id]);
+    s.landedFish=Work.validateFish(raw.landedFish===undefined?s.fishbook:raw.landedFish);s.catchReport=Work.validateCatchReport(raw.catchReport);s.workRecords=Work.validateRecords(raw.workRecords);
     s.settings={...fresh().settings};for(const k of ['sound','autoFire','shake','reduceMotion','controllerRumble'])if(typeof raw.settings?.[k]==='boolean')s.settings[k]=raw.settings[k];for(const k of ['volume','music','ambience','effects'])if(Number.isFinite(raw.settings?.[k]))s.settings[k]=clamp(raw.settings[k],0,k==='volume'?.5:1);
     if(Number.isFinite(raw.settings?.cameraZoom))s.settings.cameraZoom=clamp(raw.settings.cameraZoom,.2,8);
     if(Number.isFinite(raw.settings?.controllerDeadzone))s.settings.controllerDeadzone=clamp(raw.settings.controllerDeadzone,.1,.35);
@@ -134,14 +135,14 @@
     quantity(id){return this.cargoShips().reduce((n,f)=>n+(f.cargo[id]||0),0);}
     used(){return this.cargoShips().reduce((n,f)=>n+count(f.cargo),0);}
     capacity(){return this.cargoShips().reduce((n,f)=>n+f.capacity,0);}
-    cargoRoom(id,uid){const ship=this.cargoShips().find(f=>f.uid===uid);if(!ship)return 0;const data=this.s.fleet.find(f=>f.uid===uid),good=workGood(data?.type);return good&&data.reserve!==false&&good!==id?0:Math.max(0,ship.capacity-count(ship.cargo));}
+    cargoRoom(id,uid){const ship=this.cargoShips().find(f=>f.uid===uid);if(!ship)return 0;const data=this.s.fleet.find(f=>f.uid===uid),good=workGood(data?.type),resource=by(D.cargoGoods,id)?.resource||id;return good&&data.reserve!==false&&good!==resource?0:Math.max(0,ship.capacity-count(ship.cargo));}
     cargoSpace(id){return this.cargoShips().reduce((n,f)=>n+this.cargoRoom(id,f.uid),0);}
-    addCargo(id,qty,preferred){if(!by(D.goods,id)||!Number.isFinite(qty))return 0;let n=Math.min(Math.max(0,Math.floor(qty)),this.cargoSpace(id)),left=n;const ships=this.cargoShips();
+    addCargo(id,qty,preferred){if(!by(D.cargoGoods,id)||!Number.isFinite(qty))return 0;let n=Math.min(Math.max(0,Math.floor(qty)),this.cargoSpace(id)),left=n;const ships=this.cargoShips();
       const priority=f=>f.uid===preferred?0:this.s.fleet.find(b=>b.uid===f.uid)?.type==='freighter'?1:f.uid===0?2:3;ships.sort((a,b)=>priority(a)-priority(b));
       for(const f of ships){const q=Math.min(left,this.cargoRoom(id,f.uid));if(q)f.cargo[id]=(f.cargo[id]||0)+q;left-=q;if(!left)break;}return n-left;
     }
-    transferQuote(from,to,id,qty){if(this.mode!=='port'||from===to||!Number.isFinite(qty)||qty<=0||!by(D.goods,id))return 0;const source=this.cargoShips().find(f=>f.uid===from);return Math.max(0,Math.min(Math.floor(qty),source?.cargo[id]||0,this.cargoRoom(id,to)));}
-    transferCargo(from,to,id,qty){const n=this.transferQuote(from,to,id,qty);if(!n)return 0;const ships=this.cargoShips(),a=ships.find(f=>f.uid===from),b=ships.find(f=>f.uid===to);a.cargo[id]-=n;b.cargo[id]=(b.cargo[id]||0)+n;this.event('Moved '+n+' '+by(D.goods,id).name.toLowerCase()+' from '+a.name+' to '+b.name+'.','coin');this.change();return n;}
+    transferQuote(from,to,id,qty){if(this.mode!=='port'||from===to||!Number.isFinite(qty)||qty<=0||!by(D.cargoGoods,id))return 0;const source=this.cargoShips().find(f=>f.uid===from);return Math.max(0,Math.min(Math.floor(qty),source?.cargo[id]||0,this.cargoRoom(id,to)));}
+    transferCargo(from,to,id,qty){const n=this.transferQuote(from,to,id,qty);if(!n)return 0;const ships=this.cargoShips(),a=ships.find(f=>f.uid===from),b=ships.find(f=>f.uid===to);a.cargo[id]-=n;b.cargo[id]=(b.cargo[id]||0)+n;this.event('Moved '+n+' '+by(D.cargoGoods,id).name.toLowerCase()+' from '+a.name+' to '+b.name+'.','coin');this.change();return n;}
     reserveHold(uid,reserved){const f=this.s.fleet.find(f=>f.uid===uid);if(this.mode!=='port'||!f||!workGood(f.type)||typeof reserved!=='boolean')return false;f.reserve=reserved;this.uiDirty=true;return true;}
     canGuard(ship){return !!ship&&guardTypes.includes(ship.type);}
     guardOptions(){return [this.player,...this.fleet.filter(f=>f.hp>0&&cargoTypes.includes(f.type))];}
@@ -217,16 +218,16 @@
     nearestPort(){let best=null,d=Infinity;for(const p of this.ports){const pd=distance(this.player,p);if(pd<d){d=pd;best=p;}}return{port:best,distance:d};}
     harborStragglers(port=this.nearestPort().port){return this.fleet.filter(f=>f.hp>0&&distance(f,port)>HARBOR_APPROACH).sort((a,b)=>distance(b,port)-distance(a,port));}
     dock(){if(this.mode!=='sea')return false;const near=this.nearestPort();if(near.distance>190){this.event('Move within the harbor ring to dock.','warn');return false;}
-      const waiting=this.harborStragglers(near.port);if(waiting.length){this.event('Waiting for '+waiting[0].data.name+(waiting.length>1?' and '+(waiting.length-1)+' more':'')+' to reach the harbor approach. Open Convoy to find the distant boats.','warn');return false;}
+      const waiting=this.harborStragglers(near.port);if(waiting.length){this.event('Waiting for '+waiting[0].data.name+(waiting.length>1?' and '+(waiting.length-1)+' more':'')+' to reach harbor.','warn');return false;}
       this.finishProduction(false);this.finishEncounter(false);this.mode='port';this.s.atSea=false;this.s.port=this.s.lastPort=near.port.id;this.player.x=near.port.x;this.player.y=near.port.y;
       if(!this.s.visits.includes(near.port.id)){this.s.visits.push(near.port.id);this.s.xp+=85;this.s.coins+=100;this.log('First arrival in '+near.port.name+'. A 100 coin harbor grant.');}
-      this.s.hp=this.player.hp;for(const f of this.fleet)f.data.hp=f.hp;this.enemies.length=0;this.bullets.length=0;this.drops.length=0;this.hazards.length=0;this.route=[];this.autopilot=false;this.target=null;this.cue('dock');this.change();return true;
+      this.s.hp=this.player.hp;for(const f of this.fleet)f.data.hp=f.hp;this.enemies.length=0;this.bullets.length=0;this.drops.length=0;this.hazards.length=0;this.route=[];this.autopilot=false;this.target=null;this.cue('dock');this.landCatches();this.change();return true;
     }
     navigate(target){if(this.mode!=='sea')this.sail();return this.followCourse(target,this.earth.route(this.player,target));}
     followCourse(target,path){
       if(this.mode!=='sea'||!path?.length||!this.earth.clear(this.player,path[0],this.player.radius)){this.event('No safe water route found. Choose a nearby waypoint.','warn');return false;}
       this.route=path.map(p=>({...p}));this.target={...target};this.autopilot=true;this.navLeg=null;this.navProbeTime=0;this.navProbeDistance=0;this.navBlocked=0;
-      this.event('Course set for '+(target.name||'the marked water')+'. Steer to take the helm.');this.change();return true;
+      this.event('Course set for '+(target.name||'the marked water')+'.');this.change();return true;
     }
     takeHelm(){if(!this.autopilot)return false;this.autopilot=false;this.route=[];this.uiDirty=true;return true;}
     courseStatus(){
@@ -235,17 +236,18 @@
     }
     cancelCourse(){this.autopilot=false;this.route=[];this.target=null;this.uiDirty=true;}
     nearbySite(){return this.sites.find(s=>distance(this.player,s)<240)||null;}
-    startProduction(){if(this.mode!=='sea')return false;if(this.production){this.finishProduction(false);return true;}
+    startProduction(watches=1){if(this.mode!=='sea')return false;if(this.production){this.finishProduction(false);return true;}
       if(this.encounter){this.event('Finish or leave the current sea operation first.','warn');return false;}
       const site=this.nearbySite();if(!site){this.event('Find a fishing ground or oil field on the chart.','warn');return false;}
+      if(!this.workUnlocked(site,watches)){this.event('Complete the previous watch at this ground before taking the longer watch.','warn');return false;}
       const type=site.type==='fish'?'trawler':'oilrig',workers=this.fleet.filter(f=>f.type===type&&f.hp>0),boat=workers[0];
       if(!boat){this.event('This site needs a '+by(D.boats,type).name.toLowerCase()+'.','warn');return false;}
       if(this.cargoSpace(site.type)<4){this.event('Make room for '+site.type+' in the fleet cargo holds first.','warn');return false;}
-      this.cancelCourse();this.production=this.prepareWork(site,boat,workers);for(const f of workers){f.navRoute=[];f.detour=null;f.navTimer=0;}this.spawnTimer=5;this.log((workers.length===1?boat.data.name:workers.length+' workboats')+' moving onto '+site.name+'. Keep the raiders away.');return true;
+      this.cancelCourse();this.production=this.prepareWork(site,boat,workers,{watches});for(const f of workers){f.navRoute=[];f.detour=null;f.navTimer=0;}this.spawnTimer=5;this.log((workers.length===1?boat.data.name:workers.length+' workboats')+' moving onto '+site.name+'. '+this.production.plan.watchName+'. Keep the raiders away.');return true;
     }
     finishProduction(success,reason='recall'){if(!this.production)return;const p=this.production,paid=success?p.plan.pay:0;
-      this.s.workReport={site:p.site.id,day:this.s.day,result:success?'complete':reason,loaded:p.loaded,paid,sinceResume:p.loadedFromResume};
-      if(success){this.s.stats.operations++;this.s.voyage.worked[p.site.id]=(this.s.voyage.worked[p.site.id]||0)+1;this.s.coins+=paid;this.s.xp+=70+p.site.danger*30;this.log('Work complete at '+p.site.name+'. '+p.loaded+' '+p.site.type+' loaded'+(p.loadedFromResume?' since resuming':'')+'. '+paid+' coins paid.','complete');}
+      this.s.workReport={site:p.site.id,watches:p.plan.watches,returnPending:true,day:this.s.day,result:success?'complete':reason,loaded:p.loaded,paid,sinceResume:p.loadedFromResume};
+      if(success){this.s.stats.operations++;this.s.voyage.worked[p.site.id]=(this.s.voyage.worked[p.site.id]||0)+1;this.s.workRecords[p.site.id]=Math.max(this.workRecord(p.site),p.plan.watches);this.s.coins+=paid;this.s.xp+=(70+p.site.danger*30)*p.plan.watches;this.log(p.plan.watchName+' complete at '+p.site.name+'. '+p.loaded+' '+p.site.type+' loaded'+(p.loadedFromResume?' since resuming':'')+'. '+paid+' coins paid.','complete');}
       else this.log(({recall:'Workboats recalled.',distance:'Beyond the protection area. Workboats returning.',full:'The holds are full. Workboats returning.',lost:'All working boats were lost.'})[reason]+' '+(reason==='lost'?'Cargo on sunk boats is gone.':'Cargo already aboard stays with its boat.'),reason==='lost'||reason==='distance'?'warn':'info');
       for(const f of p.workers){f.navRoute=[];f.detour=null;f.navTimer=0;}this.production=null;this.s.production=null;this.spawnTimer=Math.max(8,this.spawnTimer);this.change();
     }
@@ -253,7 +255,7 @@
     burst(){if(this.mode!=='sea'||this.paused||this.burstCD>0)return false;this.burstCD=9;const p=this.player,n=16+this.hull().guns*4;
       for(let i=0;i<n;i++)this.shoot(p,i/n*TAU,42*(1+this.s.upgrades.guns*.2),false,{speed:420,life:1.6,splash:35,quiet:true});this.effect({x:p.x,y:p.y,t:.35,max:.35,size:70,type:'broadside'});this.event('All guns!','burst');return true;}
     needsRepair(){return this.player.hp<this.hpMax()||this.fleet.some(f=>f.hp<f.maxHp)||!!(this.encounter?.boat&&this.encounter.boat.hp<this.encounter.boat.maxHp);}
-    fieldRepair(){if(this.mode!=='sea'||this.paused||this.repairCD>0||this.s.coins<100||!this.needsRepair())return false;this.s.coins-=100;this.repairCD=25;this.player.hp=Math.min(this.hpMax(),this.player.hp+100);for(const f of [...this.fleet,...(this.encounter?.boat?[this.encounter.boat]:[])])f.hp=Math.min(f.maxHp,f.hp+55);this.event('Emergency repairs. 100 coins.','repair');for(const f of [this.player,...this.fleet])this.effect({x:f.x,y:f.y,t:.6,max:.6,size:35,type:'repair'});this.change();return true;}
+    fieldRepair(){if(this.mode!=='sea'||this.paused||this.repairCD>0||this.s.coins<100||!this.needsRepair())return false;this.s.coins-=100;this.repairCD=25;this.player.hp=Math.min(this.hpMax(),this.player.hp+100);for(const f of [...this.fleet,...(this.encounter?.boat?[this.encounter.boat]:[])])f.hp=Math.min(f.maxHp,f.hp+55);this.event('Repairs / 100c','repair');for(const f of [this.player,...this.fleet])this.effect({x:f.x,y:f.y,t:.6,max:.6,size:35,type:'repair'});this.change();return true;}
     shoot(from,angle,damage,hostile,opts={}){if(this.bullets.length>=3500)return;const speed=opts.speed||430;
       from.flash=.1;from.flashAngle=angle;
       if(!opts.quiet&&this.time-(from.lastShotCue??-1)>.08){from.lastShotCue=this.time;this.cue(hostile?'enemy-shot':from===this.player?'shot':'escort-shot',{x:from.x,y:from.y});}
@@ -300,7 +302,7 @@
     }
     hurt(ship,n,source){if(ship.hp<=0)return;ship.hp-=n*this.modifier('armor');ship.hit=.18;if(ship===this.player)this.s.hp=ship.hp;else ship.data.hp=ship.hp;
       this.effect({x:ship.x,y:ship.y,t:.24,max:.24,size:18,type:'hurt'});this.cue('hurt',{x:ship.x,y:ship.y,uid:ship.uid,flagship:ship===this.player,fromX:source?wrap(source.x-(source.vx||0)*.25):null,fromY:source?source.y-(source.vy||0)*.25:null});
-      if(ship.hp>0&&ship.hp<ship.maxHp*.3&&!ship.distress){ship.distress=true;this.event((ship===this.player?'Flagship':ship.data.name)+' is taking on water. Patch the hulls or pull back.','warn');}
+      if(ship.hp>0&&ship.hp<ship.maxHp*.3&&!ship.distress){ship.distress=true;this.event((ship===this.player?'Flagship':ship.data.name)+' / Hull critical','warn');}
       if(ship.temporary){if(ship.hp<=0){this.event(ship.data.name+' was lost.','warn');this.finishEncounter(false);}return;}
       if(ship.hp<=0&&ship!==this.player){
         const record={uid:ship.uid,type:ship.type,day:this.s.day,cause:source?.type?'ramming':source?.delay?'mortar':source?.hostile?'cannon':'damage',cargo:{...ship.data.cargo}};
@@ -311,7 +313,7 @@
       for(const f of this.cargoShips())for(const k of Object.keys(f.cargo)){const kept=Math.floor(f.cargo[k]*.5);if(f.cargo[k]>kept)cargo[k]=(cargo[k]||0)+f.cargo[k]-kept;f.cargo[k]=kept;}
       this.s.recovery={day:this.s.day,port:home.id,fee:Math.max(0,before-this.s.coins),grant:Math.max(0,this.s.coins-before),cargo,lost:this.s.lossHistory.filter(f=>this.s.tripLosses.includes(f.uid)).map(f=>({...f,cargo:{...f.cargo}})),unread:true};
       this.s.hp=this.hpMax();for(const f of this.s.fleet)f.hp=by(D.boats,f.type).hp;this.s.port=home.id;this.s.atSea=false;this.s.location=null;this.mode='port';this.enemies=[];this.bullets=[];this.drops=[];this.hazards=[];this.production=null;this.route=[];this.target=null;this.autopilot=false;this.setupFleet();
-      const r=this.s.recovery;this.log('Towed to '+home.name+'. '+(r.fee?r.fee+' coins paid for recovery.':r.grant?'Harbor relief added '+r.grant+' coins.':'No recovery fee.')+' '+count(cargo)+' cargo units taken by salvagers. Surviving hulls repaired.');this.change();}
+      const r=this.s.recovery;this.log('Towed to '+home.name+'. '+(r.fee?r.fee+' coins paid for recovery.':r.grant?'Harbor relief added '+r.grant+' coins.':'No recovery fee.')+' '+count(cargo)+' cargo units taken by salvagers. Surviving hulls repaired.');this.landCatches();this.change();}
     lostVesselName(record){return names[(record.uid-1)%names.length];}
     step(dt,input={}){
       if(this.mode!=='sea'||this.paused)return;dt=clamp(dt,0,.05);this.time+=dt;this.s.seconds+=dt;this.burstCD=Math.max(0,this.burstCD-dt);this.repairCD=Math.max(0,this.repairCD-dt);
@@ -335,7 +337,7 @@
         if(this.navLeg!==leg){this.navLeg=leg;this.navProbeTime=0;this.navProbeDistance=remaining;}
         this.navProbeTime+=dt;this.navBlocked=moved?Math.max(0,(this.navBlocked||0)-dt*2):(this.navBlocked||0)+dt;
         if(this.navProbeTime>1.5){if(remaining>40&&this.navProbeDistance-remaining<4)this.navBlocked=1;this.navProbeTime=0;this.navProbeDistance=remaining;}
-        if(this.navBlocked>.7){this.navBlocked=0;const route=this.earth.route(p,this.target);if(route)this.route=route;else{this.cancelCourse();this.event('The helmsman needs a little more sea room. Steer clear of the shore and set the course again.','warn');}}
+        if(this.navBlocked>.7){this.navBlocked=0;const route=this.earth.route(p,this.target);if(route)this.route=route;else{this.cancelCourse();this.event('Route blocked. Steer clear of the coast.','warn');}}
       }
       this.s.stats.miles+=Math.hypot(dx(oldX,p.x),p.y-oldY)/W.SCALE*60;
       if(distance(p,this.wake[this.wake.length-1])>35){this.wake.push({x:p.x,y:p.y});if(this.wake.length>1000)this.wake.shift();}
@@ -405,7 +407,7 @@
       }
       this.spawnTimer-=dt;
       if(this.production&&this.spawnTimer<=3&&!this.production.approach)this.workApproach();
-      if(this.spawnTimer<=0){if(!this.encounter&&(this.production||!safe)){if(this.production)this.workWave();else this.wave(2+this.danger*2+Math.floor(this.s.fleet.length*.7),p);}this.spawnTimer=this.production?this.production.plan.waves:24+this.random()*18;}
+      if(this.spawnTimer<=0){if(!this.encounter&&(this.production||!safe)){if(this.production)this.workWave();else this.wave(2+this.danger*2+Math.floor(this.s.fleet.length*.7),p);}this.spawnTimer=this.production?this.workInterval():24+this.random()*18;}
       this.stepVoyage(dt);
       for(const b of this.bossSites)if(!this.s.bosses.includes(b.id)&&distance(p,b)<450&&!this.enemies.some(e=>e.bossId===b.id)){
         const e=this.spawn('boss',b,true);if(e){Object.assign(e,{x:b.x,y:b.y,hp:b.hp,maxHp:b.hp,reward:b.reward,bossId:b.id,name:b.name});this.wave(12+b.rank*3,b);this.log(b.name+' is closing in.');}}
@@ -420,7 +422,7 @@
     snapshot(){
       this.snapshotVoyage();
       this.s.hp=this.player.hp;this.s.atSea=this.mode==='sea';this.s.location=this.s.atSea?{x:this.player.x,y:this.player.y,angle:this.player.angle}:null;
-      this.s.production=this.production?{site:this.production.site.id,progress:this.production.progress,wave:this.production.wave,uid:this.production.boat.uid,uids:this.production.workers.map(f=>f.uid),planDay:this.production.plan.day,loaded:this.production.loaded,loadedFromResume:this.production.loadedFromResume,timer:clamp(this.spawnTimer,0,60),approach:this.production.approach,drift:this.production.drift}:null;
+      this.s.production=this.production?{site:this.production.site.id,watches:this.production.plan.watches,progress:this.production.progress,wave:this.production.wave,uid:this.production.boat.uid,uids:this.production.workers.map(f=>f.uid),planDay:this.production.plan.day,loaded:this.production.loaded,loadedFromResume:this.production.loadedFromResume,timer:clamp(this.spawnTimer,0,60),approach:this.production.approach,drift:this.production.drift}:null;
       this.s.formation=this.formation;this.s.cooldowns={burst:this.burstCD,repair:this.repairCD};this.s.wake=this.mode==='sea'?this.wake:[];
       this.s.course=this.mode==='sea'&&this.target?{route:this.route,target:this.target,autopilot:this.autopilot}:null;
       for(const f of this.fleet){f.data.hp=f.hp;f.data.location=this.mode==='sea'?{x:f.x,y:f.y,angle:f.angle}:null;f.data.wake=this.mode==='sea'&&cargoTypes.includes(f.type)?f.wake:[];}

@@ -24,6 +24,27 @@ purchased game. Keep the title, continue/new voyage, settings, pause and return
 flows inside the game. No blog heading, portfolio navigation, article introduction
 or surrounding page furniture. A discreet site exit may live in Credits.
 
+The owner's later 2026-10-19 correction explicitly rejects the portfolio palette,
+editorial typography, persistent prose and crowded HUD. This overrides the site
+palette rule for Widewake only. Use Widewake's own navy, blue water, cyan action,
+amber currency and coral danger palette. Open ports as scenes with service
+buttons. Show a service or selected item on demand. Labels describe actions;
+explanations belong in optional help, stories or details. Do not restore a
+persistent full-fleet manifest, control paragraph, duplicated pause controls or
+blog-like headings. Preserve important prices, risks, damage and accessibility
+while reducing noise. The user asked to make this correction, then resume the
+whole-game production passes.
+
+Interface references reviewed for this correction:
+[Balatro's official shop screenshot](https://www.playbalatro.com/press-kit/Screenshots/Balatro_ui_3840x2160_2.png),
+[DREDGE's official media](https://www.dredge.game/), and
+[Black Salt Games' mobile UI talk](https://developer.apple.com/videos/play/meet-with-apple/247/).
+The adopted principles are persistent essentials, a quiet playfield, clear
+selection, contextual detail, tappable actions and layouts designed for thumb
+reach. Widewake uses original code-drawn art and controls; reference game assets
+are not included. Tradewinds, It's About Pirates and BELTFED remain the gameplay
+references.
+
 On 2026-10-19 the owner explicitly said the first public build was far from the
 full game requested and was disappointing. Treat that build as a foundation,
 not fulfillment. Prioritize a connected experience, thoughtful pacing, distinct
@@ -56,9 +77,10 @@ distinct interim backgrounds while that art pass is deferred.
 
 ## Files and ownership
 
-- `widewake.html`, `widewake.css`: full-window game shell, using the site's
-  self-hosted fonts and warm green interface colors. Its standalone stylesheet
-  deliberately does not import the portfolio stylesheet or blog component kit.
+- `widewake.html`, `widewake.css`: full-window game shell with its own palette,
+  scene-led harbor, focused goods picker and peripheral sea HUD. It uses
+  self-hosted Segoe UI and Commit Mono, without the portfolio stylesheet or
+  editorial Century Supra typography.
 - `js/widewake-data.js`: ports, prices, boats, hulls, fittings, fish, admirals.
 - `js/widewake-world.js`: Earth polygons, collision, route finding, spatial hash.
 - `js/widewake-core.js`: pure JavaScript campaign and fixed-step simulation.
@@ -70,8 +92,8 @@ distinct interim backgrounds while that art pass is deferred.
   continuation of motion, attacks, salvage and the simulation sequence.
 - `js/widewake-render.js`: small canvas sprites, sea rendering, chart, port scenes.
 - `js/widewake-convoy.js`: vessel selection, cargo transfers, hold reservations,
-  guard orders, hull/cargo sorting, port repair, and paged fleet buttons that
-  retain keyboard focus.
+  guard orders, hull/cargo sorting and port repair. Full vessel manifests live
+  in the fleet desk, reached from a single sailing control with a damage alert.
 - `js/widewake-front.js`: independent pixel-art title scene and wordmark. This
   scene never steps the campaign. It uses the shared activity scheduler and
   honors the reduced-animation setting.
@@ -170,10 +192,10 @@ import data.
 - Cargo pickups remain afloat when no suitable hold has room. Repair crates
   remain until a nearby vessel needs them, then help the most damaged hull by
   percentage. Receipts name the actual repaired ship and loaded cargo. First
-  species discoveries show one card with the naturalist's actual payment.
+  species discoveries show one card naming the carrier and value payable at port.
 - Chart, pause, blur, and hidden-tab states freeze simulation and clear held input.
-  Returning to the window does not silently resume a battle. Quantity controls
-  sit above the goods list; keyboard focus survives a completed trade.
+  Returning to the window does not silently resume a battle. The goods picker opens one order with unit prices, quantity and exact buy/sell
+  totals. Receipts remain beside that order; keyboard focus survives a trade.
 - Touch has steering and combat buttons; the desktop layout remains usable on
   landscape touch devices. Portrait remains a supported compact layout for this
   game; Sluice's separate landscape policy does not automatically apply here.
@@ -224,6 +246,28 @@ One notification remains visible at a time, with discoveries taking priority.
 The approach warning belongs to the watch rather than duplicating a toast.
 Active ground labels yield to named workers so the words do not overlap.
 
+### Extended watches and carried specimens, v0.14
+
+A standard watch unlocks a double watch at that ground; completing the double
+unlocks a triple. Only completed watches count. All eighteen grounds retain the
+standard early-game rhythm. Later cycles multiply each haul by 1.5 and 2, rounded
+per load. Double totals per boat are 160/180 fish or 200/240 oil; triple totals
+are 280/324 fish or 360/432 oil for the small/frequent and deep/pressure rhythms.
+Completion bonuses multiply the standard amount by 2.5 or 5. The later raids
+contain 3 or 7 times the original pack, with shorter intervals and two announced
+clear-water approaches. Warnings reset at the cycle boundary before a new wave.
+The watch board shows duration, load, bonus, threat scale and any cargo shortage.
+
+Rare fish replace one ordinary fish in the hold receiving that haul. They are
+physical cargo, transferable at port, lost with their carrier and paid exactly
+once on docking at any port. Discovery remains in the species record after a
+loss. Older saves retain their already-paid catches as landed records; this
+migration never pays again. Recovery halves the remaining cargo before paying
+for surviving specimens. A port receipt records the actual historical payment,
+so later catalog price changes do not invalidate it. Work records, phases,
+announced approaches and carried catches survive active-sea saves.
+
+
 ## Coastal convoy navigation, v0.13
 
 Companions follow clear formation legs with their actual 13-unit hull clearance.
@@ -273,10 +317,9 @@ bars and the fleet summary remain available when there is no room for a name.
 
 The small chart shows the nearby coast, friendly vessels, hostile contacts and
 the flagship's heading. Opening it still presents the complete Earth chart.
-The fleet strip has reachable previous/next controls when it overflows. Convoy
-opens on the weakest critical hull, then a boat delaying harbor arrival, then
-the flagship; an
-explicit vessel selection takes precedence. Its desk sorts by fleet order, hull
+The sea shows a fleet count and a critical-hull alert. Fleet opens on the
+weakest critical hull, then a boat delaying harbor arrival, then the flagship;
+an explicit vessel selection takes precedence. Its desk sorts by fleet order, hull
 condition or cargo without changing formation order. At port it also quotes and
 performs the same whole-fleet repair offered by Fleet services.
 
@@ -458,6 +501,12 @@ node tools/widewake/test-save-store.cjs
 node tools/widewake/test-reload-campaigns.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-browser.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-front.cjs
+NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-interface.cjs
+node tools/widewake/test-long-work.cjs
+NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-long-work-browser.cjs
+# Generate an earned checkpoint with test-playthrough before this extended review:
+# WIDEWAKE_CAPTAIN_OUTPUT=/tmp/widewake-earned node tools/widewake/test-playthrough.cjs
+node tools/widewake/test-working-voyages.cjs /tmp/widewake-earned/eastern-charter-earned.json
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-work-browser.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-audio.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-chart.cjs
@@ -469,7 +518,7 @@ NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-sea-browser.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-save-tabs.cjs
 ```
 
-The front, chart, helm, work, controller, fleet-view, sea and audio harnesses also support
+The front, interface, chart, helm, work, long-work, controller, fleet-view, sea and audio browser harnesses support
 `WIDEWAKE_TEST_ENGINE=webkit`.
 Audio checks render actual samples offline, verify independent mute, finite
 levels and stereo position, then exercise input, inactivity and node cleanup in
@@ -483,7 +532,7 @@ protected work and cross-window handoff. Both engines cover keyboard, button
 and left-stick-click control, failed workers, invalid routes and small touch
 layouts, including the pending state.
 
-Fleet-view checks exercise a 24-vessel fleet, strip paging, urgent selection,
+Fleet-view checks exercise a 24-vessel fleet, urgent selection,
 sorting, exact port repair, clear labels and edge markers, fitted camera, aim
 coordinates and zoom persistence. `WIDEWAKE_SOAK_SECONDS=300` adds a five-minute
 live desktop battle with 1,200 enemies and 23 companions. Its raised-health

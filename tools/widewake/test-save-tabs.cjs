@@ -7,10 +7,10 @@ const server=http.createServer((req,res)=>{const file=path.resolve(root,'.'+deco
 let browser,base;const errors=[],check=name=>console.log('PASS '+name),SAVE='widewake-save-v2',BACKUP='widewake-save-backup-v2';
 async function focus(p){await p.bringToFront();await p.evaluate(()=>window.dispatchEvent(new Event('focus')));}
 async function boot(context){const p=await context.newPage();p.on('pageerror',e=>errors.push(e.message));await p.goto(base+'/widewake.html?test');await p.waitForFunction(()=>window.__widewake);await focus(p);return p;}
-async function fresh(p){await focus(p);await p.click('#start-voyage');await p.click('[data-close="departure-dialog"]');}
+async function fresh(p){await focus(p);await p.click('#start-voyage');await p.click('[data-close="departure-dialog"]');await p.click('[data-tab="trade"]');}
 const stored=p=>p.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE);
 const own=p=>p.evaluate(()=>__widewake.session.writable);
-async function claim(p){await focus(p);await p.click('#continue-voyage');await p.waitForFunction(()=>__widewake.session.owner&&!__widewake.atTitle);}
+async function claim(p){await focus(p);await p.click('#continue-voyage');await p.waitForFunction(()=>__widewake.session.owner&&!__widewake.atTitle);if(await p.evaluate(()=>__widewake.game.mode==='port'))await p.click('[data-tab="trade"]');}
 (async()=>{try{
   await new Promise(r=>server.listen(0,'127.0.0.1',r));base='http://127.0.0.1:'+server.address().port;
   browser=process.env.WIDEWAKE_TEST_ENGINE==='webkit'?await webkit.launch({headless:true}):await chromium.launch({headless:true,executablePath:process.env.WIDEWAKE_TEST_BROWSER||'/Users/ethan/.local/bin/agent-chrome-for-testing'});
@@ -28,7 +28,7 @@ async function claim(p){await focus(p);await p.click('#continue-voyage');await p
     let game;if(kind==='battle')game=boss('iron-king');else{game=make();place(game,game.sites.find(s=>s.type===(kind==='fishing'?'fish':'oil')));assert.ok(game.startProduction());for(let i=0;i<240;i++)game.step(1/60);}
     const fixture=game.snapshot();fixture.settings.sound=false;
     const c=await browser.newContext(),a=await boot(c);await a.evaluate(state=>{__widewake.setState(state);__widewake.game.paused=true;__widewake.save();},fixture);const expected=await stored(a),b=await boot(c);
-    await claim(b);assert.deepEqual(await stored(b),expected,kind+' first handoff save retains the entire sea');assert.equal(await own(a),false);await b.click('#sea-pause');await b.click('#return-title');const paused=await b.evaluate(()=>__widewake.game.snapshot());await a.goto('about:blank');assert.deepEqual(await stored(b),paused);await c.close();check(kind+' handoff preserves attackers, momentum, loot, work and campaign');
+    await claim(b);assert.deepEqual(await stored(b),expected,kind+' first handoff save retains the entire sea');assert.equal(await own(a),false);await b.click('#settings-open');await b.click('#return-title');const paused=await b.evaluate(()=>__widewake.game.snapshot());await a.goto('about:blank');assert.deepEqual(await stored(b),paused);await c.close();check(kind+' handoff preserves attackers, momentum, loot, work and campaign');
   }
   {
     const c=await browser.newContext(),a=await boot(c);await fresh(a);const b=await boot(c);await focus(a);

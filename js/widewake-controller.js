@@ -39,9 +39,11 @@
     focus(el){if(!el)return;el.focus({preventScroll:true});if(this.options.using())el.classList.add('ww-pad-focus');el.scrollIntoView({block:'nearest',inline:'nearest'});}
     move(scope,dir){
       let list=this.buttons(scope);const current=document.activeElement,vertical=dir==='up'||dir==='down',panel=this.options.context().port?scope.querySelector('#port-panel'):null;
-      if(panel&&current.closest('.ww-tabs')&&dir==='down'){this.focus(this.buttons(panel)[0]);return;}
+      if(panel&&!panel.hidden&&current.closest('.ww-tabs')&&dir==='down'){this.focus(this.buttons(panel)[0]);return;}
       const inPanel=panel?.contains(current)&&vertical;if(inPanel)list=this.buttons(panel);
       if(!list.includes(current)){this.focus(list[0]);return;}
+      // Service cards are a reading-order list; wide headings must not skip their actions.
+      if(inPanel&&panel.dataset.service!=='trade'){const i=list.indexOf(current),next=list[i+(dir==='up'?-1:1)];if(next)this.focus(next);else if(dir==='up')this.focus(scope.querySelector('[data-tab][aria-pressed=true]'));return;}
       const a=current.getBoundingClientRect(),ax=a.x+a.width/2,ay=a.y+a.height/2,sign=dir==='up'||dir==='left'?-1:1;
       const candidates=list.filter(e=>e!==current).map(el=>{const b=el.getBoundingClientRect(),bx=b.x+b.width/2,by=b.y+b.height/2,along=(vertical?by-ay:bx-ax)*sign,cross=Math.abs(vertical?bx-ax:by-ay),overlap=vertical?b.right>a.left+2&&b.left<a.right-2:b.bottom>a.top+2&&b.top<a.bottom-2;return{el,along,overlap,score:along+cross*2};}).filter(q=>q.along>3).sort((a,b)=>a.score-b.score);
       const next=candidates.find(q=>q.overlap)||candidates[0];

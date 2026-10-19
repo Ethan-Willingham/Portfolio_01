@@ -42,19 +42,19 @@
   ];
   const ports=rows.map(r=>Object.fromEntries(['id','name','country','lon','lat','cheap','wanted','danger','sheet','cell','detail'].map((k,i)=>[k,r[i]])));
   const hulls=[
-    { id:'cutter',name:'Cutter',cost:0,rank:1,hp:200,speed:150,hold:40,guns:1,description:'A quick little boat. Enough room to start something.' },
-    { id:'brig',name:'Brig',cost:2800,rank:2,hp:380,speed:165,hold:70,guns:2,description:'A second cannon and room for a proper cargo.' },
-    { id:'corvette',name:'Corvette',cost:7500,rank:4,hp:650,speed:180,hold:100,guns:3,description:'Fast enough to choose a fight. Strong enough to stay.' },
-    { id:'frigate',name:'Frigate',cost:18000,rank:6,hp:1100,speed:175,hold:150,guns:4,description:'Four guns, a deep hold, and a place at the front of a fleet.' },
-    { id:'leviathan',name:'Leviathan',cost:42000,rank:8,hp:1900,speed:170,hold:230,guns:6,description:'A floating fortress for the far side of the ocean.' }
+    { id:'cutter',name:'Cutter',cost:0,rank:1,hp:200,speed:150,hold:40,guns:1,description:'Light and nimble.' },
+    { id:'brig',name:'Brig',cost:2800,rank:2,hp:380,speed:165,hold:70,guns:2,description:'Twin guns. Larger hold.' },
+    { id:'corvette',name:'Corvette',cost:7500,rank:4,hp:650,speed:180,hold:100,guns:3,description:'Fast attack ship.' },
+    { id:'frigate',name:'Frigate',cost:18000,rank:6,hp:1100,speed:175,hold:150,guns:4,description:'Heavy guns and cargo.' },
+    { id:'leviathan',name:'Leviathan',cost:42000,rank:8,hp:1900,speed:170,hold:230,guns:6,description:'Armored flagship.' }
   ];
   const boats=[
-    {id:'escort',name:'Gunboat',cost:950,rank:1,hp:180,hold:12,speed:190,damage:19,rate:.85,range:450,description:'Follows your flagship and fires at nearby threats.'},
-    {id:'trawler',name:'Fishing trawler',cost:750,rank:1,hp:320,hold:60,speed:165,damage:8,rate:1.5,range:270,description:'Works marked fishing grounds while you hold off raiders.'},
-    {id:'freighter',name:'Cargo lighter',cost:700,rank:1,hp:260,hold:110,speed:155,damage:9,rate:1.6,range:300,description:'A generous hold and a little stern gun.'},
-    {id:'oilrig',name:'Oil tender',cost:2200,rank:3,hp:480,hold:100,speed:155,damage:10,rate:1.4,range:320,description:'Extracts crude from offshore fields. Needs a patient escort.'},
-    {id:'destroyer',name:'Destroyer',cost:4800,rank:4,hp:480,hold:24,speed:190,damage:45,rate:.65,range:600,description:'Twin long-range guns keep a wide circle clear.'},
-    {id:'repair',name:'Repair launch',cost:3400,rank:3,hp:240,hold:35,speed:180,damage:10,rate:1.2,range:320,description:'Repairs nearby friendly hulls during a voyage.'}
+    {id:'escort',name:'Gunboat',cost:950,rank:1,hp:180,hold:12,speed:190,damage:19,rate:.85,range:450,description:'Automatic escort.'},
+    {id:'trawler',name:'Fishing trawler',cost:750,rank:1,hp:320,hold:60,speed:165,damage:8,rate:1.5,range:270,description:'Produces fish. Needs protection.'},
+    {id:'freighter',name:'Cargo lighter',cost:700,rank:1,hp:260,hold:110,speed:155,damage:9,rate:1.6,range:300,description:'Cargo transport. Light armament.'},
+    {id:'oilrig',name:'Oil tender',cost:2200,rank:3,hp:480,hold:100,speed:155,damage:10,rate:1.4,range:320,description:'Produces oil. Needs protection.'},
+    {id:'destroyer',name:'Destroyer',cost:4800,rank:4,hp:480,hold:24,speed:190,damage:45,rate:.65,range:600,description:'Heavy escort. Long range.'},
+    {id:'repair',name:'Repair launch',cost:3400,rank:3,hp:240,hold:35,speed:180,damage:10,rate:1.2,range:320,description:'Repairs nearby boats.'}
   ];
   const relics=[
     {id:'brass',name:'Brass fire control',rarity:'Uncommon',description:'Cannon reloads 18% faster.',stat:'rate',value:.82},
@@ -102,10 +102,10 @@
     {id:'last-light',name:'Last Light',lon:-164,lat:-12,rank:8,hp:12000,reward:18000,relic:'glass',description:'The largest pirate fleet in the Pacific.'}
   ];
   const upgrades=[
-    {id:'guns',name:'Cannons',base:400,description:'+20% cannon damage per level.'},
-    {id:'hull',name:'Hull bracing',base:300,description:'+70 flagship hull per level.'},
-    {id:'engine',name:'Engine',base:350,description:'+8% speed for the whole fleet per level.'},
-    {id:'hold',name:'Cargo racks',base:220,description:'+16 cargo capacity on your flagship per level.'}
+    {id:'guns',name:'Cannons',base:400,description:'+20% cannon damage'},
+    {id:'hull',name:'Hull bracing',base:300,description:'+70 flagship hull'},
+    {id:'engine',name:'Engine',base:350,description:'+8% fleet speed'},
+    {id:'hold',name:'Cargo racks',base:220,description:'+16 flagship cargo'}
   ];
   const signals=[
     {id:'calypso',name:'The Calypso wreck',kind:'wreck',lon:-74,lat:28,danger:1,reward:420,relic:'brass',text:'A yellow funnel sticks out of the water. The captain’s safe is still below deck. Raiders have been picking over the floating cargo.',quickGood:'wood',quickQty:8},
@@ -153,7 +153,10 @@
       {kind:'return',key:'havana',text:'Bring the fleet home to Havana.',target:'havana'}]}
   ];
   const ranks=[0,100,450,1300,2800,5000,8000,12000,18000,28000];
-  const data={version:'0.13.0',goods,ports,hulls,boats,relics,fish,sites,bosses,upgrades,signals,charters,ranks};
+  // Specimens share physical holds with trade goods, but are never market stock
+  // or random salvage. Keep the commodity catalog and saved drop indices stable.
+  const cargoGoods=[...goods,...fish.map(f=>({id:'catch-'+f.id,name:f.name,color:f.color,icon:'fish',specimen:f.id,resource:'fish',value:f.value}))];
+  const data={version:'0.14.0',goods,cargoGoods,ports,hulls,boats,relics,fish,sites,bosses,upgrades,signals,charters,ranks};
   if(typeof module!=='undefined'&&module.exports)module.exports=data;
   root.WidewakeData=data;
 })(typeof globalThis!=='undefined'?globalThis:this);

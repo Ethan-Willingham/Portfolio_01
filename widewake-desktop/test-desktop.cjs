@@ -31,7 +31,7 @@ async function close(){if(app){const owned=app;app=null;await owned.close();}}
   await p.screenshot({path:path.join(out,'desktop-title.png')});
   check('offline title, single profile owner, isolated renderer, bundled-resource boundary and full screen');
 
-  await app.evaluate(({app,BrowserWindow})=>{app.focus({steal:true});BrowserWindow.getAllWindows()[0].focus();});await p.click('#start-voyage');await p.click('[data-close="departure-dialog"]');await p.click('[data-action="buy"][data-id="sugar"]');
+  await app.evaluate(({app,BrowserWindow})=>{app.focus({steal:true});BrowserWindow.getAllWindows()[0].focus();});await p.click('#start-voyage');await p.click('[data-close="departure-dialog"]');await p.click('[data-tab="trade"]');await p.click('[data-action="buy"][data-id="sugar"]');
   const initial=await p.evaluate(()=>({coins:__widewake.game.s.coins,sugar:__widewake.game.quantity('sugar')}));
   assert.equal(initial.sugar,17);await p.click('#settings-open');
   const exported=path.join(out,'exported-fleet.json');
@@ -54,20 +54,20 @@ async function close(){if(app){const owned=app;app=null;await owned.close();}}
   await app.evaluate(({powerMonitor})=>{powerMonitor.emit('suspend');});await p.waitForFunction(()=>__widewake.game.paused,null,{polling:100});assert.equal(await p.evaluate(()=>__widewake.activity.active()),false);
   await app.evaluate(({powerMonitor})=>{powerMonitor.emit('resume');});assert.equal(await p.evaluate(()=>__widewake.game.paused),true);await p.click('#settings-return');
   await p.evaluate(()=>{const g=__widewake.game,port=g.ports.find(p=>p.id==='nassau');for(let i=0;i<180*60&&WidewakeWorld.distance(g.player,port)>160;i++)g.step(1/60,{});__widewake.render();});await p.click('#context-action');
-  assert.equal(await p.evaluate(()=>__widewake.game.s.port),'nassau');for(let i=0;i<3;i++)await p.click('[data-action="sell"][data-id="sugar"]');
+  assert.equal(await p.evaluate(()=>__widewake.game.s.port),'nassau');await p.click('[data-tab="trade"]');for(let i=0;i<3;i++)await p.click('[data-action="sell"][data-id="sugar"]');
   await p.click('[data-tab="fleet"]');await p.click('[data-action="boat"][data-id="trawler"]');assert.ok(await p.evaluate(()=>__widewake.game.fleet.some(f=>f.type==='trawler')));
   await p.click('#harbor-chart');await p.selectOption('#destination-list','bahama-bank');await p.waitForFunction(()=>!document.getElementById('plot-course').disabled);await p.click('#plot-course');
   await p.evaluate(()=>{const g=__widewake.game,site=g.sites.find(s=>s.id==='bahama-bank');for(let i=0;i<180*60&&WidewakeWorld.distance(g.player,site)>120;i++)g.step(1/60,{});__widewake.render();});await p.click('#context-action');
-  assert.equal(await p.evaluate(()=>__widewake.game.production?.site.id),'bahama-bank');await p.evaluate(()=>__widewake.step(16));
+  await p.click('[data-action="work-start"][data-watches="1"]');assert.equal(await p.evaluate(()=>__widewake.game.production?.site.id),'bahama-bank');await p.evaluate(()=>__widewake.step(16));
   await p.screenshot({path:path.join(out,'desktop-working-watch.png')});
-  const before=await p.evaluate(()=>{__widewake.game.paused=true;return{coins:__widewake.game.s.coins,fish:__widewake.game.quantity('fish'),seconds:__widewake.game.s.seconds,progress:__widewake.game.production.progress};});assert.ok(before.fish>0);
+  const before=await p.evaluate(()=>{__widewake.game.paused=true;return{coins:__widewake.game.s.coins,fish:__widewake.game.quantity('fish'),catches:__widewake.game.catchesAboard(),seconds:__widewake.game.s.seconds,progress:__widewake.game.production.progress};});assert.ok(before.fish>0);assert.ok(before.catches.length>0);
   // Close the OS window, without the pause menu or a scheduled automatic save.
   const closed=app.waitForEvent('close');await app.evaluate(({BrowserWindow})=>{BrowserWindow.getAllWindows()[0].close();});await closed;app=null;
-  p=await launch();assert.ok(await p.locator('#continue-voyage').isVisible());const resumed=await p.evaluate(()=>({coins:__widewake.game.s.coins,fish:__widewake.game.quantity('fish'),seconds:__widewake.game.s.seconds,progress:__widewake.game.production.progress}));assert.deepEqual(resumed,before);
+  p=await launch();assert.ok(await p.locator('#continue-voyage').isVisible());const resumed=await p.evaluate(()=>({coins:__widewake.game.s.coins,fish:__widewake.game.quantity('fish'),catches:__widewake.game.catchesAboard(),seconds:__widewake.game.s.seconds,progress:__widewake.game.production.progress}));assert.deepEqual(resumed,before);
   await p.click('#continue-voyage');assert.equal(await p.evaluate(()=>__widewake.game.production.site.id),'bahama-bank');
   check('earned first trade, purchased trawler, offline route worker, protected fishing and exact OS-close continuation');
 
-  await p.click('#sea-pause');const earnedWatch=await p.evaluate(()=>__widewake.game.snapshot());
+  await p.click('#settings-open');const earnedWatch=await p.evaluate(()=>__widewake.game.snapshot());
   for(const [name,fixture]of [['admiral',boss('iron-king').snapshot()],['dense-battle',dense().snapshot()]]){
     const file=path.join(out,name+'-import.json');fixture.settings.sound=false;await fs.writeFile(file,JSON.stringify(fixture));
     await app.evaluate(({dialog},file)=>{dialog.showOpenDialog=async()=>({canceled:false,filePaths:[file]});},file);await p.click('#import-save');await p.waitForFunction(()=>document.getElementById('save-message').textContent.startsWith('Fleet restored'));
@@ -83,7 +83,7 @@ async function close(){if(app){const owned=app;app=null;await owned.close();}}
 
   await app.evaluate(({dialog})=>{globalThis.closeWarnings=[];dialog.showMessageBox=async(_win,options)=>{closeWarnings.push(options.title);return{response:0};};});
   await p.evaluate(()=>{window.originalSetItem=Storage.prototype.setItem;Storage.prototype.setItem=()=>{throw new DOMException('Unavailable','QuotaExceededError');};});
-  await p.click('#sea-pause');await p.click('#quit-game');
+  await p.click('#settings-open');await p.click('#quit-game');
   await p.waitForFunction(()=>document.getElementById('save-status').textContent.includes('Export'));
   await new Promise(r=>setTimeout(r,150));assert.deepEqual(await app.evaluate(()=>closeWarnings),['The fleet could not be saved']);assert.ok(await p.locator('#settings-dialog').isVisible());assert.equal(await p.evaluate(()=>__widewake.game.paused),true);
   await app.evaluate(({dialog},file)=>{dialog.showSaveDialog=async()=>({canceled:false,filePath:file});},path.join(out,'emergency-export.json'));await p.click('#export-save');await p.waitForFunction(()=>document.getElementById('save-message').textContent.startsWith('Saved emergency-export.json'));

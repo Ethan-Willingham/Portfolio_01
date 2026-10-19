@@ -29,20 +29,20 @@ The exact owner constraints and source links are in `WIDEWAKE.md`.
 
 | Area | Current evidence | Next work / release requirement |
 | --- | --- | --- |
-| Launch and identity | Dedicated title, saved-fleet summary, new/continue, settings, help and return flow | Maintain cohesive identity through every view; iterate beyond the initial title scene |
+| Launch and identity | Independent navy/cyan identity, scene-led harbor, focused services, dedicated title and return flow | Maintain cohesive identity through every view; iterate beyond the initial title scene |
 | First voyage | Real-time starter sailing reviewed; guidance checks workboats; earned trade and fishing complete | Observe an unassisted human session; keep controls, profit and purchases understandable without a long manual |
 | Helm and camera | Direct manual control, one-action course resumption, continuous waypoint throttle, accurate arrival cues and fitted phone view | Review turning, arrival, coasts and camera at every hull size and input method |
 | Combat | Real projectiles, admiral tells, nearby contact map, clear priority labels and directional damage | Review threat reading in ordinary late-game fights and formation decisions through human play |
 | Trade | Exact bulk quotes, water-route comparisons, explicit order loading, reserved holds and no instant resale exploit | Review market pacing, discovery of trade routes, and late-game reasons to trade |
 | Convoy | Checked coastal recovery, physical harbor arrivals, all 24 ports with a full wide convoy, saved routes and distance inspection | Extended survival with different guard assignments and fleet builds; review arrival feedback in ordinary play |
-| Fishing and oil | Five work rhythms across 18 sites, moving schools, checked approach warnings and weighted regional catches | Longer play across fleet builds, risk/reward pacing and worthwhile repeat visits |
+| Fishing and oil | Five work rhythms across 18 sites, optional double/triple watches, carried rare catches and safe-return payment | Longer play across fleet builds, risk/reward pacing and worthwhile repeat visits |
 | Progression | Six charters completed by balanced, merchant and gunline earned captains | Human pacing, optional pursuits and free-play depth; eliminate grind or runaway snowballing |
 | Earth and discovery | Real coastlines, 24 ports, 18 work sites and 15 signals | Review recognizable regions, travel interest, geography seams, legible chart and destination discovery |
 | Art | Chunky native sprites and harbor scenes; 24 distinct briefs saved | Make compositions and silhouettes more individual; final image generation remains deferred by the owner |
 | Sound | Original score, spatial cues, mixer, bounded voices and suspended/interrupted recovery | Listening on speakers/headphones, broader regional atmosphere, long-session comfort and battle priority review |
-| Interface and access | Keyboard, mouse, touch and standard controller flows; focus, editable settings and release gates | Physical controllers, remapping, button-label coverage, readable text and non-color threat cues |
+| Interface and access | Selected-item trading, contextual sea actions, optional details; keyboard, touch and standard controller flows | Physical controllers, remapping, button-label coverage, readable text and non-color threat cues |
 | Mobile | Chromium and WebKit touch emulation | Full-screen portrait and landscape flows, safe areas, browser-height changes, sustained performance and physical-device validation |
-| Saves and recovery | Full active-sea records, 676 matching campaign reloads, exclusive browser writer, explicit handoff, primary-first writes and legacy migration | Future format upgrades, erased storage, supported platform/cloud integration and long-session recovery |
+| Saves and recovery | Full active-sea records, 674 matching v0.14 campaign reloads, exclusive browser writer, explicit handoff, primary-first writes and legacy migration | Future format upgrades, erased storage, supported platform/cloud integration and long-session recovery |
 | Performance | Five-minute 1,200-enemy browser run on M1 Pro with sound active and stable retained memory | Constrained-device budgets, longer sessions, loading cost and input latency |
 | Shipping | Public web build, tested offline Mac app, Windows package and asset inventory | Windows execution, signing, font clearance, Steam services, release QA and store materials |
 
@@ -780,3 +780,91 @@ trade or making early waters scale mechanically with the player. Continue the
 whole ledger, including sound, mobile and small interactions. Physical-device
 validation, unassisted human sessions, remapping, final art, distribution rights
 and Steam integration remain open. This increment does not complete the goal.
+
+
+## Pass 12, independent game identity and worthwhile return trips, v0.14
+
+The owner rejected the inherited portfolio colors, editorial type and crowded
+explanations. This is an explicit game-specific exception to the site's palette
+rules. Widewake now uses blue seas, navy panels, cyan actions, amber currency and
+coral danger. Its original title art and all 24 harbor palettes were retuned.
+Century Supra is removed from the game and its desktop asset set. The site itself
+is unchanged. Image generation remains deferred.
+
+The presentation review used Balatro's official shop screenshot, DREDGE's official
+media and Black Salt Games' mobile UI talk, linked in `WIDEWAKE.md`. Ports open on
+their scene with six service buttons. Selecting a service opens its panel. Trade
+shows the goods picker, one selected item, quantity and actual order totals.
+Stories, market news and landing details expand on demand. The sea retains hull,
+chart, fleet alert and relevant actions, with formation and manifests inside Fleet.
+Routine instructions, duplicated controls, the persistent fleet strip and repeated
+notifications were removed. The hidden strip's render work was also removed.
+Phone landscape uses a wide inventory with selection beside the order; portrait
+uses a focused service pane. Touch labels omit keyboard prompts.
+
+The gameplay review preceding this correction added optional longer protected
+work. Completing a site's standard watch unlocks its double, then its triple.
+Each retains the site's fishing or oil rhythm. Later watches increase loads and
+raider numbers, bring attacks from two checked water approaches and announce
+those approaches. They do not increase enemy health. Forecasts state time, cargo,
+payment and raid multiplier before deployment. Recall, full holds and losses
+retain surviving cargo without awarding completion money or the next unlock.
+
+Rare fish now replace a normal fish in the hold that received the haul. Discovery
+records the find immediately; payment waits until the carrying boat reaches port.
+A lost boat loses its specimens. Rescue applies cargo losses before payment.
+Returning to port pays surviving specimens once and records their landing.
+Historical receipts preserve the paid amount rather than depending on today's
+prices. Old saves preserve earlier discovery payments without duplicating them.
+
+Play and verification:
+
+- Continued an earned late-game fleet through a double watch at Japan Trench,
+  returned to Yokohama, landed five specimens for 4,600 coins, sold ordinary
+  cargo, repaired and upgraded guns. The redesigned harbor was then used for
+  an actual tea purchase. This fleet received no review-only money or boats.
+- Compared the same earned eastern-charter fleet at Japan Trench. A passive
+  double watch lost three of nine companions; deliberate interception retained
+  all nine, completed 180 loads and earned the 1,188 coin completion payment.
+  A third watch overwhelmed the smaller fleet. An expanded fleet bought with
+  earned funds completed it, peaked at 185 living enemies and returned with
+  losses. These are scripted tactics and one seed, not final balance evidence.
+- Balanced, merchant and gunline captains completed all six charters in 41.7,
+  42.2 and 42.4 simulated minutes. Continuous and resumed runs matched over
+  674 reloads, including every harbor arrival. Longer watches also match exact
+  saved outcomes. All 18 grounds, failed completion cases, lost carriers,
+  capacity, legacy catches and invalid records have focused checks.
+- Chromium and WebKit cover the six-view interface sweep, title, first work,
+  longer watches and controller flow. Desktop, compact desktop, 360/390-wide
+  portrait and 667/844-wide landscape layouts were inspected. The trade checks
+  verify actual purchases, reachable controls and visible order buttons.
+  All 24 harbor scenes and palettes are distinct. Phone emulation is not a
+  substitute for physical-device play.
+- Controller testing exposed a hidden-panel focus trap and skipped service
+  actions. Harbor lists now follow their reading order. The short landscape
+  title also clipped the other-window save notice; it now fits above the footer.
+  Full save-ownership, failed-write and cross-window handoff checks pass.
+  Chart review, course cancellation, guard orders, audio lifetime and feedback
+  separation also pass through the new interface.
+- A short Chromium battle retained 1,200 enemies and 21 companions with sound
+  at 9.9 ms p95 on this M1 Pro. No browser errors were recorded. The earlier
+  five-minute stress test remains useful history, but this pass's measurement
+  is a short desktop check, not a sustained phone result.
+
+The rebuilt Mac arm64 app passes the earned trade and fishing loop, bundled
+route worker, native file round trips, minimize behavior, failed-save recovery
+and exact active-sea OS-close continuation. Mac and Windows x64 packages match
+all 23 source assets, 713,687 bytes, and the host scripts. Windows execution is
+unverified. Both packages remain local development artifacts.
+
+Whole-game review: launch, trading, steering, chart, fleet orders, protected work,
+rare cargo, port return, upgrades, sound, touch and controller flows were assessed
+together. Combat mechanics and regional prices remain unchanged. The new longer
+watches provide another reason to prepare a fleet and return safely, but do not
+resolve every late-game economy question. Original code-drawn art remains interim.
+
+Next: resume ordinary late-game combat and trade pacing across different fleets,
+including losses and the time needed to replace them. Keep the quieter interface
+as a constraint on future features. Physical devices, unassisted human play,
+remapping, final art, distribution rights and Steam integration remain open.
+This increment does not complete the production goal.
