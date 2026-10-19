@@ -506,7 +506,8 @@ node tools/widewake/test-long-work.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-long-work-browser.cjs
 # Generate an earned checkpoint with test-playthrough before this extended review:
 # WIDEWAKE_CAPTAIN_OUTPUT=/tmp/widewake-earned node tools/widewake/test-playthrough.cjs
-node tools/widewake/test-working-voyages.cjs /tmp/widewake-earned/eastern-charter-earned.json
+WIDEWAKE_TEST_OUTPUT=/tmp/widewake-work node tools/widewake/test-working-voyages.cjs /tmp/widewake-earned/eastern-charter-earned.json
+node tools/widewake/test-trading-voyages.cjs /tmp/widewake-work/double-harbor.json
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-work-browser.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-audio.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-chart.cjs
@@ -565,6 +566,21 @@ Trades quote each unit against the changing supply curve and use that same
 quote for payment. The buttons show the complete order cost, with unit prices
 alongside. Max stops at affordable units, actual stock, or cargo capacity.
 Stock is always a whole number, including after market pressure decays overnight.
+
+From v0.15, ports have fixed regional export warehouses and general markets.
+Export stock ranges from 160 units in Nassau to 1,200 in Shanghai and Singapore;
+ordinary markets range from 60 to 200, plus the existing daily variation and
+player supply changes. Export and wanted-import prices use the larger warehouse
+depth. Other goods use the general market depth. These values are fictional game
+balance and never scale with the captain's level, money or fleet. Each day's
+existing half-pressure recovery restores stock gradually. A larger merchant
+convoy can now load its holds, while repeated visits still exhaust a route.
+
+An order that empties its cargo, fills the hold or spends the available money
+returns focus to the selected quantity control. Repeating confirm cannot switch
+from selling to buying or from buying to selling. The chart separates the current
+purchase quote, expected sale and trade margin. It keeps one price-change notice.
+
 Buying and immediately reselling must lose money even in an oversupplied port;
 the economy checks sweep every port and good across multiple order sizes and
 pressure levels. This closes the opening-price batch exploit found in the final

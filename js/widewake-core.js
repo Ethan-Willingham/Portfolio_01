@@ -158,9 +158,10 @@
     removeCargo(id,qty){let left=Math.min(Math.floor(qty),this.quantity(id)),n=left;for(const f of this.cargoShips()){const q=Math.min(f.cargo[id]||0,left);f.cargo[id]=(f.cargo[id]||0)-q;left-=q;if(!left)break;}return n;}
     market(portId=this.s.port,goodId,impact=this.s.impact[portId+':'+goodId]||0){const p=by(D.ports,portId),g=by(D.goods,goodId),r=rng(hash(portId+goodId+Math.floor(this.s.day/2)));
       const event=this.marketEvent(portId),mult=p.cheap===goodId?.56:p.wanted===goodId?1.55:1;
-      const pressure=clamp(impact*.003,-.14,.2);
+      const depth=p.cheap===goodId||p.wanted===goodId?p.exportStock:p.marketStock;
+      const pressure=clamp(impact*.3/depth,-.14,.2);
       const v=g.base*mult*(.91+r()*.18)*(1+pressure)*(event.good===goodId?event.mult:1);
-      return{buy:Math.ceil(v*1.09),sell:Math.max(1,Math.floor(v*.88)),stock:Math.max(0,Math.floor((p.cheap===goodId?100:35)+r()*20-impact))};
+      return{buy:Math.ceil(v*1.09),sell:Math.max(1,Math.floor(v*.88)),stock:Math.max(0,Math.floor((p.cheap===goodId?p.exportStock:p.marketStock)+r()*20-impact))};
     }
     marketEvent(portId=this.s.port){const p=by(D.ports,portId),r=rng(hash('news'+portId+Math.floor(this.s.day/3))),good=D.goods[Math.floor(r()*D.goods.length)],mult=r()<.5?.78:1.3;return{good:good.id,mult,text:mult>1?'A shortage is pushing up the price of '+good.name.toLowerCase()+'.':'A supply ship brought extra '+good.name.toLowerCase()+'. Prices are down.'};}
     // Price every unit through the same market curve. A batch must cost the

@@ -33,7 +33,7 @@ The exact owner constraints and source links are in `WIDEWAKE.md`.
 | First voyage | Real-time starter sailing reviewed; guidance checks workboats; earned trade and fishing complete | Observe an unassisted human session; keep controls, profit and purchases understandable without a long manual |
 | Helm and camera | Direct manual control, one-action course resumption, continuous waypoint throttle, accurate arrival cues and fitted phone view | Review turning, arrival, coasts and camera at every hull size and input method |
 | Combat | Real projectiles, admiral tells, nearby contact map, clear priority labels and directional damage | Review threat reading in ordinary late-game fights and formation decisions through human play |
-| Trade | Exact bulk quotes, water-route comparisons, explicit order loading, reserved holds and no instant resale exploit | Review market pacing, discovery of trade routes, and late-game reasons to trade |
+| Trade | Regional warehouse depth, earned merchant expansion, exact bulk quotes, water routes and reserved holds | Review market pacing, discovery of trade routes, and late-game reasons to trade |
 | Convoy | Checked coastal recovery, physical harbor arrivals, all 24 ports with a full wide convoy, saved routes and distance inspection | Extended survival with different guard assignments and fleet builds; review arrival feedback in ordinary play |
 | Fishing and oil | Five work rhythms across 18 sites, optional double/triple watches, carried rare catches and safe-return payment | Longer play across fleet builds, risk/reward pacing and worthwhile repeat visits |
 | Progression | Six charters completed by balanced, merchant and gunline earned captains | Human pacing, optional pursuits and free-play depth; eliminate grind or runaway snowballing |
@@ -42,7 +42,7 @@ The exact owner constraints and source links are in `WIDEWAKE.md`.
 | Sound | Original score, spatial cues, mixer, bounded voices and suspended/interrupted recovery | Listening on speakers/headphones, broader regional atmosphere, long-session comfort and battle priority review |
 | Interface and access | Selected-item trading, contextual sea actions, optional details; keyboard, touch and standard controller flows | Physical controllers, remapping, button-label coverage, readable text and non-color threat cues |
 | Mobile | Chromium and WebKit touch emulation | Full-screen portrait and landscape flows, safe areas, browser-height changes, sustained performance and physical-device validation |
-| Saves and recovery | Full active-sea records, 674 matching v0.14 campaign reloads, exclusive browser writer, explicit handoff, primary-first writes and legacy migration | Future format upgrades, erased storage, supported platform/cloud integration and long-session recovery |
+| Saves and recovery | Full active-sea records, 676 matching v0.15 campaign reloads, exclusive browser writer, explicit handoff, primary-first writes and legacy migration | Future format upgrades, erased storage, supported platform/cloud integration and long-session recovery |
 | Performance | Five-minute 1,200-enemy browser run on M1 Pro with sound active and stable retained memory | Constrained-device budgets, longer sessions, loading cost and input latency |
 | Shipping | Public web build, tested offline Mac app, Windows package and asset inventory | Windows execution, signing, font clearance, Steam services, release QA and store materials |
 
@@ -868,3 +868,81 @@ including losses and the time needed to replace them. Keep the quieter interface
 as a constraint on future features. Physical devices, unassisted human play,
 remapping, final art, distribution rights and Steam integration remain open.
 This increment does not complete the production goal.
+
+
+## Pass 13, cargo fleets that can trade, v0.15
+
+The late-game economy review found that every export market held only about
+100 units. Extra cargo boats could not improve even a well-funded company's
+orders. The same earned fleet made two Yokohama-Shanghai round trips with zero,
+three and six purchased cargo lighters. Under the old markets all three variants
+loaded the same orders: 122 tea, 114 textiles, 56 coffee and 40 oil. Their roughly
+3,200 to 3,800 coin returns barely changed with the extra capacity.
+
+All 24 ports now have regional warehouse sizes. Export stock ranges from 160 to
+1,200 units, with smaller general markets. Price pressure is proportional to
+that port's depth, so a large trading harbor can handle a bulk shipment. These
+are fixed world values, not bonuses tied to the player. Stocks still deplete,
+prices still respond per unit and passing days still recover supply. Quotes,
+payments, physical holds and reserved workboat cargo use the existing contracts.
+Combat bounties and protected-work yields are unchanged.
+
+With the same earned starting fleet, the revised route loaded 317 units before
+expansion and 647 after buying three lighters. Two round trips earned 10,898
+versus 12,826 coins after operating costs and vessel losses, counting new boats
+at replacement cost. Six additional lighters were less useful than three on this
+repeated route: stock depletion and falling destination prices still matter.
+The new earned merchant harness records actual purchases, arrivals, losses,
+repairs and sales. This is a scripted comparison, not proof of final balance.
+
+A live browser review bought three lighters with earned money, loaded 582 tea
+for 27,505 coins, sailed the entire ten-boat convoy from Yokohama to Shanghai,
+and sold all 587 tea aboard for 34,536 coins. All boats arrived. This also exposed
+a focus error: selling the last cargo moved focus onto Buy. Exhausted orders
+now return to the selected quantity, so a repeated keyboard or controller
+confirmation cannot reverse the transaction. Phone tests cover this after both
+selling the last cargo and filling the hold.
+
+The trade chart also lost repeated cargo summaries and explanatory sentences.
+It shows the purchase quote, destination sale, trade margin and a single brief
+price-change notice. Prices and unavailable-order reasons remain explicit.
+Compact dialog padding had also exposed scrolling text above sticky titles;
+chart and work headings now meet the scroll edge.
+The quiet harbor and sea layout, art direction and deferred image-generation
+constraint carry forward.
+
+Verification:
+
+- Balanced, merchant and gunline earned captains complete all six charters in
+  41.7, 42.2 and 42.7 simulated minutes. Continuous and resumed outcomes match
+  over 676 reloads, including every harbor. The revised economy does not block
+  the initial sugar trade, trawler, fishing, oil, upgrades or later admirals.
+- The longer-work review still completes double and triple watches, applies
+  actual cargo losses and returns to harbor. Its unchanged battles peak at
+  185 living enemies. Market sales at the end use the revised prices.
+- Core and market checks cover regional stocks, no player-scaled supply,
+  warehouse exhaustion and recovery, full convoy loading, reserved work holds,
+  exact unit versus bulk pricing, legacy impact records and same-port resale.
+- Chromium and WebKit cover the chart, exact 800-plus-unit orders, completed
+  purchases, saved cargo, repeat-confirm behavior and phone portrait/landscape
+  reach. Standard-controller checks exercise the earned early loop and the
+  empty-order focus behavior.
+
+The rebuilt Mac arm64 app passes the earned trade and fishing loop, offline
+route worker, native save round trips, failed-save recovery and exact active-sea
+OS-close continuation. Mac and Windows x64 packages match all 23 source assets,
+714,423 bytes, and the three host scripts. Windows execution remains unverified.
+Both packages are local development artifacts, not distribution releases.
+
+Whole-game review: the live route connected fleet purchases, cargo placement,
+chart comparison, sailing, combat exposure, complete arrival and sale. Existing
+longer-work and full-campaign evidence cover the progression connections. Sound,
+steering, battle rules, harbor art and the sea HUD need no changes for this market
+revision. The checks do not replace human balance sessions or physical devices.
+
+Next: assess mixed cargo routes, sustained losses and optional pursuits after
+maximum upgrades. Review combat readability and new-player choices without
+adding back persistent explanations. Late double-watch income still exceeds
+this relatively safe trading route; compare other regional routes and fleet
+builds before changing rewards. The remaining release gates and production goal
+stay open.

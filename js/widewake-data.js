@@ -40,7 +40,10 @@
     ['sydney','Sydney','Australia',151.26,-33.84,'wood','tea',4,6,2,'Sandstone docks and a long trip to almost anywhere.'],
     ['auckland','Auckland','New Zealand',174.80,-36.83,'fish','oil',4,6,3,'Green islands shelter the fishing fleet from the open Pacific.']
   ];
-  const ports=rows.map(r=>Object.fromEntries(['id','name','country','lon','lat','cheap','wanted','danger','sheet','cell','detail'].map((k,i)=>[k,r[i]])));
+  // Export warehouses and general market depth, in cargo units. These are game
+  // values, independent of the captain's rank, fleet and money.
+  const warehouses={havana:[480,100],nassau:[160,60],'new-york':[960,180],reykjavik:[240,80],bergen:[520,100],london:[960,180],lisbon:[640,120],marseille:[720,140],alexandria:[520,100],dakar:[360,80],'cape-town':[720,140],rio:[800,140],'buenos-aires':[640,120],valparaiso:[480,100],'san-francisco':[800,140],honolulu:[320,80],yokohama:[800,160],shanghai:[1200,200],singapore:[1200,200],mumbai:[1000,180],muscat:[800,120],mombasa:[400,100],sydney:[720,140],auckland:[400,100]};
+  const ports=rows.map(r=>({...Object.fromEntries(['id','name','country','lon','lat','cheap','wanted','danger','sheet','cell','detail'].map((k,i)=>[k,r[i]])),exportStock:warehouses[r[0]][0],marketStock:warehouses[r[0]][1]}));
   const hulls=[
     { id:'cutter',name:'Cutter',cost:0,rank:1,hp:200,speed:150,hold:40,guns:1,description:'Light and nimble.' },
     { id:'brig',name:'Brig',cost:2800,rank:2,hp:380,speed:165,hold:70,guns:2,description:'Twin guns. Larger hold.' },
@@ -156,7 +159,7 @@
   // Specimens share physical holds with trade goods, but are never market stock
   // or random salvage. Keep the commodity catalog and saved drop indices stable.
   const cargoGoods=[...goods,...fish.map(f=>({id:'catch-'+f.id,name:f.name,color:f.color,icon:'fish',specimen:f.id,resource:'fish',value:f.value}))];
-  const data={version:'0.14.0',goods,cargoGoods,ports,hulls,boats,relics,fish,sites,bosses,upgrades,signals,charters,ranks};
+  const data={version:'0.15.0',goods,cargoGoods,ports,hulls,boats,relics,fish,sites,bosses,upgrades,signals,charters,ranks};
   if(typeof module!=='undefined'&&module.exports)module.exports=data;
   root.WidewakeData=data;
 })(typeof globalThis!=='undefined'?globalThis:this);

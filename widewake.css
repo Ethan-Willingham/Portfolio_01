@@ -347,3 +347,6 @@
 @media(max-height:430px) and (orientation:landscape){
  .ww-title-menu{top:10px}.ww-title-menu h1,.ww-title-menu:has(#continue-voyage:not([hidden])) h1{margin-bottom:8px}.ww-title-menu:has(#continue-voyage:not([hidden])) #title-logo{width:200px}.ww-title-storage{margin-top:6px;margin-bottom:0}
 }
+
+/* Sticky modal headings start at the scroll edge, including compact layouts. */
+.ww-dialog.ww-chart-dialog,.ww-dialog.ww-work-dialog{padding-top:0}
