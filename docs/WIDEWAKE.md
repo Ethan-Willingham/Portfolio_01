@@ -540,6 +540,8 @@ For the isolated ocean trial:
 
 ```sh
 node tools/widewake/test-battle-core.cjs
+node tools/widewake/test-battle-feel.cjs
+NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-battle-feel-browser.cjs
 NODE_PATH=/path/to/bundled/node_modules WIDEWAKE_SOAK_SECONDS=180 node tools/widewake/test-battle-browser.cjs
 NODE_PATH=/path/to/bundled/node_modules WIDEWAKE_TEST_ENGINE=webkit node tools/widewake/test-battle-browser.cjs
 ```
@@ -548,6 +550,11 @@ The browser harness records the ordinary battle separately from a full-capacity
 projectile/effect fixture and a forced Canvas fallback. It preserves the same
 population across touch viewports, checks campaign-storage isolation and closes
 its own testing browser. Reports and screenshots use `WIDEWAKE_TEST_OUTPUT`.
+The feel checks measure acceleration and braking, convoy station arrival,
+physical broadside lanes, exact manual reach, bounded impacts and interpolation
+history. Their browser companion supports WebKit and covers keyboard previews,
+pause during a volley, pointer hit confirmation, render interpolation without
+simulation mutation, reduced motion and touch hover cleanup.
 
 For the existing campaign:
 

@@ -122,6 +122,14 @@ The current trial has neither bank collision nor a finished rudder model, so its
 handling alone cannot validate these widths. Route clearance uses the largest
 assigned hull and safe spacing, not only the flagship's centre point.
 
+The v0.19 trial replaces sideways sliding with heading, angular acceleration,
+throttle and braking. Its 86 m flagship reaches 95 percent of its 26 m/s cruise
+in 3.38 seconds and stops in 31.56 m after release. The trawler stops in 13.74 m;
+the slower industrial vessel stops in 10.00 m. These are measured arcade handling
+values, not real-vessel specifications. The renderer interpolates fixed-step
+motion. Test full hull clearance, collision and reversing in the region before
+using these centre-point distances to approve a channel or berth.
+
 Keep the player in control of formation changes. Preview a column order at a
 channel entrance; let the captain deploy a perimeter in a basin. The camera may
 offer an appropriate stop but must not forcibly zoom during a fight. A blocked

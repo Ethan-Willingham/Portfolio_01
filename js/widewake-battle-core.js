@@ -21,6 +21,31 @@
     mortar:{range:1370,interval:2.6,speed:0,damage:135,splash:125,pierce:1,kind:2},
     hostile:{range:480,interval:5,speed:290,damage:13,splash:0,pierce:1,kind:3}
   });
+  const BROADSIDE=Object.freeze({rounds:48,interval:1/60,cooldown:12,range:1250,damage:140,splash:110,pierce:1,speed:690,kind:1});
+  const angleDelta=(to,from)=>Math.atan2(Math.sin(to-from),Math.cos(to-from));
+  function helmStep(s,input,dt){
+    const x=input.x||0,y=input.y||0,amount=Math.min(1,Math.hypot(x,y)),moving=amount>.045,size=clamp(Math.sqrt(38/s.length),.6,1.35),velocity=Math.hypot(s.vx,s.vy),fraction=clamp(velocity/s.speed,0,1);
+    const error=moving?angleDelta(Math.atan2(y,x),s.angle):0,limit=(1.8-1.12*fraction)*size,targetTurn=moving?clamp(error*3.5,-limit,limit):0;
+    s.turn=(s.turn||0)+(targetTurn-(s.turn||0))*(1-Math.exp(-dt*9));
+    const forward=s.vx*Math.cos(s.angle)+s.vy*Math.sin(s.angle),side=(-s.vx*Math.sin(s.angle)+s.vy*Math.cos(s.angle))*Math.exp(-dt*4);
+    s.angle=angleDelta(s.angle+s.turn*dt,0);
+    const alignment=moving?Math.max(0,Math.cos(angleDelta(Math.atan2(y,x),s.angle))):0,desired=moving?s.speed*amount*(input.boost?1.35:1)*alignment:0;
+    const speed=forward+clamp(desired-forward,-16*size*dt,11*size*dt);
+    s.vx=Math.cos(s.angle)*speed-Math.sin(s.angle)*side;s.vy=Math.sin(s.angle)*speed+Math.cos(s.angle)*side;
+    if(!moving&&Math.hypot(s.vx,s.vy)<.03)s.vx=s.vy=0;
+    s.x+=s.vx*dt;s.y+=s.vy*dt;
+  }
+  function broadsideRound(ship,index){
+    const side=index%2?-1:1,j=Math.floor(index/2),lane=j%8,wave=Math.floor(j/8),along=(lane/7-.5)*ship.length*.7,across=side*ship.width*.48,cos=Math.cos(ship.angle),sin=Math.sin(ship.angle);
+    return{x:ship.x+cos*along-sin*across,y:ship.y+sin*along+cos*across,angle:ship.angle+side*Math.PI/2+(lane/7-.5)*.5+(wave-1)*.035};
+  }
+  function broadsideFootprint(ship,side){
+    const points=[],reach=BROADSIDE.range+120;for(let i=side;i<BROADSIDE.rounds;i+=2){const s=broadsideRound(ship,i);points.push({x:s.x,y:s.y},{x:s.x+Math.cos(s.angle)*reach,y:s.y+Math.sin(s.angle)*reach});}points.sort((a,b)=>a.x-b.x||a.y-b.y);
+    const cross=(a,b,c)=>(b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x),half=[];
+    for(const p of points){while(half.length>1&&cross(half.at(-2),half.at(-1),p)<=0)half.pop();half.push(p);}const lower=half.length;
+    for(let i=points.length-2;i>=0;i--){const p=points[i];while(half.length>lower&&cross(half.at(-2),half.at(-1),p)<=0)half.pop();half.push(p);}half.pop();return half;
+  }
+  function rayReach(x,y,angle,ship,range){const dx=x-ship.x,dy=y-ship.y,dot=dx*Math.cos(angle)+dy*Math.sin(angle);return Math.max(0,-dot+Math.sqrt(Math.max(0,dot*dot+range*range-dx*dx-dy*dy)));}
   class Effects{
     constructor(){this.count=0;for(const k of ['x','y','size','life','total','kind','angle'])this[k]=new Float32Array(LIMITS.effects);this.cursor=0;}
     add(x,y,size,kind=0){let i=this.count<LIMITS.effects?this.count++:this.cursor++%LIMITS.effects;this.x[i]=x;this.y[i]=y;this.size[i]=size;this.life[i]=this.total[i]=kind===0?.7:kind===1?.12:1.6;this.kind[i]=kind;this.angle[i]=(i*2.39996)%TAU;}
@@ -29,14 +54,14 @@
   class Raiders{
     constructor(capacity=LIMITS.raiders){
       this.capacity=Math.min(LIMITS.raiders,capacity);this.count=0;this.dead=0;this.sequence=1;
-      for(const key of ['x','y','vx','vy','hp','cooldown'])this[key]=new Float32Array(this.capacity);
+      for(const key of ['x','y','px','py','vx','vy','hp','cooldown'])this[key]=new Float32Array(this.capacity);
       this.id=new Uint32Array(this.capacity);this.kind=new Uint8Array(this.capacity);this.target=new Uint8Array(this.capacity);
       this.next=new Int32Array(this.capacity);this.head=new Int32Array(LIMITS.cells);this.population=new Uint16Array(LIMITS.cells);
       this.cellX=new Int16Array(LIMITS.cells);this.cellY=new Int16Array(LIMITS.cells);this.targetCell=new Uint8Array(LIMITS.cells);this.stamp=new Int32Array(LIMITS.cells);this.stamp.fill(-1);
       this.head.fill(-1);this.peak=0;this.hits=new Int32Array(64);this.hitDistances=new Float32Array(64);
     }
-    add(x,y,kind,rand){if(this.count>=this.capacity)return false;const i=this.count++;this.x[i]=x;this.y[i]=y;this.vx[i]=this.vy[i]=0;this.kind[i]=kind;this.hp[i]=kind===2?95:kind===1?38:24;this.id[i]=this.sequence++;this.cooldown[i]=.4+rand()*4;this.target[i]=0;this.peak=Math.max(this.peak,this.count);return true;}
-    compact(){for(let i=this.count-1;i>=0;i--)if(this.hp[i]<=0){const last=--this.count;for(const k of ['x','y','vx','vy','hp','cooldown','id','kind','target'])this[k][i]=this[k][last];}this.dead=0;}
+    add(x,y,kind,rand){if(this.count>=this.capacity)return false;const i=this.count++;this.x[i]=this.px[i]=x;this.y[i]=this.py[i]=y;this.vx[i]=this.vy[i]=0;this.kind[i]=kind;this.hp[i]=kind===2?95:kind===1?38:24;this.id[i]=this.sequence++;this.cooldown[i]=.4+rand()*4;this.target[i]=0;this.peak=Math.max(this.peak,this.count);return true;}
+    compact(){for(let i=this.count-1;i>=0;i--)if(this.hp[i]<=0){const last=--this.count;for(const k of ['x','y','px','py','vx','vy','hp','cooldown','id','kind','target'])this[k][i]=this[k][last];}this.dead=0;}
     index(){this.head.fill(-1);this.population.fill(0);const inv=1/LIMITS.cellSize;for(let i=0;i<this.count;i++){if(this.hp[i]<=0)continue;const cx=Math.floor(this.x[i]*inv),cy=Math.floor(this.y[i]*inv),key=hash(cx,cy);this.next[i]=this.head[key];this.head[key]=i;this.population[key]++;}}
     nearest(x,y,r){let best=-1,distance=r*r;const cell=LIMITS.cellSize;for(let cy=Math.floor((y-r)/cell);cy<=Math.floor((y+r)/cell);cy++)for(let cx=Math.floor((x-r)/cell);cx<=Math.floor((x+r)/cell);cx++)for(let i=this.head[hash(cx,cy)];i!==-1;i=this.next[i]){if(this.hp[i]<=0||Math.floor(this.x[i]/cell)!==cx||Math.floor(this.y[i]/cell)!==cy)continue;const dx=this.x[i]-x,dy=this.y[i]-y,d=dx*dx+dy*dy;if(d<distance){distance=d;best=i;}}return best;}
     denseTarget(x,y,r){
@@ -57,7 +82,7 @@
     step(dt,battle){
       const ships=battle.ships,cell=LIMITS.cellSize;
       for(let i=0;i<this.count;i++){
-        if(this.hp[i]<=0)continue;const target=this.acquire(this.x[i],this.y[i],ships,battle.tick),s=ships[target];this.target[i]=target;if(!s||s.hp<=0)continue;
+        if(this.hp[i]<=0)continue;this.px[i]=this.x[i];this.py[i]=this.y[i];const target=this.acquire(this.x[i],this.y[i],ships,battle.tick),s=ships[target];this.target[i]=target;if(!s||s.hp<=0)continue;
         const dx=s.x-this.x[i],dy=s.y-this.y[i],d2=dx*dx+dy*dy,d=Math.sqrt(d2)||1;this.cooldown[i]-=dt;
         if(d<s.radius+6){if(this.cooldown[i]<=0){battle.hurt(s,this.kind[i]===1?16:8);this.cooldown[i]=1.2;battle.kill(i,false);}continue;}
         // A shared density gradient, not an all-pairs separation pass. Steering
@@ -87,24 +112,24 @@
     splash(x,y,r,damage,battle){const cell=LIMITS.cellSize,r2=r*r;for(let cy=Math.floor((y-r)/cell);cy<=Math.floor((y+r)/cell);cy++)for(let cx=Math.floor((x-r)/cell);cx<=Math.floor((x+r)/cell);cx++)for(let i=this.head[hash(cx,cy)];i!==-1;i=this.next[i]){if(this.hp[i]<=0||Math.floor(this.x[i]/cell)!==cx||Math.floor(this.y[i]/cell)!==cy)continue;const dx=this.x[i]-x,dy=this.y[i]-y;if(dx*dx+dy*dy<r2)battle.damage(i,damage);}}
   }
   class Shots{
-    constructor(){this.count=0;this.hostile=0;this.rejected=0;this.peak=0;for(const key of ['x','y','px','py','vx','vy','life','total','damage','splash','height','pierce','kind','startX','startY','endX','endY'])this[key]=new Float32Array(LIMITS.shots);this.previousHit=new Uint32Array(LIMITS.shots);}
-    fire(x,y,tx,ty,spec,offset=0){
+    constructor(){this.count=0;this.hostile=0;this.rejected=0;this.peak=0;for(const key of ['x','y','px','py','vx','vy','life','total','damage','splash','height','previousHeight','pierce','kind','startX','startY','endX','endY'])this[key]=new Float32Array(LIMITS.shots);this.previousHit=new Uint32Array(LIMITS.shots);this.owner=new Uint8Array(LIMITS.shots);}
+    fire(x,y,tx,ty,spec,offset=0,owner=255,travel=spec.range+120){
       if(this.count>=LIMITS.shots||spec.kind!==3&&this.count-this.hostile>=LIMITS.shots-LIMITS.hostileReserve){this.rejected++;return false;}
       const i=this.count++,dx=tx-x,dy=ty-y,d=Math.hypot(dx,dy)||1,a=Math.atan2(dy,dx)+offset;
       this.kind[i]=spec.kind;this.x[i]=this.px[i]=this.startX[i]=x;this.y[i]=this.py[i]=this.startY[i]=y;this.endX[i]=tx;this.endY[i]=ty;
-      this.vx[i]=Math.cos(a)*spec.speed;this.vy[i]=Math.sin(a)*spec.speed;this.life[i]=this.total[i]=spec.kind===2?.75+d/900:(spec.range+120)/spec.speed;
-      this.damage[i]=spec.damage;this.splash[i]=spec.splash;this.pierce[i]=spec.pierce;this.previousHit[i]=0;this.height[i]=8;if(spec.kind===3)this.hostile++;this.peak=Math.max(this.peak,this.count);return true;
+      this.vx[i]=Math.cos(a)*spec.speed;this.vy[i]=Math.sin(a)*spec.speed;this.life[i]=this.total[i]=spec.kind===2?.75+d/900:travel/spec.speed;
+      this.damage[i]=spec.damage;this.splash[i]=spec.splash;this.pierce[i]=spec.pierce;this.previousHit[i]=0;this.owner[i]=owner;this.height[i]=this.previousHeight[i]=8;if(spec.kind===3)this.hostile++;this.peak=Math.max(this.peak,this.count);return true;
     }
-    remove(i){if(this.kind[i]===3)this.hostile--;const last=--this.count;for(const k of ['x','y','px','py','vx','vy','life','total','damage','splash','height','pierce','kind','startX','startY','endX','endY','previousHit'])this[k][i]=this[k][last];}
+    remove(i){if(this.kind[i]===3)this.hostile--;const last=--this.count;for(const k of ['x','y','px','py','vx','vy','life','total','damage','splash','height','previousHeight','pierce','kind','startX','startY','endX','endY','previousHit','owner'])this[k][i]=this[k][last];}
     step(dt,battle){const swarm=battle.raiders;
       for(let i=this.count-1;i>=0;i--){
-        this.life[i]-=dt;this.px[i]=this.x[i];this.py[i]=this.y[i];const kind=this.kind[i];let done=false;
+        const travelDt=Math.min(dt,Math.max(0,this.life[i]));this.life[i]-=dt;this.px[i]=this.x[i];this.py[i]=this.y[i];this.previousHeight[i]=this.height[i];const kind=this.kind[i];let done=false;
         if(kind===2){const t=clamp(1-this.life[i]/this.total[i],0,1);this.x[i]=this.startX[i]+(this.endX[i]-this.startX[i])*t;this.y[i]=this.startY[i]+(this.endY[i]-this.startY[i])*t;this.height[i]=12+360*t*(1-t);
           if(this.life[i]<=0){swarm.splash(this.x[i],this.y[i],this.splash[i],this.damage[i],battle);battle.effects.add(this.x[i],this.y[i],this.splash[i],0);battle.sound('mortar-hit',this.x[i],this.y[i]);done=true;}
         }else{
-          this.x[i]+=this.vx[i]*dt;this.y[i]+=this.vy[i]*dt;
+          this.x[i]+=this.vx[i]*travelDt;this.y[i]+=this.vy[i]*travelDt;
           if(kind===3){const vx=this.x[i]-this.px[i],vy=this.y[i]-this.py[i],v2=vx*vx+vy*vy||1;for(const s of battle.ships){if(s.hp<=0)continue;const dx=s.x-this.px[i],dy=s.y-this.py[i],t=clamp((dx*vx+dy*vy)/v2,0,1);if((dx-vx*t)**2+(dy-vy*t)**2<(s.radius+2)**2){battle.hurt(s,this.damage[i]);done=true;break;}}}
-          else{const hits=swarm.segment(this.px[i],this.py[i],this.x[i],this.y[i],kind===1?5:2);for(let h=0;h<hits;h++){const j=swarm.hits[h];if(swarm.hp[j]<=0||swarm.id[j]===this.previousHit[i])continue;this.previousHit[i]=swarm.id[j];battle.damage(j,this.damage[i]);
+          else{const hits=swarm.segment(this.px[i],this.py[i],this.x[i],this.y[i],kind===1?5:2);for(let h=0;h<hits;h++){const j=swarm.hits[h];if(swarm.hp[j]<=0||swarm.id[j]===this.previousHit[i])continue;this.previousHit[i]=swarm.id[j];battle.damage(j,this.damage[i]);battle.impact(swarm.x[j],swarm.y[j],this.owner[i]===0&&battle.control.fire);
               if(this.splash[i]){swarm.splash(this.x[i],this.y[i],this.splash[i],this.damage[i]*.65,battle);battle.effects.add(this.x[i],this.y[i],this.splash[i]*.55,0);}
               if(--this.pierce[i]<=0){done=true;break;}
             }}
@@ -116,14 +141,14 @@
   const shipNames=['Flagship','Wren','Kestrel','Pipit','Gannet','Tern','Moth','Nettle','Plover','Curlew','Heron','Finch','Snipe','Thunder','Cinder','Ash','Rook','Ward','Sparrow','Minnow','Lark','Petrel','Cormorant','Mender'];
   class Battle{
     constructor({population=16384,seed=48476,duration=180}={}){
-      this.random=random(seed);this.population=clamp(Math.floor(population),0,LIMITS.raiders);this.duration=duration;this.time=0;this.tick=0;this.kills=0;this.spawned=0;this.lost=0;this.burstCooldown=0;this.work=true;this.workTime=0;this.produced={fish:0,oil:0};this.result=null;this.sounds=[];this.soundBudget=0;this.deathBudget=0;this.shots=new Shots();this.effects=new Effects();this.raiders=new Raiders();this.ships=[];this.mounts=[];this.center={x:0,y:0};this.control={x:0,y:0,boost:false,fire:false,aim:null};
+      this.random=random(seed);this.population=clamp(Math.floor(population),0,LIMITS.raiders);this.duration=duration;this.time=0;this.tick=0;this.kills=0;this.spawned=0;this.lost=0;this.burstCooldown=0;this.burstCursor=BROADSIDE.rounds;this.burstTimer=0;this.lastHit={x:0,y:0,time:-10};this.impactBudget=0;this.work=true;this.workTime=0;this.produced={fish:0,oil:0};this.result=null;this.sounds=[];this.soundBudget=0;this.deathBudget=0;this.shots=new Shots();this.effects=new Effects();this.raiders=new Raiders();this.ships=[];this.mounts=[];this.center={x:0,y:0};this.control={x:0,y:0,boost:false,fire:false,aim:null};
       const types=['flagship',...Array(12).fill('gunboat'),...Array(4).fill('battery'),...Array(2).fill('screen'),'trawler','trawler','oilrig','oilrig','repair'];
       for(let i=0;i<types.length;i++){
         const type=types[i],spec=roles[type],angle=(i-1)/18*TAU,working=type==='trawler'||type==='oilrig',slot=working?{x:(i%2?1:-1)*95,y:(i<21?-1:1)*105}:type==='repair'?{x:0,y:0}:i===0?{x:0,y:260}:{x:Math.cos(angle)*390,y:Math.sin(angle)*390};
-        const ship={id:i,type,name:shipNames[i],...spec,maxHp:spec.hp,x:slot.x,y:slot.y,vx:0,vy:0,angle:i===0?-Math.PI/2:angle+Math.PI,slot,working,cargo:0,hold:type==='trawler'?640:type==='oilrig'?440:0,hit:0,flash:0,turret:angle};this.ships.push(ship);
+        const ship={id:i,type,name:shipNames[i],...spec,maxHp:spec.hp,x:slot.x,y:slot.y,vx:0,vy:0,angle:i===0?-Math.PI/2:angle+Math.PI,slot,working,cargo:0,hold:type==='trawler'?640:type==='oilrig'?440:0,hit:0,flash:0,turret:angle};ship.px=ship.x;ship.py=ship.y;ship.previousAngle=ship.angle;this.ships.push(ship);
         const weapon=type==='battery'?'mortar':type==='screen'?'flak':'gun',n=type==='flagship'?4:type==='battery'?3:type==='gunboat'?2:1;
-        if(type!=='repair')for(let j=0;j<n;j++)this.mounts.push({ship:i,weapon,along:working?spec.length*.32:(j-(n-1)/2)*12,angle,flash:0,cooldown:(i*.131+j*.21)%weapons[weapon].interval});
-        if(type==='battery'||type==='screen')this.mounts.push({ship:i,weapon:'guard',along:-spec.length*.37,angle,flash:0,cooldown:i*.013});
+        if(type!=='repair')for(let j=0;j<n;j++)this.mounts.push({ship:i,weapon,along:working?spec.length*.32:(j-(n-1)/2)*12,angle,flash:0,recoil:0,cooldown:(i*.131+j*.21)%weapons[weapon].interval});
+        if(type==='battery'||type==='screen')this.mounts.push({ship:i,weapon:'guard',along:-spec.length*.37,angle,flash:0,recoil:0,cooldown:i*.013});
       }
       // A reproducible load, with a nearby vanguard and deep incoming fronts.
       for(let i=0;i<this.population;i++)this.spawn(true,i);this.raiders.index();
@@ -135,19 +160,22 @@
       if(this.raiders.add(x,y,kind,r))this.spawned++;
     }
     sound(kind,x,y){if(this.soundBudget>=8){if(kind==='hurt'||kind==='loss')this.sounds[0]={kind,x,y};return;}this.soundBudget++;this.sounds.push({kind,x,y});}
+    impact(x,y,player=false){if(this.impactBudget++<16)this.effects.add(x,y,9,1);if(player){this.lastHit.x=x;this.lastHit.y=y;this.lastHit.time=this.time;this.sound('impact',x,y);}}
     damage(i,n){if(this.raiders.hp[i]<=0)return;this.raiders.hp[i]-=n;if(this.raiders.hp[i]<=0)this.kill(i,true);}
     kill(i,reward=true){const a=this.raiders;if(a.hp[i]===-999)return;a.hp[i]=-999;a.dead++;if(reward)this.kills++;
       if(this.deathBudget<24){this.deathBudget++;this.effects.add(a.x[i],a.y[i],12+(a.kind[i]===2?15:0),2);}if(reward&&this.kills%32===0)this.sound('sink',a.x[i],a.y[i]);
     }
     hurt(s,n){if(s.hp<=0)return;s.hp=Math.max(0,s.hp-n);s.hit=.16;if(s.hp<=0){this.lost++;if(s.working){this.produced[s.type==='trawler'?'fish':'oil']-=s.cargo;s.cargo=0;}this.effects.add(s.x,s.y,s.length,0);this.sound('loss',s.x,s.y);}else if(s.id===0)this.sound('hurt',s.x,s.y);}
-    broadside(){if(this.result||this.burstCooldown>0||this.player.hp<=0)return false;this.burstCooldown=12;const p=this.player,spec={...weapons.flak,range:1250,damage:140,splash:110,pierce:1,speed:690};for(let n=0;n<48;n++){const a=n/48*TAU;this.shots.fire(p.x,p.y,p.x+Math.cos(a)*1200,p.y+Math.sin(a)*1200,spec);}this.sound('broadside',p.x,p.y);return true;}
+    broadside(){if(this.result||this.burstCooldown>0||this.player.hp<=0)return false;this.burstCooldown=BROADSIDE.cooldown;this.burstCursor=0;this.burstTimer=BROADSIDE.interval;this.emitBroadside();this.sound('broadside',this.player.x,this.player.y);return true;}
+    emitBroadside(){for(let n=0;n<2&&this.burstCursor<BROADSIDE.rounds;n++){const shot=broadsideRound(this.player,this.burstCursor++);this.shots.fire(shot.x,shot.y,shot.x+Math.cos(shot.angle)*BROADSIDE.range,shot.y+Math.sin(shot.angle)*BROADSIDE.range,BROADSIDE,0,0);this.effects.add(shot.x,shot.y,14,1);}}
     toggleWork(){this.work=!this.work;this.workActive=false;if(this.work){this.center.x=this.player.x;this.center.y=this.player.y;}return this.work;}
     step(dt,input=this.control){
-      if(this.result)return;dt=clamp(dt,0,1/30);this.time+=dt;this.tick++;this.soundBudget=0;this.deathBudget=0;this.sounds.length=0;this.burstCooldown=Math.max(0,this.burstCooldown-dt);this.control=input;
-      const p=this.player,ix=input.x||0,iy=input.y||0,m=Math.max(1,Math.hypot(ix,iy)),blend=1-Math.exp(-dt*2.8),speed=p.speed*(input.boost?1.35:1);
-      p.vx+=(ix/m*speed-p.vx)*blend;p.vy+=(iy/m*speed-p.vy)*blend;p.x+=p.vx*dt;p.y+=p.vy*dt;if(Math.hypot(p.vx,p.vy)>1)p.angle+=clamp(Math.atan2(Math.sin(Math.atan2(p.vy,p.vx)-p.angle),Math.cos(Math.atan2(p.vy,p.vx)-p.angle)),-dt*1.8,dt*1.8);
+      if(this.result)return;dt=clamp(dt,0,1/30);this.time+=dt;this.tick++;this.soundBudget=0;this.deathBudget=0;this.impactBudget=0;this.sounds.length=0;this.burstCooldown=Math.max(0,this.burstCooldown-dt);this.control=input;
+      for(const s of this.ships){s.px=s.x;s.py=s.y;s.previousAngle=s.angle;}
+      const p=this.player;helmStep(p,input,dt);
+      if(this.burstCursor<BROADSIDE.rounds){this.burstTimer-=dt;while(this.burstTimer<=0&&this.burstCursor<BROADSIDE.rounds){this.emitBroadside();this.burstTimer+=BROADSIDE.interval;}}
       if(!this.work){this.center.x+=(p.x-this.center.x)*dt*.4;this.center.y+=(p.y-this.center.y)*dt*.4;}
-      for(const s of this.ships){if(s.hp<=0)continue;s.hit=Math.max(0,s.hit-dt);s.flash=Math.max(0,s.flash-dt);if(s===p)continue;const dx=this.center.x+s.slot.x-s.x,dy=this.center.y+s.slot.y-s.y,d=Math.hypot(dx,dy),v=Math.min(s.speed,d*1.3);s.vx=d>2?dx/d*v:0;s.vy=d>2?dy/d*v:0;s.x+=s.vx*dt;s.y+=s.vy*dt;if(d>4)s.angle+=clamp(Math.atan2(Math.sin(Math.atan2(dy,dx)-s.angle),Math.cos(Math.atan2(dy,dx)-s.angle)),-dt*1.5,dt*1.5);
+      for(const s of this.ships){if(s.hp<=0)continue;s.hit=Math.max(0,s.hit-dt);s.flash=Math.max(0,s.flash-dt);if(s===p)continue;const dx=this.center.x+s.slot.x-s.x,dy=this.center.y+s.slot.y-s.y,d=Math.hypot(dx,dy),amount=d>2?Math.min(1,d/(s.speed*1.4)):0;helmStep(s,{x:d?dx/d*amount:0,y:d?dy/d*amount:0},dt);
         if(s.type==='repair')for(const other of this.ships)if(other.hp>0&&(other.x-s.x)**2+(other.y-s.y)**2<550**2)other.hp=Math.min(other.maxHp,other.hp+dt*5);
       }
       this.raiders.compact();
@@ -156,13 +184,14 @@
       for(let n=0,missing=this.population-this.raiders.count;n<Math.min(48,missing);n++)this.spawn();
       this.raiders.index();this.raiders.step(dt,this);this.raiders.index();
       const a=this.raiders;
-      for(const mount of this.mounts){const s=this.ships[mount.ship];mount.flash=Math.max(0,mount.flash-dt);if(s.hp<=0)continue;const spec=weapons[mount.weapon];mount.cooldown-=dt;if(mount.cooldown>0)continue;
+      for(const mount of this.mounts){const s=this.ships[mount.ship];mount.flash=Math.max(0,mount.flash-dt);mount.recoil*=Math.exp(-dt*15);if(s.hp<=0)continue;const spec=weapons[mount.weapon];mount.cooldown-=dt;if(mount.cooldown>0)continue;
         const manual=s===p&&input.fire&&input.aim;let target=-1;
         if(!manual)target=mount.weapon==='mortar'||mount.weapon==='flak'?a.denseTarget(s.x,s.y,spec.range):a.nearest(s.x,s.y,spec.range);
         if(!manual&&target<0){mount.cooldown=.12;continue;}
         const tx=manual?input.aim.x:a.x[target],ty=manual?input.aim.y:a.y[target],flight=mount.weapon==='mortar'?.75+Math.hypot(tx-s.x,ty-s.y)/900:Math.hypot(tx-s.x,ty-s.y)/spec.speed;
         const ax=tx+(manual?0:a.vx[target]*flight*.75),ay=ty+(manual?0:a.vy[target]*flight*.75),angle=Math.atan2(ay-s.y,ax-s.x),x=s.x+Math.cos(s.angle)*mount.along+Math.cos(angle)*10,y=s.y+Math.sin(s.angle)*mount.along+Math.sin(angle)*10;
-        mount.angle=angle;if(this.shots.fire(x,y,ax,ay,spec,mount.weapon==='gun'?(this.random()-.5)*.018:0)){mount.flash=.07;s.flash=.07;s.turret=angle;if(mount.along<=0&&this.tick%3===0)this.sound(mount.weapon,x,y);}
+        const offset=mount.weapon==='gun'?(this.random()-.5)*.018:0,travel=manual?rayReach(x,y,angle+offset,p,spec.range+120):spec.range+120;
+        mount.angle=angle;if(this.shots.fire(x,y,ax,ay,spec,offset,s.id,travel)){mount.flash=.07;mount.recoil=mount.weapon==='mortar'?5:2.8;s.flash=.07;s.turret=angle;if(mount.along<=0&&this.tick%3===0)this.sound(mount.weapon,x,y);}
         mount.cooldown+=spec.interval*(s.working?9:1);
       }
       this.shots.step(dt,this);this.effects.step(dt);
@@ -174,5 +203,5 @@
     memoryBytes(){let n=0;for(const part of [this.raiders,this.shots,this.effects])for(const value of Object.values(part))if(ArrayBuffer.isView(value))n+=value.byteLength;return n;}
     report(){return{seconds:this.time,workSeconds:this.workTime,raiders:this.raiders.count-this.raiders.dead,targetRaiders:this.population,peakRaiders:this.raiders.peak,kills:this.kills,spawned:this.spawned,ships:this.ships.filter(s=>s.hp>0).length,lost:this.lost,shots:this.shots.count,peakShots:this.shots.peak,rejectedShots:this.shots.rejected,effects:this.effects.count,bufferBytes:this.memoryBytes(),produced:{...this.produced},result:this.result};}
   }
-  const api={Battle,Raiders,Shots,Effects,roles,weapons,LIMITS,random};root.WidewakeBattle=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
+  const api={Battle,Raiders,Shots,Effects,roles,weapons,LIMITS,BROADSIDE,helmStep,broadsideRound,broadsideFootprint,rayReach,angleDelta,random};root.WidewakeBattle=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

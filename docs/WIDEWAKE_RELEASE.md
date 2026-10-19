@@ -37,7 +37,7 @@ while the new ocean is tested separately; do not silently invalidate its saves.
 | --- | --- | --- |
 | Launch and identity | Owner-approved title, independent navy/cyan identity, scene-led harbor and focused services | Preserve the approved title; maintain cohesive identity through the remaining views |
 | First voyage | Real-time starter sailing reviewed; guidance checks workboats; earned trade and fishing complete | Observe an unassisted human session; keep controls, profit and purchases understandable without a long manual |
-| Helm and camera | Campaign controls remain; separate isometric trial has shared projection, three zoom stops, anchored wheel/pinch and screen-relative steering | Review turning and braking at real channel widths, small-screen fleet readability, controller integration and calm travel |
+| Helm and camera | Separate trial has weighted heading and braking, interpolated motion, shared projection, three zoom stops and anchored wheel/pinch | Prove hull clearance and recovery in real channels; review small-screen fleet readability, controller integration and calm travel |
 | Combat | Separate trial targets 16,384 raiders against 24 finite friendly hulls, with real shots, kills, replacement fronts and workboats | Review weapon feel, incoming-front variety, salvage load, geography and earned progression before campaign integration |
 | Trade | Regional warehouse depth, earned merchant expansion, exact bulk quotes, water routes and reserved holds | Review market pacing, discovery of trade routes, and late-game reasons to trade |
 | Convoy | Checked coastal recovery, physical harbor arrivals, all 24 ports with a full wide convoy, saved routes and distance inspection | Extended survival with different guard assignments and fleet builds; review arrival feedback in ordinary play |
@@ -1168,3 +1168,92 @@ from `WIDEWAKE_OCEAN.md`. Prove hull clearance, turning, current, draft, convoy
 columns and recovery through one river and a shallow alternate route. Repeat
 the endgame load against real geography before expanding the world or migrating
 the campaign. The production goal remains active.
+
+## Pass 17, weighted handling and two gun banks, trial v0.19
+
+The initial trial let a boat move sideways while its hull turned afterward. Its
+Broadside fired a radial circle, so orientation did little for that action. The
+review also found no distinction between a manual aim point inside weapon reach
+and one outside it, and no owned hit acknowledgement. Those weaknesses matter
+before defining river bends or treating the sea trial as a finished battle.
+
+Flagship and companion movement now uses heading, angular acceleration, throttle
+and braking. Directional input remains relative to the isometric screen. Asking
+for the opposite direction slows and turns the hull. A released helm coasts to
+a stop; low analog input permits a slower approach. The current 86 m flagship
+reaches 95 percent cruise in 3.38 seconds and needs 31.56 m to stop. Those numbers
+are game tuning, not naval specifications. Ship-to-ship and bank collision,
+reverse gear and constrained-water formation orders remain open.
+
+The broadside sends 24 rounds from each side over roughly four tenths of a
+second. A mouse hover or keyboard focus previews the actual bank lanes without
+adding persistent instructions. Its footprint is derived from the same muzzle
+positions and directions as the shots. Hull orientation now determines which
+water the volley covers. The reload meter and disabled state acknowledge the
+press immediately. Pause freezes the remaining rounds and resumes the same
+volley. Touch activation does not leave the hover preview on screen.
+
+Barrels recoil independently of their mounts. Gun impacts have a bounded flash
+budget, and manual hits give a small confirmation and the existing impact sound.
+A distant aim point shows the firing limit and a dashed remainder. Manual rounds
+end on that indicated reach, including offset muzzles and the last partial
+simulation step. Reduced motion removes barrel recoil and decorative impact
+flashes. Hulls, turrets and traveling rounds share interpolated render poses,
+while the simulation still steps at 60 Hz. Pooled raider slots retain their own
+previous positions when compacted, preventing a swapped slot from sliding across
+the screen. Arcing shells and explosions retain their full visible bounds.
+
+WebKit initially skipped game buttons during Tab navigation and did not expose
+the same focus-visible state as Chromium. The trial now cycles its available
+controls explicitly, including the pause dialog, with a visible keyboard focus
+state that clears on pointer use. Browser-level shortcuts remain available.
+
+The moving review completed the working period with all four workboats afloat
+and 120,524 cumulative kills. It included a right turn, a turn upward, a rolling
+broadside, going underway, another turn and returning to work. The enemy battle
+continued while production was paused underway, so that count is not a direct
+score comparison with a stationary three-minute run. The preset still offers
+very strong automatic protection: the separate stationary baseline wins without
+manual intervention, while an unprotected wandering flagship can be destroyed.
+Encounter variety, purposeful offensive movement and earned loadout balance
+still require work.
+
+Verification:
+
+- Core collision, reserve, finite hull/cargo, deterministic simulation and the
+  three-minute turnover test pass. The final core run records 113,347 kills,
+  129,729 spawns and 1.44 ms simulation-step p95 on this M1 Pro. The additional
+  pose history and shot ownership bring fixed buffers to 2,556,416 bytes.
+- Handling checks measure acceleration, braking, bounded turning and equal
+  diagonal speed. A moved convoy reaches every working station and resumes
+  production. Shot checks cover both banks, all preview lanes, range endpoints,
+  owned feedback and bounded impact/audio work.
+- Chromium and WebKit exercise real keyboard and pointer actions, immediate
+  reload feedback, pausing mid-volley, both aim states, actual manual hits,
+  interpolated GPU positions without simulation mutation, reduced motion and
+  touch cleanup. The existing touch layouts, focus-loss pause, context recovery,
+  anchored zoom and storage isolation also pass.
+- The three-minute Chromium continuation records 112,015 kills, roughly 16,384
+  live raiders, 18 GPU batches, 9.9 ms whole-run frame p95 and 10.4 ms p99.
+  The final sample draws 7,237 raiders. It rejects no shots and peaks at 20 audio
+  voices. Collected heap grows by 81,848 bytes between the first and last
+  samples; this short run does not settle long-session memory behavior.
+- The 4x CPU-throttled desktop sample measures 13.3 ms frame p95. The full
+  8,192-shot/2,048-effect fixture keeps 16,384 raiders before each step, draws
+  up to 7,760 rounds and measures 4.1 ms combined CPU p95. The Canvas fallback
+  retains the full simulation and measures 9.6 ms frame p95 in its smaller
+  viewport. Physical-device verification remains required.
+
+Whole-game review: the new movement and weapon geometry will affect future
+channels, convoy deployment and work protection, so those systems now have
+measurable constraints. The existing campaign's trading, charters, harbor
+progression, active saves and desktop packages are unchanged. The approved title
+is untouched. No images were generated. The trial still has no terrain, cargo
+collection, persistent battles or earned progression, and its phone checks still
+run on desktop hardware. These remain integration and release requirements.
+
+Next: build the first navigable estuary greybox at the measured boat scale.
+Prove channel width, turning room, banks, current, safe recovery and convoy
+columns before adding a large world. Carry forward the open combat readability,
+front variety, audio-priority and mobile-device work; the production goal remains
+active.
