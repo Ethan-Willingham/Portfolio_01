@@ -12,6 +12,18 @@ them. The owner specifically emphasized steering, combat, progression, and the
 feel of even small actions. Continue independently until the initial build is
 usable and tested; avoid spending effort on an enormous speculative plan.
 
+The 2026-10-19 direction supersedes that initial stopping point: keep a persistent
+production-readiness goal and work in repeated passes through the entire game.
+Working systems and passing automated checks are necessary, not sufficient.
+Mobile play is a first-class requirement. The ambition is exceptional quality
+and broad Steam appeal, without promising a sales number or declaring a game
+the best ever. The active quality ledger is `docs/WIDEWAKE_RELEASE.md`.
+
+The owner also explicitly requires opening the URL to feel like launching a
+purchased game. Keep the title, continue/new voyage, settings, pause and return
+flows inside the game. No blog heading, portfolio navigation, article introduction
+or surrounding page furniture. A discreet site exit may live in Credits.
+
 On 2026-10-19 the owner explicitly said the first public build was far from the
 full game requested and was disappointing. Treat that build as a foundation,
 not fulfillment. Prioritize a connected experience, thoughtful pacing, distinct
@@ -45,7 +57,8 @@ distinct interim backgrounds while that art pass is deferred.
 ## Files and ownership
 
 - `widewake.html`, `widewake.css`: full-window game shell, using the site's
-  self-hosted fonts and warm green interface colors.
+  self-hosted fonts and warm green interface colors. Its standalone stylesheet
+  deliberately does not import the portfolio stylesheet or blog component kit.
 - `js/widewake-data.js`: ports, prices, boats, hulls, fittings, fish, admirals.
 - `js/widewake-world.js`: Earth polygons, collision, route finding, spatial hash.
 - `js/widewake-core.js`: pure JavaScript campaign and fixed-step simulation.
@@ -54,6 +67,9 @@ distinct interim backgrounds while that art pass is deferred.
 - `js/widewake-render.js`: small canvas sprites, sea rendering, chart, port scenes.
 - `js/widewake-convoy.js`: vessel selection, cargo transfers, hold reservations,
   guard orders, and fleet buttons that retain keyboard focus.
+- `js/widewake-front.js`: independent pixel-art title scene and wordmark. This
+  scene never steps the campaign. It uses the shared activity scheduler and
+  honors the reduced-animation setting.
 - `js/widewake.js`: browser input, UI, audio, local persistence, import/export.
   Uses the shared `js/demo-activity.js` controller to stop scheduling offscreen,
   hidden, or unfocused. Held input clears, audio suspends, and battle pause stays
@@ -146,8 +162,9 @@ with the hardware/browser and actual living counts, not a boast about BELTFED.
 
 `widewake-save-v1` is a versioned localStorage record. The previous valid save is
 retained at `widewake-save-backup-v1`. Corrupt primary saves can fall back to the
-backup. A saved voyage opens paused so returning captains can orient themselves
-before the sea resumes. Import validates the campaign shape, numbers, identities, manifests,
+backup. A saved voyage waits at the title with a summary of the fleet and charter.
+Continue resumes play; no simulation runs behind the title or settings. Import
+validates the campaign shape, numbers, identities, manifests,
 upgrades and limits before replacing the live fleet. Storage failure is surfaced
 and export remains available. Saves include individual boat positions and wakes,
 the course and autopilot, formation, guard orders, reserved holds, action
@@ -168,6 +185,7 @@ node tools/widewake/test-routes.cjs
 node tools/widewake/test-voyage.cjs
 node tools/widewake/test-playthrough.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-browser.cjs
+NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-front.cjs
 ```
 
 Browser tests must use `/Users/ethan/.local/bin/agent-chrome-for-testing` or an

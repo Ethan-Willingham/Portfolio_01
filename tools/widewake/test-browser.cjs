@@ -10,7 +10,7 @@ const check=msg=>console.log('PASS '+msg);
   await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port;
   browser=await chromium.launch({headless:true,executablePath:process.env.WIDEWAKE_TEST_BROWSER||'/Users/ethan/.local/bin/agent-chrome-for-testing'});
   const context=await browser.newContext({viewport:{width:1440,height:900}}),page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
-  await page.goto(base+'/widewake.html?test=1');await page.waitForFunction(()=>window.__widewake);await page.evaluate(()=>{__widewake.game.s.seed=12345;__widewake.game.random=WidewakeCore.rng(12345);});
+  await page.goto(base+'/widewake.html?test=1');await page.waitForFunction(()=>window.__widewake);await page.click('#start-voyage');await page.click('[data-close="departure-dialog"]');await page.evaluate(()=>{__widewake.game.s.seed=12345;__widewake.game.random=WidewakeCore.rng(12345);});
   assert.equal(await page.locator('#port-name').innerText(),'Havana');assert.equal(await page.locator('.ww-goods-row').count(),10);
   await page.click('[data-action="buy"][data-id="sugar"]');assert.equal(await page.evaluate(()=>__widewake.game.quantity('sugar')),17);
   for(const tab of ['fleet','yard','voyage','jobs','log','trade']){await page.click('[data-tab="'+tab+'"]');assert.ok((await page.locator('#port-panel').innerText()).length>150);}
@@ -43,7 +43,7 @@ const check=msg=>console.log('PASS '+msg);
   await page.setInputFiles('#save-file',path.join(output,'test-save.json'));await page.waitForFunction(()=>document.getElementById('save-message').textContent.includes('restored'));assert.match(await page.locator('#save-message').innerText(),/restored/);await page.reload();await page.waitForFunction(()=>window.__widewake);assert.equal(await page.evaluate(()=>__widewake.game.s.stats.operations),1);assert.equal(await page.evaluate(()=>__widewake.game.paused),true);check('export, validated import, rejected bad imports, and reload persistence');
   // Separate fresh contexts keep viewport checks away from the campaign above.
   for(const [name,width,height,touch]of [['small-desktop',1024,768,false],['landscape-touch',844,390,true],['portrait-touch',390,844,true]]){
-    const ctx=await browser.newContext({viewport:{width,height},hasTouch:touch,isMobile:touch,deviceScaleFactor:1}),p=await ctx.newPage();p.on('pageerror',e=>errors.push(e.message));await p.goto(base+'/widewake.html?test');await p.waitForFunction(()=>window.__widewake);
+    const ctx=await browser.newContext({viewport:{width,height},hasTouch:touch,isMobile:touch,deviceScaleFactor:1}),p=await ctx.newPage();p.on('pageerror',e=>errors.push(e.message));await p.goto(base+'/widewake.html?test');await p.waitForFunction(()=>window.__widewake);await p.click('#start-voyage');await p.click('[data-close="departure-dialog"]');
     if(touch)await p.waitForFunction(()=>matchMedia('(pointer:coarse)').matches);
     assert.ok(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),name+' horizontal overflow');await p.screenshot({path:path.join(output,name+'-harbor.png')});
     for(const t of ['fleet','yard','voyage','jobs','log','trade']){await p.click('[data-tab="'+t+'"]');assert.ok(await p.locator('#port-panel').isVisible());}

@@ -86,6 +86,8 @@ Bump Widewake CSS/script version parameters together on changes. The owner
 explicitly deferred image generation: the 24 port briefs are saved in
 `assets/widewake/source/port-prompts.json`. Preserve the chunky, imperfect,
 individual indie art direction. Current canvas harbors are interim scenes.
+The game opens as a standalone game, with no blog wrapper. Continue the persistent
+quality passes in `docs/WIDEWAKE_RELEASE.md`; a passing prototype is not completion.
 
 **All Four Wheels**, a separate shopping-cart game in progress, lives in
 `four-wheels.html`, `four-wheels.css`, and `js/four-wheels*.js`. Its editable sources

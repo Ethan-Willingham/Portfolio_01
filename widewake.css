@@ -1,7 +1,14 @@
-/* Game-local layout. Shared typefaces and portfolio colors remain in style.css. */
+/* Standalone game shell. Fonts and palette match the owner, without the blog kit. */
+@font-face{font-family:'Commit Mono';font-style:normal;font-weight:400;font-display:swap;src:url('assets/fonts/commit_mono_regular.woff2') format('woff2')}
+@font-face{font-family:'Commit Mono';font-style:normal;font-weight:700;font-display:swap;src:url('assets/fonts/commit_mono_bold.woff2') format('woff2')}
+@font-face{font-family:century_supra_a;font-style:normal;font-weight:400;font-display:swap;src:url('assets/fonts/century_supra_a_regular.woff2') format('woff2')}
+@font-face{font-family:'Segoe UI';font-style:normal;font-weight:400;font-display:swap;src:local('Segoe UI'),url('assets/fonts/segoe_ui_regular.woff2') format('woff2')}
+@font-face{font-family:'Segoe UI';font-style:normal;font-weight:700;font-display:swap;src:local('Segoe UI Bold'),url('assets/fonts/segoe_ui_bold.woff2') format('woff2')}
+:root{color-scheme:dark;--bg:#303931;--bg-raised:#1e2420;--text:#e8e2d6;--text-bright:#f5f1ea;--text-dim:#b8b2a2;--text-faint:#a4a293;--accent:#d4c4a0;--accent-hover:#ede0c0;--rule:#4a544b;--rule-strong:#5a675c;--font-heading:century_supra_a,'Century Schoolbook',Georgia,serif;--font-body:'Segoe UI',system-ui,sans-serif;--font-mono:'Commit Mono',ui-monospace,monospace;scrollbar-color:var(--rule-strong) var(--bg-raised)}
+*{box-sizing:border-box;margin:0;padding:0}html{height:100%;-webkit-text-size-adjust:100%}button,input,select{font:inherit}a{color:var(--accent)}button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:3px}button:disabled{cursor:default}canvas{max-width:100%}
 .ww-body{margin:0;background:var(--bg);overflow:hidden;font-family:var(--font-body);font-size:14px;line-height:1.45;color:var(--text);-webkit-user-select:none;user-select:none}
 .ww-body *{box-sizing:border-box}.ww-body [hidden]{display:none!important}
-.ww-game{height:100vh;height:100dvh;display:flex;flex-direction:column;max-width:1920px;margin:auto;position:relative;--ww-sea:#213e3e;--ww-gold:#dfc288;--ww-green:#9ec79a;--ww-red:#d9978c;--ww-blue:#8fb3c7;--ww-panel:#252e28}
+.ww-game{height:100vh;height:100dvh;display:flex;flex-direction:column;width:100%;margin:auto;position:relative;--ww-sea:#213e3e;--ww-gold:#dfc288;--ww-green:#9ec79a;--ww-red:#d9978c;--ww-blue:#8fb3c7;--ww-panel:#252e28}
 .ww-game button,.ww-game select{font:12px var(--font-mono);color:var(--text);background:var(--bg);border:1px solid var(--rule-strong);border-radius:2px;min-height:40px;padding:9px 12px;cursor:pointer;touch-action:manipulation;transition:background .12s,transform .08s,border-color .12s}
 .ww-game button:hover:not(:disabled){background:var(--rule);border-color:var(--accent)}.ww-game button:active:not(:disabled){transform:translateY(2px)}.ww-game button:disabled{opacity:.4;cursor:default}.ww-game button:focus-visible,.ww-game select:focus-visible,.ww-game canvas:focus-visible{outline:2px solid var(--ww-gold);outline-offset:3px}
 .ww-game .ww-primary{background:var(--ww-gold);border-color:var(--ww-gold);color:var(--bg-raised);font-weight:700;box-shadow:0 3px 0 #9d8558}.ww-game .ww-primary:hover:not(:disabled){background:var(--accent-hover);color:var(--bg-raised)}
@@ -88,3 +95,71 @@
 .ww-fleet-token.ww-critical small{color:var(--ww-red)}
 @media(max-width:600px){.ww-convoy-dialog{padding:16px}.ww-convoy-layout{display:flex;flex-direction:column;gap:18px}#convoy-list{flex-direction:row;max-height:none;min-height:93px;flex-shrink:0}#convoy-list button{min-width:130px}#convoy-detail .ww-note{font-size:11px}.ww-convoy-heading h3{font-size:24px}.ww-convoy-heading{margin-bottom:8px}.ww-convoy-dialog .ww-dialog-head h2{font-size:24px}.ww-convoy-dialog .ww-eyebrow{font-size:8px;letter-spacing:.6px}}
 @media(max-height:560px) and (orientation:landscape){.ww-convoy-layout{grid-template-columns:155px minmax(0,1fr);gap:18px}.ww-convoy-heading canvas{width:64px;height:48px}.ww-fleet-strip{margin-bottom:5px}.ww-game .ww-fleet-token{padding:4px 6px}.ww-fleet-token small{margin-top:2px}.ww-sea-actions{gap:5px}}
+
+/* Launch, pause and return share a real game state, never a second running voyage. */
+.ww-sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.ww-body{overscroll-behavior:none}
+.ww-game{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+.ww-brand{font:700 16px var(--font-mono);letter-spacing:3px;color:var(--accent)}
+.ww-toolbar-location{font:10px var(--font-mono);color:var(--text-faint);margin-right:auto}
+.ww-header{border-bottom:2px solid var(--rule);height:48px;min-height:48px}
+.ww-title-screen{position:relative;flex:1;min-height:0;isolation:isolate;overflow:hidden;background:var(--ww-sea)}
+.ww-title-sea,.ww-title-shade{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;z-index:-2}
+.ww-title-shade{z-index:-1;background:linear-gradient(90deg,#172c28e8 0%,#172c28cc 28%,#172c2855 55%,transparent 75%)}
+.ww-title-menu{position:absolute;left:clamp(28px,7vw,125px);top:50%;transform:translateY(-51%);width:min(520px,47vw)}
+.ww-title-menu h1{margin:0;line-height:0}
+#title-logo{width:100%;height:auto;image-rendering:pixelated;max-width:560px}
+.ww-title-tagline{font:clamp(11px,1.15vw,15px)/1.6 var(--font-mono);color:var(--accent);margin:20px 0 44px}
+.ww-main-menu{width:min(320px,100%);display:flex;flex-direction:column;gap:9px;align-items:stretch}
+.ww-main-menu button{text-align:left;font:14px var(--font-mono);padding:15px 18px;min-height:52px;background:#1e2420b8;border:1px solid #6b7d6b;box-shadow:3px 3px 0 #172c28a8;position:relative}
+.ww-main-menu button:hover:not(:disabled),.ww-main-menu button:focus-visible{background:var(--bg);border-color:var(--ww-gold)}
+.ww-main-menu button.ww-primary{background:var(--ww-gold);box-shadow:3px 4px 0 #8e7850;border:1px solid var(--accent-hover)}
+.ww-main-menu button:active:not(:disabled){transform:translate(1px,2px);box-shadow:1px 1px 0 #172c28a8}
+.ww-menu-arrow{float:right}
+.ww-title-save{font:10px/1.8 var(--font-mono);color:var(--text-dim);padding:7px 1px 10px}
+.ww-title-save strong{font-weight:400;color:var(--text);display:block}
+.ww-title-storage{font:10px/1.6 var(--font-mono);color:var(--ww-red);max-width:320px;margin-top:14px}
+.ww-title-footer{position:absolute;left:clamp(28px,7vw,125px);right:32px;bottom:22px;display:flex;justify-content:space-between;align-items:center;gap:20px;color:var(--text-dim);font:10px var(--font-mono)}
+.ww-title-footer>div{display:flex;gap:8px}.ww-title-footer button{font-size:10px;background:#1e2420b8;border-color:#6b7d6b;min-height:44px}
+.at-title .ww-toasts{bottom:80px}
+.ww-setting-buttons{display:flex;gap:8px;margin:20px 0}.ww-setting-buttons button{flex:1;font-size:11px}
+.ww-save-section{border-top:1px solid var(--rule);padding-top:18px;margin-top:20px}.ww-save-section .ww-note{margin:10px 0 14px}
+.ww-return-title{width:100%;margin-top:20px;font-size:12px!important;border-color:var(--ww-gold)!important}
+.ww-handbook{width:min(840px,94vw)}.ww-handbook-grid{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+.ww-handbook h3{font:14px var(--font-mono);color:var(--ww-gold);margin:0 0 10px}
+.ww-handbook p{font:13px/1.7 var(--font-body);color:var(--text-dim);margin-bottom:12px}
+.ww-handbook .ww-handbook-keys{font:10px/2 var(--font-mono);padding-top:20px;border-top:1px solid var(--rule);margin:20px 0 0}
+.ww-touch-help{display:none}.ww-site-exit{display:inline-block;margin-top:24px;font:11px var(--font-mono);padding:12px 0}
+#credits-dialog>.ww-note{font-size:12px;margin-top:18px;line-height:1.7}
+.ww-departure{width:min(530px,94vw)}.ww-departure h2{font:normal 30px var(--font-heading);margin:12px 0 22px}
+.ww-departure .ww-note,#reset-dialog>.ww-note{font:13px/1.7 var(--font-body);margin:18px 0}
+.ww-departure .ww-save-actions{flex-direction:column}.ww-departure .ww-save-actions button{min-height:48px;font-size:12px}
+#reset-message{margin-top:16px;font-size:11px}
+.ww-reduce-motion *{animation:none!important;transition:none!important}
+.ww-title-screen[hidden]{display:none!important}
+.ww-port-heading h2,.ww-panel h3{font-family:var(--font-mono);letter-spacing:-1px}
+.ww-dialog .ww-note{line-height:1.6}
+@media(pointer:coarse){.ww-desktop-help{display:none}.ww-touch-help{display:block}.ww-header{min-height:50px}.ww-game .ww-setting-row input[type=checkbox]{width:26px;height:26px}.ww-setting-row:has(input[type=checkbox]){position:relative}.ww-setting-row label{flex:1;padding:10px 0}.ww-setting-row input[type=range]{width:140px;min-height:44px}.ww-setting-row{padding:3px 0}}
+@media(max-width:650px){.ww-brand{font-size:13px;letter-spacing:2px}.ww-toolbar-location{font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ww-top-actions{gap:5px}.ww-top-actions button{padding:7px 9px}.ww-handbook-grid{grid-template-columns:1fr;gap:15px}.ww-title-menu{left:24px;width:calc(100% - 48px);top:45%;transform:translateY(-50%)}#title-logo{width:min(450px,100%)}.ww-title-tagline{font-size:11px;margin:17px 0 30px}.ww-main-menu{width:240px}.ww-title-shade{background:linear-gradient(90deg,#172c28c9,#172c2866 80%,#172c2833)}.ww-title-footer{left:24px;right:20px;bottom:18px;gap:10px}.ww-title-footer>span{font-size:9px}.ww-title-footer button{padding:7px 8px}.ww-title-save{font-size:9px}}
+@media(max-width:650px) and (orientation:portrait){
+  .ww-body{overflow:hidden}.ww-game{height:100dvh;min-height:0}.ww-header{padding:0 12px}.ww-toolbar-location{display:none}.ww-top-actions{margin-left:auto}
+  .ww-harbor{flex:1;min-height:0;overflow:hidden}.ww-harbor-left{padding:12px 16px 10px;flex:none;height:clamp(235px,35dvh,350px);position:relative;gap:0}
+  .ww-port-heading{margin-bottom:8px;align-items:center}.ww-port-heading h2{font-size:25px;line-height:1.2}.ww-port-heading .ww-eyebrow{font-size:8px}.ww-coords{font-size:8px}
+  .ww-port-picture{min-height:0;height:auto;flex:1}.ww-port-picture canvas{object-fit:cover;object-position:center 56%;height:100%;width:100%}
+  .ww-port-caption,.ww-next{display:none}.ww-cast-off{padding-top:8px;gap:8px}.ww-cast-off small{display:none}.ww-cast-off button{padding:7px 10px}.ww-cast-off .ww-primary{min-width:105px}.ww-cast-off>div{margin:0;font-size:9px}
+  .ww-management{flex:1;min-height:0;overflow:hidden}.ww-wallet{padding:10px 16px;min-height:64px}.ww-wallet strong{font-size:23px}.ww-cargo-readout{font-size:11px}
+  .ww-panel{overflow:auto;min-height:0;padding:12px 16px 24px;overscroll-behavior:contain}.ww-tabs{flex-shrink:0;gap:9px;justify-content:space-between}.ww-tabs button{padding:8px 0;min-width:36px;font-size:10px}.ww-port-footer{padding:8px 16px;font-size:8px}
+  .ww-sea{height:auto;min-height:0;flex:1}.ww-goods-row,.ww-market-head{grid-template-columns:minmax(82px,1fr) 31px 31px 31px 100px;font-size:10px}.ww-goods-name{font-size:10px}.ww-trade-buttons button{min-width:46px;padding:6px 4px}.ww-trade-buttons{gap:4px}.ww-goods-name canvas{width:20px;height:20px}
+}
+@media(max-height:560px) and (orientation:landscape){
+  .ww-title-menu{left:5vw;top:46%;width:44vw;transform:translateY(-50%)}#title-logo{width:min(330px,100%)}.ww-title-tagline{font-size:10px;margin:10px 0 18px}.ww-main-menu{width:240px;gap:5px}.ww-main-menu button{min-height:44px;padding:10px 14px;font-size:12px}.ww-title-save{font-size:9px;line-height:1.5;padding:3px 0 4px}.ww-title-footer{left:5vw;bottom:10px;right:20px}.ww-title-footer>span{font-size:8px}.ww-title-footer button{font-size:9px;min-height:36px}.ww-title-menu:has(#continue-voyage:not([hidden])) .ww-title-tagline{margin-bottom:10px}.ww-title-menu:has(#continue-voyage:not([hidden])) #title-logo{width:260px}.ww-title-menu:has(#continue-voyage:not([hidden])) .ww-main-menu{gap:4px}.ww-title-menu:has(#continue-voyage:not([hidden])) .ww-title-tagline{display:none}.ww-title-menu:has(#continue-voyage:not([hidden])) h1{margin-bottom:12px}.ww-title-storage{font-size:9px;margin-top:8px}.ww-header{height:44px;min-height:44px}.ww-port-heading h2{font-size:23px}.ww-port-caption{font-size:10px}.ww-harbor-left{padding:10px 16px}.ww-cast-off button{padding:7px 10px}.ww-game .ww-main-menu button,.ww-game .ww-title-footer button{min-height:44px}.ww-toolbar-location{font-size:9px}
+}
+@media(max-height:660px) and (orientation:portrait){.ww-harbor-left{height:220px}.ww-wallet{min-height:58px}.ww-title-menu{top:45%}.ww-title-tagline{margin:12px 0 18px}.ww-main-menu{gap:5px}.ww-main-menu button{min-height:46px;padding:11px 15px}.ww-title-save{padding:4px 0}.ww-title-footer{bottom:10px}}
+@media(min-width:651px) and (max-height:720px){.ww-cast-off{flex-wrap:nowrap;padding-top:10px}.ww-cast-off>div{width:auto;font-size:10px;margin-bottom:0}.ww-cast-off .ww-primary{min-width:100px}.ww-cast-off small{font-size:8px}.ww-port-caption{margin:10px 0}.ww-next{padding:10px 0}.ww-next h3{font-size:17px}.ww-port-picture{min-height:100px}}
+@media(max-height:360px){.ww-title-menu{top:10px;bottom:62px;transform:none;overflow:auto}.ww-title-menu:has(#continue-voyage:not([hidden])) #title-logo,#title-logo{width:200px}.ww-title-tagline{display:none}.ww-title-menu h1{margin-bottom:12px}.ww-title-footer{bottom:8px}.ww-title-storage{margin-bottom:8px}}
+@media(pointer:coarse){.ww-tabs{gap:5px}.ww-tabs button{min-width:44px}.ww-quantity button{min-width:44px}.ww-game .ww-joystick.ww-full-steam{border-color:var(--ww-gold);background:#d4c4a022}.ww-joystick.ww-full-steam>div{background:#d4c4a077}}
+.ww-hold-explanation{font:10px/1.5 var(--font-mono)!important;min-height:40px!important;text-align:left;width:100%;background:var(--bg-raised)!important;color:var(--ww-gold)!important;margin:0 0 6px;padding:8px 10px!important}
+.ww-trade-buttons button{white-space:nowrap}.ww-trade-buttons small{white-space:normal;line-height:1.3}
+@media(max-height:560px) and (orientation:landscape),(max-height:720px) and (max-width:650px){
+  .ww-wallet{padding:7px 16px;min-height:60px;gap:10px}.ww-wallet .ww-eyebrow{font-size:8px;margin-bottom:1px}.ww-wallet strong{font-size:22px}.ww-panel{padding:8px 16px 24px}.ww-panel[data-service=trade]>h3{display:none}.ww-market-note{padding:0 0 6px;margin:0 0 5px;font-size:11px}.ww-quantity{margin:4px 0}.ww-market-head{padding:4px 0;font-size:8px}
+}
