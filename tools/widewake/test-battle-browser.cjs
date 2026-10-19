@@ -46,7 +46,10 @@ const saveReport=()=>fs.writeFileSync(path.join(out,'browser.json'),JSON.stringi
       // Artificial capacity test, separate from the organic battle and its HUD
       // counters. Every round still travels, queries collisions and expires.
       const B=WidewakeBattle,b=new B.Battle(),v=__widewakeBattle.view,previous=v.battle,times=[];v.battle=b;v.zoom=v.targetZoom=WidewakeOcean.stops.fleet;v.camera={x:0,y:0};v.offset={x:0,y:0};v.anchor=null;
-      const r=B.random(9821);let peak=0,effectPeak=0,minimumRaiders=Infinity,renderedShots=0;const frameIntervals=[];
+      // Fill all 24 real hull histories before the maximum shot/effect load.
+      v.wakes.clear();for(const s of b.ships){s.vx=Math.cos(s.angle)*s.speed*.8;s.vy=Math.sin(s.angle)*s.speed*.8;}
+      for(let n=0;n<=120;n++){const time=n*.1;v.wakes.sample(b.ships,b.ships.map(s=>({x:s.x-s.vx*(12-time),y:s.y-s.vy*(12-time),angle:s.angle})),time);}b.time=12;
+      const r=B.random(9821);let peak=0,effectPeak=0,minimumRaiders=Infinity,renderedShots=0,wakeSegments=0;const frameIntervals=[];
       try{for(let frame=0;frame<120;frame++){
         const start=performance.now(),shots=b.shots;
         // Refill here as well as in the ordinary simulation. A capacity test
@@ -55,11 +58,11 @@ const saveReport=()=>fs.writeFileSync(path.join(out,'browser.json'),JSON.stringi
         while(shots.count<B.LIMITS.shots&&shots.count-shots.hostile<B.LIMITS.shots-B.LIMITS.hostileReserve){const a=r()*Math.PI*2,d=300+r()*1500,x=Math.cos(a)*d,y=Math.sin(a)*d,heading=a+(r()-.5)*2.5;shots.fire(x,y,x+Math.cos(heading)*700,y+Math.sin(heading)*700,frame%5?B.weapons.gun:B.weapons.flak);}
         while(shots.count<B.LIMITS.shots){const a=r()*Math.PI*2,d=900+r()*900;shots.fire(Math.cos(a)*d,Math.sin(a)*d,Math.cos(a)*(d+700),Math.sin(a)*(d+700),B.weapons.hostile);}
         while(b.effects.count<B.LIMITS.effects)b.effects.add((r()-.5)*2400,(r()-.5)*2400,10+r()*70,r()>.3?2:0);
-        peak=Math.max(peak,shots.count);effectPeak=Math.max(effectPeak,b.effects.count);v.render(1/60);renderedShots=Math.max(renderedShots,v.batches.shot.count+v.batches.hostile.count+v.batches.shell.count);b.step(1/60);times.push(performance.now()-start);await new Promise(requestAnimationFrame);frameIntervals.push(performance.now()-start);
+        peak=Math.max(peak,shots.count);effectPeak=Math.max(effectPeak,b.effects.count);v.render(1/60);renderedShots=Math.max(renderedShots,v.batches.shot.count+v.batches.hostile.count+v.batches.shell.count);wakeSegments=Math.max(wakeSegments,v.stats.wakeSegments);b.step(1/60);times.push(performance.now()-start);await new Promise(requestAnimationFrame);frameIntervals.push(performance.now()-start);
       }}finally{v.battle=previous;}
-      times.sort((a,b)=>a-b);frameIntervals.sort((a,b)=>a-b);return{name:'capacity-fixture',shots:peak,renderedShots,effects:effectPeak,targetRaiders:b.population,minimumRaiders,kills:b.kills,cpuStepAndRenderP95:times[Math.floor(times.length*.95)],frameP95:frameIntervals[Math.floor(frameIntervals.length*.95)],backend:v.stats.backend};
+      times.sort((a,b)=>a-b);frameIntervals.sort((a,b)=>a-b);return{name:'capacity-fixture',wakeSegments,shots:peak,renderedShots,effects:effectPeak,targetRaiders:b.population,minimumRaiders,kills:b.kills,cpuStepAndRenderP95:times[Math.floor(times.length*.95)],frameP95:frameIntervals[Math.floor(frameIntervals.length*.95)],backend:v.stats.backend};
     });
-    reports.push(ceiling);saveReport();assert.equal(ceiling.shots,8192);assert.equal(ceiling.effects,2048);assert.equal(ceiling.minimumRaiders,16384);assert.ok(ceiling.renderedShots>4000&&ceiling.kills>0);assert.ok(ceiling.cpuStepAndRenderP95<25);check('full projectile and effect buffers with real collision and turnover');
+    reports.push(ceiling);saveReport();assert.ok(ceiling.wakeSegments>1000&&ceiling.wakeSegments<=3120,'full fleet wakes stay in their fixed batch');assert.equal(ceiling.shots,8192);assert.equal(ceiling.effects,2048);assert.equal(ceiling.minimumRaiders,16384);assert.ok(ceiling.renderedShots>4000&&ceiling.kills>0);assert.ok(ceiling.cpuStepAndRenderP95<25);check('full projectile and effect buffers with real collision and turnover');
     const fallbackContext=await browser.newContext({viewport:{width:1280,height:720}});
     await fallbackContext.addInitScript(()=>{const get=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(type,...args){return type==='webgl2'?null:get.call(this,type,...args);};});
     const fallbackPage=await fallbackContext.newPage();fallbackPage.on('pageerror',e=>errors.push(e.message));await fallbackPage.goto(base+'/widewake-battle.html?test');await fallbackPage.click('#resume');await fallbackPage.waitForTimeout(12000);

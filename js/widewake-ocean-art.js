@@ -194,16 +194,72 @@
       result=mix(result,vec3(.52,.59,.50),edge*wash*(.2+salt*.25));return result;
     }
   `;
+  // Twelve seconds of world-space history, with fixed storage independent of
+  // enemy count or session length. Only friendly hulls produce persistent wakes.
+  class WakeTrail{
+    constructor(){this.capacity=128;this.limit=24;this.life=12;this.tracks=Array.from({length:this.limit},()=>({x:new Float32Array(128),y:new Float32Array(128),time:new Float64Array(128),power:new Float32Array(128),head:0,count:0,last:-1}));this.count=0;this.bytes=this.limit*this.capacity*20;this.startNormal=new Float64Array(3);this.endNormal=new Float64Array(3);}
+    clear(){for(const t of this.tracks){t.count=t.head=0;t.last=-1;}this.count=0;}
+    sample(ships,poses,time){
+      this.count=0;
+      for(let id=0;id<this.limit;id++){
+        const t=this.tracks[id],s=ships[id],p=poses[id];if(!s||!p||s.hp<=0){t.count=0;continue;}
+        const c=Math.cos(p.angle),sn=Math.sin(p.angle),x=p.x-c*s.length*.38,y=p.y-sn*s.length*.38,speed=Math.hypot(s.vx,s.vy);
+        t.width=s.width*.32;t.spread=.2+s.speed*.14;t.liveX=x;t.liveY=y;t.liveTime=time;t.livePower=Math.min(1,speed/(s.speed*.6));
+        const previous=(t.head+127)%128;
+        if(time<t.last||t.count&&Math.hypot(x-t.x[previous],y-t.y[previous])>Math.max(40,s.length*2)){t.count=0;t.last=-1;}
+        while(t.count&&time-t.time[(t.head-t.count+128)%128]>this.life)t.count--;
+        if(speed>.12&&(t.last<0||time-t.last>=.1-1e-7)){
+          const i=t.head;t.x[i]=x;t.y[i]=y;t.time[i]=time;t.power[i]=t.livePower;t.head=(i+1)%128;t.count=Math.min(128,t.count+1);t.last=time;
+        }
+        this.count+=t.count;
+      }
+    }
+    tangent(t,n,out){
+      const at=(t.head-t.count+n+128)%128,prior=(at+127)%128,next=(at+1)%128;
+      const x=n===t.count?t.liveX:t.x[at],y=n===t.count?t.liveY:t.y[at],px=n===0?x:t.x[prior],py=n===0?y:t.y[prior],nx=n>=t.count-1?t.liveX:t.x[next],ny=n>=t.count-1?t.liveY:t.y[next];
+      const dx=nx-px,dy=ny-py,length=Math.hypot(dx,dy)||1,ax=x-px,ay=y-py,bx=nx-x,by=ny-y,cross=Math.abs(ax*by-ay*bx);
+      out[0]=-dy/length;out[1]=dx/length;
+      // Limit expansion inside a tight turn, where an oversized ribbon would
+      // fold through itself and make bright triangular seams.
+      out[2]=cross>1e-6?Math.hypot(ax,ay)*Math.hypot(bx,by)*length/(2*cross)*.7:1e6;
+    }
+    segments(view,emit){
+      const now=view.visualTime,scale=view.zoom*view.baseScale;
+      for(const t of this.tracks){
+        if(t.count<1)continue;
+        // A stride in wide view avoids spending fill and CPU on subpixel foam.
+        const stride=scale<.25?3:scale<.7?2:1;
+        for(let n=0;n<t.count;n+=stride){
+          const i=(t.head-t.count+n+128)%128,next=Math.min(t.count,n+stride),live=next===t.count,j=(t.head-t.count+next+128)%128;
+          const x=t.x[i],y=t.y[i],ex=live?t.liveX:t.x[j],ey=live?t.liveY:t.y[j],endTime=live?t.liveTime:t.time[j],age=now-t.time[i],endAge=now-endTime;
+          if(age>=this.life||endTime-t.time[i]>.5||Math.hypot(ex-x,ey-y)<.04)continue;
+          this.tangent(t,n,this.startNormal);this.tangent(t,next,this.endNormal);const left=this.startNormal,right=this.endNormal,width=Math.min(left[2],t.width+age*t.spread*t.power[i]**2),endWidth=Math.min(right[2],t.width+endAge*t.spread*(live?t.livePower:t.power[j])**2);
+          if(!view.visible((x+ex)*.5,(y+ey)*.5,(Math.hypot(ex-x,ey-y)+width)*scale+2))continue;
+          const alpha=t.power[i]*Math.pow(Math.max(0,1-age/this.life),1.5)*Math.min(1,n/6),endAlpha=(live?t.livePower:t.power[j])*Math.pow(Math.max(0,1-endAge/this.life),1.5)*Math.min(1,next/6);
+          emit(x,y,ex,ey,width,endWidth,alpha,endAlpha,left[0],left[1],right[0],right[1]);
+        }
+      }
+      // Small bow shoulders indicate speed and hull heading without covering it.
+      for(const s of view.battle.ships){if(s.hp<=0)continue;const p=view.poses[s.id],speed=Math.hypot(s.vx,s.vy),power=Math.min(1,speed/(s.speed*.8));if(power<.05||!view.visible(p.x,p.y,40))continue;
+        const c=Math.cos(p.angle),sn=Math.sin(p.angle);for(const side of [-1,1]){
+          const x=p.x+c*s.length*.47-sn*s.width*.13*side,y=p.y+sn*s.length*.47+c*s.width*.13*side;
+          emit(x,y,x-c*s.length*.3-sn*s.width*.44*side,y-sn*s.length*.3+c*s.width*.44*side,s.width*.025,s.width*.12,power*.75,0);
+        }
+      }
+    }
+    drawCanvas(view){const c=view.fallback;let count=0;c.save();c.lineCap='round';this.segments(view,(x,y,ex,ey,w,ew,a,ea)=>{const p=view.project(x,y),q=view.project(ex,ey);c.strokeStyle='#b1c6ba';c.globalAlpha=(a+ea)*.12;c.lineWidth=Math.max(.5,(w+ew)*view.zoom*view.baseScale);c.beginPath();c.moveTo(p.x,p.y);c.lineTo(q.x,q.y);c.stroke();count++;});c.restore();view.stats.wakeSegments=count;}
+  }
   const wakeVertex=`#version 300 es
-    precision highp float;layout(location=0)in vec2 aPosition;layout(location=2)in vec4 aWorld;layout(location=3)in vec4 aPose;uniform vec2 uSize;uniform float uZoom;out vec2 uv;out vec4 state;
-    void main(){uv=aPosition*.5+.5;float along=-uv.x*aPose.y,across=aPosition.y*aPose.z*(.22+uv.x*.85);vec2 p=aWorld.xy+vec2(along*aWorld.w-across*aPose.x,along*aPose.x+across*aWorld.w);vec2 screen=vec2((p.x-p.y)*.70710678,(p.x+p.y)*.35355339)*uZoom;gl_Position=vec4(screen.x/uSize.x*2.,-screen.y/uSize.y*2.,clamp(-(p.x+p.y)*.6123724/20000.,-.99,.99),1.);state=vec4(aPose.w,aPose.y,aPose.z,aWorld.z);}`;
+    precision highp float;layout(location=0)in vec2 aPosition;layout(location=2)in vec4 aWorld;layout(location=3)in vec4 aPose;layout(location=4)in vec2 aFade;uniform vec2 uSize;uniform vec2 uCamera;uniform float uZoom;out vec2 uv;out vec2 world;out float opacity;
+    void main(){uv=aPosition*.5+.5;vec2 p=mix(aWorld.xy,aWorld.zw,uv.x)+mix(aPose.xy,aPose.zw,uv.x)*aPosition.y;world=p+uCamera;opacity=mix(aFade.x,aFade.y,uv.x);vec2 screen=vec2((p.x-p.y)*.70710678,(p.x+p.y)*.35355339-.025)*uZoom;gl_Position=vec4(screen.x/uSize.x*2.,-screen.y/uSize.y*2.,clamp(-((p.x+p.y)*.6123724+.03)/20000.,-.99,.99),1.);}`;
   const wakeFragment=`#version 300 es
-    precision highp float;in vec2 uv;in vec4 state;uniform sampler2D uNoise;uniform float uTime;out vec4 color;
-    void main(){float x=uv.x,y=abs(uv.y*2.-1.),t=uTime;float foam=texture(uNoise,vec2(x*1.6-t*.13,uv.y*.3)).r;float edge=exp(-pow((y-(.65+sin(x*24.-t*3.)*.05))*12.,2.));float middle=exp(-y*y*10.)*smoothstep(.32,.75,foam);float alpha=(edge*.32+middle*.42)*pow(1.-x,1.4)*min(1.,state.x/5.);if(alpha<.015)discard;color=vec4(.62,.74,.70,alpha);}`;
+    precision highp float;in vec2 uv;in vec2 world;in float opacity;uniform sampler2D uNoise;uniform float uTime;out vec4 color;
+    void main(){float y=abs(uv.y*2.-1.);float coarse=texture(uNoise,world*.005+vec2(uTime*.0008,0.)).g;float foam=texture(uNoise,world*.032+vec2(uTime*.0015,0.)).r;float edge=exp(-pow((y-.62-coarse*.16)*7.,2.))*smoothstep(.28,.75,coarse);float churn=exp(-y*y*4.)*smoothstep(.20,.8,foam)*(.35+coarse*.65);float alpha=(edge*.48+churn*.58)*(1.-smoothstep(.8,1.,y))*opacity;if(alpha<.008)discard;color=vec4(.70,.81,.74,alpha);}`;
   class WaterMotion{
-    constructor(view){this.view=view;const gl=view.gl,O=root.WidewakeOcean;this.program=O.program(gl,wakeVertex,wakeFragment);this.batch=new O.Batch(gl,new Float32Array([-1,-1,1,-1,1,1,-1,-1,1,1,-1,1]),64,true);}
-    draw(){const v=this.view,gl=v.gl;this.batch.count=0;for(const s of v.battle.ships){if(s.hp<=0||!v.visible(s.x,s.y,160))continue;const p=v.poses[s.id],c=Math.cos(p.angle),sn=Math.sin(p.angle),speed=Math.hypot(s.vx,s.vy);if(speed<.3)continue;this.batch.add(p.x-v.camera.x-c*s.length*.3,p.y-v.camera.y-sn*s.length*.3,0,c,sn,Math.min(s.length*3,speed*4+s.length*.6),s.width*.9,speed);}
-      v.uniforms(this.program);gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,v.noise);gl.uniform1i(gl.getUniformLocation(this.program,'uNoise'),2);gl.uniform1f(gl.getUniformLocation(this.program,'uTime'),v.reduced?0:v.visualTime);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false);const n=this.batch.draw();gl.depthMask(true);gl.disable(gl.BLEND);return n;}
+    constructor(view){this.view=view;const gl=view.gl,O=root.WidewakeOcean;this.program=O.program(gl,wakeVertex,wakeFragment);this.batch=new O.Batch(gl,new Float32Array([-1,-1,1,-1,1,1,-1,-1,1,1,-1,1]),3120,true);
+      const b=this.batch;b.data=new Float32Array(b.capacity*10);gl.bindVertexArray(b.vao);gl.bindBuffer(gl.ARRAY_BUFFER,b.instances);gl.bufferData(gl.ARRAY_BUFFER,b.data.byteLength,gl.DYNAMIC_DRAW);for(const [index,size,offset]of [[2,4,0],[3,4,16],[4,2,32]]){gl.enableVertexAttribArray(index);gl.vertexAttribPointer(index,size,gl.FLOAT,false,40,offset);gl.vertexAttribDivisor(index,1);}}
+    draw(){const v=this.view,gl=v.gl;this.batch.count=0;v.wakes.segments(v,(x,y,ex,ey,w,ew,a,ea,nx,ny,enx,eny)=>{const b=this.batch;if(b.count>=b.capacity)return;if(nx===undefined){const length=Math.hypot(ex-x,ey-y)||1;nx=enx=-(ey-y)/length;ny=eny=(ex-x)/length;}let i=b.count++*10;const d=b.data;d[i++]=x-v.camera.x;d[i++]=y-v.camera.y;d[i++]=ex-v.camera.x;d[i++]=ey-v.camera.y;d[i++]=nx*w;d[i++]=ny*w;d[i++]=enx*ew;d[i++]=eny*ew;d[i++]=a;d[i]=ea;});v.stats.wakeSegments=this.batch.count;
+      v.uniforms(this.program);gl.uniform2f(gl.getUniformLocation(this.program,'uCamera'),v.camera.x,v.camera.y);gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,v.noise);gl.uniform1i(gl.getUniformLocation(this.program,'uNoise'),2);gl.uniform1f(gl.getUniformLocation(this.program,'uTime'),v.reduced?0:v.visualTime);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false);const b=this.batch;gl.bindVertexArray(b.vao);gl.bindBuffer(gl.ARRAY_BUFFER,b.instances);gl.bufferSubData(gl.ARRAY_BUFFER,0,b.data,0,b.count*10);if(b.count)gl.drawArraysInstanced(gl.TRIANGLES,0,6,b.count);gl.depthMask(true);gl.disable(gl.BLEND);return b.count?1:0;}
     dispose(){this.batch.dispose();this.view.gl.deleteProgram(this.program);}
   }
   const shadowVertex=`#version 300 es
@@ -233,5 +289,5 @@
     }
     dispose(){for(const batch of Object.values(this.batches))batch.dispose();}
   }
-  root.WidewakeOceanArt={mesh,normals,scenery,landings,Atlas,noiseTexture,waterGLSL,WaterMotion,Shadows,Mechanisms};
+  root.WidewakeOceanArt={mesh,normals,scenery,landings,Atlas,noiseTexture,waterGLSL,WakeTrail,WaterMotion,Shadows,Mechanisms};
 })(globalThis);

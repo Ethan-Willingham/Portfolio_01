@@ -16,7 +16,7 @@
         c=mix(vec3(.21,.27,.19),vec3(.34,.37,.24),wide)*(.93+grass*.10+grain*.025);c=mix(c,vec3(.29,.27,.20)*(1.+grass*.12),mud);}
       color=vec4(c,1.);}`;
   class Terrain{
-    constructor(view){this.view=view;this.cache=new Map();this.queue=[{key:'overview',x:-4096,y:-8192,size:16384,step:128}];this.pending=null;this.serial=1;this.requests=new Map();this.bytes=0;this.clock=0;this.failed=null;this.needed=[];this.props={};this.worker=new Worker('js/widewake-estuary-worker.js?v=0.23.0');this.worker.onmessage=e=>this.receive(e.data);this.worker.onerror=e=>{this.failed=e.message||'Terrain unavailable';this.onError?.(this.failed);};if(view.gl)this.restore();this.pump();}
+    constructor(view){this.view=view;this.cache=new Map();this.queue=[{key:'overview',x:-4096,y:-8192,size:16384,step:128}];this.pending=null;this.serial=1;this.requests=new Map();this.bytes=0;this.clock=0;this.failed=null;this.needed=[];this.props={};this.worker=new Worker('js/widewake-estuary-worker.js?v=0.24.0');this.worker.onmessage=e=>this.receive(e.data);this.worker.onerror=e=>{this.failed=e.message||'Terrain unavailable';this.onError?.(this.failed);};if(view.gl)this.restore();this.pump();}
     restore(){const gl=this.view.gl;this.program=O.program(gl,vertex,fragment);for(const tile of this.cache.values())this.upload(tile);if(this.props)for(const batch of Object.values(this.props))batch.dispose();this.props={};this.initProps();}
     initProps(){if(!this.view.gl)return;const gl=this.view.gl;
       for(const type of ['reed','tree0','tree1','tree2','rock'])this.props[type]=new O.Batch(gl,this.view.meshes[type],1600);
@@ -56,15 +56,23 @@
     dispose(){this.worker.terminate();for(const request of this.requests.values())request.reject(Error('Scene closed'));this.requests.clear();for(const tile of this.cache.values())this.release(tile);this.cache.clear();if(this.view.gl&&!this.view.lost){for(const batch of Object.values(this.props))batch.dispose();this.view.gl.deleteProgram(this.program);}}
   }
   class View extends O.Ocean{
-    constructor(canvas,navigation){super(canvas,navigation);this.stops=navigation.player.type==='launch'?{helm:6,fleet:2,survey:.45}:{helm:1.5,fleet:.65,survey:.28};this.zoom=this.targetZoom=this.stops.fleet;this.terrain=new Terrain(this);}
-    setZoom(value,x,y){super.setZoom(value,x,y);this.targetZoom=E.clamp(value,.24,8);}
+    constructor(canvas,navigation){super(canvas,navigation);this.lookAhead=true;this.configureCamera();this.zoom=this.targetZoom=this.stops.helm;this.terrain=new Terrain(this);}
+    configureCamera(){
+      // Camera distances are expressed in screen pixels per metre, so rotating a
+      // phone does not shrink the captain's boat into a dot. Physical hull scale stays intact.
+      const length=this.battle.player.length,largest=Math.max(...this.battle.ships.filter(s=>s.hp>0).map(s=>s.length)),close=40/length;
+      this.stops={helm:close/this.baseScale,fleet:Math.min(close*.45,48/largest)/this.baseScale,survey:Math.min(.12,close*.2)/this.baseScale};
+    }
+    resize(){const previous=this.baseScale;super.resize();if(this.stops){this.configureCamera();if(this.follow&&previous){this.zoom*=previous/this.baseScale;this.targetZoom*=previous/this.baseScale;this.anchor=null;}}}
+    setZoom(value,x,y){super.setZoom(value,x,y);this.targetZoom=E.clamp(value,this.stops.survey*.65,this.stops.helm*1.65);}
     zoomStop(name){if(this.stops?.[name]){this.anchor=null;this.offset.x=this.offset.y=0;this.targetZoom=this.stops[name];}}
     labels(){const c=this.ctx,n=this.battle,s=n.player,pose=this.poses[0],p=this.project(pose.x,pose.y),scale=this.zoom*this.baseScale;c.clearRect(0,0,this.width,this.height);c.font='8px "Commit Mono", monospace';c.textAlign='center';if(n.port)return;
       if(root.WidewakeReach){for(const site of root.WidewakeReach.sites){if(n.rank<site.rank)continue;const q=this.project(site.x,site.y),r=Math.max(7,site.radius*scale*.18);if(q.x<0||q.y<0||q.x>this.width||q.y>this.height)continue;c.strokeStyle='#a3cfbe66';c.setLineDash([2,4]);c.beginPath();c.ellipse(q.x,q.y,r,r*.5,0,0,Math.PI*2);c.stroke();c.setLineDash([]);c.fillStyle='#b6d2c8';c.fillText(site.name,q.x,q.y-r*.5-6);}
         for(const item of n.loot||[]){if(scale>.65)continue;const q=this.project(item.x,item.y);c.fillStyle='#ceb886';c.fillRect(q.x-2,q.y-2,4,4);c.strokeStyle='#637c74';c.strokeRect(q.x-3,q.y-3,6,6);}
         for(const ship of n.ships){if(ship.hp<=0||ship.id===0||ship.hp>=ship.maxHp&&!ship.working)continue;const q=this.project(ship.x,ship.y,ship.height+3);c.fillStyle='#112633';c.fillRect(q.x-10,q.y-1,20,3);c.fillStyle=ship.hp<ship.maxHp*.3?'#e6977d':'#9fc6b5';c.fillRect(q.x-10,q.y-1,20*ship.hp/ship.maxHp,2);}}
-      c.strokeStyle=n.contactTime?'#eac38a':'#d5c087';c.lineWidth=1;c.beginPath();c.ellipse(p.x,p.y,Math.max(5,s.width*scale*.3),Math.max(3,s.width*.15*scale),0,0,Math.PI*2);c.stroke();
-      if(s.length*scale<9){c.fillStyle='#e3cc91';c.beginPath();c.moveTo(p.x,p.y-4);c.lineTo(p.x+3,p.y+3);c.lineTo(p.x-3,p.y+3);c.fill();}
+      // At chart distance, a small leader sits above the hull. Nothing is drawn
+      // over the boat itself, including when it touches a bank.
+      if(s.length*scale<7){const top=this.project(pose.x,pose.y,s.height);c.strokeStyle='#c0d6cd88';c.beginPath();c.moveTo(top.x,top.y-3);c.lineTo(top.x,top.y-10);c.stroke();c.fillStyle='#deeadc';c.fillRect(top.x-2,top.y-13,4,2);}
       for(const port of E.ports){if(Math.hypot(port.x-s.x,port.y-s.y)<Math.max(80,s.length*2))continue;const q=this.project(port.x,port.y);if(q.x<20||q.x>this.width-20||q.y<45||q.y>this.height-45)continue;c.fillStyle='#d3d8be';c.fillText(port.name,q.x,q.y-22);c.strokeStyle='#a6c2ad66';c.beginPath();c.ellipse(q.x,q.y,Math.max(4,12*scale),Math.max(2,6*scale),0,0,Math.PI*2);c.stroke();}
       if(n.route){c.strokeStyle='#b1d9cc77';c.setLineDash([2,5]);c.beginPath();c.moveTo(p.x,p.y);for(let i=n.route.index;i<Math.min(n.route.index+25,n.route.points.length);i++){const q=this.project(n.route.points[i].x,n.route.points[i].y);c.lineTo(q.x,q.y);}c.stroke();c.setLineDash([]);}
       // The campaign has a labelled camera tool and a scale on its chart.

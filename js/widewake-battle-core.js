@@ -24,15 +24,22 @@
   const BROADSIDE=Object.freeze({rounds:48,interval:1/60,cooldown:12,range:1250,damage:140,splash:110,pierce:1,speed:690,kind:1});
   const angleDelta=(to,from)=>Math.atan2(Math.sin(to-from),Math.cos(to-from));
   function helmStep(s,input,dt){
-    const x=input.x||0,y=input.y||0,amount=Math.min(1,Math.hypot(x,y)),moving=amount>.045,size=clamp(Math.sqrt(38/s.length),.6,1.35),velocity=Math.hypot(s.vx,s.vy),fraction=clamp(velocity/s.speed,0,1);
-    const error=moving?angleDelta(Math.atan2(y,x),s.angle):0,limit=(1.8-1.12*fraction)*size,targetTurn=moving?clamp(error*3.5,-limit,limit):0;
-    s.turn=(s.turn||0)+(targetTurn-(s.turn||0))*(1-Math.exp(-dt*9));
-    const forward=s.vx*Math.cos(s.angle)+s.vy*Math.sin(s.angle),side=(-s.vx*Math.sin(s.angle)+s.vy*Math.cos(s.angle))*Math.exp(-dt*4);
+    // Surge, sway and yaw, for the bounded friendly fleet only. Velocity stays
+    // in world space when the hull turns; lateral water resistance bends its path.
+    const x=input.x||0,y=input.y||0,amount=Math.min(1,Math.hypot(x,y)),moving=amount>.045;
+    const size=clamp(Math.sqrt(38/s.length),.65,2.05),mass=1+.28*clamp((s.cargo||0)/(s.hold||1),0,1),velocity=Math.hypot(s.vx,s.vy),fraction=clamp(velocity/s.speed,0,1);
+    const error=moving?angleDelta(Math.atan2(y,x),s.angle):0,limit=(1.65-.95*fraction)*size/Math.sqrt(mass),targetTurn=moving?clamp(error*3,-limit,limit):0;
+    s.turn=(s.turn||0)+(targetTurn-(s.turn||0))*(1-Math.exp(-dt*6*size/mass));
     s.angle=angleDelta(s.angle+s.turn*dt,0);
-    const alignment=moving?Math.max(0,Math.cos(angleDelta(Math.atan2(y,x),s.angle))):0,desired=moving?s.speed*amount*(input.boost?1.35:1)*alignment:0;
-    const targetSpeed=input.reverse?-s.speed*.3:desired,speed=forward+clamp(targetSpeed-forward,-16*size*dt,11*size*dt);
-    s.vx=Math.cos(s.angle)*speed-Math.sin(s.angle)*side;s.vy=Math.sin(s.angle)*speed+Math.cos(s.angle)*side;
-    if(!moving&&!input.reverse&&Math.hypot(s.vx,s.vy)<.03)s.vx=s.vy=0;
+    const c=Math.cos(s.angle),sn=Math.sin(s.angle),forward=s.vx*c+s.vy*sn,side=-s.vx*sn+s.vy*c;
+    const alignment=moving?Math.max(0,Math.cos(angleDelta(Math.atan2(y,x),s.angle))):0,target=input.reverse?-.3:moving?amount*alignment*(input.boost?1.35:1):0;
+    s.throttle=(s.throttle||0)+(target-(s.throttle||0))*(1-Math.exp(-dt*(input.reverse?8:5)*size));
+    // Neutral coasts. Reverse applies propeller braking before making sternway.
+    const desired=s.speed*s.throttle,gain=(moving||input.reverse?2.4:.95)*size/mass;
+    const surge=forward+clamp((desired-forward)*(1-Math.exp(-dt*gain)),-(input.reverse?22:12)*size/mass*dt,9*size/mass*dt);
+    const sway=side*Math.exp(-dt*2.7*size/mass);
+    s.vx=c*surge-sn*sway;s.vy=sn*surge+c*sway;
+    if(!moving&&!input.reverse&&Math.hypot(s.vx,s.vy)<.03){s.vx=s.vy=s.throttle=0;}
     s.x+=s.vx*dt;s.y+=s.vy*dt;
   }
   function broadsideRound(ship,index){

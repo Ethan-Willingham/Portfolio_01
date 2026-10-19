@@ -105,12 +105,12 @@
       const current=this.field.sample(old.x,old.y,this.water);s.x+=current.currentX*dt;s.y+=current.currentY*dt;
       const dx=s.x-old.x,dy=s.y-old.y,da=B.angleDelta(s.angle,old.angle),steps=Math.max(1,Math.ceil(Math.hypot(dx,dy)+Math.abs(da)*s.length*.5));let safe=0;
       let pier=false;for(let i=1;i<=steps;i++){const t=i/steps,x=old.x+dx*t,y=old.y+dy*t,angle=old.angle+da*t;if(this.field.clearance(s,x,y,angle)<.12){pier=this.field.obstruction(s,x,y,angle);break;}safe=t;}
-      if(safe<1){s.x=old.x+dx*safe;s.y=old.y+dy*safe;s.angle=old.angle+da*safe;s.vx=s.vy=s.turn=0;this.contact=pier?'Pier ahead':this.water.depth<s.draft+.3?'Shallow water':'Bank ahead';this.contactTime=2.5;this.route=null;}
+      if(safe<1){s.x=old.x+dx*safe;s.y=old.y+dy*safe;s.angle=old.angle+da*safe;s.vx=s.vy=s.turn=s.throttle=0;this.contact=pier?'Pier ahead':this.water.depth<s.draft+.3?'Shallow water':'Bank ahead';this.contactTime=2.5;this.route=null;}
       return Math.hypot(s.x-old.x,s.y-old.y);
     }
     step(dt,input={x:0,y:0}){
       dt=clamp(dt,0,1/30);const s=this.player;s.px=s.x;s.py=s.y;s.previousAngle=s.angle;this.time+=dt;this.tick++;this.control=input;this.contactTime=Math.max(0,this.contactTime-dt);if(!this.contactTime&&!this.towing)this.contact='';
-      if(this.towing){s.vx=s.vy=s.turn=0;let remaining=6*dt;for(let n=0;n<20&&this.trailCount&&remaining>0;n++){const at=(this.trailCursor+2047)%2048,p=this.trail[at],d=Math.hypot(s.x-p.x,s.y-p.y),a=root.WidewakeBattle.angleDelta(p.angle,s.angle),cost=Math.max(d,Math.abs(a)*s.length*.1),t=cost?Math.min(1,remaining/cost):1;
+      if(this.towing){s.vx=s.vy=s.turn=s.throttle=0;let remaining=6*dt;for(let n=0;n<20&&this.trailCount&&remaining>0;n++){const at=(this.trailCursor+2047)%2048,p=this.trail[at],d=Math.hypot(s.x-p.x,s.y-p.y),a=root.WidewakeBattle.angleDelta(p.angle,s.angle),cost=Math.max(d,Math.abs(a)*s.length*.1),t=cost?Math.min(1,remaining/cost):1;
           s.x+=(p.x-s.x)*t;s.y+=(p.y-s.y)*t;s.angle+=a*t;this.towDistance+=d*t;remaining-=cost*t;if(t===1){this.trailCursor=at;this.trailCount--;}if(this.towDistance>Math.max(10,s.length)&&this.field.clearance(s,s.x,s.y,s.angle,.7)>.7){this.towing=false;break;}}
         if(!this.trailCount)this.towing=false;if(!this.towing){this.contact='Back in clear water';this.contactTime=3;}this.field.sample(s.x,s.y,this.water);return;}
       const manual=Math.hypot(input.x||0,input.y||0)>.04||input.reverse;if(manual){this.route=null;this.arrived=null;}
@@ -122,7 +122,7 @@
         drive={x:dx/(d||1)*throttle,y:dy/(d||1)*throttle};
         if(end&&d<Math.max(5,s.length*.25)&&Math.hypot(s.vx,s.vy)<3){this.arrived=r.destination;this.visited.add(r.destination.id);this.route=null;drive={x:0,y:0};}
       }
-      if(this.arrived&&!manual){s.vx=s.vy=s.turn=0;this.field.sample(s.x,s.y,this.water);return;}
+      if(this.arrived&&!manual){s.vx=s.vy=s.turn=s.throttle=0;this.field.sample(s.x,s.y,this.water);return;}
       const before={x:s.x,y:s.y,angle:s.angle},distance=this.move(drive,dt);if(distance>.001||Math.abs(root.WidewakeBattle.angleDelta(s.angle,before.angle))>.0005)this.record(before);this.distance+=distance;this.field.sample(s.x,s.y,this.water);
     }
     report(){const s=this.player;return{type:s.type,x:s.x,y:s.y,distance:this.distance,depth:this.water.depth,clearance:this.field.clearance(s),salinity:this.water.salinity,contact:this.contact,towing:this.towing,route:this.route?.destination.id||null,arrived:this.arrived?.id||null,visited:[...this.visited],trailCount:this.trailCount};}

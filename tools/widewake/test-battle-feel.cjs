@@ -13,10 +13,10 @@ for(const type of ['flagship','gunboat','trawler','oilrig']){
   close(Math.hypot(s.vx,s.vy),s.speed);
   const x=s.x;B.helmStep(s,{},dt);assert.ok(s.vx>s.speed*.9,'releasing the helm cannot instantly stop a hull');
   let stopped=dt;while(Math.hypot(s.vx,s.vy)>.03&&stopped<20){B.helmStep(s,{},dt);stopped+=dt;}
-  assert.ok(stopped<6&&s.vx===0&&s.vy===0);assert.ok(s.x-x>5);
+  assert.ok(stopped<13&&s.vx===0&&s.vy===0);assert.ok(s.x-x>5);
   handling.push({type,length:s.length,width:s.width,speed:s.speed,secondsTo95Percent:ninetyFive,brakingSeconds:stopped,brakingMetres:s.x-x});
 }
-assert.ok(handling[0].brakingMetres>25&&handling[0].brakingMetres<45);
+assert.ok(handling[0].brakingMetres>45&&handling[0].brakingMetres<65);
 const turn=vessel('flagship');turn.vx=turn.speed;B.helmStep(turn,{x:-1,y:0},dt);assert.ok(turn.vx>0,'reverse input first brakes and turns');assert.ok(Math.abs(turn.angle)<.04);
 let maxTurn=0;for(let n=0;n<600;n++){const old=turn.angle;B.helmStep(turn,{x:-1,y:0},dt);maxTurn=Math.max(maxTurn,Math.abs(B.angleDelta(turn.angle,old))/dt);}
 assert.ok(turn.vx<-turn.speed*.95);assert.ok(maxTurn<1.25);

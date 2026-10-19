@@ -1472,3 +1472,46 @@ Phone checks use browser device emulation on the M1 Pro, not physical handsets.
 Controller checks exercise the actual focus/activation handlers without claiming
 a hardware controller playthrough. No new enemy-capacity or performance claim is
 made by this UI pass. The whole-game production goal remains open.
+
+## v0.24: momentum, wakes and automatic combat
+
+The owner made driving the priority and removed manual firing from the campaign.
+Friendly boats now keep world-space momentum while their hulls turn. Surge, sway,
+yaw and engine spool provide acceleration, sideslip, coasting and reverse thrust.
+Hull size and cargo affect response. The launch turns promptly; heavier loaded
+hulls need room. Routes, full-hull clearance, physical reverse and tow still pass.
+A checked, staggered departure approach prevents support boats cutting across
+quays to join the convoy. Engine spool and joining routes survive save/reload.
+
+The launch is readable at the default camera distance on every tested viewport.
+The yellow ring and filled hull marker are gone. Close, Fleet and Wide use
+viewport-independent scale; rotation preserves the selected distance. Smooth
+zoom anchors and a limited velocity lead keep the water ahead available.
+
+Wake histories stay in the water when the boat turns or stops. Foam spreads
+according to hull speed and emission strength, fades over twelve seconds, and
+joins continuously through bends. Bow shoulders share the same rendering batch.
+The fixed history uses 61,440 bytes; a 3,120-segment GPU allocation draws the
+entire friendly fleet in one call. Distant samples are reduced. Canvas uses the
+same history. Enemy count does not allocate more wake trails.
+
+The campaign has no fire button, aiming or Space-to-shoot action. Guns acquire
+their own targets, and a hostile in a clear bank arc releases a rolling broadside
+on larger player hulls. Empty water does not consume the salvo. The isolated
+engineering battle harness retains manual controls for its existing checks.
+
+Validation includes the connected trade, fishing, oil and river-convoy sequence;
+physics convergence, loaded hulls and reverse thrust; old-save defaults and
+validation; world-anchored wake lifetime and all 24 bounded histories; automatic
+starter guns and bank salvos; browser saves, quota recovery and writer ownership.
+Chromium and WebKit checks cover real keyboard/pointer input, emulated phones,
+rotation, camera anchors, Canvas fallback, menus and fleet progression. Existing
+subpixel-motion and sprite-atlas checks still pass. The offline desktop shell
+passes import/export, pause and quit/relaunch.
+
+The M1 Pro browser benchmark retains 16,384 raiders, including its four-times CPU
+throttle and full 8,192-shot / 2,048-effect fixture. A focused final render check
+also fills all 24 wake histories before this capacity fixture. Its report lives
+with the v0.24 visual evidence. These are local browser measurements, not a claim
+of physical-phone or Steam production readiness. Human handling feedback,
+long-session device testing and the remaining whole-game work are still needed.

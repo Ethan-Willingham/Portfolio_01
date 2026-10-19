@@ -1,7 +1,7 @@
 /* UI decisions must work with a real pointer, keyboard and controller focus.
    Fixtures expose later services; they do not stand in for earned progression. */
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),http=require('node:http');
-const {chromium,webkit}=require('playwright'),root=path.resolve(__dirname,'../..'),out=process.env.WIDEWAKE_TEST_OUTPUT||'/tmp/widewake-v023/ui';fs.mkdirSync(out,{recursive:true});
+const {chromium,webkit}=require('playwright'),root=path.resolve(__dirname,'../..'),out=process.env.WIDEWAKE_TEST_OUTPUT||'/tmp/widewake-v024/ui';fs.mkdirSync(out,{recursive:true});
 const server=http.createServer((req,res)=>{const file=path.resolve(root,'.'+new URL(req.url,'http://localhost').pathname);if(!file.startsWith(root+path.sep)){res.writeHead(403).end();return;}fs.readFile(file,(e,data)=>{res.writeHead(e?404:200,{'Content-Type':({'.html':'text/html','.css':'text/css','.js':'text/javascript','.woff2':'font/woff2'})[path.extname(file)]||'application/octet-stream'});res.end(e?'Missing':data);});});
 let browser;const errors=[],reports=[],isWebkit=process.env.WIDEWAKE_TEST_ENGINE==='webkit';
 const ready=p=>p.waitForFunction(()=>__widewakeReach.view?.terrain.ready,null,{timeout:45000});

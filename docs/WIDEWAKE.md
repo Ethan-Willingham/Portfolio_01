@@ -57,6 +57,13 @@ a harbor menu, a cargo ledger, a paper chart and compact sailing instruments.
 The approved title remains unchanged. See the interface contract in
 `WIDEWAKE_REACH.md` before adding UI.
 
+The subsequent driving instruction makes boat handling and its wake the focus.
+Use world-space momentum, hull and cargo inertia, purposeful braking, and a
+persistent wake that shows turns. The boat must stay readable on phones, without
+a yellow ring covering it. All campaign weapons fire automatically, including
+bank salvos. There is no aiming or fire action; moving and positioning the fleet
+are the player's combat inputs. Preserve bounded cost as fleets grow.
+
 The subsequent graphics correction asks for Factorio's level of sprite detail
 and animation, not its industrial theme. Keep original nautical designs. The
 owner also explicitly asks for regular production pushes of verified milestones.

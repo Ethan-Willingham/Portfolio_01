@@ -99,7 +99,7 @@
       const action=pressed[1]?'pause':pressed[4]?'chart':pressed[5]?'convoy':pressed[0]?'context':pressed[2]?'burst':pressed[3]?'repair':pressed[8]?'help':pressed[10]?'helm':pressed[12]?'zoom-in':pressed[13]?'zoom-out':pressed[14]?'formation-previous':pressed[15]?'formation-next':null;
       if(action){this.options.action(action);if(!this.options.context().sea)return empty;}
       if(right.x||right.y){const length=Math.hypot(right.x,right.y);this.aim={x:right.x/length,y:right.y/length};}
-      return{x:left.x,y:left.y,boost:(pad.buttons[6]?.value||0)>.25,fire:!!(right.x||right.y)||(pad.buttons[7]?.value||0)>.25,aim:this.aim};
+      return{x:left.x,y:left.y,brake:(pad.buttons[7]?.value||0)>.25,boost:(pad.buttons[6]?.value||0)>.25,fire:!!(right.x||right.y)||(pad.buttons[7]?.value||0)>.25,aim:this.aim};
     }
   }
   const api={Controller,stick};root.WidewakeController=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;

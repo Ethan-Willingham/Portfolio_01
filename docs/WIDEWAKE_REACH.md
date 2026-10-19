@@ -4,7 +4,7 @@ Owner instruction, 2026-10-19: make the new ocean part of the game, retire the o
 world, and bring the graphics into one consistent visual system. This explicitly
 supersedes the earlier instruction to keep the new ocean in separate trials.
 
-Version 0.23 opens the approved title illustration, then starts at Tern Yard in
+Version 0.24 opens the approved title illustration, then starts at Tern Yard in
 Bracken Reach. Continue loads this same world. There is no Earth campaign or
 trial chooser in the normal play flow. An old `widewake-estuary.html` bookmark
 redirects to the game. `?test` retains the isolated navigation harness; the battle
@@ -77,8 +77,8 @@ file actions. Nested help and canceled imports return to their parent menu.
 
 The sailing HUD keeps hull and depth together. Zoom is a labelled control with
 Close, Fleet and Wide choices on demand. Wheel, pinch and keyboard camera stops
-remain available. Chart, broadside and nearby dock/work actions occupy the lower
-right. The main-world scale lives on the chart, avoiding action overlaps on phones.
+remain available. Chart and nearby dock/work actions occupy the lower right. All weapons fire
+automatically; do not add a manual fire action. The main-world scale lives on the chart, avoiding action overlaps on phones.
 Modal decisions hide the inactive HUD, including stale notices behind them.
 
 Use at least 44 px for interactive targets. Preserve the same actions on phones;
@@ -86,11 +86,45 @@ compact landscape layouts move contextual actions above the lower row and allow
 long fleet and destination lists to scroll. Keep the chart confirmation outside
 that scrolling list. Do not restore nearest-neighbor scaling to moving scenery.
 
+## Driving and wakes, v0.24
+
+Friendly hulls use surge, sway and yaw at the existing fixed 60 Hz. Turning the
+bow does not rotate its world velocity. Sideways water resistance brings the
+trajectory around; engine spool and hull size set response. Cargo adds up to
+28 percent inertia without silently changing rated top speed. Releasing the
+helm coasts; R, the touch Reverse button, or controller RT applies reverse thrust
+and then makes sternway. The shared enemy movement remains lightweight.
+
+The camera's Close stop is measured in CSS pixels per metre, independent of the
+viewport shrink used by the scene. Rotation preserves the selected scale. Wheel
+and pinch retain their water anchor; stops recenter, and a bounded velocity lead
+opens water ahead of the bow. A tiny leader appears above a distant hull only.
+There is no hull selection ring or filled marker covering the boat.
+
+A fixed wake history records the stern in world space. It survives turns and
+stops, spreads and fades over twelve seconds, and resets on a recovery jump.
+Twenty-four 128-point tracks use 61,440 bytes of CPU history. The GPU ribbon has
+a fixed 3,120-segment buffer, shared endpoint normals, one instanced draw call,
+and reduced sampling at distance. Small bow shoulders share that batch. Canvas
+uses the same histories. Raiders do not allocate individual persistent trails.
+Context restoration keeps the history and recreates only its GPU resources.
+
+Starter guns and support weapons acquire targets automatically. Larger player
+hulls release their rolling bank salvo when a hostile enters a clear broadside
+arc; empty water does not consume it. The old isolated battle harness retains
+manual firing as an engineering test, not a campaign control.
+
+On departure, each support boat takes a checked approach from its berth to the
+captain's recorded path. This prevents a heavy boat cutting across the quay to
+reach the first wake point. The approach and engine spool persist in saves;
+older version-one saves default the new fields safely.
+
 ## Graphics contract
 
 One unit is one metre. Decks, piers, doors, railings, trees, weapon mounts and
 work equipment use that scale. A six-metre launch is naturally smaller than a
-warehouse or a trawler. Camera stops let the player inspect the small boat.
+warehouse or a trawler. The default camera keeps at least 40 CSS pixels of projected hull length at
+every heading and viewport. Fleet and Wide remain deliberate overview choices.
 
 All nautical and shore models use the same isometric projection, directional
 lighting, muted material family, baked color/depth sprites, filtered edges and
@@ -143,6 +177,8 @@ A second window must hand off ownership before it can write.
 ## Verification
 
 ```sh
+node tools/widewake/test-driving.cjs
+node tools/widewake/test-driving-browser.cjs
 node tools/widewake/test-reach-game.cjs
 node tools/widewake/test-reach-browser.cjs
 node tools/widewake/test-reach-ui.cjs
