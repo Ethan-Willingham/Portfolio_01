@@ -12,6 +12,12 @@ them. The owner specifically emphasized steering, combat, progression, and the
 feel of even small actions. Continue independently until the initial build is
 usable and tested; avoid spending effort on an enormous speculative plan.
 
+On 2026-10-19 the owner explicitly said the first public build was far from the
+full game requested and was disappointing. Treat that build as a foundation,
+not fulfillment. Prioritize a connected experience, thoughtful pacing, distinct
+encounters, and complete playthroughs. A long feature list is not evidence that
+the game feels finished.
+
 - The entire sailing world is Earth, with real coastlines. Players can steer
   freely, approach ports, cross oceans, and wrap around the Pacific seam.
 - Port trading follows the old Tradewinds idea: regional prices, buy low, sell
@@ -43,7 +49,11 @@ distinct interim backgrounds while that art pass is deferred.
 - `js/widewake-data.js`: ports, prices, boats, hulls, fittings, fish, admirals.
 - `js/widewake-world.js`: Earth polygons, collision, route finding, spatial hash.
 - `js/widewake-core.js`: pure JavaScript campaign and fixed-step simulation.
+- `js/widewake-voyage.js`: charters, sea stories, rescue operations, encounter
+  rewards, and their validated save state. No DOM dependencies.
 - `js/widewake-render.js`: small canvas sprites, sea rendering, chart, port scenes.
+- `js/widewake-convoy.js`: vessel selection, cargo transfers, hold reservations,
+  guard orders, and fleet buttons that retain keyboard focus.
 - `js/widewake.js`: browser input, UI, audio, local persistence, import/export.
   Uses the shared `js/demo-activity.js` controller to stop scheduling offscreen,
   hidden, or unfocused. Held input clears, audio suspends, and battle pause stays
@@ -72,7 +82,11 @@ all provide experience. Milestone rewards are granted once. After the world
 circuit and admirals, the trading and fleet sandbox continues.
 
 Every support vessel has a separate cargo manifest and hull. Incoming trade is
-distributed into free holds; production fills its workboat first. Sinking a
+loaded into cargo lighters first, then the flagship and other free holds;
+production fills its workboat first. Workboats reserve their holds for fish or
+oil by default. Existing cargo stays aboard when a reservation changes. The
+Convoy desk moves whole units between actual holds at port, without trading
+or changing coins. Sinking a
 support vessel loses its cargo. Damaged ships can be repaired at ports or with a
 paid emergency repair at sea. Losing the flagship returns the surviving fleet
 to the last harbor, with a recoverable loss rather than a permanently insolvent
@@ -86,6 +100,9 @@ import data.
 - Guns use visible traveling rounds and swept hit tests. A broadside is a
   deliberate cooldown action. Friendly fire is disabled.
 - Three fleet formations change spacing. Support ships turn and catch up.
+  Gunboats, destroyers and repair launches can guard a named cargo boat or the
+  flagship. Automatic orders divide them between active workboats or protect a
+  stranded crew during a rescue. When work ends they rejoin the flagship.
 - Production vessels move onto station before their timer starts. Operations
   stop if the player leaves the area or the workboat sinks. Loaded cargo remains.
 - Each market shows purchase and sale prices, the fleet's holdings, local exports,
@@ -132,8 +149,11 @@ retained at `widewake-save-backup-v1`. Corrupt primary saves can fall back to th
 backup. A saved voyage opens paused so returning captains can orient themselves
 before the sea resumes. Import validates the campaign shape, numbers, identities, manifests,
 upgrades and limits before replacing the live fleet. Storage failure is surfaced
-and export remains available. Saves include position, hulls, cargo, progression,
-collections and an active production operation. Transient projectiles and enemy
+and export remains available. Saves include individual boat positions and wakes,
+the course and autopilot, formation, guard orders, reserved holds, action
+cooldowns, hulls, cargo, progression, collections, charters and an active sea
+operation. Original version-1 saves migrate with defaults for the new fields.
+Transient projectiles and enemy
 formations are regenerated after loading; they are not a replay format.
 
 Exported JSON is the portable save format for this browser build. A future Steam
@@ -145,6 +165,8 @@ services through the browser shell, rather than rewriting the economy.
 ```sh
 node tools/widewake/test-core.cjs
 node tools/widewake/test-routes.cjs
+node tools/widewake/test-voyage.cjs
+node tools/widewake/test-playthrough.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-browser.cjs
 ```
 
@@ -191,6 +213,63 @@ targeting, projectiles and rendering. Median frame interval was 8.3 ms and the
 95th percentile was 9.9 ms. Only fixture hull health was raised to keep the
 population alive during measurement. This is a short local stress result, not
 a guarantee for every browser, machine, or extended campaign.
+
+## Campaign and sea stories, v0.2
+
+The Voyage desk carries six sequential charters. They link the Nassau trade,
+first trawler, brig, Calypso recovery, Atlantic blockade, Lisbon, northern fishing
+and a timber delivery, oil production, the Cape, the Indian Ocean, eastern trade,
+deep-water fishing, and the Pacific finale. The final charter requires returning
+to Havana after Last Light. Its homecoming screen records the voyage and returns
+the player to the same fleet and open-world sandbox. These objectives guide a
+route without locking other regions or taking away free sailing.
+
+Fifteen authored sea signals add wreck recoveries, stranded crews, blockades,
+and traveling merchants. Investigate with E inside the signal ring. Wrecks offer
+a quick cargo recovery or a longer guarded operation for money and a fitting.
+Rescues require protecting an actual target hull for 45 seconds. Failed or
+abandoned operations can be retried. Resolved stories pay once. Merchants quote
+one complete order and check the purse and usable holds before taking payment.
+Encounter dialogs pause the sea while the captain decides.
+
+The Red Widow winds up aimed fan salvos. The Iron King marks water before mortar
+impacts. Last Light mixes fans, mortars and ring salvos with gaps. Each admiral
+calls reinforcements at half hull. Rammers show their committed charge direction
+before accelerating. Critical friendly hulls have a distinct warning, visible
+name and offscreen pointer; the minimap now includes the convoy. C opens the
+convoy desk at sea or port. Transfers and hold reservations are port actions.
+
+Rank thresholds were spread out after an earned playthrough exposed escalation
+far ahead of affordable fleet strength. Ordinary patrols have more space between
+waves. Production ramps through its one-minute operation and adds pressure for
+extra workboats. Admiral fittings are excluded from ordinary raider drops.
+
+The helmsman now slows at waypoints, detects blocked progress, and replans from
+the actual hull position. Routes check swept clearance rays against coastline
+edges, in addition to sampling. This prevents a narrow coastal sliver from
+passing the planner but blocking the boat. A regression exercises the southwest
+Iceland stall with an upgraded engine, alongside both Gibraltar directions.
+
+## Extended verification, 2026-10-19
+
+The automated captain in `test-playthrough.cjs` completed all six charters using
+ordinary purchases, market trades, steering, hulls, guns and repairs. No money,
+health, invulnerability, kills, objectives, or position jumps were injected.
+The seeded run took 41.7 minutes of simulated sailing, reached the final admiral
+in a frigate, lost ships, bought a Leviathan afterward, and returned to Havana
+with ten vessels. It finished with 941 kills and 28,362 coins. This is a reproducible
+campaign solvability and pacing check, not a human usability or enjoyment study.
+
+The convoy and voyage scenarios also cover conservation in transfers, reserved
+holds, automatic and named protection, sinking a protected ship, original-save
+migration, actual per-ship save positions, courses, cooldowns, one-time rewards,
+repeatable failures, merchant payment, charter delivery and ending persistence.
+All 15 sea-story sites have water-only approaches, in addition to the 42 ports
+and resource sites. Browser checks exercise the transfer and order controls,
+earned first charter, wreck decisions, real rescue combat, merchant payment,
+mortar tells, homecoming and continuing play. Desktop and touch dialogs and
+ocean views are inspected as screenshots. The earlier release's performance
+numbers are historical; use the latest browser report for the current build.
 
 ## References
 

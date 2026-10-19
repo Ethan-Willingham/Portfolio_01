@@ -46,8 +46,21 @@
       }return false;
     }
     water(x,y,r=0){return !this.land(x,y)&&(!r||!this.land(x+r,y)&&!this.land(x-r,y)&&!this.land(x,y+r)&&!this.land(x,y-r));}
-    clear(a,b,r=14){const vx=dx(a.x,b.x),vy=b.y-a.y,n=Math.max(1,Math.ceil(Math.hypot(vx,vy)/28));
-      for(let i=0;i<=n;i++){const t=i/n;if(!this.water(a.x+vx*t,a.y+vy*t,r))return false;}return true;
+    clear(a,b,r=15){const vx=dx(a.x,b.x),vy=b.y-a.y,n=Math.max(1,Math.ceil(Math.hypot(vx,vy)/20));
+      for(let i=0;i<=n;i++){const t=i/n;if(!this.water(a.x+vx*t,a.y+vy*t,r))return false;}
+      // Sampling alone can jump a thin coastal sliver. Check the swept center
+      // and clearance rays against real coastline edges as well.
+      const ga=geo(a.x,a.y),bx=ga.lon+vx/SCALE,by=ga.lat-vy/SCALE,margin=r/SCALE;
+      const minX=Math.min(ga.lon,bx)-margin,maxX=Math.max(ga.lon,bx)+margin,minY=Math.min(ga.lat,by)-margin,maxY=Math.max(ga.lat,by)+margin;
+      const rays=r?[[0,0],[margin,0],[-margin,0],[0,margin],[0,-margin]]:[[0,0]];
+      for(const polygon of this.polygons){if(polygon.maxY<minY||polygon.minY>maxY)continue;
+        for(const shift of [-360,0,360]){if(polygon.maxX+shift<minX||polygon.minX+shift>maxX)continue;
+          const seen=new Set();for(const rows of polygon.indexed)for(let row=Math.max(0,Math.floor(minY+90));row<=Math.min(180,Math.floor(maxY+90));row++)for(const e of rows[row]||[]){
+            if(seen.has(e))continue;seen.add(e);const cx=e[0]+shift,cy=e[1],ex=e[2]-e[0],ey=e[3]-e[1];if(Math.max(cx,cx+ex)<minX||Math.min(cx,cx+ex)>maxX)continue;
+            for(const [ox,oy]of rays){const ax=ga.lon+ox,ay=ga.lat+oy,sx=bx-ga.lon,sy=by-ga.lat,den=sx*ey-sy*ex;if(Math.abs(den)<1e-12)continue;const qx=cx-ax,qy=cy-ay,t=(qx*ey-qy*ex)/den,u=(qx*sy-qy*sx)/den;if(t>1e-9&&t<1-1e-9&&u>=0&&u<=1)return false;}
+          }
+        }
+      }return true;
     }
     nearestWater(p,r=32){if(this.water(p.x,p.y,r))return {...p};
       for(let d=24;d<1600;d+=24)for(let a=0;a<Math.PI*2;a+=Math.min(.3,24/d)){
@@ -93,7 +106,7 @@
           if(ox&&oy&&(!this.grid[y*360+nx]||!this.grid[(y+oy)*360+x]))continue;
           const ng=g[id]+(ox&&oy?Math.SQRT2:1);if(ng>=g[n])continue;
           const edge=id*9+(oy+1)*3+ox+1;
-          if(!this.edges[edge])this.edges[edge]=this.clear(a,this.cellPoint(n),14)?1:-1;
+          if(!this.edges[edge])this.edges[edge]=this.clear(a,this.cellPoint(n),18)?1:-1;
           if(this.edges[edge]<0)continue;
           g[n]=ng;prev[n]=id;special.delete(n);heap.push({id:n,f:ng+heuristic(n)});
         }

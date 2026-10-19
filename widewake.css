@@ -30,3 +30,61 @@
 @media(pointer:coarse){.ww-game button,.ww-tabs button,.ww-quantity button,.ww-top-actions button,.ww-sea-actions button{min-height:44px}.ww-zoom button{width:44px}.ww-header{min-height:50px}.ww-setting-row input[type=checkbox]{width:24px;height:24px}.ww-setting-row{min-height:48px}}
 
 .ww-trade-buttons small{display:block;margin-top:2px;font:9px var(--font-mono);color:var(--text-dim)}
+.ww-letter{font:14px/1.75 var(--font-heading);color:var(--text);padding:14px 16px;background:var(--bg-raised);border-left:2px solid var(--ww-gold)}
+.ww-letter small{display:block;font:10px var(--font-mono);color:var(--text-faint);margin-top:12px}
+.ww-charter-step{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 0;border-bottom:1px solid var(--rule)}
+.ww-charter-step p{margin:0 0 5px;font-size:12px}.ww-charter-step small{font:9px var(--font-mono);color:var(--text-faint)}
+.ww-charter-step button{font-size:10px;flex-shrink:0}.ww-charter-step.ww-done small{color:var(--ww-green)}
+.ww-charter-claim{margin:18px 0 25px}.ww-charter-claim p{font:11px var(--font-mono);color:var(--ww-gold)}
+.ww-chapter-index{display:flex;justify-content:space-between;gap:10px;font-size:11px;padding:9px 0;border-bottom:1px solid var(--rule);margin:0}
+.ww-chapter-index span{font:9px var(--font-mono);color:var(--text-faint)}
+#signal-choices>.ww-note{margin:8px 0 20px;font-size:11px;line-height:1.6}#signal-choices>button{width:100%;text-align:left;line-height:1.5}
+.ww-tabs{gap:9px}.ww-tabs button{min-width:38px}
+.ww-admiral{border-color:var(--ww-red)}.ww-admiral .ww-progress i{background:var(--ww-red)}
+#voyage-open{font-size:10px;min-height:32px;margin-top:10px;padding:5px 9px;background:none}
+.ww-ending{width:min(640px,94vw)}.ww-ending h2{font:normal 36px var(--font-heading);margin:8px 0 18px}
+#ending-art{display:block;width:100%;max-height:220px;object-fit:cover;image-rendering:pixelated}
+.ww-ending>.ww-primary{width:100%;margin-top:8px}
+@media(max-width:900px){.ww-tabs{gap:8px;padding:0 12px}.ww-tabs button{font-size:10px;min-width:36px}}
+
+.ww-boat-actions{display:flex;flex-direction:column;gap:7px}
+.ww-dialog{margin:auto}
+.ww-convoy-dialog{width:min(780px,95vw)}
+.ww-convoy-layout{display:grid;grid-template-columns:190px minmax(0,1fr);gap:25px;min-height:310px}
+#convoy-list{display:flex;flex-direction:column;gap:7px;max-height:62dvh;overflow:auto;scrollbar-width:thin}
+#convoy-list button{text-align:left;background:var(--bg-raised);padding:10px 12px;font:11px var(--font-mono)}
+#convoy-list strong,#convoy-list small,#convoy-list span{display:block}
+#convoy-list strong{font-weight:400;color:var(--text-bright)}
+#convoy-list small{font-size:10px;color:var(--text-dim);margin:5px 0}
+#convoy-list span{font-size:9px;color:var(--text-faint)}
+#convoy-list button[aria-pressed=true]{border-color:var(--ww-gold);background:var(--bg)}
+#convoy-detail{min-width:0}
+.ww-convoy-heading{display:flex;gap:15px;align-items:center;margin-bottom:12px}
+.ww-convoy-heading canvas{width:80px;height:60px;image-rendering:pixelated;background:var(--bg-raised)}
+.ww-convoy-heading h3{font:normal 27px var(--font-heading);margin:0 0 4px}
+.ww-convoy-heading p{font:11px var(--font-mono);color:var(--text-dim);margin:0}
+.ww-convoy-stats{display:grid;grid-template-columns:1fr 1fr;gap:20px;font:10px var(--font-mono);color:var(--text-faint);margin:12px 0}
+.ww-convoy-stats strong{font:16px var(--font-mono);display:block;color:var(--text);margin-bottom:5px}
+.ww-field-label{display:block;font:11px var(--font-mono);margin:20px 0 8px}
+#convoy-guard{width:100%;font-size:11px;min-height:44px}
+.ww-order-help{margin-top:8px;font-size:11px;line-height:1.6}
+.ww-order-status{font:11px var(--font-mono);color:var(--ww-green);margin:20px 0}
+.ww-reserve{display:flex;align-items:center;gap:10px;font-size:12px;margin:18px 0 10px;min-height:44px}
+.ww-reserve input{accent-color:var(--ww-gold);width:22px;height:22px}
+.ww-transfer-controls{display:grid;grid-template-columns:minmax(0,1fr) 110px;gap:12px;margin-bottom:10px}
+.ww-transfer-controls label{font:10px var(--font-mono);color:var(--text-dim)}
+.ww-transfer-controls select{display:block;width:100%;font-size:11px;min-height:44px;margin-top:6px}
+.ww-transfer-row{display:flex;align-items:center;gap:15px;padding:8px 0;border-bottom:1px solid var(--rule);font:12px var(--font-mono)}
+.ww-transfer-row span{margin-right:auto}.ww-transfer-row strong{font-weight:400}.ww-transfer-row button{min-height:40px;min-width:85px;font-size:10px}
+#convoy-feedback{min-height:18px;margin:16px 0 0;color:var(--ww-green)}
+.ww-fleet-strip{justify-content:safe center}
+.ww-game .ww-fleet-token{padding:6px 8px;flex:0 0 84px;min-width:84px;border:1px solid var(--rule-strong);border-top:2px solid var(--ww-blue);text-align:left}
+.ww-fleet-token strong{font:9px var(--font-mono)}
+.ww-fleet-token small{display:block;font:8px var(--font-mono);margin-top:4px;color:var(--text-dim)}
+.ww-fleet-token i{background:var(--ww-green)}
+.ww-game .ww-fleet-token.ww-working{border-top-color:var(--ww-gold)}
+.ww-game .ww-fleet-token.ww-critical{border-color:var(--ww-red)}
+.ww-fleet-token.ww-critical i{background:var(--ww-red)}
+.ww-fleet-token.ww-critical small{color:var(--ww-red)}
+@media(max-width:600px){.ww-convoy-dialog{padding:16px}.ww-convoy-layout{display:flex;flex-direction:column;gap:18px}#convoy-list{flex-direction:row;max-height:none;min-height:93px;flex-shrink:0}#convoy-list button{min-width:130px}#convoy-detail .ww-note{font-size:11px}.ww-convoy-heading h3{font-size:24px}.ww-convoy-heading{margin-bottom:8px}.ww-convoy-dialog .ww-dialog-head h2{font-size:24px}.ww-convoy-dialog .ww-eyebrow{font-size:8px;letter-spacing:.6px}}
+@media(max-height:560px) and (orientation:landscape){.ww-convoy-layout{grid-template-columns:155px minmax(0,1fr);gap:18px}.ww-convoy-heading canvas{width:64px;height:48px}.ww-fleet-strip{margin-bottom:5px}.ww-game .ww-fleet-token{padding:4px 6px}.ww-fleet-token small{margin-top:2px}.ww-sea-actions{gap:5px}}

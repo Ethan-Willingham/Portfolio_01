@@ -107,7 +107,53 @@
     {id:'engine',name:'Engine',base:350,description:'+8% speed for the whole fleet per level.'},
     {id:'hold',name:'Cargo racks',base:220,description:'+16 cargo capacity on your flagship per level.'}
   ];
-  const data={version:'0.1.1',goods,ports,hulls,boats,relics,fish,sites,bosses,upgrades};
+  const signals=[
+    {id:'calypso',name:'The Calypso wreck',kind:'wreck',lon:-74,lat:28,danger:1,reward:420,relic:'brass',text:'A yellow funnel sticks out of the water. The captain’s safe is still below deck. Raiders have been picking over the floating cargo.',quickGood:'wood',quickQty:8},
+    {id:'lantern',name:'A lantern in the swell',kind:'rescue',lon:-53,lat:39,danger:2,reward:900,boatName:'Little Mercy',text:'A hospital launch has broken its propeller. Its captain can patch the shaft, but armed boats are approaching. Keep the launch afloat for 45 seconds.'},
+    {id:'cooper',name:'The wandering cooper',kind:'trader',lon:-29,lat:42,danger:2,good:'cloth',qty:14,price:520,text:'A cargo lighter carries more cloth than its captain can sell. The offer is for the whole stack. He is in no hurry to reach land.'},
+    {id:'bell',name:'The bell under the ice',kind:'wreck',lon:-26,lat:61,danger:3,reward:1100,relic:'plate',text:'The wreck’s bell knocks against a buried mast. A diver signals that a sound hull plate can be brought up, if you can hold position.',quickGood:'iron',quickQty:10},
+    {id:'pilgrim',name:'The Pilgrim’s last engine',kind:'rescue',lon:-12,lat:34,danger:2,reward:850,boatName:'Pilgrim',text:'A packet boat is burning dirty fuel. Give its engineer 45 seconds to clear the intake while you keep the raiders off.'},
+    {id:'sargasso',name:'Sargasso blockade',kind:'battle',lon:-49,lat:22,danger:2,reward:1200,text:'Raiders have chained empty barges across a shipping lane. Clear their patrol and the local merchants will pay for the passage.'},
+    {id:'namib',name:'The sand-colored ghost',kind:'wreck',lon:10,lat:-24,danger:3,reward:1700,relic:'turbine',text:'An abandoned survey ship rides low beside the desert coast. Its engine is worth more than the cargo. Cutting it free will draw attention.',quickGood:'oil',quickQty:16},
+    {id:'spice-runner',name:'The broken dhow',kind:'rescue',lon:51,lat:-5,danger:4,reward:2400,boatName:'Blue Heron',text:'The dhow’s rudder is jammed hard to port. Her crew know these waters well. Buy them 45 seconds and they can get her moving again.'},
+    {id:'sunda',name:'The Sunda provisioner',kind:'trader',lon:99,lat:-6,danger:3,good:'spice',qty:18,price:1150,text:'A provisioner is selling pepper from a water-stained ledger. The sacks are dry. There is room to make a profit at the Cape.'},
+    {id:'glass-current',name:'The glass-current wreck',kind:'wreck',lon:149,lat:33,danger:4,reward:2600,relic:'magnet',text:'Loose fittings glitter in unusually clear water. The wreck lies deep enough that the recovery line will need time.',quickGood:'pearl',quickQty:8},
+    {id:'orchard',name:'A floating orchard',kind:'trader',lon:165,lat:-28,danger:3,good:'tea',qty:22,price:850,text:'Planters have lashed their cargo across an old barge. The tea is sealed in waxed chests. The captain would rather sell here than risk the next storm.'},
+    {id:'silent-station',name:'The silent weather station',kind:'battle',lon:-174,lat:-9,danger:5,reward:4200,relic:'shell',text:'A stolen weather ship is guiding Last Light’s patrols. Clear the boats around it and break the Pacific warning chain.'},
+    {id:'compass',name:'A compass pointing home',kind:'rescue',lon:-144,lat:19,danger:4,reward:2500,boatName:'Homeward',text:'A fishing boat’s engine has stopped. Her skipper keeps turning a pocket compass in his hand. Defend her while the crew gets the engine running.'},
+    {id:'southern-bell',name:'The southern bell',kind:'wreck',lon:-67,lat:-52,danger:4,reward:2300,relic:'plate',text:'A survey vessel went down trying to round the cape. The wreck still holds its iron bracing. The water around it is watched.',quickGood:'iron',quickQty:18},
+    {id:'fog-bank',name:'Patrol in the fog',kind:'battle',lon:-128,lat:38,danger:3,reward:1900,text:'Three stolen fishing boats have been turned into gun platforms. Their escorts are intercepting every freighter that comes south.'}
+  ];
+  const charters=[
+    {id:'company',title:'A company of your own',voice:'Mara, the Havana dockmaster',intro:'Twelve sacks of sugar and a borrowed gunboat. Nassau will buy the sugar. After that, put a trawler to work and come back with something larger than this cutter.',reward:800,xp:120,steps:[
+      {kind:'stat',key:'sugar',total:6,text:'Sell 6 sugar in Nassau.',target:'nassau'},
+      {kind:'stat',key:'fish',total:12,text:'Land 12 fish with a working trawler.',target:'bahama-bank'},
+      {kind:'hull',key:'brig',text:'Make the brig your flagship.',service:'yard'}]},
+    {id:'atlantic',title:'The western blockade',voice:'Ines, the Nassau shipwright',intro:'The Calypso went down east of here carrying gun fittings. Past her wreck, the Red Widow has been stopping ships bound for Europe. Bring a fleet you can afford to repair.',reward:1800,xp:350,steps:[
+      {kind:'signal',key:'calypso',text:'Recover something from the Calypso.',target:'calypso'},
+      {kind:'boss',key:'widow',text:'Break the Red Widow’s blockade.',target:'widow'},
+      {kind:'port',key:'lisbon',text:'Reach Lisbon across the Atlantic.',target:'lisbon'}]},
+    {id:'north',title:'A cold-water ledger',voice:'Edda, the Reykjavik harbormaster',intro:'There is a market beyond the warm-water routes. Bergen has timber. We need it. Work a northern fishing ground along the way; the holds should never come home empty.',reward:2400,xp:500,steps:[
+      {kind:'port',key:'bergen',text:'Visit the timber docks in Bergen.',target:'bergen'},
+      {kind:'work',key:'cold',text:'Complete a fishing operation in cold water.',target:'iceland-bank'},
+      {kind:'delivery',key:'north-timber',port:'reykjavik',good:'wood',qty:18,text:'Hand over 18 timber in Reykjavik.',target:'reykjavik'}]},
+    {id:'cape',title:'A long way round',voice:'Jonas, a Cape Town engineer',intro:'The yards south of the Cape run on fuel. Put an oil tender to work, bring the convoy around Africa, and find the Iron King. His mortars can reach a stationary workboat.',reward:5000,xp:800,steps:[
+      {kind:'stat',key:'oil',total:20,text:'Extract 20 oil with a tender.',target:'north-sea'},
+      {kind:'port',key:'cape-town',text:'Reach Cape Town.',target:'cape-town'},
+      {kind:'port',key:'mombasa',text:'Call at Mombasa.',target:'mombasa'},
+      {kind:'boss',key:'iron-king',text:'Sink the Iron King.',target:'iron-king'}]},
+    {id:'east',title:'Beyond the straits',voice:'Lin, a Singapore broker',intro:'There are tea buyers to the south and deep fishing grounds beyond Japan. A frigate and a few dependable escorts will go farther than a crowded fleet of little guns.',reward:6500,xp:1200,steps:[
+      {kind:'port',key:'singapore',text:'Reach Singapore through the straits.',target:'singapore'},
+      {kind:'port',key:'yokohama',text:'Reach Yokohama.',target:'yokohama'},
+      {kind:'work',key:'deep',text:'Protect a complete deep-water fishing operation.',target:'japan-trench'},
+      {kind:'hull',key:'frigate',text:'Commission a frigate or larger flagship.',service:'yard'}]},
+    {id:'home',title:'The long wake home',voice:'Mara, in a letter carried east',intro:'Last Light has a fleet in the open Pacific. Take out the warning station, then go after the flagship. When the sea is clear, there is still a place for you at the old Havana quay.',reward:12000,xp:2000,steps:[
+      {kind:'signal',key:'silent-station',text:'Clear the stolen weather station.',target:'silent-station'},
+      {kind:'boss',key:'last-light',text:'Defeat Last Light in the Pacific.',target:'last-light'},
+      {kind:'return',key:'havana',text:'Bring the fleet home to Havana.',target:'havana'}]}
+  ];
+  const ranks=[0,100,450,1300,2800,5000,8000,12000,18000,28000];
+  const data={version:'0.2.0',goods,ports,hulls,boats,relics,fish,sites,bosses,upgrades,signals,charters,ranks};
   if(typeof module!=='undefined'&&module.exports)module.exports=data;
   root.WidewakeData=data;
 })(typeof globalThis!=='undefined'?globalThis:this);
