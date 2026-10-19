@@ -30,9 +30,9 @@
     const forward=s.vx*Math.cos(s.angle)+s.vy*Math.sin(s.angle),side=(-s.vx*Math.sin(s.angle)+s.vy*Math.cos(s.angle))*Math.exp(-dt*4);
     s.angle=angleDelta(s.angle+s.turn*dt,0);
     const alignment=moving?Math.max(0,Math.cos(angleDelta(Math.atan2(y,x),s.angle))):0,desired=moving?s.speed*amount*(input.boost?1.35:1)*alignment:0;
-    const speed=forward+clamp(desired-forward,-16*size*dt,11*size*dt);
+    const targetSpeed=input.reverse?-s.speed*.3:desired,speed=forward+clamp(targetSpeed-forward,-16*size*dt,11*size*dt);
     s.vx=Math.cos(s.angle)*speed-Math.sin(s.angle)*side;s.vy=Math.sin(s.angle)*speed+Math.cos(s.angle)*side;
-    if(!moving&&Math.hypot(s.vx,s.vy)<.03)s.vx=s.vy=0;
+    if(!moving&&!input.reverse&&Math.hypot(s.vx,s.vy)<.03)s.vx=s.vy=0;
     s.x+=s.vx*dt;s.y+=s.vy*dt;
   }
   function broadsideRound(ship,index){

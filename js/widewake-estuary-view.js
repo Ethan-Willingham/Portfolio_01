@@ -1,0 +1,71 @@
+/* Bounded terrain tiles, shared ocean projection, and quiet navigation overlays. */
+(function(root){
+  'use strict';
+  const E=root.WidewakeEstuary,O=root.WidewakeOcean;
+  const vertex=`#version 300 es
+    precision highp float;layout(location=0) in vec3 position;layout(location=1) in vec3 tint;layout(location=2) in vec4 water;
+    uniform vec2 uSize;uniform vec2 uCamera;uniform float uZoom;out vec3 vColor;out vec2 vWorld;out vec4 vWater;
+    void main(){vec3 p=position-vec3(uCamera,0.);vec2 screen=vec2((p.x-p.y)*.70710678,(p.x+p.y)*.35355339-p.z*.8660254)*uZoom;
+      gl_Position=vec4(screen.x/uSize.x*2.,-screen.y/uSize.y*2.,clamp(-((p.x+p.y)*.6123724+p.z*.5)/20000.,-.99,.99),1.);vColor=tint;vWorld=position.xy;vWater=water;}`;
+  const fragment=`#version 300 es
+    precision highp float;in vec3 vColor;in vec2 vWorld;in vec4 vWater;uniform float uTime;uniform float uZoom;out vec4 color;
+    ${root.WidewakeOceanArt.waterGLSL}
+    void main(){vec3 c=vColor;
+      if(vWater.x>0.)c=seaColor(vWorld,vWater.x,vWater.y,vWater.zw,uTime,uZoom);
+      else{float wide=texture(uNoise,vWorld*.0009).r,grass=texture(uNoise,vWorld*.014).g,grain=texture(uNoise,vWorld*.09).b;float mud=exp(vWater.x*1.4);
+        c=mix(vec3(.21,.27,.19),vec3(.34,.37,.24),wide)*(.88+grass*.18+grain*.08);c=mix(c,vec3(.29,.27,.20)*(1.+grass*.12),mud);}
+      color=vec4(c,1.);}`;
+  class Terrain{
+    constructor(view){this.view=view;this.cache=new Map();this.queue=[{key:'overview',x:-4096,y:-8192,size:16384,step:128}];this.pending=null;this.serial=1;this.requests=new Map();this.bytes=0;this.clock=0;this.failed=null;this.needed=[];this.props={};this.worker=new Worker('js/widewake-estuary-worker.js?v=0.20.0');this.worker.onmessage=e=>this.receive(e.data);this.worker.onerror=e=>{this.failed=e.message||'Terrain unavailable';this.onError?.(this.failed);};if(view.gl)this.restore();this.pump();}
+    restore(){const gl=this.view.gl;this.program=O.program(gl,vertex,fragment);for(const tile of this.cache.values())this.upload(tile);if(this.props)for(const batch of Object.values(this.props))batch.dispose();this.props={};this.initProps();}
+    initProps(){if(!this.view.gl)return;const gl=this.view.gl;
+      for(const type of ['reed','tree0','tree1','tree2','rock'])this.props[type]=new O.Batch(gl,this.view.meshes[type],1600);
+      for(const port of E.ports){const type='landing_'+port.id;this.props[type]=new O.Batch(gl,this.view.meshes[type],1);}
+    }
+    upload(tile){const gl=this.view.gl;tile.vao=gl.createVertexArray();tile.buffer=gl.createBuffer();gl.bindVertexArray(tile.vao);gl.bindBuffer(gl.ARRAY_BUFFER,tile.buffer);gl.bufferData(gl.ARRAY_BUFFER,tile.vertices,gl.STATIC_DRAW);for(const [index,size,offset] of [[0,3,0],[1,3,12],[2,4,24]]){gl.enableVertexAttribArray(index);gl.vertexAttribPointer(index,size,gl.FLOAT,false,40,offset);}}
+    receive(data){if(data.error){this.failed=data.error;const request=this.requests.get(data.id);request?.reject(Error(data.error));this.requests.delete(data.id);this.pending=null;this.onError?.(data.error);return;}if(data.kind==='route'){const request=this.requests.get(data.id);this.requests.delete(data.id);request?.resolve(data.result);return;}
+      const tile={...this.pending,...data,used:this.clock};this.pending=null;if(!this.cache.has(data.key)){if(this.view.gl)this.upload(tile);this.cache.set(data.key,tile);this.bytes+=tile.vertices.byteLength+tile.props.byteLength;}
+      this.evict();this.pump();this.onReady?.();
+    }
+    route(ship,destination){const id=this.serial++;return new Promise((resolve,reject)=>{this.requests.set(id,{resolve,reject});this.worker.postMessage({id,kind:'route',ship:{...ship},destination});});}
+    update(){const v=this.view,r=v.canvas.getBoundingClientRect(),corners=[[r.left,r.top],[r.right,r.top],[r.right,r.bottom],[r.left,r.bottom]].map(p=>v.screenWorld(...p)),size=v.zoom>1.2?256:v.zoom>.4?512:1024,step=v.zoom>2.5?4:v.zoom>.7?8:v.zoom>.4?16:32;
+      const minX=Math.max(E.bounds.left,Math.min(...corners.map(p=>p.x))-32),maxX=Math.min(E.bounds.right,Math.max(...corners.map(p=>p.x))+32),minY=Math.max(E.bounds.top,Math.min(...corners.map(p=>p.y))-32),maxY=Math.min(E.bounds.bottom,Math.max(...corners.map(p=>p.y))+32),needed=[];this.clock++;
+      for(let y=Math.floor(minY/size)*size;y<=maxY;y+=size)for(let x=Math.floor(minX/size)*size;x<=maxX;x+=size){if(!v.visible(x+size/2,y+size/2,size*v.zoom*v.baseScale*.8+40))continue;const key=[x,y,size,step].join(':');needed.push({x,y,size,step,key,distance:Math.hypot(x+size/2-v.camera.x,y+size/2-v.camera.y)});const tile=this.cache.get(key);if(tile)tile.used=this.clock;}
+      this.needed=needed.sort((a,b)=>a.distance-b.distance);this.queue=this.needed.filter(t=>!this.cache.has(t.key)&&this.pending?.key!==t.key);this.evict();this.pump();
+    }
+    pump(){if(this.pending||!this.queue.length||this.failed)return;this.pending=this.queue.shift();this.worker.postMessage({...this.pending,id:this.serial++,kind:'tile'});}
+    evict(){if(this.bytes<24*1048576&&this.cache.size<100)return;const needed=new Set(this.needed.map(t=>t.key)),old=[...this.cache.values()].filter(t=>t.key!=='overview'&&!needed.has(t.key)).sort((a,b)=>a.used-b.used);for(const tile of old){if(this.bytes<20*1048576&&this.cache.size<80)break;this.cache.delete(tile.key);this.bytes-=tile.vertices.byteLength+tile.props.byteLength;this.release(tile);}}
+    release(tile){if(this.view.gl&&!this.view.lost){this.view.gl.deleteBuffer(tile.buffer);this.view.gl.deleteVertexArray(tile.vao);}tile.image=null;}
+    get ready(){return this.cache.has('overview')&&this.needed.length>0&&this.needed.every(t=>this.cache.has(t.key));}
+    renderGPU(v){this.update();const gl=v.gl;gl.useProgram(this.program);gl.uniform2f(gl.getUniformLocation(this.program,'uSize'),v.width,v.height);gl.uniform2f(gl.getUniformLocation(this.program,'uCamera'),v.camera.x,v.camera.y);gl.uniform1f(gl.getUniformLocation(this.program,'uZoom'),v.zoom*v.baseScale);gl.uniform1f(gl.getUniformLocation(this.program,'uTime'),v.reduced?0:v.battle.time);gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,v.noise);gl.uniform1i(gl.getUniformLocation(this.program,'uNoise'),2);
+      const overview=this.cache.get('overview');if(overview){gl.depthMask(false);gl.bindVertexArray(overview.vao);gl.drawArrays(gl.TRIANGLES,0,overview.vertices.length/10);gl.depthMask(true);v.stats.drawCalls++;}
+      for(const entry of this.needed){const tile=this.cache.get(entry.key);if(!tile)continue;gl.bindVertexArray(tile.vao);gl.drawArrays(gl.TRIANGLES,0,tile.vertices.length/10);v.stats.drawCalls++;v.stats.triangles+=tile.vertices.length/30;}
+      for(const batch of Object.values(this.props))batch.count=0;v.shadows.batch.count=0;
+      for(const entry of this.needed){const tile=this.cache.get(entry.key);if(!tile)continue;const props=tile.props;for(let i=0;i<props.length;i+=5){if(!v.visible(props[i],props[i+1],30))continue;const kind=props[i+3];if(v.zoom<.4&&kind===0)continue;const type=kind===1?'tree'+(Math.floor(Math.abs(props[i]+props[i+1]))%3):kind===0?'reed':'rock';this.props[type].add(props[i]-v.camera.x,props[i+1]-v.camera.y,props[i+2],1,0,props[i+4],0,props[i]*.1);if(kind===1)v.shadows.batch.add(props[i]-v.camera.x,props[i+1]-v.camera.y,props[i+2]+.05,1,0,10*props[i+4],8*props[i+4],7*props[i+4]);}}
+      v.stats.drawCalls+=v.shadows.draw();for(const port of E.ports)if(v.visible(port.x,port.y,250*v.zoom*v.baseScale+20))this.props['landing_'+port.id].add(port.x-v.camera.x,port.y-v.camera.y,0,1,0);for(const [type,batch]of Object.entries(this.props)){if(v.atlas?.entries[type])v.stats.drawCalls+=v.atlas.draw(type,batch);else{v.uniforms(v.main);v.stats.drawCalls+=batch.draw();}}v.stats.terrainBytes=this.bytes;v.stats.terrainTiles=this.cache.size;v.stats.tilesPending=this.queue.length+(this.pending?1:0);
+    }
+    renderCanvas(v){this.update();const c=v.fallback;
+      // Cached top-down tile images are projected by the same affine isometry.
+      for(const entry of [{key:'overview'},...this.needed]){const tile=this.cache.get(entry.key);if(!tile)continue;const n=tile.size/tile.step;
+        if(!tile.image){tile.image=document.createElement('canvas');tile.image.width=tile.image.height=n;const ctx=tile.image.getContext('2d'),pixels=ctx.createImageData(n,n);for(let i=0;i<n*n;i++){const at=i*60;pixels.data[i*4]=tile.vertices[at+3]*255;pixels.data[i*4+1]=tile.vertices[at+4]*255;pixels.data[i*4+2]=tile.vertices[at+5]*255;pixels.data[i*4+3]=255;}ctx.putImageData(pixels,0,0);}
+        const a=v.project(tile.x,tile.y),b=v.project(tile.x+tile.size,tile.y),d=v.project(tile.x,tile.y+tile.size);c.save();c.transform((b.x-a.x)/n,(b.y-a.y)/n,(d.x-a.x)/n,(d.y-a.y)/n,a.x,a.y);c.drawImage(tile.image,0,0);c.restore();}
+      const items=[];for(const entry of this.needed){const tile=this.cache.get(entry.key);if(!tile)continue;for(let i=0;i<tile.props.length;i+=5){const p=tile.props,x=p[i],y=p[i+1],kind=p[i+3];if(!v.visible(x,y,30)||(v.zoom<.4&&kind===0))continue;items.push({type:kind===1?'tree'+(Math.floor(Math.abs(x+y))%3):kind===0?'reed':'rock',x,y,z:p[i+2],scale:p[i+4]});}}
+      for(const port of E.ports)if(v.visible(port.x,port.y,250*v.zoom*v.baseScale+20))items.push({type:'landing_'+port.id,x:port.x,y:port.y,z:0,scale:1});items.sort((a,b)=>a.x+a.y-b.x-b.y);for(const item of items)v.paintSprite(item.type,0,item.x,item.y,item.scale,item.z);
+      v.stats.terrainBytes=this.bytes;v.stats.terrainTiles=this.cache.size;v.stats.tilesPending=this.queue.length+(this.pending?1:0);
+    }
+    dispose(){this.worker.terminate();for(const request of this.requests.values())request.reject(Error('Scene closed'));this.requests.clear();for(const tile of this.cache.values())this.release(tile);this.cache.clear();if(this.view.gl&&!this.view.lost){for(const batch of Object.values(this.props))batch.dispose();this.view.gl.deleteProgram(this.program);}}
+  }
+  class View extends O.Ocean{
+    constructor(canvas,navigation){super(canvas,navigation);this.stops=navigation.player.type==='launch'?{helm:6,fleet:2,survey:.45}:{helm:1.5,fleet:.65,survey:.28};this.zoom=this.targetZoom=this.stops.fleet;this.terrain=new Terrain(this);}
+    setZoom(value,x,y){super.setZoom(value,x,y);this.targetZoom=E.clamp(value,.24,8);}
+    zoomStop(name){if(this.stops?.[name]){this.anchor=null;this.offset.x=this.offset.y=0;this.targetZoom=this.stops[name];}}
+    labels(){const c=this.ctx,n=this.battle,s=n.player,pose=this.poses[0],p=this.project(pose.x,pose.y),scale=this.zoom*this.baseScale;c.clearRect(0,0,this.width,this.height);c.font='8px "Commit Mono", monospace';c.textAlign='center';
+      c.strokeStyle=n.contactTime?'#eac38a':'#d5c087';c.lineWidth=1;c.beginPath();c.ellipse(p.x,p.y,Math.max(5,s.width*scale*.3),Math.max(3,s.width*.15*scale),0,0,Math.PI*2);c.stroke();
+      if(s.length*scale<9){c.fillStyle='#e3cc91';c.beginPath();c.moveTo(p.x,p.y-4);c.lineTo(p.x+3,p.y+3);c.lineTo(p.x-3,p.y+3);c.fill();}
+      for(const port of E.ports){if(Math.hypot(port.x-s.x,port.y-s.y)<Math.max(80,s.length*2))continue;const q=this.project(port.x,port.y);if(q.x<20||q.x>this.width-20||q.y<45||q.y>this.height-45)continue;c.fillStyle='#d3d8be';c.fillText(port.name,q.x,q.y-22);c.strokeStyle='#a6c2ad66';c.beginPath();c.ellipse(q.x,q.y,Math.max(4,12*scale),Math.max(2,6*scale),0,0,Math.PI*2);c.stroke();}
+      if(n.route){c.strokeStyle='#b1d9cc77';c.setLineDash([2,5]);c.beginPath();c.moveTo(p.x,p.y);for(let i=n.route.index;i<Math.min(n.route.index+25,n.route.points.length);i++){const q=this.project(n.route.points[i].x,n.route.points[i].y);c.lineTo(q.x,q.y);}c.stroke();c.setLineDash([]);}
+      const metres=scale>1?20:scale>.3?100:250,len=metres*scale,x=this.width/2-len/2;c.textAlign='center';c.fillStyle='#b9cdca';c.fillText(metres+' m',this.width/2,this.height-17);c.strokeStyle='#a9c0be';c.beginPath();c.moveTo(x,this.height-10);c.lineTo(x+len,this.height-10);c.stroke();
+    }
+  }
+  root.WidewakeEstuaryView={View,Terrain};
+})(globalThis);

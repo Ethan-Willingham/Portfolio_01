@@ -4,6 +4,11 @@ Owner direction, 2026-10-19. This supersedes the Earth requirement and the old
 1,200-enemy ceiling as an endgame design target. Keep the approved title screen.
 Final image generation is still deferred.
 
+The later owner clarification makes Factorio a reference for sprite detail,
+animation and rendering efficiency. Widewake retains its nautical identity.
+Publish tested milestones regularly. The following stages remain separate from
+the existing campaign until routes, work and progression can migrate together.
+
 ## Order of work
 
 Do not attempt the world, combat, graphics and campaign overhaul in one pass.
@@ -88,9 +93,9 @@ rock and human use at the scale of its boats. Water movement and small ambient
 events should make calm travel worth watching. Threats must remain legible over
 that detail. Streaming boundaries must never be a combat or save boundary.
 
-The world is not yet authored, and these regions are not implemented by this
-document. Decide the first region's dimensions and route graph using the trial's
-tested vessel sizes and maneuvering footprint, before generating a large map.
+Bracken Reach now implements the first navigation region described below. The
+other regions are still design requirements. Prove its connected play before
+generating a large map.
 
 ## First region, a design to prove before building outward
 
@@ -163,3 +168,47 @@ from a bad turn. A later fleet must complete the wider route, while a small laun
 still benefits from the cut. Test the same geography at Helm, Fleet and Survey,
 on desktop and touch, including rain, combat effects and paused recovery. Judge
 calm travel in motion before spending time populating a larger world.
+
+## v0.20 implementation and graphics
+
+Bracken Reach has an 8 by 12 km extent, a 9.0 km main passage from Tern Yard to
+Lockmill and a launch-only reed cut that saves 1.24 km. Reed Landing lies on the
+cut. The 6 m launch, 38 m escort and 61 m industrial hull physically sail their
+permitted round trips. Draft, oriented hull clearance, current and salinity come
+from one authored field. Swept movement stops before a bank or pier. Reverse and
+a tow along recorded safe positions allow recovery. The piers use the same
+footprints for rendering and collision. The berth is an open-water anchorage;
+walking ashore and docking services are not implemented.
+
+The renderer uses original models with shaped bows, separate hull sides, inset
+decks, seams, railings, cabin windows, fittings and role-specific equipment. It
+bakes 64 friendly headings and 32 raider headings into color/depth sprites at
+startup. Per-pixel depth lets independent turrets, recoil, equipment and scenery
+overlap correctly. A hull's bob is shared by its attached equipment. Winches and
+drill rods move only while the vessel is on station with room to produce. They
+freeze when production stops instead of snapping to the start of a cycle.
+Propeller motion, speed-driven wakes, water and foliage use bounded draw batches.
+Pause stops animation; reduced motion freezes decorative movement.
+
+The [Factorio water rendering article](https://www.factorio.com/blog/post/fff-323)
+informed the use of texture noise and a quiet water surface; its assets and code
+are not included. The [terrain composition article](https://www.factorio.com/blog/post/fff-401)
+informed grouping vegetation around readable banks. The resulting work is still
+an initial authored region, not a claim of matching Factorio's finished art.
+
+Water colors and shoreline wash follow depth and salinity. Current moves the
+surface texture. Three canopy shapes, reeds, stones, timber piers and distinct
+yard, mill and reed buildings establish the shore. Terrain tiles are prepared in
+a worker and retained in a bounded cache; the overview remains available while
+nearby tiles load. Routes also run in that worker. Atlas storage is 20.06 MiB for
+the battle and 22.73 MiB for the region. Scenery shares atlas shelves, avoiding a
+power-of-two allocation that previously wasted nearly half the texture memory.
+The Canvas fallback keeps the same hulls, buildings and vegetation, with simpler
+water and without the WebGL machinery effects.
+
+The navigation trial has no fleet columns, enemy route fields, tide cycle,
+fishing, oil sites, trading, region saves or campaign migration yet. Calm travel
+still lacks encounters and discovery. Banks and foliage need more variety, and
+distant small ships need further readability work. Next prove a convoy through
+the same geography, including work and a return to port; repeat the enemy load
+there before expanding the world. Physical mobile devices remain a release gate.

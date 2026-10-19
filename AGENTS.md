@@ -92,6 +92,12 @@ The owner's latest direction replaces the Earth target with an original world of
 believably scaled waterways. Read `docs/WIDEWAKE_OCEAN.md` for the staged ocean
 redesign. `widewake-battle.html` is its isolated isometric endgame trial; the
 existing campaign and approved title remain intact pending deliberate integration.
+`widewake-estuary.html` is the first metre-scale navigation region, Bracken Reach.
+Both trials share the directional sprite renderer in `js/widewake-ocean*.js`.
+Their v0.20 graphics use original code-authored models, baked once into sprites;
+Factorio is a reference for sprite detail and animation, not industrial styling.
+Neither trial reads or writes campaign storage. Publish verified milestones
+regularly, as the owner requested, rather than accumulating an unpublished pass.
 
 **All Four Wheels**, a separate shopping-cart game in progress, lives in
 `four-wheels.html`, `four-wheels.css`, and `js/four-wheels*.js`. Its editable sources

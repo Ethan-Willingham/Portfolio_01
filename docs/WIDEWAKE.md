@@ -49,6 +49,10 @@ at once. `docs/WIDEWAKE_OCEAN.md` records the order and design constraints.
 The existing campaign still uses Earth until a deliberate replacement and save
 migration are ready. Its approved title must remain unchanged.
 
+The subsequent graphics correction asks for Factorio's level of sprite detail
+and animation, not its industrial theme. Keep original nautical designs. The
+owner also explicitly asks for regular production pushes of verified milestones.
+
 Interface references reviewed for this correction:
 [Balatro's official shop screenshot](https://www.playbalatro.com/press-kit/Screenshots/Balatro_ui_3840x2160_2.png),
 [DREDGE's official media](https://www.dredge.game/), and
@@ -97,10 +101,21 @@ The next ocean foundation is isolated at `widewake-battle.html` with
 `js/widewake-battle.js`. It is a playable endgame engineering trial, not a new
 campaign or a claim of finished world content. It never reads or writes campaign
 storage. Its explicit starting fleet is a test loadout, not earned progression.
-The renderer uses actual isometric hull geometry and instanced WebGL2 batches;
-its simulation uses fixed typed buffers. The two battle test harnesses live in
-`tools/widewake/`. Continue the measured stages in `WIDEWAKE_OCEAN.md` before
-replacing the campaign's ocean.
+The renderer bakes original isometric hull models into directional color and depth
+sprites, then draws instanced quads. Turrets and moving equipment remain separate.
+`js/widewake-ocean-art.js` is editable source for that art. Its simulation uses
+fixed typed buffers. The battle test harnesses live in `tools/widewake/`.
+Continue the measured stages in `WIDEWAKE_OCEAN.md` before replacing the campaign's
+ocean.
+
+`widewake-estuary.html`, `widewake-estuary.css` and `js/widewake-estuary*.js`
+provide Bracken Reach, an isolated 8 by 12 km navigation region. Its core owns
+the channels, depths, currents, pier footprints, routes, hull clearance and tow
+history. A worker prepares terrain tiles and plots routes. The view shares the
+ocean sprite system; the controller owns input, chart and pause. This region has
+three landings and three trial hulls, without campaign storage, trading or combat.
+The sea-trial pause menu links to it. Both trial HTML files are excluded from the
+sitemap. Keep worker imports and trial asset version parameters in sync.
 
 - `widewake.html`, `widewake.css`: full-window game shell with its own palette,
   scene-led harbor, focused goods picker and peripheral sea HUD. It uses
@@ -541,6 +556,9 @@ For the isolated ocean trial:
 ```sh
 node tools/widewake/test-battle-core.cjs
 node tools/widewake/test-battle-feel.cjs
+node tools/widewake/test-estuary.cjs
+NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-estuary-browser.cjs
+NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-ocean-art-browser.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-battle-feel-browser.cjs
 NODE_PATH=/path/to/bundled/node_modules WIDEWAKE_SOAK_SECONDS=180 node tools/widewake/test-battle-browser.cjs
 NODE_PATH=/path/to/bundled/node_modules WIDEWAKE_TEST_ENGINE=webkit node tools/widewake/test-battle-browser.cjs
@@ -555,6 +573,14 @@ physical broadside lanes, exact manual reach, bounded impacts and interpolation
 history. Their browser companion supports WebKit and covers keyboard previews,
 pause during a volley, pointer hit confirmation, render interpolation without
 simulation mutation, reduced motion and touch hover cleanup.
+
+The estuary checks sail the actual permitted round trips, compare hull clearance
+against dense samples, and cover bank and pier contact, reversing, bounded tow
+recovery, draft, current and salinity. Its browser suite also sweeps the terrain
+cache, restores a lost graphics context and checks four touch layouts. The art
+suite reads every atlas frame for visible pixels and clipped edges, verifies
+working equipment stops and resumes with its real work state, and exercises the
+Canvas fallback. These browser suites support `WIDEWAKE_TEST_ENGINE=webkit`.
 
 For the existing campaign:
 

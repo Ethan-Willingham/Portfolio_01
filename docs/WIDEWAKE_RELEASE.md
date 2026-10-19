@@ -37,14 +37,14 @@ while the new ocean is tested separately; do not silently invalidate its saves.
 | --- | --- | --- |
 | Launch and identity | Owner-approved title, independent navy/cyan identity, scene-led harbor and focused services | Preserve the approved title; maintain cohesive identity through the remaining views |
 | First voyage | Real-time starter sailing reviewed; guidance checks workboats; earned trade and fishing complete | Observe an unassisted human session; keep controls, profit and purchases understandable without a long manual |
-| Helm and camera | Separate trial has weighted heading and braking, interpolated motion, shared projection, three zoom stops and anchored wheel/pinch | Prove hull clearance and recovery in real channels; review small-screen fleet readability, controller integration and calm travel |
+| Helm and camera | Trials have weighted handling, interpolated motion and anchored zoom; three hull sizes complete the estuary routes with bank and pier clearance, reverse and tow | Add constrained-water convoy orders; review small-screen fleet readability, controller integration and calm travel |
 | Combat | Separate trial targets 16,384 raiders against 24 finite friendly hulls, with real shots, kills, replacement fronts and workboats | Review weapon feel, incoming-front variety, salvage load, geography and earned progression before campaign integration |
 | Trade | Regional warehouse depth, earned merchant expansion, exact bulk quotes, water routes and reserved holds | Review market pacing, discovery of trade routes, and late-game reasons to trade |
 | Convoy | Checked coastal recovery, physical harbor arrivals, all 24 ports with a full wide convoy, saved routes and distance inspection | Extended survival with different guard assignments and fleet builds; review arrival feedback in ordinary play |
 | Fishing and oil | Five work rhythms across 18 sites, optional double/triple watches, carried rare catches and safe-return payment | Longer play across fleet builds, risk/reward pacing and worthwhile repeat visits |
 | Progression | Six earned charters; staged harbor access with alternate rank routes and legacy access preserved | Human pacing, optional pursuits and free-play depth; eliminate grind or runaway snowballing |
-| World and discovery | Existing Earth campaign retained; owner now requires an original world and believable local scale | Prove one estuary region with rivers, shallows and habitat transitions, then expand and deliberately migrate saves |
-| Art | Original isometric hull geometry, decks, cabins, turrets and wakes in the trial; existing harbors retained | Build informative banks and water, improve distant silhouettes and atmosphere; image generation remains deferred |
+| World and discovery | Existing Earth campaign retained; Bracken Reach has three connected landings, a shallow shortcut, draft, current and salinity | Connect convoy work, trade and discovery in the region, then expand and deliberately migrate saves |
+| Art | Detailed directional ship sprites, animated work gear, water, wakes, foliage and three landing scenes in the trials | Refine weapon mounting, distant silhouettes, bank variety and atmosphere; image generation remains deferred |
 | Sound | Original score, spatial cues, mixer, bounded voices and suspended/interrupted recovery | Listening on speakers/headphones, broader regional atmosphere, long-session comfort and battle priority review |
 | Interface and access | Locked service previews, compact future stock, selected-item trading and contextual sea actions; keyboard, touch and standard controller flows | Physical controllers, remapping, button-label coverage, readable text and non-color threat cues |
 | Mobile | Chromium and WebKit touch emulation | Full-screen portrait and landscape flows, safe areas, browser-height changes, sustained performance and physical-device validation |
@@ -1257,3 +1257,84 @@ Prove channel width, turning room, banks, current, safe recovery and convoy
 columns before adding a large world. Carry forward the open combat readability,
 front variety, audio-priority and mobile-device work; the production goal remains
 active.
+
+## Pass 18, directional sprites and Bracken Reach, trial v0.20
+
+The owner redirected this pass toward graphics while the first region was being
+built, then clarified that Factorio was a reference for sprite detail and
+animation, not industrial styling. The new ocean art remains nautical and
+original. It is authored as editable geometry, baked once into directional color
+and depth sprites, and drawn as instanced quads. The existing campaign and its
+approved title remain unchanged. The owner also asked for regular production
+pushes; this pass is a publishable milestone, not a completed production game.
+
+The vessels now have shaped hulls, inset decks, seams, raised rails, cabin
+windows, deck fittings and equipment for their roles. Friendly hulls have 64
+headings and raiders have 32. Working winches and drill rods animate separately
+from the hull and stop when a workboat leaves its station or fills its hold.
+Their phases freeze rather than resetting when work stops. The hull's small bob
+is shared by attached mounts and gear. Propellers, speed-driven stern wakes,
+shadows and quiet layered water add motion without a particle per visible wave.
+Reduced motion freezes decorative movement. The original turret/recoil system
+remains; weapon mounting and finer animation still need an art review.
+
+Bracken Reach is the first original region, an 8 by 12 km estuary in metre units.
+Tern Yard, Lockmill and Reed Landing have different timber buildings and piers.
+The winding main route is 9.0 km. The shallow reed cut saves the launch 1.24 km;
+the 38 m escort and 61 m industrial ship need the deeper route. Shared depth,
+current, salinity and bank data drive both navigation and rendering. Full hull
+clearance uses conservative circle acceptance, then an oriented hull sample near
+banks. Thin piers use separating-axis collision with the same footprints as the
+art. Movement sweeps intermediate positions and stops before an obstruction.
+Reverse and a six-metres-per-second tow along actual safe history provide recovery.
+
+Route searches and tile preparation run in a worker. The camera retains an
+overview while nearby terrain loads. Cache sweeps cover the three landings,
+outer water and the minimum zoom, including revisiting an evicted region. Shore
+detail includes grouped canopy variants, reeds, stones, mud, shallow-water color
+and depth-driven wash. The first visual review found overly busy water and plain
+buildings; this version quiets the surface and adds pitched roofs, planks, windows,
+posts and dock fittings. Canvas retains ships, buildings and vegetation, with
+simpler water and without the WebGL mechanism animations.
+
+Verification on the M1 Pro:
+
+- All three hulls complete their permitted round trips under actual steering
+  simulation. The launch visits the reed landing and mill, then returns home.
+  Deep-draft vessels reject the cut. Independent dense samples check 128 accepted
+  hull poses. Bank and pier contact, reverse and tow preserve legal positions;
+  the maximum tow step is 0.10 m at 60 Hz.
+- Chromium and WebKit exercise steering, reverse, worker-plotted routes,
+  freshwater arrival, zoom, focus-loss pause and four touch viewports. A detected
+  41 px camera button was corrected to meet the 44 px target. Chromium also loses
+  and restores the graphics context. Campaign storage stays untouched.
+- Every one of the battle's 544 and region's 616 atlas frames contains visible
+  pixels within its padded boundary. Both browser engines check work animation,
+  stopping and resuming production, pause, reduced motion, and the forced Canvas
+  route. Color/depth atlas storage is 20.06 MiB for battle and 22.73 MiB for the
+  region. Packing scenery into shared shelves reduced the initial 48 MiB region atlas.
+- The final three-minute Chromium combat continuation records 112,010 kills,
+  16,379 remaining raiders, all 24 friendly hulls, 21 draw batches, 9.2 ms whole-run
+  frame p95 and 9.3 ms p99. Collected heap grows by 90,332 bytes across the sample.
+  The 4x CPU-throttled sample measures 15.5 ms frame p95. The full 8,192-shot and
+  2,048-effect fixture retains 16,384 raiders before each step and measures 4.1 ms
+  combined CPU p95. The Canvas battle measures 9.1 ms frame p95 with 193 cached
+  sprites. These are desktop measurements, not a physical-mobile guarantee.
+- The navigation cache sweep peaks at 24,935,680 bytes of retained vertex/prop
+  payload and 84 tiles. Its desktop/touch samples measure 9.9 to 10.3 ms frame
+  p95. GPU copies of terrain vertices and the sprite atlas are additional memory;
+  these figures are not a total application-memory measurement.
+
+Whole-game review: regional route constraints now give small and large hulls
+different uses, which should feed trade, fishing and fleet progression. Those
+loops still run in the existing campaign and are not yet connected to Bracken
+Reach. This trial has no encounters, fleet columns, oil or fishing sites, tide
+cycle, save migration or local economy. Quiet travel currently has little to
+discover. The older Earth campaign's progression, markets, work, saves and
+desktop packages are unchanged. Final harbor image generation remains deferred.
+
+Next: carry a convoy through this region and make a connected work-and-return
+loop, then test enemy routing and the endgame load at a bend and tile boundary.
+Continue the weapon mounting, distant readability, more varied banks and audio
+review before expanding the map. Physical phones, long sessions, human pacing
+and Steam release gates remain open. The production objective is unfinished.

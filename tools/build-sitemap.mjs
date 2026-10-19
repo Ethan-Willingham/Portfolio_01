@@ -22,7 +22,7 @@ const SITE = 'https://ethanwillingham.com';
 
 const SKIP = [
   /-lab\.html$/,        // throwaway choosers
-  /^widewake-battle\.html$/, // isolated ocean engineering trial
+  /^widewake-(battle|estuary)\.html$/, // isolated ocean engineering trial
   /^sfx-/,              // sfx prompt/publish/test tools
   /^(edit|blog-edit|post-builder)\.html$/, // editors and builders
   /^404\.html$/,        // the not-found page itself
