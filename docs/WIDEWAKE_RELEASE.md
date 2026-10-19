@@ -32,7 +32,7 @@ The exact owner constraints and source links are in `WIDEWAKE.md`.
 | Launch and identity | Independent navy/cyan identity, scene-led harbor, focused services, dedicated title and return flow | Maintain cohesive identity through every view; iterate beyond the initial title scene |
 | First voyage | Real-time starter sailing reviewed; guidance checks workboats; earned trade and fishing complete | Observe an unassisted human session; keep controls, profit and purchases understandable without a long manual |
 | Helm and camera | Direct manual control, one-action course resumption, continuous waypoint throttle, accurate arrival cues and fitted phone view | Review turning, arrival, coasts and camera at every hull size and input method |
-| Combat | Real projectiles, admiral tells, nearby contact map, clear priority labels and directional damage | Review threat reading in ordinary late-game fights and formation decisions through human play |
+| Combat | Distinct enemy silhouettes, warnings matching actual shot lanes, nearby contacts, priority labels and directional damage | Review threat reading, audible windups and formation decisions through human play |
 | Trade | Regional warehouse depth, earned merchant expansion, exact bulk quotes, water routes and reserved holds | Review market pacing, discovery of trade routes, and late-game reasons to trade |
 | Convoy | Checked coastal recovery, physical harbor arrivals, all 24 ports with a full wide convoy, saved routes and distance inspection | Extended survival with different guard assignments and fleet builds; review arrival feedback in ordinary play |
 | Fishing and oil | Five work rhythms across 18 sites, optional double/triple watches, carried rare catches and safe-return payment | Longer play across fleet builds, risk/reward pacing and worthwhile repeat visits |
@@ -946,3 +946,78 @@ adding back persistent explanations. Late double-watch income still exceeds
 this relatively safe trading route; compare other regional routes and fleet
 builds before changing rewards. The remaining release gates and production goal
 stay open.
+
+## Pass 14, readable attacks, v0.16
+
+The combat review found that skiffs, gunners and rammers used nearly the same
+shape. It also found a specific warning error: Last Light fired a wider fan
+than its displayed sector. The ring warning did not reveal the four wider gaps.
+Both problems weaken the player's ability to make a deliberate move.
+
+The four ordinary enemy classes and three admirals now have individual chunky
+silhouettes. Rammers have a pointed prow, gunners a long barrel, armored boats
+a broad plated hull and the Iron King visible mortar wells. Small-screen minimum
+sizes keep heavy boats and admirals recognizable. These are original code-drawn
+sprites. The deferred image-generation instruction still applies.
+
+Fan, ring and charge definitions are shared by firing, saved-state validation
+and the renderer. Fan boundaries include every actual shot, ring spokes leave
+the real gaps open, and a rammer's marked corridor shrinks as it completes its
+charge. Windup arcs show timing. Mortar circles and attack outlines draw above
+explosions and shots, with selection and names above them. An attack originating
+outside the viewport can still show its incoming lanes. This adds no persistent
+HUD text. Damage, speeds, firing times, rewards and the saved format are unchanged.
+
+The live review resumed a v0.15 double watch at Japan Trench in v0.16. It was not
+a successful defense: the trawler, one destroyer and two cargo lighters were lost.
+Six boats reached Yokohama with 63 fish, other salvage and three rare catches.
+The naturalist paid 2,550 coins at the harbor. Replacing all four lost boats cost
+6,950 coins, repairs cost 88, and the restored ten-boat fleet retained 55,033 coins.
+Selling the 63 surviving fish paid another 2,028 coins and returned focus to Max,
+leaving 57,061 coins and ten units of other salvage. Cargo on lost boats stayed
+lost. The review included long intervals relying on
+automatic defenses, so it does not establish tuned difficulty or optimal tactics.
+It does exercise a failed watch, an actual return and a recoverable fleet.
+
+That return also exposed a small mismatch: the chart estimated ten seconds,
+while the sea HUD rounded every short trip to one minute. Both now use the same
+five-second estimates below one minute. Waiting for distant boats still has its
+own arrival state.
+
+Verification:
+
+- New checks compare warning lanes against actual emitted rounds, including
+  shot counts, full range, the Pacific seam, the four ring gaps and remaining
+  charge distance. All seven silhouettes also differ without their colors.
+- Chromium and WebKit render fan, ring and mortar encounters at desktop,
+  portrait and landscape sizes, including explosions and reduced animation.
+  Incoming lanes remain drawn when their source is outside the viewport.
+- A staged 1,200-ship render with 300 charge warnings measured 7.4 ms p95 in
+  Chromium and 5 ms in WebKit on this M1 Pro. This isolates drawing cost.
+  A separate 60-second live simulation retained 1,200 enemies with targeting,
+  shots, sound and saving at 9.2 ms p95. Memory, effects and voices stayed bounded.
+  These desktop measurements do not establish sustained physical-phone results.
+- Core and active-sea continuation checks pass. The balanced earned captain
+  completes all six charters in 41.7 simulated minutes with 223 reconstructions;
+  its final save exactly matches the v0.15 campaign. The warning refactor has
+  not changed that captain's outcome.
+- Helm checks in both browser engines cover the short ETA, steering, controller
+  press edges, route cancellation, save handoff and four touch viewports. Fleet
+  checks retain clear names, SOS pointers, zoom persistence and port repair.
+
+The rebuilt Mac app passes offline trading, fishing, native file round trips,
+failed-save recovery and exact active-admiral OS-close continuation. Mac arm64
+and Windows x64 packages match all 23 game assets, 720,208 bytes, and the host
+scripts. Windows execution is unverified. Both remain local development builds.
+
+Whole-game review: this pass connects visible threats, manual movement, protected
+work, losses, physical cargo, rare-catch landing, port repair and replacement.
+The quieter harbor, regional trade, first voyage, camera and campaign remain
+intact. Audio behavior is unchanged; specific attack sounds deserve a listening
+pass. Final art, broad balance, physical devices and distribution gates remain
+open.
+
+Next: review the last admiral and optional pursuits through ordinary play, with
+attention to audible danger and the choice between escaping, defending and
+replacing a fleet. Mixed trading routes and repeated work income still need
+comparison. The production goal remains active.

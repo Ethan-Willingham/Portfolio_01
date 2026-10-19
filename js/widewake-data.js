@@ -156,10 +156,17 @@
       {kind:'return',key:'havana',text:'Bring the fleet home to Havana.',target:'havana'}]}
   ];
   const ranks=[0,100,450,1300,2800,5000,8000,12000,18000,28000];
+  // Simulation and warning shapes share the same shot lanes and charge timing.
+  const attacks={
+    ram:{windup:.9,duration:1.35,speedMultiplier:2.6},
+    fan:{windup:1.5,speed:240,life:3.8,damage:18,angles:Array.from({length:9},(_,i)=>(i-4)*.12)},
+    fanWide:{windup:1.5,speed:240,life:3.8,damage:30,angles:Array.from({length:13},(_,i)=>(i-6)*.12)},
+    ring:{windup:1.5,speed:185,life:5,damage:27,angles:Array.from({length:20},(_,i)=>i).filter(i=>i%5!==0).map(i=>i/20*(Math.PI*2))}
+  };
   // Specimens share physical holds with trade goods, but are never market stock
   // or random salvage. Keep the commodity catalog and saved drop indices stable.
   const cargoGoods=[...goods,...fish.map(f=>({id:'catch-'+f.id,name:f.name,color:f.color,icon:'fish',specimen:f.id,resource:'fish',value:f.value}))];
-  const data={version:'0.15.0',goods,cargoGoods,ports,hulls,boats,relics,fish,sites,bosses,upgrades,signals,charters,ranks};
+  const data={version:'0.16.0',goods,cargoGoods,ports,hulls,boats,relics,fish,sites,bosses,upgrades,signals,charters,ranks,attacks};
   if(typeof module!=='undefined'&&module.exports)module.exports=data;
   root.WidewakeData=data;
 })(typeof globalThis!=='undefined'?globalThis:this);

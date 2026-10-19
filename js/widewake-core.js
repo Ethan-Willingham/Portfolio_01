@@ -10,6 +10,7 @@
   const TAU=Math.PI*2, SAVE_VERSION=1, HARBOR_APPROACH=1200;
   const count=c=>Object.values(c||{}).reduce((a,b)=>a+b,0);
   const angleDiff=(a,b)=>Math.atan2(Math.sin(b-a),Math.cos(b-a));
+  const salvoFor=e=>e.attack?.kind==='fan'?D.attacks[e.bossId==='last-light'?'fanWide':'fan']:e.attack?.kind==='ring'?D.attacks.ring:null;
   // Direct formation legs stay live. Coast detours are retained until the current
   // destination is visible again, with at most one route search in each step.
   function fleetSteering(earth,f,target,budget){
@@ -272,16 +273,15 @@
     enemyAbility(e,dt,victim){
       e.specialCD=(e.specialCD??3)-dt;
       if(e.type==='rammer'){
-        if(e.charge){e.charge.t-=dt;if(e.charge.t<=0){if(e.charge.phase==='aim')e.charge={...e.charge,phase:'run',t:1.35};else e.charge=null;}}
-        else if(e.specialCD<=0&&distance(e,victim)<520){e.charge={phase:'aim',angle:Math.atan2(victim.y-e.y,dx(e.x,victim.x)),t:.9};e.specialCD=5;}
+        if(e.charge){e.charge.t-=dt;if(e.charge.t<=0){if(e.charge.phase==='aim')e.charge={...e.charge,phase:'run',t:D.attacks.ram.duration};else e.charge=null;}}
+        else if(e.specialCD<=0&&distance(e,victim)<520){e.charge={phase:'aim',angle:Math.atan2(victim.y-e.y,dx(e.x,victim.x)),t:D.attacks.ram.windup};e.specialCD=5;}
         return;
       }
       if(!e.bossId)return;
       if(e.hp<e.maxHp*.5&&!e.enraged){e.enraged=true;e.rate*=.8;e.specialCD=1.2;this.wave(e.bossId==='last-light'?18:8,e);this.event(e.name+' is calling in reinforcements.','warn');}
       if(e.attack){
         e.attack.t-=dt;if(e.attack.t<=0){const a=e.attack;
-          if(a.kind==='fan'){const n=e.bossId==='last-light'?13:9;for(let i=0;i<n;i++)this.shoot(e,a.angle+(i-(n-1)/2)*.12,e.bossId==='last-light'?30:18,true,{speed:240,life:3.8});}
-          if(a.kind==='ring'){for(let i=0;i<20;i++){if(i%5===0)continue;this.shoot(e,a.angle+i/20*TAU,27,true,{speed:185,life:5});}}
+          const salvo=salvoFor(e);if(salvo)for(const offset of salvo.angles)this.shoot(e,a.angle+offset,salvo.damage,true,{speed:salvo.speed,life:salvo.life});
           e.attack=null;
         }
         return;
@@ -292,7 +292,7 @@
         const targets=[victim,...this.fleet.filter(f=>f.hp>0&&f!==victim).sort((a,b)=>distance(e,a)-distance(e,b)).slice(0,e.enraged?3:2)];
         for(const target of targets)this.hazards.push({x:target.x,y:target.y,radius:e.bossId==='iron-king'?80:95,elapsed:0,delay:2.2,damage:e.bossId==='iron-king'?50:65});
         e.attack={kind:'mortar',angle,t:2.2,max:2.2};
-      }else e.attack={kind:e.bossId==='last-light'&&e.salvos%2===0?'ring':'fan',angle,t:1.5,max:1.5};
+      }else{const kind=e.bossId==='last-light'&&e.salvos%2===0?'ring':'fan',windup=D.attacks[kind].windup;e.attack={kind,angle,t:windup,max:windup};}
     }
     damage(e,n){if(e.hp<=0)return;e.hp-=n;e.hit=.12;if(this.time-(e.lastImpact??-1)>.06){e.lastImpact=this.time;this.effect({x:e.x,y:e.y,t:.22,max:.22,size:16,type:'impact'});this.cue('impact',{x:e.x,y:e.y});}if(e.hp>0)return;
       this.s.stats.kills++;this.s.xp+=e.type==='boss'?500:7;this.s.coins+=e.reward;this.effect({x:e.x,y:e.y,t:.8,max:.8,size:e.radius*2,type:'blast'});
@@ -385,7 +385,7 @@
         let factor=e.type==='rammer'?1:d<e.range*.7?-.3:1;
         // Small deterministic lateral motion keeps large groups legible without pairwise separation.
         const sway=Math.sin(this.time*.8+e.id)*.32;
-        if(e.charge){const speed=e.charge.phase==='run'?e.speed*2.6:e.speed*.08;e.angle=e.charge.angle;this.earth.move(e,e.x+Math.cos(e.angle)*speed*dt,e.y+Math.sin(e.angle)*speed*dt);}
+        if(e.charge){const speed=e.charge.phase==='run'?e.speed*D.attacks.ram.speedMultiplier:e.speed*.08;e.angle=e.charge.angle;this.earth.move(e,e.x+Math.cos(e.angle)*speed*dt,e.y+Math.sin(e.angle)*speed*dt);}
         else this.earth.move(e,e.x+(vx/d*Math.cos(sway)-vy/d*Math.sin(sway))*e.speed*factor*(e.attack?.kind==='fan'?.2:1)*dt,e.y+(vy/d*Math.cos(sway)+vx/d*Math.sin(sway))*e.speed*factor*(e.attack?.kind==='fan'?.2:1)*dt);
         e.cd-=dt;if(d<e.range&&e.cd<=0){this.shoot(e,a,e.damage,true,{speed:210,life:3});if(e.type==='boss'){this.shoot(e,a-.25,e.damage,true,{speed:210,life:3});this.shoot(e,a+.25,e.damage,true,{speed:210,life:3});}e.cd=e.rate;}
         if(d<e.radius+victim.radius+4&&e.cd<=0){this.hurt(victim,e.damage,e);e.cd=1;this.damage(e,e.type==='rammer'?e.maxHp:12);}
@@ -432,5 +432,5 @@
     }
   }
   V.install(Game);Work.install(Game);
-  const api={Game,fresh,validate,rng,hash,count,SAVE_VERSION,HARBOR_APPROACH,MAX_SAVE_BYTES:Sea.MAX_SAVE_BYTES};if(typeof module!=='undefined'&&module.exports)module.exports=api;root.WidewakeCore=api;
+  const api={Game,fresh,validate,rng,hash,count,salvoFor,SAVE_VERSION,HARBOR_APPROACH,MAX_SAVE_BYTES:Sea.MAX_SAVE_BYTES};if(typeof module!=='undefined'&&module.exports)module.exports=api;root.WidewakeCore=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

@@ -40,8 +40,8 @@
     const e={...definition,id,type,target,x,y,angle,hp,maxHp,cd,specialCD,salvos,enraged:!!flags,dead:false,hit:0};
     if(b)Object.assign(e,{bossId:b.id,name:b.name,reward:b.reward,rate:definition.rate*(flags ? .8 : 1)});
     if(signal)e.encounterId=D.signals[signal-1].id;
-    if(ability&&ability<=2){assert(abilityTime<=(ability===1?.9:1.35));e.charge={phase:abilities[ability],angle:abilityAngle,t:abilityTime};}
-    else if(ability){const max=ability===5?2.2:1.5;assert(abilityTime<=max);e.attack={kind:abilities[ability],angle:abilityAngle,t:abilityTime,max};}
+    if(ability&&ability<=2){assert(abilityTime<=(ability===1?D.attacks.ram.windup:D.attacks.ram.duration));e.charge={phase:abilities[ability],angle:abilityAngle,t:abilityTime};}
+    else if(ability){const max=ability===5?2.2:D.attacks[abilities[ability]].windup;assert(abilityTime<=max);e.attack={kind:abilities[ability],angle:abilityAngle,t:abilityTime,max};}
     return e;
   }
   function shotRead(v,o){

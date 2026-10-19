@@ -150,6 +150,11 @@ import data.
   rather than instantly snapping. The camera follows with a short lag.
 - Guns use visible traveling rounds and swept hit tests. A broadside is a
   deliberate cooldown action. Friendly fire is disabled.
+- Skiffs, gunners, rammers, armored boats and the three admirals have distinct
+  silhouettes. Attack warnings use the simulation's shot lanes and timing:
+  full fan spreads, the four wider ring gaps, remaining ramming distance and
+  mortar impact circles. Outlines stay above explosions and projectiles. No
+  persistent enemy-class labels are needed.
 - Three fleet formations change spacing. Support ships turn and catch up.
   Gunboats, destroyers and repair launches can guard a named cargo boat or the
   flagship. Automatic orders divide them between active workboats or protect a
@@ -510,6 +515,7 @@ WIDEWAKE_TEST_OUTPUT=/tmp/widewake-work node tools/widewake/test-working-voyages
 node tools/widewake/test-trading-voyages.cjs /tmp/widewake-work/double-harbor.json
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-work-browser.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-audio.cjs
+NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-combat-view.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-chart.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-helm-browser.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-controller.cjs
@@ -631,7 +637,12 @@ Encounter dialogs pause the sea while the captain decides.
 The Red Widow winds up aimed fan salvos. The Iron King marks water before mortar
 impacts. Last Light mixes fans, mortars and ring salvos with gaps. Each admiral
 calls reinforcements at half hull. Rammers show their committed charge direction
-before accelerating. Critical friendly hulls have a distinct warning, visible
+before accelerating. From v0.16, these warnings share the firing definitions in
+`WidewakeData.attacks`. Last Light's wider fan includes its outermost shots;
+ring warnings show actual spokes rather than an unbroken circle. A winding arc
+shows commitment timing. Incoming patterns remain visible when the attacking
+ship is just outside the viewport. The attack values and saved format are unchanged.
+Critical friendly hulls have a distinct warning, visible
 name and offscreen pointer; the minimap now includes the convoy. C opens the
 convoy desk at sea or port. Transfers and hold reservations are port actions.
 
