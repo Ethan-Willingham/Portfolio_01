@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#303931">
+  <title>Widewake</title>
+  <meta name="description" content="Sail the Earth with a growing convoy. Trade between 24 ports, hunt pirate fleets, and protect fishing boats and oil tenders in an open-world JavaScript game.">
+  <meta property="og:title" content="Widewake">
+  <meta property="og:description" content="A little boat. The whole wide world. Port trading, convoy combat, and a living at sea.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://ethanwillingham.com/widewake.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/widewake/cover.png">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="preload" href="assets/fonts/commit_mono_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="widewake.css?v=0.1.0">
+  <script defer src="js/demo-activity.js"></script>
+  <script defer src="js/widewake-data.js?v=0.1.0"></script>
+  <script defer src="js/widewake-world.js?v=0.1.0"></script>
+  <script defer src="js/widewake-core.js?v=0.1.0"></script>
+  <script defer src="js/widewake-render.js?v=0.1.0"></script>
+  <script defer src="js/widewake.js?v=0.1.0"></script>
+</head>
+<body class="ww-body">
+  <main id="game" class="ww-game" aria-label="Widewake game">
+    <header class="ww-header">
+      <a class="ww-back" href="archive.html" aria-label="Back to In Progress">In Progress</a>
+      <h1>WIDEWAKE<span class="ww-version">0.1</span></h1>
+      <div class="ww-top-actions"><button id="sound-toggle" title="Toggle sound" aria-label="Toggle sound">Sound on</button><button id="settings-open" title="Pause and settings (Escape)">Menu <kbd>Esc</kbd></button></div>
+    </header>
+    <div id="loading" class="ww-loading"><div class="ww-loading-boat" aria-hidden="true"></div><p>Unfolding the chart...</p><small>24 ports. One ocean.</small></div>
+    <section id="harbor" class="ww-harbor" hidden aria-label="Harbor">
+      <div class="ww-harbor-left">
+        <div class="ww-port-heading"><div><p id="port-country" class="ww-eyebrow"></p><h2 id="port-name"></h2></div><div id="port-coords" class="ww-coords"></div></div>
+        <div class="ww-port-picture"><canvas id="port-art" width="384" height="216" aria-label="Pixel art of the current harbor"></canvas><span id="port-time" class="ww-picture-note"></span></div>
+        <div class="ww-port-caption"><p id="port-description"></p><span id="port-weather"></span></div>
+        <div class="ww-next"><p class="ww-eyebrow">The next small thing</p><h3 id="next-title"></h3><p id="next-description"></p><div id="next-progress" class="ww-progress"><i></i></div></div>
+        <div class="ww-cast-off"><div><span id="harbor-fleet-count"></span><small id="harbor-hull-status"></small></div><button id="cast-off" class="ww-primary">Cast off</button><button id="harbor-chart">Chart <kbd>M</kbd></button></div>
+      </div>
+      <section class="ww-management" aria-label="Port services">
+        <div class="ww-wallet"><div><span class="ww-eyebrow">Your purse</span><strong id="coins">780</strong><small>coins</small></div><div class="ww-cargo-readout"><span id="hold-usage"></span><div class="ww-progress"><i id="hold-bar"></i></div><small>Cargo across the fleet</small></div></div>
+        <nav class="ww-tabs" aria-label="Port services"><button data-tab="trade" aria-pressed="true">Trade</button><button data-tab="fleet" aria-pressed="false">Fleet</button><button data-tab="yard" aria-pressed="false">Shipyard</button><button data-tab="jobs" aria-pressed="false">Jobs</button><button data-tab="log" aria-pressed="false">Log</button></nav>
+        <div id="port-panel" class="ww-panel" tabindex="-1"></div>
+        <footer class="ww-port-footer"><span id="captain-rank"></span><span id="save-status">Saved on this device</span></footer>
+      </section>
+    </section>
+    <section id="sea" class="ww-sea" hidden aria-label="Open ocean">
+      <canvas id="ocean" tabindex="0" aria-label="Sail with W A S D or arrow keys. Guns fire automatically. Space fires a broadside. E docks or works a production site. M opens the chart."></canvas>
+      <div class="ww-sea-top"><div class="ww-sea-status"><div><strong id="sea-ship">Cutter</strong><span id="sea-coins"></span></div><div class="ww-progress ww-hull"><i id="sea-health"></i></div><small id="sea-health-text"></small></div><div class="ww-sea-location"><span id="sea-location"></span><small id="sea-position"></small></div><button id="sea-chart" class="ww-chart-button">World chart <kbd>M</kbd><canvas id="minimap" width="160" height="80" aria-hidden="true"></canvas></button></div>
+      <div id="operation" class="ww-operation" hidden><span id="operation-text"></span><div class="ww-progress"><i id="operation-bar"></i></div><small id="operation-detail"></small></div>
+      <div id="sea-objective" class="ww-sea-objective"></div>
+      <div class="ww-sea-bottom"><div id="fleet-strip" class="ww-fleet-strip"></div><div class="ww-sea-actions"><button id="formation">Screen formation <kbd>F</kbd></button><button id="broadside">Broadside <kbd>Space</kbd></button><button id="field-repair">Patch hulls <small>100c</small><kbd>R</kbd></button><button id="context-action" class="ww-primary" hidden></button><button id="sea-pause">Pause</button></div><p class="ww-controls"><kbd>WASD</kbd> sail <span>&middot;</span> <kbd>Shift</kbd> full steam <span>&middot;</span> guns aim automatically <span>&middot;</span> click to aim <span>&middot;</span> scroll to zoom</p></div>
+      <div id="joystick" class="ww-joystick" aria-label="Touch steering control"><div></div></div>
+      <div class="ww-zoom"><button id="zoom-in" aria-label="Zoom in">+</button><button id="zoom-out" aria-label="Zoom out">&minus;</button></div>
+    </section>
+    <div id="toasts" class="ww-toasts" role="status" aria-live="polite" aria-atomic="true"></div>
+    <dialog id="chart-dialog" class="ww-dialog ww-chart-dialog" aria-labelledby="chart-title"><div class="ww-dialog-head"><div><p class="ww-eyebrow">The whole wide world</p><h2 id="chart-title">Your chart</h2></div><button data-close="chart-dialog" aria-label="Close chart">Close <kbd>M</kbd></button></div><div class="ww-chart-layout"><div class="ww-chart-map"><canvas id="world-chart" width="1000" height="500" aria-label="Map of Earth. Select a port, fishing ground, oil field, or admiral. The destination list provides the same controls."></canvas><p class="ww-map-legend"><span class="port-dot">Ports</span><span class="fish-dot">Fishing</span><span class="oil-dot">Oil</span><span class="boss-dot">Admirals</span><span>Click open water to set a waypoint.</span></p></div><aside class="ww-chart-side"><label for="destination-list" class="ww-eyebrow">Choose a destination</label><select id="destination-list"></select><div id="destination-detail"></div><button id="plot-course" class="ww-primary">Plot course</button><p class="ww-chart-tip">Your helmsman follows a water route. Use WASD to take over at any time. Dock when you enter a port's harbor ring.</p></aside></div></dialog>
+    <dialog id="settings-dialog" class="ww-dialog ww-settings" aria-labelledby="settings-title"><div class="ww-dialog-head"><div><p class="ww-eyebrow">A moment at anchor</p><h2 id="settings-title">Paused</h2></div><button data-close="settings-dialog">Resume</button></div><div class="ww-setting-row"><label for="autofire">Automatic cannon fire</label><input type="checkbox" id="autofire" checked></div><div class="ww-setting-row"><label for="volume">Sound volume</label><input type="range" id="volume" min="0" max="0.5" step="0.01" value="0.22"></div><div class="ww-setting-row"><label for="camera-shake">Small camera impacts</label><input type="checkbox" id="camera-shake" checked></div><div class="ww-help"><p><kbd>WASD</kbd> or arrows steer. <kbd>Shift</kbd> gives full steam. Your guns and escorts fire automatically.</p><p>Aim with the mouse and hold click for manual fire. <kbd>Space</kbd> fires all guns, <kbd>R</kbd> patches the fleet for 100 coins, <kbd>F</kbd> changes formation.</p><p><kbd>M</kbd> opens the chart. Approach a port and press <kbd>E</kbd> to dock. At a fishing ground or oil field, <kbd>E</kbd> deploys the right workboat. Stay close and protect it for a minute.</p><p>Progress saves on this device. Export a save to move it elsewhere.</p></div><div class="ww-save-actions"><button id="export-save">Export save</button><button id="import-save">Import save</button><input id="save-file" type="file" accept=".json,application/json" hidden><button id="fullscreen">Full screen</button><button id="new-game" class="ww-danger">Start over</button></div><p id="save-message" class="ww-note"></p><p class="ww-credits">Widewake, an early browser build by Ethan Willingham. Geography from <a href="https://www.naturalearthdata.com/">Natural Earth</a>.</p></dialog>
+    <dialog id="reset-dialog" class="ww-dialog ww-settings" aria-labelledby="reset-title"><div class="ww-dialog-head"><h2 id="reset-title">Leave this fleet behind?</h2></div><p>This replaces the save on this device. Export your current fleet first if you want to keep it.</p><div class="ww-save-actions"><button data-close="reset-dialog">Keep playing</button><button id="confirm-reset" class="ww-danger">Start a new game</button></div></dialog>
+    <noscript><p>Widewake needs JavaScript enabled to run.</p></noscript>
+  </main>
+</body>
+</html>
