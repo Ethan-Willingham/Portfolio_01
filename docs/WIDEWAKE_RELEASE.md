@@ -10,6 +10,12 @@ sales ambition informs the care invested; it is not a forecast or a completion
 criterion. Tradewinds, It's About Pirates and BELTFED remain the three references.
 The exact owner constraints and source links are in `WIDEWAKE.md`.
 
+The latest owner direction is staged in `WIDEWAKE_OCEAN.md`: endgame combat
+performance first, an isometric ocean and rethought zoom, then an original world
+at believable local scale with varied waterways. This supersedes the earlier
+Earth target. Keep the approved title. The existing campaign remains available
+while the new ocean is tested separately; do not silently invalidate its saves.
+
 ## How a pass works
 
 1. Play the current build from a clean launch and from an existing fleet. Follow
@@ -31,19 +37,19 @@ The exact owner constraints and source links are in `WIDEWAKE.md`.
 | --- | --- | --- |
 | Launch and identity | Owner-approved title, independent navy/cyan identity, scene-led harbor and focused services | Preserve the approved title; maintain cohesive identity through the remaining views |
 | First voyage | Real-time starter sailing reviewed; guidance checks workboats; earned trade and fishing complete | Observe an unassisted human session; keep controls, profit and purchases understandable without a long manual |
-| Helm and camera | Direct manual control, one-action course resumption, continuous waypoint throttle, accurate arrival cues and fitted phone view | Review turning, arrival, coasts and camera at every hull size and input method |
-| Combat | Distinct enemy silhouettes, warnings matching actual shot lanes, nearby contacts, priority labels and directional damage | Review threat reading, audible windups and formation decisions through human play |
+| Helm and camera | Campaign controls remain; separate isometric trial has shared projection, three zoom stops, anchored wheel/pinch and screen-relative steering | Review turning and braking at real channel widths, small-screen fleet readability, controller integration and calm travel |
+| Combat | Separate trial targets 16,384 raiders against 24 finite friendly hulls, with real shots, kills, replacement fronts and workboats | Review weapon feel, incoming-front variety, salvage load, geography and earned progression before campaign integration |
 | Trade | Regional warehouse depth, earned merchant expansion, exact bulk quotes, water routes and reserved holds | Review market pacing, discovery of trade routes, and late-game reasons to trade |
 | Convoy | Checked coastal recovery, physical harbor arrivals, all 24 ports with a full wide convoy, saved routes and distance inspection | Extended survival with different guard assignments and fleet builds; review arrival feedback in ordinary play |
 | Fishing and oil | Five work rhythms across 18 sites, optional double/triple watches, carried rare catches and safe-return payment | Longer play across fleet builds, risk/reward pacing and worthwhile repeat visits |
 | Progression | Six earned charters; staged harbor access with alternate rank routes and legacy access preserved | Human pacing, optional pursuits and free-play depth; eliminate grind or runaway snowballing |
-| Earth and discovery | Real coastlines, 24 ports, 18 work sites and 15 signals | Review recognizable regions, travel interest, geography seams, legible chart and destination discovery |
-| Art | Chunky native sprites and harbor scenes; 24 distinct briefs saved | Make compositions and silhouettes more individual; final image generation remains deferred by the owner |
+| World and discovery | Existing Earth campaign retained; owner now requires an original world and believable local scale | Prove one estuary region with rivers, shallows and habitat transitions, then expand and deliberately migrate saves |
+| Art | Original isometric hull geometry, decks, cabins, turrets and wakes in the trial; existing harbors retained | Build informative banks and water, improve distant silhouettes and atmosphere; image generation remains deferred |
 | Sound | Original score, spatial cues, mixer, bounded voices and suspended/interrupted recovery | Listening on speakers/headphones, broader regional atmosphere, long-session comfort and battle priority review |
 | Interface and access | Locked service previews, compact future stock, selected-item trading and contextual sea actions; keyboard, touch and standard controller flows | Physical controllers, remapping, button-label coverage, readable text and non-color threat cues |
 | Mobile | Chromium and WebKit touch emulation | Full-screen portrait and landscape flows, safe areas, browser-height changes, sustained performance and physical-device validation |
 | Saves and recovery | Full active-sea records, 676 matching v0.15 campaign reloads, exclusive browser writer, explicit handoff, primary-first writes and legacy migration | Future format upgrades, erased storage, supported platform/cloud integration and long-session recovery |
-| Performance | Five-minute 1,200-enemy browser run on M1 Pro with sound active and stable retained memory | Constrained-device budgets, longer sessions, loading cost and input latency |
+| Performance | Separate isometric trial uses bounded simulation buffers, local collision queries and instanced WebGL2 drawing; evidence below | Physical-device budgets, terrain pathing, streamed regions, pickups, persistence and longer sessions under the new load |
 | Shipping | Public web build, tested offline Mac app, Windows package and asset inventory | Windows execution, signing, font clearance, Steam services, release QA and store materials |
 
 ## Release gates
@@ -1083,3 +1089,82 @@ Next: return to the last admiral, audible threat cues and optional pursuits;
 include contract usefulness and actual route costs in the trade pass. Physical
 devices, unassisted human sessions, remapping, final art, distribution rights
 and Steam integration remain open. The production goal remains active.
+
+## Pass 16, a separate isometric endgame sea trial
+
+The owner changed the ocean brief: performance first, far more activity, an
+isometric view, deliberate zoom, and a world built around believable local
+waterways. They also explicitly asked to stage the work. The first stage is
+`widewake-battle.html`, an isolated playable trial. It does not access campaign
+storage. The v0.17 campaign, earned harbor services and approved title remain
+unchanged. The trial's preset equipment is an engineering load, not earned
+progression or proposed starting balance.
+
+The trial has 24 finite friendly hulls, including four working boats, against a
+target population of 16,384 live light raiders. Three raider roles move, attack,
+take damage and sink. Destroyed boats are replaced by new approaching vessels.
+Rapid guns intercept the front, flak clears pockets, and batteries aim into
+dense groups with traveling arcing shells. Hostile projectiles have reserved
+capacity. Going underway stops work, and production waits for boats to reach
+their new stations. Cargo belongs to each working hull and is lost with it.
+
+The first moving review completed the three-minute defense with all four
+workboats afloat and 111,784 raiders sunk. That is cumulative destruction, not
+the simultaneous population. This establishes a playable stress loop, not
+tuned campaign difficulty: the supplied formation is deliberately very strong.
+The next review must test breaches, useful manual intervention, varied fronts,
+withdrawal and recovery rather than merely raising the enemy counter.
+
+The new renderer draws original hull sides, raised cabins, rotating guns,
+industrial towers, wakes and shells through instanced WebGL2 batches. The
+simulation and camera share a tested isometric projection and inverse. Helm,
+Fleet and Survey are stops on continuous zoom; wheel and two-finger pinch keep
+the inspected water point in place. Steering eases the camera back toward the
+flagship. Pinching clears held fire. Reduced motion removes decorative movement
+and flashes. Graphics-context recovery pauses explicitly before resuming.
+
+Verification and limits:
+
+- Projection, picking, local collision queries, ordered piercing, hostile shot
+  reserve, physical cargo loss, station arrival and deterministic replay pass.
+  A three-minute simulation produces 114,955 actual kills and 131,330 spawns,
+  with a 1.65 ms simulation-step p95 on this M1 Pro. Fixed simulation buffers
+  occupy 2,253,312 bytes; this is not the browser's total memory footprint.
+- The final-source three-minute Chromium run sustains the 16,384 target with
+  111,950 kills, 17 GPU draw calls, about 7,000 visible raiders at its last
+  sample, 9.8 ms whole-run frame p95 and 10.2 ms p99. The ordinary battle peaks
+  at 359 simultaneous shots, with zero rejected shots and at most 19 audio
+  voices. Thousands of rounds are a separate capacity fixture, not a claim
+  about that organic sample.
+- Chromium and WebKit cover keyboard steering, work/broadside controls, zoom,
+  cleared held input on focus loss, manual resume and WebGL context recovery.
+  Four emulated phone viewports retain the same simulation population and
+  test rotation while paused. Chromium exercises native multi-touch pinch;
+  WebKit checks touch controls and the camera buttons. These are desktop
+  browser tests, not physical-phone certification.
+- A separate two-second ceiling fixture refills the population to 16,384 before
+  every step while filling all 8,192 projectile and 2,048 effect slots. It draws
+  up to 7,760 visible rounds and includes real collision, kills and replenishment.
+  Combined simulation, refill and draw submission measure 4.4 ms CPU p95, with
+  10.2 ms frame p95. This artificial fixture is not normal encounter balance.
+- The completed follow-up Chromium suite measures 14.2 ms frame p95 under 4x
+  CPU throttling. Its one-minute sound-active continuation retains no heap
+  growth after collection, measuring 80,196 bytes less at the last sample.
+  The forced Canvas fallback keeps the full simulation, renders 3,552 visible
+  raiders in its smaller viewport, and measures 9.9 ms frame p95 with a bounded
+  164-sprite cache. WebGL remains the primary visual path. None of these short
+  desktop samples substitutes for long sessions on a physical minimum device.
+
+Whole-game review: the existing trading, work, progression and saves provide
+integration requirements, but have not yet been connected to this renderer.
+The title and harbor stay as approved. No images were generated. Small distant
+ships need further readability review, especially on phones; the art and sound
+still need a qualitative pass. This trial does not yet include terrain, bank
+collision, global routes, salvage pickup loads, persistent battles, controller
+input or native packaging. Those cannot be inferred from its frame-time result.
+
+Next: complete the combat and camera feel review, then build one estuary greybox
+from `WIDEWAKE_OCEAN.md`. Prove hull clearance, turning, current, draft, convoy
+columns and recovery through one river and a shallow alternate route. Repeat
+the endgame load against real geography before expanding the world or migrating
+the campaign. The production goal remains active.

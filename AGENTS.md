@@ -77,7 +77,7 @@ and its tools beside the firebox on every active device.
 
 ## What lives here
 
-**Widewake**, the Earth naval trading and convoy game, lives in `widewake.html`,
+**Widewake**, the naval trading and convoy game, lives in `widewake.html`,
 `widewake.css`, `js/widewake*.js`, and `assets/widewake/`. Read `docs/WIDEWAKE.md`
 first for the owner's design, persistence, controls, checks, and remaining work.
 It is developed separately from Sluice, with no bundle step. Keep its temporary
@@ -88,6 +88,10 @@ explicitly deferred image generation: the 24 port briefs are saved in
 individual indie art direction. Current canvas harbors are interim scenes.
 The game opens as a standalone game, with no blog wrapper. Continue the persistent
 quality passes in `docs/WIDEWAKE_RELEASE.md`; a passing prototype is not completion.
+The owner's latest direction replaces the Earth target with an original world of
+believably scaled waterways. Read `docs/WIDEWAKE_OCEAN.md` for the staged ocean
+redesign. `widewake-battle.html` is its isolated isometric endgame trial; the
+existing campaign and approved title remain intact pending deliberate integration.
 
 **All Four Wheels**, a separate shopping-cart game in progress, lives in
 `four-wheels.html`, `four-wheels.css`, and `js/four-wheels*.js`. Its editable sources

@@ -40,6 +40,15 @@ it as it is. Preserve its art, composition and presentation. The same instructio
 asks for progressive access to harbor services: future areas remain visible as
 locked previews, while the first voyage presents fewer active decisions.
 
+The latest 2026-10-19 direction supersedes the Earth world and top-down ocean
+targets below. The owner wants isometric ocean graphics, endgame-scale combat
+designed around performance first, deliberate zoom, and an original water world
+with believable local scale, rivers, fresh and salt water, swamps and varied
+navigation. They explicitly asked to stage this work rather than attempt it all
+at once. `docs/WIDEWAKE_OCEAN.md` records the order and design constraints.
+The existing campaign still uses Earth until a deliberate replacement and save
+migration are ready. Its approved title must remain unchanged.
+
 Interface references reviewed for this correction:
 [Balatro's official shop screenshot](https://www.playbalatro.com/press-kit/Screenshots/Balatro_ui_3840x2160_2.png),
 [DREDGE's official media](https://www.dredge.game/), and
@@ -56,8 +65,9 @@ not fulfillment. Prioritize a connected experience, thoughtful pacing, distinct
 encounters, and complete playthroughs. A long feature list is not evidence that
 the game feels finished.
 
-- The entire sailing world is Earth, with real coastlines. Players can steer
-  freely, approach ports, cross oceans, and wrap around the Pacific seam.
+- The existing campaign uses Earth, with real coastlines and a Pacific seam.
+  This is historical implementation context, superseded by the original-world
+  direction above. Preserve free steering and meaningful port approaches.
 - Port trading follows the old Tradewinds idea: regional prices, buy low, sell
   high, invest in the next boat. Rare salvage and fish keep voyages interesting.
 - Combat should take cues from It's About Pirates: a distant camera, direct
@@ -81,6 +91,16 @@ because more art would be useful. The current code-drawn harbor scenes provide
 distinct interim backgrounds while that art pass is deferred.
 
 ## Files and ownership
+
+The next ocean foundation is isolated at `widewake-battle.html` with
+`widewake-battle.css`, `js/widewake-battle-core.js`, `js/widewake-ocean.js` and
+`js/widewake-battle.js`. It is a playable endgame engineering trial, not a new
+campaign or a claim of finished world content. It never reads or writes campaign
+storage. Its explicit starting fleet is a test loadout, not earned progression.
+The renderer uses actual isometric hull geometry and instanced WebGL2 batches;
+its simulation uses fixed typed buffers. The two battle test harnesses live in
+`tools/widewake/`. Continue the measured stages in `WIDEWAKE_OCEAN.md` before
+replacing the campaign's ocean.
 
 - `widewake.html`, `widewake.css`: full-window game shell with its own palette,
   scene-led harbor, focused goods picker and peripheral sea HUD. It uses
@@ -515,6 +535,21 @@ and platform services still need a deliberate adapter. See
 distributing binaries.
 
 ## Checks
+
+For the isolated ocean trial:
+
+```sh
+node tools/widewake/test-battle-core.cjs
+NODE_PATH=/path/to/bundled/node_modules WIDEWAKE_SOAK_SECONDS=180 node tools/widewake/test-battle-browser.cjs
+NODE_PATH=/path/to/bundled/node_modules WIDEWAKE_TEST_ENGINE=webkit node tools/widewake/test-battle-browser.cjs
+```
+
+The browser harness records the ordinary battle separately from a full-capacity
+projectile/effect fixture and a forced Canvas fallback. It preserves the same
+population across touch viewports, checks campaign-storage isolation and closes
+its own testing browser. Reports and screenshots use `WIDEWAKE_TEST_OUTPUT`.
+
+For the existing campaign:
 
 ```sh
 node tools/widewake/test-core.cjs
