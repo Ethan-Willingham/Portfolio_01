@@ -29,6 +29,17 @@ const check=msg=>console.log('PASS '+msg);
   const snap=await p.evaluate(()=>JSON.stringify(__widewake.game.snapshot()));await p.waitForTimeout(180);assert.equal(await p.evaluate(()=>JSON.stringify(__widewake.game.snapshot())),snap);
   await p.click('#start-voyage');assert.ok(await p.locator('#reset-dialog').isVisible());await p.click('[data-close="reset-dialog"]');assert.equal(await p.evaluate(()=>JSON.stringify(__widewake.game.snapshot())),snap);
   await p.reload();await p.waitForFunction(()=>window.__widewake);assert.equal(await p.evaluate(()=>__widewake.atTitle),true);assert.equal(await p.locator('dialog[open]').count(),0);assert.match(await p.locator('#title-save').innerText(),/At sea/);
+  const preserved=await p.evaluate(()=>localStorage.getItem('widewake-save-v2'));
+  assert.match(await p.locator('#title-version').innerText(),/^0\.21\.0/);
+  for(const trial of ['estuary','battle']){
+    await p.click('#title-ocean');await p.click('#ocean-dialog a[href="widewake-'+trial+'.html"]');
+    const resume=trial==='estuary'?'#reach-resume':'#resume',menu=trial==='estuary'?'#reach-menu':'#battle-menu',pause=trial==='estuary'?'#reach-pause':'#pause';
+    await p.waitForFunction(id=>{const b=document.querySelector(id);return b&&!b.disabled;},resume);await p.click(resume);await p.waitForTimeout(120);assert.equal(await p.locator(menu).evaluate(d=>d.open),false);await p.click(pause);
+    assert.match(await p.locator(menu+' small').innerText(),/^0\.21\.0/);await p.click(menu+' a[href="widewake.html"]');await p.locator('#title-screen').waitFor({state:'visible'});
+    assert.equal(await p.evaluate(()=>localStorage.getItem('widewake-save-v2')),preserved);assert.ok(await p.locator('#continue-voyage').isVisible());
+  }
+  await p.goto(base+'/widewake.html?test');await p.waitForFunction(()=>window.__widewake);
+  check('both current ocean trials launch from the title and return without altering the saved voyage');
   await p.screenshot({path:path.join(out,'title-continue.png')});await p.click('#continue-voyage');assert.equal(await p.locator('#sea').isVisible(),true);assert.equal(await p.evaluate(()=>__widewake.game.paused),false);
   await p.click('#settings-open');await p.click('#settings-handbook');await p.keyboard.press('Escape');assert.ok(await p.locator('#settings-dialog').isVisible());assert.equal(await p.evaluate(()=>__widewake.game.paused),true);
   await p.click('#return-title');await p.click('#start-voyage');await p.click('#confirm-reset');assert.ok(await p.locator('#departure-dialog').isVisible());assert.equal(await p.evaluate(()=>__widewake.game.s.coins),780);

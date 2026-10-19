@@ -31,6 +31,14 @@ async function close(){if(app){const owned=app;app=null;await owned.close();}}
   await p.screenshot({path:path.join(out,'desktop-title.png')});
   check('offline title, single profile owner, isolated renderer, bundled-resource boundary and full screen');
 
+  for(const trial of ['estuary','battle']){
+    await p.click('#title-ocean');await p.click('#ocean-dialog a[href="widewake-'+trial+'.html"]');
+    const resume=trial==='estuary'?'#reach-resume':'#resume',menu=trial==='estuary'?'#reach-menu':'#battle-menu';
+    await p.waitForFunction(id=>{const b=document.querySelector(id);return b&&!b.disabled;},resume);await p.click(resume);await p.click(trial==='estuary'?'#reach-pause':'#pause');
+    await p.click(menu+' a[href="widewake.html"]');await p.locator('#title-screen').waitFor({state:'visible'});assert.equal(await p.evaluate(()=>localStorage.getItem('widewake-save-v2')),null);
+  }
+  await p.goto('widewake://game/widewake.html?test');await p.waitForFunction(()=>window.__widewake);
+  check('both new ocean trials and their terrain worker run from the offline package');
   await app.evaluate(({app,BrowserWindow})=>{app.focus({steal:true});BrowserWindow.getAllWindows()[0].focus();});await p.click('#start-voyage');await p.click('[data-close="departure-dialog"]');await p.click('[data-tab="trade"]');await p.click('[data-action="buy"][data-id="sugar"]');
   const initial=await p.evaluate(()=>({coins:__widewake.game.s.coins,sugar:__widewake.game.quantity('sugar')}));
   assert.equal(initial.sugar,17);await p.click('#settings-open');

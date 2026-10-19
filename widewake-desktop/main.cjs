@@ -1,7 +1,7 @@
 'use strict';
 const {app,BrowserWindow,Menu,protocol,session,ipcMain,dialog,shell,powerMonitor}=require('electron');
 const fs=require('node:fs/promises'),path=require('node:path');
-const {ORIGIN,CSP,localURL,assetPath,externalURL,requestAllowed}=require('./policy.cjs');
+const {ORIGIN,CSP,localURL,gameURL,assetPath,externalURL,requestAllowed}=require('./policy.cjs');
 const {MAX_SAVE_BYTES}=require('./game/js/widewake-sea-save.js');
 const value=name=>process.argv.find(arg=>arg.startsWith(name+'='))?.slice(name.length+1);
 app.setName('Widewake');
@@ -82,7 +82,7 @@ if(ownsProfile)app.whenReady().then(async()=>{
   win=new BrowserWindow({title:'Widewake',width:1440,height:900,minWidth:640,minHeight:360,useContentSize:true,show:false,backgroundColor:'#182d2b',autoHideMenuBar:true,
     webPreferences:{preload:path.join(__dirname,'preload.cjs'),nodeIntegration:false,contextIsolation:true,sandbox:true,webSecurity:true,allowRunningInsecureContent:false,webviewTag:false}});
   win.webContents.setWindowOpenHandler(({url})=>{openExternal(url);return{action:'deny'};});
-  win.webContents.on('will-navigate',(event,url)=>{if(url!==ORIGIN+'/widewake.html'&&url!==ORIGIN+'/widewake.html?test'){event.preventDefault();openExternal(url);}});
+  win.webContents.on('will-navigate',(event,url)=>{if(!gameURL(url)){event.preventDefault();openExternal(url);}});
   win.webContents.on('will-attach-webview',event=>event.preventDefault());
   win.webContents.on('before-input-event',(event,input)=>{if(input.type==='keyDown'&&input.key==='F11'&&!input.isAutoRepeat){event.preventDefault();win.setFullScreen(!win.isFullScreen());}});
   const activity=active=>{if(!win.isDestroyed()&&!win.webContents.isDestroyed())win.webContents.send('widewake:activity',active);};

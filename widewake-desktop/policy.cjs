@@ -5,10 +5,14 @@ const CSP="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inlin
 function localURL(value){
   try{const u=new URL(value);return u.protocol==='widewake:'&&u.hostname==='game'&&!u.port&&!u.username&&!u.password;}catch{return false;}
 }
+function gameURL(value){
+  if(!localURL(value))return false;
+  const u=new URL(value);return ['/widewake.html','/widewake-battle.html','/widewake-estuary.html'].includes(u.pathname)&&['','?test'].includes(u.search);
+}
 function assetPath(value,files){
   if(!localURL(value))return null;
   try{const name=decodeURIComponent(new URL(value).pathname).slice(1);return files.has(name)?name:null;}catch{return null;}
 }
 function externalURL(value){return EXTERNAL.has(value);}
 function requestAllowed(value){return localURL(value)||value.startsWith('blob:'+ORIGIN+'/')||value.startsWith('data:');}
-module.exports={ORIGIN,CSP,localURL,assetPath,externalURL,requestAllowed};
+module.exports={ORIGIN,CSP,localURL,gameURL,assetPath,externalURL,requestAllowed};

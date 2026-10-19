@@ -1,8 +1,9 @@
 # Widewake desktop
 
-This builds the same Widewake campaign as the website into an offline application.
+This builds the Widewake campaign and both ocean trials into an offline application.
 It has its own title and window, native import/export dialogs, full screen, Quit,
-and a separate saved fleet. It is a local release-development build, not a Steam
+and a separate saved fleet. The title menu’s New ocean entry opens Bracken Reach
+or the fleet battle without changing that saved voyage. It is a local release-development build, not a Steam
 release. `desktop/` belongs to Sluice and is independent of this directory.
 
 Use Node 22.12 or newer. From `widewake-desktop`:

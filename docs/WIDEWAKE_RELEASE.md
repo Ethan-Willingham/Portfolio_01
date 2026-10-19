@@ -35,7 +35,7 @@ while the new ocean is tested separately; do not silently invalidate its saves.
 
 | Area | Current evidence | Next work / release requirement |
 | --- | --- | --- |
-| Launch and identity | Owner-approved title, independent navy/cyan identity, scene-led harbor and focused services | Preserve the approved title; maintain cohesive identity through the remaining views |
+| Launch and identity | Owner-approved title, current version and direct New ocean access, independent navy/cyan identity, scene-led harbor and focused services | Preserve the approved title; maintain cohesive identity through the remaining views |
 | First voyage | Real-time starter sailing reviewed; guidance checks workboats; earned trade and fishing complete | Observe an unassisted human session; keep controls, profit and purchases understandable without a long manual |
 | Helm and camera | Trials have weighted handling, interpolated motion and anchored zoom; three hull sizes complete the estuary routes with bank and pier clearance, reverse and tow | Add constrained-water convoy orders; review small-screen fleet readability, controller integration and calm travel |
 | Combat | Separate trial targets 16,384 raiders against 24 finite friendly hulls, with real shots, kills, replacement fronts and workboats | Review weapon feel, incoming-front variety, salvage load, geography and earned progression before campaign integration |
@@ -44,7 +44,7 @@ while the new ocean is tested separately; do not silently invalidate its saves.
 | Fishing and oil | Five work rhythms across 18 sites, optional double/triple watches, carried rare catches and safe-return payment | Longer play across fleet builds, risk/reward pacing and worthwhile repeat visits |
 | Progression | Six earned charters; staged harbor access with alternate rank routes and legacy access preserved | Human pacing, optional pursuits and free-play depth; eliminate grind or runaway snowballing |
 | World and discovery | Existing Earth campaign retained; Bracken Reach has three connected landings, a shallow shortcut, draft, current and salinity | Connect convoy work, trade and discovery in the region, then expand and deliberately migrate saves |
-| Art | Detailed directional ship sprites, animated work gear, water, wakes, foliage and three landing scenes in the trials | Refine weapon mounting, distant silhouettes, bank variety and atmosphere; image generation remains deferred |
+| Art | Filtered directional sprites with continuous heading blends, display-aware resolution, animated work gear, water, wakes, foliage and three landing scenes in the trials | Refine weapon mounting, distant silhouettes, bank variety and atmosphere; image generation remains deferred |
 | Sound | Original score, spatial cues, mixer, bounded voices and suspended/interrupted recovery | Listening on speakers/headphones, broader regional atmosphere, long-session comfort and battle priority review |
 | Interface and access | Locked service previews, compact future stock, selected-item trading and contextual sea actions; keyboard, touch and standard controller flows | Physical controllers, remapping, button-label coverage, readable text and non-color threat cues |
 | Mobile | Chromium and WebKit touch emulation | Full-screen portrait and landscape flows, safe areas, browser-height changes, sustained performance and physical-device validation |
@@ -1338,3 +1338,64 @@ loop, then test enemy routing and the endgame load at a bend and tile boundary.
 Continue the weapon mounting, distant readability, more varied banks and audio
 review before expanding the map. Physical phones, long sessions, human pacing
 and Steam release gates remain open. The production objective is unfinished.
+
+## Pass 19, smooth motion and reachable builds, v0.21
+
+The owner reported shimmering moving pixel art, an old version on the main site,
+and unclear local access. The earlier ocean build had deployed successfully, but
+its separate URLs were missing from the main title and the campaign still showed
+0.17. The title now provides New ocean, with Explore Bracken Reach and Defend the
+fleet. Every entry point shows 0.21.0. The approved title art is unchanged. The
+navigation and combat trials remain separate from the campaign and its save.
+Both trials, their dependencies and the terrain worker also enter the offline
+package through its explicit local navigation and resource allowlists.
+
+The renderer previously drew at half CSS resolution, enlarged with pixelated CSS,
+and nearest-sampled fine details. Frozen-simulation camera sweeps reproduced the
+reported flicker. Ships also snapped to the nearest baked heading. Rendering now
+uses a display-aware buffer capped near 2.1 million pixels, keeps fractional
+positions, filters complete mip chains in isolated direction layers, and blends
+neighbouring headings. Opaque depth is followed by blended silhouette coverage.
+The second pass reuses uploaded instances. Animated water, trees and machinery
+share interpolated visual time. Canvas fallback gets the same raster and sampling
+correction. The campaign renderer also interpolates ships and projectiles between
+simulation ticks and removes ship-position rounding.
+
+In the deterministic Chromium pixel sweep, a translating tree's brightness range
+fell from 16.83 percent to 0.37 percent; the escort fell from 4.08 to 0.49 percent.
+The normalized temporal jump measure fell from 1.93 to 0.47 for that tree and 1.89
+to 0.35 for the escort. Slow turning fell from 2.00 to 0.42. These are controlled
+rendered-pixel measurements, not perceptual quality scores. Zoom across a mip
+transition and a tiny distant raider are included in the regression. Chromium and
+WebKit pass those checks, including a bounded raster on a simulated 3x display.
+
+The unchanged 16,384-raider combat load completed a three-minute Chromium run
+with 112,005 kills, all 24 friendly boats afloat, 1,080 fish and 720 oil loaded.
+Whole-run frame intervals measured 9.5 ms at p95 and 10.3 ms at p99 on this M1 Pro.
+The separate 4x CPU slowdown measured 14.5 ms at p95. The full 8,192-projectile /
+2,048-effect fixture measured 4.3 ms p95 for CPU simulation plus drawing submission.
+The blended edge pass brings normal combat to 31 draws. Both color and depth mip
+chains together use 28.85 MiB for combat and 30.79 MiB for the region, below the
+existing 32 MiB sprite budget. Canvas retained the same population with a bounded
+256-sprite cache and measured 9.7 ms p95 frame intervals. These are machine-specific
+results; physical mobile validation is still open.
+
+Main-menu round trips exposed an unnecessary rewrite of loaded modern saves when
+leaving the title. Untouched saves now wait for play or an intentional change,
+as legacy saves already did. Both trial round trips preserve the saved voyage
+byte for byte. Fresh visits do not create a campaign save. Chromium and WebKit
+also pass the existing title, touch layouts, navigation, zoom-anchor, pause,
+context-recovery and handling checks. Local play instructions now name the main
+page and its menu route. The running local preview was synchronized only after
+checking the Widewake dependencies, preserving unrelated checkout changes.
+
+The complete retained-campaign browser run passed, including trading, protected
+fishing, progression and ending controls; its 1,200-enemy scene measured 9.8 ms p95.
+Chromium and WebKit both pass the multi-window ownership and recovery suite.
+The handoff notice now sits beside Continue so it remains visible on short phones.
+Controller navigation through the new menu passes, as do the offline Mac trial
+launches, terrain worker, native file operations and exact OS-close continuation.
+
+This pass fixes motion and access. Constrained-water convoys, connected trade and
+work in Bracken Reach, campaign migration, further world content and the other
+production gates remain open.

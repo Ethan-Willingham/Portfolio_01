@@ -212,3 +212,33 @@ still lacks encounters and discovery. Banks and foliage need more variety, and
 distant small ships need further readability work. Next prove a convoy through
 the same geography, including work and a return to port; repeat the enemy load
 there before expanding the world. Physical mobile devices remain a release gate.
+
+## v0.21 motion correction
+
+The v0.20 nearest-filtered sprites and half-resolution pixelated presentation
+caused visible shimmer even with simulation time frozen. Friendly headings also
+jumped between baked views. The revised renderer keeps logical camera coordinates
+separate from a raster sized for the display, capped near 2.1 million pixels and
+1.5 device pixels per CSS pixel. Aiming, anchored zoom and label sizes retain their
+world scale.
+
+Each original hull heading now has its own texture-array layer and complete mip
+chain. Minification cannot bleed into another heading. Adjacent headings blend
+continuously. Color and encoded depth both carry coverage through the mip chain.
+Opaque surfaces establish depth first; a second batched pass blends fractional
+silhouettes without writing depth. Instance buffers upload once. This avoids both
+hard alpha-cutoff flicker and transparent fringes hiding opaque boats behind them.
+Geometry uses the browser's multisample buffer where available. No full-scene
+blur, temporal history, or reduced enemy population is involved.
+
+Water, foliage, hull bob and work gear use interpolated visual time. Canvas fallback
+uses display-aware resolution and smooth sampling. The retained campaign also
+interpolates vessels and rounds between simulation ticks and removes coordinate
+snapping from moving ships. Title and harbor art are unchanged.
+
+`test-ocean-motion-browser.cjs` measures real frame pixels across slow subpixel
+pans, heading changes and a mip-level zoom. Its temporal second difference detects
+the former hold-and-jump motion; integrated brightness catches detail blinking
+in and out. A tiny distant raider must remain visible at every tested position.
+The existing scene, touch, context-recovery, fallback and sustained-combat checks
+remain required. Physical mobile hardware still needs direct validation.

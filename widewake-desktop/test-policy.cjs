@@ -9,3 +9,7 @@ assert.ok(p.externalURL('https://ethanwillingham.com/archive.html'));
 for(const url of ['https://ethanwillingham.com/archive.html?redirect=evil','https://www.naturalearthdata.com.evil/','javascript:alert(1)','file:///tmp/save'])assert.equal(p.externalURL(url),false);
 assert.ok(!p.CSP.includes("script-src 'self' 'unsafe-inline'"));
 console.log('PASS desktop protocol allowlist, traversal, remote-request and external-link boundaries');
+
+for(const page of ['widewake.html','widewake-battle.html','widewake-estuary.html'])for(const query of ['','?test'])assert.ok(p.gameURL('widewake://game/'+page+query));
+for(const url of ['widewake://game/js/widewake.js','widewake://game/widewake.html?redirect=evil','widewake://other/widewake-estuary.html','https://game/widewake.html'])assert.equal(p.gameURL(url),false);
+console.log('PASS native navigation stays within the three packaged game pages');

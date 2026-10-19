@@ -94,6 +94,32 @@ The 24 individual art briefs are in
 because more art would be useful. The current code-drawn harbor scenes provide
 distinct interim backgrounds while that art pass is deferred.
 
+## Playing the current build
+
+Open `widewake.html`, then choose **New ocean**. **Explore Bracken Reach** opens
+navigation; **Defend the fleet** opens the large combat trial. Both have a visible
+version in their pause menu and return to the title. Continue and New voyage
+still open the existing campaign. Trial visits do not change its saved fleet.
+The title art and composition remain the approved design.
+
+For local play, serve the repository over HTTP, rather than opening the HTML file
+directly. From its directory, run:
+
+```sh
+python3 -m http.server 8768 --bind 127.0.0.1
+```
+
+Keep that terminal running, then open `http://127.0.0.1:8768/widewake.html`.
+Use the same address each time to retain local campaign saves. The local preview
+is separate from the public site's browser storage. If port 8768 already serves
+this checkout, use that existing server. All three pages also ship in the offline
+desktop package.
+
+The v0.21 correction addresses the owner's report of flickering motion. Keep
+fractional positions, display-aware rasterization, filtered sprite minification,
+and continuous heading transitions. Chunky art is not a reason to quantize camera
+or vessel movement. Review pixels in motion as well as static screenshots.
+
 ## Files and ownership
 
 The next ocean foundation is isolated at `widewake-battle.html` with

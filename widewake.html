@@ -13,21 +13,21 @@
   <meta property="og:image" content="https://ethanwillingham.com/assets/widewake/cover.png">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="preload" href="assets/fonts/commit_mono_regular.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="widewake.css?v=0.17.0">
+  <link rel="stylesheet" href="widewake.css?v=0.21.0">
   <script defer src="js/demo-activity.js"></script>
-  <script defer src="js/widewake-data.js?v=0.17.0"></script>
-  <script defer src="js/widewake-world.js?v=0.17.0"></script>
-  <script defer src="js/widewake-voyage.js?v=0.17.0"></script>
-  <script defer src="js/widewake-work.js?v=0.17.0"></script>
-  <script defer src="js/widewake-sea-save.js?v=0.17.0"></script>
-  <script defer src="js/widewake-core.js?v=0.17.0"></script>
-  <script defer src="js/widewake-render.js?v=0.17.0"></script>
-  <script defer src="js/widewake-convoy.js?v=0.17.0"></script>
-  <script defer src="js/widewake-front.js?v=0.17.0"></script>
-  <script defer src="js/widewake-controller.js?v=0.17.0"></script>
-  <script defer src="js/widewake-audio.js?v=0.17.0"></script>
-  <script defer src="js/widewake-saves.js?v=0.17.0"></script>
-  <script defer src="js/widewake.js?v=0.17.0"></script>
+  <script defer src="js/widewake-data.js?v=0.21.0"></script>
+  <script defer src="js/widewake-world.js?v=0.21.0"></script>
+  <script defer src="js/widewake-voyage.js?v=0.21.0"></script>
+  <script defer src="js/widewake-work.js?v=0.21.0"></script>
+  <script defer src="js/widewake-sea-save.js?v=0.21.0"></script>
+  <script defer src="js/widewake-core.js?v=0.21.0"></script>
+  <script defer src="js/widewake-render.js?v=0.21.0"></script>
+  <script defer src="js/widewake-convoy.js?v=0.21.0"></script>
+  <script defer src="js/widewake-front.js?v=0.21.0"></script>
+  <script defer src="js/widewake-controller.js?v=0.21.0"></script>
+  <script defer src="js/widewake-audio.js?v=0.21.0"></script>
+  <script defer src="js/widewake-saves.js?v=0.21.0"></script>
+  <script defer src="js/widewake.js?v=0.21.0"></script>
 </head>
 <body class="ww-body at-title">
   <main id="game" class="ww-game" aria-label="Widewake game">
@@ -46,14 +46,15 @@
         <nav class="ww-main-menu" aria-label="Main menu">
           <button id="continue-voyage" class="ww-primary" hidden><span>Continue</span><span class="ww-menu-arrow" aria-hidden="true">&gt;</span></button>
           <div id="title-save" class="ww-title-save" hidden></div>
+          <p id="title-storage" class="ww-title-storage" role="status"></p>
           <button id="start-voyage">New voyage</button>
+          <button id="title-ocean">New ocean</button>
           <button id="title-settings">Settings</button>
           <button id="title-handbook">How to play</button>
         </nav>
         <button class="ww-audio-notice" hidden>Enable sound</button>
-        <p id="title-storage" class="ww-title-storage" role="status"></p>
       </div>
-      <footer class="ww-title-footer"><span id="title-version">0.17.0 / Web edition</span><div><button id="title-fullscreen">Full screen</button><button id="title-credits">Credits</button><button id="title-quit" hidden>Quit</button></div></footer>
+      <footer class="ww-title-footer"><span id="title-version">0.21.0 / Web edition</span><div><button id="title-fullscreen">Full screen</button><button id="title-credits">Credits</button><button id="title-quit" hidden>Quit</button></div></footer>
     </section>
     <section id="harbor" class="ww-harbor" hidden aria-label="Harbor">
       <div class="ww-harbor-left">
@@ -115,6 +116,7 @@
       <section><h3>Fight</h3><p>Guns aim and fire automatically. Hold on open water to aim.</p><p>Broadside fires every gun. Repair costs 100c. Assign escorts in Fleet.</p><p>Sunken boats lose their cargo. A sunk flagship is rescued for a fee and half your remaining cargo.</p></section>
       <section><h3>Work</h3><p>Bring a trawler to fishing grounds or an oil tender to oil fields. Protect it while it works.</p><p>Finish a watch to unlock a longer one. Recall keeps loaded cargo. Rare catches pay when you dock.</p></section>
     </div><p class="ww-handbook-keys ww-desktop-help"><kbd>M</kbd> Chart &nbsp; <kbd>C</kbd> Convoy &nbsp; <kbd>E</kbd> Dock / work / investigate &nbsp; <kbd>Space</kbd> Broadside &nbsp; <kbd>R</kbd> Repair &nbsp; <kbd>F</kbd> Formation &nbsp; <kbd>Esc</kbd> Pause</p></dialog>
+    <dialog id="ocean-dialog" class="ww-dialog ww-settings" aria-labelledby="ocean-title"><div class="ww-dialog-head"><h2 id="ocean-title">New ocean</h2><button data-close="ocean-dialog">Return</button></div><a class="ww-trial-choice" href="widewake-estuary.html">Explore Bracken Reach<span>Rivers, shallows and open water</span></a><a class="ww-trial-choice" href="widewake-battle.html">Defend the fleet<span>Endgame sea battle</span></a><p class="ww-note">Development trials. Your voyage save stays separate.</p></dialog>
     <dialog id="credits-dialog" class="ww-dialog ww-settings" aria-labelledby="credits-title"><div class="ww-dialog-head"><h2 id="credits-title">Widewake</h2><button data-close="credits-dialog">Return</button></div><p class="ww-letter">A little boat. The whole wide world.<small>A game by Ethan Willingham</small></p><p class="ww-note">An independent game in development. Built for the web, with a Steam release in mind.</p><p class="ww-note">Earth coastline data: <a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener">Natural Earth</a>, public domain. Current harbor and vessel art is drawn in canvas. Sound is synthesized locally.</p><a class="ww-site-exit" href="https://ethanwillingham.com/archive.html">Return to Ethan's In Progress page</a></dialog>
     <dialog id="departure-dialog" class="ww-dialog ww-departure" aria-labelledby="departure-title"><p class="ww-eyebrow">Havana</p><h2 id="departure-title">Your first run</h2><div class="ww-first-cargo"><canvas data-icon="sugar" width="24" height="24" aria-hidden="true"></canvas><strong>12 sugar</strong><span>Nassau pays more.</span></div><div class="ww-save-actions"><button id="first-course" class="ww-primary">Sail to Nassau</button><button data-close="departure-dialog">Stay in harbor</button></div></dialog>
     <dialog id="reset-dialog" class="ww-dialog ww-settings" aria-labelledby="reset-title"><div class="ww-dialog-head"><h2 id="reset-title">Start a new voyage?</h2></div><p class="ww-note">This replaces the fleet saved on this device. Export it first if you want to sail it again.</p><div class="ww-save-actions"><button data-close="reset-dialog">Keep this fleet</button><button id="reset-export">Export current fleet</button><button id="confirm-reset" class="ww-danger">Start a new voyage</button></div><p id="reset-message" class="ww-note" role="status"></p></dialog>

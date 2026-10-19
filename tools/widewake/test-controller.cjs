@@ -27,6 +27,7 @@ let browser;const errors=[],check=message=>console.log('PASS '+message);
  }
  async function choose(selector,options){await reach(selector,options);await tap(0);}
  // No mouse or key event has unlocked the page in this context.
+ await tap(13);assert.ok(await selected('#title-ocean'));await tap(0);assert.ok(await p.locator('#ocean-dialog').isVisible());await reach('#ocean-dialog a[href="widewake-estuary.html"]');await tap(1);assert.ok(await selected('#title-ocean'));
  await tap(13);assert.ok(await selected('#title-settings'));await tap(0);assert.ok(await p.locator('#settings-dialog').isVisible());
  await reach('#volume');await tap(0);const volume=await p.inputValue('#volume');await tap(15);assert.ok(Number(await p.inputValue('#volume'))>Number(volume));await tap(1);assert.equal(await p.inputValue('#volume'),volume);assert.ok(await p.locator('#settings-dialog').isVisible());
  await reach('.ww-controller-settings summary');await tap(0);await reach('#controller-deadzone');await tap(0);await tap(12);assert.equal(await p.inputValue('#controller-deadzone'),'0.19');await tap(0);

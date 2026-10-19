@@ -101,42 +101,61 @@
     void main(){vec3 p=vec3(aPosition.x*uRotation.x-aPosition.y*uRotation.y,aPosition.x*uRotation.y+aPosition.y*uRotation.x,aPosition.z);vNormal=vec3(aNormal.x*uRotation.x-aNormal.y*uRotation.y,aNormal.x*uRotation.y+aNormal.y*uRotation.x,aNormal.z);vColor=aColor;vLocal=aPosition;vDepth=(p.x+p.y)*.6123724+p.z*.5;
       vec2 screen=vec2((p.x-p.y)*.70710678,(p.x+p.y)*.35355339-p.z*.8660254);vec2 pixel=vec2(screen.x-uRect.x,uRect.y-screen.y)*uRect.z+2.;gl_Position=vec4(pixel/uSize*2.-1.,-vDepth/uRange,1.);}`;
   const bakeFragment=`#version 300 es
-    precision highp float;in vec3 vColor;in vec3 vNormal;in vec3 vLocal;in float vDepth;uniform float uRange;layout(location=0)out vec4 color;layout(location=1)out vec2 height;
+    precision highp float;in vec3 vColor;in vec3 vNormal;in vec3 vLocal;in float vDepth;uniform float uRange;layout(location=0)out vec4 color;layout(location=1)out vec4 height;
     float hash(vec3 p){p=fract(p*.1031);p+=dot(p,p.yzx+33.33);return fract((p.x+p.y)*p.z);}
     void main(){vec3 normal=normalize(vNormal),light=normalize(vec3(-.45,-.65,1.));float diffuse=.48+.52*max(0.,dot(normal,light)),grain=(hash(floor(vLocal*7.))-.5)*.07;float edge=pow(max(0.,dot(normal,normalize(vec3(-.2,-.5,1.)))),16.)*.055;
-      color=vec4(vColor*(diffuse+grain)+edge,1.);float z=clamp(vDepth/uRange*.5+.5,0.,.99999);height=vec2(floor(z*255.)/255.,fract(z*255.));}`;
+      color=vec4(vColor*(diffuse+grain)+edge,1.);float z=clamp(vDepth/uRange*.5+.5,0.,.99999);height=vec4(floor(z*255.)/255.,fract(z*255.),0.,1.);}`;
   const spriteVertex=`#version 300 es
     precision highp float;layout(location=0)in vec2 aPosition;layout(location=2)in vec4 aWorld;layout(location=3)in vec4 aPose;
-    uniform vec2 uSize;uniform float uZoom;uniform vec4 uCell;uniform vec4 uRect;uniform vec2 uAtlas;uniform float uOffset;uniform float uFrames;uniform float uTime;uniform float uFoliage;out vec2 uv;out float depth;out float flash;out float spriteScale;
-    void main(){float frame=mod(floor(atan(aPose.x,aWorld.w)/6.28318530718*uFrames+.5)+uFrames,uFrames);vec2 cell=vec2(uOffset+mod(frame,uCell.z)*uCell.x,uCell.w+floor(frame/uCell.z)*uCell.y);vec2 q=aPosition*.5+.5;uv=(cell+q*vec2(uCell.xy))/uAtlas;
-      vec2 local=vec2(uRect.x+(q.x*uCell.x-2.)/uRect.z,uRect.y-(q.y*uCell.y-2.)/uRect.z)*aPose.y;vec3 p=aWorld.xyz;local.x+=sin(uTime*1.5+aPose.w)*max(0.,-local.y)*uFoliage*.025;vec2 screen=(vec2((p.x-p.y)*.70710678,(p.x+p.y)*.35355339-p.z*.8660254)+local)*uZoom;gl_Position=vec4(screen.x/uSize.x*2.,-screen.y/uSize.y*2.,0.,1.);depth=(p.x+p.y)*.6123724+p.z*.5;flash=aPose.z;spriteScale=aPose.y;}`;
+    uniform vec2 uSize;uniform float uZoom;uniform vec2 uCell;uniform vec4 uRect;uniform float uFrames;uniform float uTime;uniform float uFoliage;
+    out vec2 uv;flat out vec3 frames;out float depth;out float flash;out float spriteScale;
+    void main(){float heading=mod(atan(aPose.x,aWorld.w)/6.28318530718*uFrames+uFrames,uFrames);frames=vec3(floor(heading),mod(floor(heading)+1.,uFrames),fract(heading));uv=aPosition*.5+.5;
+      vec2 local=vec2(uRect.x+(uv.x*uCell.x-2.)/uRect.z,uRect.y-(uv.y*uCell.y-2.)/uRect.z)*aPose.y;vec3 p=aWorld.xyz;local.x+=sin(uTime*1.5+aPose.w)*max(0.,-local.y)*uFoliage*.025;vec2 screen=(vec2((p.x-p.y)*.70710678,(p.x+p.y)*.35355339-p.z*.8660254)+local)*uZoom;
+      gl_Position=vec4(screen.x/uSize.x*2.,-screen.y/uSize.y*2.,0.,1.);depth=(p.x+p.y)*.6123724+p.z*.5;flash=aPose.z;spriteScale=aPose.y;}`;
   const spriteFragment=`#version 300 es
-    precision highp float;in vec2 uv;in float depth;in float flash;in float spriteScale;uniform sampler2D uColor;uniform sampler2D uDepth;uniform float uRange;out vec4 color;
-    void main(){vec4 c=texture(uColor,uv);if(c.a<.5)discard;vec2 enc=texture(uDepth,uv).rg;float local=((enc.r+enc.g/255.)*2.-1.)*uRange;gl_FragDepth=clamp(.5-(depth+local*spriteScale)/40000.,.001,.999);color=vec4(mix(c.rgb,vec3(1.,.94,.77),flash),1.);}`;
+    precision highp float;precision highp sampler2DArray;
+    in vec2 uv;flat in vec3 frames;in float depth;in float flash;in float spriteScale;uniform sampler2DArray uColor;uniform sampler2DArray uDepth;uniform float uRange;uniform bool uEdges;out vec4 color;
+    void main(){vec3 a=vec3(uv,frames.x),b=vec3(uv,frames.y);vec4 ca=texture(uColor,a),cb=frames.x==frames.y?ca:texture(uColor,b),c=mix(ca,cb,frames.z);if(c.a<.008||uEdges==(c.a>.998))discard;
+      vec4 d=mix(texture(uDepth,a),texture(uDepth,b),frames.z);float local=(((d.r+d.g/255.)/max(d.a,.008))*2.-1.)*uRange;
+      gl_FragDepth=clamp(.5-(depth+local*spriteScale)/40000.,.001,.999);color=vec4(mix(c.rgb/max(c.a,.008),vec3(1.,.94,.77),flash),c.a);}`;
   class Atlas{
-    constructor(view){this.view=view;this.gl=view.gl;this.entries={};this.width=2048;this.height=0;const gl=this.gl;
+    constructor(view){this.view=view;this.gl=view.gl;this.entries={};this.pending=[];this.bytes=0;const gl=this.gl;
+      // Each heading occupies its own array layer. Complete mip chains can never
+      // sample a neighbouring heading, including when a distant hull is one pixel.
       for(const [type,spec] of Object.entries({...root.WidewakeBattle.roles,...view.battle.visualRoles,...view.artSpecs,raider0:{length:13,height:4},raider1:{length:16,height:4},raider2:{length:23,height:4}})){
         const mesh=view.meshes[type];if(!mesh)continue;let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity,range=0;const frames=spec.frames||(type.startsWith('raider')?32:64),ppu=spec.ppu||(type==='launch'?8:spec.length>70?1.25:spec.length>50?1.65:type.startsWith('raider')?1.5:2);
         for(let f=0;f<frames;f++){const c=Math.cos(f/frames*TAU),s=Math.sin(f/frames*TAU);for(let i=0;i<mesh.length;i+=6){const x=mesh[i]*c-mesh[i+1]*s,y=mesh[i]*s+mesh[i+1]*c,z=mesh[i+2],px=(x-y)*Math.SQRT1_2,py=(x+y)*Math.SQRT1_2*.5-z*Math.sqrt(.75);minX=Math.min(minX,px);maxX=Math.max(maxX,px);minY=Math.min(minY,py);maxY=Math.max(maxY,py);range=Math.max(range,Math.abs((x+y)*.6123724+z*.5)+1);}}
-        const w=Math.ceil(((maxX-minX)*ppu+4)/4)*4,h=Math.ceil(((maxY-minY)*ppu+4)/4)*4,cols=Math.floor(this.width/w);this.entries[type]={mesh,minX,maxY,ppu,w,h,cols,y:this.height,frames,range};this.height+=Math.ceil(frames/cols)*h;
+        const w=Math.ceil(((maxX-minX)*ppu+4)/4)*4,h=Math.ceil(((maxY-minY)*ppu+4)/4)*4,levels=1+Math.floor(Math.log2(Math.max(w,h)));
+        if(Math.max(w,h)>gl.getParameter(gl.MAX_TEXTURE_SIZE)||frames>gl.getParameter(gl.MAX_ARRAY_TEXTURE_LAYERS))throw Error('Sprite frames exceed device limit');
+        this.entries[type]={mesh,minX,maxY,ppu,w,h,frames,range,levels};
+        for(let level=0;level<levels;level++)this.bytes+=Math.max(1,w>>level)*Math.max(1,h>>level)*frames*8;
       }
-      // WebGL2 does not require power-of-two atlases. Pack single-frame scenery
-      // onto shared shelves, so a few small trees cannot double texture memory.
-      const single=Object.values(this.entries).filter(e=>e.frames===1);this.height=0;for(const e of Object.values(this.entries)){e.x=0;if(e.frames===1)continue;e.y=this.height;this.height+=Math.ceil(e.frames/e.cols)*e.h;}
-      let shelfX=0,shelfY=this.height,shelfH=0;for(const e of single){if(shelfX+e.w>this.width){shelfY+=shelfH;shelfX=shelfH=0;}e.x=shelfX;e.y=shelfY;shelfX+=e.w;shelfH=Math.max(shelfH,e.h);}this.height=shelfY+shelfH;
-      if(this.height>gl.getParameter(gl.MAX_TEXTURE_SIZE))throw Error('Sprite atlas exceeds device limit');this.bytes=this.width*this.height*6;this.bake();this.program=root.WidewakeOcean.program(gl,spriteVertex,spriteFragment);
+      this.bake();this.program=root.WidewakeOcean.program(gl,spriteVertex,spriteFragment);
       const quad=new Float32Array([-1,-1,1,-1,1,1,-1,-1,1,1,-1,1]);this.batches={};for(const type of Object.keys(this.entries))this.batches[type]=new root.WidewakeOcean.Batch(gl,quad,type.startsWith('raider')?32768:view.artSpecs?.[type]?1600:64,true);
     }
-    bake(){const gl=this.gl,program=root.WidewakeOcean.program(gl,bakeVertex,bakeFragment),framebuffer=gl.createFramebuffer(),depth=gl.createRenderbuffer();gl.bindFramebuffer(gl.FRAMEBUFFER,framebuffer);
-      const texture=(format,type,attachment)=>{const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);gl.texStorage2D(gl.TEXTURE_2D,1,format,this.width,this.height);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);gl.framebufferTexture2D(gl.FRAMEBUFFER,attachment,gl.TEXTURE_2D,t,0);return t;};
-      this.color=texture(gl.RGBA8,gl.RGBA,gl.COLOR_ATTACHMENT0);this.depth=texture(gl.RG8,gl.RG,gl.COLOR_ATTACHMENT1);gl.bindRenderbuffer(gl.RENDERBUFFER,depth);gl.renderbufferStorage(gl.RENDERBUFFER,gl.DEPTH_COMPONENT16,this.width,this.height);gl.framebufferRenderbuffer(gl.FRAMEBUFFER,gl.DEPTH_ATTACHMENT,gl.RENDERBUFFER,depth);gl.drawBuffers([gl.COLOR_ATTACHMENT0,gl.COLOR_ATTACHMENT1]);if(gl.checkFramebufferStatus(gl.FRAMEBUFFER)!==gl.FRAMEBUFFER_COMPLETE)throw Error('Sprite atlas framebuffer unavailable');
-      gl.disable(gl.BLEND);gl.disable(gl.CULL_FACE);gl.enable(gl.DEPTH_TEST);gl.depthMask(true);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(program);
-      for(const entry of Object.values(this.entries)){const data=normals(entry.mesh),vao=gl.createVertexArray(),buffer=gl.createBuffer();gl.bindVertexArray(vao);gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.bufferData(gl.ARRAY_BUFFER,data,gl.STATIC_DRAW);for(const [index,offset]of [[0,0],[1,12],[4,24]]){gl.enableVertexAttribArray(index);gl.vertexAttribPointer(index,3,gl.FLOAT,false,36,offset);}gl.uniform2f(gl.getUniformLocation(program,'uSize'),entry.w,entry.h);gl.uniform4f(gl.getUniformLocation(program,'uRect'),entry.minX,entry.maxY,entry.ppu,0);gl.uniform1f(gl.getUniformLocation(program,'uRange'),entry.range);
-        for(let f=0;f<entry.frames;f++){gl.viewport(entry.x+f%entry.cols*entry.w,entry.y+Math.floor(f/entry.cols)*entry.h,entry.w,entry.h);gl.uniform2f(gl.getUniformLocation(program,'uRotation'),Math.cos(f/entry.frames*TAU),Math.sin(f/entry.frames*TAU));gl.drawArrays(gl.TRIANGLES,0,data.length/9);}gl.deleteBuffer(buffer);gl.deleteVertexArray(vao);}
+    bake(){const gl=this.gl,program=root.WidewakeOcean.program(gl,bakeVertex,bakeFragment),framebuffer=gl.createFramebuffer(),depth=gl.createRenderbuffer();gl.bindFramebuffer(gl.FRAMEBUFFER,framebuffer);gl.bindRenderbuffer(gl.RENDERBUFFER,depth);gl.framebufferRenderbuffer(gl.FRAMEBUFFER,gl.DEPTH_ATTACHMENT,gl.RENDERBUFFER,depth);gl.drawBuffers([gl.COLOR_ATTACHMENT0,gl.COLOR_ATTACHMENT1]);
+      gl.disable(gl.BLEND);gl.disable(gl.SAMPLE_ALPHA_TO_COVERAGE);gl.disable(gl.CULL_FACE);gl.enable(gl.DEPTH_TEST);gl.depthMask(true);gl.clearColor(0,0,0,0);gl.useProgram(program);
+      for(const entry of Object.values(this.entries)){
+        const texture=(format,levels,filter)=>{const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D_ARRAY,t);gl.texStorage3D(gl.TEXTURE_2D_ARRAY,levels,format,entry.w,entry.h,entry.frames);gl.texParameteri(gl.TEXTURE_2D_ARRAY,gl.TEXTURE_MIN_FILTER,filter);gl.texParameteri(gl.TEXTURE_2D_ARRAY,gl.TEXTURE_MAG_FILTER,levels>1?gl.LINEAR:gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D_ARRAY,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D_ARRAY,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);return t;};
+        entry.color=texture(gl.RGBA8,entry.levels,gl.LINEAR_MIPMAP_LINEAR);entry.depth=texture(gl.RGBA8,entry.levels,gl.LINEAR_MIPMAP_LINEAR);gl.renderbufferStorage(gl.RENDERBUFFER,gl.DEPTH_COMPONENT16,entry.w,entry.h);
+        const data=normals(entry.mesh),vao=gl.createVertexArray(),buffer=gl.createBuffer();gl.bindVertexArray(vao);gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.bufferData(gl.ARRAY_BUFFER,data,gl.STATIC_DRAW);for(const [index,offset]of [[0,0],[1,12],[4,24]]){gl.enableVertexAttribArray(index);gl.vertexAttribPointer(index,3,gl.FLOAT,false,36,offset);}gl.viewport(0,0,entry.w,entry.h);gl.uniform2f(gl.getUniformLocation(program,'uSize'),entry.w,entry.h);gl.uniform4f(gl.getUniformLocation(program,'uRect'),entry.minX,entry.maxY,entry.ppu,0);gl.uniform1f(gl.getUniformLocation(program,'uRange'),entry.range);
+        for(let f=0;f<entry.frames;f++){gl.framebufferTextureLayer(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,entry.color,0,f);gl.framebufferTextureLayer(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT1,entry.depth,0,f);if(f===0&&gl.checkFramebufferStatus(gl.FRAMEBUFFER)!==gl.FRAMEBUFFER_COMPLETE)throw Error('Sprite frame framebuffer unavailable');gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.uniform2f(gl.getUniformLocation(program,'uRotation'),Math.cos(f/entry.frames*TAU),Math.sin(f/entry.frames*TAU));gl.drawArrays(gl.TRIANGLES,0,data.length/9);}
+        for(const t of [entry.color,entry.depth]){gl.bindTexture(gl.TEXTURE_2D_ARRAY,t);gl.generateMipmap(gl.TEXTURE_2D_ARRAY);}gl.deleteBuffer(buffer);gl.deleteVertexArray(vao);
+      }
       gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.deleteFramebuffer(framebuffer);gl.deleteRenderbuffer(depth);gl.deleteProgram(program);
     }
-    draw(type,source){if(!source.count)return 0;const gl=this.gl,entry=this.entries[type],batch=this.batches[type];batch.data.set(source.data.subarray(0,source.count*8));batch.count=source.count;this.view.uniforms(this.program);gl.uniform4f(gl.getUniformLocation(this.program,'uCell'),entry.w,entry.h,entry.cols,entry.y);gl.uniform4f(gl.getUniformLocation(this.program,'uRect'),entry.minX,entry.maxY,entry.ppu,0);gl.uniform2f(gl.getUniformLocation(this.program,'uAtlas'),this.width,this.height);gl.uniform1f(gl.getUniformLocation(this.program,'uRange'),entry.range);gl.uniform1f(gl.getUniformLocation(this.program,'uOffset'),entry.x);gl.uniform1f(gl.getUniformLocation(this.program,'uFrames'),entry.frames);gl.uniform1f(gl.getUniformLocation(this.program,'uTime'),this.view.reduced?0:this.view.battle.time);gl.uniform1f(gl.getUniformLocation(this.program,'uFoliage'),this.view.reduced?0:type.startsWith('tree')||type==='reed'?1:0);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,this.color);gl.uniform1i(gl.getUniformLocation(this.program,'uColor'),0);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,this.depth);gl.uniform1i(gl.getUniformLocation(this.program,'uDepth'),1);return batch.draw();}
-    dispose(){const gl=this.gl;gl.deleteTexture(this.color);gl.deleteTexture(this.depth);gl.deleteProgram(this.program);for(const batch of Object.values(this.batches))batch.dispose();}
+    bind(type,edges){const gl=this.gl,entry=this.entries[type];this.view.uniforms(this.program);gl.uniform2f(gl.getUniformLocation(this.program,'uCell'),entry.w,entry.h);gl.uniform4f(gl.getUniformLocation(this.program,'uRect'),entry.minX,entry.maxY,entry.ppu,0);gl.uniform1f(gl.getUniformLocation(this.program,'uRange'),entry.range);gl.uniform1f(gl.getUniformLocation(this.program,'uFrames'),entry.frames);gl.uniform1f(gl.getUniformLocation(this.program,'uTime'),this.view.reduced?0:this.view.visualTime);gl.uniform1f(gl.getUniformLocation(this.program,'uFoliage'),this.view.reduced?0:type.startsWith('tree')||type==='reed'?1:0);gl.uniform1i(gl.getUniformLocation(this.program,'uEdges'),edges?1:0);
+      gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D_ARRAY,entry.color);gl.uniform1i(gl.getUniformLocation(this.program,'uColor'),0);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D_ARRAY,entry.depth);gl.uniform1i(gl.getUniformLocation(this.program,'uDepth'),1);
+    }
+    begin(){this.pending.length=0;}
+    draw(type,source){if(!source.count)return 0;const batch=this.batches[type];if(batch!==source)batch.data.set(source.data.subarray(0,source.count*8));batch.count=source.count;this.bind(type,false);this.pending.push(type);return batch.draw();}
+    edges(){
+      // Finish opaque depth first. Filtered silhouettes then blend over the scene
+      // without writing depth or turning fractional coverage into flashing pixels.
+      const gl=this.gl;gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false);let draws=0;
+      for(const type of this.pending){this.bind(type,true);draws+=this.batches[type].draw(false);this.view.stats.triangles+=this.batches[type].count*2;}this.pending.length=0;gl.depthMask(true);gl.disable(gl.BLEND);return draws;
+    }
+    dispose(){const gl=this.gl;for(const entry of Object.values(this.entries)){gl.deleteTexture(entry.color);gl.deleteTexture(entry.depth);}gl.deleteProgram(this.program);for(const batch of Object.values(this.batches))batch.dispose();}
   }
   function noiseTexture(gl){const size=128,data=new Uint8Array(size*size*4);let seed=1729;for(let i=0;i<data.length;i++){seed=(Math.imul(seed,1664525)+1013904223)>>>0;data[i]=seed>>>24;}const texture=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,texture);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,size,size,0,gl.RGBA,gl.UNSIGNED_BYTE,data);gl.generateMipmap(gl.TEXTURE_2D);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.REPEAT);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.REPEAT);return texture;}
   const waterGLSL=`
@@ -167,7 +186,7 @@
   class WaterMotion{
     constructor(view){this.view=view;const gl=view.gl,O=root.WidewakeOcean;this.program=O.program(gl,wakeVertex,wakeFragment);this.batch=new O.Batch(gl,new Float32Array([-1,-1,1,-1,1,1,-1,-1,1,1,-1,1]),64,true);}
     draw(){const v=this.view,gl=v.gl;this.batch.count=0;for(const s of v.battle.ships){if(s.hp<=0||!v.visible(s.x,s.y,160))continue;const p=v.poses[s.id],c=Math.cos(p.angle),sn=Math.sin(p.angle),speed=Math.hypot(s.vx,s.vy);if(speed<.3)continue;this.batch.add(p.x-v.camera.x-c*s.length*.3,p.y-v.camera.y-sn*s.length*.3,0,c,sn,Math.min(s.length*3,speed*4+s.length*.6),s.width*.9,speed);}
-      v.uniforms(this.program);gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,v.noise);gl.uniform1i(gl.getUniformLocation(this.program,'uNoise'),2);gl.uniform1f(gl.getUniformLocation(this.program,'uTime'),v.reduced?0:v.battle.time);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false);const n=this.batch.draw();gl.depthMask(true);gl.disable(gl.BLEND);return n;}
+      v.uniforms(this.program);gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,v.noise);gl.uniform1i(gl.getUniformLocation(this.program,'uNoise'),2);gl.uniform1f(gl.getUniformLocation(this.program,'uTime'),v.reduced?0:v.visualTime);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false);const n=this.batch.draw();gl.depthMask(true);gl.disable(gl.BLEND);return n;}
     dispose(){this.batch.dispose();this.view.gl.deleteProgram(this.program);}
   }
   const shadowVertex=`#version 300 es
@@ -182,16 +201,16 @@
     dispose(){this.batch.dispose();this.view.gl.deleteProgram(this.program);}
   }
   class Mechanisms{
-    constructor(view){this.view=view;this.phases=new Float64Array(64);this.lastTime=view.battle.time;const O=root.WidewakeOcean,gl=view.gl;this.batches={};
+    constructor(view){this.view=view;this.phases=new Float64Array(64);this.lastTime=view.visualTime||0;const O=root.WidewakeOcean,gl=view.gl;this.batches={};
       const capstan=O.geometry();capstan.box(0,0,0,1.8,1.8,1.2,'#a6b8ad','#597779');capstan.box(0,0,1.2,3.2,.2,.2,'#d9c9a3','#867e68');capstan.box(0,0,1.2,.2,3.2,.2,'#d9c9a3','#867e68');this.batches.winch=new O.Batch(gl,new Float32Array(capstan.out),48);
       const pump=O.geometry();pump.box(0,0,0,.65,.65,13,'#bfc7b8','#728c8c');pump.box(0,0,11,2.5,2.5,2,'#a5b6a3','#5b7f78');this.batches.pump=new O.Batch(gl,new Float32Array(pump.out),48);
       const rotor=O.geometry();for(let i=0;i<4;i++){const a=i/4*TAU,b=(i+.3)/4*TAU;rotor.face([[0,0,0],[Math.cos(a)*1.2,Math.sin(a)*1.2,0],[Math.cos(b)*.8,Math.sin(b)*.8,0]],'#94b2a7');}this.batches.rotor=new O.Batch(gl,new Float32Array(rotor.out),48);
     }
-    draw(){const v=this.view,b=v.battle,dt=Math.max(0,Math.min(.1,b.time-this.lastTime));this.lastTime=b.time;for(const batch of Object.values(this.batches))batch.count=0;
+    draw(){const v=this.view,b=v.battle,dt=Math.max(0,Math.min(.1,v.visualTime-this.lastTime));this.lastTime=v.visualTime;for(const batch of Object.values(this.batches))batch.count=0;
       for(const s of b.ships){if(s.hp<=0||!v.visible(s.x,s.y,80))continue;const p=v.poses[s.id],c=Math.cos(p.angle),sn=Math.sin(p.angle),h=Math.min(8,s.height*.28)+(p.z||0),active=s.working&&b.work&&b.center&&(s.x-b.center.x-s.slot.x)**2+(s.y-b.center.y-s.slot.y)**2<900&&s.cargo<s.hold&&!v.reduced,time=(this.phases[s.id]+=active?dt:0),offset=(along,across=0)=>({x:p.x-v.camera.x+c*along-sn*across,y:p.y-v.camera.y+sn*along+c*across});
         if(s.type==='trawler'){const q=offset(s.length*.07);this.batches.winch.add(q.x,q.y,h+1,Math.cos(time*2.2),Math.sin(time*2.2),1);}
         if(s.type==='oilrig'){const q=offset(s.length*.19);this.batches.pump.add(q.x,q.y,h+3+Math.sin(time*1.8)*2,c,sn);}
-        const speed=Math.hypot(s.vx,s.vy);if(speed>.8&&!v.reduced){const q=offset(-s.length*.44),a=b.time*speed*3;this.batches.rotor.add(q.x,q.y,.15,Math.cos(a),Math.sin(a),s.type==='launch'?.22:s.width*.09);}
+        const speed=Math.hypot(s.vx,s.vy);if(speed>.8&&!v.reduced){const q=offset(-s.length*.44),a=v.visualTime*speed*3;this.batches.rotor.add(q.x,q.y,.15,Math.cos(a),Math.sin(a),s.type==='launch'?.22:s.width*.09);}
       }
       v.uniforms(v.main);let draws=0;for(const batch of Object.values(this.batches))draws+=batch.draw();return draws;
     }
