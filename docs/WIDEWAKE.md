@@ -68,7 +68,8 @@ distinct interim backgrounds while that art pass is deferred.
   raider approaches, weighted rare species, and validated watch state.
 - `js/widewake-render.js`: small canvas sprites, sea rendering, chart, port scenes.
 - `js/widewake-convoy.js`: vessel selection, cargo transfers, hold reservations,
-  guard orders, and fleet buttons that retain keyboard focus.
+  guard orders, hull/cargo sorting, port repair, and paged fleet buttons that
+  retain keyboard focus.
 - `js/widewake-front.js`: independent pixel-art title scene and wordmark. This
   scene never steps the campaign. It uses the shared activity scheduler and
   honors the reduced-animation setting.
@@ -213,6 +214,30 @@ One notification remains visible at a time, with discoveries taking priority.
 The approach warning belongs to the watch rather than duplicating a toast.
 Active ground labels yield to named workers so the words do not overlap.
 
+## Fleet reading and camera, v0.8
+
+The default camera fits roughly 1,400 world units across the smaller canvas
+dimension at the supported phone and desktop sizes. Minimum sprite sizes keep
+small hulls visible. Manual zoom is stored as a factor of that fitted view, so
+resizing, rotating or continuing a save keeps the captain's preference. Aim
+conversion uses each canvas axis's actual scale, including odd viewport sizes.
+
+Selected boats, critical hulls, working boats, rescue targets and admirals can
+request labels. A bounded priority layout places them clear of friendly hulls,
+the HUD and one another, retaining the previous clear slot when possible.
+Selected and endangered boats take precedence when space is tight. Leader lines
+connect displaced names to their hulls. Critical or selected companions outside
+the view, including those covered by the HUD, get directional markers. Health
+bars and the fleet summary remain available when there is no room for a name.
+
+The small chart shows the nearby coast, friendly vessels, hostile contacts and
+the flagship's heading. Opening it still presents the complete Earth chart.
+The fleet strip has reachable previous/next controls when it overflows. Convoy
+opens on the weakest critical hull, or the flagship when none is critical; an
+explicit vessel selection takes precedence. Its desk sorts by fleet order, hull
+condition or cargo without changing formation order. At port it also quotes and
+performs the same whole-fleet repair offered by Fleet services.
+
 ## Controller play
 
 The web edition accepts devices reported with the browser's standard gamepad
@@ -299,7 +324,8 @@ and export remains available. Saves include individual boat positions and wakes,
 the course and autopilot, formation, guard orders, reserved holds, action
 cooldowns, hulls, cargo, progression, collections, charters and an active sea
 operation. Watch saves include forecast day, loaded cargo, drift, approach and
-next-wave timing. Recovery receipts and recent losses are validated too. Original
+next-wave timing. Recovery receipts, recent losses and the relative camera zoom
+are validated too. Original
 version-1 saves migrate with defaults for the new fields. An older active watch
 labels its cargo counter as loaded since resuming, because earlier saves did not
 record a reliable watch total.
@@ -326,9 +352,11 @@ NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-work-browser.cj
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-audio.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-chart.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-controller.cjs
+NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-fleet-view.cjs
 ```
 
-The front, chart, work, controller and audio harnesses also support `WIDEWAKE_TEST_ENGINE=webkit`.
+The front, chart, work, controller, fleet-view and audio harnesses also support
+`WIDEWAKE_TEST_ENGINE=webkit`.
 Audio checks render actual samples offline, verify independent mute, finite
 levels and stereo position, then exercise input, inactivity and node cleanup in
 the running game. They do not substitute for listening on speakers/headphones.
@@ -336,6 +364,20 @@ Chart checks cover review without departure, exact explicit purchases, stale
 route replies, worker failure and fallback, retained destinations, missing boats,
 guard status and touch layouts. Route previews and market comparisons are
 transient UI state, not new save fields.
+
+Fleet-view checks exercise a 24-vessel fleet, strip paging, urgent selection,
+sorting, exact port repair, clear labels and edge markers, fitted camera, aim
+coordinates and zoom persistence. `WIDEWAKE_SOAK_SECONDS=300` adds a five-minute
+live desktop battle with 1,200 enemies and 23 companions. Its raised-health
+fixtures retain the load; they do not represent ordinary balance or valid
+campaign saves. Memory samples follow explicit collection and are compared
+with the first sample, rather than counting transient allocations as leaks.
+
+The earned captain accepts `WIDEWAKE_CAPTAIN_SEED` and
+`WIDEWAKE_FLEET_STYLE=balanced|merchant|gunline`. Each style finishes through real
+purchases, travel, trade and combat. Periodic snapshots are validated every
+twelve simulated seconds. That checks save shape and limits; it does not reload
+every encounter or certify all continuation boundaries.
 
 Browser tests must use `/Users/ethan/.local/bin/agent-chrome-for-testing` or an
 explicit testing-browser override. Never launch the owner's personal Chrome with

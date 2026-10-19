@@ -218,3 +218,12 @@
 @media(max-height:560px) and (orientation:landscape),(max-width:650px) and (orientation:portrait){
   .at-sea .ww-toasts .ww-toast:not(.ww-discovery):not(:last-child),.at-sea .ww-toasts:has(.ww-discovery) .ww-toast:not(.ww-discovery),.at-sea .ww-toasts .ww-discovery:has(~.ww-discovery){display:none}
 }
+
+/* Fleet order stays stable as hulls take damage. Paging keeps every boat reachable. */
+.ww-fleet-row{display:flex;align-items:stretch;gap:6px;margin-bottom:12px;min-width:0}.ww-fleet-row .ww-fleet-strip{flex:1;min-width:0;margin-bottom:0;justify-content:flex-start;scrollbar-width:thin}.ww-fleet-row .ww-fleet-token{flex:0 0 78px}.ww-fleet-token:first-child{margin-left:auto}.ww-fleet-token:last-child{margin-right:auto}.ww-fleet-page{flex:0 0 44px;min-height:44px;background:var(--bg-raised);padding:4px;font:16px var(--font-mono)}
+#convoy-open>span,#convoy-alert{display:block}#convoy-alert{margin:3px 0 0;color:var(--ww-red);font:9px var(--font-mono)}.ww-convoy-urgent{border-color:var(--ww-red)!important}.ww-convoy-toolbar{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:16px}.ww-convoy-toolbar label{display:flex;align-items:center;gap:12px;flex-shrink:0;font:10px var(--font-mono)}.ww-convoy-toolbar select{font-size:11px;min-height:44px}.ww-convoy-toolbar .ww-note{font-size:10px;line-height:1.5;text-align:right}
+@media(max-width:600px){.ww-convoy-toolbar{flex-wrap:wrap;gap:8px}.ww-convoy-toolbar .ww-note{margin:0;text-align:left}.ww-convoy-toolbar label{width:100%;justify-content:space-between}.ww-fleet-row{margin-bottom:8px}}
+@media(max-height:560px) and (orientation:landscape){.ww-fleet-row{margin-bottom:5px}.ww-convoy-toolbar{margin-bottom:10px}}
+#convoy-list button{flex:0 0 auto}
+
+.ww-convoy-repair{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-top:12px}.ww-convoy-repair small{font:10px/1.5 var(--font-body);color:var(--text-faint)}

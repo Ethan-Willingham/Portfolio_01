@@ -19,7 +19,7 @@
     upgrades:{guns:0,hull:0,engine:0,hold:0},cargo:{sugar:12},fleet:[{uid:1,type:'escort',name:'Wren',hp:180,cargo:{}}],nextUid:2,
     items:[],equipped:[],fishbook:{},visits:['havana'],bosses:[],claimed:[],deliveries:[],completedContracts:[],impact:{},
     stats:{kills:0,profit:0,fish:0,oil:0,operations:0,sugar:0,miles:0,rare:0},
-    settings:{sound:true,volume:.22,music:.35,ambience:.5,effects:.8,autoFire:true,shake:true,controllerDeadzone:.18,controllerRumble:true,controllerLabels:'auto'},journal:[],lossHistory:[],tripLosses:[],recovery:null,workReport:null,location:null,production:null,formation:'screen',course:null,wake:[],voyage:V.fresh(),atSea:false,seed:hash(Date.now())};}
+    settings:{cameraZoom:1,sound:true,volume:.22,music:.35,ambience:.5,effects:.8,autoFire:true,shake:true,controllerDeadzone:.18,controllerRumble:true,controllerLabels:'auto'},journal:[],lossHistory:[],tripLosses:[],recovery:null,workReport:null,location:null,production:null,formation:'screen',course:null,wake:[],voyage:V.fresh(),atSea:false,seed:hash(Date.now())};}
   function validate(raw){
     if(!raw||raw.version!==SAVE_VERSION)throw new Error('This chart belongs to a different save version.');
     const s=fresh();
@@ -46,6 +46,7 @@
     s.stats={...fresh().stats};for(const k of Object.keys(s.stats)){if(!finite(raw.stats?.[k],0,1e12))throw new Error('Invalid logbook.');s.stats[k]=raw.stats[k];}
     s.fishbook={};for(const f of D.fish)if(finite(raw.fishbook?.[f.id],1,1e7))s.fishbook[f.id]=Math.floor(raw.fishbook[f.id]);
     s.settings={...fresh().settings};for(const k of ['sound','autoFire','shake','reduceMotion','controllerRumble'])if(typeof raw.settings?.[k]==='boolean')s.settings[k]=raw.settings[k];for(const k of ['volume','music','ambience','effects'])if(Number.isFinite(raw.settings?.[k]))s.settings[k]=clamp(raw.settings[k],0,k==='volume'?.5:1);
+    if(Number.isFinite(raw.settings?.cameraZoom))s.settings.cameraZoom=clamp(raw.settings.cameraZoom,.2,8);
     if(Number.isFinite(raw.settings?.controllerDeadzone))s.settings.controllerDeadzone=clamp(raw.settings.controllerDeadzone,.1,.35);
     if(['auto','xbox','playstation'].includes(raw.settings?.controllerLabels))s.settings.controllerLabels=raw.settings.controllerLabels;
     s.claimed=Array.isArray(raw.claimed)?raw.claimed.filter(x=>typeof x==='string').slice(0,60):[];

@@ -31,19 +31,19 @@ The exact owner constraints and source links are in `WIDEWAKE.md`.
 | --- | --- | --- |
 | Launch and identity | Dedicated title, saved-fleet summary, new/continue, settings, help and return flow | Maintain cohesive identity through every view; iterate beyond the initial title scene |
 | First voyage | Real-time starter sailing reviewed; guidance checks workboats; earned trade and fishing complete | Observe an unassisted human session; keep controls, profit and purchases understandable without a long manual |
-| Helm and camera | Acceleration, coastal collision, checked route preview and retained destination after manual detours | Review turning, arrival, coasts and camera at every hull size and input method |
-| Combat | Real projectiles, admiral tells, directional hits, reticles, recoil and distinct impacts | Review dense threat reading and formation decisions; verify difficulty with varied builds, not one scripted captain |
+| Helm and camera | Acceleration, coastal collision, checked routes, fitted phone view and persistent relative zoom | Review turning, arrival, coasts and camera at every hull size and input method |
+| Combat | Real projectiles, admiral tells, nearby contact map, clear priority labels and directional damage | Review threat reading in ordinary late-game fights and formation decisions through human play |
 | Trade | Exact bulk quotes, water-route comparisons, explicit order loading, reserved holds and no instant resale exploit | Review market pacing, discovery of trade routes, and late-game reasons to trade |
-| Convoy | Per-vessel cargo and guards, saved loss causes, exact recovery receipt and next actions | Large-fleet selection, convoy stragglers and build-dependent survival |
+| Convoy | Physical cargo and guards, exact losses, paged selection, hull/cargo sort, SOS priority and port repair | Convoy stragglers and build-dependent survival through extended play |
 | Fishing and oil | Five work rhythms across 18 sites, moving schools, checked approach warnings and weighted regional catches | Longer play across fleet builds, risk/reward pacing and worthwhile repeat visits |
-| Progression | Six solvable charters and three admirals; earned simulated campaign | More human play, build diversity, optional pursuits and free-play depth; eliminate grind or runaway snowballing |
+| Progression | Six charters completed by balanced, merchant and gunline earned captains | Human pacing, optional pursuits and free-play depth; eliminate grind or runaway snowballing |
 | Earth and discovery | Real coastlines, 24 ports, 18 work sites and 15 signals | Review recognizable regions, travel interest, geography seams, legible chart and destination discovery |
 | Art | Chunky native sprites and harbor scenes; 24 distinct briefs saved | Make compositions and silhouettes more individual; final image generation remains deferred by the owner |
 | Sound | Original score, spatial cues, mixer, bounded voices and suspended/interrupted recovery | Listening on speakers/headphones, broader regional atmosphere, long-session comfort and battle priority review |
 | Interface and access | Keyboard, mouse, touch and standard controller flows; focus, editable settings and release gates | Physical controllers, remapping, button-label coverage, readable text and non-color threat cues |
 | Mobile | Chromium and WebKit touch emulation | Full-screen portrait and landscape flows, safe areas, browser-height changes, sustained performance and physical-device validation |
-| Saves and recovery | Validated imports, backup, actual fleet positions and courses | Launch without overwriting a fleet, storage errors, version migration, safe updates and long-session recovery |
-| Performance | Short 1,200-enemy browser run on M1 Pro with sound active | Long-session and constrained-device budgets, memory stability, loading cost and input latency |
+| Saves and recovery | Validated imports, backup, positions, courses and 628 periodic campaign snapshots | Reload combat and admiral boundaries, migration, desktop persistence and long-session recovery |
+| Performance | Five-minute 1,200-enemy browser run on M1 Pro with sound active and stable retained memory | Constrained-device budgets, longer sessions, loading cost and input latency |
 | Shipping | Public GitHub Pages build with cache versions | Desktop package, platform/controller services, asset/license inventory, release QA, distributable smoke checks and store materials |
 
 ## Release gates
@@ -376,3 +376,60 @@ overlap a nearby hull, progression across different builds and long-session stab
 Physical-device play, human pacing and listening, controller remapping, final art,
 desktop packaging and platform integration remain open release requirements.
 The persistent production goal remains active.
+
+
+## Pass 6, large fleets and sustained play, v0.8
+
+The review found that the camera retained a desktop zoom on phones, showing
+too little water for a convoy. Large fleet strips could hide the first boat,
+names overlapped hulls, critical ships could disappear under the HUD, and long
+Convoy lists squeezed their own rows. The small chart showed too much of Earth
+to be useful for nearby combat. Repairing a damaged convoy required leaving its
+desk and finding the same action in another service.
+
+The fitted camera preserves a relative manual zoom across resizing and saves.
+Minimum hull sizes, clear priority labels, leader lines and unobstructed edge
+markers keep selected, working and endangered vessels identifiable. The local
+chart shows nearby hostile contacts and heading. Fleet paging, hull/cargo sorting,
+an SOS count and urgent opening selection make a large convoy manageable without
+reordering the formation. Port repairs show the exact existing fleet quote.
+
+Evidence:
+
+- Chromium and WebKit fleet checks cover 24 boats, reaching the first and last
+  strip entries, selected-row scrolling, hull/cargo order, two critical markers,
+  HUD and hull clearance, 44-pixel controls, unclipped list rows and camera/aim
+  behavior at 1440 by 900, 360 by 640 and 667 by 375. Zoom survives a title and
+  reload cycle. Port repair deducts the quoted cost exactly once.
+- The five-minute Chromium battle retains 1,200 enemies and 23 companions with
+  movement, projectiles, rendering and audio active. Thirty-second samples have
+  9.6 to 10.0 ms p95 frame intervals. Retained JavaScript heap grows by 309,204
+  bytes between the first and last collected samples, with a peak of 6.98 MB;
+  DOM count stays at 702. Audio, projectiles and effects remain bounded. This
+  Apple M1 Pro / Chrome for Testing 148 / 1440 by 900 run uses invulnerable load
+  fixtures, excludes mortar hazards, and is not a phone or balance benchmark.
+- Three ordinary-progression captains finish all six charters: gunline seed
+  12345 in 42.1 simulated minutes with 18 total vessels, merchant seed 91 in
+  41.9 with 11, and balanced seed 744 in 41.8 with 10. Together they validate
+  628 periodic campaign snapshots, the largest 88,168 bytes. Purchases, income,
+  damage and victories are earned. These checks validate save shape without
+  reloading every snapshot; they do not establish human enjoyment or difficulty.
+- Core, voyage, work, feedback and trade checks pass. The Chromium controller
+  route completes an earned trade, protected fishing, return, a purchased cargo
+  lighter, transfer and fleet repair. Audio/moving aim, phone feedback and the
+  WebKit launch, resize, pause and save checks pass. The connected browser route
+  still covers sea stories, live rescue, mortar tells, import and ending controls.
+
+Whole-game review: launch remains a dedicated game with a saved voyage. Early
+trade, production and recovery retain their prices and balance; fleet attention
+now leads directly to the relevant hull or repair. Larger fleets and battle cues
+received the main visual work, and portrait sailing exposes more usable water.
+Earth routes, charter content, harbor scenes and the score are unchanged.
+Multiple campaign builds and the sustained battle extend the evidence beyond a
+single short captain. Image generation remains deferred.
+
+Next: build and test the desktop distribution path, then investigate continuation
+at active combat and admiral boundaries. Transient enemies currently regenerate
+on reload; the consequence for an injured admiral needs a dedicated check.
+Physical devices, human pacing/listening, remapping, final assets and platform
+integration remain release requirements. The production goal stays active.
