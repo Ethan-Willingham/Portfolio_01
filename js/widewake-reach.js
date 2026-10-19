@@ -70,7 +70,7 @@
       try{$('legacy-export').hidden=!['widewake-save-v2','widewake-save-v1'].some(k=>localStorage.getItem(k));}catch{}
       if(game&&!save())$('saves-fold').open=true;
     }
-    if(id==='help-dialog'){$('help-voyage').hidden=!!game?.endgame;$('help-combat').hidden=!game?.endgame;}
+    if(id==='help-dialog'){$('help-actions').textContent=game?.endgame?'E orders the fleet to follow or hold. Guns and broadsides fire automatically.':'E docks or deploys workboats. M opens the chart. All weapons choose their own targets.';$('help-voyage').hidden=!!game?.endgame;$('help-combat').hidden=!game?.endgame;}
     if(!$(id).open)$(id).showModal();dirty=true;
   }
   function closeDialog(id){
@@ -229,6 +229,6 @@
       if(ms-uiTime>150){updateUI();uiTime=ms;}if(noticeUntil&&ms>noticeUntil){$('reach-notice').textContent='';noticeUntil=0;}
     }activity.requestFrame(frame);
   }
-  if(new URLSearchParams(location.search).has('test'))window.__widewakeReach={activity,get game(){return game;},get view(){return view;},get mode(){return mode;},get session(){return session;},get voyage(){return voyage;},get input(){return{keys:[...keys],stick:{...stick},reverse};},get controller(){return controller;},save,step:n=>{for(let i=0;i<n;i++)game.step(1/60);dirty=true;updateUI();},metrics:()=>({version:R.version,mode,endgame:!!game?.endgame,...(game?.endgame?game.report():{}),ships:game?.ships.length,raiders:game?.raiders.count,audioPeak:sound?.stats.peakVoices||0,stepP95:Array.from(stepTimes.subarray(0,Math.min(samples,600))).sort((a,b)=>a-b)[Math.floor(Math.min(samples,600)*.95)]||0,frameP95:Array.from(frameTimes.subarray(0,Math.min(samples,600))).sort((a,b)=>a-b)[Math.floor(Math.min(samples,600)*.95)]||0,...view?.stats})};
+  if(new URLSearchParams(location.search).has('test'))window.__widewakeReach={activity,get game(){return game;},get view(){return view;},get mode(){return mode;},get session(){return session;},get voyage(){return voyage;},get input(){return{keys:[...keys],stick:{...stick},reverse};},get controller(){return controller;},save,step:n=>{for(let i=0;i<n;i++)game.step(1/60);dirty=true;updateUI();},metrics:()=>({version:R.version,mode,endgame:!!game?.endgame,...(game?.endgame?game.report():{}),ships:game?.ships.filter(s=>s.hp>0).length,raiders:game?game.raiders.count-game.raiders.dead:0,audioPeak:sound?.stats.peakVoices||0,stepP95:Array.from(stepTimes.subarray(0,Math.min(samples,600))).sort((a,b)=>a-b)[Math.floor(Math.min(samples,600)*.95)]||0,frameP95:Array.from(frameTimes.subarray(0,Math.min(samples,600))).sort((a,b)=>a-b)[Math.floor(Math.min(samples,600)*.95)]||0,...view?.stats})};
   refreshTitle();activity.requestFrame(frame);
 })();

@@ -1575,3 +1575,6 @@ is not campaign progression. Human combat feel review, campaign balance, large
 raids in constrained waterways, physical-device runs and the rest of the
 whole-game production ledger remain open. This pass is not a production-ready
 Steam release claim.
+
+The v0.25.1 follow-up makes optional help match the active mode and reports only
+living hulls and enemies in debug metrics. It changes no combat tuning.
