@@ -1446,3 +1446,29 @@ backup recovery pass in the browser, with previous-world storage unchanged.
 All ship headings and scenery atlas layers pass visibility and clipping checks;
 the atlas remains under 32 MiB. The In Progress card now uses an actual capture
 of the new harbor and boats rather than the retired Havana art.
+
+## v0.23: a quieter game interface
+
+The harbor now uses a service list over the actual world, a single delivery
+shortcut and Cast off. Locked services explain the next requirement when opened.
+The approved title artwork, menu composition and colors are unchanged.
+
+Trade is a cargo ledger with original illustrations, one selected good, Buy/Sell
+order modes, a quantity and an exact total. Max respects the current price curve,
+coins and cargo space. Fleet and shipyard use actual boat previews and separate
+owned boats, purchases, fittings and hulls. A paper chart keeps destinations and
+route confirmation separate. Sailing uses compact hull/depth instruments and a
+labelled Zoom control; settings and save-file controls remain folded on pause.
+
+The pass checks full holds, empty cargo, unaffordable orders, later fleets,
+upgrades, route selection, touch target spacing, nested menus and keyboard focus.
+The UI harness covers Chromium and WebKit at desktop size and five phone layouts,
+including 568 by 320 landscape. Browser ownership, quota recovery and old-world
+storage protection still pass. The offline 29-file package passes native save
+export/import, minimize pause and quit/relaunch. The connected campaign core test
+still completes its trade, production and river-convoy checks.
+
+Phone checks use browser device emulation on the M1 Pro, not physical handsets.
+Controller checks exercise the actual focus/activation handlers without claiming
+a hardware controller playthrough. No new enemy-capacity or performance claim is
+made by this UI pass. The whole-game production goal remains open.

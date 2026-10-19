@@ -16,7 +16,7 @@
         c=mix(vec3(.21,.27,.19),vec3(.34,.37,.24),wide)*(.93+grass*.10+grain*.025);c=mix(c,vec3(.29,.27,.20)*(1.+grass*.12),mud);}
       color=vec4(c,1.);}`;
   class Terrain{
-    constructor(view){this.view=view;this.cache=new Map();this.queue=[{key:'overview',x:-4096,y:-8192,size:16384,step:128}];this.pending=null;this.serial=1;this.requests=new Map();this.bytes=0;this.clock=0;this.failed=null;this.needed=[];this.props={};this.worker=new Worker('js/widewake-estuary-worker.js?v=0.22.0');this.worker.onmessage=e=>this.receive(e.data);this.worker.onerror=e=>{this.failed=e.message||'Terrain unavailable';this.onError?.(this.failed);};if(view.gl)this.restore();this.pump();}
+    constructor(view){this.view=view;this.cache=new Map();this.queue=[{key:'overview',x:-4096,y:-8192,size:16384,step:128}];this.pending=null;this.serial=1;this.requests=new Map();this.bytes=0;this.clock=0;this.failed=null;this.needed=[];this.props={};this.worker=new Worker('js/widewake-estuary-worker.js?v=0.23.0');this.worker.onmessage=e=>this.receive(e.data);this.worker.onerror=e=>{this.failed=e.message||'Terrain unavailable';this.onError?.(this.failed);};if(view.gl)this.restore();this.pump();}
     restore(){const gl=this.view.gl;this.program=O.program(gl,vertex,fragment);for(const tile of this.cache.values())this.upload(tile);if(this.props)for(const batch of Object.values(this.props))batch.dispose();this.props={};this.initProps();}
     initProps(){if(!this.view.gl)return;const gl=this.view.gl;
       for(const type of ['reed','tree0','tree1','tree2','rock'])this.props[type]=new O.Batch(gl,this.view.meshes[type],1600);
@@ -67,6 +67,8 @@
       if(s.length*scale<9){c.fillStyle='#e3cc91';c.beginPath();c.moveTo(p.x,p.y-4);c.lineTo(p.x+3,p.y+3);c.lineTo(p.x-3,p.y+3);c.fill();}
       for(const port of E.ports){if(Math.hypot(port.x-s.x,port.y-s.y)<Math.max(80,s.length*2))continue;const q=this.project(port.x,port.y);if(q.x<20||q.x>this.width-20||q.y<45||q.y>this.height-45)continue;c.fillStyle='#d3d8be';c.fillText(port.name,q.x,q.y-22);c.strokeStyle='#a6c2ad66';c.beginPath();c.ellipse(q.x,q.y,Math.max(4,12*scale),Math.max(2,6*scale),0,0,Math.PI*2);c.stroke();}
       if(n.route){c.strokeStyle='#b1d9cc77';c.setLineDash([2,5]);c.beginPath();c.moveTo(p.x,p.y);for(let i=n.route.index;i<Math.min(n.route.index+25,n.route.points.length);i++){const q=this.project(n.route.points[i].x,n.route.points[i].y);c.lineTo(q.x,q.y);}c.stroke();c.setLineDash([]);}
+      // The campaign has a labelled camera tool and a scale on its chart.
+      if(root.WidewakeReach&&n instanceof root.WidewakeReach.Game)return;
       const metres=scale>1?20:scale>.3?100:250,len=metres*scale,x=this.width/2-len/2;c.textAlign='center';c.fillStyle='#b9cdca';c.fillText(metres+' m',this.width/2,this.height-17);c.strokeStyle='#a9c0be';c.beginPath();c.moveTo(x,this.height-10);c.lineTo(x+len,this.height-10);c.stroke();
     }
   }

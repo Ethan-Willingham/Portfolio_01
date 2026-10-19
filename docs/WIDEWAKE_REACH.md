@@ -4,7 +4,7 @@ Owner instruction, 2026-10-19: make the new ocean part of the game, retire the o
 world, and bring the graphics into one consistent visual system. This explicitly
 supersedes the earlier instruction to keep the new ocean in separate trials.
 
-Version 0.22 opens the approved title illustration, then starts at Tern Yard in
+Version 0.23 opens the approved title illustration, then starts at Tern Yard in
 Bracken Reach. Continue loads this same world. There is no Earth campaign or
 trial chooser in the normal play flow. An old `widewake-estuary.html` bookmark
 redirects to the game. `?test` retains the isolated navigation harness; the battle
@@ -19,7 +19,7 @@ A completed Tern Shoal fishing watch opens Shipyard. Lockmill exports timber;
 Tern Yard buys it. The Outer Sound oil watch earns access to heavy escorts.
 
 All three ports occupy the actual terrain. Their docked views keep the ocean,
-piers and buildings on screen, with a compact service strip. Trade opens one
+piers and buildings on screen, with a quiet service menu. Trade opens one
 order at a time. Locked Fleet and Shipyard areas remain visible with a short
 requirement. The log records visited landings and rare catches.
 
@@ -49,6 +49,42 @@ Campaign admission is bounded to 2,048 raiders, with progressive watch waves.
 The separate 16,384-enemy battle test still verifies the shared renderer and
 combat buffers. That test is not evidence of 16,384 terrain-aware campaign
 enemies. Larger fronts in constrained waterways need their own measured pass.
+
+## Interface contract, v0.23
+
+The owner explicitly rejected generic website panels and asked for a distinctive
+game interface that is as quiet and obvious as possible. Preserve the approved
+title. The harbor uses a short service list over the world, one visible delivery,
+and a clear Cast off action. The delivery opens its destination on the chart.
+Locked services show their requirement when selected.
+
+Paper is reserved for harbor decisions and the navigation chart. Dark instruments
+belong over the water. Do not add dashboard cards, decorative labels, paragraph
+instructions or another persistent status strip. Original chart marks and cargo
+illustrations live in `js/widewake-reach-ui.js`. Fleet thumbnails use the actual
+boat meshes, cached once per view and heading.
+
+Trade shows one good and one order. Buy and Sell show their unit prices; the
+confirmation shows quantity and total. Max uses the exact price curve, available
+coins and remaining cargo space when buying, or the amount aboard when selling.
+Never let a generic Max value refer to two different orders at once. Transaction
+feedback stays in the ledger. No silent order is sent when switching a selection.
+
+Fleet separates owned boats from purchases. Available roles appear as progression
+opens them; fittings and replacement hulls are separate views. The pause menu keeps
+settings and save files folded until requested. Save errors automatically expose
+file actions. Nested help and canceled imports return to their parent menu.
+
+The sailing HUD keeps hull and depth together. Zoom is a labelled control with
+Close, Fleet and Wide choices on demand. Wheel, pinch and keyboard camera stops
+remain available. Chart, broadside and nearby dock/work actions occupy the lower
+right. The main-world scale lives on the chart, avoiding action overlaps on phones.
+Modal decisions hide the inactive HUD, including stale notices behind them.
+
+Use at least 44 px for interactive targets. Preserve the same actions on phones;
+compact landscape layouts move contextual actions above the lower row and allow
+long fleet and destination lists to scroll. Keep the chart confirmation outside
+that scrolling list. Do not restore nearest-neighbor scaling to moving scenery.
 
 ## Graphics contract
 
@@ -80,6 +116,7 @@ Earth-port backgrounds or restore the retired world.
 - `js/widewake-reach-game.js`: pure campaign, market, progression, fleet movement,
   work, terrain-aware combat and validated persistence.
 - `js/widewake-reach.js`: title, menus, controls, chart, audio and save ownership.
+- `js/widewake-reach-ui.js`: original interface marks, cargo art and vessel previews.
 - `js/widewake-estuary-core.js`: authored waterways, field and route clearance.
 - `js/widewake-estuary-view.js`, `js/widewake-estuary-worker.js`: bounded terrain,
   background route preparation and region overlays.
@@ -108,6 +145,7 @@ A second window must hand off ownership before it can write.
 ```sh
 node tools/widewake/test-reach-game.cjs
 node tools/widewake/test-reach-browser.cjs
+node tools/widewake/test-reach-ui.cjs
 node tools/widewake/test-reach-saves.cjs
 node tools/widewake/test-estuary.cjs
 node tools/widewake/test-ocean-motion-browser.cjs

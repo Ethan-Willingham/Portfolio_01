@@ -26,8 +26,8 @@ or surrounding page furniture. A discreet site exit may live in Credits.
 
 The owner's later 2026-10-19 correction explicitly rejects the portfolio palette,
 editorial typography, persistent prose and crowded HUD. This overrides the site
-palette rule for Widewake only. Use Widewake's own navy, blue water, cyan action,
-amber currency and coral danger palette. Open ports as scenes with service
+palette rule for Widewake only. Use Widewake's own navy and blue water, pale sailcloth decisions,
+amber currency and coral danger palette. The approved title keeps its colors. Open ports as scenes with service
 buttons. Show a service or selected item on demand. Labels describe actions;
 explanations belong in optional help, stories or details. Do not restore a
 persistent full-fleet manifest, control paragraph, duplicated pause controls or
@@ -50,6 +50,12 @@ The subsequent owner instruction explicitly retires the Earth play flow. From
 v0.22, Bracken Reach is the campaign world. The approved title remains unchanged;
 old saves are preserved for export. Read `WIDEWAKE_REACH.md` for current source,
 play flow, persistence and checks.
+
+The subsequent UI correction asks for a distinctive game interface with as little
+clutter as possible and obvious controls. v0.23 replaces boxed service grids with
+a harbor menu, a cargo ledger, a paper chart and compact sailing instruments.
+The approved title remains unchanged. See the interface contract in
+`WIDEWAKE_REACH.md` before adding UI.
 
 The subsequent graphics correction asks for Factorio's level of sprite detail
 and animation, not its industrial theme. Keep original nautical designs. The
