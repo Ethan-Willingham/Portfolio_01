@@ -7,7 +7,6 @@ Builds stay local until the distribution requirements below are resolved.
 | --- | --- | --- |
 | Game code, vessel/harbor/title art and synthesized sound | This repository's Widewake modules | Included directly from the web game; no downloaded music or third-party game art |
 | Desktop cutter icon | `icons.mjs`, original 64-pixel drawing | Generated as PNG, ICO and ICNS; no deferred generated port studies included |
-| Earth coastline | [Natural Earth](https://www.naturalearthdata.com/about/terms-of-use/), 1:110m land | Public-domain source, retained game credit |
 | Commit Mono regular and bold | Existing portfolio WOFF2 files; [author's font license](https://github.com/eigilnikolajsen/commit-mono/blob/main/LICENSE-FONT) | SIL Open Font License included in `licenses/Commit-Mono-OFL.txt` |
 | Segoe UI regular and bold | Existing portfolio WOFF2 files; [Microsoft font redistribution FAQ](https://learn.microsoft.com/en-us/typography/fonts/font-faq) | App/game redistribution rights need confirmation before distribution |
 | Electron and Chromium | Pinned Electron 44.9.0 runtime | Runtime license and Chromium notices remain with each packaged executable |

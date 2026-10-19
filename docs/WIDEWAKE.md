@@ -46,8 +46,10 @@ designed around performance first, deliberate zoom, and an original water world
 with believable local scale, rivers, fresh and salt water, swamps and varied
 navigation. They explicitly asked to stage this work rather than attempt it all
 at once. `docs/WIDEWAKE_OCEAN.md` records the order and design constraints.
-The existing campaign still uses Earth until a deliberate replacement and save
-migration are ready. Its approved title must remain unchanged.
+The subsequent owner instruction explicitly retires the Earth play flow. From
+v0.22, Bracken Reach is the campaign world. The approved title remains unchanged;
+old saves are preserved for export. Read `WIDEWAKE_REACH.md` for current source,
+play flow, persistence and checks.
 
 The subsequent graphics correction asks for Factorio's level of sprite detail
 and animation, not its industrial theme. Keep original nautical designs. The
@@ -96,31 +98,26 @@ distinct interim backgrounds while that art pass is deferred.
 
 ## Playing the current build
 
-Open `widewake.html`, then choose **New ocean**. **Explore Bracken Reach** opens
-navigation; **Defend the fleet** opens the large combat trial. Both have a visible
-version in their pause menu and return to the title. Continue and New voyage
-still open the existing campaign. Trial visits do not change its saved fleet.
-The title art and composition remain the approved design.
+Open `widewake.html` and choose **New voyage** or **Continue**. Trading, fleet
+progression, combat, fishing and oil production now happen in Bracken Reach.
+The old `widewake-estuary.html` bookmark redirects here. No trial selection or
+Earth campaign remains in the normal play flow. The title art is unchanged.
 
-For local play, serve the repository over HTTP, rather than opening the HTML file
-directly. From its directory, run:
+For local play, serve the repository over HTTP:
 
 ```sh
 python3 -m http.server 8768 --bind 127.0.0.1
 ```
 
-Keep that terminal running, then open `http://127.0.0.1:8768/widewake.html`.
-Use the same address each time to retain local campaign saves. The local preview
-is separate from the public site's browser storage. If port 8768 already serves
-this checkout, use that existing server. All three pages also ship in the offline
-desktop package.
+Open `http://127.0.0.1:8768/widewake.html`. If that port already serves the
+checkout, use the existing server. Local and public saves belong to their
+respective browser origins. Previous-world saves remain exportable in Settings.
 
-The v0.21 correction addresses the owner's report of flickering motion. Keep
-fractional positions, display-aware rasterization, filtered sprite minification,
-and continuous heading transitions. Chunky art is not a reason to quantize camera
-or vessel movement. Review pixels in motion as well as static screenshots.
+Read `WIDEWAKE_REACH.md` for the current file map and validation commands.
+The following earlier campaign descriptions are historical implementation notes;
+they do not describe the active v0.22 shell or its three-port region.
 
-## Files and ownership
+## Historical files and ownership
 
 The next ocean foundation is isolated at `widewake-battle.html` with
 `widewake-battle.css`, `js/widewake-battle-core.js`, `js/widewake-ocean.js` and

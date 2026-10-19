@@ -1,5 +1,5 @@
 /* Terrain preparation and route searches stay off the input/render thread. */
-importScripts('widewake-estuary-core.js?v=0.21.0');
+importScripts('widewake-estuary-core.js?v=0.22.0');
 const E=WidewakeEstuary,field=new E.Field();
 function point(x,y){
   const p=field.sample(x,y),n=E.noise(Math.floor(x/19),Math.floor(y/19)),d=p.depth,s=p.salinity;
@@ -17,7 +17,7 @@ function tile({x,y,size,step}){
     if(p.depth<.45&&p.depth>-.85&&p.habitat!=='salt'&&seed>.22)kind=0;
     else if(p.edge<-10&&p.edge>-210&&seed>.65-cluster*.22&&cluster>.35&&p.habitat!=='salt')kind=1;
     else if(p.edge<-1&&p.edge>-18&&seed>.68)kind=2;
-    if(kind>=0&&!E.ports.some(p=>Math.hypot(px-p.x,py-p.y)<155&&p.id!=='reeds'))props.push(px,py,Math.min(7,.8-p.edge*.055),kind,scale);
+    if(kind>=0&&!E.ports.some(port=>port.id==='reeds'?Math.abs(px-port.x+40)<17&&Math.abs(py-port.y)<14:Math.hypot(px-port.x,py-port.y)<155))props.push(px,py,kind===0?Math.max(0,Math.min(.9,-p.depth)):Math.min(7,.8-p.edge*.055),kind,scale);
   }
   return{vertices,props:new Float32Array(props)};
 }

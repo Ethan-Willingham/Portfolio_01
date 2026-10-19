@@ -61,7 +61,24 @@
   function normals(vertices){const out=new Float32Array(vertices.length/6*9);for(let i=0,j=0;i<vertices.length;i+=18){const ax=vertices[i+6]-vertices[i],ay=vertices[i+7]-vertices[i+1],az=vertices[i+8]-vertices[i+2],bx=vertices[i+12]-vertices[i],by=vertices[i+13]-vertices[i+1],bz=vertices[i+14]-vertices[i+2],nx=ay*bz-az*by,ny=az*bx-ax*bz,nz=ax*by-ay*bx,n=Math.hypot(nx,ny,nz)||1;for(let v=0;v<3;v++){for(let k=0;k<6;k++)out[j++]=vertices[i+v*6+k];out[j++]=nx/n;out[j++]=ny/n;out[j++]=nz/n;}}return out;}
   function scenery(G){const meshes={},specs={};let seed=3918;const rand=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
     const leaf=(g,x,y,z,r,color)=>{const n=7,rings=4,points=[];for(let a=0;a<=rings;a++){const lat=a/rings*Math.PI,row=[];for(let b=0;b<n;b++){const angle=b/n*TAU,jitter=.86+rand()*.27;row.push([x+Math.sin(lat)*Math.cos(angle)*r*jitter,y+Math.sin(lat)*Math.sin(angle)*r*jitter,z+Math.cos(lat)*r*.7*jitter]);}points.push(row);}for(let a=0;a<rings;a++)for(let b=0;b<n;b++){const next=(b+1)%n;g.face([points[a][b],points[a][next],points[a+1][next],points[a+1][b]],color);}};
-    for(let variant=0;variant<3;variant++){const g=G(),height=10+variant*1.7;g.box(0,0,0,.55,.6,height*.7,'#88765a','#665f4a');for(let i=0;i<27;i++){const a=rand()*TAU,r=Math.sqrt(rand())*4.6,x=Math.cos(a)*r,y=Math.sin(a)*r,z=height-r*.6+(rand()-.5)*2;leaf(g,x,y,z,1.6+rand()*1.1,['#637c52','#7d8e5e','#8c9c69','#586f50'][Math.floor(rand()*4)]);}meshes['tree'+variant]=new Float32Array(g.out);specs['tree'+variant]={length:12,height:15,frames:1,ppu:5};}
+    for(let variant=0;variant<3;variant++){
+      const g=G(),height=[9.8,12.3,10.7][variant],bark='#6c6853';
+      g.box(.15,-.1,0,.46,.53,height*.65,'#95836a',bark);
+      const colors=variant===1?['#4c7062','#648271','#718e73']:variant===2?['#6d8564','#8b996c','#788f67']:['#597957','#718a60','#829969'];
+      // Three silhouettes: spreading alder, narrow cypress, trailing willow.
+      // Clusters follow branches, leaving windows through the crown.
+      for(let branch=0;branch<5;branch++){
+        const a=branch*2.399+variant*.8,reach=variant===1?1.5:3.2+rand(),x=Math.cos(a)*reach,y=Math.sin(a)*reach;
+        const z=height-(variant===1?branch*1.1:branch*.35);
+        g.face([[0,0,height*.4],[.2,.1,height*.5],[x,y,z-1],[x-.2,y,z-1.3]],bark);
+        for(let i=0;i<4;i++){
+          const offset=(i-1.5)*.72,px=x+Math.cos(a+1.4)*offset,py=y+Math.sin(a+1.4)*offset;
+          leaf(g,px,py,z+(rand()-.5)*1.3-(variant===2?Math.abs(offset)*1.5:0),variant===1?1.45:1.55+rand()*.6,colors[(branch+i)%3]);
+        }
+      }
+      leaf(g,0,0,height,variant===1?1.3:2,colors[1]);
+      meshes['tree'+variant]=new Float32Array(g.out);specs['tree'+variant]={length:12,height:15,frames:1,ppu:5};
+    }
     const reeds=G();for(let i=0;i<27;i++){const x=(rand()-.5)*3,y=(rand()-.5)*3,z=1.5+rand()*2,a=rand()*TAU,lean=.3+rand()*.6,color=['#8e9663','#a5a875','#697e55'][i%3];reeds.face([[x-.025,y,0],[x+.025,y,0],[x+Math.cos(a)*lean+.04,y+Math.sin(a)*lean,z],[x+Math.cos(a)*lean-.04,y+Math.sin(a)*lean,z]],color);if(i%3===0)reeds.box(x+Math.cos(a)*lean,y+Math.sin(a)*lean,z,.1,.1,.3,'#8a7453','#665d42');}meshes.reed=new Float32Array(reeds.out);specs.reed={length:5,height:4,frames:1,ppu:7};
     const rock=G();leaf(rock,0,0,.2,1.5,'#8b9180');leaf(rock,1.2,.6,.1,.8,'#b1ad93');meshes.rock=new Float32Array(rock.out);specs.rock={length:5,height:3,frames:1,ppu:6};return{meshes,specs};
   }
@@ -103,7 +120,7 @@
   const bakeFragment=`#version 300 es
     precision highp float;in vec3 vColor;in vec3 vNormal;in vec3 vLocal;in float vDepth;uniform float uRange;layout(location=0)out vec4 color;layout(location=1)out vec4 height;
     float hash(vec3 p){p=fract(p*.1031);p+=dot(p,p.yzx+33.33);return fract((p.x+p.y)*p.z);}
-    void main(){vec3 normal=normalize(vNormal),light=normalize(vec3(-.45,-.65,1.));float diffuse=.48+.52*max(0.,dot(normal,light)),grain=(hash(floor(vLocal*7.))-.5)*.07;float edge=pow(max(0.,dot(normal,normalize(vec3(-.2,-.5,1.)))),16.)*.055;
+    void main(){vec3 normal=normalize(vNormal),light=normalize(vec3(-.45,-.65,1.));float diffuse=.48+.52*max(0.,dot(normal,light)),grain=(hash(floor(vLocal*5.))-.5)*.035;float edge=pow(max(0.,dot(normal,normalize(vec3(-.2,-.5,1.)))),16.)*.055;
       color=vec4(vColor*(diffuse+grain)+edge,1.);float z=clamp(vDepth/uRange*.5+.5,0.,.99999);height=vec4(floor(z*255.)/255.,fract(z*255.),0.,1.);}`;
   const spriteVertex=`#version 300 es
     precision highp float;layout(location=0)in vec2 aPosition;layout(location=2)in vec4 aWorld;layout(location=3)in vec4 aPose;
@@ -172,7 +189,7 @@
       result=mix(result,vec3(.27,.31,.22)+sand*.035,bottom*.68);
       float crest=smoothstep(.68,.84,a*.65+b*.35)*smoothstep(.50,.72,c);result+=vec3(.16,.22,.23)*crest*.18;
       float fine=texture(uNoise,p*vec2(.018,.044)+drift*3.).r;
-      result+=vec3(.07,.10,.10)*smoothstep(.74,.9,fine)*smoothstep(.62,.79,swell)*min(1.,zoom*1.8);
+      result+=vec3(.035,.05,.05)*smoothstep(.74,.9,fine)*smoothstep(.62,.79,swell)*min(1.,zoom*1.8);
       float edge=exp(-abs(depth-.16)*4.5),wash=smoothstep(.46,.7,texture(uNoise,world*.014+drift*.7).b+sin(time*.6+depth*5.)*.07);
       result=mix(result,vec3(.52,.59,.50),edge*wash*(.2+salt*.25));return result;
     }

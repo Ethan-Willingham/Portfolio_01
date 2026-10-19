@@ -1,10 +1,11 @@
 # Widewake desktop
 
-This builds the Widewake campaign and both ocean trials into an offline application.
-It has its own title and window, native import/export dialogs, full screen, Quit,
-and a separate saved fleet. The title menu’s New ocean entry opens Bracken Reach
-or the fleet battle without changing that saved voyage. It is a local release-development build, not a Steam
-release. `desktop/` belongs to Sluice and is independent of this directory.
+This builds the Bracken Reach campaign into an offline application. It has the
+approved title, native import/export dialogs, full screen, Quit, and a separate
+saved fleet. New voyage and Continue use the new ocean directly. The isolated
+navigation and battle pages remain packaged test harnesses, outside the normal
+menu. This is a local release-development build, not a Steam release.
+`desktop/` belongs to Sluice and is independent of this directory.
 
 Use Node 22.12 or newer. From `widewake-desktop`:
 
@@ -28,7 +29,8 @@ Outputs are in `dist/Widewake-<platform>-<arch>/`. Open `Widewake.app` on macOS,
 files together. The build replaces its generated `stage/` and target output;
 it does not modify a player profile. Dependencies and the Electron runtime are
 pinned in the lockfile. Packaging uses [Electron Packager](https://github.com/electron/packager).
-The current Mac and Windows packages have been built; Linux has not been checked.
+Earlier Mac and Windows packages were built. The v0.22 staging runtime has been
+tested on Mac; distributables must be rebuilt to include this campaign.
 
 The packaged Mac executable can run through the same checks:
 
@@ -47,20 +49,19 @@ application-data directory named `Widewake`. Defaults are
 `~/Library/Application Support/Widewake` on macOS, `%APPDATA%/Widewake` on Windows,
 and the system's application configuration directory on Linux. This is separate
 from the website's fleet. Export JSON from either edition and import it into the
-other. No new save format is introduced. Version updates retain the same origin
+other. Version 0.22 uses the `widewake-reach-v1` save namespace and retains old
+Earth-world slots for export without loading them as new-region positions.
+Version updates retain the same origin
 and profile location. Only one instance can own a profile.
 
 Full-screen, show and restore transitions resynchronize the activity scheduler
 with the native window. They retain a deliberate game pause.
 
-The v0.11 app migrates the older local save pair into its v2 storage slot on
-play or a deliberate edit. Portable JSON remains version 1. Browser window
-ownership does not restrict the app, which already owns its profile exclusively.
-
-Use v0.10 or later on both sides for active-battle continuation. The shared
-1,500,000-byte file limit accommodates the full bounded sea and convoy tracks.
-Native import/export and OS-close tests cover a damaged admiral with pending
-mortars and a maximum-size battle, in addition to an earned fishing watch.
+Portable Bracken Reach saves include movement, cargo, routes, active work,
+enemies and projectiles. The shared file limit is 2,000,000 bytes. Native tests
+cover export, a rejected old/invalid save, confirmed import, a worker-plotted
+route, minimize/pause and quit/relaunch continuation. The current region browser
+and core tests are listed in `../docs/WIDEWAKE_REACH.md`.
 
 The OS close button, application Quit and in-game Quit ask the game to save its
 current snapshot before closing and flush browser storage. A failed write keeps

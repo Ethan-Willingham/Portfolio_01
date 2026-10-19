@@ -7,16 +7,17 @@ const require=createRequire(import.meta.url),here=path.dirname(fileURLToPath(imp
 export async function prepare(){
   const stage=path.join(here,'stage'),prior=await fs.lstat(stage).catch(()=>null);if(prior?.isSymbolicLink())throw Error('Stage must not be a symbolic link.');
   const pages=['widewake','widewake-battle','widewake-estuary'];
-  const files=new Set(['favicon.svg','js/widewake-route-worker.js','js/widewake-estuary-worker.js','assets/widewake/earth-land.geojson']);
+  const files=new Set(['favicon.svg','js/widewake-estuary-worker.js','widewake-reach.css']);
   for(const page of pages){
     files.add(page+'.html');files.add(page+'.css');
     const html=await fs.readFile(path.join(root,page+'.html'),'utf8'),css=await fs.readFile(path.join(root,page+'.css'),'utf8');
     for(const match of html.matchAll(/<script[^>]+src="([^"?]+)[^"]*"/g))files.add(match[1]);
     for(const match of css.matchAll(/url\(['"]?([^)'"?]+)[^)]*\)/g))files.add(match[1]);
   }
-  const data=require(path.join(root,'js/widewake-data.js')),version=data.version,contents=new Map(),manifest={version,files:{}};
+  require(path.join(root,'js/widewake-battle-core.js'));require(path.join(root,'js/widewake-estuary-core.js'));
+  const data=require(path.join(root,'js/widewake-reach-game.js')),version=data.version,contents=new Map(),manifest={version,files:{}};
   for(const file of [...files].sort()){
-    if(!/^(?:widewake(?:-battle|-estuary)?\.(?:html|css)|favicon\.svg|js\/(?:widewake[-\w]*|demo-activity)\.js|assets\/fonts\/[\w-]+\.woff2|assets\/widewake\/earth-land\.geojson)$/.test(file))throw Error('Unexpected game asset: '+file);
+    if(!/^(?:widewake(?:-battle|-estuary|-reach)?\.(?:html|css)|favicon\.svg|js\/(?:widewake[-\w]*|demo-activity)\.js|assets\/fonts\/[\w-]+\.woff2|assets\/widewake\/earth-land\.geojson)$/.test(file))throw Error('Unexpected game asset: '+file);
     const bytes=await fs.readFile(path.join(root,file));contents.set(file,bytes);manifest.files[file]={bytes:bytes.length,sha256:crypto.createHash('sha256').update(bytes).digest('hex')};
   }
   await fs.rm(stage,{recursive:true,force:true});await fs.mkdir(path.join(stage,'game'),{recursive:true});
@@ -25,7 +26,7 @@ export async function prepare(){
   await fs.cp(path.join(here,'licenses'),path.join(stage,'licenses'),{recursive:true});
   await fs.copyFile(path.join(here,'ASSETS.md'),path.join(stage,'ASSETS.md'));
   await fs.writeFile(path.join(stage,'game','asset-manifest.json'),JSON.stringify(manifest,null,2)+'\n');
-  await fs.writeFile(path.join(stage,'package.json'),JSON.stringify({name:'widewake',productName:'Widewake',version,description:'Sail the Earth with a growing convoy.',author:'Ethan Willingham',main:'main.cjs',private:true},null,2)+'\n');
+  await fs.writeFile(path.join(stage,'package.json'),JSON.stringify({name:'widewake',productName:'Widewake',version,description:'Build a trading fleet in Bracken Reach.',author:'Ethan Willingham',main:'main.cjs',private:true},null,2)+'\n');
   console.log('Staged Widewake '+version+': '+contents.size+' files, '+[...contents.values()].reduce((sum,b)=>sum+b.length,0)+' bytes.');
   return{stage,version,manifest};
 }

@@ -13,8 +13,11 @@ The exact owner constraints and source links are in `WIDEWAKE.md`.
 The latest owner direction is staged in `WIDEWAKE_OCEAN.md`: endgame combat
 performance first, an isometric ocean and rethought zoom, then an original world
 at believable local scale with varied waterways. This supersedes the earlier
-Earth target. Keep the approved title. The existing campaign remains available
-while the new ocean is tested separately; do not silently invalidate its saves.
+Earth target. Keep the approved title. The owner subsequently directed the new ocean to replace the old game flow.
+Version 0.22 makes Bracken Reach the playable campaign and preserves previous
+world saves for export. The current architecture and limits are in
+`WIDEWAKE_REACH.md`; historical campaign evidence below does not establish
+production readiness for the replacement.
 
 ## How a pass works
 
@@ -1399,3 +1402,47 @@ launches, terrain worker, native file operations and exact OS-close continuation
 This pass fixes motion and access. Constrained-water convoys, connected trade and
 work in Bracken Reach, campaign migration, further world content and the other
 production gates remain open.
+
+## v0.22: one ocean, one play flow
+
+The approved title now starts or continues Bracken Reach. The trial chooser and
+Earth play flow are retired. All three ports, trading, earned services, fleet
+purchases, upgrades, production, salvage and combat share the metre-scale region.
+A separate save namespace preserves old-world files. The offline package stages
+28 files and no longer includes the Earth coastline or old campaign runtime.
+
+The graphics pass seats and scales weapon mounts to the actual decks, replaces
+block explosions with a short core and pressure ring, reduces surface noise,
+and gives shoreline foliage distinct branching silhouettes. Ports use their
+actual world scenery. The approved title illustration and smooth-motion renderer
+are preserved.
+
+The connected core test completes first trade, earned fishing, an oil fixture,
+and a four-vessel Lockmill round trip with 812 raiders defeated before recovery
+testing. Its first-stage funds are earned; its later oil fleet is a funded test
+fixture. Chromium and WebKit cover real UI trade, worker routes, active fishing
+save/reload, input release, and four touch layouts. Continuous-motion pixel
+checks still pass. See `WIDEWAKE_REACH.md` for the current test entry points.
+
+A focused 2,048-raider open-sea simulation initially cost 63 ms at the 95th
+percentile because every enemy repeated terrain probes. Shared conservative
+cells and the open-water fast path reduced that measured step to 0.77 ms on this
+M1 Pro. This short diagnostic is not a physical-phone or whole-game frame-rate
+claim. The separate sustained battle benchmark remains the endgame load check.
+
+Remaining: larger terrain-aware fronts, player-led first-session pacing, deeper
+fleet orders, additional regions and distinctive long-term encounters. This is
+a connected replacement region, not a production or Steam release declaration.
+
+The final three-minute browser soak held 16,384 target raiders with all 24
+friendly hulls alive, 112,010 kills, 1,080 fish and 720 oil. Its full-run frame
+p95 was 9.9 ms and p99 10.3 ms on the M1 Pro. Full projectile/effect capacity and
+Canvas fallback checks also passed. This measures the shared open-sea benchmark.
+The current campaign's geography-aware admission limit remains 2,048.
+
+Final native staging passes the same-region launch, route worker, import/export,
+minimize pause, and quit/relaunch persistence. Window handoff, quota failure and
+backup recovery pass in the browser, with previous-world storage unchanged.
+All ship headings and scenery atlas layers pass visibility and clipping checks;
+the atlas remains under 32 MiB. The In Progress card now uses an actual capture
+of the new harbor and boats rather than the retired Havana art.

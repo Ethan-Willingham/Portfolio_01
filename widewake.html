@@ -1,43 +1,23 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#101627">
-  <title>Widewake</title>
-  <meta name="description" content="Sail the Earth with a growing convoy. Trade between 24 ports, hunt pirate fleets, and protect fishing boats and oil tenders in an open-world JavaScript game.">
-  <meta property="og:title" content="Widewake">
-  <meta property="og:description" content="A little boat. The whole wide world. Port trading, convoy combat, and a living at sea.">
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://ethanwillingham.com/widewake.html">
-  <meta property="og:image" content="https://ethanwillingham.com/assets/widewake/cover.png">
-  <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <link rel="preload" href="assets/fonts/commit_mono_regular.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="widewake.css?v=0.21.0">
-  <script defer src="js/demo-activity.js"></script>
-  <script defer src="js/widewake-data.js?v=0.21.0"></script>
-  <script defer src="js/widewake-world.js?v=0.21.0"></script>
-  <script defer src="js/widewake-voyage.js?v=0.21.0"></script>
-  <script defer src="js/widewake-work.js?v=0.21.0"></script>
-  <script defer src="js/widewake-sea-save.js?v=0.21.0"></script>
-  <script defer src="js/widewake-core.js?v=0.21.0"></script>
-  <script defer src="js/widewake-render.js?v=0.21.0"></script>
-  <script defer src="js/widewake-convoy.js?v=0.21.0"></script>
-  <script defer src="js/widewake-front.js?v=0.21.0"></script>
-  <script defer src="js/widewake-controller.js?v=0.21.0"></script>
-  <script defer src="js/widewake-audio.js?v=0.21.0"></script>
-  <script defer src="js/widewake-saves.js?v=0.21.0"></script>
-  <script defer src="js/widewake.js?v=0.21.0"></script>
-</head>
-<body class="ww-body at-title">
-  <main id="game" class="ww-game" aria-label="Widewake game">
-    <header id="game-toolbar" class="ww-header" hidden>
-      <span class="ww-brand">WIDEWAKE</span>
-      <span id="toolbar-location" class="ww-toolbar-location"></span>
-      <div class="ww-top-actions"><button id="settings-open" title="Pause and settings (Escape)">Menu <kbd>Esc</kbd></button></div>
-    </header>
-    <div id="loading" class="ww-loading" role="status"><div class="ww-loading-boat" aria-hidden="true"></div><p>WIDEWAKE</p><small>Loading...</small></div>
-    <section id="title-screen" class="ww-title-screen" hidden aria-labelledby="game-title">
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#101627">
+<title>Widewake</title><meta name="description" content="Build a trading fleet in Bracken Reach. Sail winding waterways, defend working boats, and bring rare catches home.">
+<meta property="og:title" content="Widewake"><meta property="og:description" content="A little boat. A growing fleet. A living on the water."><meta property="og:type" content="website"><meta property="og:url" content="https://ethanwillingham.com/widewake.html"><meta property="og:image" content="https://ethanwillingham.com/assets/widewake/reach-cover.png">
+<link rel="icon" href="favicon.svg"><link rel="stylesheet" href="widewake.css?v=0.22.0"><link rel="stylesheet" href="widewake-reach.css?v=0.22.0">
+<script defer src="js/demo-activity.js?v=0.22.0"></script>
+<script defer src="js/widewake-front.js?v=0.22.0"></script>
+<script defer src="js/widewake-audio.js?v=0.22.0"></script>
+<script defer src="js/widewake-controller.js?v=0.22.0"></script>
+<script defer src="js/widewake-saves.js?v=0.22.0"></script>
+<script defer src="js/widewake-battle-core.js?v=0.22.0"></script>
+<script defer src="js/widewake-ocean-art.js?v=0.22.0"></script>
+<script defer src="js/widewake-ocean.js?v=0.22.0"></script>
+<script defer src="js/widewake-estuary-core.js?v=0.22.0"></script>
+<script defer src="js/widewake-estuary-view.js?v=0.22.0"></script>
+<script defer src="js/widewake-reach-game.js?v=0.22.0"></script>
+<script defer src="js/widewake-reach.js?v=0.22.0"></script>
+</head><body class="ww-body at-title"><main id="game" class="ww-game" aria-label="Widewake">
+    <section id="title-screen" class="ww-title-screen" aria-labelledby="game-title">
       <canvas id="title-sea" class="ww-title-sea" aria-hidden="true"></canvas>
       <div class="ww-title-shade" aria-hidden="true"></div>
       <div class="ww-title-menu">
@@ -48,79 +28,30 @@
           <div id="title-save" class="ww-title-save" hidden></div>
           <p id="title-storage" class="ww-title-storage" role="status"></p>
           <button id="start-voyage">New voyage</button>
-          <button id="title-ocean">New ocean</button>
           <button id="title-settings">Settings</button>
           <button id="title-handbook">How to play</button>
         </nav>
         <button class="ww-audio-notice" hidden>Enable sound</button>
       </div>
-      <footer class="ww-title-footer"><span id="title-version">0.21.0 / Web edition</span><div><button id="title-fullscreen">Full screen</button><button id="title-credits">Credits</button><button id="title-quit" hidden>Quit</button></div></footer>
+      <footer class="ww-title-footer"><span id="title-version">0.22.0 / Web edition</span><div><button id="title-fullscreen">Full screen</button><button id="title-credits">Credits</button><button id="title-quit" hidden>Quit</button></div></footer>
     </section>
-    <section id="harbor" class="ww-harbor" hidden aria-label="Harbor">
-      <div class="ww-harbor-left">
-        <div class="ww-port-heading"><div><p id="port-country" class="ww-eyebrow"></p><h2 id="port-name"></h2></div><div id="port-coords" class="ww-coords"></div></div>
-        <div class="ww-port-picture"><canvas id="port-art" width="384" height="216" aria-label="Pixel art of the current harbor"></canvas><span id="port-time" class="ww-picture-note"></span></div>
-        <div class="ww-port-caption"><p id="port-description"></p><span id="port-weather"></span></div>
-        <div class="ww-next"><p class="ww-eyebrow">Charter</p><h3 id="next-title"></h3><p id="next-description"></p><div id="next-progress" class="ww-progress"><i></i></div><button id="voyage-open">Charter</button></div>
-        <div class="ww-cast-off"><div><span id="harbor-fleet-count"></span><small id="harbor-hull-status"></small></div><button id="cast-off" class="ww-primary">Cast off</button><button id="harbor-chart">Chart <kbd>M</kbd></button></div>
-      </div>
-      <section class="ww-management" aria-label="Port services">
-        <div class="ww-service-heading" hidden><button id="service-back">&lt; Harbor</button><h2 id="service-title">Trade</h2></div>
-        <div class="ww-wallet"><div><span class="ww-eyebrow">Coins</span><strong id="coins">780</strong><small>c</small></div><div class="ww-cargo-readout"><span id="hold-usage"></span><div class="ww-progress"><i id="hold-bar"></i></div><small id="hold-detail">Cargo across the fleet</small></div></div>
-        <nav class="ww-tabs" aria-label="Port services"><button data-tab="trade" aria-pressed="true"><span>Trade</span><span class="ww-service-lock" aria-hidden="true" hidden></span></button><button data-tab="fleet" aria-pressed="false"><span>Fleet</span><span class="ww-service-lock" aria-hidden="true" hidden></span></button><button data-tab="yard" aria-pressed="false"><span>Shipyard</span><span class="ww-service-lock" aria-hidden="true" hidden></span></button><button data-tab="voyage" aria-pressed="false"><span>Voyage</span><span class="ww-service-lock" aria-hidden="true" hidden></span></button><button data-tab="jobs" aria-pressed="false"><span>Jobs</span><span class="ww-service-lock" aria-hidden="true" hidden></span></button><button data-tab="log" aria-pressed="false"><span>Log</span><span class="ww-service-lock" aria-hidden="true" hidden></span></button></nav>
-        <div id="port-panel" class="ww-panel" tabindex="-1"></div>
-        <p id="port-controller-help" class="ww-port-pad-help"></p><footer class="ww-port-footer"><span id="captain-rank"></span><span id="save-status">Saved on this device</span></footer>
-      </section>
-    </section>
-    <section id="sea" class="ww-sea" hidden aria-label="Open ocean">
-      <canvas id="ocean" tabindex="0" aria-label="Sail with W A S D or arrow keys. Guns fire automatically. Space fires a broadside. E docks, works a production site, or investigates a signal. M opens the chart. H takes or returns the helm. C opens convoy orders."></canvas>
-      <div class="ww-sea-top"><div class="ww-sea-status"><div><strong id="sea-ship">Cutter</strong><span id="sea-coins"></span></div><div class="ww-progress ww-hull"><i id="sea-health"></i></div><small id="sea-health-text"></small></div><div class="ww-sea-location"><span id="sea-location"></span><small id="sea-position"></small></div><button id="sea-chart" class="ww-chart-button" aria-label="Open world chart. The inset shows nearby vessels and threats.">Chart <kbd>M</kbd><canvas id="minimap" width="160" height="80" aria-hidden="true"></canvas></button></div>
-      <div id="operation" class="ww-operation" hidden><span id="operation-text"></span><div class="ww-progress"><i id="operation-bar"></i></div><small id="operation-detail"></small><small id="operation-warning" class="ww-operation-warning" role="status" hidden></small></div>
-      <div id="admiral" class="ww-operation ww-admiral" hidden><span id="admiral-name"></span><div class="ww-progress"><i id="admiral-health"></i></div><small id="admiral-order"></small></div>
-      <div id="sea-objective" class="ww-sea-objective"><strong id="objective-title"></strong><span id="objective-text"></span><span id="helm-status" class="ww-helm-status"></span></div>
-      <div class="ww-sea-bottom"><div class="ww-sea-actions"><button id="convoy-open"><span>Fleet <b id="sea-fleet-count"></b> <kbd>C</kbd></span><small id="convoy-alert" hidden></small></button><button id="broadside" class="ww-charge-button"><span>Broadside <kbd>Space</kbd></span><small id="broadside-status">Ready</small></button><button id="field-repair" class="ww-charge-button"><span>Repair <kbd>R</kbd></span><small id="repair-status">100c</small></button><button id="helm-toggle" hidden>Resume course <kbd>H</kbd></button><button id="context-action" class="ww-primary" hidden></button></div><p id="sea-controls" class="ww-controls"><kbd>WASD</kbd> sail <span>&middot;</span> <kbd>Shift</kbd> full steam <span>&middot;</span> guns aim automatically <span>&middot;</span> click to aim <span>&middot;</span> scroll to zoom</p></div>
-      <div id="joystick" class="ww-joystick" aria-label="Touch steering control"><div></div></div>
-      <div class="ww-zoom"><button id="zoom-in" aria-label="Zoom in">+</button><button id="zoom-out" aria-label="Zoom out">&minus;</button></div>
-    </section>
-    <div class="ww-feedback"><div id="toasts" class="ww-toasts" role="status" aria-live="polite" aria-atomic="true"></div><div id="sea-receipt" class="ww-sea-receipt" role="status" aria-live="polite" hidden></div></div>
-    <dialog id="recovery-dialog" class="ww-dialog ww-recovery" aria-labelledby="recovery-title"><div class="ww-dialog-head"><div><p id="recovery-caption" class="ww-eyebrow"></p><h2 id="recovery-title"></h2></div><button data-close="recovery-dialog">To the harbor</button></div><div id="recovery-body"></div><div class="ww-save-actions"><button class="ww-primary" data-action="recovery-trade">Trade</button><button data-action="recovery-fleet">Fleet</button></div><p class="ww-note"></p></dialog>
-    <dialog id="work-dialog" class="ww-dialog ww-work-dialog" aria-labelledby="work-title"><div class="ww-dialog-head"><div><p class="ww-eyebrow">Deploy</p><h2 id="work-title"></h2></div><button data-close="work-dialog">Cancel</button></div><p id="work-readiness" class="ww-note"></p><p id="work-outlook" class="ww-note"></p><div id="work-choices"></div><p class="ww-note">Recall keeps loaded cargo. Finish to earn the bonus.</p></dialog>
-    <dialog id="signal-dialog" class="ww-dialog ww-settings" aria-labelledby="signal-title"><div class="ww-dialog-head"><div><p class="ww-eyebrow">Signal at sea / paused</p><h2 id="signal-title"></h2></div><button data-close="signal-dialog">Leave</button></div><p id="signal-story" class="ww-letter"></p><div id="signal-choices"></div></dialog>
-    <dialog id="ending-dialog" class="ww-dialog ww-ending" aria-labelledby="ending-title"><p class="ww-eyebrow">The long wake home / campaign complete</p><h2 id="ending-title">Havana, again.</h2><canvas id="ending-art" width="384" height="216" aria-label="Your flagship at the Havana quay"></canvas><p class="ww-letter">Mara has kept your old berth. She walks the length of the quay, counting the boats, then looks up at the flagship. “You can probably afford your own gunboat now.”</p><div id="ending-stats" class="ww-convoy-stats"></div><p class="ww-note">Your fleet, cargo and collections are saved. The ports are still trading. There is more ocean whenever you want it.</p><button class="ww-primary" data-close="ending-dialog">Keep sailing</button></dialog>
-    <dialog id="convoy-dialog" class="ww-dialog ww-convoy-dialog" aria-labelledby="convoy-title"><div class="ww-dialog-head"><div><p id="convoy-caption" class="ww-eyebrow"></p><h2 id="convoy-title">Fleet</h2></div><button data-close="convoy-dialog">Return <kbd>C</kbd></button></div><div class="ww-convoy-toolbar"><button id="formation">Screen formation <kbd>F</kbd></button><label for="convoy-sort">Sort<select id="convoy-sort"><option value="fleet">Fleet order</option><option value="hull">Hull condition</option><option value="cargo">Cargo aboard</option><option value="distance">Distance from flagship</option></select></label><p id="convoy-summary" class="ww-note"></p></div><div class="ww-convoy-layout"><nav id="convoy-list" aria-label="Select a vessel"></nav><section id="convoy-detail" aria-label="Vessel manifest and orders"></section></div><p id="convoy-feedback" class="ww-note" role="status" aria-live="polite"></p></dialog>
-    <dialog id="chart-dialog" class="ww-dialog ww-chart-dialog" aria-labelledby="chart-title"><div class="ww-dialog-head"><div><h2 id="chart-title">Chart</h2></div><button data-close="chart-dialog" aria-label="Close chart">Close <kbd>M</kbd></button></div><div class="ww-chart-layout"><div class="ww-chart-main"><div class="ww-chart-map"><canvas id="world-chart" width="1000" height="500" aria-label="Map of Earth. Select a port, fishing ground, oil field, or admiral. The destination list provides the same controls."></canvas><p class="ww-map-legend"><span class="port-dot">Ports</span><span class="fish-dot">Fishing</span><span class="oil-dot">Oil</span><span class="boss-dot">Admirals</span><span class="signal-dot">Sea signals</span></p></div><details id="chart-trade" class="ww-chart-trade"><summary>Trade opportunities</summary><div class="ww-trade-filters"><label>Goods<select id="chart-good"></select></label><label>Cargo<select id="chart-order"><option value="aboard">Already aboard</option><option value="buy">Buy at this port</option></select></label><label>Units<select id="chart-quantity"><option value="1">1</option><option value="5">5</option><option value="10">10</option><option value="9999">All that fit</option></select></label><label>Find<select id="chart-sort"><option value="near">Nearby gains</option><option value="gain">Largest gain</option></select></label></div><div id="trade-prospects"></div><p id="trade-quote-note" class="ww-quote-note"></p></details></div><aside class="ww-chart-side"><label for="destination-list" class="ww-eyebrow">Destination</label><select id="destination-list"></select><div id="destination-detail"></div><div id="route-preview" class="ww-route-preview" role="status" aria-live="polite"></div><button id="load-trade-order" class="ww-load-order" hidden></button><p id="trade-load-note" class="ww-quote-note" role="status" hidden></p><button id="plot-course" class="ww-primary">Plot course</button></aside></div></dialog>
-    <dialog id="settings-dialog" class="ww-dialog ww-settings" aria-labelledby="settings-title">
-      <div class="ww-dialog-head"><div><p id="settings-caption" class="ww-eyebrow"></p><h2 id="settings-title">Paused</h2></div><button id="settings-return" data-close="settings-dialog">Resume</button></div>
-      <button class="ww-audio-notice" hidden>Enable sound</button>
-      <div class="ww-setting-row"><label for="sound-enabled">Sound</label><input type="checkbox" id="sound-enabled" checked></div>
-      <div class="ww-setting-row"><label for="volume">Master volume</label><div class="ww-mix-control"><input type="range" id="volume" min="0" max="0.5" step="0.01" value="0.22"><output id="volume-value" for="volume">44%</output></div></div>
-      <div class="ww-setting-row"><label for="music-volume">Music</label><div class="ww-mix-control"><input type="range" id="music-volume" min="0" max="1" step="0.05" value="0.35"><output id="music-value" for="music-volume">35%</output></div></div>
-      <div class="ww-setting-row"><label for="effects-volume">Effects</label><div class="ww-mix-control"><input type="range" id="effects-volume" min="0" max="1" step="0.05" value="0.8"><output id="effects-value" for="effects-volume">80%</output></div></div>
-      <div class="ww-setting-row"><label for="ambience-volume">Sea and harbor</label><div class="ww-mix-control"><input type="range" id="ambience-volume" min="0" max="1" step="0.05" value="0.5"><output id="ambience-value" for="ambience-volume">50%</output></div></div>
-      <div class="ww-setting-row"><label for="autofire">Automatic cannon fire</label><input type="checkbox" id="autofire" checked></div>
-      <div class="ww-setting-row"><label for="camera-shake">Camera shake</label><input type="checkbox" id="camera-shake" checked></div>
-      <div class="ww-setting-row"><label for="reduced-motion">Reduce animation</label><input type="checkbox" id="reduced-motion"></div>
-      <details class="ww-controller-settings"><summary>Controller</summary><p id="controller-status" class="ww-note" role="status">Press a button on a connected controller.</p>
-        <div class="ww-setting-row"><label for="controller-rumble">Vibration</label><input type="checkbox" id="controller-rumble" checked></div>
-        <div class="ww-setting-row"><label for="controller-deadzone">Stick dead zone</label><div class="ww-mix-control"><input type="range" id="controller-deadzone" min="0.1" max="0.35" step="0.01" value="0.18"><output id="controller-deadzone-value" for="controller-deadzone">18%</output></div></div>
-        <p class="ww-note">Raise this if your boat moves when the sticks are centered.</p>
-        <div class="ww-setting-row"><label for="controller-labels">Button names</label><select id="controller-labels"><option value="auto">Automatic</option><option value="xbox">A B X Y</option><option value="playstation">PlayStation</option></select></div>
-      </details>
-      <div class="ww-setting-buttons"><button id="settings-handbook">How to play</button><button id="fullscreen">Full screen</button></div>
-      <div class="ww-save-section"><p class="ww-eyebrow">Your voyage</p><p id="save-message" class="ww-note"></p><div class="ww-save-actions"><button id="export-save">Export save</button><button id="import-save">Import save</button><input id="save-file" type="file" accept=".json,application/json" hidden><button id="new-game" class="ww-danger">New voyage</button></div></div>
-      <button id="return-title" class="ww-return-title">Save &amp; return to title</button><button id="quit-game" class="ww-return-title" hidden>Save &amp; quit</button>
-    </dialog>
-    <dialog id="handbook-dialog" class="ww-dialog ww-handbook" aria-labelledby="handbook-title"><div class="ww-dialog-head"><div><h2 id="handbook-title">How to play</h2></div><button data-close="handbook-dialog">Return</button></div><div class="ww-handbook-grid">
-      <section><h3>Sail</h3><p id="controller-handbook" class="ww-controller-only"></p><p class="ww-desktop-help"><kbd>WASD</kbd> Steer<br><kbd>Shift</kbd> Full steam<br><kbd>H</kbd> Autopilot<br>Mouse wheel: zoom.</p><p class="ww-touch-help">Drag the pad to steer. Push to the rim for full steam. Tap + or minus to zoom.</p><p>Choose a destination on the chart. Steer to take over.</p></section>
-      <section><h3>Trade</h3><p>Buy local exports. Sell where demand is high.</p><p>Select goods to see prices and compare ports. Workboats reserve cargo space for fish or oil.</p></section>
-      <section><h3>Fight</h3><p>Guns aim and fire automatically. Hold on open water to aim.</p><p>Broadside fires every gun. Repair costs 100c. Assign escorts in Fleet.</p><p>Sunken boats lose their cargo. A sunk flagship is rescued for a fee and half your remaining cargo.</p></section>
-      <section><h3>Work</h3><p>Bring a trawler to fishing grounds or an oil tender to oil fields. Protect it while it works.</p><p>Finish a watch to unlock a longer one. Recall keeps loaded cargo. Rare catches pay when you dock.</p></section>
-    </div><p class="ww-handbook-keys ww-desktop-help"><kbd>M</kbd> Chart &nbsp; <kbd>C</kbd> Convoy &nbsp; <kbd>E</kbd> Dock / work / investigate &nbsp; <kbd>Space</kbd> Broadside &nbsp; <kbd>R</kbd> Repair &nbsp; <kbd>F</kbd> Formation &nbsp; <kbd>Esc</kbd> Pause</p></dialog>
-    <dialog id="ocean-dialog" class="ww-dialog ww-settings" aria-labelledby="ocean-title"><div class="ww-dialog-head"><h2 id="ocean-title">New ocean</h2><button data-close="ocean-dialog">Return</button></div><a class="ww-trial-choice" href="widewake-estuary.html">Explore Bracken Reach<span>Rivers, shallows and open water</span></a><a class="ww-trial-choice" href="widewake-battle.html">Defend the fleet<span>Endgame sea battle</span></a><p class="ww-note">Development trials. Your voyage save stays separate.</p></dialog>
-    <dialog id="credits-dialog" class="ww-dialog ww-settings" aria-labelledby="credits-title"><div class="ww-dialog-head"><h2 id="credits-title">Widewake</h2><button data-close="credits-dialog">Return</button></div><p class="ww-letter">A little boat. The whole wide world.<small>A game by Ethan Willingham</small></p><p class="ww-note">An independent game in development. Built for the web, with a Steam release in mind.</p><p class="ww-note">Earth coastline data: <a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener">Natural Earth</a>, public domain. Current harbor and vessel art is drawn in canvas. Sound is synthesized locally.</p><a class="ww-site-exit" href="https://ethanwillingham.com/archive.html">Return to Ethan's In Progress page</a></dialog>
-    <dialog id="departure-dialog" class="ww-dialog ww-departure" aria-labelledby="departure-title"><p class="ww-eyebrow">Havana</p><h2 id="departure-title">Your first run</h2><div class="ww-first-cargo"><canvas data-icon="sugar" width="24" height="24" aria-hidden="true"></canvas><strong>12 sugar</strong><span>Nassau pays more.</span></div><div class="ww-save-actions"><button id="first-course" class="ww-primary">Sail to Nassau</button><button data-close="departure-dialog">Stay in harbor</button></div></dialog>
-    <dialog id="reset-dialog" class="ww-dialog ww-settings" aria-labelledby="reset-title"><div class="ww-dialog-head"><h2 id="reset-title">Start a new voyage?</h2></div><p class="ww-note">This replaces the fleet saved on this device. Export it first if you want to sail it again.</p><div class="ww-save-actions"><button data-close="reset-dialog">Keep this fleet</button><button id="reset-export">Export current fleet</button><button id="confirm-reset" class="ww-danger">Start a new voyage</button></div><p id="reset-message" class="ww-note" role="status"></p></dialog>
-    <noscript><p>Widewake needs JavaScript enabled to run.</p></noscript>
-  </main>
-</body>
-</html>
+
+<section id="reach" hidden aria-label="Bracken Reach">
+<canvas id="reach-water" tabindex="0" aria-label="WASD or arrows steer. R reverses, E interacts, M opens the chart, Escape pauses."></canvas>
+<header class="reach-top"><div id="vessel-status"><span id="place"></span><strong id="sounder"></strong><meter id="hull-meter" min="0" max="1" value="1" aria-label="Hull condition"></meter><small id="water-kind"></small></div><button id="reach-pause">Menu <kbd>Esc</kbd></button></header>
+<div id="reach-notice" role="status" aria-live="polite"></div>
+<div id="reach-course" hidden><span id="course-name"></span><button id="take-helm">Take helm</button></div>
+<div id="work-status" hidden><strong id="work-name"></strong><progress id="work-progress" max="1" value="0" aria-label="Working watch"></progress><button id="recall">Recall</button></div>
+<div class="reach-controls" id="helm-controls"><div id="reach-helm" role="application" aria-label="Drag to steer"><i></i></div><button id="reverse">Astern <kbd>R</kbd></button><button id="tow" hidden>Tow back</button></div>
+<div class="reach-actions" id="sailing-actions"><button id="context-action" class="ww-primary" hidden></button><button id="broadside" hidden>Broadside</button><button id="chart-open">Chart <kbd>M</kbd></button><div class="reach-zoom"><button data-zoom="helm">Helm</button><button data-zoom="fleet">Channel</button><button data-zoom="survey">Survey</button></div></div>
+<section id="port-scene" hidden aria-label="Harbor services"><header><span id="port-water"></span><h2 id="port-name"></h2><span id="wallet"></span></header><div class="port-bottom"><div class="port-charter"><span id="charter-title"></span><strong id="charter-detail"></strong></div><nav aria-label="Harbor services"><button data-service="trade">Trade</button><button data-service="fleet">Fleet <small></small></button><button data-service="yard">Shipyard <small></small></button><button data-service="log">Log</button></nav><div class="port-depart"><button id="harbor-chart">Chart</button><button id="cast-off" class="ww-primary">Cast off</button></div></div></section>
+</section>
+<dialog id="port-service" class="reach-dialog" aria-labelledby="service-title"><header><h2 id="service-title">Trade</h2><button data-close="port-service">Close</button></header><div id="service-body"></div><p id="service-feedback" role="status" aria-live="polite"></p></dialog>
+<dialog id="reach-chart" class="reach-dialog" aria-labelledby="chart-title"><header><h2 id="chart-title">Bracken Reach</h2><button data-close="reach-chart">Close</button></header><canvas id="chart-map" aria-label="Waterways, ports, fishing grounds and oil grounds. Select a destination below."></canvas><nav id="chart-destinations" aria-label="Destinations"></nav><footer><div><strong id="route-name">Choose a destination</strong><span id="route-detail"></span></div><button id="set-course" class="ww-primary" disabled>Set course</button></footer></dialog>
+<dialog id="reach-menu" class="reach-dialog" aria-labelledby="pause-title"><header><h2 id="pause-title">Paused</h2><button data-close="reach-menu" id="reach-resume">Resume</button></header><label>Sound <input type="checkbox" id="sound-enabled" checked></label><label>Volume <input type="range" id="volume" min="0" max="0.5" step=".01" value=".2"></label><label>Reduced motion <input type="checkbox" id="reduce-motion"></label><div class="save-actions"><button id="export-save">Export save</button><button id="import-save">Import save</button><input id="import-file" type="file" accept="application/json,.json" hidden><button id="legacy-export" hidden>Export previous world</button></div><p id="save-status" role="status"></p><button id="return-title">Title screen</button><small>0.22.0 / Bracken Reach</small></dialog>
+<dialog id="help-dialog" class="reach-dialog" aria-labelledby="help-title"><header><h2 id="help-title">At the helm</h2><button data-close="help-dialog">Close</button></header><p>WASD or arrows steer. Hold R to reverse. Guns fire automatically.</p><p>E docks or deploys workboats. M opens the chart. Space fires a broadside on larger hulls.</p><p>Wheel or pinch to zoom. Drag the water to look around. On touch, drag the helm to steer.</p><p>Buy local exports, sell where prices are higher. A completed delivery opens the fleet yard.</p></dialog>
+<dialog id="credits-dialog" class="reach-dialog" aria-labelledby="credits-title"><header><h2 id="credits-title">Widewake</h2><button data-close="credits-dialog">Close</button></header><p>By Ethan Willingham.</p><p>Original nautical artwork and synthesized sound.</p><a href="archive.html">In Progress</a></dialog>
+<dialog id="new-dialog" class="reach-dialog" aria-labelledby="new-title"><header><h2 id="new-title">Start a new voyage?</h2><button data-close="new-dialog">Cancel</button></header><p>Your current voyage will be kept as the backup save.</p><button id="confirm-new" class="ww-primary">New voyage</button></dialog>
+<dialog id="import-dialog" class="reach-dialog" aria-labelledby="import-title"><header><h2 id="import-title">Load this voyage?</h2><button data-close="import-dialog">Cancel</button></header><p id="import-preview"></p><button id="confirm-import" class="ww-primary">Load voyage</button></dialog>
+<p id="boot-error" role="alert" hidden></p>
+</main></body></html>

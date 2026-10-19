@@ -2,7 +2,7 @@
 const {app,BrowserWindow,Menu,protocol,session,ipcMain,dialog,shell,powerMonitor}=require('electron');
 const fs=require('node:fs/promises'),path=require('node:path');
 const {ORIGIN,CSP,localURL,gameURL,assetPath,externalURL,requestAllowed}=require('./policy.cjs');
-const {MAX_SAVE_BYTES}=require('./game/js/widewake-sea-save.js');
+const MAX_SAVE_BYTES=2_000_000;
 const value=name=>process.argv.find(arg=>arg.startsWith(name+'='))?.slice(name.length+1);
 app.setName('Widewake');
 app.setPath('userData',value('--profile')?path.resolve(value('--profile')):path.join(app.getPath('appData'),'Widewake'));
@@ -79,7 +79,7 @@ if(ownsProfile)app.whenReady().then(async()=>{
     {label:'Widewake',submenu:[{role:'about'},{type:'separator'},{role:'hide'},{role:'hideOthers'},{role:'unhide'},{type:'separator'},{role:'quit'}]},
     {role:'editMenu'},{label:'Window',submenu:[{role:'minimize'},{role:'togglefullscreen'}]}
   ]):null);
-  win=new BrowserWindow({title:'Widewake',width:1440,height:900,minWidth:640,minHeight:360,useContentSize:true,show:false,backgroundColor:'#182d2b',autoHideMenuBar:true,
+  win=new BrowserWindow({title:'Widewake',width:1440,height:900,minWidth:640,minHeight:360,useContentSize:true,show:false,backgroundColor:'#101627',autoHideMenuBar:true,
     webPreferences:{preload:path.join(__dirname,'preload.cjs'),nodeIntegration:false,contextIsolation:true,sandbox:true,webSecurity:true,allowRunningInsecureContent:false,webviewTag:false}});
   win.webContents.setWindowOpenHandler(({url})=>{openExternal(url);return{action:'deny'};});
   win.webContents.on('will-navigate',(event,url)=>{if(!gameURL(url)){event.preventDefault();openExternal(url);}});

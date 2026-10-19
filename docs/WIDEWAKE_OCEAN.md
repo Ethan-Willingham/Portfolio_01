@@ -6,8 +6,10 @@ Final image generation is still deferred.
 
 The later owner clarification makes Factorio a reference for sprite detail,
 animation and rendering efficiency. Widewake retains its nautical identity.
-Publish tested milestones regularly. The following stages remain separate from
-the existing campaign until routes, work and progression can migrate together.
+Publish tested milestones regularly. The owner's next instruction explicitly
+asks to retire the old world and make this ocean the game. Version 0.22 connects
+routes, trading, work, progression and saves in Bracken Reach. See
+`WIDEWAKE_REACH.md`. The stages below record the earlier development order.
 
 ## Order of work
 

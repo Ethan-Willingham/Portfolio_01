@@ -77,16 +77,16 @@
       for(let i=0;i<=n;i++){const t=i/n;if(this.clearance(ship,a.x+(b.x-a.x)*t,a.y+(b.y-a.y)*t,angle,.2)<.2)return false;}return true;
     }
     route(ship,destination){
-      const target=ports.find(p=>p.id===destination);if(!target)return null;
+      const target=typeof destination==='object'&&destination&&Number.isFinite(destination.x)&&Number.isFinite(destination.y)?destination:ports.find(p=>p.id===destination);if(!target)return null;
       const nodes=this.nodes,count=nodes.length,dist=new Float64Array(count).fill(Infinity),prev=new Int32Array(count).fill(-1),used=new Uint8Array(count),via=new Array(count);
       const candidates=nodes.map((n,i)=>({i,d:Math.hypot(n.x-ship.x,n.y-ship.y)})).sort((a,b)=>a.d-b.d).slice(0,16);
       for(const c of candidates)if(this.legClear(ship,ship,nodes[c.i]))dist[c.i]=c.d;
       const goal=nodes.reduce((best,n,i)=>Math.hypot(n.x-target.x,n.y-target.y)<Math.hypot(nodes[best].x-target.x,nodes[best].y-target.y)?i:best,0);
       for(let k=0;k<count;k++){let at=-1,best=Infinity;for(let i=0;i<count;i++)if(!used[i]&&dist[i]<best){best=dist[i];at=i;}if(at<0)break;if(at===goal)break;used[at]=1;
         for(const edge of nodes[at].edges){if(used[edge.to]||dist[edge.to]<=best+edge.distance)continue;if(!this.legClear(ship,nodes[at],nodes[edge.to]))continue;dist[edge.to]=best+edge.distance;prev[edge.to]=at;via[edge.to]=edge.channel;}}
-      if(!Number.isFinite(dist[goal]))return null;
-      const points=[],branches=new Set();for(let at=goal;at!==-1;at=prev[at]){points.push({x:nodes[at].x,y:nodes[at].y});if(via[at])branches.add(via[at]);}points.reverse();
-      return{destination:target,points,distance:dist[goal],name:branches.has('cut')?'Reed cut':'Main channel',index:0};
+      if(!Number.isFinite(dist[goal])||!this.legClear(ship,nodes[goal],target))return null;
+      const points=[],branches=new Set();for(let at=goal;at!==-1;at=prev[at]){points.push({x:nodes[at].x,y:nodes[at].y});if(via[at])branches.add(via[at]);}points.reverse();if(Math.hypot(points.at(-1).x-target.x,points.at(-1).y-target.y)>1)points.push({x:target.x,y:target.y});
+      return{destination:target,points,distance:dist[goal]+Math.hypot(nodes[goal].x-target.x,nodes[goal].y-target.y),name:branches.has('cut')?'Reed cut':'Main channel',index:0};
     }
   }
   function createShip(type='launch'){const spec=vessels[type],port=ports[0];return{id:0,type,...spec,maxHp:spec.hp,x:port.x,y:port.y,px:port.x,py:port.y,angle:0,previousAngle:0,vx:0,vy:0,hit:0,working:false};}

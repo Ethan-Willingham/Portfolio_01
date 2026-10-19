@@ -84,18 +84,19 @@
       for(let i=0;i<this.count;i++){
         if(this.hp[i]<=0)continue;this.px[i]=this.x[i];this.py[i]=this.y[i];const target=this.acquire(this.x[i],this.y[i],ships,battle.tick),s=ships[target];this.target[i]=target;if(!s||s.hp<=0)continue;
         const dx=s.x-this.x[i],dy=s.y-this.y[i],d2=dx*dx+dy*dy,d=Math.sqrt(d2)||1;this.cooldown[i]-=dt;
-        if(d<s.radius+6){if(this.cooldown[i]<=0){battle.hurt(s,this.kind[i]===1?16:8);this.cooldown[i]=1.2;battle.kill(i,false);}continue;}
+        if(Math.hypot(s.x-this.x[i],s.y-this.y[i])<s.radius+6){if(this.cooldown[i]<=0){battle.hurt(s,this.kind[i]===1?16:8);this.cooldown[i]=1.2;battle.kill(i,false);}continue;}
         // A shared density gradient, not an all-pairs separation pass. Steering
         // is staggered, while motion and actual collision remain at 60 Hz.
         if((battle.tick+this.id[i])%4===0){
+          const waypoint=battle.enemyWaypoint?.(this.x[i],this.y[i],s)||s,dx=waypoint.x-this.x[i],dy=waypoint.y-this.y[i],d=Math.hypot(dx,dy)||1;
           const cx=Math.floor(this.x[i]/cell),cy=Math.floor(this.y[i]/cell);
           const gx=clamp((this.population[hash(cx-1,cy)]-this.population[hash(cx+1,cy)])*.022,-.45,.45),gy=clamp((this.population[hash(cx,cy-1)]-this.population[hash(cx,cy+1)])*.022,-.45,.45);
           const sway=((this.id[i]%13)-6)*.025,speed=this.kind[i]===1?66:this.kind[i]===2?39:49;
           let ux=dx/d+gx-dy/d*sway,uy=dy/d+gy+dx/d*sway;const inv=1/(Math.sqrt(ux*ux+uy*uy)||1),stop=this.kind[i]===2&&d<340?-.18:1;
           this.vx[i]=ux*inv*speed*stop;this.vy[i]=uy*inv*speed*stop;
         }
-        this.x[i]+=this.vx[i]*dt;this.y[i]+=this.vy[i]*dt;
-        if(this.kind[i]===2&&d<480&&this.cooldown[i]<=0){battle.shots.fire(this.x[i],this.y[i],s.x,s.y,weapons.hostile,0);this.cooldown[i]=4+(this.id[i]%7)*.2;}
+        if(battle.moveEnemy)battle.moveEnemy(i,dt);else{this.x[i]+=this.vx[i]*dt;this.y[i]+=this.vy[i]*dt;}
+        if(this.kind[i]===2&&d<480&&this.cooldown[i]<=0&&(!battle.clearShot||battle.clearShot(this.x[i],this.y[i],s.x,s.y))){battle.shots.fire(this.x[i],this.y[i],s.x,s.y,weapons.hostile,0);this.cooldown[i]=4+(this.id[i]%7)*.2;}
       }
     }
     segment(x0,y0,x1,y1,radius){
@@ -113,12 +114,12 @@
   }
   class Shots{
     constructor(){this.count=0;this.hostile=0;this.rejected=0;this.peak=0;for(const key of ['x','y','px','py','vx','vy','life','total','damage','splash','height','previousHeight','pierce','kind','startX','startY','endX','endY'])this[key]=new Float32Array(LIMITS.shots);this.previousHit=new Uint32Array(LIMITS.shots);this.owner=new Uint8Array(LIMITS.shots);}
-    fire(x,y,tx,ty,spec,offset=0,owner=255,travel=spec.range+120){
+    fire(x,y,tx,ty,spec,offset=0,owner=255,travel=spec.range+120,height=8){
       if(this.count>=LIMITS.shots||spec.kind!==3&&this.count-this.hostile>=LIMITS.shots-LIMITS.hostileReserve){this.rejected++;return false;}
       const i=this.count++,dx=tx-x,dy=ty-y,d=Math.hypot(dx,dy)||1,a=Math.atan2(dy,dx)+offset;
       this.kind[i]=spec.kind;this.x[i]=this.px[i]=this.startX[i]=x;this.y[i]=this.py[i]=this.startY[i]=y;this.endX[i]=tx;this.endY[i]=ty;
       this.vx[i]=Math.cos(a)*spec.speed;this.vy[i]=Math.sin(a)*spec.speed;this.life[i]=this.total[i]=spec.kind===2?.75+d/900:travel/spec.speed;
-      this.damage[i]=spec.damage;this.splash[i]=spec.splash;this.pierce[i]=spec.pierce;this.previousHit[i]=0;this.owner[i]=owner;this.height[i]=this.previousHeight[i]=8;if(spec.kind===3)this.hostile++;this.peak=Math.max(this.peak,this.count);return true;
+      this.damage[i]=spec.damage;this.splash[i]=spec.splash;this.pierce[i]=spec.pierce;this.previousHit[i]=0;this.owner[i]=owner;this.height[i]=this.previousHeight[i]=height;if(spec.kind===3)this.hostile++;this.peak=Math.max(this.peak,this.count);return true;
     }
     remove(i){if(this.kind[i]===3)this.hostile--;const last=--this.count;for(const k of ['x','y','px','py','vx','vy','life','total','damage','splash','height','previousHeight','pierce','kind','startX','startY','endX','endY','previousHit','owner'])this[k][i]=this[k][last];}
     step(dt,battle){const swarm=battle.raiders;
@@ -128,6 +129,7 @@
           if(this.life[i]<=0){swarm.splash(this.x[i],this.y[i],this.splash[i],this.damage[i],battle);battle.effects.add(this.x[i],this.y[i],this.splash[i],0);battle.sound('mortar-hit',this.x[i],this.y[i]);done=true;}
         }else{
           this.x[i]+=this.vx[i]*travelDt;this.y[i]+=this.vy[i]*travelDt;
+          if(battle.clearShot&&!battle.clearShot(this.px[i],this.py[i],this.x[i],this.y[i])){this.remove(i);continue;}
           if(kind===3){const vx=this.x[i]-this.px[i],vy=this.y[i]-this.py[i],v2=vx*vx+vy*vy||1;for(const s of battle.ships){if(s.hp<=0)continue;const dx=s.x-this.px[i],dy=s.y-this.py[i],t=clamp((dx*vx+dy*vy)/v2,0,1);if((dx-vx*t)**2+(dy-vy*t)**2<(s.radius+2)**2){battle.hurt(s,this.damage[i]);done=true;break;}}}
           else{const hits=swarm.segment(this.px[i],this.py[i],this.x[i],this.y[i],kind===1?5:2);for(let h=0;h<hits;h++){const j=swarm.hits[h];if(swarm.hp[j]<=0||swarm.id[j]===this.previousHit[i])continue;this.previousHit[i]=swarm.id[j];battle.damage(j,this.damage[i]);battle.impact(swarm.x[j],swarm.y[j],this.owner[i]===0&&battle.control.fire);
               if(this.splash[i]){swarm.splash(this.x[i],this.y[i],this.splash[i],this.damage[i]*.65,battle);battle.effects.add(this.x[i],this.y[i],this.splash[i]*.55,0);}
@@ -191,7 +193,7 @@
         const tx=manual?input.aim.x:a.x[target],ty=manual?input.aim.y:a.y[target],flight=mount.weapon==='mortar'?.75+Math.hypot(tx-s.x,ty-s.y)/900:Math.hypot(tx-s.x,ty-s.y)/spec.speed;
         const ax=tx+(manual?0:a.vx[target]*flight*.75),ay=ty+(manual?0:a.vy[target]*flight*.75),angle=Math.atan2(ay-s.y,ax-s.x),x=s.x+Math.cos(s.angle)*mount.along+Math.cos(angle)*10,y=s.y+Math.sin(s.angle)*mount.along+Math.sin(angle)*10;
         const offset=mount.weapon==='gun'?(this.random()-.5)*.018:0,travel=manual?rayReach(x,y,angle+offset,p,spec.range+120):spec.range+120;
-        mount.angle=angle;if(this.shots.fire(x,y,ax,ay,spec,offset,s.id,travel)){mount.flash=.07;mount.recoil=mount.weapon==='mortar'?5:2.8;s.flash=.07;s.turret=angle;if(mount.along<=0&&this.tick%3===0)this.sound(mount.weapon,x,y);}
+        mount.angle=angle;if(this.shots.fire(x,y,ax,ay,spec,offset,s.id,travel,Math.min(8,s.height*.28)+.2+4*clamp(s.width/24,.12,.85))){mount.flash=.07;mount.recoil=mount.weapon==='mortar'?5:2.8;s.flash=.07;s.turret=angle;if(mount.along<=0&&this.tick%3===0)this.sound(mount.weapon,x,y);}
         mount.cooldown+=spec.interval*(s.working?9:1);
       }
       this.shots.step(dt,this);this.effects.step(dt);
