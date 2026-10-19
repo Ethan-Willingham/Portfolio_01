@@ -1,0 +1,20 @@
+{
+  "name": "widewake-desktop-tools",
+  "version": "0.9.0",
+  "private": true,
+  "description": "Offline desktop packaging and verification for Widewake",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "stage": "node prepare.mjs",
+    "start": "node prepare.mjs && electron stage",
+    "package": "node package.mjs",
+    "test": "node prepare.mjs && node test-policy.cjs && node test-desktop.cjs"
+  },
+  "devDependencies": {
+    "@electron/packager": "20.3.0",
+    "electron": "44.9.0",
+    "playwright": "1.64.1"
+  }
+}

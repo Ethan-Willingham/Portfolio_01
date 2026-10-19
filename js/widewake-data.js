@@ -153,7 +153,7 @@
       {kind:'return',key:'havana',text:'Bring the fleet home to Havana.',target:'havana'}]}
   ];
   const ranks=[0,100,450,1300,2800,5000,8000,12000,18000,28000];
-  const data={version:'0.8.0',goods,ports,hulls,boats,relics,fish,sites,bosses,upgrades,signals,charters,ranks};
+  const data={version:'0.9.0',goods,ports,hulls,boats,relics,fish,sites,bosses,upgrades,signals,charters,ranks};
   if(typeof module!=='undefined'&&module.exports)module.exports=data;
   root.WidewakeData=data;
 })(typeof globalThis!=='undefined'?globalThis:this);

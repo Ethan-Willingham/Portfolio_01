@@ -13,19 +13,19 @@
   <meta property="og:image" content="https://ethanwillingham.com/assets/widewake/cover.png">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="preload" href="assets/fonts/commit_mono_regular.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="widewake.css?v=0.8.0">
+  <link rel="stylesheet" href="widewake.css?v=0.9.0">
   <script defer src="js/demo-activity.js"></script>
-  <script defer src="js/widewake-data.js?v=0.8.0"></script>
-  <script defer src="js/widewake-world.js?v=0.8.0"></script>
-  <script defer src="js/widewake-voyage.js?v=0.8.0"></script>
-  <script defer src="js/widewake-work.js?v=0.8.0"></script>
-  <script defer src="js/widewake-core.js?v=0.8.0"></script>
-  <script defer src="js/widewake-render.js?v=0.8.0"></script>
-  <script defer src="js/widewake-convoy.js?v=0.8.0"></script>
-  <script defer src="js/widewake-front.js?v=0.8.0"></script>
-  <script defer src="js/widewake-controller.js?v=0.8.0"></script>
-  <script defer src="js/widewake-audio.js?v=0.8.0"></script>
-  <script defer src="js/widewake.js?v=0.8.0"></script>
+  <script defer src="js/widewake-data.js?v=0.9.0"></script>
+  <script defer src="js/widewake-world.js?v=0.9.0"></script>
+  <script defer src="js/widewake-voyage.js?v=0.9.0"></script>
+  <script defer src="js/widewake-work.js?v=0.9.0"></script>
+  <script defer src="js/widewake-core.js?v=0.9.0"></script>
+  <script defer src="js/widewake-render.js?v=0.9.0"></script>
+  <script defer src="js/widewake-convoy.js?v=0.9.0"></script>
+  <script defer src="js/widewake-front.js?v=0.9.0"></script>
+  <script defer src="js/widewake-controller.js?v=0.9.0"></script>
+  <script defer src="js/widewake-audio.js?v=0.9.0"></script>
+  <script defer src="js/widewake.js?v=0.9.0"></script>
 </head>
 <body class="ww-body at-title">
   <main id="game" class="ww-game" aria-label="Widewake game">
@@ -51,7 +51,7 @@
         <button class="ww-audio-notice" hidden>Click or tap to enable sound in this browser.</button>
         <p id="title-storage" class="ww-title-storage" role="status"></p>
       </div>
-      <footer class="ww-title-footer"><span id="title-version">0.8.0 / Web edition</span><div><button id="title-fullscreen">Full screen</button><button id="title-credits">Credits</button></div></footer>
+      <footer class="ww-title-footer"><span id="title-version">0.9.0 / Web edition</span><div><button id="title-fullscreen">Full screen</button><button id="title-credits">Credits</button><button id="title-quit" hidden>Quit</button></div></footer>
     </section>
     <section id="harbor" class="ww-harbor" hidden aria-label="Harbor">
       <div class="ww-harbor-left">
@@ -103,7 +103,7 @@
       </details>
       <div class="ww-setting-buttons"><button id="settings-handbook">Captain's handbook</button><button id="fullscreen">Full screen</button></div>
       <div class="ww-save-section"><p class="ww-eyebrow">Your voyage</p><p id="save-message" class="ww-note"></p><div class="ww-save-actions"><button id="export-save">Export save</button><button id="import-save">Import save</button><input id="save-file" type="file" accept=".json,application/json" hidden><button id="new-game" class="ww-danger">New voyage</button></div></div>
-      <button id="return-title" class="ww-return-title">Save &amp; return to title</button>
+      <button id="return-title" class="ww-return-title">Save &amp; return to title</button><button id="quit-game" class="ww-return-title" hidden>Save &amp; quit</button>
     </dialog>
     <dialog id="handbook-dialog" class="ww-dialog ww-handbook" aria-labelledby="handbook-title"><div class="ww-dialog-head"><div><p class="ww-eyebrow">The captain's handbook</p><h2 id="handbook-title">Make a living at sea</h2></div><button data-close="handbook-dialog">Return</button></div><div class="ww-handbook-grid">
       <section><h3>The helm</h3><p id="controller-handbook" class="ww-controller-only"></p><p class="ww-desktop-help"><kbd>WASD</kbd> or arrows steer. Hold <kbd>Shift</kbd> for full steam. Click and hold on the ocean to aim your guns. Scroll to zoom.</p><p class="ww-touch-help">Drag the steering pad to sail. Push it to the rim for full steam. Your guns aim and fire automatically. Hold a second finger on open water to aim and fire yourself. Use + and &minus; to zoom.</p><p>Open the world chart to choose a destination. The helmsman follows a water route. Steer to take over whenever you want. Your destination stays marked; open the chart to set a fresh course from your new position.</p></section>
@@ -111,7 +111,7 @@
       <section><h3>Keep the fleet afloat</h3><p>Guns and escorts fire automatically. Broadside fires every gun at once, then needs nine seconds to reload. Patch hulls repairs the fleet for 100 coins.</p><p>The inset chart shows nearby ships and hostile contacts. Use Convoy to assign guards to particular boats. Its SOS notice opens on the most damaged boat; sort by hull condition to check the others. Red hull bars need attention. A sunken support boat takes its cargo with it. If your flagship goes down, salvagers take half the remaining cargo and a recovery fee. Harbor relief keeps at least 260 coins available; surviving hulls are repaired. Your progress and upgrades remain.</p></section>
       <section><h3>Work and discovery</h3><p>A trawler fishes; an oil tender pumps crude. Bring one to the matching site and deploy it. Protect it until the operation finishes. Check the chart for the working time, expected load and raider forecast. Cold-water schools move; deep nets and pressure wells bring larger loads up in slower cycles. Approach warnings give you time to reposition. Recall a workboat early to keep the cargo already aboard, or finish the watch for its bonus.</p><p>Sea signals mark wrecks, traders and crews in trouble. The Voyage desk links your first trade to a journey around the world. Follow it at your own pace.</p></section>
     </div><p class="ww-handbook-keys ww-desktop-help"><kbd>M</kbd> Chart &nbsp; <kbd>C</kbd> Convoy &nbsp; <kbd>E</kbd> Dock / work / investigate &nbsp; <kbd>Space</kbd> Broadside &nbsp; <kbd>R</kbd> Repair &nbsp; <kbd>F</kbd> Formation &nbsp; <kbd>Esc</kbd> Pause</p></dialog>
-    <dialog id="credits-dialog" class="ww-dialog ww-settings" aria-labelledby="credits-title"><div class="ww-dialog-head"><h2 id="credits-title">Widewake</h2><button data-close="credits-dialog">Return</button></div><p class="ww-letter">A little boat. The whole wide world.<small>A game by Ethan Willingham</small></p><p class="ww-note">An independent game in development. Built for the web, with a Steam release in mind.</p><p class="ww-note">Earth coastline data: <a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener">Natural Earth</a>, public domain. Current harbor and vessel art is drawn in canvas. Sound is synthesized locally.</p><a class="ww-site-exit" href="archive.html">Return to Ethan's In Progress page</a></dialog>
+    <dialog id="credits-dialog" class="ww-dialog ww-settings" aria-labelledby="credits-title"><div class="ww-dialog-head"><h2 id="credits-title">Widewake</h2><button data-close="credits-dialog">Return</button></div><p class="ww-letter">A little boat. The whole wide world.<small>A game by Ethan Willingham</small></p><p class="ww-note">An independent game in development. Built for the web, with a Steam release in mind.</p><p class="ww-note">Earth coastline data: <a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener">Natural Earth</a>, public domain. Current harbor and vessel art is drawn in canvas. Sound is synthesized locally.</p><a class="ww-site-exit" href="https://ethanwillingham.com/archive.html">Return to Ethan's In Progress page</a></dialog>
     <dialog id="departure-dialog" class="ww-dialog ww-departure" aria-labelledby="departure-title"><p class="ww-eyebrow">Havana / your first morning</p><h2 id="departure-title">The cutter is yours.</h2><p class="ww-letter">“Twelve sacks of sugar in the hold. Nassau pays well for them. Wren will see you across.”<small>Mara, at the quay</small></p><p class="ww-note">Open the chart, sail to Nassau, and sell the sugar. Your first profits can put a fishing boat in the convoy.</p><div class="ww-save-actions"><button id="first-course" class="ww-primary">Chart a course to Nassau</button><button data-close="departure-dialog">Look around the harbor</button></div></dialog>
     <dialog id="reset-dialog" class="ww-dialog ww-settings" aria-labelledby="reset-title"><div class="ww-dialog-head"><h2 id="reset-title">Start a new voyage?</h2></div><p class="ww-note">This replaces the fleet saved on this device. Export it first if you want to sail it again.</p><div class="ww-save-actions"><button data-close="reset-dialog">Keep this fleet</button><button id="reset-export">Export current fleet</button><button id="confirm-reset" class="ww-danger">Start a new voyage</button></div><p id="reset-message" class="ww-note" role="status"></p></dialog>
     <noscript><p>Widewake needs JavaScript enabled to run.</p></noscript>

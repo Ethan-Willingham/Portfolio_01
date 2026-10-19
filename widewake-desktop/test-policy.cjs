@@ -1,0 +1,11 @@
+const assert=require('node:assert/strict');
+const p=require('./policy.cjs'),files=new Set(['widewake.html','js/widewake.js','assets/widewake/earth-land.geojson']);
+assert.equal(p.assetPath('widewake://game/widewake.html?test',files),'widewake.html');
+assert.equal(p.assetPath('widewake://game/js/widewake.js?v=0.9.0',files),'js/widewake.js');
+for(const url of ['file:///etc/passwd','https://game/widewake.html','widewake://evil/widewake.html','widewake://game:80/widewake.html','widewake://user@game/widewake.html','widewake://game/%2e%2e/package.json','widewake://game/%2e%2e%2fmain.cjs','widewake://game/%zz','widewake://game/assets/fonts/unlisted.woff2'])assert.equal(p.assetPath(url,files),null,url);
+for(const url of ['https://example.com','http://127.0.0.1/','file:///etc/passwd','blob:https://example.com/id'])assert.equal(p.requestAllowed(url),false);
+assert.ok(p.requestAllowed('blob:widewake://game/save-id'));
+assert.ok(p.externalURL('https://ethanwillingham.com/archive.html'));
+for(const url of ['https://ethanwillingham.com/archive.html?redirect=evil','https://www.naturalearthdata.com.evil/','javascript:alert(1)','file:///tmp/save'])assert.equal(p.externalURL(url),false);
+assert.ok(!p.CSP.includes("script-src 'self' 'unsafe-inline'"));
+console.log('PASS desktop protocol allowlist, traversal, remote-request and external-link boundaries');

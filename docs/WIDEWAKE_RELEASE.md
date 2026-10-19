@@ -42,9 +42,9 @@ The exact owner constraints and source links are in `WIDEWAKE.md`.
 | Sound | Original score, spatial cues, mixer, bounded voices and suspended/interrupted recovery | Listening on speakers/headphones, broader regional atmosphere, long-session comfort and battle priority review |
 | Interface and access | Keyboard, mouse, touch and standard controller flows; focus, editable settings and release gates | Physical controllers, remapping, button-label coverage, readable text and non-color threat cues |
 | Mobile | Chromium and WebKit touch emulation | Full-screen portrait and landscape flows, safe areas, browser-height changes, sustained performance and physical-device validation |
-| Saves and recovery | Validated imports, backup, positions, courses and 628 periodic campaign snapshots | Reload combat and admiral boundaries, migration, desktop persistence and long-session recovery |
+| Saves and recovery | Validated imports, backup, 628 campaign snapshots and exact native mid-watch close/reopen | Fix the verified admiral-health reset on reload; review active combat continuation and long-session recovery |
 | Performance | Five-minute 1,200-enemy browser run on M1 Pro with sound active and stable retained memory | Constrained-device budgets, longer sessions, loading cost and input latency |
-| Shipping | Public GitHub Pages build with cache versions | Desktop package, platform/controller services, asset/license inventory, release QA, distributable smoke checks and store materials |
+| Shipping | Public web build, tested offline Mac app, Windows package and asset inventory | Windows execution, signing, font clearance, Steam services, release QA and store materials |
 
 ## Release gates
 
@@ -433,3 +433,64 @@ at active combat and admiral boundaries. Transient enemies currently regenerate
 on reload; the consequence for an injured admiral needs a dedicated check.
 Physical devices, human pacing/listening, remapping, final assets and platform
 integration remain release requirements. The production goal stays active.
+
+
+## Pass 7, an actual desktop application, v0.9
+
+The offline application packages the same game, coastlines, fonts, worker and
+audio synthesis in a local ASAR archive. There is no development server or
+website dependency. A dedicated application identity, cutter icon, native file
+pickers, full screen and Quit complete the window-level flow. The web interface
+keeps these desktop-only actions hidden. The Sluice desktop project is untouched.
+
+The profile and origin remain stable across version updates. Native exports
+report actual completion or cancellation, and imports retain the existing
+campaign validator. Closing the window first writes the current fleet, then
+flushes storage. Write failure leaves the window open by default with export
+still usable. A second instance cannot open the same profile concurrently.
+
+The native-window check exposed a mismatch between OS minimization and the
+renderer visibility reported through automation. The app now forwards its own
+blur, minimize, hide, lock and suspend events into the game's existing activity
+scheduler. Returning can restore UI scheduling but cannot silently unpause the
+voyage. This avoids depending solely on document visibility at the host boundary.
+
+Evidence:
+
+- The staged application and the packaged Mac arm64 executable launch offline
+  on Electron 44.9.0. Checks cover renderer isolation, resource/path boundaries,
+  one profile owner, native full screen, exports, canceled pickers, failed file
+  writes, malformed imports and restoring a portable browser-format save.
+- The native captain buys sugar, follows the worker's water route, docks at
+  Nassau, sells earned cargo, buys a trawler and begins protected fishing.
+  Closing the OS window mid-watch and reopening preserves exact coins, fish,
+  elapsed campaign time and work progress. Ordinary fixed steps accelerate
+  travel; the run does not grant money, hull health or victories.
+- Minimizing stops simulation and controller polling, and restoring retains the
+  pause. Simulated OS suspend/resume signals also retain pause. Failed local
+  storage leaves the application open and an emergency JSON export remains
+  available. The final successful Quit closes the owned process.
+- Chromium and WebKit web launcher checks still cover title, settings, file
+  import, corrupt/unavailable storage, pause, rotation, touch and contained
+  layouts. Native Quit stays hidden in the website. No gameplay balance or
+  simulation module was changed during this pass.
+- Mac arm64 and Windows x64 packages build with the same 22 served game files,
+  about 675 KB before the runtime. Each served file has a byte count and SHA-256
+  digest. The complete runtime folders are approximately 308 MB and 369 MB.
+  The Windows package has not executed on Windows. Builds remain local.
+
+Whole-game review: launch now has a concrete application counterpart to the web
+home. Native persistence and window transitions were tested through earned trade
+and protected production. Helm, combat, convoy behavior, world routes, campaign
+content, interim harbors and the score share the same sources and remain at their
+prior settings. Web/mobile launch and save regressions were checked around the
+shell changes. The asset inventory includes font-rights checks and bundled
+open-source notices; it does not claim all release rights are cleared.
+
+Next: active combat continuation is now a verified issue, not just a suspicion.
+A Red Widow reduced from 2,600 to 2,000 hull reloads at 2,600 after one step.
+Fix named encounter continuity, then review interruption and return through
+ordinary battles and sea operations. Keep working through the whole ledger.
+Signing, proprietary font clearance, Windows/Linux/Steam Deck execution,
+Steamworks/cloud integration, final art, remapping and physical/human play remain
+open. This desktop increment does not complete the production goal.

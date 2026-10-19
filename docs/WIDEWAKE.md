@@ -85,10 +85,13 @@ distinct interim backgrounds while that art pass is deferred.
 - `js/widewake-route-worker.js`: route searches off the rendering thread.
 - `assets/widewake/earth-land.geojson`: vendored Natural Earth coastline data.
 - `tools/widewake/`: core, geography, browser, and scale checks.
+- `widewake-desktop/`: isolated Electron packaging, native file pickers, window
+  lifecycle and packaged-app verification. `desktop/` is Sluice's separate build.
 
-There is no framework, CDN, game dependency, or bundle step. Serve the repository
-over HTTP. Bump all Widewake CSS/script version parameters together when editing
-it. Do not change Sluice or the other games as part of Widewake work.
+The web game has no framework, CDN, game dependency or bundle step. Serve the
+repository over HTTP. Bump all Widewake CSS/script version parameters together
+when editing it. Desktop dependencies are isolated in `widewake-desktop`.
+Do not change Sluice or the other games as part of Widewake work.
 
 ## Initial game loop
 
@@ -332,9 +335,14 @@ record a reliable watch total.
 Transient projectiles and enemy
 formations are regenerated after loading; they are not a replay format.
 
-Exported JSON is the portable save format for this browser build. A future Steam
-package should retain the core module and adapt persistence, input and platform
-services through the browser shell, rather than rewriting the economy.
+Exported JSON is portable between the web and desktop builds. The desktop app
+retains the same core and stable save schema, with a separate local profile.
+Native pickers report completed export, cancellation and failure. Window closing
+saves the current fleet before quitting; a failed write leaves it open by default.
+The packaged-app check includes an exact mid-watch close and reopen. Steam Cloud
+and platform services still need a deliberate adapter. See
+`widewake-desktop/README.md` for builds and `widewake-desktop/ASSETS.md` before
+distributing binaries.
 
 ## Checks
 

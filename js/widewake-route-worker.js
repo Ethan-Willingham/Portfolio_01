@@ -1,5 +1,5 @@
 /* Keeps long ocean route searches off the animation/input thread. */
-importScripts('widewake-world.js?v=0.8.0');
+importScripts('widewake-world.js?v=0.9.0');
 let earth;
 self.onmessage=e=>{const m=e.data;try{
   if(m.type==='init'){earth=new WidewakeWorld.Earth(m.geojson);earth.makeGrid();self.postMessage({type:'ready'});}
