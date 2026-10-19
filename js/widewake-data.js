@@ -107,7 +107,7 @@
     {id:'engine',name:'Engine',base:350,description:'+8% speed for the whole fleet per level.'},
     {id:'hold',name:'Cargo racks',base:220,description:'+16 cargo capacity on your flagship per level.'}
   ];
-  const data={version:'0.1.0',goods,ports,hulls,boats,relics,fish,sites,bosses,upgrades};
+  const data={version:'0.1.1',goods,ports,hulls,boats,relics,fish,sites,bosses,upgrades};
   if(typeof module!=='undefined'&&module.exports)module.exports=data;
   root.WidewakeData=data;
 })(typeof globalThis!=='undefined'?globalThis:this);

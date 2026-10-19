@@ -28,3 +28,5 @@
 @media(prefers-reduced-motion:reduce){.ww-game *{animation:none!important;transition:none!important}}
 
 @media(pointer:coarse){.ww-game button,.ww-tabs button,.ww-quantity button,.ww-top-actions button,.ww-sea-actions button{min-height:44px}.ww-zoom button{width:44px}.ww-header{min-height:50px}.ww-setting-row input[type=checkbox]{width:24px;height:24px}.ww-setting-row{min-height:48px}}
+
+.ww-trade-buttons small{display:block;margin-top:2px;font:9px var(--font-mono);color:var(--text-dim)}

@@ -157,9 +157,20 @@ manual steering, automatic escorts, production, actual cargo loss, cooldowns,
 rank gates, contracts, pause/blur, persistent saves, malformed imports, touch
 input, page overflow, all service tabs, and a dense battle. Inspect screenshots.
 
+## Bulk order pricing
+
+Trades quote each unit against the changing supply curve and use that same
+quote for payment. The buttons show the complete order cost, with unit prices
+alongside. Max stops at affordable units, actual stock, or cargo capacity.
+Stock is always a whole number, including after market pressure decays overnight.
+Buying and immediately reselling must lose money even in an oversupplied port;
+the economy checks sweep every port and good across multiple order sizes and
+pressure levels. This closes the opening-price batch exploit found in the final
+review of the first build.
+
 ## Initial verification, 2026-10-18
 
-Twenty core scenarios passed, including a real first trade, economy constraints,
+Twenty-one core scenarios passed, including a real first trade, economy constraints,
 individual cargo loss, production and save continuation, multiple workboats
 losing their leader, upgrades, bosses, and rescue from bankruptcy. All 42 port
 and resource destinations have water-only routes. The actual helm and a
