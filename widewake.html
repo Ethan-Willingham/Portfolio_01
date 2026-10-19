@@ -13,16 +13,17 @@
   <meta property="og:image" content="https://ethanwillingham.com/assets/widewake/cover.png">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="preload" href="assets/fonts/commit_mono_regular.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="widewake.css?v=0.3.0">
+  <link rel="stylesheet" href="widewake.css?v=0.4.0">
   <script defer src="js/demo-activity.js"></script>
-  <script defer src="js/widewake-data.js?v=0.3.0"></script>
-  <script defer src="js/widewake-world.js?v=0.3.0"></script>
-  <script defer src="js/widewake-voyage.js?v=0.3.0"></script>
-  <script defer src="js/widewake-core.js?v=0.3.0"></script>
-  <script defer src="js/widewake-render.js?v=0.3.0"></script>
-  <script defer src="js/widewake-convoy.js?v=0.3.0"></script>
-  <script defer src="js/widewake-front.js?v=0.3.0"></script>
-  <script defer src="js/widewake.js?v=0.3.0"></script>
+  <script defer src="js/widewake-data.js?v=0.4.0"></script>
+  <script defer src="js/widewake-world.js?v=0.4.0"></script>
+  <script defer src="js/widewake-voyage.js?v=0.4.0"></script>
+  <script defer src="js/widewake-core.js?v=0.4.0"></script>
+  <script defer src="js/widewake-render.js?v=0.4.0"></script>
+  <script defer src="js/widewake-convoy.js?v=0.4.0"></script>
+  <script defer src="js/widewake-front.js?v=0.4.0"></script>
+  <script defer src="js/widewake-audio.js?v=0.4.0"></script>
+  <script defer src="js/widewake.js?v=0.4.0"></script>
 </head>
 <body class="ww-body at-title">
   <main id="game" class="ww-game" aria-label="Widewake game">
@@ -47,7 +48,7 @@
         </nav>
         <p id="title-storage" class="ww-title-storage" role="status"></p>
       </div>
-      <footer class="ww-title-footer"><span id="title-version">0.3.0 / Web edition</span><div><button id="title-fullscreen">Full screen</button><button id="title-credits">Credits</button></div></footer>
+      <footer class="ww-title-footer"><span id="title-version">0.4.0 / Web edition</span><div><button id="title-fullscreen">Full screen</button><button id="title-credits">Credits</button></div></footer>
     </section>
     <section id="harbor" class="ww-harbor" hidden aria-label="Harbor">
       <div class="ww-harbor-left">
@@ -70,11 +71,11 @@
       <div id="operation" class="ww-operation" hidden><span id="operation-text"></span><div class="ww-progress"><i id="operation-bar"></i></div><small id="operation-detail"></small></div>
       <div id="admiral" class="ww-operation ww-admiral" hidden><span id="admiral-name"></span><div class="ww-progress"><i id="admiral-health"></i></div><small id="admiral-order"></small></div>
       <div id="sea-objective" class="ww-sea-objective"></div>
-      <div class="ww-sea-bottom"><div id="fleet-strip" class="ww-fleet-strip"></div><div class="ww-sea-actions"><button id="convoy-open">Convoy <kbd>C</kbd></button><button id="formation">Screen formation <kbd>F</kbd></button><button id="broadside">Broadside <kbd>Space</kbd></button><button id="field-repair">Patch hulls <small>100c</small><kbd>R</kbd></button><button id="context-action" class="ww-primary" hidden></button><button id="sea-pause">Pause</button></div><p class="ww-controls"><kbd>WASD</kbd> sail <span>&middot;</span> <kbd>Shift</kbd> full steam <span>&middot;</span> guns aim automatically <span>&middot;</span> click to aim <span>&middot;</span> scroll to zoom</p></div>
+      <div class="ww-sea-bottom"><div id="fleet-strip" class="ww-fleet-strip"></div><div class="ww-sea-actions"><button id="convoy-open">Convoy <kbd>C</kbd></button><button id="formation">Screen formation <kbd>F</kbd></button><button id="broadside" class="ww-charge-button"><span>Broadside <kbd>Space</kbd></span><small id="broadside-status">Ready</small></button><button id="field-repair" class="ww-charge-button"><span>Patch hulls <kbd>R</kbd></span><small id="repair-status">100c</small></button><button id="context-action" class="ww-primary" hidden></button><button id="sea-pause">Pause</button></div><p class="ww-controls"><kbd>WASD</kbd> sail <span>&middot;</span> <kbd>Shift</kbd> full steam <span>&middot;</span> guns aim automatically <span>&middot;</span> click to aim <span>&middot;</span> scroll to zoom</p></div>
       <div id="joystick" class="ww-joystick" aria-label="Touch steering control"><div></div></div>
       <div class="ww-zoom"><button id="zoom-in" aria-label="Zoom in">+</button><button id="zoom-out" aria-label="Zoom out">&minus;</button></div>
     </section>
-    <div id="toasts" class="ww-toasts" role="status" aria-live="polite" aria-atomic="true"></div>
+    <div class="ww-feedback"><div id="toasts" class="ww-toasts" role="status" aria-live="polite" aria-atomic="true"></div><div id="sea-receipt" class="ww-sea-receipt" role="status" aria-live="polite" hidden></div></div>
     <dialog id="signal-dialog" class="ww-dialog ww-settings" aria-labelledby="signal-title"><div class="ww-dialog-head"><div><p class="ww-eyebrow">Signal at sea / paused</p><h2 id="signal-title"></h2></div><button data-close="signal-dialog">Leave</button></div><p id="signal-story" class="ww-letter"></p><div id="signal-choices"></div></dialog>
     <dialog id="ending-dialog" class="ww-dialog ww-ending" aria-labelledby="ending-title"><p class="ww-eyebrow">The long wake home / campaign complete</p><h2 id="ending-title">Havana, again.</h2><canvas id="ending-art" width="384" height="216" aria-label="Your flagship at the Havana quay"></canvas><p class="ww-letter">Mara has kept your old berth. She walks the length of the quay, counting the boats, then looks up at the flagship. “You can probably afford your own gunboat now.”</p><div id="ending-stats" class="ww-convoy-stats"></div><p class="ww-note">Your fleet, cargo and collections are saved. The ports are still trading. There is more ocean whenever you want it.</p><button class="ww-primary" data-close="ending-dialog">Keep sailing</button></dialog>
     <dialog id="convoy-dialog" class="ww-dialog ww-convoy-dialog" aria-labelledby="convoy-title"><div class="ww-dialog-head"><div><p id="convoy-caption" class="ww-eyebrow"></p><h2 id="convoy-title">Your convoy</h2></div><button data-close="convoy-dialog">Return <kbd>C</kbd></button></div><div class="ww-convoy-layout"><nav id="convoy-list" aria-label="Select a vessel"></nav><section id="convoy-detail" aria-label="Vessel manifest and orders"></section></div><p id="convoy-feedback" class="ww-note" role="status" aria-live="polite"></p></dialog>
@@ -82,7 +83,10 @@
     <dialog id="settings-dialog" class="ww-dialog ww-settings" aria-labelledby="settings-title">
       <div class="ww-dialog-head"><div><p id="settings-caption" class="ww-eyebrow">A moment at anchor</p><h2 id="settings-title">Paused</h2></div><button id="settings-return" data-close="settings-dialog">Resume</button></div>
       <div class="ww-setting-row"><label for="sound-enabled">Sound</label><input type="checkbox" id="sound-enabled" checked></div>
-      <div class="ww-setting-row"><label for="volume">Sound volume</label><input type="range" id="volume" min="0" max="0.5" step="0.01" value="0.22"></div>
+      <div class="ww-setting-row"><label for="volume">Master volume</label><div class="ww-mix-control"><input type="range" id="volume" min="0" max="0.5" step="0.01" value="0.22"><output id="volume-value" for="volume">44%</output></div></div>
+      <div class="ww-setting-row"><label for="music-volume">Music</label><div class="ww-mix-control"><input type="range" id="music-volume" min="0" max="1" step="0.05" value="0.35"><output id="music-value" for="music-volume">35%</output></div></div>
+      <div class="ww-setting-row"><label for="effects-volume">Effects</label><div class="ww-mix-control"><input type="range" id="effects-volume" min="0" max="1" step="0.05" value="0.8"><output id="effects-value" for="effects-volume">80%</output></div></div>
+      <div class="ww-setting-row"><label for="ambience-volume">Sea and harbor</label><div class="ww-mix-control"><input type="range" id="ambience-volume" min="0" max="1" step="0.05" value="0.5"><output id="ambience-value" for="ambience-volume">50%</output></div></div>
       <div class="ww-setting-row"><label for="autofire">Automatic cannon fire</label><input type="checkbox" id="autofire" checked></div>
       <div class="ww-setting-row"><label for="camera-shake">Small camera impacts</label><input type="checkbox" id="camera-shake" checked></div>
       <div class="ww-setting-row"><label for="reduced-motion">Reduce animation</label><input type="checkbox" id="reduced-motion"></div>

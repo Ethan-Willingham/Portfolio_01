@@ -1,4 +1,4 @@
-/* Browser shell, input, local saves, and restrained synthesized sound. */
+/* Browser shell, input, local saves, and game feedback. */
 (function(){
   'use strict';
   const D=WidewakeData,W=WidewakeWorld,C=WidewakeCore,R=WidewakeRender;
@@ -12,24 +12,33 @@
   const input={x:0,y:0,fire:false,boost:false,aim:null},keys=new Set(),touch={x:0,y:0};
   const activity=DemoActivity.create($('game'));
   const convoy=new WidewakeConvoy({game:()=>game,open:()=>modal('convoy-dialog'),change:()=>commit()});
-  class Sound{
-    constructor(){const A=window.AudioContext||window.webkitAudioContext;this.ctx=A?new A():null;this.lastPlayed=Object.create(null);}
-    play(kind){if(!game?.s.settings.sound||game.s.settings.volume<=0||!this.ctx||!activity.active())return;const a=this.ctx;if(a.state==='suspended')a.resume().catch(()=>{});const now=a.currentTime,interval=({shot:.12,hit:.06,hurt:.18,burst:.5,rare:.3})[kind]||.05;if(now-(this.lastPlayed[kind]??-10)<interval)return;this.lastPlayed[kind]=now;
-      const gain=a.createGain();gain.connect(a.destination);const v=game.s.settings.volume*.35;gain.gain.setValueAtTime(Math.max(.0001,v),now);gain.gain.exponentialRampToValueAtTime(.0001,now+(kind==='burst'?.5:.18));
-      if(['shot','hit','hurt','burst'].includes(kind)){const length=Math.floor(a.sampleRate*.16),buffer=a.createBuffer(1,length,a.sampleRate),data=buffer.getChannelData(0);for(let i=0;i<length;i++)data[i]=(Math.random()*2-1)*(1-i/length);const source=a.createBufferSource(),filter=a.createBiquadFilter();filter.type='lowpass';filter.frequency.value=kind==='shot'?450:kind==='hit'?700:230;source.buffer=buffer;source.connect(filter);filter.connect(gain);source.start();source.stop(now+.18);}
-      else{const o=a.createOscillator();o.type='triangle';const freq=kind==='coin'?740:kind==='rare'?520:kind==='upgrade'?430:290;o.frequency.setValueAtTime(freq,now);o.frequency.exponentialRampToValueAtTime(freq*1.4,now+.09);o.connect(gain);o.start();o.stop(now+.2);}
-    }
+  let audioUnavailable=false,lastBurstCD=0,aimScreen=null,receipt={until:0,coins:0,cargo:{},heals:{}};
+  function wakeSound(){if(!activity.active())return;if(!game?.s.settings.sound||game.s.settings.volume<=0){sound?.suspend();return;}if(!sound&&!audioUnavailable){try{sound=new WidewakeAudio({active:()=>activity.active(),settings:()=>game.s.settings});}catch{audioUnavailable=true;}}sound?.wake();}
+  function audioScene(){return{mode:atTitle?'title':game.mode,speed:Math.hypot(game.player.vx||0,game.player.vy||0)/game.hull().speed,steam:!['cutter','brig'].includes(game.s.hull),work:game.production?.site.type,battle:!atTitle&&game.mode==='sea'&&game.enemies.length>0&&!game.paused,paused:game.paused};}
+  function playWorldSound(kind,detail={}){
+    let pan=0,volume=1;if(Number.isFinite(detail.x)&&renderer){const dx=W.dx(renderer.cam.x,detail.x),dy=detail.y-renderer.cam.y,reach=Math.max(1000,renderer.width/renderer.zoom*.7),d=Math.hypot(dx,dy);if(d>reach)return;pan=Math.max(-.85,Math.min(.85,dx/(renderer.width/renderer.zoom*.5)));volume=1/(1+d/450);}
+    sound?.play(kind==='hurt'&&!detail.flagship?'impact':kind,{...detail,pan,volume:volume*(kind==='hurt'&&!detail.flagship?.55:1)});
   }
-  function wakeSound(){if(!activity.active())return;if(!game?.s.settings.sound){sound?.ctx?.suspend().catch(()=>{});return;}if(!sound)sound=new Sound();else if(sound.ctx?.state==='suspended')sound.ctx.resume().catch(()=>{});}
+  function pickupReceipt(detail){if(clock>receipt.until)receipt={until:0,coins:0,cargo:{},heals:{}};receipt.until=clock+3.2;receipt.coins+=detail.coins||0;if(detail.hp)receipt.heals[detail.name||'Flagship']=(receipt.heals[detail.name||'Flagship']||0)+detail.hp;if(detail.qty)receipt.cargo[detail.item]=(receipt.cargo[detail.item]||0)+detail.qty;}
+  function discoveryToast(text,detail){
+    const item=by(detail.discovery==='fish'?D.fish:D.relics,detail.item),el=document.createElement('div');el.className='ww-toast rare ww-discovery';
+    el.innerHTML='<canvas width="24" height="24" aria-hidden="true"></canvas><div><small>'+(detail.discovery==='fish'?(detail.first?'NEW SPECIES':'RARE CATCH'):'SALVAGED FITTING')+'</small><strong>'+esc(item.name)+'</strong><span>'+(detail.coins?'Naturalist paid '+money(detail.coins)+'c.':'Fit it at a shipyard.')+'</span></div>';
+    el.querySelector('canvas').getContext('2d').drawImage(R.icon(detail.discovery==='fish'?detail.item:'pearl'),0,0);$('toasts').append(el);while($('toasts').children.length>3)$('toasts').firstChild.remove();activity.setTimeout(()=>el.remove(),6500);
+  }
   function toast(text,kind='info'){const e=document.createElement('div');e.className='ww-toast '+kind;e.textContent=text;$('toasts').append(e);while($('toasts').children.length>3)$('toasts').firstChild.remove();activity.setTimeout(()=>{e.remove();},kind==='rare'?6500:4200);}
-  function wireGame(){game.onEvent=(kind,text)=>{if(text){if(matchMedia('(pointer:coarse)').matches&&text.startsWith('WASD to sail'))text='Drag the steering pad to sail. Guns fire automatically. World chart sets a course.';toast(text,kind);}sound?.play(kind);if(renderer&&!game.s.settings.reduceMotion&&(kind==='hurt'||kind==='burst'))renderer.shake=kind==='burst'?2:1.5;};}
+  function wireGame(){lastBurstCD=game.burstCD;receipt.until=0;game.onEvent=(kind,text,detail)=>{
+    if(text){if(matchMedia('(pointer:coarse)').matches&&text.startsWith('WASD to sail'))text='Drag the steering pad to sail. Push to the rim for full steam. Guns fire automatically.';if(detail?.discovery)discoveryToast(text,detail);else toast(text,kind);}
+    if(kind==='pickup')pickupReceipt(detail);playWorldSound(kind,detail);
+    if(renderer){if(kind==='hurt'&&detail?.flagship){renderer.hitT=.65;const dx=detail.fromX===null?0:W.dx(game.player.x,detail.fromX),dy=detail.fromY===null?0:detail.fromY-game.player.y;renderer.hitBearing=Math.hypot(dx,dy)>8?Math.atan2(dy,dx):null;}
+      if(!game.s.settings.reduceMotion&&(kind==='burst'||kind==='hurt'&&detail?.flagship))renderer.shake=kind==='burst'?2:1.5;}
+  };}
   function save(){if(!game||!hasVoyage)return;try{const current=JSON.stringify(game.snapshot());if(current.length>500000)throw new Error('Save too large');const old=localStorage.getItem(SAVE);if(old){try{C.validate(JSON.parse(old));localStorage.setItem(BACKUP,old);}catch{}}localStorage.setItem(SAVE,current);saveAvailable=true;$('save-status').textContent='Saved on this device';game.autoSaveTimer=0;}catch{saveAvailable=false;$('save-status').textContent='Export a save to keep progress';}}
   function load(){for(const key of [SAVE,BACKUP]){try{const text=localStorage.getItem(key);if(text){const result=C.validate(JSON.parse(text));if(key===BACKUP)loadNotice='Recovered your last working save.';return result;}}catch{loadNotice='The saved fleet could not be read. You can import an exported save in Settings.';}}return null;}
   function preferences(){
     let text;try{text=localStorage.getItem(PREFS);}catch{saveAvailable=false;return null;}
-    try{const p=JSON.parse(text||'null');if(!p||typeof p!=='object')return null;const clean={};for(const k of ['sound','shake','autoFire','reduceMotion'])if(typeof p[k]==='boolean')clean[k]=p[k];if(Number.isFinite(p.volume))clean.volume=Math.max(0,Math.min(.5,p.volume));return clean;}catch{return null;}
+    try{const p=JSON.parse(text||'null');if(!p||typeof p!=='object')return null;const clean={};for(const k of ['sound','shake','autoFire','reduceMotion'])if(typeof p[k]==='boolean')clean[k]=p[k];for(const k of ['volume','music','effects','ambience'])if(Number.isFinite(p[k]))clean[k]=Math.max(0,Math.min(k==='volume'?.5:1,p[k]));return clean;}catch{return null;}
   }
-  function applyPreferences(){document.body.classList.toggle('ww-reduce-motion',!!game.s.settings.reduceMotion);if(game.s.settings.reduceMotion)renderer.shake=0;}
+  function applyPreferences(){document.body.classList.toggle('ww-reduce-motion',!!game.s.settings.reduceMotion);if(game.s.settings.reduceMotion)renderer.shake=0;sound?.applyMix();}
   function preferenceChanged(){applyPreferences();try{localStorage.setItem(PREFS,JSON.stringify(game.s.settings));}catch{saveAvailable=false;}save();renderUI(true);}
   function renderTitle(){
     $('continue-voyage').hidden=!hasVoyage;$('title-save').hidden=!hasVoyage;$('start-voyage').classList.toggle('ww-primary',!hasVoyage);
@@ -38,7 +47,7 @@
     $('title-version').textContent=D.version+' / Web edition';
   }
   function showTitle(){
-    save();pendingRoute=null;document.querySelectorAll('dialog[open]').forEach(el=>el.close());modalOrder.length=0;atTitle=true;game.paused=true;clearInput();lastMode=null;$('toasts').replaceChildren();renderUI(true);front.draw(clock,game.s.settings.reduceMotion);$('continue-voyage').focus({preventScroll:true});
+    save();sound?.clearEffects();pendingRoute=null;document.querySelectorAll('dialog[open]').forEach(el=>el.close());modalOrder.length=0;atTitle=true;game.paused=true;clearInput();lastMode=null;$('toasts').replaceChildren();renderUI(true);front.draw(clock,game.s.settings.reduceMotion);$('continue-voyage').focus({preventScroll:true});
   }
   function enterVoyage(fresh=false){
     if(fresh){const settings={...game.s.settings};game=new C.Game(game.earth);game.s.settings=settings;wireGame();renderer=new R.Renderer($('ocean'),game);tab='trade';selected=null;pendingRoute=null;document.querySelectorAll('[data-tab]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.tab===tab)));}
@@ -74,7 +83,7 @@
     if(action){const next=[...panel.querySelectorAll('[data-action]')].find(e=>e.dataset.action===action&&e.dataset.id===id);if(next&&!next.disabled)next.focus({preventScroll:true});}
   }
   function nextGoal(){const c=game.charterStatus();if(c){const step=c.steps.find(s=>!s.done);return{name:c.title,text:step?.text||'Complete this charter at any port’s voyage desk.',progress:step?.progress??1,total:step?.total||1};}return game.goals().find(g=>!game.s.claimed.includes(g.id))||{name:'The sea is still there',text:'Trade, collect the remaining fish, or build a larger fleet.',progress:1,total:1};}
-  function renderUI(force=false){if(!game)return;$('title-screen').hidden=!atTitle;$('game-toolbar').hidden=atTitle;document.body.classList.toggle('at-title',atTitle);if(atTitle){$('harbor').hidden=true;$('sea').hidden=true;document.body.classList.remove('at-sea');if(force||game.uiDirty)renderTitle();game.uiDirty=false;return;}const modeChanged=lastMode!==game.mode;
+  function renderUI(force=false){if(!game)return;$('sea-receipt').hidden=atTitle||game.mode!=='sea'||clock>receipt.until||receipt.until===0;$('title-screen').hidden=!atTitle;$('game-toolbar').hidden=atTitle;document.body.classList.toggle('at-title',atTitle);if(atTitle){$('harbor').hidden=true;$('sea').hidden=true;document.body.classList.remove('at-sea');if(force||game.uiDirty)renderTitle();game.uiDirty=false;return;}const modeChanged=lastMode!==game.mode;
     if(modeChanged){lastMode=game.mode;$('harbor').hidden=game.mode!=='port';$('sea').hidden=game.mode!=='sea';document.body.classList.toggle('at-sea',game.mode==='sea');if(game.mode==='sea'){renderer.cam={x:game.player.x,y:game.player.y};renderer.resize();$('ocean').focus({preventScroll:true});}else $('port-panel').scrollTop=0;}
     const s=game.s,goal=nextGoal();$('toolbar-location').textContent=(game.mode==='port'?port().name:'At sea')+' / day '+s.day;$('voyage-open').textContent=game.charter()?'Read the charter':'Voyage log';
     if(game.mode==='port'&&(force||game.uiDirty||modeChanged)){
@@ -84,7 +93,10 @@
     if(game.mode==='sea'){
       const near=game.nearestPort(),pos=W.geo(game.player.x,game.player.y),site=game.nearbySite();$('sea-ship').textContent=game.hull().name;$('sea-coins').textContent=money(s.coins)+'c';$('sea-health').style.width=Math.max(0,game.player.hp/game.hpMax()*100)+'%';$('sea-health').style.background=game.player.hp/game.hpMax()<.3?'var(--ww-red)':'var(--ww-green)';$('sea-health-text').textContent=Math.ceil(game.player.hp)+' / '+game.hpMax()+' hull   '+game.used()+' / '+game.capacity()+' cargo';$('sea-location').textContent=near.distance<900?near.port.name+' waters':'Open ocean';$('sea-position').textContent=Math.abs(pos.lat).toFixed(1)+'°'+(pos.lat>=0?'N':'S')+'  '+Math.abs(pos.lon).toFixed(1)+'°'+(pos.lon>=0?'E':'W')+' / DAY '+s.day;
       $('sea-objective').innerHTML='<strong>'+esc(goal.name)+'</strong>'+esc(goal.text)+(game.autopilot?'<br><br>Helmsman sailing to '+esc(game.target?.name||'waypoint')+'.':game.target?'<br><br>Course marked. You have the helm.':'');
-      $('broadside').disabled=game.burstCD>0;$('broadside').innerHTML=game.burstCD>0?'Broadside '+Math.ceil(game.burstCD)+'s':'Broadside <kbd>Space</kbd>';$('field-repair').disabled=game.repairCD>0||s.coins<100||!game.needsRepair();$('field-repair').innerHTML=game.repairCD>0?'Repairs '+Math.ceil(game.repairCD)+'s':'Patch hulls <small>100c</small><kbd>R</kbd>';
+      $('broadside').disabled=game.burstCD>0;$('broadside-status').textContent=game.burstCD>0?'Reload '+Math.ceil(game.burstCD)+'s':'Ready';$('broadside').style.setProperty('--charge',(1-game.burstCD/9)*100+'%');$('broadside').setAttribute('aria-label',game.burstCD>0?'Broadside reloads in '+Math.ceil(game.burstCD)+' seconds':'Fire broadside');
+      $('field-repair').disabled=game.repairCD>0||s.coins<100||!game.needsRepair();$('repair-status').textContent=game.repairCD>0?'Ready in '+Math.ceil(game.repairCD)+'s':!game.needsRepair()?'Hulls sound':s.coins<100?'Need 100c':'100c';$('field-repair').style.setProperty('--charge',(1-game.repairCD/25)*100+'%');
+      if(lastBurstCD>0&&game.burstCD<=0&&!game.paused)sound?.play('ready');lastBurstCD=game.burstCD;
+      $('sea-receipt').hidden=clock>receipt.until||receipt.until===0;if(!$('sea-receipt').hidden){const goods=Object.entries(receipt.cargo).map(([id,n])=>n+' '+by(D.goods,id).name.toLowerCase());$('sea-receipt').textContent=[...goods.slice(0,2),goods.length>2?'more cargo':null,receipt.coins?'+'+receipt.coins+'c':null,...Object.entries(receipt.heals).slice(0,2).map(([name,hp])=>name+' +'+hp+' hull')].filter(Boolean).join(' / ');}
       $('formation').innerHTML=game.formation[0].toUpperCase()+game.formation.slice(1)+' formation <kbd>F</kbd>';
       const signal=game.nearbySignal(),action=$('context-action');action.hidden=!site&&near.distance>190&&!game.production&&!signal&&!game.encounter;if(game.production)action.textContent='Recall workboat (E)';else if(game.encounter)action.textContent='Leave operation (E)';else if(near.distance<190)action.textContent='Dock in '+near.port.name+' (E)';else if(signal)action.textContent='Investigate signal (E)';else if(site)action.textContent=site.type==='fish'?'Deploy nets (E)':'Extract oil (E)';
       $('operation').hidden=!game.production;if(game.production){const op=game.production;$('operation-text').textContent=(op.site.type==='fish'?'Fishing: ':'Extracting: ')+op.site.name;$('operation-bar').style.width=op.progress/60*100+'%';$('operation-detail').textContent=op.workers.length+' workboat'+(op.workers.length===1?'':'s')+' / lowest hull '+Math.ceil(Math.min(...op.workers.map(f=>f.hp/f.maxHp))*100)+'% / '+Math.ceil(60-op.progress)+'s';}
@@ -94,11 +106,11 @@
     }
     $('sound-toggle').textContent=s.settings.sound?'Sound on':'Sound off';game.uiDirty=false;
   }
-  function clearInput(){keys.clear();input.x=input.y=touch.x=touch.y=0;input.fire=input.boost=false;input.aim=null;fireId=null;if(stickId!==null&&$('joystick').hasPointerCapture(stickId))$('joystick').releasePointerCapture(stickId);stickId=null;$('joystick').firstElementChild.style.transform='';$('joystick').classList.remove('ww-full-steam');}
-  function modal(id){clearInput();game.paused=true;const el=$(id);if(!el.open){el.showModal();modalOrder.push(id);}}
+  function clearInput(){keys.clear();aimScreen=null;if(renderer)renderer.aim=null;input.x=input.y=touch.x=touch.y=0;input.fire=input.boost=false;input.aim=null;fireId=null;if(stickId!==null&&$('joystick').hasPointerCapture(stickId))$('joystick').releasePointerCapture(stickId);stickId=null;$('joystick').firstElementChild.style.transform='';$('joystick').classList.remove('ww-full-steam');}
+  function modal(id){clearInput();sound?.clearEffects();game.paused=true;const el=$(id);if(!el.open){el.showModal();modalOrder.push(id);}}
   function closeModal(id){$(id).close();const index=modalOrder.lastIndexOf(id);if(index>=0)modalOrder.splice(index,1);if(id==='chart-dialog')pendingRoute=null;game.paused=atTitle||!!document.querySelector('dialog[open]');clearInput();if(game.mode==='sea'&&!game.paused)$('ocean').focus({preventScroll:true});}
   function openSettings(){
-    if(!game)return;$('autofire').checked=game.s.settings.autoFire;$('volume').value=game.s.settings.volume;$('sound-enabled').checked=game.s.settings.sound;$('camera-shake').checked=game.s.settings.shake;$('reduced-motion').checked=!!game.s.settings.reduceMotion;
+    if(!game)return;$('autofire').checked=game.s.settings.autoFire;$('volume').value=game.s.settings.volume;$('sound-enabled').checked=game.s.settings.sound;$('camera-shake').checked=game.s.settings.shake;$('reduced-motion').checked=!!game.s.settings.reduceMotion;for(const k of ['music','effects','ambience'])$(k+'-volume').value=game.s.settings[k];updateMixLabels();
     $('settings-title').textContent=atTitle?'Settings':'Paused';$('settings-caption').textContent=atTitle?'Make yourself at home':'A moment at anchor';$('settings-return').textContent=atTitle?'Return':'Resume';$('return-title').hidden=atTitle;$('export-save').disabled=!hasVoyage;$('new-game').hidden=atTitle;
     save();$('save-message').textContent=!saveAvailable?'Device storage is unavailable. Export a save before leaving.':hasVoyage?'Your fleet is saved on this device. Export a copy to keep it elsewhere.':'Your voyage will save on this device. You can also import an exported fleet.';modal('settings-dialog');
   }
@@ -145,8 +157,11 @@
   $('convoy-open').onclick=()=>convoy.open();
   $('voyage-open').onclick=()=>{tab='voyage';document.querySelectorAll('[data-tab]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.tab===tab)));$('port-panel').scrollTop=0;renderPanel();};
   function toggleSound(enabled){game.s.settings.sound=enabled;wakeSound();preferenceChanged();}
-  $('sound-toggle').onclick=()=>{if(game)toggleSound(!game.s.settings.sound);};$('sound-enabled').onchange=e=>toggleSound(e.target.checked);$('autofire').onchange=e=>{game.s.settings.autoFire=e.target.checked;preferenceChanged();};$('volume').oninput=e=>{game.s.settings.volume=Number(e.target.value);wakeSound();sound?.play('tap');preferenceChanged();};$('camera-shake').onchange=e=>{game.s.settings.shake=e.target.checked;preferenceChanged();};$('reduced-motion').onchange=e=>{game.s.settings.reduceMotion=e.target.checked;preferenceChanged();};
-  $('broadside').onclick=()=>game.burst();$('field-repair').onclick=()=>{game.fieldRepair();commit();};$('formation').onclick=formation;$('context-action').onclick=contextAction;$('zoom-in').onclick=()=>renderer.setZoom(1.2);$('zoom-out').onclick=()=>renderer.setZoom(1/1.2);
+  $('sound-toggle').onclick=()=>{if(game)toggleSound(!game.s.settings.sound);};$('sound-enabled').onchange=e=>toggleSound(e.target.checked);$('autofire').onchange=e=>{game.s.settings.autoFire=e.target.checked;preferenceChanged();};$('volume').oninput=e=>{game.s.settings.volume=Number(e.target.value);wakeSound();sound?.play('tap');preferenceChanged();updateMixLabels();};$('camera-shake').onchange=e=>{game.s.settings.shake=e.target.checked;preferenceChanged();};$('reduced-motion').onchange=e=>{game.s.settings.reduceMotion=e.target.checked;preferenceChanged();};
+  function updateMixLabels(){for(const key of ['volume','music','effects','ambience']){const slider=$(key==='volume'?'volume':key+'-volume'),amount=Math.round(Number(slider.value)*(key==='volume'?200:100));$(key==='volume'?'volume-value':key+'-value').textContent=amount+'%';slider.setAttribute('aria-valuetext',amount+' percent');}}
+  for(const key of ['music','effects','ambience'])$(key+'-volume').oninput=e=>{game.s.settings[key]=Number(e.target.value);wakeSound();preferenceChanged();updateMixLabels();if(key==='effects')sound?.play('tap');};
+  function fireBroadside(){if(game.burst())commit();}
+  $('broadside').onclick=fireBroadside;$('field-repair').onclick=()=>{game.fieldRepair();commit();};$('formation').onclick=formation;$('context-action').onclick=contextAction;$('zoom-in').onclick=()=>renderer.setZoom(1.2);$('zoom-out').onclick=()=>renderer.setZoom(1/1.2);
   $('destination-list').onchange=e=>selectDestination(allDestinations().find(p=>p.id===e.target.value));
   $('world-chart').onclick=e=>{const cv=e.currentTarget,b=cv.getBoundingClientRect(),x=(e.clientX-b.left)/b.width*W.W,y=(e.clientY-b.top)/b.height*W.H,all=allDestinations(),near=all.map(p=>({p,d:Math.hypot((p.x-x)/W.W*b.width,(p.y-y)/W.H*b.height)})).sort((a,b)=>a.d-b.d)[0];if(near.d<14)selectDestination(near.p);else if(!game.earth.land(x,y))selectDestination({x,y,name:'Ocean waypoint',kind:'water'});};
   function routeFinished(path,error){const request=pendingRoute;if(!request||request.game!==game)return;pendingRoute=null;const button=$('plot-course');if(!path){toast(error||'No safe water route found. Choose a nearby waypoint.','warn');button.disabled=false;button.textContent='Choose another destination';return;}
@@ -169,19 +184,21 @@
     if(document.querySelector('dialog[open]'))return;
     if(game.mode!=='sea'||e.code==='Space'&&e.target.closest('button'))return;
     if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();keys.add(e.code);wakeSound();
-    if(!e.repeat&&game.mode==='sea'){if(e.code==='Space')game.burst();if(e.code==='KeyR')game.fieldRepair();if(e.code==='KeyE')contextAction();if(e.code==='KeyF')formation();if(e.code==='KeyP')openSettings();}
+    if(!e.repeat&&game.mode==='sea'){if(e.code==='Space')fireBroadside();if(e.code==='KeyR'&&game.fieldRepair())commit();if(e.code==='KeyE')contextAction();if(e.code==='KeyF')formation();if(e.code==='KeyP')openSettings();}
   });window.addEventListener('keyup',e=>keys.delete(e.code));
-  $('ocean').addEventListener('pointermove',e=>{if(renderer&&(e.pointerType!=='touch'||e.pointerId===fireId))input.aim=renderer.screenWorld(e.clientX,e.clientY);});
-  $('ocean').addEventListener('pointerdown',e=>{if(fireId!==null||game.paused)return;wakeSound();fireId=e.pointerId;input.fire=true;input.aim=renderer.screenWorld(e.clientX,e.clientY);$('ocean').setPointerCapture(e.pointerId);});
+  $('ocean').addEventListener('pointermove',e=>{if(renderer&&(e.pointerType!=='touch'||e.pointerId===fireId)){input.aim=renderer.screenWorld(e.clientX,e.clientY);aimScreen={x:e.clientX,y:e.clientY};}});
+  $('ocean').addEventListener('pointerdown',e=>{if(fireId!==null||game.paused)return;wakeSound();fireId=e.pointerId;input.fire=true;input.aim=renderer.screenWorld(e.clientX,e.clientY);aimScreen={x:e.clientX,y:e.clientY};$('ocean').setPointerCapture(e.pointerId);});
   for(const type of ['pointerup','pointercancel','lostpointercapture'])$('ocean').addEventListener(type,e=>{if(e.pointerId===fireId){fireId=null;input.fire=false;}});
   $('ocean').addEventListener('wheel',e=>{e.preventDefault();renderer?.setZoom(e.deltaY>0?.9:1.1);},{passive:false});$('ocean').addEventListener('contextmenu',e=>e.preventDefault());
   let stickId=null;function moveStick(e){const el=$('joystick'),b=el.getBoundingClientRect(),x=e.clientX-b.left-b.width/2,y=e.clientY-b.top-b.height/2,d=Math.hypot(x,y),max=b.width*.32,n=Math.min(1,d/max);touch.x=d?x/d*n:0;touch.y=d?y/d*n:0;el.classList.toggle('ww-full-steam',n>.94);el.firstElementChild.style.transform='translate('+touch.x*max+'px,'+touch.y*max+'px)';}
   $('joystick').addEventListener('pointerdown',e=>{if(stickId!==null||game.paused)return;wakeSound();stickId=e.pointerId;e.currentTarget.setPointerCapture(e.pointerId);moveStick(e);});$('joystick').addEventListener('pointermove',e=>{if(e.pointerId===stickId)moveStick(e);});for(const type of ['pointerup','pointercancel','lostpointercapture'])$('joystick').addEventListener(type,()=>{stickId=null;touch.x=touch.y=0;$('joystick').firstElementChild.style.transform='';$('joystick').classList.remove('ww-full-steam');});
   function autoPause(){clearInput();if(!atTitle&&game?.mode==='sea'&&!document.querySelector('dialog[open]'))openSettings();save();}
-  activity.onChange(active=>{last=0;accumulator=0;if(!active){autoPause();sound?.ctx?.suspend().catch(()=>{});}});
+  activity.onChange(active=>{last=0;accumulator=0;if(!active){autoPause();sound?.suspend();}});
   window.addEventListener('pagehide',save);window.addEventListener('resize',()=>{if(renderer&&game.mode==='sea')renderer.resize();});
   function loop(ms){const dt=Math.min(.1,(ms-(last||ms))/1000);last=ms;clock+=dt;
+    if(game)sound?.update(audioScene());
     if(game&&atTitle){front.draw(clock,game.s.settings.reduceMotion);}else if(game){input.x=(keys.has('KeyD')||keys.has('ArrowRight')?1:0)-(keys.has('KeyA')||keys.has('ArrowLeft')?1:0)+touch.x;input.y=(keys.has('KeyS')||keys.has('ArrowDown')?1:0)-(keys.has('KeyW')||keys.has('ArrowUp')?1:0)+touch.y;input.boost=keys.has('ShiftLeft')||keys.has('ShiftRight')||Math.hypot(touch.x,touch.y)>.94;
+      if(input.fire&&aimScreen)input.aim=renderer.screenWorld(aimScreen.x,aimScreen.y);renderer.aim=input.fire?input.aim:null;
       if(!game.paused){accumulator+=dt;let steps=0;while(accumulator>=1/60&&steps<5){game.step(1/60,input);accumulator-=1/60;steps++;}if(steps===5)accumulator=0;}else accumulator=0;
       if(game.mode==='sea')renderer.render(game.paused?0:dt);else if(clock-lastPortFrame>.08&&!document.hidden){R.harbor($('port-art').getContext('2d'),port(),game.s.settings.reduceMotion?0:clock,game.s.hull);lastPortFrame=clock;}
       if(clock-lastUI>.16||game.mode!==lastMode){renderUI();lastUI=clock;}
@@ -190,9 +207,9 @@
   }
   async function start(){try{
     const res=await fetch('assets/widewake/earth-land.geojson');if(!res.ok)throw new Error('The coastline file could not be loaded.');const geojson=await res.json(),earth=new W.Earth(geojson);const saved=load();hasVoyage=!!saved;game=new C.Game(earth,saved);if(!saved)game.s.settings={...game.s.settings,...preferences()};if(typeof game.s.settings.reduceMotion!=='boolean')game.s.settings.reduceMotion=matchMedia('(prefers-reduced-motion:reduce)').matches;wireGame();renderer=new R.Renderer($('ocean'),game);game.paused=true;applyPreferences();$('loading').hidden=true;renderUI(true);front.draw(0,game.s.settings.reduceMotion);$(hasVoyage?'continue-voyage':'start-voyage').focus({preventScroll:true});activity.requestFrame(loop);
-    try{routeWorker=new Worker('js/widewake-route-worker.js?v=0.3.0');routeWorker.postMessage({type:'init',geojson});routeWorker.onmessage=e=>{if(e.data.id===pendingRoute?.id)routeFinished(e.data.path,e.data.message);};routeWorker.onerror=()=>{routeWorker.terminate();routeWorker=null;if(pendingRoute)routeFinished(null,'The route planner failed. Choose the destination again.');};}catch{routeWorker=null;}
+    try{routeWorker=new Worker('js/widewake-route-worker.js?v=0.4.0');routeWorker.postMessage({type:'init',geojson});routeWorker.onmessage=e=>{if(e.data.id===pendingRoute?.id)routeFinished(e.data.path,e.data.message);};routeWorker.onerror=()=>{routeWorker.terminate();routeWorker=null;if(pendingRoute)routeFinished(null,'The route planner failed. Choose the destination again.');};}catch{routeWorker=null;}
     // A deliberately opt-in inspection surface for deterministic browser checks.
-    if(new URLSearchParams(location.search).has('test'))window.__widewake={get game(){return game;},get renderer(){return renderer;},get activity(){return activity;},get atTitle(){return atTitle;},save,render:()=>renderUI(true),step:(seconds,input={})=>{for(let i=0;i<seconds*60;i++)game.step(1/60,input);renderUI(true);},setState:s=>{game=new C.Game(earth,s);atTitle=false;hasVoyage=true;document.querySelectorAll('dialog[open]').forEach(el=>el.close());modalOrder.length=0;wireGame();renderer=new R.Renderer($('ocean'),game);lastMode=null;renderUI(true);},openChart};
+    if(new URLSearchParams(location.search).has('test'))window.__widewake={get game(){return game;},get renderer(){return renderer;},get activity(){return activity;},get atTitle(){return atTitle;},get sound(){return sound;},save,render:()=>renderUI(true),step:(seconds,input={})=>{for(let i=0;i<seconds*60;i++)game.step(1/60,input);renderUI(true);},setState:s=>{game=new C.Game(earth,s);atTitle=false;hasVoyage=true;document.querySelectorAll('dialog[open]').forEach(el=>el.close());modalOrder.length=0;wireGame();renderer=new R.Renderer($('ocean'),game);lastMode=null;renderUI(true);},openChart};
   }catch(err){$('loading').innerHTML='<p>The chart could not be opened.</p><small>'+esc(err.message)+'</small><button id="retry-load">Try again</button>';$('retry-load').onclick=()=>location.reload();}}
   start();
 })();

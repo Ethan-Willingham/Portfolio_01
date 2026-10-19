@@ -55,7 +55,7 @@
     encounterWave(n){const op=this.encounter;if(!op)return;for(let i=0;i<n;i++){const kind=op.signal.danger>=3&&i%5===0?'armored':i%3===0?'rammer':i%2===0?'gunner':'skiff',e=this.spawn(kind,op.signal,true);if(e)e.encounterId=op.signal.id;}},
     finishEncounter(success){
       const op=this.encounter;if(!op)return;this.encounter=null;this.s.voyage.active=null;
-      if(success){const s=op.signal;this.s.voyage.resolved[s.id]=s.kind==='rescue'?'rescued':s.kind==='battle'?'cleared':'recovered';this.s.coins+=s.reward;this.s.xp+=100+s.danger*40;if(s.relic)this.salvage(s.relic);this.log(s.name+': '+s.reward+' coins recovered.');}
+      if(success){const s=op.signal;this.s.voyage.resolved[s.id]=s.kind==='rescue'?'rescued':s.kind==='battle'?'cleared':'recovered';this.s.coins+=s.reward;this.s.xp+=100+s.danger*40;if(s.relic)this.salvage(s.relic);this.log(s.name+': '+s.reward+' coins recovered.','complete');}
       else this.event('Operation abandoned. You can return to try again.','warn');
       for(const e of this.enemies)if(e.encounterId===op.signal.id)e.encounterId=null;this.change();
     },

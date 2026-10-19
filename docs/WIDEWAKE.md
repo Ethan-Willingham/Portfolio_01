@@ -70,7 +70,10 @@ distinct interim backgrounds while that art pass is deferred.
 - `js/widewake-front.js`: independent pixel-art title scene and wordmark. This
   scene never steps the campaign. It uses the shared activity scheduler and
   honors the reduced-animation setting.
-- `js/widewake.js`: browser input, UI, audio, local persistence, import/export.
+- `js/widewake-audio.js`: original synthesized music, sea and harbor ambience,
+  spatial action cues, separate mix buses and bounded voice cleanup. No timers,
+  external recordings or asset downloads.
+- `js/widewake.js`: browser input, UI, feedback, local persistence, import/export.
   Uses the shared `js/demo-activity.js` controller to stop scheduling offscreen,
   hidden, or unfocused. Held input clears, audio suspends, and battle pause stays
   independent of returning to the page.
@@ -125,8 +128,19 @@ import data.
   demand, quantity controls, and executable trade totals on button hover.
 - Disabled purchases show their price or rank requirement. Empty holds and a
   lack of workboats produce an explicit reason rather than silently doing nothing.
-- Audio is locally synthesized, with a mute switch and volume control. Camera
-  impacts have a separate setting. Reduced-motion preferences disable UI motion.
+- Audio is locally synthesized, with master, music, effects and sea/harbor levels.
+  Cannon fire, ordinary hits, sinking, repairs, salvage and discoveries have
+  separate cues. Sound begins only after input and suspends with page inactivity.
+  Camera impacts have a separate setting. Reduced animation also removes muzzle
+  flashes and recoil, hit flashes, sea bobbing and animated effect expansion.
+- Held manual aim tracks the screen pointer as the camera moves. Auto targets
+  have corner brackets. Flagship hits show the incoming direction; escort hits
+  do not shake the flagship camera. Broadside and repair buttons show cooldown
+  progress and respond immediately to a successful action.
+- Cargo pickups remain afloat when no suitable hold has room. Repair crates
+  remain until a nearby vessel needs them, then help the most damaged hull by
+  percentage. Receipts name the actual repaired ship and loaded cargo. First
+  species discoveries show one card with the naturalist's actual payment.
 - Chart, pause, blur, and hidden-tab states freeze simulation and clear held input.
   Returning to the window does not silently resume a battle. Quantity controls
   sit above the goods list; keyboard focus survives a completed trade.
@@ -183,10 +197,17 @@ services through the browser shell, rather than rewriting the economy.
 node tools/widewake/test-core.cjs
 node tools/widewake/test-routes.cjs
 node tools/widewake/test-voyage.cjs
+node tools/widewake/test-feedback.cjs
 node tools/widewake/test-playthrough.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-browser.cjs
 NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-front.cjs
+NODE_PATH=/path/to/bundled/node_modules node tools/widewake/test-audio.cjs
 ```
+
+The front and audio harnesses also support `WIDEWAKE_TEST_ENGINE=webkit`.
+Audio checks render actual samples offline, verify independent mute, finite
+levels and stereo position, then exercise input, inactivity and node cleanup in
+the running game. They do not substitute for listening on speakers/headphones.
 
 Browser tests must use `/Users/ethan/.local/bin/agent-chrome-for-testing` or an
 explicit testing-browser override. Never launch the owner's personal Chrome with
