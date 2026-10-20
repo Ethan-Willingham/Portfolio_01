@@ -147,6 +147,9 @@ Choose **Endgame combat** on the title to test 24 fully armed boats against
 16,384 active raiders. E or the fleet button switches between following and
 holding position to load workboats. Steering and positioning are the combat
 inputs. Menu returns to the current session; the run can also finish or restart.
+From v0.26.1, explosive hits and near misses push surviving enemies through the
+water, with hull-weighted drift, water columns and foam. Ordinary rounds retain
+their direct-hit behavior. See `WIDEWAKE_REACH.md` for the rules and bounds.
 
 For local play, serve the repository over HTTP:
 

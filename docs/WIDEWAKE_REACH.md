@@ -4,7 +4,7 @@ Owner instruction, 2026-10-19: make the new ocean part of the game, retire the o
 world, and bring the graphics into one consistent visual system. This explicitly
 supersedes the earlier instruction to keep the new ocean in separate trials.
 
-Version 0.26.0 opens the approved title illustration, then starts at Tern Yard in
+Version 0.26.1 opens the approved title illustration, then starts at Tern Yard in
 Bracken Reach. Each page load starts a fresh session. There is no Earth campaign or
 trial chooser in the normal play flow. An old `widewake-estuary.html` bookmark
 redirects to the game. `?test` retains the isolated navigation harness; the battle
@@ -108,7 +108,7 @@ Simulation buffers are fixed: 32,768 enemy capacity, 8,192 rounds including a
 1,024-round hostile reserve, 2,048 effects, 24 wake histories and 16 repair crates.
 Enemy admission is capped at 48 per tick. A shared cell grid handles queries;
 there is no all-pairs fleet/enemy separation. The new targeting and ram state
-bring combat typed arrays to 3,383,808 bytes, independent of kills or elapsed
+bring combat typed arrays to 3,645,952 bytes including blast drift, independent of kills or elapsed
 session time. Effect, audio and notification budgets remain bounded.
 
 The open-water test is deliberately a powerful fleet. Campaign difficulty,
@@ -172,6 +172,43 @@ The grid still bounds collision candidates. Hull planes are cached, and contact
 scratch space and projectile buffers remain fixed. The collision tests exercise all four enemy silhouettes at 16 headings,
 moving crossings, misses, penetration, terrain, every projectile family and
 600 simultaneous contacts with exhausted presentation budgets.
+
+## Explosives and water pressure, v0.26.1
+
+Mortars, flak and gun-bank shells now displace surviving enemies. Ordinary
+rounds retain their direct-hit behavior. The existing damage and damage radius
+remain the core of each blast. A pressure shoulder reaches 1.4 times that radius
+and can push an unharmed boat just outside it. Light hulls move most; gunner hulls
+receive half the impulse and iron rams receive 32 percent. Pressure falls with
+distance. Repeated hits add vectors up to a 140 m/s cap; water drag fades them
+exponentially at 2.8 per second. These are gameplay values, not naval modeling.
+
+The shove is separate from AI steering, so a boat slides without snapping its
+bow around or losing the force on its next steering update. A charging ram keeps
+its committed direction while drifting. Banks stop the displacement and land
+blocks the pressure. Friendly hulls keep the existing friendly-fire protection.
+The same mechanics apply to the campaign and the endgame shortcut.
+
+Explosive shells detonate at their swept collision point, and missed shells
+splash when their travel ends. Mortars burst on a deck or the water on descent.
+Automatic aiming accounts
+for the remaining drift rather than assuming the initial shove lasts forever.
+The dormant snapshot helpers preserve pressure vectors for deterministic tests;
+older snapshots supply zero drift. Invalid or incomplete vector arrays are rejected.
+Browser and desktop saving remain disabled.
+
+A burst uses one entry in the existing 2,048-effect pool. Its water-plane foam
+and trough render beneath hulls, followed by a short, irregular column and spray.
+Two instanced effect passes replace the previous single pass. There are no
+per-droplet physics objects, new textures or unbounded emitters. Both passes
+cull offscreen bursts; the plume quad is cropped to its small visible bounds.
+Canvas uses the same timing and silhouettes. Reduced motion shows stationary,
+fading foam and suppresses the plume without changing combat.
+
+Two fixed Float32 arrays add 256 KiB at the maximum enemy capacity. Damage and
+pressure share one local cell query; no global enemy scan is added per explosion.
+The new checks are `test-water-blasts.cjs` and `test-water-blasts-browser.cjs`.
+Measured battle comparisons and rendering limits are recorded in the release log.
 
 ## Interface contract, v0.23
 
@@ -277,9 +314,10 @@ Fine material grain and water highlights are quieter. Alder, cypress and willow
 crowns have different silhouettes, with visible gaps between branches. Floating salvage uses the same wooden crate materials as the piers. Reeds
 root at the bank instead of hovering; vegetation leaves the reed hut clear.
 
-Explosions have a short bright core, irregular smoke and a faint pressure ring.
-The splash radius no longer becomes a giant solid block of orange. Canvas
-fallback uses matching rounded silhouettes. Preserve the v0.21 continuous
+Explosive weapon impacts use blue water columns, spray and broken foam rings.
+Sinking hulls retain their short bright core, smoke and small surface disturbance.
+The splash radius never becomes a solid disk of fire. Canvas
+fallback uses matching silhouettes. Preserve the v0.21 continuous
 movement, directional blending and display-aware raster budget. Do not reapply
 nearest-neighbor scaling to the moving scene.
 
@@ -335,6 +373,10 @@ and window closing performs no save handshake.
 node tools/widewake/test-spawns.cjs
 node tools/widewake/test-spawns-browser.cjs
 node tools/widewake/test-projectiles.cjs
+
+
+node tools/widewake/test-water-blasts.cjs
+node tools/widewake/test-water-blasts-browser.cjs
 node tools/widewake/test-combat.cjs
 node tools/widewake/test-combat-browser.cjs
 node tools/widewake/test-driving.cjs

@@ -88,12 +88,42 @@
   const effectVertex=`#version 300 es
     precision highp float;layout(location=0) in vec2 aPosition;layout(location=2) in vec4 aWorld;layout(location=3) in vec4 aPose;
     uniform vec2 uSize;uniform float uZoom;out vec2 uv;out vec3 state;
-    void main(){vec3 p=aWorld.xyz;vec2 screen=vec2((p.x-p.y)*.70710678,(p.x+p.y)*.35355339-p.z*.8660254)*uZoom;
-      screen+=aPosition*aWorld.w*uZoom*vec2(1.,aPose.y==2.?.6:1.);
-      gl_Position=vec4(screen.x/uSize.x*2.,-screen.y/uSize.y*2.,clamp(-((p.x+p.y)*.6123724+p.z*.5)/20000.,-.99,.99),1.);uv=aPosition;state=aPose.xyz;}`;
+    void main(){vec3 p=aWorld.xyz;
+      if(aPose.y==3.)p.xy+=vec2(aPosition.x+aPosition.y,aPosition.y-aPosition.x)*aWorld.w*.70710678;
+      vec2 screen=vec2((p.x-p.y)*.70710678,(p.x+p.y)*.35355339-p.z*.8660254)*uZoom;
+      vec2 local=aPose.y==4.?aPosition*vec2(.34,.32)+vec2(0.,-.22):aPosition;
+      if(aPose.y!=3.)screen+=local*aWorld.w*uZoom*vec2(1.,aPose.y==2.?.6:1.);
+      gl_Position=vec4(screen.x/uSize.x*2.,-screen.y/uSize.y*2.,clamp(-((p.x+p.y)*.6123724+p.z*.5)/20000.,-.99,.99),1.);uv=local;state=aPose.xyz;}`;
   const effectFragment=`#version 300 es
-    precision highp float;in vec2 uv;in vec3 state;out vec4 color;
+    precision highp float;in vec2 uv;in vec3 state;uniform bool uReduced;out vec4 color;
     void main(){float life=state.x,age=1.-life,r=length(uv),aa=max(fwidth(r),.008);
+      if(state.y==3.){
+        float t=uReduced?.32:age,front=.12+.84*(1.-(1.-t)*(1.-t)),angle=atan(uv.y,uv.x);
+        float ripple=sin(angle*9.+state.z)*.012+sin(angle*17.-state.z)*.007;
+        float width=.01+(1.-t)*.018,edge=abs(r-front-ripple);
+        float crest=1.-smoothstep(width,width+aa*1.5,edge);
+        float wake=(1.-smoothstep(.012,.012+aa,abs(r-front*.79)))*.2;
+        float broken=.24+.76*smoothstep(-.6,.4,sin(angle*7.+state.z)+sin(angle*17.-state.z)*.4);
+        float trough=(1.-smoothstep(.02,.08,abs(r-front+.055)))*.08;
+        float foam=max(crest*broken,wake)*life*.32;
+        color=vec4(mix(vec3(.035,.14,.20),vec3(.65,.84,.83),foam/(foam+trough+.001)),max(foam,trough*life));return;
+      }
+      if(state.y==4.){
+        // Five overlapping jets share one quad, no particle emitters or textures.
+        float t=min(1.,age/.58),lift=sin(t*3.141593)*.28,body=0.,light=0.,spray=0.;
+        for(int j=0;j<5;j++){
+          float lane=float(j)-2.,variation=.84+.16*sin(state.z+float(j)*4.7),spread=lane*(.018+t*.047),height=lift*(1.-abs(lane)*.14)*variation;
+          vec2 p=vec2((uv.x-spread)/(.034+t*.025),(uv.y+height*.47)/(.025+height*.57));
+          float d=length(p)+sin(p.y*13.+state.z+lane)*.1+sin(p.y*27.+lane)*.045,edge=max(fwidth(d),.04),lobe=1.-smoothstep(1.-edge,1.+edge,d);
+          body=max(body,lobe);light=max(light,lobe*(.42+.12*lane+.2*clamp(-p.x-p.y,0.,1.)));
+          vec2 drop=vec2(lane*age*.21,-max(0.,age*1.65-age*age*3.1)*variation-.035);
+          float dr=length((uv-drop)/vec2(.007,.012));spray=max(spray,1.-smoothstep(.8,1.2+fwidth(dr),dr));
+        }
+        float fade=(1.-smoothstep(.27,.65,age))*.7;
+        vec3 tint=mix(vec3(.22,.48,.58),vec3(.78,.90,.86),light);
+        float flash=(1.-smoothstep(.015,.06,r))*max(0.,1.-age/.075);
+        color=vec4(mix(mix(tint,vec3(.78,.90,.86),spray),vec3(1.,.92,.70),flash),max(max(body,spray)*fade,flash*.85));return;
+      }
       if(state.y==2.){float ring=abs(r-(.22+age*.68));float foam=1.-smoothstep(.014,.014+aa*2.,ring);float broken=.6+.4*sin(atan(uv.y,uv.x)*13.+age*5.);color=vec4(.59,.72,.69,foam*life*.43*broken);return;}
       // A short hot core, lobed smoke, and a much lighter water pressure ring.
       // Blast radius describes the pressure wave, not a solid disk of fire.
@@ -164,7 +194,7 @@
     render(dt=1/60,alpha=1){this.alpha=clamp(alpha,0,1);this.visualTime=Math.max(0,this.battle.time-(1-this.alpha)/60);for(const s of this.battle.ships){const p=this.poses[s.id]||(this.poses[s.id]={});p.x=s.px+(s.x-s.px)*this.alpha;p.y=s.py+(s.y-s.py)*this.alpha;p.angle=s.previousAngle+root.WidewakeBattle.angleDelta(s.angle,s.previousAngle)*this.alpha;p.z=this.reduced?0:Math.sin(this.visualTime*1.4+s.id)*Math.min(.5,s.height*.08);}if(this.battle.port)this.wakes?.clear();else this.wakes?.sample(this.battle.ships,this.poses,this.visualTime);this.stats.wakePoints=this.wakes?.count||0;this.stats.wakeBytes=this.wakes?.bytes||0;this.updateCamera(dt);this.prepareSpawns();if(this.lost)return;const start=performance.now();this.gl?this.renderGPU():this.renderCanvas();this.labels();this.stats.cpuRenderMs=performance.now()-start;}
     renderGPU(){
       const gl=this.gl,b=this.battle,z=this.zoom*this.baseScale,cam=this.camera;gl.viewport(0,0,this.canvas.width,this.canvas.height);gl.clearColor(.045,.16,.24,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.disable(gl.BLEND);gl.depthMask(false);this.uniforms(this.water);gl.uniform2f(gl.getUniformLocation(this.water,'uCamera'),cam.x,cam.y);gl.uniform1f(gl.getUniformLocation(this.water,'uTime'),this.reduced?0:this.visualTime);gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,this.noise);gl.uniform1i(gl.getUniformLocation(this.water,'uNoise'),2);gl.bindVertexArray(this.quad.vao);gl.drawArrays(gl.TRIANGLES,0,6);gl.depthMask(true);this.stats.drawCalls=1;this.stats.triangles=2;this.atlas?.begin();
-      this.terrain?.renderGPU(this);this.stats.drawCalls+=this.shadows?.ships()||0;this.stats.drawCalls+=this.waterMotion?.draw()||0;
+      this.terrain?.renderGPU(this);this.stats.drawCalls+=this.shadows?.ships()||0;this.stats.drawCalls+=this.waterMotion?.draw()||0;this.drawEffectsGPU(true);
       for(const batch of Object.values(this.batches))batch.count=0;const a=b.raiders;let shown=0;
       for(let i=0;i<a.count;i++){const x=a.px[i]+(a.x[i]-a.px[i])*this.alpha,y=a.py[i]+(a.y[i]-a.py[i])*this.alpha;if(a.hp[i]<=0||!this.visible(x,y,8))continue;const dx=a.vx[i],dy=a.vy[i],v=Math.sqrt(dx*dx+dy*dy);this.batches['raider'+a.kind[i]].add(x-cam.x,y-cam.y,0,v?dx/v:1,v?dy/v:0,1,this.reduced?0:a.hitUntil[i]>b.time?.4:a.kind[i]===3&&a.charge[i]>1?.18:0);shown++;}
       this.stats.visibleRaiders=shown;if(this.batches.salvage)for(const item of b.loot){if(this.visible(item.x,item.y,8))this.batches.salvage.add(item.x-cam.x,item.y-cam.y,this.reduced?0:Math.sin(this.visualTime*1.4+item.x)*.12,1,0);}
@@ -172,8 +202,19 @@
       for(const mount of b.mounts){const s=b.ships[mount.ship],p=this.poses[s.id];if(s.hp<=0||!this.visible(p.x,p.y,60))continue;const x=p.x+Math.cos(p.angle)*mount.along-cam.x,y=p.y+Math.sin(p.angle)*mount.along-cam.y,h=Math.min(8,s.height*.28)+.2+p.z,mountScale=clamp(s.width/24,.12,.85),cos=Math.cos(mount.angle),sin=Math.sin(mount.angle),recoil=this.reduced?0:mount.recoil*mountScale;this.batches.turret.add(x,y,h,cos,sin,mountScale);this.batches[mount.weapon==='mortar'?'mortar':'barrel'].add(x-cos*recoil,y-sin*recoil,h,cos,sin,mountScale);if(mount.flash&&!this.reduced)this.batches.shell.add(x+cos*(13*mountScale-recoil),y+sin*(13*mountScale-recoil),h+4*mountScale,cos,sin,mountScale*.7);}
       const shots=b.shots;for(let i=0;i<shots.count;i++){const x=shots.px[i]+(shots.x[i]-shots.px[i])*this.alpha,y=shots.py[i]+(shots.y[i]-shots.py[i])*this.alpha,height=shots.previousHeight[i]+(shots.height[i]-shots.previousHeight[i])*this.alpha;if(!this.visible(x,y,Math.max(45,height*z*H+12)))continue;const kind=shots.kind[i],vx=shots.vx[i],vy=shots.vy[i],d=Math.hypot(vx,vy),scale=kind===1?1.6:kind===2?1.5:kind===3?Math.max(1,.4/z):1,tail=kind===2?0:-Math.max(.001,Math.min(1,Math.hypot(x-shots.startX[i],y-shots.startY[i])/((kind===3?18:22)*scale)));this.batches[kind===2?'shell':kind===3?'hostile':'shot'].add(x-cam.x,y-cam.y,height,d?vx/d:1,d?vy/d:0,scale,0,tail);}
       for(const [type,batch] of Object.entries(this.batches)){if(this.atlas?.entries[type]){this.stats.drawCalls+=this.atlas.draw(type,batch);this.stats.triangles+=batch.count*2;}else{this.uniforms(this.main);this.stats.drawCalls+=batch.draw();this.stats.triangles+=batch.count*batch.vertexCount/3;}}this.stats.spriteAtlasBytes=this.atlas?.bytes||0;this.stats.drawCalls+=this.mechanisms?.draw()||0;this.stats.drawCalls+=this.atlas?.edges()||0;
-      const fx=b.effects;this.quad.count=0;for(let i=0;i<fx.count;i++){if(!this.visible(fx.x[i],fx.y[i],Math.max(16,fx.size[i]*z+8))||this.reduced&&fx.kind[i]!==0)continue;this.quad.add(fx.x[i]-cam.x,fx.y[i]-cam.y,fx.height[i],fx.size[i],fx.life[i]/fx.total[i],fx.kind[i],0);}
-      gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false);this.uniforms(this.particles);this.stats.drawCalls+=this.quad.draw();gl.depthMask(true);gl.disable(gl.BLEND);
+      this.drawEffectsGPU(false);
+    }
+    drawEffectsGPU(surface){
+      const gl=this.gl,fx=this.battle.effects,z=this.zoom*this.baseScale,cam=this.camera;this.quad.count=0;
+      for(let i=0;i<fx.count;i++){
+        const water=fx.kind[i]===3;
+        if(surface&&!water||!this.visible(fx.x[i],fx.y[i],Math.max(16,fx.size[i]*z+8)))continue;
+        const life=clamp((fx.life[i]+(this.battle.time-this.visualTime))/fx.total[i],0,1);
+        if(!surface&&(this.reduced&&fx.kind[i]!==0||water&&life<.35))continue;
+        this.quad.add(fx.x[i]-cam.x,fx.y[i]-cam.y,surface||water?.2:fx.height[i],fx.size[i],life,surface?3:water?4:fx.kind[i],fx.angle[i]);
+      }
+      if(surface)this.stats.visibleWaterBlasts=this.quad.count;
+      gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false);this.uniforms(this.particles);gl.uniform1i(gl.getUniformLocation(this.particles,'uReduced'),this.reduced?1:0);this.stats.drawCalls+=this.quad.draw();this.stats.triangles+=this.quad.count*2;gl.depthMask(true);gl.disable(gl.BLEND);
     }
     sprite(type,angle){const frames=this.artSpecs?.[type]?.frames||(type.startsWith('raider')?32:64),n=((Math.round(angle/TAU*frames)%frames)+frames)%frames,key=type+':'+n;let sprite=this.spriteCache.get(key);if(sprite)return sprite;
       const mesh=this.meshes[type],a=n/frames*TAU,cos=Math.cos(a),sin=Math.sin(a),faces=[];let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
@@ -184,7 +225,7 @@
       faces.sort((a,b)=>a.depth-b.depth);for(const f of faces){c.beginPath();f.points.forEach((p,i)=>i?c.lineTo(...p):c.moveTo(...p));c.closePath();c.fillStyle=f.color;c.fill();}this.spriteCache.set(key,sprite);return sprite;
     }
     paintSprite(type,angle,x,y,scale=1,z=0){const p=this.project(x,y,z),s=this.sprite(type,angle),zoom=this.zoom*this.baseScale*scale;this.fallback.drawImage(s,p.x+s.originX*zoom,p.y+s.originY*zoom,s.width/s.resolution*zoom,s.height/s.resolution*zoom);}
-    renderCanvas(){const c=this.fallback,b=this.battle,z=this.zoom*this.baseScale;c.fillStyle=palette.water;c.fillRect(0,0,this.width,this.height);this.terrain?.renderCanvas(this);this.wakes?.drawCanvas(this);const list=[],a=b.raiders;
+    renderCanvas(){const c=this.fallback,b=this.battle,z=this.zoom*this.baseScale;c.fillStyle=palette.water;c.fillRect(0,0,this.width,this.height);this.terrain?.renderCanvas(this);this.wakes?.drawCanvas(this);this.drawWaterCanvas(true);const list=[],a=b.raiders;
       for(let i=0;i<a.count;i++){const x=a.px[i]+(a.x[i]-a.px[i])*this.alpha,y=a.py[i]+(a.y[i]-a.py[i])*this.alpha;if(a.hp[i]>0&&this.visible(x,y,12))list.push({x,y,type:'raider'+a.kind[i],angle:Math.atan2(a.vy[i],a.vx[i])});}
       this.stats.visibleRaiders=list.length;if(this.meshes.salvage)for(const item of b.loot)if(this.visible(item.x,item.y,8))list.push({...item,type:'salvage',angle:0,z:0});for(const s of b.ships)if(s.hp>0)list.push({...this.poses[s.id],type:s.type});list.sort((a,b)=>a.x+a.y-b.x-b.y);for(const s of list)this.paintSprite(s.type,s.angle,s.x,s.y,1,s.z||0);
       const shots=b.shots;
@@ -195,7 +236,31 @@
         }kind===2?c.fill():c.stroke();
       }
       for(const mount of b.mounts){const ship=b.ships[mount.ship],pose=this.poses[ship.id];if(ship.hp<=0)continue;const x=pose.x+Math.cos(pose.angle)*mount.along,y=pose.y+Math.sin(pose.angle)*mount.along,h=Math.min(8,ship.height*.28)+.2+(pose.z||0),mountScale=clamp(ship.width/24,.12,.85),q=this.project(x,y,h),recoil=this.reduced?0:mount.recoil,r=this.project(x-Math.cos(mount.angle)*recoil,y-Math.sin(mount.angle)*recoil,h);this.paintSprite('turret',mount.angle,x,y,mountScale,h);this.paintSprite(mount.weapon==='mortar'?'mortar':'barrel',mount.angle,x-Math.cos(mount.angle)*recoil,y-Math.sin(mount.angle)*recoil,mountScale,h);}
-      const fx=b.effects;for(let i=0;i<fx.count;i++){if(this.reduced&&fx.kind[i]!==0)continue;const q=this.project(fx.x[i],fx.y[i],fx.height[i]),life=fx.life[i]/fx.total[i],size=fx.size[i]*z*(1-life*.7);c.globalAlpha=life;if(fx.kind[i]===2){c.strokeStyle='#8bb9bd';c.beginPath();c.ellipse(q.x,q.y,size,size*.6,0,0,TAU);c.stroke();}else{c.fillStyle=life>.72?'#ffe3a9':life>.4?'#ec8955':'#4b616d';c.beginPath();for(let j=0;j<9;j++){const a=j/9*TAU,r=size*(.25+(j%3)*.025);c.lineTo(q.x+Math.cos(a)*r,q.y+Math.sin(a)*r);}c.closePath();c.fill();}}c.globalAlpha=1;this.stats.drawCalls=list.length+shots.count;}
+      this.drawWaterCanvas(false);
+      const fx=b.effects;for(let i=0;i<fx.count;i++){if(fx.kind[i]===3||this.reduced&&fx.kind[i]!==0)continue;const q=this.project(fx.x[i],fx.y[i],fx.height[i]),life=fx.life[i]/fx.total[i],size=fx.size[i]*z*(1-life*.7);c.globalAlpha=life;if(fx.kind[i]===2){c.strokeStyle='#8bb9bd';c.beginPath();c.ellipse(q.x,q.y,size,size*.6,0,0,TAU);c.stroke();}else{c.fillStyle=life>.72?'#ffe3a9':life>.4?'#ec8955':'#4b616d';c.beginPath();for(let j=0;j<9;j++){const a=j/9*TAU,r=size*(.25+(j%3)*.025);c.lineTo(q.x+Math.cos(a)*r,q.y+Math.sin(a)*r);}c.closePath();c.fill();}}c.globalAlpha=1;this.stats.drawCalls=list.length+shots.count;}
+    drawWaterCanvas(surface){
+      const c=this.fallback,fx=this.battle.effects,z=this.zoom*this.baseScale;let shown=0;
+      if(!surface&&this.reduced)return;
+      for(let i=0;i<fx.count;i++){
+        if(fx.kind[i]!==3||!this.visible(fx.x[i],fx.y[i],fx.size[i]*z+8))continue;
+        const life=clamp((fx.life[i]+this.battle.time-this.visualTime)/fx.total[i],0,1),age=1-life,size=fx.size[i]*z,q=this.project(fx.x[i],fx.y[i]);shown++;
+        if(surface){
+          const t=this.reduced?.32:age,front=size*(.12+.84*(1-(1-t)*(1-t)));c.lineWidth=Math.max(.5,size*(.01+(1-t)*.018));
+          c.globalAlpha=life*.08;c.strokeStyle='#103c50';c.beginPath();c.ellipse(q.x,q.y,front*.94,front*.47,0,0,TAU);c.stroke();
+          c.strokeStyle='#a6d6d4';c.globalAlpha=life*.26;
+          for(let j=0;j<7;j++){const start=fx.angle[i]+j*TAU/7;c.beginPath();c.ellipse(q.x,q.y,front,front*.5,0,start,start+.65);c.stroke();}
+          c.globalAlpha=life*.07;c.lineWidth=.5;c.beginPath();c.ellipse(q.x,q.y,front*.79,front*.395,0,0,TAU);c.stroke();
+        }else if(age<.65){
+          const t=Math.min(1,age/.58),lift=Math.sin(t*Math.PI)*.28,fade=1-clamp((age-.27)/.38,0,1);
+          for(let j=0;j<5;j++){
+            const lane=j-2,variation=.84+.16*Math.sin(fx.angle[i]+j*4.7),spread=lane*(.018+t*.047),height=lift*(1-Math.abs(lane)*.14)*variation;c.globalAlpha=fade*.7;c.fillStyle=j<2?'#528a9c':'#b5d8d5';c.beginPath();
+            for(let n=0;n<16;n++){const angle=n/16*TAU,rough=1+Math.sin(n*2.4+fx.angle[i]+j)*.1;c.lineTo(q.x+(spread+Math.cos(angle)*(.034+t*.025)*rough)*size,q.y+(-height*.47+Math.sin(angle)*(.025+height*.57)*rough)*size);}c.closePath();c.fill();
+            c.beginPath();c.ellipse(q.x+lane*age*.21*size,q.y-(Math.max(0,age*1.65-age*age*3.1)*variation+.035)*size,.007*size,.012*size,0,0,TAU);c.fill();
+          }
+        }
+      }
+      c.globalAlpha=1;if(surface)this.stats.visibleWaterBlasts=shown;
+    }
     labels(){const c=this.ctx,b=this.battle,z=this.zoom*this.baseScale;c.clearRect(0,0,this.width,this.height);c.font='7px "Commit Mono", monospace';c.textAlign='center';
       const pose=this.poses[b.player.id],p=this.project(pose.x,pose.y);c.strokeStyle=palette.gold;c.lineWidth=1;c.beginPath();c.ellipse(p.x,p.y,Math.max(7,27*z),Math.max(4,16*z),0,0,TAU);c.stroke();
       if(this.showBroadside||b.burstCursor<root.WidewakeBattle.BROADSIDE.rounds){

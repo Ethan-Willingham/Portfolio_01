@@ -1645,3 +1645,73 @@ restoration, and a closed-window diagnostic obscured one failure. The harness
 now preserves the original error even when no window survives, plus state and
 a screenshot when available. Physical-device and human handling review remain
 open.
+
+
+## v0.26.1: explosive water pressure
+
+Owner direction, 2026-10-19: explosives should have a different impact on water,
+including displacing boats that survive, with attractive effects and bounded
+cost in endgame combat.
+
+Mortars, flak and bank salvos now create a radial impulse in the same local grid
+walk as their damage. The damaging core keeps its weapon values. The outer
+pressure shoulder pushes without damage; heavier enemy hulls resist more.
+Independent drift survives AI steering updates, fades under water drag and stops
+at banks. Overlapping hits have a velocity cap. Automatic lead aiming accounts
+for the decaying drift. Bullets keep their direct-hit behavior. Missed explosive
+rounds burst at their travel limit, and hits use the swept contact position.
+
+Each burst occupies one existing effect slot. Broken foam and a dark trough sit
+on the water beneath hulls; a short column and spray rise above the impact.
+The plume uses a cropped quad with five procedural jets. Surface and airborne
+effects share the fixed instance buffer in two passes. Canvas follows the same
+sequence; reduced motion keeps stationary fading foam without the plume. The
+first visual pass was reduced in brightness after reviewing overlapping volleys.
+
+Three matched, stationary 180-second endgame watches use 24 fully armed boats
+and 16,384 active raiders. The comparison holds the newer offscreen reinforcement
+arrivals, independent fleet handling and v0.26 hull contacts constant. No campaign
+progress is earned.
+
+| Seed | Kills before | Kills after | Fleet damage before | Fleet damage after |
+|---|---:|---:|---:|---:|
+| 90210 | 69,746 | 70,172 | 871 | 858 |
+| 48476 | 69,398 | 70,397 | 1,092 | 832 |
+| 7319 | 69,523 | 70,489 | 1,274 | 338 |
+
+All 24 boats survive both versions in every fixture and fill the same working
+holds. Total incoming damage across the three runs falls 37 percent, while kills
+rise 1.1 percent. The per-run damage reduction ranges from 1.5 to 73.5 percent;
+kills rise 0.6 to 1.4 percent. Pressure changes whether and when attackers reach
+firing range, so its benefit varies considerably with wave timing. These final
+results replace an earlier local comparison made before the hull-contact update.
+This gives explosives a positional benefit without establishing a balanced
+campaign difficulty. Active steering and earned fleets remain separate balance
+questions.
+
+Validation includes radial falloff, exact-center impacts, heavy-hull response,
+nonlethal near misses, lethal reward accounting, projectile contact locations,
+missed-shell impacts, one direct hit per hull, deck contacts, pressure stacking, drift decay, ram lanes, banks, hashed
+cell collisions and slot reuse. Dormant snapshot helpers retain drift exactly,
+accept old snapshots and reject malformed vectors. Browser and desktop saving
+remain disabled under the current session-play instruction.
+
+Chromium and WebKit render the foam in the water plane, the plume above it and
+stable pixels while paused. Reduced-motion tests verify a fixed foam footprint
+and no plume. The main-shell checks cover the actual Endgame combat entry,
+controls, fleet orders, pause, graphics recovery, result/retry/return and phone
+layouts. Canvas renders the same simulation on a phone-sized viewport.
+
+On the local M1 Pro, the final Chromium watch sample measures 9.5 ms frame p95
+and 3.3 ms simulation p95. The capacity fixture keeps 16,384 raiders, all 8,192
+shot slots and all 2,048 effect slots occupied with water blasts. It renders
+1,987 visible bursts in 33 draw calls, at 6.1 ms CPU simulation-plus-render p95
+and 10 ms frame p95. WebKit's water-effects fixture measures 7 ms CPU p95 and
+19 ms frame p95. These are local browser measurements, not physical-phone results.
+
+The impulse arrays add 256 KiB and bring the fixed combat buffers to 3,645,952
+bytes. There are no new particle objects, fluid grids or all-enemy scans per
+explosion. No projectile is rejected in the complete watches. Syntax checks,
+water-blast tests, connected campaign simulation, fleet handling, spawn checks,
+desktop asset staging and desktop policy checks pass. The current production
+readiness goal remains open.
