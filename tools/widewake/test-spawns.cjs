@@ -32,7 +32,7 @@ for(const [x,y]of [[0,2300],[450,1100],[-750,-4300]]){
   const g=new R.Game();g.castOff();Object.assign(g.player,{x,y,px:x,py:y});
   const p=O.project(x,y);g.spawnBounds={left:p.x-500,right:p.x+500,top:p.y-300,bottom:p.y+300};
   for(let n=0;n<16;n++){const angle=(n+.5)/16*Math.PI*2;g.raiders.add(x+Math.cos(angle)*500,y+Math.sin(angle)*500,0,g.random);}const prior=g.raiders.count;
-  assert.ok(g.wave(12)>0,'offscreen water approach at '+x+','+y);
+  assert.ok(g.wave(12,true)>0,'offscreen water approach at '+x+','+y);
   for(let i=prior;i<g.raiders.count;i++){
     assert.equal(B.spawnVisible(g,g.raiders.x[i],g.raiders.y[i]),false);
     assert.ok(Math.hypot(g.raiders.x[i]-x,g.raiders.y[i]-y)>=579.99);

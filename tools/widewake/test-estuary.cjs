@@ -8,7 +8,7 @@ function voyage(nav,to){const plan=nav.plan(to);assert.ok(plan,to+' has a route 
   assert.equal(nav.arrived?.id,to);reports.push({type:nav.player.type,to,route:plan.name,plannedMetres:plan.distance,sailedMetres:nav.distance-start,seconds:ticks/60,cpuMs:performance.now()-at});return plan;
 }
 for(const type of Object.keys(E.vessels)){const n=new E.Navigation({field,type});if(type==='launch'){voyage(n,'reeds');voyage(n,'mill');}else{assert.equal(n.plan('reeds'),null);voyage(n,'mill');}voyage(n,'yard');}
-const launch=new E.Navigation({field}),large=new E.Navigation({field,type:'oilrig'}),short=launch.plan('mill'),long=large.plan('mill');assert.equal(short.name,'Reed cut');assert.equal(long.name,'Main channel');assert.ok(long.distance-short.distance>1000);check('all three hulls make their permitted round trips; the launch retains a meaningful shallow shortcut');
+const launch=new E.Navigation({field}),large=new E.Navigation({field,type:'oilrig'}),short=launch.plan('mill'),long=large.plan('mill');assert.equal(short.name,'Reed cut');assert.notEqual(long.name,'Reed cut');assert.ok(long.distance-short.distance>600);check('all three hulls make their permitted round trips; the launch retains a meaningful shallow shortcut');
 
 // Collision still stops the whole hull; retired controls cannot bypass the bank.
 const collision=new E.Navigation({field,type:'oilrig'});for(let i=0;i<1800&&!collision.contact;i++)collision.step(1/60,{x:-1,y:0});assert.ok(collision.contact);assert.ok(field.clearance(collision.player)>=.12);

@@ -1715,3 +1715,45 @@ explosion. No projectile is rejected in the complete watches. Syntax checks,
 water-blast tests, connected campaign simulation, fleet handling, spawn checks,
 desktop asset staging and desktop policy checks pass. The current production
 readiness goal remains open.
+
+## Water atlas and pacing milestone, v0.27, 2026-10-19
+
+The new owner-requested route and encounter plan is in
+[WIDEWAKE_WATERWAYS.md](WIDEWAKE_WATERWAYS.md). The playable world now has ten
+trading ports, fifteen channel paths, twenty-four named shore scenes and the
+existing three working grounds. Lantern Quay replaces the long Reed trip as the
+suggested first delivery. Its actual unupgraded passage takes 56 seconds.
+
+The western lake chain adds short neighboring trades. Canopy tools, Bellwether
+grain and Crown oil extend the objectives. Regional patrol mixes and finite
+active caps replace indefinite pressure growth from elapsed voyages or repeated
+watches. The chart shows fleet-specific sailing estimates, pressure and hazard
+warnings, with Sheltered and Direct route choices. The volcanic alternatives
+measure 2.60 km and 3.57 km. The launch's direct crossing takes 137 seconds and
+loses about 33 hull points; the sheltered outward trip takes 180 seconds and
+loses none in the isolated sailing test.
+
+Currents, the pulsing floodwheel race, the Turnglass and thermal water affect
+friendly and hostile motion through the shared field. Existing blast drift and
+bank blocking remain intact. Named shore discoveries fill the log. Original
+geometry, color/depth sprites, animated wheel paddles, flowing lava and falls,
+and sparse birds establish the first scenery pass. Landmark clearings and
+terrain anchoring keep the scenes visible. New ports have their own berth
+orientations and arrival cameras.
+
+Verification includes 32 physical passage runs, old and new delivery rules,
+finite admissions, force parity, heat damage, dormant snapshot determinism,
+complete existing Reach trade/work/convoy checks, fleet handling, projectiles,
+water blasts and the 180-second endgame simulation. Chromium and WebKit exercise
+the new chart, earned first sale, ten destinations and original art. Touch
+layouts, Canvas fallback, the existing interface suite, graphics restoration,
+and disabled-save/session behavior pass. Every atlas frame has visible,
+unclipped pixels; the expanded scene remains under the existing 48 MiB ceiling.
+Desktop source staging and protocol policy checks pass. This is not a packaged
+app or physical-phone performance certification.
+
+The map integrates the concurrent harbor detail, boat-relative helm, projectile
+contact and water blast changes. Saving, reverse and tow remain disabled as the
+owner directed. The wider production goal remains open. Remaining world work
+includes a complete earned economy review of the added objectives, shore NPC
+behavior, authored regional encounters and a human review of boring stretches.

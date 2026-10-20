@@ -103,3 +103,7 @@ body:has(.reach-dialog[open]) :is(.reach-controls,.reach-actions,#reach-course,#
 body:has(.reach-dialog[open]) #combat-status{visibility:hidden}
 @media(max-width:560px) and (orientation:portrait){#combat-status{top:92px;width:calc(100% - 48px)}#reach.in-combat #reach-notice{top:165px}.in-combat .reach-actions{bottom:150px}.combat-result{padding:24px 20px}#combat-result-stats{gap:10px}#combat-result-stats strong{font-size:19px}}
 @media(max-height:500px) and (orientation:landscape){#combat-status{top:17px;width:215px;left:55%}#combat-order{font-size:11px}#combat-tally{font-size:9px}#reach.in-combat #reach-notice{top:79px;font-size:11px}.combat-result{padding:18px 24px}#combat-result-stats{padding:10px 0 15px}}
+
+/* Passage choices stay on the paper chart, with the voyage estimate below. */
+.route-policies{display:flex;gap:6px;flex:none}.route-policies button{min-height:44px;padding:8px 14px!important;font-size:12px;color:var(--ink-soft);border-bottom:2px solid transparent!important}.route-policies button[aria-pressed="true"]{color:var(--ink);border-color:var(--ink)!important;background:#526b6b14}.route-policies button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+@media(max-height:500px){.route-policies{position:absolute;right:62px;top:6px}.route-policies button{font-size:10px;padding:6px 9px!important}#reach-chart header h2{font-size:18px}#reach-chart header small{display:none}}

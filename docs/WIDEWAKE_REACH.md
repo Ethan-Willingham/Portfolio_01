@@ -29,6 +29,32 @@ Reverse and tow-back are removed completely, including their buttons, R and RT
 bindings, negative propeller thrust and tow-history playback. Steer to turn and
 release the helm to coast. The navigation trial uses the same simplified controls.
 
+## Waterway expansion, v0.27
+
+The active route plan is [WIDEWAKE_WATERWAYS.md](WIDEWAKE_WATERWAYS.md). Ten
+trading ports and twenty-four named shore scenes now occupy a connected network
+of narrow channels and lakes. The first salt delivery goes to Lantern Quay and
+measures 56 seconds of sailing in the unupgraded launch. Reed Landing still
+accepts the old opening delivery. Tools to Canopy Landing, grain to Bellwether
+and oil to Crown add three one-time objectives. Old completed objectives remain.
+
+The paper chart shows estimated sailing time for the current fleet, geographic
+patrol pressure and physical hazards. Sheltered and Direct passage select
+actual alternative routes around the volcanic reach. The race, whirlpool and
+thermal outfall affect player, companion and hostile boats. Enemy pressure is
+fixed by region and working fleet size, with finite active caps, rather than
+increasing indefinitely with elapsed time or completed watches.
+
+New source: `js/widewake-waterways.js` owns the atlas and environmental fields;
+`js/widewake-waterway-art.js` owns the original shore and port geometry. The
+existing worker, terrain, navigation and campaign consume that shared data.
+The title artwork and separate endgame combat flow remain unchanged. New
+snapshot fields default safely in the dormant simulation test helpers. Browser
+and desktop saving remain disabled; voyages exist only in the current session.
+
+The sections below retain the earlier three-port loop as implementation history.
+The current map, progression and review boundaries are in the atlas document.
+
 ## Current connected loop
 
 The launch starts with 520 coins, eight salt and a 32-unit hold. Sell eight salt

@@ -2,6 +2,7 @@
    Pure simulation. This review region never opens the campaign save. */
 (function(root){
   'use strict';
+  const W=root.WidewakeWaterways||(typeof require==='function'?require('./widewake-waterways.js'):null);
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),TAU=Math.PI*2;
   const bounds=Object.freeze({left:-4000,right:4000,top:-8000,bottom:4000});
   const vessels=Object.freeze({
@@ -15,11 +16,12 @@
     {id:'yard',name:'Tern Yard',nodes:[[100,500,130,9],[-200,650,115,9],[-550,600,115,9]]},
     {id:'cut',name:'Reed cut',nodes:[[-50,-1600,16,1.65],[-200,-1900,15,1.55],[-380,-2200,25,1.8],[-100,-2450,14,1.5],[0,-2800,17,1.65],[300,-3300,18,1.7]]}
   ];
+  channels.push(...W.channels);
   const ports=Object.freeze([
     {id:'yard',name:'Tern Yard',x:-550,y:600,description:'Sheltered boatyard',piers:[{x:0,y:-88,length:65,width:8,alongY:true},{x:-7,y:-56,length:22,width:6,alongY:false}]},
     {id:'mill',name:'Lockmill',x:100,y:-5100,description:'Freshwater mill',piers:[{x:-42,y:-100,length:56,width:9,alongY:true},{x:-54,y:-73,length:32,width:7,alongY:false}]},
     {id:'reeds',name:'Reed Landing',x:-380,y:-2200,description:'Shallow access',piers:[{x:-23,y:0,length:25,width:3,alongY:false}]}
-  ]);
+  ,...W.ports]);
   const noise=(x,y)=>{const t=Math.sin(x*12.9898+y*78.233)*43758.5453;return t-Math.floor(t);};
   function spline(a,b,c,d,t){return .5*((2*b)+(-a+c)*t+(2*a-5*b+4*c-d)*t*t+(-a+3*b-3*c+d)*t*t*t);}
   function samples(channel){const result=[],n=channel.nodes;
@@ -28,7 +30,7 @@
     const last=n.at(-1);result.push({x:last[0],y:last[1],width:last[2],depth:last[3],channel:channel.id});return result;
   }
   class Field{
-    constructor(){this.segments=[];this.grid=new Map();this.paths=channels.map(c=>({...c,points:samples(c)}));this.nodes=[];this.obstacles=ports.flatMap(port=>port.piers.map(p=>({x:port.x+p.x,y:port.y+p.y,hx:(p.alongY?p.width:p.length)*.5,hy:(p.alongY?p.length:p.width)*.5})));
+    constructor(){this.time=0;this.segments=[];this.grid=new Map();this.paths=channels.map(c=>({...c,points:samples(c)}));this.nodes=[];this.obstacles=ports.flatMap(port=>port.piers.map(p=>({x:port.x+p.x,y:port.y+p.y,hx:(p.alongY?p.width:p.length)*.5,hy:(p.alongY?p.length:p.width)*.5})));
       const junctions=new Map();
       for(const path of this.paths){let previous;
         for(const point of path.points){const key=Math.round(point.x)+','+Math.round(point.y);let index=junctions.get(key);
@@ -49,7 +51,7 @@
         edge=Math.max(edge,e);const base=s.a.depth+(s.b.depth-s.a.depth)*t,value=e>0?base*(1-(d/r)**4):e*.12;
         if(value>depth){depth=value;channel=s.id;const speed=s.id==='yard'?.08:s.id==='cut'?.45:clamp(.65+(-y/5000),.3,1.3),direction=s.id==='main'?-1:1,len=Math.sqrt(s.d2);cx=s.dx/len*speed*direction;cy=s.dy/len*speed*direction;}}
       const border=Math.min(x-bounds.left,bounds.right-x,y-bounds.top,bounds.bottom-y);if(border<0){edge=border;depth=border*.2;channel=null;}
-      out.depth=depth;out.edge=edge;out.salinity=clamp((y+2400)/3900,0,1);out.currentX=depth>0?cx:0;out.currentY=depth>0?cy:0;out.channel=channel;out.habitat=channel==='cut'?'reeds':y<-2200?'river':y<800?'estuary':'salt';return out;
+      out.depth=depth;out.edge=edge;out.salinity=clamp((y+2400)/3900,0,1);out.currentX=depth>0?cx:0;out.currentY=depth>0?cy:0;out.channel=channel;out.habitat=channel==='cut'?'reeds':y<-2200?'river':y<800?'estuary':'salt';out.region=W.region(x,y,channel);out.heat=0;out.hazard=null;if(depth>0)W.flow(x,y,this.time,out);return out;
     }
     obstruction(ship,x=ship.x,y=ship.y,angle=ship.angle){
       // Separating axes catch even the three-metre pier, independently of the
@@ -78,15 +80,19 @@
     }
     route(ship,destination){
       const target=typeof destination==='object'&&destination&&Number.isFinite(destination.x)&&Number.isFinite(destination.y)?destination:ports.find(p=>p.id===destination);if(!target)return null;
+      const sheltered=ship.routePolicy!=='direct';
       const nodes=this.nodes,count=nodes.length,dist=new Float64Array(count).fill(Infinity),prev=new Int32Array(count).fill(-1),used=new Uint8Array(count),via=new Array(count);
       const candidates=nodes.map((n,i)=>({i,d:Math.hypot(n.x-ship.x,n.y-ship.y)})).sort((a,b)=>a.d-b.d).slice(0,16);
       for(const c of candidates)if(this.legClear(ship,ship,nodes[c.i]))dist[c.i]=c.d;
       const goal=nodes.reduce((best,n,i)=>Math.hypot(n.x-target.x,n.y-target.y)<Math.hypot(nodes[best].x-target.x,nodes[best].y-target.y)?i:best,0);
       for(let k=0;k<count;k++){let at=-1,best=Infinity;for(let i=0;i<count;i++)if(!used[i]&&dist[i]<best){best=dist[i];at=i;}if(at<0)break;if(at===goal)break;used[at]=1;
-        for(const edge of nodes[at].edges){if(used[edge.to]||dist[edge.to]<=best+edge.distance)continue;if(!this.legClear(ship,nodes[at],nodes[edge.to]))continue;dist[edge.to]=best+edge.distance;prev[edge.to]=at;via[edge.to]=edge.channel;}}
+        for(const edge of nodes[at].edges){const to=nodes[edge.to],cost=edge.distance*(1+(sheltered?W.passageRisk((nodes[at].x+to.x)/2,(nodes[at].y+to.y)/2):0));if(used[edge.to]||dist[edge.to]<=best+cost)continue;if(!this.legClear(ship,nodes[at],to))continue;dist[edge.to]=best+cost;prev[edge.to]=at;via[edge.to]=edge.channel;}}
       if(!Number.isFinite(dist[goal])||!this.legClear(ship,nodes[goal],target))return null;
       const points=[],branches=new Set();for(let at=goal;at!==-1;at=prev[at]){points.push({x:nodes[at].x,y:nodes[at].y});if(via[at])branches.add(via[at]);}points.reverse();if(Math.hypot(points.at(-1).x-target.x,points.at(-1).y-target.y)>1)points.push({x:target.x,y:target.y});
-      return{destination:target,points,distance:dist[goal]+Math.hypot(nodes[goal].x-target.x,nodes[goal].y-target.y),name:branches.has('cut')?'Reed cut':'Main channel',index:0};
+      let distance=0,seconds=4,tier=0,last=ship,heading=ship.angle||0;const hazards=new Set(),speed=ship.cruiseSpeed||ship.speed||12;
+      for(const point of points){const dx=point.x-last.x,dy=point.y-last.y,d=Math.hypot(dx,dy);if(d>.01){const water=this.sample((last.x+point.x)/2,(last.y+point.y)/2),angle=Math.atan2(dy,dx),bend=Math.abs(Math.atan2(Math.sin(angle-heading),Math.cos(angle-heading)));distance+=d;seconds+=d/Math.max(2,speed*.98+(water.currentX*dx+water.currentY*dy)/d)+bend*.6;heading=angle;tier=Math.max(tier,water.region.tier);if(water.hazard)hazards.add(water.hazard);}last=point;}
+      const named=[...branches].filter(id=>!['main','yard','cut'].includes(id));
+      return{destination:target,points,distance,seconds,tier,hazards:[...hazards],policy:sheltered?'sheltered':'direct',name:named.length?channels.find(c=>c.id===named[0]).name:branches.has('cut')?'Reed cut':'Main channel',index:0};
     }
   }
   function createShip(type='launch'){const spec=vessels[type],port=ports[0];return{id:0,type,...spec,maxHp:spec.hp,x:port.x,y:port.y,px:port.x,py:port.y,angle:0,previousAngle:0,vx:0,vy:0,hit:0,working:false};}
@@ -107,7 +113,7 @@
       return Math.hypot(s.x-old.x,s.y-old.y);
     }
     step(dt,input={x:0,y:0}){
-      dt=clamp(dt,0,1/30);const s=this.player;s.px=s.x;s.py=s.y;s.previousAngle=s.angle;this.time+=dt;this.tick++;this.control=input;this.contactTime=Math.max(0,this.contactTime-dt);if(!this.contactTime)this.contact='';
+      dt=clamp(dt,0,1/30);const s=this.player;s.px=s.x;s.py=s.y;s.previousAngle=s.angle;this.time+=dt;this.field.time=this.time;this.tick++;this.control=input;this.contactTime=Math.max(0,this.contactTime-dt);if(!this.contactTime)this.contact='';
       const manual=Math.hypot(input.x||0,input.y||0)>.04||Math.abs(input.throttle||0)>.04||Math.abs(input.steer||0)>.04;if(manual){this.route=null;this.arrived=null;}
       let drive=input;
       if(this.route){const r=this.route;while(r.index<r.points.length-1&&Math.hypot(r.points[r.index].x-s.x,r.points[r.index].y-s.y)<Math.max(7,s.speed*.65))r.index++;

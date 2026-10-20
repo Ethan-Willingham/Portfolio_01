@@ -11,6 +11,11 @@ asks to retire the old world and make this ocean the game. Version 0.22 connects
 routes, trading, work, progression and saves in Bracken Reach. See
 `WIDEWAKE_REACH.md`. The stages below record the earlier development order.
 
+The later map instruction authorizes expanding the established Reach foundation.
+The v0.27 implementation and next encounter briefs are in
+[WIDEWAKE_WATERWAYS.md](WIDEWAKE_WATERWAYS.md). Earlier limits to the three-port
+trial below are historical, not a prohibition on this authorized expansion.
+
 ## Order of work
 
 Do not attempt the world, combat, graphics and campaign overhaul in one pass.

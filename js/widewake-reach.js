@@ -8,7 +8,7 @@
   try{const p=JSON.parse(localStorage.getItem('widewake-reach-settings')||'{}');for(const k of ['sound','reduceMotion'])if(typeof p[k]==='boolean')settings[k]=p[k];if(Number.isFinite(p.volume))settings.volume=E.clamp(p.volume,0,.5);}catch{}
   // Voyages live only in memory until saving is deliberately reintroduced.
   let game=null,view=null,sound=null,mode='title',modalReturn='title',dirty=true,last=0,accumulator=0,uiTime=0,noticeUntil=0,usingPad=false,service='trade',serviceTab='recruit',tradeSide='buy',good='salt',quantity=8,request=0,selected=null,plan=null,stickId=null,pan=null,pinch=null,controller;
-  let voyage=null;
+  let voyage=null,routePolicy="sheltered";
   const dialogStack=[];
   const keys=new Set(),stick={x:0,y:0},pointers=new Map(),frameTimes=new Float32Array(600),stepTimes=new Float32Array(600);let samples=0;
   const money=n=>Math.round(n).toLocaleString()+' c',allDestinations=()=>[...E.ports,...R.sites.filter(s=>game.rank>=s.rank)];
@@ -16,7 +16,7 @@
   function wake(){if(!settings.sound||!activity.active())return;try{sound=sound||new WidewakeAudio({active:()=>activity.active(),settings:()=>settings});sound.wake();}catch{}}
   function notify(text){$('reach-notice').textContent=text;noticeUntil=activity.now()+4500;if(mode==='service')$('service-feedback').textContent=text;}
   function refreshTitle(){if(mode!=='title')return;$('resume-voyage').hidden=!voyage;$('start-voyage').classList.toggle('ww-primary',!voyage);}
-  function setPortCamera(){const p=E.ports.find(p=>p.id===game.port);if(!p)return;view.follow=false;view.anchor=null;view.offset={x:0,y:0};view.camera={x:p.x-26,y:p.y-88};view.zoom=view.targetZoom=p.id==='reeds'?5:2.8;dirty=true;}
+  function setPortCamera(){const p=E.ports.find(p=>p.id===game.port);if(!p)return;view.follow=false;view.anchor=null;view.offset={x:0,y:0};view.camera={x:p.x-26,y:p.y-88};view.zoom=view.targetZoom=p.id==='reeds'?5:2.8;if(p.theme){const scale=3.8,shift=O.unproject(view.width*.16/scale,0);view.camera={x:p.x-Math.cos(p.shoreAngle)*(p.shore+5)-shift.x,y:p.y-Math.sin(p.shoreAngle)*(p.shore+5)-shift.y};view.zoom=view.targetZoom=scale/view.baseScale;}dirty=true;}
   function sailCamera(){view.follow=true;view.anchor=null;view.offset={x:0,y:0};view.configureCamera();view.targetZoom=view.stops.helm;view.camera={x:game.player.x,y:game.player.y};}
   function bindView(){view.reduced=settings.reduceMotion;view.onContextLost=()=>{openDialog('reach-menu','menu');$('menu-status').textContent='Graphics paused. Restoring the scene...';};view.onContextRestored=()=>{dirty=true;$('menu-status').textContent='Graphics restored. Resume when ready.';};if(view.terrain){view.terrain.onReady=()=>{dirty=true;updateUI();};view.terrain.onError=message=>{$('boot-error').hidden=false;$('boot-error').textContent=message;openDialog('reach-menu','menu');};}}
   function enter(value){dialogStack.length=0;for(const d of document.querySelectorAll('dialog[open]'))d.close();clear();game=value;voyage=null;$('reach-notice').textContent='';$('reach-water').setAttribute('aria-label','W or Up drives forward. A/D or Left/Right turn. S or Down brakes. E interacts, M opens the chart, Escape pauses.');$('reach').classList.remove('in-combat');view?.dispose();$('title-screen').hidden=true;$('reach').hidden=false;document.body.classList.remove('at-title');view=new WidewakeEstuaryView.View($('reach-water'),game);bindView();mode=game.port?'port':'sailing';if(game.port)setPortCamera();else sailCamera();last=accumulator=0;dirty=true;updateUI();wake();}
@@ -107,7 +107,7 @@
     let html=summary;
     const locked=service==='fleet'&&game.rank<2||service==='yard'&&game.rank<3;
     if(locked){
-      html+='<div class="locked-service">'+U.icon('lock')+'<div><h3>'+(service==='fleet'?'Fleet locked':'Shipyard locked')+'</h3><p>'+(service==='fleet'?'Sell 8 salt at Reed Landing.':'Finish a fishing watch at Tern Shoal.')+'</p></div><button class="reach-primary" data-job="chart">Show on chart '+U.icon('arrow')+'</button></div>';
+      html+='<div class="locked-service">'+U.icon('lock')+'<div><h3>'+(service==='fleet'?'Fleet locked':'Shipyard locked')+'</h3><p>'+(service==='fleet'?'Sell 8 salt at Lantern Quay.':'Finish a fishing watch at Tern Shoal.')+'</p></div><button class="reach-primary" data-job="chart">Show on chart '+U.icon('arrow')+'</button></div>';
       if(game.repairCost())html+='<button class="repair-fleet" data-job="repair" '+(game.repairCost()>game.coins?'disabled':'')+'>Repair fleet <strong>'+money(game.repairCost())+'</strong></button>';
     }else if(service==='trade'){
       const limit=tradeLimit(),buying=tradeSide==='buy',total=game.quote(good,quantity,buying),amount=game.amount(good),available=quantity<=limit;
@@ -132,6 +132,7 @@
       else html+=Object.entries(R.hulls).filter(([k])=>k!=='launch').map(([k,h])=>'<article class="offer">'+boatArt(k)+'<div><h3>'+h.name+'</h3><small>'+h.hold+' hold · '+h.draft+' m draft'+(game.rank<h.rank?'<br>Complete an oil watch':'')+'</small></div><button data-hull="'+k+'" data-focus="hull-'+k+'" '+(game.rank<h.rank||game.coins<h.cost||game.player.type===k?'disabled':'')+'><span>'+(game.player.type===k?'Aboard':'Buy hull')+'</span><strong>'+money(h.cost)+'</strong></button></article>').join('');
     }else{
       html+='<div class="log-stats"><span>'+game.visited.size+'<small>Ports visited</small></span><span>'+game.kills+'<small>Raiders sunk</small></span><span>'+game.stats.watches+'<small>Watches</small></span></div>';
+      html+='<span class="service-subtitle">Places remembered</span>'+game.discoveries.map(id=>'<div class="log-entry">'+U.icon('chart')+'<strong>'+escapeText(WidewakeWaterways.landmarks.find(m=>m.id===id).name)+'</strong></div>').join('');
       html+=game.collection.length?'<span class="service-subtitle">Rare finds</span>'+game.collection.map(n=>'<div class="log-entry">'+U.cargo(n==='Amber nautilus'?'relic':'fish')+'<strong>'+escapeText(n)+'</strong></div>').join(''):'<div class="empty-collection">'+U.icon('fish')+'<p>No rare finds yet.</p></div>';
       html+='<p>'+game.objective().detail+'</p>';
     }
@@ -161,7 +162,7 @@
     const canvas=$('chart-map'),r=canvas.getBoundingClientRect(),ratio=Math.min(2,devicePixelRatio);
     canvas.width=Math.round(r.width*ratio);canvas.height=Math.round(r.height*ratio);
     const c=canvas.getContext('2d');c.scale(ratio,ratio);
-    const w=r.width,h=r.height,scale=Math.min((w-40)/3400,(h-40)/8200),cx=w/2,cy=20+5500*scale,point=(x,y)=>({x:cx+x*scale,y:cy+y*scale});
+    const w=r.width,h=r.height,scale=Math.min((w-40)/7100,(h-40)/8400),cx=w/2,cy=20+5600*scale,point=(x,y)=>({x:cx+x*scale,y:cy+y*scale});
     c.fillStyle='#d2d2b9';c.fillRect(0,0,w,h);c.fillStyle='#a8c0bb';c.fillRect(0,point(0,1280).y,w,h);
     c.lineJoin=c.lineCap='round';
     for(const edge of [true,false])for(const path of game.field.paths)for(let i=1;i<path.points.length;i++){
@@ -171,6 +172,8 @@
     c.strokeStyle='#405e6420';c.lineWidth=.5;
     for(let x=-6000;x<=6000;x+=2000){const p=point(x,0);c.beginPath();c.moveTo(p.x,0);c.lineTo(p.x,h);c.stroke();}
     for(let y=-6000;y<=4000;y+=2000){const p=point(0,y);c.beginPath();c.moveTo(0,p.y);c.lineTo(w,p.y);c.stroke();}
+    for(const hazard of WidewakeWaterways.hazards){const q=point(hazard.x,hazard.y);c.strokeStyle=hazard.kind==='heat'?'#ac6448':'#637c8b';c.lineWidth=1;c.beginPath();c.arc(q.x,q.y,Math.max(5,hazard.radius*scale),0,Math.PI*2);c.stroke();c.beginPath();c.moveTo(q.x-2,q.y);c.lineTo(q.x+2,q.y);c.moveTo(q.x,q.y-2);c.lineTo(q.x,q.y+2);c.stroke();}
+    if(h>330){c.font='italic 11px "Segoe UI",sans-serif';c.fillStyle='#506e6b';for(const [name,x,y]of [['Gorilla Narrows',-3100,-1800],['Drowned town',-3100,-3500],['Blackglass',1800,-1750],['Leeward',2650,-3750]]){const p=point(x,y);c.fillText(name,E.clamp(p.x,10,w-95),p.y);}}
     const route=plan||game.route;
     if(route){c.strokeStyle='#385964';c.lineWidth=1.5;c.setLineDash([4,4]);c.beginPath();for(const [i,p]of route.points.entries()){const q=point(p.x,p.y);i?c.lineTo(q.x,q.y):c.moveTo(q.x,q.y);}c.stroke();c.setLineDash([]);}
     c.font='11px "Segoe UI",sans-serif';
@@ -179,8 +182,8 @@
       c.fillStyle=active?'#203a45':'#526b6b';
       if(port.type){c.beginPath();c.arc(p.x,p.y,4,0,Math.PI*2);c.fill();}else c.fillRect(p.x-3,p.y-3,6,6);
       if(active){c.strokeStyle='#203a45';c.lineWidth=1.5;c.beginPath();c.arc(p.x,p.y,8,0,Math.PI*2);c.stroke();}
-      if(h<250&&!active&&port.id!==game.port)continue;
-      const tw=c.measureText(port.name).width,left=port.id==='reeds'||port.id==='river';
+      if((h<340||port.type)&&!active&&port.id!==game.port)continue;
+      const tw=c.measureText(port.name).width,left=port.x<0;
       // Keep labels on the paper even on a narrow phone chart.
       const x=E.clamp(left?p.x-tw-10:p.x+10,8,w-tw-8),y=E.clamp(p.y-10,14,h-18);
       c.fillStyle='#dedbc3e8';c.fillRect(x-3,y-10,tw+6,15);c.fillStyle='#203a45';c.textAlign='left';c.fillText(port.name,x,y+1);
@@ -189,8 +192,10 @@
     c.strokeStyle='#526d70';c.fillStyle='#526d70';c.textAlign='center';c.font='9px "Commit Mono",monospace';c.fillText('N',w-24,18);c.beginPath();c.moveTo(w-24,24);c.lineTo(w-28,35);c.lineTo(w-24,32);c.lineTo(w-20,35);c.closePath();c.fill();
     c.textAlign='left';c.fillText('1 km',14,h-17);c.lineWidth=1;c.beginPath();c.moveTo(14,h-12);c.lineTo(14,h-8);c.lineTo(14+scale*1000,h-8);c.lineTo(14+scale*1000,h-12);c.stroke();canvas.chartPoint=point;
   }
-  function openChart(){if(!game||game.endgame)return;openDialog('reach-chart','chart');plan=null;selected=null;$('route-name').textContent='Choose a destination';$('route-detail').textContent='';$('set-course').disabled=true;$('chart-destinations').innerHTML=allDestinations().map(p=>'<button data-port="'+p.id+'">'+U.icon(p.type==='fish'?'fish':p.type==='oil'?'engine':'sail')+'<span>'+p.name+'<small>'+(p.type==='fish'?'Fishing':p.type==='oil'?'Oil grounds':p.id===game.port?'Docked here':'Harbor')+'</small></span></button>').join('');drawChart();}
-  async function selectPort(id){const destination=allDestinations().find(p=>p.id===id);if(!destination)return;selected=id;plan=null;const token=++request;$('route-name').textContent='Checking passage...';$('route-detail').textContent='';$('set-course').disabled=true;for(const b of document.querySelectorAll('[data-port]'))b.setAttribute('aria-pressed',String(b.dataset.port===id));drawChart();try{const route=await view.terrain.route(game.routeHull(),destination);if(token!==request||mode!=='chart')return;plan=route;$('route-name').textContent=route?destination.name:'Shallow access';$('route-detail').textContent=route?(route.distance/1000).toFixed(1)+' km · '+route.name:'Your fleet needs a deeper approach.';$('set-course').disabled=!route;drawChart();}catch(error){if(token===request){$('route-name').textContent='Route unavailable';$('route-detail').textContent=error.message;}}}
+  function passageTime(seconds){const format=s=>Math.floor(s/60)+':'+String(Math.round(s%60)).padStart(2,'0');return format(Math.round(seconds*.8/5)*5)+' to '+format(Math.round(seconds*1.2/5)*5);}
+  for(const b of document.querySelectorAll('[data-route-policy]'))b.onclick=()=>{routePolicy=b.dataset.routePolicy;for(const other of document.querySelectorAll('[data-route-policy]'))other.setAttribute('aria-pressed',String(other===b));if(selected)selectPort(selected);};
+  function openChart(){if(!game||game.endgame)return;openDialog('reach-chart','chart');plan=null;selected=null;$('route-name').textContent='Choose a destination';$('route-detail').textContent='';$('set-course').disabled=true;$('chart-destinations').innerHTML=allDestinations().map(p=>'<button data-port="'+p.id+'">'+U.icon(p.type==='fish'?'fish':p.type==='oil'?'engine':'sail')+'<span>'+p.name+'<small>'+(p.id===game.port?'Docked here':p.type==='fish'?'Fishing':p.type==='oil'?'Oil grounds':['Sheltered','Light patrols','Fast raiders','Gunboats','Heavy patrols'][game.field.sample(p.x,p.y).region.tier])+'</small></span></button>').join('');drawChart();}
+  async function selectPort(id){const destination=allDestinations().find(p=>p.id===id);if(!destination)return;selected=id;plan=null;const token=++request;$('route-name').textContent='Checking passage...';$('route-detail').textContent='';$('set-course').disabled=true;for(const b of document.querySelectorAll('[data-port]'))b.setAttribute('aria-pressed',String(b.dataset.port===id));drawChart();try{const route=await view.terrain.route({...game.routeHull(),routePolicy},destination);if(token!==request||mode!=='chart')return;plan=route;$('route-name').textContent=route?destination.name:'Shallow access';$('route-detail').textContent=route?(route.distance/1000).toFixed(1)+' km · '+passageTime(route.seconds)+' sailing · '+['Sheltered','Light patrols','Fast raiders','Gunboats','Heavy patrols'][route.tier]+(route.hazards.length?' · '+route.hazards.map(id=>id==='furnace'?'Hot water damages hulls':WidewakeWaterways.hazards.find(h=>h.id===id).name).join(', '):''):'Your fleet needs a deeper approach.';$('set-course').disabled=!route;drawChart();}catch(error){if(token===request){$('route-name').textContent='Route unavailable';$('route-detail').textContent=error.message;}}}
   function objectiveChart(){openChart();const o=game.objective(),id=o.port||o.site;if(id)selectPort(id);}
   $('charter-chart').onclick=objectiveChart;
   $('chart-open').onclick=openChart;$('harbor-chart').onclick=openChart;$('chart-destinations').onclick=e=>{const b=e.target.closest('[data-port]');if(b)selectPort(b.dataset.port);};$('chart-map').onclick=e=>{const r=e.currentTarget.getBoundingClientRect(),x=e.clientX-r.x,y=e.clientY-r.y;let best=null,d=30;for(const port of allDestinations()){const p=e.currentTarget.chartPoint(port.x,port.y),distance=Math.hypot(p.x-x,p.y-y);if(distance<d){best=port;d=distance;}}if(best)selectPort(best.id);};

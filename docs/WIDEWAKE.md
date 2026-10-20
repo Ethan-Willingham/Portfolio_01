@@ -136,6 +136,15 @@ The 24 individual art briefs are in
 because more art would be useful. The current code-drawn harbor scenes provide
 distinct interim backgrounds while that art pass is deferred.
 
+## Waterway world, v0.27
+
+The owner's latest direction makes travel pacing, regional enemy progression,
+a narrow connected map and memorable physical waterways the next foundation.
+Read [WIDEWAKE_WATERWAYS.md](WIDEWAKE_WATERWAYS.md) for the route atlas, measured
+passages, creative scene briefs, encounter progression and remaining review.
+The campaign now starts with a short delivery to Lantern Quay, expands through
+seven additional ports, and offers a sheltered alternative to a volcanic race.
+
 ## Playing the current build
 
 Open `widewake.html` and choose **New voyage**. Trading, fleet

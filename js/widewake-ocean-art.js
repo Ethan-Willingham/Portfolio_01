@@ -190,7 +190,7 @@
       for(let z=-.5;z<2;z+=.38)beam(point(end-.45,edge,z),point(end+.45,edge,z),.055,'#acb8a4');
       for(let coil=0;coil<3;coil++)for(let i=0;i<20;i++){const r=.38+coil*.12,a=i/20*TAU,b=(i+1)/20*TAU;beam(point(end+2+Math.cos(a)*r,Math.sin(a)*r,1.72),point(end+2+Math.cos(b)*r,Math.sin(b)*r,1.72),.035,'#c3ad80',4);}
     }
-    for(const port of root.WidewakeEstuary.ports){
+    for(const port of root.WidewakeEstuary.ports.filter(p=>!p.theme)){
       const add=(suffix,x,y,build,shadow)=>{
         g=G();build();const type='landing_'+port.id+suffix,mesh=new Float32Array(g.out);let radius=1;
         for(let i=0;i<mesh.length;i+=6)radius=Math.max(radius,Math.hypot(mesh[i],mesh[i+1])+mesh[i+2]);
