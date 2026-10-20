@@ -16,7 +16,6 @@
     pause:'M8 4v16M16 4v16',
     close:'m6 6 12 12M18 6 6 18',
     arrow:'M3 12h17M14 5l7 7-7 7',
-    reverse:'M20 12H3M10 5l-7 7 7 7',
     fish:'M4 12 1 7v10ZM4 12q8-13 18 0-10 13-18 0ZM15 9v1M12 7l-2-3M12 17l-2 3',
     engine:'M4 9h16v10H4ZM8 5h8M12 5v4M1 12v4M20 12h3v5M7 22h10',
     guns:'m3 17 13-9 3 4-13 9ZM12 8l5-4 5 5-4 4M7 19l2 3M3 17l-2-3',

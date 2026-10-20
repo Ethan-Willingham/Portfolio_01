@@ -7,16 +7,16 @@ const report=[];
 for(const type of ['launch','gunboat','flagship','oilrig']){
   const s=boat(type);advance(s,{x:1,y:0},15);assert.ok(Math.abs(s.vx-s.speed)<.001);
   const coast={...s},brake={...s},x=s.x;advance(coast,{},2);advance(brake,{reverse:true},2);
-  assert.ok(coast.vx>0&&coast.x>x,'neutral retains forward momentum');assert.ok(brake.vx<coast.vx&&brake.x<coast.x,'reverse propeller arrests forward motion sooner');
+  assert.ok(coast.vx>0&&coast.x>x,'neutral retains forward momentum');assert.deepEqual(brake,coast,'retired reverse input has no effect on coasting');
   B.helmStep(s,{x:0,y:1},dt);const heading=Math.atan2(s.vy,s.vx);assert.ok(s.angle>0&&heading<s.angle*.25,'turning the hull cannot rotate the world velocity with it');
   advance(s,{x:0,y:1},.5);const slip=s.vy*Math.cos(s.angle)-s.vx*Math.sin(s.angle);assert.ok(Math.abs(slip)>.1,'a turning hull leaves measurable sideslip');
   const empty=boat(type),laden=boat(type,32);advance(empty,{x:1,y:0},.5);advance(laden,{x:1,y:0},.5);assert.ok(laden.vx<empty.vx*.95,'cargo adds inertia');
   for(const input of [{x:1,y:1},{x:.25,y:0},{x:1,y:0,boost:true}]){const b=boat(type);advance(b,input,15);const expected=b.speed*Math.min(1,Math.hypot(input.x,input.y))*(input.boost?1.35:1);assert.ok(Math.abs(Math.hypot(b.vx,b.vy)-expected)<.02,'analog and diagonal inputs have honest speed');}
-  report.push({type,coastMetres:coast.x-x,reverseMetres:brake.x-x,sideSlip:slip});
+  report.push({type,coastMetres:coast.x-x,sideSlip:slip});
 }
 // The integrator converges across supported simulation steps.
 const a=boat(),b=boat();for(let i=0;i<600;i++)B.helmStep(a,{x:Math.cos(i/600*2),y:Math.sin(i/600*2)},1/60);for(let i=0;i<300;i++)B.helmStep(b,{x:Math.cos(i/300*2),y:Math.sin(i/300*2)},1/30);assert.ok(Math.hypot(a.x-b.x,a.y-b.y)<1);
-console.log('PASS world momentum, surge/sway/yaw, coasting, reverse thrust, cargo and timestep convergence');
+console.log('PASS world momentum, surge/sway/yaw, coasting, ignored reverse input, cargo and timestep convergence');
 
 const wake=new WidewakeOceanArt.WakeTrail(),s=boat(),poses=[s],v={battle:{ships:[s]},poses,zoom:2,baseScale:1,visualTime:0,visible:()=>true};const buffers=wake.tracks.map(t=>t.x);
 for(let i=0;i<3600;i++){const angle=i/60*.3;B.helmStep(s,{x:Math.cos(angle),y:Math.sin(angle)},dt);v.visualTime=i/60;wake.sample([s],poses,v.visualTime);}

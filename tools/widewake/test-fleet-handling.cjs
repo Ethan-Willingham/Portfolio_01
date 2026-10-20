@@ -34,7 +34,7 @@ takeover.step(dt,{x:1,y:0});manual.step(dt,{x:1,y:0});
 assert.equal(takeover.route,null);assert.deepEqual(pose(takeover.player),pose(manual.player));
 check('taking the helm cancels channel cruise without a one-frame speed penalty');
 
-const crew=Array.from({length:12},(_,i)=>({...B.roles.gunboat,id:i+1,x:0,y:0,vx:31,vy:0,angle:0,helm:{x:1,y:0,reverse:false}}));
+const crew=Array.from({length:12},(_,i)=>({...B.roles.gunboat,id:i+1,x:0,y:0,vx:31,vy:0,angle:0,helm:{x:1,y:0}}));
 const reactions=new Map();
 for(let frame=1;frame<=40;frame++)for(const s of crew){B.crewStep(s,{x:0,y:1},dt,1200+frame);if(s.angle>0&&!reactions.has(s.id))reactions.set(s.id,frame);}
 assert.equal(reactions.size,12);assert.ok(new Set(reactions.values()).size>=8,'same hulls react at different times');
@@ -67,8 +67,9 @@ for(let frame=0;frame<900;frame++){
   assert.ok(g.ships.every(s=>g.field.clearance(s)>=.12));
 }
 const old=JSON.parse(g.save());old.ships.forEach(s=>delete s.helm);assert.ok(R.Game.restore(JSON.stringify(old)));
-for(const helm of [{x:2,y:0,reverse:false},{x:0,y:null,reverse:false},{x:1,y:1,reverse:false},{x:0,y:0,reverse:'yes'}]){
+for(const helm of [{x:2,y:0},{x:0,y:null},{x:1,y:1}]){
   const broken=JSON.parse(g.save());broken.ships[1].helm=helm;assert.throws(()=>R.Game.restore(JSON.stringify(broken)));
 }
+const legacy=JSON.parse(g.save());legacy.ships[1].helm.reverse=true;assert.equal('reverse' in R.Game.restore(JSON.stringify(legacy)).ships[1].helm,false);
 check('channel crews stay in water; mid-decision saves resume exactly and validate older/new fields');
 console.log(JSON.stringify({reactionFrames:Object.fromEntries(reactions),captainTurn:captain.angle,escortTurn:escort.angle}));

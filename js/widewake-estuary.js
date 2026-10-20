@@ -3,9 +3,9 @@
   'use strict';
   const $=id=>document.getElementById(id),E=WidewakeEstuary,O=WidewakeOcean,activity=DemoActivity.create($('reach'));
   const settings={sound:true,volume:.2,effects:.5,music:.1,ambience:.45,reduceMotion:matchMedia('(prefers-reduced-motion:reduce)').matches};
-  const keys=new Set(),stick={x:0,y:0},pointers=new Map();let nav=new E.Navigation(),view=new WidewakeEstuaryView.View($('reach-water'),nav),sound=null,mode='menu',started=false,dirty=true,last=0,accumulator=0,uiTime=0,stickId=null,reverse=false,pinch=null,pan=null,chartReturn='menu',selection=null,plan=null,request=0;
+  const keys=new Set(),stick={x:0,y:0},pointers=new Map();let nav=new E.Navigation(),view=new WidewakeEstuaryView.View($('reach-water'),nav),sound=null,mode='menu',started=false,dirty=true,last=0,accumulator=0,uiTime=0,stickId=null,pinch=null,pan=null,chartReturn='menu',selection=null,plan=null,request=0;
   const frames=new Float32Array(1200),steps=new Float32Array(1200);let samples=0;
-  function clear(){keys.clear();pointers.clear();stick.x=stick.y=0;stickId=null;reverse=false;pinch=pan=null;$('reach-helm').firstElementChild.style.transform='';$('reverse').setAttribute('aria-pressed','false');}
+  function clear(){keys.clear();pointers.clear();stick.x=stick.y=0;stickId=null;pinch=pan=null;$('reach-helm').firstElementChild.style.transform='';}
   function wake(){if(!settings.sound||!activity.active())return;try{sound=sound||new WidewakeAudio({active:()=>activity.active(),settings:()=>settings});sound.wake();}catch{settings.sound=false;$('reach-sound').checked=false;}}
   function bindView(){view.reduced=settings.reduceMotion;view.onContextLost=()=>pause('Graphics paused');view.onContextRestored=()=>{dirty=true;pause('Graphics restored');};view.terrain.onReady=()=>{dirty=true;updateUI();};view.terrain.onError=message=>{pause('Water unavailable');$('reach-error').hidden=false;$('reach-error').textContent=message;};}
   bindView();
@@ -14,7 +14,7 @@
   function zoomLabel(){for(const button of document.querySelectorAll('[data-zoom]'))button.setAttribute('aria-pressed',String(Math.abs(view.targetZoom-view.stops[button.dataset.zoom])<.01));}
   function updateUI(){const s=nav.player,w=nav.water,nearYard=Math.hypot(s.x-E.ports[0].x,s.y-E.ports[0].y)<35&&Math.hypot(s.vx,s.vy)<1;
     $('place').textContent=nav.arrived?.name.toUpperCase()||'BRACKEN REACH';$('sounder').textContent=Math.max(0,w.depth).toFixed(1)+' m';$('water-kind').textContent=w.salinity<.12?'Fresh water':w.salinity>.85?'Salt water':'Brackish water';$('sounder').parentElement.classList.toggle('shallow',w.depth-s.draft<1);
-    $('reach-notice').textContent=nav.contact||(nav.arrived?'At anchor in '+nav.arrived.name:'');$('tow').hidden=!(nav.contact||nav.towing);$('tow').disabled=nav.towing||nav.trailCount<2;$('tow').textContent=nav.towing?'Towing...':'Tow back';
+    $('reach-notice').textContent=nav.contact||(nav.arrived?'At anchor in '+nav.arrived.name:'');
     $('course').hidden=!nav.route;$('course-name').textContent=nav.route?'To '+nav.route.destination.name:'';$('boat-info').textContent=s.length+' m hull / '+s.draft+' m draft';
     for(const button of document.querySelectorAll('[data-boat]')){button.disabled=started&&!nearYard;button.setAttribute('aria-pressed',String(button.dataset.boat===s.type));}
     $('reach-resume').disabled=view.lost||!view.terrain.ready||!!view.terrain.failed;$('reach-resume').textContent=view.lost?'Restoring graphics...':!view.terrain.ready?'Preparing water...':started?'Resume':'Take the helm';
@@ -34,12 +34,11 @@
   $('reach-resume').onclick=resume;$('reach-pause').onclick=()=>pause();$('reach-menu').addEventListener('cancel',e=>{e.preventDefault();if(started)resume();});$('reach-chart').addEventListener('cancel',e=>{e.preventDefault();closeChart();});$('chart-open').onclick=openChart;$('chart-close').onclick=closeChart;
   for(const b of document.querySelectorAll('[data-port]'))b.onclick=()=>selectPort(b.dataset.port);
   $('chart-map').onclick=e=>{const r=e.currentTarget.getBoundingClientRect(),x=e.clientX-r.x,y=e.clientY-r.y;let best=null,distance=30;for(const port of E.ports){const p=e.currentTarget.chartPoint(port.x,port.y),d=Math.hypot(p.x-x,p.y-y);if(d<distance){best=port;distance=d;}}if(best)selectPort(best.id);};
-  $('set-course').onclick=()=>{if(plan){nav.setCourse(plan);$('reach-chart').close();resume();updateUI();}};$('take-helm').onclick=()=>{nav.cancel();updateUI();};$('tow').onclick=()=>{if(mode==='sailing'){nav.tow();updateUI();}};
+  $('set-course').onclick=()=>{if(plan){nav.setCourse(plan);$('reach-chart').close();resume();updateUI();}};$('take-helm').onclick=()=>{nav.cancel();updateUI();};
   $('reach-sound').onchange=()=>{settings.sound=$('reach-sound').checked;if(!settings.sound)sound?.suspend();};
   for(const b of document.querySelectorAll('[data-boat]'))b.onclick=()=>{if(b.disabled||b.dataset.boat===nav.player.type)return;request++;view.dispose();nav=new E.Navigation({type:b.dataset.boat});view=new WidewakeEstuaryView.View($('reach-water'),nav);bindView();plan=null;selection=null;dirty=true;zoomLabel();updateUI();};
   for(const b of document.querySelectorAll('[data-zoom]'))b.onclick=()=>{view.zoomStop(b.dataset.zoom);zoomLabel();dirty=true;};
-  function reversing(value){reverse=value;$('reverse').setAttribute('aria-pressed',String(value));}
-  $('reverse').addEventListener('pointerdown',e=>{if(mode!=='sailing')return;e.currentTarget.setPointerCapture(e.pointerId);reversing(true);});for(const name of ['pointerup','pointercancel','lostpointercapture'])$('reverse').addEventListener(name,()=>reversing(false));
+
   function stickMove(e){const r=$('reach-helm').getBoundingClientRect(),x=e.clientX-r.x-r.width/2,y=e.clientY-r.y-r.height/2,d=Math.hypot(x,y)||1,amount=Math.min(1,d/(r.width*.34));stick.x=x/d*amount;stick.y=y/d*amount;$('reach-helm').firstElementChild.style.transform=`translate(${stick.x*r.width*.3}px,${stick.y*r.height*.3}px)`;}
   $('reach-helm').addEventListener('pointerdown',e=>{if(mode!=='sailing'||stickId!==null)return;stickId=e.pointerId;e.currentTarget.setPointerCapture(e.pointerId);stickMove(e);});$('reach-helm').addEventListener('pointermove',e=>{if(e.pointerId===stickId)stickMove(e);});for(const name of ['pointerup','pointercancel','lostpointercapture'])$('reach-helm').addEventListener(name,e=>{if(e.pointerId!==stickId)return;stickId=null;stick.x=stick.y=0;$('reach-helm').firstElementChild.style.transform='';});
   const water=$('reach-water');water.addEventListener('wheel',e=>{e.preventDefault();if(mode!=='sailing')return;view.setZoom(view.targetZoom*Math.exp(-E.clamp(e.deltaY,-180,180)*.0015),e.clientX,e.clientY);zoomLabel();},{passive:false});
@@ -51,15 +50,15 @@
   window.addEventListener('keydown',e=>{if(e.metaKey||e.ctrlKey||e.altKey)return;if(e.code==='Tab'){e.preventDefault();focusStep(e.shiftKey);return;}if(e.target.tagName==='INPUT')return;
     if(e.code==='Escape'){e.preventDefault();if(e.repeat)return;if(mode==='chart')closeChart();else if(mode==='sailing')pause();else if(started)resume();return;}
     if(e.code==='KeyM'&&!e.repeat){e.preventDefault();mode==='chart'?closeChart():openChart();return;}if(mode!=='sailing')return;
-    if(e.code==='Space'&&e.target.id==='reverse'){e.preventDefault();reversing(true);}if(e.code.startsWith('Arrow'))e.preventDefault();keys.add(e.code);if(['Digit1','Digit2','Digit3'].includes(e.code)){view.zoomStop(['helm','fleet','survey'][Number(e.code.at(-1))-1]);zoomLabel();}
-  });window.addEventListener('keyup',e=>{keys.delete(e.code);if(e.code==='Space')reversing(false);});
+    if(e.code.startsWith('Arrow'))e.preventDefault();keys.add(e.code);if(['Digit1','Digit2','Digit3'].includes(e.code)){view.zoomStop(['helm','fleet','survey'][Number(e.code.at(-1))-1]);zoomLabel();}
+  });window.addEventListener('keyup',e=>{keys.delete(e.code);});
   window.addEventListener('resize',()=>{view.resize();dirty=true;if(mode==='chart')drawChart();});activity.onChange(active=>{last=accumulator=0;if(!active){clear();chartReturn='menu';if(started)pause();sound?.suspend();}});
   function frame(ms){const raw=last?(ms-last)/1000:1/60,delta=Math.min(.1,raw);last=ms;
-    if(mode==='sailing'){const move=O.direction((keys.has('KeyD')||keys.has('ArrowRight')?1:0)-(keys.has('KeyA')||keys.has('ArrowLeft')?1:0)+stick.x,(keys.has('KeyS')||keys.has('ArrowDown')?1:0)-(keys.has('KeyW')||keys.has('ArrowUp')?1:0)+stick.y),input={...move,reverse:reverse||keys.has('KeyR')};accumulator+=delta;let count=0;const at=performance.now();while(accumulator>=1/60&&count<5){nav.step(1/60,input);accumulator-=1/60;count++;}if(count===5)accumulator=0;steps[samples%1200]=(performance.now()-at)/Math.max(1,count);frames[samples%1200]=raw*1000;samples++;
+    if(mode==='sailing'){const move=O.direction((keys.has('KeyD')||keys.has('ArrowRight')?1:0)-(keys.has('KeyA')||keys.has('ArrowLeft')?1:0)+stick.x,(keys.has('KeyS')||keys.has('ArrowDown')?1:0)-(keys.has('KeyW')||keys.has('ArrowUp')?1:0)+stick.y),input=move;accumulator+=delta;let count=0;const at=performance.now();while(accumulator>=1/60&&count<5){nav.step(1/60,input);accumulator-=1/60;count++;}if(count===5)accumulator=0;steps[samples%1200]=(performance.now()-at)/Math.max(1,count);frames[samples%1200]=raw*1000;samples++;
       sound?.update({mode:'sea',battle:false,speed:Math.hypot(nav.player.vx,nav.player.vy)/nav.player.speed,steam:nav.player.type!=='launch',paused:false});}
     if(mode==='sailing'||dirty||!view.terrain.ready){view.render(mode==='sailing'?delta:0,mode==='sailing'?accumulator*60:1);dirty=false;}if(ms-uiTime>150){updateUI();uiTime=ms;}activity.requestFrame(frame);
   }
   function percentile(a){const data=Array.from(a.subarray(0,Math.min(samples,1200))).sort((a,b)=>a-b);return data[Math.floor(data.length*.95)]||0;}
-  if(new URLSearchParams(location.search).has('test'))window.__widewakeEstuary={get nav(){return nav;},get view(){return view;},get mode(){return mode;},get input(){return{keys:[...keys],stick:{...stick},reverse};},metrics:()=>({...nav.report(),...view.stats,samples,frameP95:percentile(frames),stepP95:percentile(steps)}),step:n=>{for(let i=0;i<n;i++)nav.step(1/60);dirty=true;updateUI();},pause};
+  if(new URLSearchParams(location.search).has('test'))window.__widewakeEstuary={get nav(){return nav;},get view(){return view;},get mode(){return mode;},get input(){return{keys:[...keys],stick:{...stick}};},metrics:()=>({...nav.report(),...view.stats,samples,frameP95:percentile(frames),stepP95:percentile(steps)}),step:n=>{for(let i=0;i<n;i++)nav.step(1/60);dirty=true;updateUI();},pause};
   pause('Bracken Reach.');view.render(0);activity.requestFrame(frame);
 })();

@@ -19,6 +19,14 @@ world saves for export. The current architecture and limits are in
 `WIDEWAKE_REACH.md`; historical campaign evidence below does not establish
 production readiness for the replacement.
 
+## Current scope override, 2026-10-19
+
+The owner has deferred saving and removed reverse and tow-back completely.
+Do not restore persistence, file actions, save handoff, reverse inputs or tow
+recovery as quality work. Play fresh or in-memory sessions; existing save slots
+remain untouched. Earlier save evidence below is historical. See
+`WIDEWAKE_REACH.md` for the active session and control contract.
+
 ## How a pass works
 
 1. Play the current build from a clean launch and from an existing fleet. Follow

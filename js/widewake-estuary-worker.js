@@ -1,5 +1,5 @@
 /* Terrain preparation and route searches stay off the input/render thread. */
-importScripts('widewake-estuary-core.js?v=0.25.5');
+importScripts('widewake-estuary-core.js?v=0.25.6');
 const E=WidewakeEstuary,field=new E.Field();
 // Level working yards meet the 1.66 m pier decks. Only the dry rendered bank is
 // graded; navigation depth, the waterline and collision footprints stay physical.

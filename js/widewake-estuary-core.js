@@ -92,14 +92,12 @@
   function createShip(type='launch'){const spec=vessels[type],port=ports[0];return{id:0,type,...spec,maxHp:spec.hp,x:port.x,y:port.y,px:port.x,py:port.y,angle:0,previousAngle:0,vx:0,vy:0,hit:0,working:false};}
   class Navigation{
     constructor({type='launch',field=new Field()}={}){
-      this.field=field;this.ships=[createShip(type)];this.visualRoles=vessels;this.time=0;this.tick=0;this.control={x:0,y:0};this.mounts=[];this.raiders={count:0};this.shots={count:0};this.effects={count:0};this.burstCursor=48;this.lastHit={time:-10};this.contact='';this.contactTime=0;this.route=null;this.arrived=null;this.visited=new Set(['yard']);this.distance=0;this.towing=false;this.trail=[];this.trailCursor=0;this.trailCount=0;this.towDistance=0;this.water={};this.field.sample(this.player.x,this.player.y,this.water);
+      this.field=field;this.ships=[createShip(type)];this.visualRoles=vessels;this.time=0;this.tick=0;this.control={x:0,y:0};this.mounts=[];this.raiders={count:0};this.shots={count:0};this.effects={count:0};this.burstCursor=48;this.lastHit={time:-10};this.contact='';this.contactTime=0;this.route=null;this.arrived=null;this.visited=new Set(['yard']);this.distance=0;this.water={};this.field.sample(this.player.x,this.player.y,this.water);
     }
     get player(){return this.ships[0];}
     plan(id){return this.field.route(this.player,id);}
-    setCourse(plan){if(!plan)return false;this.route={...plan,index:0};this.arrived=null;this.towing=false;return true;}
+    setCourse(plan){if(!plan)return false;this.route={...plan,index:0};this.arrived=null;return true;}
     cancel(){this.route=null;}
-    record(s=this.player){this.trail[this.trailCursor]={x:s.x,y:s.y,angle:s.angle};this.trailCursor=(this.trailCursor+1)%2048;this.trailCount=Math.min(2048,this.trailCount+1);}
-    tow(){if(this.towing||this.trailCount<2)return false;this.route=null;this.towing=true;this.towDistance=0;this.contact='Towing back';return true;}
     move(input,dt){
       const B=root.WidewakeBattle,s=this.player,old={x:s.x,y:s.y,angle:s.angle};B.helmStep(s,input,dt);
       const current=this.field.sample(old.x,old.y,this.water);s.x+=current.currentX*dt;s.y+=current.currentY*dt;
@@ -109,11 +107,8 @@
       return Math.hypot(s.x-old.x,s.y-old.y);
     }
     step(dt,input={x:0,y:0}){
-      dt=clamp(dt,0,1/30);const s=this.player;s.px=s.x;s.py=s.y;s.previousAngle=s.angle;this.time+=dt;this.tick++;this.control=input;this.contactTime=Math.max(0,this.contactTime-dt);if(!this.contactTime&&!this.towing)this.contact='';
-      if(this.towing){s.vx=s.vy=s.turn=s.throttle=0;let remaining=6*dt;for(let n=0;n<20&&this.trailCount&&remaining>0;n++){const at=(this.trailCursor+2047)%2048,p=this.trail[at],d=Math.hypot(s.x-p.x,s.y-p.y),a=root.WidewakeBattle.angleDelta(p.angle,s.angle),cost=Math.max(d,Math.abs(a)*s.length*.1),t=cost?Math.min(1,remaining/cost):1;
-          s.x+=(p.x-s.x)*t;s.y+=(p.y-s.y)*t;s.angle+=a*t;this.towDistance+=d*t;remaining-=cost*t;if(t===1){this.trailCursor=at;this.trailCount--;}if(this.towDistance>Math.max(10,s.length)&&this.field.clearance(s,s.x,s.y,s.angle,.7)>.7){this.towing=false;break;}}
-        if(!this.trailCount)this.towing=false;if(!this.towing){this.contact='Back in clear water';this.contactTime=3;}this.field.sample(s.x,s.y,this.water);return;}
-      const manual=Math.hypot(input.x||0,input.y||0)>.04||input.reverse;if(manual){this.route=null;this.arrived=null;}
+      dt=clamp(dt,0,1/30);const s=this.player;s.px=s.x;s.py=s.y;s.previousAngle=s.angle;this.time+=dt;this.tick++;this.control=input;this.contactTime=Math.max(0,this.contactTime-dt);if(!this.contactTime)this.contact='';
+      const manual=Math.hypot(input.x||0,input.y||0)>.04;if(manual){this.route=null;this.arrived=null;}
       let drive=input;
       if(this.route){const r=this.route;while(r.index<r.points.length-1&&Math.hypot(r.points[r.index].x-s.x,r.points[r.index].y-s.y)<Math.max(7,s.speed*.65))r.index++;
         const p=r.points[r.index],dx=p.x-s.x,dy=p.y-s.y,d=Math.hypot(dx,dy),end=r.index===r.points.length-1,amount=end?Math.min(.65,d/(s.speed*1.6)):1;
@@ -123,9 +118,9 @@
         if(end&&d<Math.max(5,s.length*.25)&&Math.hypot(s.vx,s.vy)<3){this.arrived=r.destination;this.visited.add(r.destination.id);this.route=null;drive={x:0,y:0};}
       }
       if(this.arrived&&!manual){s.vx=s.vy=s.turn=s.throttle=0;this.field.sample(s.x,s.y,this.water);return;}
-      const before={x:s.x,y:s.y,angle:s.angle},distance=this.move(drive,dt);if(distance>.001||Math.abs(root.WidewakeBattle.angleDelta(s.angle,before.angle))>.0005)this.record(before);this.distance+=distance;this.field.sample(s.x,s.y,this.water);
+      this.distance+=this.move(drive,dt);this.field.sample(s.x,s.y,this.water);
     }
-    report(){const s=this.player;return{type:s.type,x:s.x,y:s.y,distance:this.distance,depth:this.water.depth,clearance:this.field.clearance(s),salinity:this.water.salinity,contact:this.contact,towing:this.towing,route:this.route?.destination.id||null,arrived:this.arrived?.id||null,visited:[...this.visited],trailCount:this.trailCount};}
+    report(){const s=this.player;return{type:s.type,x:s.x,y:s.y,distance:this.distance,depth:this.water.depth,clearance:this.field.clearance(s),salinity:this.water.salinity,contact:this.contact,route:this.route?.destination.id||null,arrived:this.arrived?.id||null,visited:[...this.visited]};}
   }
   const api={Field,Navigation,vessels,ports,channels,bounds,noise,clamp};root.WidewakeEstuary=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

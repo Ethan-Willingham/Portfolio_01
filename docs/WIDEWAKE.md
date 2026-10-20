@@ -4,6 +4,17 @@ Working title for Ethan's JavaScript naval trading and convoy game. The public
 portfolio is its temporary home, under In Progress. The intended destination is
 Steam. It is separate from Sluice, Hunting Game, and All Four Wheels.
 
+## Current override, 2026-10-19
+
+The owner has disabled saving for now and removed reverse and tow-back entirely.
+There are no save/load, import/export, backup or save-ownership flows in the
+current game. A voyage lasts for the current page session; reload and quit start
+fresh. Existing save slots stay untouched. Pause, title resume and returning
+from endgame combat keep the live voyage in memory only. The R and RT reverse
+bindings, reverse thrust, tow recovery and their UI/help are removed. See
+`WIDEWAKE_REACH.md` for the current contract. Older persistence and control
+sections below are historical, not instructions to restore these features.
+
 ## Owner direction, 2026-10-18
 
 Build a proper connected game, with care for tiny interactions, rather than an
@@ -119,7 +130,7 @@ distinct interim backgrounds while that art pass is deferred.
 
 ## Playing the current build
 
-Open `widewake.html` and choose **New voyage** or **Continue**. Trading, fleet
+Open `widewake.html` and choose **New voyage**. Trading, fleet
 progression, combat, fishing and oil production now happen in Bracken Reach.
 The old `widewake-estuary.html` bookmark redirects here. No trial selection or
 Earth campaign remains in the normal play flow. The title art is unchanged.
@@ -127,7 +138,7 @@ Earth campaign remains in the normal play flow. The title art is unchanged.
 Choose **Endgame combat** on the title to test 24 fully armed boats against
 16,384 active raiders. E or the fleet button switches between following and
 holding position to load workboats. Steering and positioning are the combat
-inputs. Menu returns to the saved voyage; the run can also finish or restart.
+inputs. Menu returns to the current session; the run can also finish or restart.
 
 For local play, serve the repository over HTTP:
 
@@ -136,8 +147,8 @@ python3 -m http.server 8768 --bind 127.0.0.1
 ```
 
 Open `http://127.0.0.1:8768/widewake.html`. If that port already serves the
-checkout, use the existing server. Local and public saves belong to their
-respective browser origins. Previous-world saves remain exportable in Settings.
+checkout, use the existing server. Reloading or closing the game ends the current voyage. Settings contain no save
+controls, and older stored voyages are ignored.
 
 Read `WIDEWAKE_REACH.md` for the current file map and validation commands.
 The following earlier campaign descriptions are historical implementation notes;

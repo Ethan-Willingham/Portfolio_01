@@ -33,10 +33,10 @@
   const crewPace=id=>.92+((id*7)%11)*.008;
   function crewStep(s,input,dt,tick,channel=false){
     // Captains hold a decision for a few beats instead of copying the helm at
-    // 60 Hz. Channel pilots check more often; backing off a bank is immediate.
+    // 60 Hz. Channel pilots check more often.
     const period=channel?8+(s.id*7)%9:16+(s.id*7)%19;
-    if(!s.helm||(tick+s.id*11)%period===0||!!input.reverse!==s.helm.reverse){
-      s.helm={x:input.x||0,y:input.y||0,reverse:!!input.reverse};
+    if(!s.helm||(tick+s.id*11)%period===0){
+      s.helm={x:input.x||0,y:input.y||0};
     }
     helmStep(s,s.helm,dt);
   }
@@ -74,14 +74,14 @@
     s.turn=(s.turn||0)+(targetTurn-(s.turn||0))*(1-Math.exp(-dt*6*size/mass));
     s.angle=angleDelta(s.angle+s.turn*dt,0);
     const c=Math.cos(s.angle),sn=Math.sin(s.angle),forward=s.vx*c+s.vy*sn,side=-s.vx*sn+s.vy*c;
-    const alignment=moving?Math.max(0,Math.cos(angleDelta(Math.atan2(y,x),s.angle))):0,target=input.reverse?-.3:moving?amount*alignment*(input.boost?1.35:1):0;
-    s.throttle=(s.throttle||0)+(target-(s.throttle||0))*(1-Math.exp(-dt*(input.reverse?8:5)*size));
-    // Neutral coasts. Reverse applies propeller braking before making sternway.
-    const desired=s.speed*s.throttle,gain=(moving||input.reverse?2.4:.95)*size/mass;
-    const surge=forward+clamp((desired-forward)*(1-Math.exp(-dt*gain)),-(input.reverse?22:12)*size/mass*dt,9*size/mass*dt);
+    const alignment=moving?Math.max(0,Math.cos(angleDelta(Math.atan2(y,x),s.angle))):0,target=moving?amount*alignment*(input.boost?1.35:1):0;
+    s.throttle=(s.throttle||0)+(target-(s.throttle||0))*(1-Math.exp(-dt*5*size));
+    // Releasing the helm lets the hull coast down under water resistance.
+    const desired=s.speed*s.throttle,gain=(moving?2.4:.95)*size/mass;
+    const surge=forward+clamp((desired-forward)*(1-Math.exp(-dt*gain)),-12*size/mass*dt,9*size/mass*dt);
     const sway=side*Math.exp(-dt*2.7*size/mass);
     s.vx=c*surge-sn*sway;s.vy=sn*surge+c*sway;
-    if(!moving&&!input.reverse&&Math.hypot(s.vx,s.vy)<.03){s.vx=s.vy=s.throttle=0;}
+    if(!moving&&Math.hypot(s.vx,s.vy)<.03){s.vx=s.vy=s.throttle=0;}
     s.x+=s.vx*dt;s.y+=s.vy*dt;
   }
   function broadsideRound(ship,index){
