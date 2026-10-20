@@ -4,7 +4,7 @@ Owner instruction, 2026-10-19: make the new ocean part of the game, retire the o
 world, and bring the graphics into one consistent visual system. This explicitly
 supersedes the earlier instruction to keep the new ocean in separate trials.
 
-Version 0.25.2 opens the approved title illustration, then starts at Tern Yard in
+Version 0.25.5 opens the approved title illustration, then starts at Tern Yard in
 Bracken Reach. Continue loads this same world. There is no Earth campaign or
 trial chooser in the normal play flow. An old `widewake-estuary.html` bookmark
 redirects to the game. `?test` retains the isolated navigation harness; the battle
@@ -233,6 +233,21 @@ The splash radius no longer becomes a giant solid block of orange. Canvas
 fallback uses matching rounded silhouettes. Preserve the v0.21 continuous
 movement, directional blending and display-aware raster budget. Do not reapply
 nearest-neighbor scaling to the moving scene.
+
+The v0.25.5 port pass replaces each low-resolution combined landing with tightly
+cropped building, pier and cargo sprites at 10 pixels per metre. Roof panels,
+siding, sliding doors, masonry footings, plank decks, pilings, mooring hardware,
+ladders and cargo share the nautical materials and light. Static landmark bakes
+resolve four-sample coverage before generating mipmaps, avoiding broken seams.
+Canvas uses the same geometry at up to 8 pixels per metre. Working yards are
+visually graded to meet their decks and exclude trees from building footprints;
+the navigation field and pier collisions are unchanged.
+
+All three ports are cached together. The campaign color/depth atlas is about
+41 MiB with a 48 MiB test ceiling; the open-water battle retains its 32 MiB
+ceiling. Landmarks are individually culled and still draw as cached quads, so
+board and roof detail adds no per-frame geometry work. Original title art and
+ship/water resolution are preserved.
 
 The title artwork is unchanged. Image generation remains deferred by the owner.
 The 24 earlier port prompts are historical material, not a request to generate

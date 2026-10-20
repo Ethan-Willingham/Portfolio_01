@@ -92,35 +92,132 @@
     const reeds=G();for(let i=0;i<27;i++){const x=(rand()-.5)*3,y=(rand()-.5)*3,z=1.5+rand()*2,a=rand()*TAU,lean=.3+rand()*.6,color=['#8e9663','#a5a875','#697e55'][i%3];reeds.face([[x-.025,y,0],[x+.025,y,0],[x+Math.cos(a)*lean+.04,y+Math.sin(a)*lean,z],[x+Math.cos(a)*lean-.04,y+Math.sin(a)*lean,z]],color);if(i%3===0)reeds.box(x+Math.cos(a)*lean,y+Math.sin(a)*lean,z,.1,.1,.3,'#8a7453','#665d42');}meshes.reed=new Float32Array(reeds.out);specs.reed={length:5,height:4,frames:1,ppu:7};
     const rock=G();leaf(rock,0,0,.2,1.5,'#8b9180');leaf(rock,1.2,.6,.1,.8,'#b1ad93');meshes.rock=new Float32Array(rock.out);specs.rock={length:5,height:3,frames:1,ppu:6};return{meshes,specs};
   }
-  // Landmarks are authored in metres around each berth. Small repeated fittings
-  // are baked once with the building, rather than submitted as separate objects.
-  function landings(G){const meshes={},specs={};
-    for(const id of ['yard','mill','reeds']){const g=G();
-      function shed(x,y,l,w,h,roof,wall){const z=2,peak=h+w*.24;
-        g.box(x,y,z,l,w,h,'#a99775',wall);g.face([[x-l/2,y-w/2,z+h],[x-l/2,y,z+peak],[x-l/2,y+w/2,z+h]],wall);g.face([[x+l/2,y-w/2,z+h],[x+l/2,y+w/2,z+h],[x+l/2,y,z+peak]],wall);
-        for(const side of [-1,1]){g.face([[x-l/2-1,y,z+peak],[x+l/2+1,y,z+peak],[x+l/2+1,y+side*(w/2+1),z+h-.5],[x-l/2-1,y+side*(w/2+1),z+h-.5]],roof);
-          for(let a=-l/2;a<l/2;a+=1.7)g.box(x+a,y+side*(w/2+.04),z,.09,.12,h,'#9f9477','#8b8167');
-          for(let a=-l*.34;a<l*.4;a+=6){g.box(x+a,y+side*(w/2+.1),z+3,2.1,.18,2.5,'#e2cb92','#d5bb82');g.box(x+a,y+side*(w/2+.22),z+3.2,1.6,.12,1.9,'#3b6570','#3b6570');g.box(x+a,y+side*(w/2+.3),z+3.9,1.7,.12,.13,'#b4b59c','#b4b59c');}}
-        for(let a=-l/2;a<l/2;a+=1.5)for(const side of [-1,1])g.face([[x+a,y,z+peak+.06],[x+a+.08,y,z+peak+.06],[x+a+.08,y+side*(w/2+1),z+h-.44],[x+a,y+side*(w/2+1),z+h-.44]],'#91a1a0');
-        g.box(x+l/2+.12,y,z,.2,w*.36,h*.7,'#52635c','#4c5a53');for(const offset of [-1,1])g.box(x+l/2+.25,y+offset*w*.19,z,.2,.3,h*.72,'#c9bda0','#ab9e84');
+  // Each landmark has a tightly cropped, high-resolution sprite. Keeping the
+  // empty space between buildings out of the atlas pays for close-camera detail.
+  function landings(G){
+    const meshes={},specs={},parts=[];let g,seed=7183;
+    const rand=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
+    const tint=(hex,amount)=>'#'+hex.slice(1).match(/../g).map(v=>Math.max(0,Math.min(255,parseInt(v,16)+amount)).toString(16).padStart(2,'0')).join('');
+    const face=(points,color,reverse=false)=>g.face(reverse?points.slice().reverse():points,color);
+    function beam(a,b,r,color,n=6){
+      const d=b.map((v,i)=>v-a[i]),length=Math.hypot(...d),u=Math.hypot(d[0],d[1])>.001?[-d[1],d[0],0]:[1,0,0],ul=Math.hypot(...u);for(let i=0;i<3;i++)u[i]/=ul;
+      const v=[(d[1]*u[2]-d[2]*u[1])/length,(d[2]*u[0]-d[0]*u[2])/length,(d[0]*u[1]-d[1]*u[0])/length],ring=t=>Array.from({length:n},(_,i)=>a.map((p,k)=>p+d[k]*t+r*(u[k]*Math.cos(i/n*TAU)+v[k]*Math.sin(i/n*TAU))));
+      const lo=ring(0),hi=ring(1);for(let i=0;i<n;i++)face([lo[i],lo[(i+1)%n],hi[(i+1)%n],hi[i]],color);face(hi,color);face(lo,color,true);
+    }
+    function crate(x,y,z,l=2){
+      const h=l*.8;
+      // Pallet feet reach the graded yard; the cargo does not float above it.
+      for(const side of [-1,1])g.box(x+side*l*.32,y,z-.42,.22,l+.12,.3,'#9b8b69','#716f55');
+      g.box(x,y,z-.12,l+.16,l+.16,.12,'#ae9b73','#7e775b');g.box(x,y,z,l,l,h,'#b3a174','#827d60');
+      for(let t=-l/2+.26;t<l/2;t+=.32){g.box(x+t,y,z+h+.01,.025,l,.025,'#867c60');g.box(x+l/2+.01,y+t,z,.025,.026,h,'#716e56','#716e56');}
+      for(const side of [-1,1]){g.box(x+side*l*.34,y,z+h+.03,.13,l+.1,.1,'#cfb98b','#9a936d');g.box(x+side*l*.34,y+l/2+.04,z,.13,.1,h,'#b7aa7b','#b7aa7b');g.box(x+l/2+.04,y+side*l*.34,z,.1,.13,h,'#b7aa7b','#b7aa7b');}
+      beam([x+l/2+.1,y-l*.35,z+.13],[x+l/2+.1,y+l*.35,z+h-.13],.055,'#c1ac80',4);
+    }
+    function shed(l,w,h,roof,wall){
+      const z=2,peak=z+h+w*.24,eave=z+h-.45,half=w/2+.75;
+      // A weathered masonry footing seats the timber walls in the bank.
+      g.box(0,0,.12,l+.45,w+.45,1.9,'#9d9d84','#6e7767');
+      for(const side of [-1,1])for(let row=0;row<3;row++)for(let x=-l/2+.8;x<l/2;x+=1.6)g.box(x+(row%2)*.4,side*(w/2+.24),.25+row*.53,1.48,.06,.46,'#919583',tint('#777e6c',Math.floor(rand()*12)-6));
+      g.box(0,0,z,l,w,h,wall,wall);
+      for(const side of [-1,1]){
+        face([[side*l/2,-w/2,z+h],[side*l/2,w/2,z+h],[side*l/2,0,peak]],wall,side<0);
+        for(let y=-w/2+.26;y<w/2;y+=.52){const shade=tint(wall,Math.floor(rand()*13)-6),height=h+Math.max(0,w*.24*(1-(Math.abs(y)+.26)/(w/2)))-.1;g.box(side*(l/2+.03),y,z,.06,.485,height,shade,shade);}
+        for(let x=-l/2+.26;x<l/2;x+=.52){
+          const shade=tint(wall,Math.floor(rand()*15)-7);g.box(x,side*(w/2+.035),z,.485,.07,h,shade,shade);
+          if(rand()>.45){const start=z+.3+rand()*h*.25;g.box(x+.12,side*(w/2+.08),start,.025,.018,h*.48,shade,tint(shade,-10));}
+        }
+        g.box(0,side*(w/2+.12),z+.15,l,.18,.24,'#ada180','#827b62');
+        g.box(0,side*(w/2+.18),z+h-.65,l,.2,.45,'#817d66','#6c715e');
+        for(const end of [-1,1])g.box(end*(l/2-.1),side*(w/2+.13),z,.25,.22,h,'#c0b393','#a79b7c');
+        for(let x=-l*.34;x<l*.4;x+=6){
+          const y=side*(w/2+.15),outside=y+side*.18;
+          g.box(x,y,z+3,2.15,.2,2.5,'#c5bb98','#b4aa88');g.box(x,outside,z+3.22,1.74,.13,2.04,'#294b58','#294b58');
+          g.box(x-.4,outside+side*.08,z+4.3,.74,.025,.7,'#60818b','#60818b');
+          g.box(x,outside+side*.13,z+3.18,.11,.08,2.12,'#bdbb9d','#bdbb9d');g.box(x,outside+side*.14,z+4.2,1.82,.08,.1,'#bdbb9d','#bdbb9d');
+          g.box(x,y+side*.12,z+2.9,2.45,.55,.18,'#c8b99a','#827e68');
+        }
+        // Narrow standing-seam panels follow the roof slope, with quiet wear.
+        const panel=1.15,rz=t=>peak+(eave-peak)*t;
+        for(let x=-l/2-.75;x<l/2+.75;x+=panel){const end=Math.min(l/2+.75,x+panel),shade=tint(roof,Math.floor(rand()*11)-5);
+          face([[x,0,peak],[end,0,peak],[end,side*half,eave],[x,side*half,eave]],shade,side<0);
+          beam([x,0,peak+.06],[x,side*half,eave+.06],.045,tint(roof,18),4);
+          if(rand()>.6){const a=.2+rand()*.3,b=Math.min(.95,a+.25+rand()*.25),sx=x+.25,ex=Math.min(end,sx+.3);face([[sx,side*half*a,rz(a)+.015],[ex,side*half*a,rz(a)+.015],[ex,side*half*b,rz(b)+.015],[sx,side*half*b,rz(b)+.015]],tint(shade,-8),side<0);}
+        }
+        beam([-l/2-.85,side*half,eave-.1],[l/2+.85,side*half,eave-.1],.13,'#a7b1a3');
+        for(const end of [-1,1])beam([end*(l/2+.8),0,peak],[end*(l/2+.8),side*half,eave],.12,'#b7b79b');
       }
-      function pier(x,y,l,w,alongY){const length=alongY?w:l,width=alongY?l:w;g.box(x,y,1,length,width,.65,'#9c8b6d','#5e6e67');
-        for(let t=-l/2;t<l/2;t+=.9){const px=x+(alongY?0:t),py=y+(alongY?t:0);g.box(px,py,1.66,alongY?w:.055,alongY?.055:w,.04,'#5d6e63','#5d6e63');}
-        for(let t=-l/2+1;t<l/2;t+=7)for(const side of [-1,1]){const px=x+(alongY?side*(w/2-.4):t),py=y+(alongY?t:side*(w/2-.4));g.box(px,py,-1,.65,.65,3.4,'#c5b38e','#625f4c');g.box(px,py,2.35,.85,.85,.15,'#ddd1a9','#7e7e63');}
+      beam([-l/2-.9,0,peak+.08],[l/2+.9,0,peak+.08],.18,tint(roof,24));
+      // Recessed loading doors, framed boards and external sliding hardware.
+      const dw=w*.36,dh=h*.7,x=l/2+.06;
+      g.box(x,0,z,.16,dw+.6,dh+.35,'#344b4b','#344b4b');
+      for(let y=-dw/2+.2;y<dw/2;y+=.4){const c=tint('#60716a',Math.floor(rand()*14)-7);g.box(x+.12,y,z+.08,.14,.365,dh-.16,c,c);}
+      for(const side of [-1,1]){
+        g.box(x+.26,side*(dw/2+.25),z,.25,.28,dh+.5,'#b8ac8c','#a4987b');
+        beam([x+.25,side*.17,z+.35],[x+.25,side*(dw/2-.15),z+dh-.35],.075,'#a0a18b',4);
+        g.box(x+.3,side*.22,z+dh*.46,.09,.1,.4,'#313f42','#313f42');
       }
-      function crate(x,y,z,l=2){g.box(x,y,z,l,l,l*.8,'#b3a174','#7c795b');for(const side of [-1,1]){g.box(x+side*l*.33,y,z+l*.8+.03,.14,l+.1,.12,'#d1bc8e','#9a936d');g.box(x+side*l*.33,y+l/2+.04,z,.14,.1,l*.8,'#b7aa7b','#b7aa7b');}}
-      if(id==='yard'){shed(-10,-139,35,24,9,'#587c88','#98977b');shed(-64,-123,17,15,7,'#8a7869','#9e9374');
-        for(let i=0;i<10;i++)crate(-33+(i%4)*3,-111+Math.floor(i/4)*3,2,i%3===0?2.5:1.8);g.box(-17,-116,2,.7,.7,12,'#b9ba9f','#657d77');g.box(-12,-116,13,11,.6,.6,'#c0c3aa','#738c88');g.box(-7,-116,4,.1,.1,9,'#d2cfb4','#d2cfb4');
-        for(let i=0;i<7;i++)g.box(-64+i*.8,-112,2, .6,11,.8,'#b8a47d','#8a8666');
-      }else if(id==='mill'){shed(-86,-146,42,25,15,'#897968','#a39272');shed(-135,-125,24,18,10,'#68857f','#b0a17e');
-        g.box(-95,-145,17,4,4,14,'#b5a27b','#8b7d62');g.box(-95,-145,31,5,5,.7,'#d3be92','#9c9075');for(let i=0;i<15;i++)crate(-79+(i%5)*2.8,-121+Math.floor(i/5)*2.7,2);
-        for(let i=0;i<8;i++)g.box(-119+i*.9,-102,2,.7,18,1.2,'#ac956b','#817757');
-      }else{shed(-41,0,11,9,5,'#aaa17c','#9c9475');crate(-34,6,2,1.8);crate(-33,8,2,1.5);
-        for(let i=0;i<9;i++)g.box(-29+i*.15,-6,1.7,.08,4,.18,'#819281','#667e72');
+      g.box(x+.22,0,z+dh+.35,.3,dw+1.5,.18,'#b6b9a1','#626f6b');g.box(x+.5,0,1.86,1.1,dw+.8,.22,'#aaa58a','#777c69');
+      // Slatted gable vent reads as a recess beneath the roof ridge.
+      g.box(x+.07,0,z+h-.1,.12,w*.13,w*.1,'#344d52','#344d52');for(let i=0;i<4;i++)g.box(x+.15,0,z+h+i*w*.022,.12,w*.14,.08,'#a6a588','#8d937c');
+    }
+    function pier(l,w,alongY){
+      const box=(t,s,z,a,b,h,top,side)=>g.box(alongY?s:t,alongY?t:s,z,alongY?b:a,alongY?a:b,h,top,side);
+      const point=(t,s,z)=>alongY?[s,t,z]:[t,s,z];
+      // Solid fascia and separate boards retain a clean silhouette as seams mip out.
+      box(0,0,.95,l,w,.56,'#857e65','#53675f');
+      for(let t=-l/2+.17;t<l/2;t+=.34){
+        const a=Math.min(.315,l/2-t+.17),c=tint('#a19577',Math.floor(rand()*16)-8);box(t,0,1.51,a,w-.18,.15,c,'#736f57');
+        if(rand()>.5)box(t+.08,(rand()-.5)*w*.3,1.665,.018,w*.45,.012,tint(c,-12));
+        // Sparse board joints avoid a uniform dotted texture at distance.
+        if(Math.floor((t+l/2)/.34)%4===0)box(t,(rand()-.5)*w*.6,1.67,a,.025,.012,'#696e59');
       }
-      for(const p of root.WidewakeEstuary.ports.find(p=>p.id===id).piers)pier(p.x,p.y,p.length,p.width,p.alongY);
-      meshes['landing_'+id]=new Float32Array(g.out);specs['landing_'+id]={length:180,height:35,frames:1,ppu:2};
-    }return{meshes,specs};
+      for(const side of [-1,1]){
+        box(0,side*(w/2-.12),1.45,l,.23,.22,'#b1a282','#777961');
+        for(let t=-l/2+1;t<l/2;t+=6){
+          beam(point(t,side*(w/2-.4),-1.1),point(t,side*(w/2-.4),2.35),.28,'#777562',8);
+          beam(point(t,side*(w/2-.4),-.15),point(t,side*(w/2-.4),.65),.3,'#415f56',8);
+          beam(point(t,side*(w/2-.4),2.32),point(t,side*(w/2-.4),2.47),.34,'#c0b597',8);
+          box(t,side*(w/2-.4),2.03,.59,.59,.1,'#526362','#526362');
+          box(t,0,.7,.3,w,.35,'#8c866b','#5e6e60');
+        }
+      }
+      // Iron mooring cleats, access ladder and a coiled line at the outer berth.
+      for(const side of [-1,1])for(const t of [-l/2+3,l/2-3]){
+        const s=side*(w/2-.85);box(t,s,1.69,.55,.5,.12,'#85958c','#455f61');beam(point(t,s,1.8),point(t,s,2.05),.1,'#7d928b');beam(point(t-.4,s,2.04),point(t+.4,s,2.04),.095,'#a6b2a0');
+      }
+      const end=-l/2+5,edge=w/2+.18;
+      for(const offset of [-.45,.45])beam(point(end+offset,edge,-.6),point(end+offset,edge,2.1),.065,'#98a99b');
+      for(let z=-.5;z<2;z+=.38)beam(point(end-.45,edge,z),point(end+.45,edge,z),.055,'#acb8a4');
+      for(let coil=0;coil<3;coil++)for(let i=0;i<20;i++){const r=.38+coil*.12,a=i/20*TAU,b=(i+1)/20*TAU;beam(point(end+2+Math.cos(a)*r,Math.sin(a)*r,1.72),point(end+2+Math.cos(b)*r,Math.sin(b)*r,1.72),.035,'#c3ad80',4);}
+    }
+    for(const port of root.WidewakeEstuary.ports){
+      const add=(suffix,x,y,build,shadow)=>{
+        g=G();build();const type='landing_'+port.id+suffix,mesh=new Float32Array(g.out);let radius=1;
+        for(let i=0;i<mesh.length;i+=6)radius=Math.max(radius,Math.hypot(mesh[i],mesh[i+1])+mesh[i+2]);
+        meshes[type]=mesh;specs[type]={length:radius*2,height:35,frames:1,ppu:10};parts.push({type,x:port.x+x,y:port.y+y,radius,shadow,shadowZ:suffix.startsWith('_pier')?.08:1.23});
+      };
+      if(port.id==='yard'){
+        add('',-10,-139,()=>shed(35,24,9,'#587c88','#98977b'),[37,26,9]);
+        add('_workshop',-64,-123,()=>shed(17,15,7,'#8a7869','#9e9374'),[19,17,7]);
+        add('_cargo',-35,-122,()=>{for(let i=0;i<10;i++)crate(-4+(i%4)*3,-3+Math.floor(i/4)*3,1.65,i%3===0?2.5:1.8);},[15,10,1.5]);
+        add('_hoist',-17,-116,()=>{
+          g.box(0,0,1.2,1.7,1.7,1.1,'#a1a38a','#6b7d70');beam([0,0,2],[0,0,14],.3,'#7d968c');beam([-.7,0,13.5],[10,0,13.5],.25,'#b0ba9f');beam([0,0,8],[5,0,13.5],.15,'#8c9f8e');
+          beam([9,0,13.3],[9,0,5],.035,'#c9c4a0');beam([9,0,5],[9,0,4.6],.14,'#536e70');beam([9,0,4.6],[9.35,0,4.6],.12,'#536e70');g.box(.6,0,3.2,.5,1.4,1.1,'#b5a581','#526b68');
+        },[4,3,8]);
+        add('_timber',-61,-112,()=>{for(const y of [-4,4])g.box(-.6,y,1.23,6,.45,.57,'#9a8b6b','#6e7057');for(let row=0;row<2;row++)for(let i=0;i<7;i++)g.box(-3+i*.8,0,1.8+row*.48,.65,11,.42,'#b8a47d','#8a8666');},[7,12,1.5]);
+      }else if(port.id==='mill'){
+        add('',-86,-146,()=>{shed(42,25,15,'#897968','#a39272');g.box(-9,-2,17,3.5,3.5,14,'#a08e73','#807461');for(let z=20;z<31;z+=.6)g.box(-9,-.23,z,3.55,.06,.055,'#b3a084','#a29176');g.box(-9,-2,31,4.2,4.2,.45,'#c0ad8b','#847a65');g.box(-9,-2,31.46,2.6,2.6,.04,'#344b4a');},[44,27,15]);
+        add('_store',-135,-125,()=>shed(24,18,10,'#68857f','#b0a17e'),[26,20,10]);
+        add('_cargo',-73,-118,()=>{for(let i=0;i<15;i++)crate(-6+(i%5)*2.8,-3+Math.floor(i/5)*2.7,1.7);},[15,10,1.5]);
+        add('_timber',-116,-102,()=>{for(const y of [-6,6])g.box(.15,y,1.23,7.5,.45,.47,'#9a8b6b','#6e7057');for(let row=0;row<3;row++)for(let i=0;i<8;i++)g.box(-3+i*.9,0,1.7+row*.42,.76,18,.37,'#ac956b','#817757');},[9,19,1.5]);
+      }else{
+        add('',-41,0,()=>shed(11,9,5,'#aaa17c','#9c9475'),[13,11,5]);
+        add('_cargo',-33,7,()=>{crate(-1,-1,1.7,1.8);crate(0,1,1.7,1.5);},[4,4,1]);
+        add('_nets',-28,-6,()=>{for(let i=0;i<9;i++)g.box(-1+i*.15,0,1.7,.08,4,.18,'#819281','#667e72');});
+      }
+      port.piers.forEach((p,i)=>add('_pier'+i,p.x,p.y,()=>pier(p.length,p.width,p.alongY),[p.alongY?p.width:p.length,p.alongY?p.length:p.width,1]));
+    }
+    return{meshes,specs,parts};
   }
   const bakeVertex=`#version 300 es
     precision highp float;layout(location=0)in vec3 aPosition;layout(location=1)in vec3 aColor;layout(location=4)in vec3 aNormal;
@@ -154,22 +251,27 @@
         for(let f=0;f<frames;f++){const c=Math.cos(f/frames*TAU),s=Math.sin(f/frames*TAU);for(let i=0;i<mesh.length;i+=6){const x=mesh[i]*c-mesh[i+1]*s,y=mesh[i]*s+mesh[i+1]*c,z=mesh[i+2],px=(x-y)*Math.SQRT1_2,py=(x+y)*Math.SQRT1_2*.5-z*Math.sqrt(.75);minX=Math.min(minX,px);maxX=Math.max(maxX,px);minY=Math.min(minY,py);maxY=Math.max(maxY,py);range=Math.max(range,Math.abs((x+y)*.6123724+z*.5)+1);}}
         const w=Math.ceil(((maxX-minX)*ppu+4)/4)*4,h=Math.ceil(((maxY-minY)*ppu+4)/4)*4,levels=1+Math.floor(Math.log2(Math.max(w,h)));
         if(Math.max(w,h)>gl.getParameter(gl.MAX_TEXTURE_SIZE)||frames>gl.getParameter(gl.MAX_ARRAY_TEXTURE_LAYERS))throw Error('Sprite frames exceed device limit');
-        this.entries[type]={mesh,minX,maxY,ppu,w,h,frames,range,levels};
+        this.entries[type]={mesh,minX,maxY,ppu,w,h,frames,range,levels,samples:type.startsWith('landing_')?Math.min(4,gl.getParameter(gl.MAX_SAMPLES)):0};
         for(let level=0;level<levels;level++)this.bytes+=Math.max(1,w>>level)*Math.max(1,h>>level)*frames*8;
       }
       this.bake();this.program=root.WidewakeOcean.program(gl,spriteVertex,spriteFragment);
       const quad=new Float32Array([-1,-1,1,-1,1,1,-1,-1,1,1,-1,1]);this.batches={};for(const type of Object.keys(this.entries))this.batches[type]=new root.WidewakeOcean.Batch(gl,quad,type.startsWith('raider')?32768:view.artSpecs?.[type]?1600:64,true);
     }
-    bake(){const gl=this.gl,program=root.WidewakeOcean.program(gl,bakeVertex,bakeFragment),framebuffer=gl.createFramebuffer(),depth=gl.createRenderbuffer();gl.bindFramebuffer(gl.FRAMEBUFFER,framebuffer);gl.bindRenderbuffer(gl.RENDERBUFFER,depth);gl.framebufferRenderbuffer(gl.FRAMEBUFFER,gl.DEPTH_ATTACHMENT,gl.RENDERBUFFER,depth);gl.drawBuffers([gl.COLOR_ATTACHMENT0,gl.COLOR_ATTACHMENT1]);
+    bake(){const gl=this.gl,program=root.WidewakeOcean.program(gl,bakeVertex,bakeFragment),framebuffer=gl.createFramebuffer(),depth=gl.createRenderbuffer(),multisample=gl.createFramebuffer(),sampleBuffers=[gl.createRenderbuffer(),gl.createRenderbuffer(),gl.createRenderbuffer()];gl.bindFramebuffer(gl.FRAMEBUFFER,framebuffer);gl.bindRenderbuffer(gl.RENDERBUFFER,depth);gl.framebufferRenderbuffer(gl.FRAMEBUFFER,gl.DEPTH_ATTACHMENT,gl.RENDERBUFFER,depth);gl.drawBuffers([gl.COLOR_ATTACHMENT0,gl.COLOR_ATTACHMENT1]);
       gl.disable(gl.BLEND);gl.disable(gl.SAMPLE_ALPHA_TO_COVERAGE);gl.disable(gl.CULL_FACE);gl.enable(gl.DEPTH_TEST);gl.depthMask(true);gl.clearColor(0,0,0,0);gl.useProgram(program);
       for(const entry of Object.values(this.entries)){
         const texture=(format,levels,filter)=>{const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D_ARRAY,t);gl.texStorage3D(gl.TEXTURE_2D_ARRAY,levels,format,entry.w,entry.h,entry.frames);gl.texParameteri(gl.TEXTURE_2D_ARRAY,gl.TEXTURE_MIN_FILTER,filter);gl.texParameteri(gl.TEXTURE_2D_ARRAY,gl.TEXTURE_MAG_FILTER,levels>1?gl.LINEAR:gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D_ARRAY,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D_ARRAY,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);return t;};
-        entry.color=texture(gl.RGBA8,entry.levels,gl.LINEAR_MIPMAP_LINEAR);entry.depth=texture(gl.RGBA8,entry.levels,gl.LINEAR_MIPMAP_LINEAR);gl.renderbufferStorage(gl.RENDERBUFFER,gl.DEPTH_COMPONENT16,entry.w,entry.h);
+        entry.color=texture(gl.RGBA8,entry.levels,gl.LINEAR_MIPMAP_LINEAR);entry.depth=texture(gl.RGBA8,entry.levels,gl.LINEAR_MIPMAP_LINEAR);gl.bindRenderbuffer(gl.RENDERBUFFER,depth);gl.renderbufferStorage(gl.RENDERBUFFER,gl.DEPTH_COMPONENT16,entry.w,entry.h);
+        // Static close-up art resolves coverage before mip generation. Thin plank
+        // gaps and roof seams stay continuous instead of aliasing into dotted rows.
+        if(entry.samples){gl.bindFramebuffer(gl.FRAMEBUFFER,multisample);for(let i=0;i<3;i++){gl.bindRenderbuffer(gl.RENDERBUFFER,sampleBuffers[i]);gl.renderbufferStorageMultisample(gl.RENDERBUFFER,entry.samples,i===2?gl.DEPTH_COMPONENT16:gl.RGBA8,entry.w,entry.h);gl.framebufferRenderbuffer(gl.FRAMEBUFFER,i===2?gl.DEPTH_ATTACHMENT:gl.COLOR_ATTACHMENT0+i,gl.RENDERBUFFER,sampleBuffers[i]);}gl.drawBuffers([gl.COLOR_ATTACHMENT0,gl.COLOR_ATTACHMENT1]);if(gl.checkFramebufferStatus(gl.FRAMEBUFFER)!==gl.FRAMEBUFFER_COMPLETE)throw Error('Antialiased landmark framebuffer unavailable');gl.bindFramebuffer(gl.FRAMEBUFFER,framebuffer);}
         const data=normals(entry.mesh),vao=gl.createVertexArray(),buffer=gl.createBuffer();gl.bindVertexArray(vao);gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.bufferData(gl.ARRAY_BUFFER,data,gl.STATIC_DRAW);for(const [index,offset]of [[0,0],[1,12],[4,24]]){gl.enableVertexAttribArray(index);gl.vertexAttribPointer(index,3,gl.FLOAT,false,36,offset);}gl.viewport(0,0,entry.w,entry.h);gl.uniform2f(gl.getUniformLocation(program,'uSize'),entry.w,entry.h);gl.uniform4f(gl.getUniformLocation(program,'uRect'),entry.minX,entry.maxY,entry.ppu,0);gl.uniform1f(gl.getUniformLocation(program,'uRange'),entry.range);
-        for(let f=0;f<entry.frames;f++){gl.framebufferTextureLayer(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,entry.color,0,f);gl.framebufferTextureLayer(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT1,entry.depth,0,f);if(f===0&&gl.checkFramebufferStatus(gl.FRAMEBUFFER)!==gl.FRAMEBUFFER_COMPLETE)throw Error('Sprite frame framebuffer unavailable');gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.uniform2f(gl.getUniformLocation(program,'uRotation'),Math.cos(f/entry.frames*TAU),Math.sin(f/entry.frames*TAU));gl.drawArrays(gl.TRIANGLES,0,data.length/9);}
+        for(let f=0;f<entry.frames;f++){gl.framebufferTextureLayer(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,entry.color,0,f);gl.framebufferTextureLayer(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT1,entry.depth,0,f);if(f===0&&gl.checkFramebufferStatus(gl.FRAMEBUFFER)!==gl.FRAMEBUFFER_COMPLETE)throw Error('Sprite frame framebuffer unavailable');if(entry.samples)gl.bindFramebuffer(gl.FRAMEBUFFER,multisample);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.uniform2f(gl.getUniformLocation(program,'uRotation'),Math.cos(f/entry.frames*TAU),Math.sin(f/entry.frames*TAU));gl.drawArrays(gl.TRIANGLES,0,data.length/9);
+          if(entry.samples){gl.bindFramebuffer(gl.READ_FRAMEBUFFER,multisample);gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER,framebuffer);for(let attachment=0;attachment<2;attachment++){gl.readBuffer(gl.COLOR_ATTACHMENT0+attachment);gl.drawBuffers(attachment?[gl.NONE,gl.COLOR_ATTACHMENT1]:[gl.COLOR_ATTACHMENT0]);gl.blitFramebuffer(0,0,entry.w,entry.h,0,0,entry.w,entry.h,gl.COLOR_BUFFER_BIT,gl.NEAREST);}gl.bindFramebuffer(gl.FRAMEBUFFER,framebuffer);gl.drawBuffers([gl.COLOR_ATTACHMENT0,gl.COLOR_ATTACHMENT1]);}
+        }
         for(const t of [entry.color,entry.depth]){gl.bindTexture(gl.TEXTURE_2D_ARRAY,t);gl.generateMipmap(gl.TEXTURE_2D_ARRAY);}gl.deleteBuffer(buffer);gl.deleteVertexArray(vao);
       }
-      gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.deleteFramebuffer(framebuffer);gl.deleteRenderbuffer(depth);gl.deleteProgram(program);
+      gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.deleteFramebuffer(framebuffer);gl.deleteRenderbuffer(depth);for(const buffer of sampleBuffers)gl.deleteRenderbuffer(buffer);gl.deleteFramebuffer(multisample);gl.deleteProgram(program);
     }
     bind(type,edges){const gl=this.gl,entry=this.entries[type];this.view.uniforms(this.program);gl.uniform2f(gl.getUniformLocation(this.program,'uCell'),entry.w,entry.h);gl.uniform4f(gl.getUniformLocation(this.program,'uRect'),entry.minX,entry.maxY,entry.ppu,0);gl.uniform1f(gl.getUniformLocation(this.program,'uRange'),entry.range);gl.uniform1f(gl.getUniformLocation(this.program,'uFrames'),entry.frames);gl.uniform1f(gl.getUniformLocation(this.program,'uTime'),this.view.reduced?0:this.view.visualTime);gl.uniform1f(gl.getUniformLocation(this.program,'uFoliage'),this.view.reduced?0:type.startsWith('tree')||type==='reed'?1:0);gl.uniform1i(gl.getUniformLocation(this.program,'uEdges'),edges?1:0);
       gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D_ARRAY,entry.color);gl.uniform1i(gl.getUniformLocation(this.program,'uColor'),0);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D_ARRAY,entry.depth);gl.uniform1i(gl.getUniformLocation(this.program,'uDepth'),1);

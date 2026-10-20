@@ -12,7 +12,7 @@ let browser;const errors=[];
     const v=__widewakeEstuary.view,g=v.gl;v.reduced=true;v.follow=false;v.camera.x=v.camera.y=0;
     const c=document.createElement('canvas');c.width=c.height=256;const ctx=c.getContext('2d',{willReadFrequently:true});ctx.imageSmoothingEnabled=getComputedStyle(v.canvas).imageRendering!=='pixelated';ctx.imageSmoothingQuality='high';
     const rows=[];
-    for(const [type,zoom,motion]of [['tree0',.65,'pan'],['gunboat',1.5,'pan'],['flagship',.27,'pan'],['raider0',.12,'pan'],['gunboat',1.5,'turn'],['gunboat',.5,'zoom']]){
+    for(const [type,zoom,motion]of [['tree0',.65,'pan'],['gunboat',1.5,'pan'],['flagship',.27,'pan'],['raider0',.12,'pan'],['gunboat',1.5,'turn'],['gunboat',.5,'zoom'],['landing_yard',1.5,'pan'],['landing_yard_pier0',1.5,'zoom']]){
       const b=v.atlas.batches[type],frames=[],scales=[];
       for(let step=0;step<33;step++){
         v.zoom=motion==='zoom'?zoom*(.92+step/32*.16):zoom;
@@ -29,9 +29,9 @@ let browser;const errors=[];
     return{rows,width:v.canvas.width,height:v.canvas.height,samples:g.getParameter(g.SAMPLES),atlasBytes:v.atlas.bytes,error:g.getError()};
   });
   fs.writeFileSync(path.join(out,'motion.json'),JSON.stringify({engine:isWebkit?'webkit':'chromium',...result},null,2)+'\n');
-  assert.equal(result.error,0);assert.ok(result.width>=1280&&result.height>=720);assert.ok(result.atlasBytes<32*1048576);
+  assert.equal(result.error,0);assert.ok(result.width>=1280&&result.height>=720);assert.ok(result.atlasBytes<48*1048576);
   for(const row of result.rows){assert.ok(row.minimumEnergy>0,'distant hull must not disappear');assert.ok(row.jumpRatio<.8,JSON.stringify(row));assert.ok(row.energyVariation<(row.type==='raider0'?.12:.02),JSON.stringify(row));}
-  console.log('PASS continuous subpixel translation, directional blending, distant visibility and mip-level zoom');
+  console.log('PASS continuous ship and port motion, directional blending, distant visibility and mip-level zoom');
   const retina=await browser.newContext({viewport:{width:1440,height:900},deviceScaleFactor:3}),r=await retina.newPage();await r.goto(base+'/widewake-battle.html?test&population=0');await r.waitForFunction(()=>window.__widewakeBattle);
   const budget=await r.evaluate(()=>{const v=__widewakeBattle.view,p=v.project(0,0),box=v.canvas.getBoundingClientRect(),world=v.screenWorld(box.left+p.x/v.width*box.width,box.top+p.y/v.height*box.height);return{pixels:v.canvas.width*v.canvas.height,world};});
   assert.ok(budget.pixels<=2076000);assert.ok(Math.hypot(budget.world.x,budget.world.y)<.001);await retina.close();
