@@ -172,6 +172,19 @@ Touch and the left stick use up/down for throttle/braking and left/right for
 rudder. The removed R, RT, reverse and tow controls remain absent. There is no camera-relative
 heading selection in the player helm. Releasing throttle coasts.
 
+### Floating touch helm, v0.27.1
+
+Touch anywhere on the water to place a joystick at that finger. It starts neutral,
+with a six-pixel dead zone and proportional throttle and rudder. Dragging beyond
+its travel moves the base with the thumb, keeping direction changes close.
+Lifting, cancellation, capture loss, pause, focus loss and viewport changes clear
+held steering. The joystick disappears on release and leaves the resting HUD clear.
+
+A second finger releases steering and starts two-finger camera pan and pinch zoom.
+After a camera gesture, lift all fingers before starting another helm gesture.
+HUD buttons keep their own touches, so the chart, camera choices and fleet order
+remain usable. Mouse dragging still pans. Campaign and endgame use the same helm.
+
 The manual helm has faster engine response, speed-dependent steering authority,
 smoothed yaw and lateral grip. Turning changes the hull heading before the world
 velocity catches up, leaving a curved wake. Larger and loaded boats retain more
@@ -408,6 +421,7 @@ node tools/widewake/test-combat-browser.cjs
 node tools/widewake/test-driving.cjs
 node tools/widewake/test-fleet-handling.cjs
 node tools/widewake/test-driving-browser.cjs
+node tools/widewake/test-touch-browser.cjs
 node tools/widewake/test-reach-game.cjs
 node tools/widewake/test-reach-browser.cjs
 node tools/widewake/test-reach-ui.cjs
@@ -425,6 +439,9 @@ node widewake-desktop/test-desktop.cjs
 Browser harnesses require Playwright on NODE_PATH and own their test browser.
 Use the agent Chrome for Testing wrapper, never the personal Chrome executable.
 `WIDEWAKE_TEST_ENGINE=webkit` selects WebKit in the relevant harnesses.
+The touch harness dispatches real multi-touch in Chromium. WebKit checks native
+taps and bridges continuous drags through mouse pointer events; its multi-touch
+behavior still needs a physical-device check.
 The session-storage harness owns its HTTP server and tests untouched old saves,
 independent tabs, session resume, fresh reloads and unavailable storage.
 

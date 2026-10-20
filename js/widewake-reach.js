@@ -12,7 +12,7 @@
   const dialogStack=[];
   const keys=new Set(),stick={x:0,y:0},pointers=new Map(),frameTimes=new Float32Array(600),stepTimes=new Float32Array(600);let samples=0;
   const money=n=>Math.round(n).toLocaleString()+' c',allDestinations=()=>[...E.ports,...R.sites.filter(s=>game.rank>=s.rank)];
-  function clear(){cameraMenu(false);keys.clear();pointers.clear();stick.x=stick.y=0;stickId=null;pan=pinch=null;$('reach-helm').firstElementChild.style.transform='';controller?.reset();}
+  function clear(){cameraMenu(false);keys.clear();stopStick();buttonTouches.clear();for(const id of pointers.keys())if(water.hasPointerCapture(id))water.releasePointerCapture(id);pointers.clear();pan=pinch=null;touchGesture=false;controller?.reset();}
   function wake(){if(!settings.sound||!activity.active())return;try{sound=sound||new WidewakeAudio({active:()=>activity.active(),settings:()=>settings});sound.wake();}catch{}}
   function notify(text){$('reach-notice').textContent=text;noticeUntil=activity.now()+4500;if(mode==='service')$('service-feedback').textContent=text;}
   function refreshTitle(){if(mode!=='title')return;$('resume-voyage').hidden=!voyage;$('start-voyage').classList.toggle('ww-primary',!voyage);}
@@ -204,13 +204,67 @@
   $('camera-toggle').onclick=()=>cameraMenu($('camera-controls').hidden);
   for(const b of document.querySelectorAll('[data-zoom]'))b.onclick=()=>{view.zoomStop(b.dataset.zoom);cameraMenu(false);$('camera-toggle').focus({preventScroll:true});dirty=true;updateUI();};
   document.addEventListener('pointerdown',e=>{if(!e.target.closest('.camera-tool'))cameraMenu(false);});
-  function stickMove(e){const r=$('reach-helm').getBoundingClientRect(),x=e.clientX-r.x-r.width/2,y=e.clientY-r.y-r.height/2,d=Math.hypot(x,y)||1,amount=Math.min(1,d/(r.width*.34));stick.x=x/d*amount;stick.y=y/d*amount;$('reach-helm').firstElementChild.style.transform=`translate(${stick.x*r.width*.3}px,${stick.y*r.height*.3}px)`;}
-  $('reach-helm').addEventListener('pointerdown',e=>{if(mode!=='sailing'||stickId!==null)return;stickId=e.pointerId;e.currentTarget.setPointerCapture(e.pointerId);stickMove(e);});$('reach-helm').addEventListener('pointermove',e=>{if(e.pointerId===stickId)stickMove(e);});for(const name of ['pointerup','pointercancel','lostpointercapture'])$('reach-helm').addEventListener(name,e=>{if(e.pointerId!==stickId)return;stickId=null;stick.x=stick.y=0;$('reach-helm').firstElementChild.style.transform='';});
-  const water=$('reach-water');water.addEventListener('wheel',e=>{e.preventDefault();if(mode!=='sailing')return;view.setZoom(view.targetZoom*Math.exp(-E.clamp(e.deltaY*(e.deltaMode===1?16:e.deltaMode===2?400:1),-200,200)*.0025),e.clientX,e.clientY);updateUI();},{passive:false});water.addEventListener('pointerdown',e=>{if(mode!=='sailing')return;pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});water.setPointerCapture(e.pointerId);if(pointers.size===2){const [a,b]=[...pointers.values()];pinch={distance:Math.hypot(a.x-b.x,a.y-b.y),zoom:view.targetZoom};pan=null;}else pan={x:e.clientX,y:e.clientY};});water.addEventListener('pointermove',e=>{if(!pointers.has(e.pointerId))return;pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pointers.size===2&&pinch){const [a,b]=[...pointers.values()];view.setZoom(pinch.zoom*Math.hypot(a.x-b.x,a.y-b.y)/Math.max(1,pinch.distance),(a.x+b.x)/2,(a.y+b.y)/2);}else if(pan){const a=view.screenWorld(pan.x,pan.y),b=view.screenWorld(e.clientX,e.clientY);view.camera.x=game.endgame?view.camera.x+a.x-b.x:E.clamp(view.camera.x+a.x-b.x,E.bounds.left,E.bounds.right);view.camera.y=game.endgame?view.camera.y+a.y-b.y:E.clamp(view.camera.y+a.y-b.y,E.bounds.top,E.bounds.bottom);view.offset.x=view.camera.x-game.player.x;view.offset.y=view.camera.y-game.player.y;view.anchor=null;pan={x:e.clientX,y:e.clientY};}});for(const name of ['pointerup','pointercancel','lostpointercapture'])water.addEventListener(name,e=>{pointers.delete(e.pointerId);pan=pinch=null;});
+  const water=$('reach-water'),helm=$('reach-helm'),thumb=helm.firstElementChild;
+  let stickOrigin=null,stickRadius=38,touchGesture=false,handledButton=null;
+  const buttonTouches=new Map();
+  function stopStick(){stickId=null;stickOrigin=null;stick.x=stick.y=0;helm.classList.remove('is-active','is-thrusting');thumb.style.transform='';}
+  function placeStick(){const r=$('reach').getBoundingClientRect();helm.style.left=(stickOrigin.x-r.left)+'px';helm.style.top=(stickOrigin.y-r.top)+'px';}
+  function startStick(e){stickId=e.pointerId;stickOrigin={x:e.clientX,y:e.clientY};stick.x=stick.y=0;helm.classList.add('is-active');stickRadius=(helm.offsetWidth-thumb.offsetWidth)/2;placeStick();wake();}
+  function moveStick(e){
+    let x=e.clientX-stickOrigin.x,y=e.clientY-stickOrigin.y,d=Math.hypot(x,y);
+    // Let the base follow an overextended thumb so reversing never needs a long drag.
+    if(d>stickRadius){stickOrigin.x+=x*(1-stickRadius/d);stickOrigin.y+=y*(1-stickRadius/d);x*=stickRadius/d;y*=stickRadius/d;d=stickRadius;placeStick();}
+    const dead=6,amount=Math.max(0,(d-dead)/(stickRadius-dead));
+    stick.x=d?x/d*amount:0;stick.y=d?y/d*amount:0;
+    thumb.style.transform=`translate(${x}px,${y}px)`;helm.classList.toggle('is-thrusting',amount>.1);
+  }
+  function cameraDrag(from,to){const a=view.screenWorld(from.x,from.y),b=view.screenWorld(to.x,to.y);view.camera.x=game.endgame?view.camera.x+a.x-b.x:E.clamp(view.camera.x+a.x-b.x,E.bounds.left,E.bounds.right);view.camera.y=game.endgame?view.camera.y+a.y-b.y:E.clamp(view.camera.y+a.y-b.y,E.bounds.top,E.bounds.bottom);view.offset.x=view.camera.x-game.player.x;view.offset.y=view.camera.y-game.player.y;view.anchor=null;}
+  function beginPinch(){const [a,b]=[...pointers.values()];pinch={distance:Math.max(1,Math.hypot(a.x-b.x,a.y-b.y)),zoom:view.targetZoom,x:(a.x+b.x)/2,y:(a.y+b.y)/2};}
+  water.addEventListener('wheel',e=>{e.preventDefault();if(mode!=='sailing')return;view.setZoom(view.targetZoom*Math.exp(-E.clamp(e.deltaY*(e.deltaMode===1?16:e.deltaMode===2?400:1),-200,200)*.0025),e.clientX,e.clientY);updateUI();},{passive:false});
+  water.addEventListener('pointerdown',e=>{
+    if(mode!=='sailing'||e.pointerType==='mouse'&&e.button!==0)return;
+    e.preventDefault();water.setPointerCapture(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(e.pointerType==='mouse'){if(pointers.size===1)pan={x:e.clientX,y:e.clientY};return;}
+    if(pointers.size===1&&!touchGesture)startStick(e);
+    else{stopStick();pan=null;touchGesture=true;if(pointers.size===2)beginPinch();}
+  });
+  water.addEventListener('pointermove',e=>{
+    if(mode!=='sailing'||!pointers.has(e.pointerId))return;
+    pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(e.pointerId===stickId){moveStick(e);return;}
+    if(touchGesture&&pointers.size>=2&&pinch){
+      const [a,b]=[...pointers.values()],center={x:(a.x+b.x)/2,y:(a.y+b.y)/2};
+      cameraDrag(pinch,center);view.setZoom(pinch.zoom*Math.hypot(a.x-b.x,a.y-b.y)/pinch.distance,center.x,center.y);pinch.x=center.x;pinch.y=center.y;
+    }else if(pan){cameraDrag(pan,{x:e.clientX,y:e.clientY});pan={x:e.clientX,y:e.clientY};}
+  });
+  for(const name of ['pointerup','pointercancel','lostpointercapture'])water.addEventListener(name,e=>{
+    if(!pointers.delete(e.pointerId))return;
+    if(e.pointerId===stickId)stopStick();
+    pan=null;pinch=null;
+    if(pointers.size>=2)beginPinch();
+    // A remaining pinch finger must lift before it can become the helm again.
+    if(!pointers.size)touchGesture=false;
+  });
+  // A secondary touch does not reliably produce a native click while steering.
+  // Own that tap and suppress any subsequent native duplicate until the next press.
+  document.addEventListener('pointerdown',e=>{
+    handledButton=null;
+    const button=e.target.closest('#reach button');
+    if(stickId===null||e.pointerType!=='touch'||!button||button.disabled)return;
+    e.preventDefault();buttonTouches.set(e.pointerId,{button,x:e.clientX,y:e.clientY,canceled:false});
+  },{capture:true,passive:false});
+  document.addEventListener('pointermove',e=>{const tap=buttonTouches.get(e.pointerId);if(tap&&Math.hypot(e.clientX-tap.x,e.clientY-tap.y)>12)tap.canceled=true;},true);
+  document.addEventListener('pointerup',e=>{
+    const tap=buttonTouches.get(e.pointerId);if(!tap)return;buttonTouches.delete(e.pointerId);handledButton=tap.button;e.preventDefault();
+    if(tap.canceled||tap.button.disabled||!tap.button.contains(document.elementFromPoint(e.clientX,e.clientY)))return;
+    tap.button.click();
+  },{capture:true,passive:false});
+  for(const name of ['pointercancel','lostpointercapture'])document.addEventListener(name,e=>buttonTouches.delete(e.pointerId),true);
+  document.addEventListener('click',e=>{if(e.isTrusted&&e.detail>0&&handledButton?.contains(e.target)){handledButton=null;e.preventDefault();e.stopImmediatePropagation();}},true);
   function back(){if(!$('camera-controls').hidden){cameraMenu(false);$('camera-toggle').focus({preventScroll:true});return;}const dialog=document.querySelector('dialog[open]');if(dialog)closeDialog(dialog.id);else if(mode==='sailing'||mode==='port')openDialog('reach-menu','menu');}
   controller=new WidewakeController.Controller({settings:()=>settings,using:()=>usingPad,use:()=>usingPad=true,status:()=>{},connected:()=>{},lost:used=>{if(used&&mode==='sailing')openDialog('reach-menu','menu');},context:()=>({sea:mode==='sailing',port:mode==='port',scope:document.querySelector('dialog[open]')||(mode==='title'?$('title-screen'):mode==='port'?$('port-scene'):$('reach'))}),action:action=>{if(action==='back'||action==='pause')back();else if(action==='chart')openChart();else if(action==='context')contextAction();else if(action==='helm')game?.cancel?.();else if(action==='zoom-in'||action==='zoom-out')view.setZoom(view.targetZoom*(action==='zoom-in'?1.3:1/1.3));else if(action==='help')openDialog('help-dialog','menu');else if(mode==='port'&&(action==='next-tab'||action==='previous-tab'))controller.tab($('port-scene'),action==='next-tab'?1:-1);}});
   window.addEventListener('keydown',e=>{if(e.metaKey||e.ctrlKey||e.altKey||e.target.tagName==='INPUT')return;if(e.code==='Escape'){e.preventDefault();if(!e.repeat)back();return;}if(e.code==='KeyM'&&game&&!e.repeat){e.preventDefault();mode==='chart'?closeDialog('reach-chart'):openChart();return;}if(mode!=='sailing'||e.code==='Space'&&e.target.closest('button,summary'))return;if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();if(!e.repeat&&e.code==='KeyE')contextAction();if(!e.repeat&&e.code==='KeyH')game.cancel?.();if(['Digit1','Digit2','Digit3'].includes(e.code)){view.zoomStop(['helm','fleet','survey'][Number(e.code.at(-1))-1]);updateUI();}keys.add(e.code);});window.addEventListener('keyup',e=>keys.delete(e.code));$('game').addEventListener('pointerdown',()=>usingPad=false);
-  window.addEventListener('resize',()=>{view?.resize();dirty=true;if(mode==='chart')drawChart();});activity.onChange(active=>{last=accumulator=0;if(!active){clear();if(mode==='sailing')openDialog('reach-menu','menu');sound?.suspend();}});window.addEventListener('widewake-activity',e=>{window.dispatchEvent(new Event(e.detail?'focus':'blur'));if(!e.detail){clear();if(mode==='sailing')openDialog('reach-menu','menu');sound?.suspend();}});
+  window.addEventListener('resize',()=>{if(stickId!==null||pointers.size)clear();view?.resize();dirty=true;if(mode==='chart')drawChart();});activity.onChange(active=>{last=accumulator=0;if(!active){clear();if(mode==='sailing')openDialog('reach-menu','menu');sound?.suspend();}});window.addEventListener('widewake-activity',e=>{window.dispatchEvent(new Event(e.detail?'focus':'blur'));if(!e.detail){clear();if(mode==='sailing')openDialog('reach-menu','menu');sound?.suspend();}});
   function frame(ms){const raw=last?(ms-last)/1000:1/60,delta=Math.min(.1,raw);last=ms;const pad=controller.update(ms/1000);
     if(mode==='title')front.draw(ms/1000,settings.reduceMotion);
     else if(game&&view){if(mode==='sailing'&&(!view.terrain||view.terrain.cache.has('overview'))&&!view.lost){const input={throttle:E.clamp((keys.has('KeyW')||keys.has('ArrowUp')?1:0)-(keys.has('KeyS')||keys.has('ArrowDown')?1:0)-stick.y-pad.y,-1,1),steer:E.clamp((keys.has('KeyD')||keys.has('ArrowRight')?1:0)-(keys.has('KeyA')||keys.has('ArrowLeft')?1:0)+stick.x+pad.x,-1,1),boost:keys.has('ShiftLeft')||pad.boost};view.prepareSpawns();accumulator+=delta;let count=0;const stepStart=performance.now();while(accumulator>=1/60&&count<5){game.step(1/60,input);for(const cue of game.sounds){if(!sound)break;const q=view.project(cue.x,cue.y);sound.play(cue.kind==='gun'||cue.kind==='guard'?'escort-shot':cue.kind==='broadside'?'burst':cue.kind==='mortar'?'mortar-shot':cue.kind==='flak'?'flak-shot':cue.kind==='mortar-hit'?'mortar-hit':cue.kind==='repair'?'repair':cue.kind==='hurt'?'hurt':cue.kind==='impact'?'impact':'sink',{pan:E.clamp((q.x/view.width-.5)*1.6,-.8,.8),volume:.3});}accumulator-=1/60;count++;}if(count===5)accumulator=0;stepTimes[samples%600]=performance.now()-stepStart;frameTimes[samples++%600]=raw*1000;sound?.update({mode:'sea',battle:game.raiders.count>0,speed:Math.hypot(game.player.vx,game.player.vy)/game.player.speed,steam:game.player.type!=='launch',work:game.endgame?(game.workActive?'oil':null):game.operation?R.sites.find(s=>s.id===game.operation.id).type:null,paused:false});}
