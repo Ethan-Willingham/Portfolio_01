@@ -16,7 +16,7 @@
         c=mix(vec3(.21,.27,.19),vec3(.34,.37,.24),wide)*(.93+grass*.10+grain*.025);c=mix(c,vec3(.29,.27,.20)*(1.+grass*.12),mud);}
       color=vec4(c,1.);}`;
   class Terrain{
-    constructor(view){this.view=view;this.cache=new Map();this.queue=[{key:'overview',x:-4096,y:-8192,size:16384,step:128}];this.pending=null;this.serial=1;this.requests=new Map();this.bytes=0;this.clock=0;this.failed=null;this.needed=[];this.props={};this.worker=new Worker('js/widewake-estuary-worker.js?v=0.25.2');this.worker.onmessage=e=>this.receive(e.data);this.worker.onerror=e=>{this.failed=e.message||'Terrain unavailable';this.onError?.(this.failed);};if(view.gl)this.restore();this.pump();}
+    constructor(view){this.view=view;this.cache=new Map();this.queue=[{key:'overview',x:-4096,y:-8192,size:16384,step:128}];this.pending=null;this.serial=1;this.requests=new Map();this.bytes=0;this.clock=0;this.failed=null;this.needed=[];this.props={};this.worker=new Worker('js/widewake-estuary-worker.js?v=0.25.3');this.worker.onmessage=e=>this.receive(e.data);this.worker.onerror=e=>{this.failed=e.message||'Terrain unavailable';this.onError?.(this.failed);};if(view.gl)this.restore();this.pump();}
     restore(){const gl=this.view.gl;this.program=O.program(gl,vertex,fragment);for(const tile of this.cache.values())this.upload(tile);if(this.props)for(const batch of Object.values(this.props))batch.dispose();this.props={};this.initProps();}
     initProps(){if(!this.view.gl)return;const gl=this.view.gl;
       for(const type of ['reed','tree0','tree1','tree2','rock'])this.props[type]=new O.Batch(gl,this.view.meshes[type],1600);
@@ -61,10 +61,11 @@
       // Camera distances are expressed in screen pixels per metre, so rotating a
       // phone does not shrink the captain's boat into a dot. Physical hull scale stays intact.
       const length=this.battle.player.length,largest=Math.max(...this.battle.ships.filter(s=>s.hp>0).map(s=>s.length)),close=40/length;
-      this.stops={helm:close/this.baseScale,fleet:Math.min(close*.45,48/largest)/this.baseScale,survey:Math.min(.12,close*.2)/this.baseScale};
+      const wide=Math.max(Math.min(.24,close*.28),this.minimumZoom()*this.baseScale),fleet=Math.max(Math.min(close*.45,48/largest),wide*1.25);
+      this.stops={helm:Math.max(close,fleet*1.25)/this.baseScale,fleet:fleet/this.baseScale,survey:wide/this.baseScale};
     }
-    resize(){const previous=this.baseScale;super.resize();if(this.stops){this.configureCamera();if(this.follow&&previous){this.zoom*=previous/this.baseScale;this.targetZoom*=previous/this.baseScale;this.anchor=null;}}}
-    setZoom(value,x,y){super.setZoom(value,x,y);this.targetZoom=E.clamp(value,this.stops.survey*.65,this.stops.helm*1.65);}
+    resize(){const old=this.stops,stop=old&&Object.keys(old).find(k=>Math.abs(old[k]-this.targetZoom)<.001),previous=this.baseScale;super.resize();if(old){this.configureCamera();if(this.follow&&previous){this.zoom=E.clamp(this.zoom*previous/this.baseScale,this.stops.survey,this.stops.helm*1.65);this.targetZoom=stop?this.stops[stop]:E.clamp(this.targetZoom*previous/this.baseScale,this.stops.survey,this.stops.helm*1.65);this.anchor=null;}}}
+    setZoom(value,x,y){super.setZoom(value,x,y);this.targetZoom=E.clamp(value,this.stops.survey,this.stops.helm*1.65);}
     zoomStop(name){if(this.stops?.[name]){this.anchor=null;this.offset.x=this.offset.y=0;this.targetZoom=this.stops[name];}}
     labels(){const c=this.ctx,n=this.battle,s=n.player,pose=this.poses[0],p=this.project(pose.x,pose.y),scale=this.zoom*this.baseScale;c.clearRect(0,0,this.width,this.height);c.font='8px "Commit Mono", monospace';c.textAlign='center';if(n.port)return;
       if(root.WidewakeReach){for(const site of root.WidewakeReach.sites){if(n.rank<site.rank)continue;const q=this.project(site.x,site.y),r=Math.max(7,site.radius*scale*.18);if(q.x<0||q.y<0||q.x>this.width||q.y>this.height)continue;c.strokeStyle='#a3cfbe66';c.setLineDash([2,4]);c.beginPath();c.ellipse(q.x,q.y,r,r*.5,0,0,Math.PI*2);c.stroke();c.setLineDash([]);c.fillStyle='#b6d2c8';c.fillText(site.name,q.x,q.y-r*.5-6);}

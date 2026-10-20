@@ -3,7 +3,7 @@
 (function(root){
   'use strict';
   const E=root.WidewakeEstuary,B=root.WidewakeBattle,clamp=E.clamp;
-  const version='0.25.2',SAVE_VERSION=1;
+  const version='0.25.3',SAVE_VERSION=1;
   const goods={salt:{name:'Salt',color:'#d8d8bd'},tools:{name:'Tools',color:'#92a9ad'},grain:{name:'Grain',color:'#c4ac72'},timber:{name:'Timber',color:'#a68b65'},fish:{name:'Fish',color:'#78b3b5'},oil:{name:'Oil',color:'#8a909e'},relic:{name:'Salvage',color:'#dbc18c'}};
   const markets={yard:{salt:12,tools:30,grain:23,timber:25,fish:18,oil:44,relic:140},reeds:{salt:22,tools:48,grain:10,timber:24,fish:9,oil:35,relic:155},mill:{salt:27,tools:54,grain:18,timber:11,fish:24,oil:52,relic:190}};
   const boats={gunboat:{name:'Escort',cost:1100,rank:2,hold:20,draft:2.6,weapon:'guard'},trawler:{name:'Trawler',cost:680,rank:2,hold:80,draft:2.1,weapon:'guard'},repair:{name:'Tender',cost:1400,rank:3,hold:70,draft:1.8,weapon:'guard'},oilrig:{name:'Oil tender',cost:2400,rank:3,hold:100,draft:4.2,weapon:'guard'},screen:{name:'Flak boat',cost:3800,rank:4,hold:25,draft:2.8,weapon:'flak'},battery:{name:'Mortar boat',cost:5200,rank:4,hold:25,draft:3.2,weapon:'mortar'}};
@@ -101,7 +101,22 @@
       if(cache.size>=65536)cache.clear();cache.set(key,clear);return clear;
     }
     moveEnemy(i,dt){const a=this.raiders,x=a.x[i]+a.vx[i]*dt,y=a.y[i]+a.vy[i]*dt;if(this.enemyWater(x,y)){a.x[i]=x;a.y[i]=y;}else{a.vx[i]*=.2;a.vy[i]*=.2;}}
-    wave(count){const a=this.raiders,p=this.player;let admitted=0;for(let n=0;n<count*12&&admitted<count&&a.count<2048;n++){let x,y;const radius=340+this.random()*280;if(p.y>1450){const angle=this.random()*Math.PI*2;x=p.x+Math.cos(angle)*radius;y=p.y+Math.sin(angle)*radius;}else{const nodes=this.field.nodes.filter(n=>n.channel!=='cut'&&Math.hypot(n.x-p.x,n.y-p.y)>180&&Math.hypot(n.x-p.x,n.y-p.y)<550);if(!nodes.length)break;const node=nodes[Math.floor(this.random()*nodes.length)];x=node.x+(this.random()-.5)*node.width*.5;y=node.y+(this.random()-.5)*node.width*.5;}const probe={length:23,width:8,draft:.8};if(this.field.clearance(probe,x,y,0,.5)<.5||E.ports.some(port=>Math.hypot(x-port.x,y-port.y)<180))continue;const kind=this.rank>=3&&this.random()<.18?2:this.random()<.2?1:0;if(a.add(x,y,kind,this.random)){admitted++;this.spawned++;}}a.index();return admitted;}
+    wave(count){
+      const a=this.raiders,p=this.player,probe={length:23,width:8,draft:.8},rear=new Float64Array(16).fill(340),sector=(x,y)=>Math.floor((Math.atan2(y,x)+Math.PI)/(Math.PI*2)*16)%16;
+      const rearAt=(x,y)=>{const i=sector(x,y);return Math.max(rear[i],rear[(i+1)%16],rear[(i+15)%16]);};let admitted=0;
+      // Waves join behind the existing attackers. Sample the rear once per
+      // wave, so admitting a group cannot push its own entry farther away.
+      for(let i=0;i<a.count;i++)if(a.hp[i]>0){const x=a.x[i]-p.x,y=a.y[i]-p.y,k=sector(x,y);rear[k]=Math.max(rear[k],Math.hypot(x,y)+80);}
+      const nodes=p.y>1450?null:this.field.nodes.filter(n=>n.channel!=='cut'&&Math.hypot(n.x-p.x,n.y-p.y)>=rearAt(n.x-p.x,n.y-p.y)&&!B.spawnVisible(this,n.x,n.y)).sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y)).slice(0,32);
+      for(let n=0;n<count*12&&admitted<count&&a.count<2048;n++){
+        let x,y;
+        if(!nodes){const angle=this.random()*Math.PI*2,c=Math.cos(angle),s=Math.sin(angle),radius=B.spawnRadius(this,p,angle,rearAt(c,s)+this.random()*280,180);x=p.x+c*radius;y=p.y+s*radius;}
+        else{if(!nodes.length)break;const node=nodes[Math.floor(this.random()*nodes.length)];x=node.x+(this.random()-.5)*node.width*.5;y=node.y+(this.random()-.5)*node.width*.5;}
+        if(x<E.bounds.left||x>E.bounds.right||y<E.bounds.top||y>E.bounds.bottom||Math.hypot(x-p.x,y-p.y)<rearAt(x-p.x,y-p.y)||B.spawnVisible(this,x,y)||this.ships.some(s=>s.hp>0&&Math.hypot(x-s.x,y-s.y)<180)||this.field.clearance(probe,x,y,0,.5)<.5||E.ports.some(port=>Math.hypot(x-port.x,y-port.y)<180))continue;
+        const kind=this.rank>=3&&this.random()<.18?2:this.random()<.2?1:0;if(a.add(x,y,kind,this.random)){admitted++;this.spawned++;}
+      }
+      a.index();return admitted;
+    }
     sound(...args){B.Battle.prototype.sound.apply(this,args);}
     impact(...args){B.Battle.prototype.impact.apply(this,args);}
     damage(...args){B.Battle.prototype.damage.apply(this,args);}

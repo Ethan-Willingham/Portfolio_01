@@ -99,6 +99,29 @@ The open-water test is deliberately a powerful fleet. Campaign difficulty,
 terrain-aware large raids and earned midgame loadouts still need playtesting.
 It is not the finished Steam balance or proof of physical-phone performance.
 
+### Reinforcement arrivals, v0.25.3
+
+Owner direction, 2026-10-19: enemies should enter offscreen at the back of the
+swarm, with a tighter limit on zooming out. New endgame arrivals, including
+flanking raids, start in a 3.2 to 3.68 km outer band behind the initial fronts.
+Panning across that band moves admission beyond the visible water along the
+same approach. Detached friendly boats also retain 600 m of arrival clearance.
+The starting enemy formation is prepared before the scene opens.
+
+Wide is now the furthest zoom for wheel, pinch, gamepad and the named camera
+stops. Viewport size sets a 2.5 km maximum distance from camera to corner;
+rotation preserves the chosen stop and clamps intermediate scales. Admission
+checks the padded isometric viewport and any pending anchored zoom destination
+before each simulation frame. Endgame admission also reserves its widest view.
+It keeps the 48-arrivals-per-tick limit and the same fixed combat buffers.
+
+Campaign waves use the same viewport exclusion, join beyond surviving attackers,
+and check nearby friendly boats, water clearance, ports and the world boundary.
+River approaches use offscreen channel nodes. A wave with no valid approach
+admits fewer enemies instead of putting them into visible water. Camera guards
+are transient and do not change the save format. Longer approaches reduce the
+old replacement rate and give new waves actual travel time.
+
 ## Interface contract, v0.23
 
 The owner explicitly rejected generic website panels and asked for a distinctive
@@ -251,6 +274,8 @@ A second window must hand off ownership before it can write.
 ## Verification
 
 ```sh
+node tools/widewake/test-spawns.cjs
+node tools/widewake/test-spawns-browser.cjs
 node tools/widewake/test-combat.cjs
 node tools/widewake/test-combat-browser.cjs
 node tools/widewake/test-driving.cjs

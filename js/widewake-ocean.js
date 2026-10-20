@@ -2,7 +2,7 @@
 (function(root){
   'use strict';
   const A=Math.SQRT1_2,B=A*.5,H=Math.sqrt(.75),TAU=Math.PI*2;
-  const stops=Object.freeze({helm:.66,fleet:.27,survey:.12});
+  const stops=Object.freeze({helm:.66,fleet:.27,survey:.22});
   const palette={water:'#123b55',ink:'#101a29',cream:'#e8dfb5',cyan:'#89d0d2',gold:'#ffc978',coral:'#ee826c'};
   const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
   function project(x,y,z=0){return{x:(x-y)*A,y:(x+y)*B-z*H};}
@@ -133,11 +133,24 @@
       for(const c of [this.canvas,this.overlay]){c.width=w;c.height=h;}
       for(const c of [this.ctx,this.fallback])if(c){c.setTransform(w/this.width,0,0,h/this.height,0,0);c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';}
       this.stats.rasterWidth=w;this.stats.rasterHeight=h;this.stats.msaaSamples=this.gl?this.gl.getParameter(this.gl.SAMPLES):0;this.baseScale=Math.min(1,Math.min(this.width/640,this.height/360));
+      if(!this.stops){const minimum=Math.max(stops.survey,this.minimumZoom());this.zoom=Math.max(this.zoom,minimum);this.targetZoom=Math.max(this.targetZoom,minimum);}
     }
     project(x,y,z=0){const p=project(x-this.camera.x,y-this.camera.y,z),scale=this.zoom*this.baseScale;return{x:this.width/2+p.x*scale,y:this.height/2+p.y*scale};}
     screenWorld(clientX,clientY){const r=this.canvas.getBoundingClientRect(),p=unproject(((clientX-r.left)*this.width/r.width-this.width/2)/(this.zoom*this.baseScale),((clientY-r.top)*this.height/r.height-this.height/2)/(this.zoom*this.baseScale));return{x:p.x+this.camera.x,y:p.y+this.camera.y};}
-    setZoom(value,clientX,clientY){const r=this.canvas.getBoundingClientRect();if(Number.isFinite(clientX)&&Number.isFinite(clientY)){const q=this.screenWorld(clientX,clientY);this.anchor={...q,sx:(clientX-r.left)*this.width/r.width-this.width/2,sy:(clientY-r.top)*this.height/r.height-this.height/2};}else this.anchor=null;this.targetZoom=clamp(value,.09,.9);}
-    zoomStop(name){if(stops[name]){this.anchor=null;this.offset.x=this.offset.y=0;this.targetZoom=stops[name];}}
+    minimumZoom(){return Math.hypot(this.width/2,this.height)/(2500*this.baseScale);}
+    setZoom(value,clientX,clientY){const r=this.canvas.getBoundingClientRect();if(Number.isFinite(clientX)&&Number.isFinite(clientY)){const q=this.screenWorld(clientX,clientY);this.anchor={...q,sx:(clientX-r.left)*this.width/r.width-this.width/2,sy:(clientY-r.top)*this.height/r.height-this.height/2};}else this.anchor=null;this.targetZoom=clamp(value,Math.max(stops.survey,this.minimumZoom()),Math.max(.9,this.minimumZoom()*1.5));}
+    zoomStop(name){if(stops[name]){this.anchor=null;this.offset.x=this.offset.y=0;this.targetZoom=Math.max(stops[name],this.minimumZoom());}}
+    prepareSpawns(){
+      // Protect the current zoom tween and its anchored destination. Open-water
+      // battles also reserve their widest view. The simulation gets geometry only.
+      const wide=this.battle.field?this.targetZoom:this.stops?.survey||Math.max(stops.survey,this.minimumZoom());
+      const z=Math.min(this.zoom,this.targetZoom,wide)*this.baseScale;
+      const padding=Math.max(96,48/z),halfWidth=this.width/(2*z)+padding,halfHeight=this.height/(2*z)+padding,p=project(this.camera.x,this.camera.y),b=this.battle.spawnBounds||(this.battle.spawnBounds={});
+      b.left=p.x-halfWidth;b.right=p.x+halfWidth;b.top=p.y-halfHeight;b.bottom=p.y+halfHeight;
+      if(this.anchor){const q=project(this.anchor.x,this.anchor.y),scale=this.targetZoom*this.baseScale,x=q.x-this.anchor.sx/scale,y=q.y-this.anchor.sy/scale;
+        b.left=Math.min(b.left,x-halfWidth);b.right=Math.max(b.right,x+halfWidth);b.top=Math.min(b.top,y-halfHeight);b.bottom=Math.max(b.bottom,y+halfHeight);
+      }
+    }
     updateCamera(dt){
       this.zoom+=(this.targetZoom-this.zoom)*(this.reduced?1:1-Math.exp(-dt*12));
       const p=this.poses[this.battle.player.id];
@@ -146,7 +159,7 @@
     }
     uniforms(p){const gl=this.gl;gl.useProgram(p);gl.uniform2f(gl.getUniformLocation(p,'uSize'),this.width,this.height);gl.uniform1f(gl.getUniformLocation(p,'uZoom'),this.zoom*this.baseScale);}
     visible(x,y,r=25){const dx=x-this.camera.x,dy=y-this.camera.y,z=this.zoom*this.baseScale;return Math.abs((dx-dy)*A*z)<this.width/2+r&&Math.abs((dx+dy)*B*z)<this.height/2+r;}
-    render(dt=1/60,alpha=1){this.alpha=clamp(alpha,0,1);this.visualTime=Math.max(0,this.battle.time-(1-this.alpha)/60);for(const s of this.battle.ships){const p=this.poses[s.id]||(this.poses[s.id]={});p.x=s.px+(s.x-s.px)*this.alpha;p.y=s.py+(s.y-s.py)*this.alpha;p.angle=s.previousAngle+root.WidewakeBattle.angleDelta(s.angle,s.previousAngle)*this.alpha;p.z=this.reduced?0:Math.sin(this.visualTime*1.4+s.id)*Math.min(.5,s.height*.08);}if(this.battle.port)this.wakes?.clear();else this.wakes?.sample(this.battle.ships,this.poses,this.visualTime);this.stats.wakePoints=this.wakes?.count||0;this.stats.wakeBytes=this.wakes?.bytes||0;this.updateCamera(dt);if(this.lost)return;const start=performance.now();this.gl?this.renderGPU():this.renderCanvas();this.labels();this.stats.cpuRenderMs=performance.now()-start;}
+    render(dt=1/60,alpha=1){this.alpha=clamp(alpha,0,1);this.visualTime=Math.max(0,this.battle.time-(1-this.alpha)/60);for(const s of this.battle.ships){const p=this.poses[s.id]||(this.poses[s.id]={});p.x=s.px+(s.x-s.px)*this.alpha;p.y=s.py+(s.y-s.py)*this.alpha;p.angle=s.previousAngle+root.WidewakeBattle.angleDelta(s.angle,s.previousAngle)*this.alpha;p.z=this.reduced?0:Math.sin(this.visualTime*1.4+s.id)*Math.min(.5,s.height*.08);}if(this.battle.port)this.wakes?.clear();else this.wakes?.sample(this.battle.ships,this.poses,this.visualTime);this.stats.wakePoints=this.wakes?.count||0;this.stats.wakeBytes=this.wakes?.bytes||0;this.updateCamera(dt);this.prepareSpawns();if(this.lost)return;const start=performance.now();this.gl?this.renderGPU():this.renderCanvas();this.labels();this.stats.cpuRenderMs=performance.now()-start;}
     renderGPU(){
       const gl=this.gl,b=this.battle,z=this.zoom*this.baseScale,cam=this.camera;gl.viewport(0,0,this.canvas.width,this.canvas.height);gl.clearColor(.045,.16,.24,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.disable(gl.BLEND);gl.depthMask(false);this.uniforms(this.water);gl.uniform2f(gl.getUniformLocation(this.water,'uCamera'),cam.x,cam.y);gl.uniform1f(gl.getUniformLocation(this.water,'uTime'),this.reduced?0:this.visualTime);gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,this.noise);gl.uniform1i(gl.getUniformLocation(this.water,'uNoise'),2);gl.bindVertexArray(this.quad.vao);gl.drawArrays(gl.TRIANGLES,0,6);gl.depthMask(true);this.stats.drawCalls=1;this.stats.triangles=2;this.atlas?.begin();
       this.terrain?.renderGPU(this);this.stats.drawCalls+=this.shadows?.ships()||0;this.stats.drawCalls+=this.waterMotion?.draw()||0;

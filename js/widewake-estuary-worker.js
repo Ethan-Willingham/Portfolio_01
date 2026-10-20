@@ -1,5 +1,5 @@
 /* Terrain preparation and route searches stay off the input/render thread. */
-importScripts('widewake-estuary-core.js?v=0.25.2');
+importScripts('widewake-estuary-core.js?v=0.25.3');
 const E=WidewakeEstuary,field=new E.Field();
 function point(x,y){
   const p=field.sample(x,y),n=E.noise(Math.floor(x/19),Math.floor(y/19)),d=p.depth,s=p.salinity;

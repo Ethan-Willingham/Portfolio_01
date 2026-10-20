@@ -40,6 +40,31 @@
     }
     helmStep(s,s.helm,dt);
   }
+  function spawnVisible(battle,x,y){
+    const b=battle.spawnBounds;if(!b)return false;
+    const u=(x-y)*Math.SQRT1_2,v=(x+y)*Math.SQRT1_2*.5;
+    return u>=b.left&&u<=b.right&&v>=b.top&&v<=b.bottom;
+  }
+  function spawnRadius(battle,origin,angle,radius,clearance=600){
+    const c=Math.cos(angle),s=Math.sin(angle),b=battle.spawnBounds;
+    // Exit the entire padded camera rectangle along the incoming front. This
+    // also works when the player pans past its usual entry point.
+    if(b){
+      const u=(origin.x-origin.y)*Math.SQRT1_2,v=(origin.x+origin.y)*Math.SQRT1_2*.5,du=(c-s)*Math.SQRT1_2,dv=(c+s)*Math.SQRT1_2*.5;
+      let near=0,far=Infinity;
+      for(const [p,d,lo,hi]of [[u,du,b.left,b.right],[v,dv,b.top,b.bottom]]){
+        if(Math.abs(d)<1e-8){if(p<lo||p>hi){far=-1;break;}}
+        else{const a=(lo-p)/d,z=(hi-p)/d;near=Math.max(near,Math.min(a,z));far=Math.min(far,Math.max(a,z));}
+      }
+      if(far>=near)radius=Math.max(radius,far+64);
+    }
+    // Detached escorts and a flagship sailing away from the work station must
+    // not find a new enemy materializing beside their hull either.
+    for(const ship of battle.ships){if(ship.hp<=0)continue;const x=ship.x-origin.x,y=ship.y-origin.y,along=x*c+y*s,across=x*s-y*c;
+      if(Math.abs(across)<clearance)radius=Math.max(radius,along+Math.sqrt(clearance*clearance-across*across));
+    }
+    return radius;
+  }
   function helmStep(s,input,dt){
     // Surge, sway and yaw, for the bounded friendly fleet only. Velocity stays
     // in world space when the hull turns; lateral water resistance bends its path.
@@ -239,7 +264,7 @@
     }
     get player(){return this.ships[0];}
     spawn(initial=false,index=0){
-      const r=this.random,front=initial?index%5:Math.floor(r()*5),base=[-2.3,-.7,.9,2.8,-1.5][front],a=base+(r()-.5)*(front===4?.45:.95),radius=initial?(index<600?650+r()*320:1050+r()*1550):2150+r()*480;
+      const r=this.random,front=initial?index%5:Math.floor(r()*5),base=[-2.3,-.7,.9,2.8,-1.5][front],a=base+(r()-.5)*(front===4?.45:.95),radius=initial?(index<600?650+r()*320:1050+r()*1550):spawnRadius(this,this.center,a,3200+r()*480);
       const x=this.center.x+Math.cos(a)*radius,y=this.center.y+Math.sin(a)*radius,kind=r()<.035?2:r()<.2?1:0;
       if(this.raiders.add(x,y,kind,r))this.spawned++;
     }
@@ -295,5 +320,5 @@
     memoryBytes(){let n=0;for(const part of [this.raiders,this.shots,this.effects])for(const value of Object.values(part))if(ArrayBuffer.isView(value))n+=value.byteLength;return n;}
     report(){return{seconds:this.time,workSeconds:this.workTime,raiders:this.raiders.count-this.raiders.dead,targetRaiders:this.population,peakRaiders:this.raiders.peak,kills:this.kills,spawned:this.spawned,ships:this.ships.filter(s=>s.hp>0).length,lost:this.lost,shots:this.shots.count,peakShots:this.shots.peak,rejectedShots:this.shots.rejected,effects:this.effects.count,bufferBytes:this.memoryBytes(),produced:{...this.produced},result:this.result};}
   }
-  const api={Battle,Raiders,Shots,Effects,roles,enemies,weapons,LIMITS,BROADSIDE,helmStep,crewStep,crewPace,broadsideRound,broadsideFootprint,rayReach,angleDelta,random,intercept,fireFleet,autoBroadside};root.WidewakeBattle=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
+  const api={Battle,Raiders,Shots,Effects,roles,enemies,weapons,LIMITS,BROADSIDE,helmStep,crewStep,crewPace,broadsideRound,broadsideFootprint,rayReach,angleDelta,random,intercept,fireFleet,autoBroadside,spawnVisible,spawnRadius};root.WidewakeBattle=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

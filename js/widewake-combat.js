@@ -38,7 +38,7 @@
     spawn(initial=false,index=0){
       const r=this.random,f=fronts[this.phase||0],n=initial?index:this.admission++,front=n%f.angles.length;
       const angle=f.angles[front]+(r()-.5)*f.width+(initial&&index>4000?(r()-.5)*.65:0);
-      const radius=initial?(index<1900?570+r()*600:1150+r()*1850):1450+r()*1050;
+      const radius=initial?(index<1900?570+r()*600:1150+r()*1850):B.spawnRadius(this,this.center,angle,3200+r()*480);
       const kind=n%650===649?3:r()<f.armor?2:r()<f.fast?1:0;
       if(this.raiders.add(this.center.x+Math.cos(angle)*radius,this.center.y+Math.sin(angle)*radius,kind,r))this.spawned++;
     }
@@ -48,7 +48,7 @@
       if(this.time>=this.nextPincer){this.pincer=110+this.phase*32;this.nextPincer+=19;}
       const missing=Math.min(48,this.population-this.raiders.count);
       for(let n=0;n<missing;n++){
-        if(this.pincer>0){const r=this.random,a=fronts[this.phase].angles[0]+Math.PI*.6+(r()-.5)*.35,d=650+r()*220,kind=this.pincer%(this.phase?11:35)===0?3:1;this.pincer--;
+        if(this.pincer>0){const r=this.random,a=fronts[this.phase].angles[0]+Math.PI*.6+(r()-.5)*.35,d=B.spawnRadius(this,this.center,a,3200+r()*480),kind=this.pincer%(this.phase?11:35)===0?3:1;this.pincer--;
           if(this.raiders.add(this.center.x+Math.cos(a)*d,this.center.y+Math.sin(a)*d,kind,r))this.spawned++;
         }else this.spawn();
       }
