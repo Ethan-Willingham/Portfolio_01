@@ -26,7 +26,7 @@
         if(s.type==='gunboat'){const a=gun++/12*TAU;s.slot={x:Math.cos(a)*315,y:Math.sin(a)*315};s.angle=a;}
         else if(s.type==='battery'){const a=battery++/4*TAU+Math.PI/4;s.slot={x:Math.cos(a)*200,y:Math.sin(a)*200};s.angle=a;}
         else if(s.type==='screen'){s.slot={x:screen++?235:-235,y:15};s.angle=s.slot.x>0?0:Math.PI;}
-        else if(s.id===0){s.slot={x:0,y:190};s.angle=-Math.PI/4;s.speed=35;}
+        else if(s.id===0){s.slot={x:0,y:190};s.angle=-Math.PI/4;}
         s.x=s.px=s.slot.x;s.y=s.py=s.slot.y;s.previousAngle=s.angle;
       }
       const tender=this.ships.find(s=>s.type==='repair');this.mounts.push({ship:tender.id,weapon:'guard',along:10,angle:0,flash:0,recoil:0,cooldown:.3});

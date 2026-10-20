@@ -4,7 +4,7 @@ Owner instruction, 2026-10-19: make the new ocean part of the game, retire the o
 world, and bring the graphics into one consistent visual system. This explicitly
 supersedes the earlier instruction to keep the new ocean in separate trials.
 
-Version 0.25 opens the approved title illustration, then starts at Tern Yard in
+Version 0.25.2 opens the approved title illustration, then starts at Tern Yard in
 Bracken Reach. Continue loads this same world. There is no Earth campaign or
 trial chooser in the normal play flow. An old `widewake-estuary.html` bookmark
 redirects to the game. `?test` retains the isolated navigation harness; the battle
@@ -33,9 +33,9 @@ protects them. The three grounds introduce Glass mullet, Copper pike and Amber
 nautilus. A first completed watch at each ground guarantees its discovery.
 
 Routes use the fleet's largest draft and clearance envelope. A launch can use
-the Reed cut; bringing deeper boats closes it. Autopilot cruises at the slowest
-surviving boat's speed. Followers advance through the recorded wake in order,
-then take checked routes to work stations or harbor berths. A blocked follower
+the Reed cut; bringing deeper boats closes it. Autopilot respects the channel
+cruise speed and the slowest surviving boat. Followers advance through the
+recorded wake in order, then take checked routes to work stations or harbor berths. A blocked follower
 backs away physically before retrying a turn. Boarding the harbor requires the
 fleet within its 360 m anchorage. Boats are not teleported through bends.
 
@@ -168,6 +168,29 @@ captain's recorded path. This prevents a heavy boat cutting across the quay to
 reach the first wake point. The approach and engine spool persist in saves;
 older version-one saves default the new fields safely.
 
+## Independent fleet handling, v0.25.2
+
+Owner instruction, 2026-10-19: the main ship should move more quickly than its
+fleet, and the other captains should feel human instead of mirroring each move.
+Manual captain speeds are 20 m/s for the launch, 40 for the patrol boat and
+38 for the frigate. The endgame flagship makes 40 m/s. Companion cruise speeds
+vary slightly by crew and stay below the captain's speed, including with engine
+upgrades. The captain accelerates and turns more promptly while keeping world
+momentum, cargo inertia, coasting and reverse thrust.
+
+Open-water crews track individual delayed formation positions and reconsider
+their steering at staggered intervals. They accept a small position error after
+settling, so every movement does not trigger a formation correction. Workboats
+settle inside the production radius. Holding position leaves the captain free
+to circle the fleet; recalling them takes actual travel time.
+
+River crews retain the ordered, checked wake path with small spacing differences
+and shorter steering intervals. Bank avoidance can interrupt a held decision
+immediately. Autopilot retains conservative channel speeds; taking manual control
+restores captain speed on that same step. Held crew decisions are validated and
+saved with each ship, and older saves default them safely. Crew timing uses ship
+identity and simulation ticks, without advancing the combat random stream.
+
 ## Graphics contract
 
 One unit is one metre. Decks, piers, doors, railings, trees, weapon mounts and
@@ -231,6 +254,7 @@ A second window must hand off ownership before it can write.
 node tools/widewake/test-combat.cjs
 node tools/widewake/test-combat-browser.cjs
 node tools/widewake/test-driving.cjs
+node tools/widewake/test-fleet-handling.cjs
 node tools/widewake/test-driving-browser.cjs
 node tools/widewake/test-reach-game.cjs
 node tools/widewake/test-reach-browser.cjs

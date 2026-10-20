@@ -29,11 +29,22 @@
     {length:34,width:12,height:7,hp:1800}
   ]);
   const angleDelta=(to,from)=>Math.atan2(Math.sin(to-from),Math.cos(to-from));
+  // Stable crew differences do not consume the combat random stream.
+  const crewPace=id=>.92+((id*7)%11)*.008;
+  function crewStep(s,input,dt,tick,channel=false){
+    // Captains hold a decision for a few beats instead of copying the helm at
+    // 60 Hz. Channel pilots check more often; backing off a bank is immediate.
+    const period=channel?8+(s.id*7)%9:16+(s.id*7)%19;
+    if(!s.helm||(tick+s.id*11)%period===0||!!input.reverse!==s.helm.reverse){
+      s.helm={x:input.x||0,y:input.y||0,reverse:!!input.reverse};
+    }
+    helmStep(s,s.helm,dt);
+  }
   function helmStep(s,input,dt){
     // Surge, sway and yaw, for the bounded friendly fleet only. Velocity stays
     // in world space when the hull turns; lateral water resistance bends its path.
     const x=input.x||0,y=input.y||0,amount=Math.min(1,Math.hypot(x,y)),moving=amount>.045;
-    const size=clamp(Math.sqrt(38/s.length),.65,2.05),mass=1+.28*clamp((s.cargo||0)/(s.hold||1),0,1),velocity=Math.hypot(s.vx,s.vy),fraction=clamp(velocity/s.speed,0,1);
+    const hullSize=clamp(Math.sqrt(38/s.length),.65,2.05),size=s.id===0?Math.max(1.45,hullSize*1.25):hullSize,mass=1+.28*clamp((s.cargo||0)/(s.hold||1),0,1),velocity=Math.hypot(s.vx,s.vy),fraction=clamp(velocity/s.speed,0,1);
     const error=moving?angleDelta(Math.atan2(y,x),s.angle):0,limit=(1.65-.95*fraction)*size/Math.sqrt(mass),targetTurn=moving?clamp(error*3,-limit,limit):0;
     s.turn=(s.turn||0)+(targetTurn-(s.turn||0))*(1-Math.exp(-dt*6*size/mass));
     s.angle=angleDelta(s.angle+s.turn*dt,0);
@@ -218,7 +229,7 @@
       const types=['flagship',...Array(12).fill('gunboat'),...Array(4).fill('battery'),...Array(2).fill('screen'),'trawler','trawler','oilrig','oilrig','repair'];
       for(let i=0;i<types.length;i++){
         const type=types[i],spec=roles[type],angle=(i-1)/18*TAU,working=type==='trawler'||type==='oilrig',slot=working?{x:(i%2?1:-1)*95,y:(i<21?-1:1)*105}:type==='repair'?{x:0,y:0}:i===0?{x:0,y:260}:{x:Math.cos(angle)*390,y:Math.sin(angle)*390};
-        const ship={id:i,type,name:shipNames[i],...spec,maxHp:spec.hp,x:slot.x,y:slot.y,vx:0,vy:0,angle:i===0?-Math.PI/2:angle+Math.PI,slot,working,cargo:0,hold:type==='trawler'?640:type==='oilrig'?440:0,hit:0,flash:0,turret:angle};ship.px=ship.x;ship.py=ship.y;ship.previousAngle=ship.angle;this.ships.push(ship);
+        const ship={id:i,type,name:shipNames[i],...spec,speed:i===0?40:spec.speed*crewPace(i),maxHp:spec.hp,x:slot.x,y:slot.y,vx:0,vy:0,angle:i===0?-Math.PI/2:angle+Math.PI,slot,working,cargo:0,hold:type==='trawler'?640:type==='oilrig'?440:0,hit:0,flash:0,turret:angle};ship.px=ship.x;ship.py=ship.y;ship.previousAngle=ship.angle;this.ships.push(ship);
         const weapon=type==='battery'?'mortar':type==='screen'?'flak':'gun',n=type==='flagship'?4:type==='battery'?3:type==='gunboat'?2:1;
         if(type!=='repair')for(let j=0;j<n;j++)this.mounts.push({ship:i,weapon,along:working?spec.length*.32:(j-(n-1)/2)*12,angle,flash:0,recoil:0,cooldown:(i*.131+j*.21)%weapons[weapon].interval});
         if(type==='battery'||type==='screen')this.mounts.push({ship:i,weapon:'guard',along:-spec.length*.37,angle,flash:0,recoil:0,cooldown:i*.013});
@@ -248,7 +259,15 @@
       const p=this.player;helmStep(p,input,dt);
       if(this.burstCursor<BROADSIDE.rounds){this.burstTimer-=dt;while(this.burstTimer<=0&&this.burstCursor<BROADSIDE.rounds){this.emitBroadside();this.burstTimer+=BROADSIDE.interval;}}
       if(!this.work){this.center.x+=(p.x-this.center.x)*dt*.4;this.center.y+=(p.y-this.center.y)*dt*.4;}
-      for(const s of this.ships){if(s.hp<=0)continue;s.hit=Math.max(0,s.hit-dt);s.flash=Math.max(0,s.flash-dt);if(s===p)continue;const dx=this.center.x+s.slot.x-s.x,dy=this.center.y+s.slot.y-s.y,d=Math.hypot(dx,dy),amount=d>2?Math.min(1,d/(s.speed*1.4)):0;helmStep(s,{x:d?dx/d*amount:0,y:d?dy/d*amount:0},dt);
+      for(const s of this.ships){if(s.hp<=0)continue;s.hit=Math.max(0,s.hit-dt);s.flash=Math.max(0,s.flash-dt);if(s===p)continue;
+        const anchor=s.followAnchor||(s.followAnchor={x:this.center.x,y:this.center.y}),lag=.65+(s.id*5%13)*.13,gain=1-Math.exp(-dt/lag);
+        anchor.x+=(this.center.x-anchor.x)*gain;anchor.y+=(this.center.y-anchor.y)*gain;
+        const target=this.work?this.center:anchor,dx=target.x+s.slot.x-s.x,dy=target.y+s.slot.y-s.y,d=Math.hypot(dx,dy),slack=s.working?5:10+(s.id*3%11);
+        // A settled crew tolerates small position errors. Workers still berth
+        // inside the production radius; a new order can pull them off station.
+        s.onStation=s.onStation?d<slack*1.8:d<slack;
+        const amount=s.onStation?0:Math.min(1,Math.max(0,d-slack*.5)/(s.speed*(1.35+(s.id%4)*.12)));
+        crewStep(s,{x:d?dx/d*amount:0,y:d?dy/d*amount:0},dt,this.tick);
         if(s.type==='repair')for(const other of this.ships)if(other.hp>0&&(other.x-s.x)**2+(other.y-s.y)**2<550**2)other.hp=Math.min(other.maxHp,other.hp+dt*5);
       }
       this.raiders.compact();
@@ -276,5 +295,5 @@
     memoryBytes(){let n=0;for(const part of [this.raiders,this.shots,this.effects])for(const value of Object.values(part))if(ArrayBuffer.isView(value))n+=value.byteLength;return n;}
     report(){return{seconds:this.time,workSeconds:this.workTime,raiders:this.raiders.count-this.raiders.dead,targetRaiders:this.population,peakRaiders:this.raiders.peak,kills:this.kills,spawned:this.spawned,ships:this.ships.filter(s=>s.hp>0).length,lost:this.lost,shots:this.shots.count,peakShots:this.shots.peak,rejectedShots:this.shots.rejected,effects:this.effects.count,bufferBytes:this.memoryBytes(),produced:{...this.produced},result:this.result};}
   }
-  const api={Battle,Raiders,Shots,Effects,roles,enemies,weapons,LIMITS,BROADSIDE,helmStep,broadsideRound,broadsideFootprint,rayReach,angleDelta,random,intercept,fireFleet,autoBroadside};root.WidewakeBattle=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
+  const api={Battle,Raiders,Shots,Effects,roles,enemies,weapons,LIMITS,BROADSIDE,helmStep,crewStep,crewPace,broadsideRound,broadsideFootprint,rayReach,angleDelta,random,intercept,fireFleet,autoBroadside};root.WidewakeBattle=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

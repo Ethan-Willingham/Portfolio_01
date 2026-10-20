@@ -23,7 +23,9 @@ assert.ok(turn.vx<-turn.speed*.95);assert.ok(maxTurn<1.25);
 for(const input of [{x:1,y:0},{x:1,y:1},{x:.2,y:.2}]){const s=vessel('flagship');for(let i=0;i<900;i++)B.helmStep(s,input,dt);assert.ok(Math.hypot(s.vx,s.vy)<=s.speed+1e-6);close(-s.vx*Math.sin(s.angle)+s.vy*Math.cos(s.angle),0);}
 check('finite acceleration, hull-relative turns, braking, analog throttle and equal diagonal speed');
 
-const convoy=new B.Battle({population:0});convoy.toggleWork();for(let i=0;i<1800;i++)convoy.step(dt,{x:.8,y:.6});convoy.toggleWork();for(let i=0;i<3600;i++)convoy.step(dt,{x:0,y:0});
+// The faster captain can open a larger gap. Give the slowest oil boat 70
+// seconds to make the physical return, without snapping it onto the station.
+const convoy=new B.Battle({population:0});convoy.toggleWork();for(let i=0;i<1800;i++)convoy.step(dt,{x:.8,y:.6});convoy.toggleWork();for(let i=0;i<4200;i++)convoy.step(dt,{x:0,y:0});
 assert.ok(convoy.ships.filter(s=>s.working).every(s=>Math.hypot(s.x-convoy.center.x-s.slot.x,s.y-convoy.center.y-s.slot.y)<30));assert.ok(convoy.produced.fish>0&&convoy.produced.oil>0);
 check('a moving convoy turns back onto its working stations and resumes real production');
 
