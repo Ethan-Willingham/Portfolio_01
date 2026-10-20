@@ -3,7 +3,7 @@
 (function(root){
   'use strict';
   const E=root.WidewakeEstuary,B=root.WidewakeBattle,clamp=E.clamp;
-  const version='0.25.3',SAVE_VERSION=1;
+  const version='0.25.4',SAVE_VERSION=1;
   const goods={salt:{name:'Salt',color:'#d8d8bd'},tools:{name:'Tools',color:'#92a9ad'},grain:{name:'Grain',color:'#c4ac72'},timber:{name:'Timber',color:'#a68b65'},fish:{name:'Fish',color:'#78b3b5'},oil:{name:'Oil',color:'#8a909e'},relic:{name:'Salvage',color:'#dbc18c'}};
   const markets={yard:{salt:12,tools:30,grain:23,timber:25,fish:18,oil:44,relic:140},reeds:{salt:22,tools:48,grain:10,timber:24,fish:9,oil:35,relic:155},mill:{salt:27,tools:54,grain:18,timber:11,fish:24,oil:52,relic:190}};
   const boats={gunboat:{name:'Escort',cost:1100,rank:2,hold:20,draft:2.6,weapon:'guard'},trawler:{name:'Trawler',cost:680,rank:2,hold:80,draft:2.1,weapon:'guard'},repair:{name:'Tender',cost:1400,rank:3,hold:70,draft:1.8,weapon:'guard'},oilrig:{name:'Oil tender',cost:2400,rank:3,hold:100,draft:4.2,weapon:'guard'},screen:{name:'Flak boat',cost:3800,rank:4,hold:25,draft:2.8,weapon:'flak'},battery:{name:'Mortar boat',cost:5200,rank:4,hold:25,draft:3.2,weapon:'mortar'}};

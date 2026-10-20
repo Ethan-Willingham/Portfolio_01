@@ -99,7 +99,7 @@ The open-water test is deliberately a powerful fleet. Campaign difficulty,
 terrain-aware large raids and earned midgame loadouts still need playtesting.
 It is not the finished Steam balance or proof of physical-phone performance.
 
-### Reinforcement arrivals, v0.25.3
+### Reinforcement arrivals, v0.25.4
 
 Owner direction, 2026-10-19: enemies should enter offscreen at the back of the
 swarm, with a tighter limit on zooming out. New endgame arrivals, including
@@ -111,7 +111,7 @@ The starting enemy formation is prepared before the scene opens.
 Wide is now the furthest zoom for wheel, pinch, gamepad and the named camera
 stops. Viewport size sets a 2.5 km maximum distance from camera to corner;
 rotation preserves the chosen stop and clamps intermediate scales. Admission
-checks the padded isometric viewport and any pending anchored zoom destination
+checks the padded isometric viewport and any pending zoom or recenter destination
 before each simulation frame. Endgame admission also reserves its widest view.
 It keeps the 48-arrivals-per-tick limit and the same fixed combat buffers.
 

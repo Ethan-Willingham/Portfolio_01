@@ -147,9 +147,10 @@
       const z=Math.min(this.zoom,this.targetZoom,wide)*this.baseScale;
       const padding=Math.max(96,48/z),halfWidth=this.width/(2*z)+padding,halfHeight=this.height/(2*z)+padding,p=project(this.camera.x,this.camera.y),b=this.battle.spawnBounds||(this.battle.spawnBounds={});
       b.left=p.x-halfWidth;b.right=p.x+halfWidth;b.top=p.y-halfHeight;b.bottom=p.y+halfHeight;
-      if(this.anchor){const q=project(this.anchor.x,this.anchor.y),scale=this.targetZoom*this.baseScale,x=q.x-this.anchor.sx/scale,y=q.y-this.anchor.sy/scale;
-        b.left=Math.min(b.left,x-halfWidth);b.right=Math.max(b.right,x+halfWidth);b.top=Math.min(b.top,y-halfHeight);b.bottom=Math.max(b.bottom,y+halfHeight);
-      }
+      let destination=null;
+      if(this.anchor){destination=project(this.anchor.x,this.anchor.y);const scale=this.targetZoom*this.baseScale;destination.x-=this.anchor.sx/scale;destination.y-=this.anchor.sy/scale;}
+      else if(this.follow){const ship=this.battle.player,lead=this.lookAhead?.85:0;destination=project(ship.x+this.offset.x+ship.vx*lead,ship.y+this.offset.y+ship.vy*lead);}
+      if(destination){b.left=Math.min(b.left,destination.x-halfWidth);b.right=Math.max(b.right,destination.x+halfWidth);b.top=Math.min(b.top,destination.y-halfHeight);b.bottom=Math.max(b.bottom,destination.y+halfHeight);}
     }
     updateCamera(dt){
       this.zoom+=(this.targetZoom-this.zoom)*(this.reduced?1:1-Math.exp(-dt*12));

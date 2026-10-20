@@ -23,13 +23,15 @@ let browser;const errors=[],reports=[];
         if(Math.hypot(x-g.center.x,y-g.center.y)<3199.99)throw Error('Enemy appeared inside the swarm');
         births++;return add(x,y,kind,r);
       };
-      const cameras=[[0,80],[2500,800],[-2400,-2000]];
+      const cameras=[[0,80],[2500,800],[-2400,-2000],[8000,4000]];
       for(const [x,y]of cameras)for(const phase of [0,2,4]){
         v.camera={x,y};v.offset={x:x-g.player.x,y:y-g.player.y};v.follow=false;v.anchor=null;
         v.zoom=v.targetZoom=v.stops.survey;v.prepareSpawns();g.phase=phase;g.raiders.count=0;g.population=48;g.pincer=48;g.nextPincer=Infinity;g.reinforce();
         g.raiders.count=0;g.reinforce();
         // A close-to-wide anchored tween must protect both footprints.
         v.zoom=v.stops.helm;v.setZoom(1e-6,v.canvas.getBoundingClientRect().width*.8,120);v.prepareSpawns();g.raiders.count=0;g.reinforce();
+        v.follow=true;v.zoom=v.stops.survey;v.zoomStop('survey');v.prepareSpawns();g.raiders.count=0;g.reinforce();
+        for(let frame=0;frame<20;frame++){v.updateCamera(.1);for(let i=0;i<g.raiders.count;i++)if(v.visible(g.raiders.x[i],g.raiders.y[i],36))throw Error('Recentering revealed an arrival');}
       }
       g.raiders.add=add;v.camera={x:0,y:80};v.anchor=null;v.offset={x:0,y:0};v.follow=true;v.zoom=v.targetZoom=v.stops.survey;
       return{births,wide:v.stops.survey*v.baseScale,cornerMetres:Math.hypot(v.width/2,v.height)/(v.stops.survey*v.baseScale),backend:v.stats.backend};
