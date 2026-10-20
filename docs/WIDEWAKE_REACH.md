@@ -4,7 +4,7 @@ Owner instruction, 2026-10-19: make the new ocean part of the game, retire the o
 world, and bring the graphics into one consistent visual system. This explicitly
 supersedes the earlier instruction to keep the new ocean in separate trials.
 
-Version 0.25.6 opens the approved title illustration, then starts at Tern Yard in
+Version 0.26.0 opens the approved title illustration, then starts at Tern Yard in
 Bracken Reach. Each page load starts a fresh session. There is no Earth campaign or
 trial chooser in the normal play flow. An old `widewake-estuary.html` bookmark
 redirects to the game. `?test` retains the isolated navigation harness; the battle
@@ -108,7 +108,7 @@ Simulation buffers are fixed: 32,768 enemy capacity, 8,192 rounds including a
 1,024-round hostile reserve, 2,048 effects, 24 wake histories and 16 repair crates.
 Enemy admission is capped at 48 per tick. A shared cell grid handles queries;
 there is no all-pairs fleet/enemy separation. The new targeting and ram state
-bring combat typed arrays to 3,342,848 bytes, independent of kills or elapsed
+bring combat typed arrays to 3,383,808 bytes, independent of kills or elapsed
 session time. Effect, audio and notification budgets remain bounded.
 
 The open-water test is deliberately a powerful fleet. Campaign difficulty,
@@ -137,6 +137,41 @@ River approaches use offscreen channel nodes. A wave with no valid approach
 admits fewer enemies instead of putting them into visible water. Camera guards
 are transient and do not change the save format. Longer approaches reduce the
 old replacement rate and give new waves actual travel time.
+
+## Player helm and projectile contacts, v0.26
+
+W or Up is always forward throttle along the bow. A/D or Left/Right apply left
+and right rudder at every heading. S or Down brakes without reverse thrust.
+Touch and the left stick use up/down for throttle/braking and left/right for
+rudder. The removed R, RT, reverse and tow controls remain absent. There is no camera-relative
+heading selection in the player helm. Releasing throttle coasts.
+
+The manual helm has faster engine response, speed-dependent steering authority,
+smoothed yaw and lateral grip. Turning changes the hull heading before the world
+velocity catches up, leaving a curved wake. Larger and loaded boats retain more
+inertia. Autopilot and escorts keep their separate direction-vector steering,
+and any manual throttle or rudder input takes over a plotted course.
+
+All direct rounds use swept contacts against the same 13-point hull outline used
+by the artwork, including the full bow and stern. Collision considers boat motion
+during the step and orders contacts by the first hull surface crossed. Hostile
+rounds use the same hull checks against friendly boats. Gun rounds retain their
+specified two-hull penetration; guards, flak and hostile rounds stop on contact.
+Friendly weapons do not damage allied boats.
+
+A tracer trails behind its simulated tip. Direct rounds descend from the muzzle
+toward hull level; mortar shells follow their arc and strike a deck on descent
+or explode on reaching the water. Flak detonates at the contact point, not at the
+end of the frame. Its direct target takes the direct damage once, while nearby
+boats take the splash damage. Hit sparks originate at the contact position and
+height. Effect, sound and offscreen drawing budgets never suppress hull damage.
+The parked serialization code preserves launch height, with defaults for old
+snapshots. This does not re-enable saving in the game.
+
+The grid still bounds collision candidates. Hull planes are cached, and contact
+scratch space and projectile buffers remain fixed. The collision tests exercise all four enemy silhouettes at 16 headings,
+moving crossings, misses, penetration, terrain, every projectile family and
+600 simultaneous contacts with exhausted presentation budgets.
 
 ## Interface contract, v0.23
 
@@ -299,6 +334,7 @@ and window closing performs no save handshake.
 ```sh
 node tools/widewake/test-spawns.cjs
 node tools/widewake/test-spawns-browser.cjs
+node tools/widewake/test-projectiles.cjs
 node tools/widewake/test-combat.cjs
 node tools/widewake/test-combat-browser.cjs
 node tools/widewake/test-driving.cjs

@@ -29,9 +29,11 @@ check('all player hulls outrun their fleet; captain acceleration and turning rem
 const takeover=new R.Game();takeover.castOff();takeover.nextEncounter=1e9;
 Object.assign(takeover.player,{x:0,y:2000,vx:20,vy:0,throttle:1});
 assert.ok(takeover.setCourse(takeover.field.route(takeover.routeHull(),R.sites[2])));
-const manual=R.Game.restore(takeover.save());manual.cancel();
-takeover.step(dt,{x:1,y:0});manual.step(dt,{x:1,y:0});
-assert.equal(takeover.route,null);assert.deepEqual(pose(takeover.player),pose(manual.player));
+for(const input of [{x:1,y:0},{throttle:1,steer:0},{throttle:0,steer:1}]){
+  const routed=R.Game.restore(takeover.save()),manual=R.Game.restore(takeover.save());manual.cancel();
+  routed.step(dt,input);manual.step(dt,input);
+  assert.equal(routed.route,null);assert.deepEqual(pose(routed.player),pose(manual.player));
+}
 check('taking the helm cancels channel cruise without a one-frame speed penalty');
 
 const crew=Array.from({length:12},(_,i)=>({...B.roles.gunboat,id:i+1,x:0,y:0,vx:31,vy:0,angle:0,helm:{x:1,y:0}}));

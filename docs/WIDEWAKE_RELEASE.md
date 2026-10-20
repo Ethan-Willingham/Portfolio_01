@@ -1586,3 +1586,62 @@ Steam release claim.
 
 The v0.25.1 follow-up makes optional help match the active mode and reports only
 living hulls and enemies in debug metrics. It changes no combat tuning.
+
+
+## v0.26: boat-relative helm and honest projectile contacts
+
+The owner requested jet-ski handling: W or Up is forward throttle along the bow,
+A/D or Left/Right turns the hull, and S/Down brakes without reverse thrust. The new manual
+helm has quick engine response, smoothed steering, sideslip and coasting. Touch
+and controller sticks use the same axes. Removed reverse, R, RT and tow controls
+remain absent. Autopilot and escort route following keep their direction-vector
+controls; either manual axis takes over a plotted course. The integrated build
+preserves the faster captain, independent escort decisions and offscreen
+reinforcement arrivals from v0.25.2 through v0.25.4, along with the v0.25.5
+port detail. The v0.25.6 session-only policy is retained: no save reads or writes,
+old slots untouched, in-memory title/combat returns, fresh reloads and quits.
+Shared hull silhouettes still pass all projectile contact checks.
+
+The owner's next correction was that endgame combat felt fake. Inspection found
+centre-circle hitboxes that missed visible bows and sterns, tracers extending
+ahead of their simulated tips, and flak explosions placed at the end of a tick
+instead of at the collision. The correction uses the art's full hull outline,
+sweeps moving targets and orders hits by actual first contact. Hostile rounds
+use the same hull checks. Tracers trail behind the simulated tip in WebGL and
+Canvas. Flak strikes once, then applies splash to neighboring hulls. Mortars
+clear boats while airborne and hit a deck or the water on descent. Impact height
+and launch height are represented in effects and the parked internal snapshot format.
+
+The new projectile checks cover 128 bow/stern cases across four enemy silhouettes,
+clean misses, moving crossings, first-contact ordering, two-hull penetration,
+all projectile types, bank obstruction, lethal overkill and compatible saves.
+A separate 600-round fixture proves that exhausted effect and sound budgets
+cannot suppress damage. The seeded endgame watch completes 180 seconds with
+69,746 kills, 21,961 direct contacts and 56,134 blast hits. Those counts come
+from collision and damage processing. All 24 boats fire and survive, and the
+workboats finish loading. The new offscreen approaches reduce replacement speed
+compared with earlier local runs of the collision change.
+
+On the local M1 Pro, the Chromium combat pass measures 9.0 ms frame p95
+with 3,410 enemies visible, and 12.2 ms at four-times CPU throttling with 3,241
+visible. The fixed-capacity fixture maintains 16,384 enemies, all 8,192 rounds,
+2,048 effects and 1,488 wake segments; it measures 8.5 ms simulation-plus-render
+CPU p95. The typed combat arrays remain fixed at 3,383,808 bytes. These are
+browser measurements, not physical-phone benchmarks.
+
+Keyboard tests use W and Up at four headings, both left/right key sets, braking
+and real controller polling with a held-input pause gate. Touch checks retain
+portrait and two landscape sizes. Chromium and WebKit exercise the public
+endgame button, normal voyage isolation, fleet orders, pause/context recovery,
+win/retry/loss/return and reload. The connected campaign simulation still covers
+trade, fishing, oil, a loaded river convoy, internal snapshots and recovery.
+
+Session checks cover untouched old saves, independent tabs, unavailable storage,
+in-memory resume and fresh reloads. The shared motion checks retain continuous
+subpixel movement, heading blending and bounded high-density rendering. The
+offline desktop check covers worker routes, pause, endgame entry and a fresh
+voyage after quit/relaunch. Earlier native attempts timed out after window
+restoration, and a closed-window diagnostic obscured one failure. The harness
+now preserves the original error even when no window survives, plus state and
+a screenshot when available. Physical-device and human handling review remain
+open.

@@ -68,7 +68,7 @@
       const phase=Math.min(fronts.length-1,Math.floor(this.time/36));
       if(phase!==this.phase){this.phase=phase;this.phaseName=fronts[phase].name;this.events.push(this.phaseName);}
       // Fire/aim are deliberately ignored, including injected controller input.
-      super.step(dt,{x:input.x||0,y:input.y||0,boost:!!input.boost});
+      super.step(dt,{x:input.x||0,y:input.y||0,throttle:input.throttle,steer:input.steer,boost:!!input.boost});
       for(let i=this.loot.length-1;i>=0;i--){const c=this.loot[i];c.life-=dt;const p=this.player;
         if(Math.hypot(c.x-p.x,c.y-p.y)<95){for(const s of this.ships)if(s.hp>0)s.hp=Math.min(s.maxHp,s.hp+s.maxHp*.16);this.repaired++;this.effects.add(p.x,p.y,32,2);this.sound('repair',p.x,p.y);this.events.push('Fleet patched');this.loot.splice(i,1);}
         else if(c.life<=0)this.loot.splice(i,1);

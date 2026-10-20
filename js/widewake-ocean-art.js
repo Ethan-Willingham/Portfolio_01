@@ -11,7 +11,7 @@
     function beam(a,b,r,color,n=6){const dx=b[0]-a[0],dy=b[1]-a[1],dz=b[2]-a[2],length=Math.hypot(dx,dy,dz)||1,u=[-dy,dx,0],ul=Math.hypot(...u);if(ul<.001){u[0]=1;u[1]=0;}else{u[0]/=ul;u[1]/=ul;}const v=[-dz*u[1]/length,dz*u[0]/length,(dx*u[1]-dy*u[0])/length];
       for(let i=0;i<n;i++){const ca=Math.cos(i/n*TAU)*r,sa=Math.sin(i/n*TAU)*r,cb=Math.cos((i+1)/n*TAU)*r,sb=Math.sin((i+1)/n*TAU)*r,p=a.map((value,k)=>value+u[k]*ca+v[k]*sa),q=a.map((value,k)=>value+u[k]*cb+v[k]*sb),pp=b.map((value,k)=>value+u[k]*ca+v[k]*sa),qq=b.map((value,k)=>value+u[k]*cb+v[k]*sb);g.face([p,q,qq,pp],color);}}
     // Curved bow and tumblehome, with a separate dark waterline and inset deck.
-    const shape=[[-.47,-.29],[-.42,-.42],[-.26,-.49],[.05,-.47],[.28,-.36],[.44,-.19],[.5,0],[.44,.19],[.28,.36],[.05,.47],[-.26,.49],[-.42,.42],[-.47,.29]],ring=(scale,z)=>shape.map(p=>[p[0]*l*scale,p[1]*w*scale,z]);
+    const shape=root.WidewakeBattle.HULL_OUTLINE,ring=(scale,z)=>shape.map(p=>[p[0]*l*scale,p[1]*w*scale,z]);
     const rings=[ring(.84,-.12),ring(.96,h*.25),ring(1,h),ring(.94,h+.15)];
     for(let level=0;level<3;level++)for(let i=0;i<shape.length;i++){const j=(i+1)%shape.length;g.face([rings[level][i],rings[level][j],rings[level+1][j],rings[level+1][i]],level===0?material.dark:level===1?material.hull:material.rim);}
     g.face(rings[3],material.deck);

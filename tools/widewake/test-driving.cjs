@@ -18,6 +18,27 @@ for(const type of ['launch','gunboat','flagship','oilrig']){
 const a=boat(),b=boat();for(let i=0;i<600;i++)B.helmStep(a,{x:Math.cos(i/600*2),y:Math.sin(i/600*2)},1/60);for(let i=0;i<300;i++)B.helmStep(b,{x:Math.cos(i/300*2),y:Math.sin(i/300*2)},1/30);assert.ok(Math.hypot(a.x-b.x,a.y-b.y)<1);
 console.log('PASS world momentum, surge/sway/yaw, coasting, ignored reverse input, cargo and timestep convergence');
 
+// Player helm is boat-relative at every heading, including when the bow
+// points down the screen. Navigation vectors above remain a separate API.
+for(const type of ['launch','gunboat','flagship'])for(let n=0;n<8;n++){
+  const angle=n*Math.PI/4,s={...boat(type),angle},start={x:s.x,y:s.y};
+  advance(s,{throttle:1,steer:0},2);
+  const dx=s.x-start.x,dy=s.y-start.y;
+  assert.ok(dx*Math.cos(angle)+dy*Math.sin(angle)>s.speed*.8);
+  assert.ok(Math.abs(dx*Math.sin(angle)-dy*Math.cos(angle))<.00001);
+  assert.ok(Math.abs(B.angleDelta(s.angle,angle))<.00001);
+  const left={...s},right={...s};advance(left,{throttle:1,steer:-1},.5);advance(right,{throttle:1,steer:1},.5);
+  assert.ok(B.angleDelta(left.angle,angle)<-.2&&B.angleDelta(right.angle,angle)>.2);
+  assert.ok(Math.abs(right.vy*Math.cos(right.angle)-right.vx*Math.sin(right.angle))>.4,'turns keep sideways momentum');
+  const coast={...s},brake={...s};advance(coast,{throttle:0,steer:0},1);advance(brake,{throttle:-1,steer:0},1.5);
+  assert.ok(Math.hypot(coast.vx,coast.vy)>1);assert.ok(brake.vx*Math.cos(angle)+brake.vy*Math.sin(angle)>=0&&Math.hypot(brake.vx,brake.vy)<1,'down brakes without reverse thrust');
+}
+const pivot=boat();advance(pivot,{throttle:0,steer:1},1);assert.equal(pivot.x,0);assert.equal(pivot.y,2000);assert.ok(pivot.angle>.5,'rudder turns without commanding forward thrust');
+const empty=boat(),laden=boat('launch',32);advance(empty,{throttle:1,steer:.4},.5);advance(laden,{throttle:1,steer:.4},.5);assert.ok(Math.hypot(laden.vx,laden.vy)<Math.hypot(empty.vx,empty.vy));
+const fine=boat(),coarse=boat();for(let i=0;i<360;i++)B.helmStep(fine,{throttle:1,steer:Math.sin(i/60)*.6},1/60);for(let i=0;i<180;i++)B.helmStep(coarse,{throttle:1,steer:Math.sin(i/30)*.6},1/30);assert.ok(Math.hypot(fine.x-coarse.x,fine.y-coarse.y)<.8);
+const nav=new E.Navigation();assert.ok(nav.setCourse(nav.plan('reeds')));nav.step(dt,{throttle:0,steer:0});assert.ok(nav.route,'released helm preserves course');nav.step(dt,{throttle:0,steer:.5});assert.equal(nav.route,null,'turning takes the helm immediately');
+console.log('PASS boat-relative throttle at eight headings, left/right rudder, jet turns, braking, cargo and route takeover');
+
 const wake=new WidewakeOceanArt.WakeTrail(),s=boat(),poses=[s],v={battle:{ships:[s]},poses,zoom:2,baseScale:1,visualTime:0,visible:()=>true};const buffers=wake.tracks.map(t=>t.x);
 for(let i=0;i<3600;i++){const angle=i/60*.3;B.helmStep(s,{x:Math.cos(angle),y:Math.sin(angle)},dt);v.visualTime=i/60;wake.sample([s],poses,v.visualTime);}
 assert.ok(wake.count>80&&wake.count<=128);assert.equal(wake.bytes,61440);assert.ok(wake.tracks.every((t,i)=>t.x===buffers[i]));

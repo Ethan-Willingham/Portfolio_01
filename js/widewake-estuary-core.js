@@ -108,7 +108,7 @@
     }
     step(dt,input={x:0,y:0}){
       dt=clamp(dt,0,1/30);const s=this.player;s.px=s.x;s.py=s.y;s.previousAngle=s.angle;this.time+=dt;this.tick++;this.control=input;this.contactTime=Math.max(0,this.contactTime-dt);if(!this.contactTime)this.contact='';
-      const manual=Math.hypot(input.x||0,input.y||0)>.04;if(manual){this.route=null;this.arrived=null;}
+      const manual=Math.hypot(input.x||0,input.y||0)>.04||Math.abs(input.throttle||0)>.04||Math.abs(input.steer||0)>.04;if(manual){this.route=null;this.arrived=null;}
       let drive=input;
       if(this.route){const r=this.route;while(r.index<r.points.length-1&&Math.hypot(r.points[r.index].x-s.x,r.points[r.index].y-s.y)<Math.max(7,s.speed*.65))r.index++;
         const p=r.points[r.index],dx=p.x-s.x,dy=p.y-s.y,d=Math.hypot(dx,dy),end=r.index===r.points.length-1,amount=end?Math.min(.65,d/(s.speed*1.6)):1;

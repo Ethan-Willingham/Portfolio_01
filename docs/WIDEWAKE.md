@@ -83,6 +83,14 @@ fleet and a separate three-minute watch. It does not grant campaign progress or
 replace the voyage save. The title artwork is preserved. Shared lead aiming,
 area targeting and weapon sound also improve the normal voyage.
 
+The subsequent helm correction requires jet-ski-like, boat-relative controls:
+W or Up is forward throttle, A/D or Left/Right turn, and S or Down brakes.
+The removal of reverse and towing remains in effect. Touch and controller sticks
+use the same throttle/rudder layout. The owner then rejected combat that feels
+fake: visible projectile contacts must cause actual hull damage. v0.26 shares
+hull outlines between graphics and swept hit tests, resolves the first physical
+contact, and keeps damage independent of visual effect budgets.
+
 The subsequent graphics correction asks for Factorio's level of sprite detail
 and animation, not its industrial theme. Keep original nautical designs. The
 owner also explicitly asks for regular production pushes of verified milestones.

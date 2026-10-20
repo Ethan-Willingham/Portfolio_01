@@ -54,7 +54,7 @@ for(const angle of [-2.8,-1.2,0,1.4,3])for(const x of [-30,0,30]){
 const within=O.aimGuide(ship,{x:300,y:200}),beyond=O.aimGuide(ship,{x:1500,y:0});assert.equal(within.inRange,true);assert.equal(beyond.inRange,false);close(Math.hypot(beyond.x,beyond.y),reach);
 check('manual projectile lifetime ends at the displayed reach, including offset muzzle positions');
 
-const hit=new B.Battle({population:0});hit.mounts=[];hit.control.fire=true;hit.raiders.add(20,0,0,B.random(2));hit.raiders.index();hit.shots.fire(0,0,100,0,{...B.weapons.gun,speed:3000},0,0);hit.shots.step(dt,hit);assert.equal(hit.lastHit.time,hit.time);close(hit.lastHit.x,20);assert.equal(hit.kills,1);
+const hit=new B.Battle({population:0});hit.mounts=[];hit.control.fire=true;hit.raiders.add(20,0,0,B.random(2));hit.raiders.index();hit.shots.fire(0,0,100,0,{...B.weapons.gun,speed:3000},0,0);hit.shots.step(dt,hit);assert.equal(hit.lastHit.time,hit.time);assert.ok(hit.lastHit.x>12&&hit.lastHit.x<14,'feedback is at the struck stern, not the boat centre');assert.equal(hit.kills,1);
 const impact=new B.Battle({population:0});for(let n=0;n<1000;n++)impact.impact(n,0,true);assert.equal(impact.effects.count,16);assert.ok(impact.sounds.length<=8);
 const compact=new B.Raiders();compact.add(0,0,0,B.random(1));compact.add(777,2,0,B.random(2));compact.px[1]=666;compact.hp[0]=0;compact.compact();assert.equal(compact.px[0],666);assert.equal(compact.x[0],777);
 check('manual hits have owned feedback, impact work is bounded, and compaction retains interpolation history');

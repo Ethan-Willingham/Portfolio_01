@@ -26,7 +26,7 @@ let browser;const errors=[];const ready=p=>p.waitForFunction(()=>__widewakeReach
   await p.click('#cast-off');await p.evaluate(()=>{const g=__widewakeReach.game;Object.assign(g.player,{x:0,y:2000,px:0,py:2000,angle:0,vx:0,vy:0,throttle:0});g.nextEncounter=1e9;});
   await p.keyboard.down('r');await p.waitForTimeout(300);await p.keyboard.up('r');assert.equal(await p.evaluate(()=>__widewakeReach.game.player.throttle),0);assert.equal(await p.evaluate(()=>typeof __widewakeReach.game.tow),'undefined');
   await p.evaluate(()=>{window.testPad={connected:true,index:0,mapping:'standard',id:'Test controller',axes:[0,0,0,0],buttons:Array.from({length:17},()=>({pressed:false,value:0}))};navigator.getGamepads=()=>[testPad];});await p.waitForTimeout(100);await p.evaluate(()=>testPad.buttons[7]={pressed:true,value:1});await p.waitForTimeout(300);assert.equal(await p.evaluate(()=>__widewakeReach.game.player.throttle),0);await p.evaluate(()=>testPad.buttons[7]={pressed:false,value:0});
-  await p.keyboard.down('d');await p.waitForTimeout(600);await p.keyboard.up('d');assert.ok(await p.evaluate(()=>__widewakeReach.game.player.throttle)>0);
+  await p.keyboard.down('w');await p.waitForTimeout(600);await p.keyboard.up('w');assert.ok(await p.evaluate(()=>__widewakeReach.game.player.throttle)>0);
   // Cross the old autosave interval while the actual game loop is running.
   await p.waitForTimeout(16000);await p.click('#reach-pause');await p.click('#return-title');await p.click('#start-voyage');await p.click('#confirm-new');await ready(p);assert.equal(await p.evaluate(()=>__widewakeReach.game.coins),520);
   assert.deepEqual(await p.evaluate(()=>saveAccess),[]);assert.deepEqual(await p.evaluate(()=>storageSnapshot()),seed);
