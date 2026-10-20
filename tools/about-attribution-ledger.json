@@ -3162,16 +3162,24 @@
         },
         "gpt-6-astra": {
           "water-smoke-slime": {
-            "edits": 17,
-            "tokens": 13779,
+            "edits": 18,
+            "tokens": 14063,
             "first": "2026-10-06",
-            "last": "2026-10-11"
+            "last": "2026-10-13"
           },
           "sluice": {
             "edits": 1,
             "tokens": 585,
             "first": "2026-10-08",
             "last": "2026-10-08"
+          }
+        },
+        "gpt-6-sol": {
+          "water-smoke-slime": {
+            "edits": 69,
+            "tokens": 24617,
+            "first": "2026-10-13",
+            "last": "2026-10-13"
           }
         }
       }
@@ -3852,6 +3860,235 @@
             "tokens": 1646,
             "first": "2026-10-11",
             "last": "2026-10-11"
+          }
+        }
+      }
+    },
+    "codex:e641a2235160230f": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "water-smoke-slime": {
+            "edits": 4,
+            "tokens": 3273,
+            "first": "2026-10-12",
+            "last": "2026-10-12"
+          },
+          "sluice": {
+            "edits": 6,
+            "tokens": 4702,
+            "first": "2026-10-12",
+            "last": "2026-10-12"
+          }
+        }
+      }
+    },
+    "codex:6929b0858e76f43a": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "water-smoke-slime": {
+            "edits": 21,
+            "tokens": 19403,
+            "first": "2026-10-12",
+            "last": "2026-10-14"
+          }
+        }
+      }
+    },
+    "codex:7dcece00814c28b4": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "water-smoke-slime": {
+            "edits": 9,
+            "tokens": 15841,
+            "first": "2026-10-12",
+            "last": "2026-10-12"
+          }
+        },
+        "gpt-6.1-sol": {
+          "water-smoke-slime": {
+            "edits": 4,
+            "tokens": 7230,
+            "first": "2026-10-13",
+            "last": "2026-10-13"
+          },
+          "sluice": {
+            "edits": 2,
+            "tokens": 2560,
+            "first": "2026-10-13",
+            "last": "2026-10-13"
+          }
+        },
+        "gpt-6-sol": {
+          "water-smoke-slime": {
+            "edits": 7,
+            "tokens": 1330,
+            "first": "2026-10-13",
+            "last": "2026-10-14"
+          }
+        }
+      }
+    },
+    "codex:233d61082f755b71": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-sol": {
+          "water-smoke-slime": {
+            "edits": 5,
+            "tokens": 779,
+            "first": "2026-10-14",
+            "last": "2026-10-14"
+          },
+          "sluice": {
+            "edits": 1,
+            "tokens": 104,
+            "first": "2026-10-14",
+            "last": "2026-10-14"
+          }
+        }
+      }
+    },
+    "codex:9ca37f21b5bb6b22": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-sol": {
+          "water-smoke-slime": {
+            "edits": 12,
+            "tokens": 2842,
+            "first": "2026-10-13",
+            "last": "2026-10-14"
+          }
+        }
+      }
+    },
+    "codex:21cfaa310c066b3f": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-sol": {
+          "water-smoke-slime": {
+            "edits": 2,
+            "tokens": 460,
+            "first": "2026-10-13",
+            "last": "2026-10-13"
+          }
+        }
+      }
+    },
+    "codex:e7a76d52cc8062f9": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-sol": {
+          "water-smoke-slime": {
+            "edits": 1,
+            "tokens": 140,
+            "first": "2026-10-14",
+            "last": "2026-10-14"
+          }
+        }
+      }
+    },
+    "codex:5371855745d51011": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-sol": {
+          "water-smoke-slime": {
+            "edits": 19,
+            "tokens": 9134,
+            "first": "2026-10-13",
+            "last": "2026-10-13"
+          }
+        }
+      }
+    },
+    "codex:c8d9c6e3ebfdf0bb": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "water-smoke-slime": {
+            "edits": 4,
+            "tokens": 3240,
+            "first": "2026-10-14",
+            "last": "2026-10-14"
+          }
+        }
+      }
+    },
+    "codex:6df5af8dd12e0d71": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "widewake": {
+            "edits": 166,
+            "tokens": 338719,
+            "first": "2026-10-19",
+            "last": "2026-10-20"
+          }
+        }
+      }
+    },
+    "codex:25546e9edbae0f8c": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "widewake": {
+            "edits": 3,
+            "tokens": 4366,
+            "first": "2026-10-20",
+            "last": "2026-10-20"
+          }
+        }
+      }
+    },
+    "codex:5d39d6bd7d35344c": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "widewake": {
+            "edits": 12,
+            "tokens": 12204,
+            "first": "2026-10-20",
+            "last": "2026-10-20"
+          }
+        }
+      }
+    },
+    "codex:e9b119cb239de2f0": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "widewake": {
+            "edits": 6,
+            "tokens": 14065,
+            "first": "2026-10-20",
+            "last": "2026-10-20"
+          }
+        }
+      }
+    },
+    "codex:603c648c2442a652": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "widewake": {
+            "edits": 2,
+            "tokens": 8612,
+            "first": "2026-10-20",
+            "last": "2026-10-20"
+          }
+        }
+      }
+    },
+    "codex:7f1357010cc293b7": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "widewake": {
+            "edits": 4,
+            "tokens": 7853,
+            "first": "2026-10-20",
+            "last": "2026-10-20"
           }
         }
       }
