@@ -1,0 +1,208 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Reusable art briefs for One Shift receiving shipments. These are authoring prompts, not runtime calls or an inventory source.",
+  "generator": {
+    "mode": "built-in image_gen",
+    "modelSelection": "Not exposed by the built-in tool. Do not label these assets as a specific numbered image model.",
+    "preserveGeneratedOriginals": true
+  },
+  "reference": "reference-print.png",
+  "style": {
+    "palette": [
+      "charcoal black",
+      "muted rust",
+      "warm cream"
+    ],
+    "brief": "Restrained screen print with only charcoal black, muted rust, and the warm cream of unprinted paper. Broad flat ink shapes, consistent perspective, irregular but deliberate cut edges, modest local ink grain, and meaningful empty space. No glossy rendering, gradients, photographic texture, bright orange, or uniform digital distress.",
+    "view": "From inside the warehouse into the rear of a docked dry-van trailer.",
+    "textPolicy": "Draw labels, exact quantities, lot IDs, barcode data, dock numbers, hover highlights, and scan effects in the game."
+  },
+  "geometry": {
+    "background": {
+      "width": 1536,
+      "height": 1024,
+      "aspectRatio": "3:2",
+      "approximateTrailerOpening": {
+        "left": 390,
+        "right": 1150,
+        "top": 0,
+        "bottom": 670
+      },
+      "approximateFloor": {
+        "nearLeft": [
+          400,
+          660
+        ],
+        "nearRight": [
+          1136,
+          660
+        ],
+        "farLeft": [
+          620,
+          510
+        ],
+        "farRight": [
+          898,
+          510
+        ]
+      },
+      "alignment": "Use trailer-empty.png as the edit target. Preserve its planes and image registration, including the back wall. Coordinates describe the approved master, not permission to shift its geometry."
+    },
+    "sprites": {
+      "background": "alpha-transparent",
+      "view": "Nearly frontal, standing eye level, narrow visible side, minimal top faces.",
+      "anchor": "Bottom center of the visible pallet base.",
+      "runtimeBounds": "Read opaque alpha bounds. Transparent margins are not the object's footprint.",
+      "currentMasterBoundsAtAlpha128": {
+        "pallet-low.png": {
+          "canvas": [
+            1536,
+            1024
+          ],
+          "bounds": [
+            274,
+            116,
+            1256,
+            910
+          ]
+        },
+        "pallet-tall.png": {
+          "canvas": [
+            1024,
+            1536
+          ],
+          "bounds": [
+            80,
+            118,
+            942,
+            1402
+          ]
+        }
+      },
+      "boundsConvention": "[left, top, right, bottom]; measured on a 2-pixel grid for authoring guidance. Runtime computes its own full-resolution silhouette."
+    }
+  },
+  "templates": {
+    "pallet": {
+      "transparent_background": true,
+      "reference": "reference-print.png",
+      "prompt": "Use case: illustration-story.\nInput: reference-print.png is the art style and viewpoint reference.\nCreate one isolated loaded wooden shipping pallet as a game sprite. Restrained screen print with only charcoal black, muted rust, and the warm cream of unprinted paper. Broad flat ink shapes, consistent perspective, irregular but deliberate cut edges, modest local ink grain, and meaningful empty space. No glossy rendering, gradients, photographic texture, bright orange, or uniform digital distress.\nCargo: {{cargo_description}}. Stack silhouette: {{stack_shape}}. Carton treatment: {{carton_treatment}}. Wrap: {{wrap_treatment}}.\nView almost straight-on at warehouse standing eye level. Show only a narrow {{visible_side}} side and very little of the carton tops. Match the reference perspective; no isometric or overhead view. Show the whole wooden pallet base with readable cream/rust boards and dark fork pockets. Keep the load stable, within the pallet footprint, with continuous support beneath every carton. All outer edges and pallet feet must fit inside the image with modest transparent margins.\nGenuine alpha-transparent background. Fully transparent pixels outside the object. Printed parts of the object remain opaque. No room, floor, paper rectangle, ground shadow, haze, vignette, glow, labels, lettering, barcode, logos, border, or watermark. One object only."
+    },
+    "dock": {
+      "transparent_background": false,
+      "reference": "trailer-empty.png",
+      "prompt": "Use case: precise-object-edit.\nInput: trailer-empty.png is the exact edit target. It is an empty game background.\nKeep its 1536 by 1024 canvas, camera, straight-on view from the warehouse into the trailer, vanishing point, all trailer boundary planes, threshold, dock leveler, and floor geometry unchanged. Restrained screen print with only charcoal black, muted rust, and the warm cream of unprinted paper. Broad flat ink shapes, consistent perspective, irregular but deliberate cut edges, modest local ink grain, and meaningful empty space. No glossy rendering, gradients, photographic texture, bright orange, or uniform digital distress.\nChange only these warehouse details: {{dock_details}}. Change only these trailer interior details: {{trailer_details}}. Changes stay within the existing wall and hardware planes and preserve their scale.\nThe entire trailer remains empty. Remove any accidental cargo, cartons, pallets, shrink wrap, people, or machines. No lettering, numbers, labels, signs, UI, logos, border, or watermark. Keep the foreground clear and cream, the doorway dark, the trailer floor readable near the threshold, and the depth darker. The result must match the same print edition as the reference."
+    }
+  },
+  "shipmentRecipes": [
+    {
+      "item": "stove",
+      "name": "Camp stoves",
+      "suggestedExistingArt": "pallet-cargo.png",
+      "parameters": {
+        "cargo_description": "Plain corrugated cases for boxed camp stoves",
+        "stack_shape": "A medium-height rectangular load of broad, relatively shallow cartons, two across and four courses high",
+        "carton_treatment": "Mostly muted rust faces with small cream packing-tape strips and sparse dark seams",
+        "wrap_treatment": "Two or three interrupted slender cream stretch-wrap marks",
+        "visible_side": "right"
+      }
+    },
+    {
+      "item": "lantern",
+      "name": "Trail lanterns",
+      "suggestedExistingArt": "pallet-mixed.png",
+      "parameters": {
+        "cargo_description": "Plain corrugated cases for trail lanterns",
+        "stack_shape": "A compact medium-height load of squarer cartons, with a gently uneven but stable top course",
+        "carton_treatment": "Rust cartons with a few warm cream faces and short tape strips",
+        "wrap_treatment": "Two restrained cream wrap strokes crossing the load",
+        "visible_side": "left"
+      }
+    },
+    {
+      "item": "chair",
+      "name": "Folding chairs",
+      "suggestedExistingArt": "pallet-low.png",
+      "parameters": {
+        "cargo_description": "Long shallow cartons containing folded camping chairs, arranged flat within the pallet footprint",
+        "stack_shape": "A low wide load with three or four stable courses",
+        "carton_treatment": "Long rust front faces, narrow cream tape strips, and a few clear carton joints",
+        "wrap_treatment": "Sparse taut horizontal cream wrap lines",
+        "visible_side": "right"
+      }
+    },
+    {
+      "item": "radio",
+      "name": "Pocket radios",
+      "suggestedExistingArt": "pallet-tall.png",
+      "parameters": {
+        "cargo_description": "Small master cartons containing boxed pocket radios",
+        "stack_shape": "A tall stable rectangular load with several courses of small cartons, tied together by staggered seams",
+        "carton_treatment": "Mixed rust and cream carton faces, small tape strips, no printed branding",
+        "wrap_treatment": "Two interrupted cream wrap bands with no glossy highlights",
+        "visible_side": "right"
+      }
+    },
+    {
+      "item": "notebook",
+      "name": "Pocket notebooks",
+      "suggestedExistingArt": "pallet-low.png",
+      "parameters": {
+        "cargo_description": "Dense plain paper-goods cartons containing pocket notebooks",
+        "stack_shape": "A low compact block of broad cartons, with a level top and stable interlocked courses",
+        "carton_treatment": "More cream faces than the stove load, rust side faces, restrained dark seams",
+        "wrap_treatment": "Two fine cream wrap marks that remain readable against rust surfaces",
+        "visible_side": "left"
+      }
+    }
+  ],
+  "dockRecipes": [
+    {
+      "id": "dock-one",
+      "existingArt": "trailer-empty.png",
+      "parameters": {
+        "dock_details": "Retain the approved broad lower rust wall stripe, short right-side control box, and original dock bumper plates",
+        "trailer_details": "Retain the original dark wall framing and sparse floor wear"
+      }
+    },
+    {
+      "id": "dock-two",
+      "existingArt": "trailer-dock-two.png",
+      "parameters": {
+        "dock_details": "Use a narrower higher rust wall stripe, paired bumper bolts, and a slightly taller right-side control box",
+        "trailer_details": "Add sparse horizontal tie-down rails on the same sidewall planes and alter small seam and wear marks"
+      }
+    },
+    {
+      "id": "future-dock-variation",
+      "existingArt": null,
+      "parameters": {
+        "dock_details": "{{small_hardware_and_wall_trim_changes}}",
+        "trailer_details": "{{panel_rail_and_local_wear_changes}}"
+      }
+    }
+  ],
+  "integrationContract": [
+    "The simulation manifest determines pallet IDs, products, quantities, rows, and scan eligibility. Artwork never creates inventory.",
+    "Render exactly one cargo sprite per actual pallet that is still visible. Never add decorative phantom pallets or paint permanent cargo into a background.",
+    "Choose a scene variation from actual dock identity and stable truck identity. Choose a cargo appearance from actual product, load size, and stable pallet identity. Preserve choices when reopening the same shipment or restoring a save.",
+    "Suggested recipe art is authoring guidance. The current renderer can select among the four approved sprite variants; adding product-specific masters requires an explicit renderer mapping.",
+    "A pictured carton is an illustration, not the authoritative case count. Exact count, lot, item, and barcode come from the simulation.",
+    "A successful scan removes that pallet's sprite according to the receiving state. Keep the identical empty background under every load state.",
+    "Do not convert alpha-transparent sprite masters to JPEG, flatten them onto cream, or discard source masters."
+  ],
+  "provenance": {
+    "approvedSource": "reference-print.png is a copy of the approved screen-print image generated in this chat.",
+    "emptyBackgroundChain": "reference-print.png -> trailer-empty.png -> trailer-dock-two.png",
+    "spriteChain": "reference-print.png -> pallet-cargo.png, pallet-mixed.png, pallet-low.png, pallet-tall.png",
+    "exactCompletedPrompts": [
+      "prompts.txt",
+      "variants-prompts.txt"
+    ],
+    "generatedVariantOriginals": {
+      "trailer-dock-two.png": "exec-c98dbecb-1de7-4240-b28f-978c5041fe52.png",
+      "pallet-low.png": "exec-0043e7f7-8868-426a-8f3c-1676073c2bfe.png",
+      "pallet-tall.png": "exec-06e0bc26-8c4c-4479-a4a3-9ee5563d001a.png"
+    }
+  }
+}

@@ -204,8 +204,16 @@
         if(assigned)break;
       }
       if(assigned)continue;
-      const inbound=s.trucks.find(t=>t.supplier&&t.status==='docked'&&!t.departureRequested);
-      if(inbound){inbound.checked=inbound.inspected=inbound.opened=true;const p=inbound.manifest.map(id=>this.p.get(id)).find(p=>p?.place==='trailer'&&!p.reservedBy&&this.reachable(inbound,p));const dest=p&&this.businessSpot(w,p);if(dest&&this.businessTask(w,{type:'move',pallet:p.id,dest},null))continue;}
+      // An unscanned load at one door must not block accepted freight at another.
+      for(const inbound of s.trucks.filter(t=>t.supplier&&t.status==='docked'&&!t.departureRequested)){
+        inbound.checked=inbound.inspected=inbound.opened=true;
+        for(const p of inbound.manifest.map(id=>this.p.get(id)).filter(p=>p?.place==='trailer'&&!p.reservedBy&&this.reachable(inbound,p)&&(!b.manualReceiving||this.receivingAccepted?.(p.id)))){
+          const dest=this.businessSpot(w,p);
+          if(dest&&this.businessTask(w,{type:'move',pallet:p.id,dest},null)){assigned=true;break;}
+        }
+        if(assigned)break;
+      }
+      if(assigned)continue;
       const p=s.pallets.find(p=>stockPlace(p)&&p.place==='lane'&&!p.businessOrder&&!p.reservedBy&&!this.claimedCases(p.id)),dest=p&&this.businessSpot(w,p);if(dest)this.businessTask(w,{type:'move',pallet:p.id,dest},null);
     }
     for(const o of b.orders.filter(active)){
@@ -235,7 +243,14 @@
     for(const w of s.workers){this.clearWork(w);w.battery=100;w.fatigue=0;}
     const c=s.commerce;c.history.push(...c.orders.map(o=>({id:o.id,day:o.day,customer:o.customer,status:o.status,paid:o.paid,cogs:o.cogs})));c.history=c.history.slice(-300);c.orders=[];c.queue=[];c.firstDecision=false;
     const carry=s.trucks.filter(t=>t.supplier&&t.manifest.some(id=>this.p.get(id)?.place==='trailer'));
-    for(const t of carry){t.status='scheduled';t.door=null;t.arrival=480+(t.deliveryDay>s.day?Math.max(10,t.appointment-480):15);t.appointment=t.arrival;t.deadline=10000;t.animation=0;t.departureRequested=false;t.closingTick=null;}
+    for(const t of carry){
+      // A carried trailer contains only its remaining freight. Stored or sold
+      // pallets retain their physical positions and purchase receipt history.
+      t.manifest=t.manifest.filter(id=>this.p.get(id)?.place==='trailer');
+      t.manifest.forEach((id,index)=>{this.p.get(id).index=index;});
+      t.receipt=(t.receipt||[]).filter(r=>t.manifest.includes(r.pallet));
+      t.status='scheduled';t.door=null;t.arrival=480+(t.deliveryDay>s.day?Math.max(10,t.appointment-480):15);t.appointment=t.arrival;t.deadline=10000;t.animation=0;t.departureRequested=false;t.closingTick=null;
+    }
     s.trucks=carry;s.pallets=s.pallets.filter(p=>!['empty','shipped','returned','scrap'].includes(p.place));for(const p of s.pallets)p.businessOrder=null;
     c.purchases=c.purchases.filter(p=>!p.stored || p.day>=s.day-6);
     for(const p of s.pallets.filter(p=>p.place==='lane'&&p.cases)){const lane=this.lane('receiving',p);if(lane?.place==='lane')Object.assign(p,lane);}

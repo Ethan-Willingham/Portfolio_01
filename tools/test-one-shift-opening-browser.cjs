@@ -3,11 +3,12 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const os = require('node:os');
 const http = require('node:http');
 const {chromium} = require('playwright');
 
 const root = path.resolve(__dirname, '..');
-const dump = process.env.SHIFT_DUMP || '/Users/ethan/Portfolio_01/research/one-shift/evidence-closer/opening';
+const dump = process.env.SHIFT_DUMP || path.join(os.tmpdir(), 'one-shift-opening-browser');
 fs.mkdirSync(dump, {recursive:true});
 const checks = [], errors = [], layouts = [], stages = [];
 const check = (name, result) => {
@@ -27,10 +28,23 @@ const server = http.createServer((req, res) => {
 });
 let browser;
 
+// These are stocked-business UI regressions. The dedicated receiving browser
+// suite covers the public scan-first opening and its manual delivery workflow.
+async function stockedFixture(page, reset=true) {
+  await page.evaluate(reset => {
+    if (reset) __oneShift.newGame(1,'business');
+    OneShift.app.sim.setManualReceiving(false);
+    OneShift.app.ui.update();
+    OneShift.app.renderer.home(OneShift.app.sim.s);
+    __oneShift.draw();
+  }, reset);
+}
+
 async function boot(page, url) {
   page.on('pageerror', e => errors.push(e.message));
   await page.goto(url);
   await page.waitForFunction(() => !!window.__oneShift);
+  await stockedFixture(page);
   await page.evaluate(async () => {
     await document.fonts.ready;
     __oneShift.stop();
@@ -115,7 +129,7 @@ async function advanceSale(page) {
   try {
     await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
     const url = process.env.SHIFT_URL || 'http://127.0.0.1:' + server.address().port + '/one-shift.html';
-    browser = await chromium.launch({executablePath:'/Users/ethan/.local/bin/agent-chrome-for-testing', headless:true});
+    browser = await chromium.launch({headless:true,...(process.env.SHIFT_CHROME?{executablePath:process.env.SHIFT_CHROME}:{})});
     let desktop, phone;
     for (const [label, width, height, mobile] of [
       ['opening-laptop',1512,742,false], ['opening-desktop',1440,900,false],
@@ -224,18 +238,21 @@ async function advanceSale(page) {
     await desktop.locator('[data-action="menu-close"]').click();
     await desktop.reload();
     await desktop.waitForFunction(() => !!window.__oneShift);
+    await stockedFixture(desktop);
     await desktop.evaluate(() => __oneShift.stop());
     check('Reload restarts the first customer with fresh cash and hidden advanced controls', await desktop.evaluate(()=>OneShift.app.sim.s.commerce.completed===0 && OneShift.app.sim.s.cash===20000) && await desktop.locator('body.shift-opening').count()===1 && await desktop.locator('#shift-store').isHidden());
     await desktop.locator('#shift-menu').click();
     await desktop.locator('[data-action="load"][data-id="1"]').click();
+    await stockedFixture(desktop,false);
     check('An explicitly loaded established business skips the opening', await desktop.evaluate(()=>OneShift.app.sim.s.commerce.completed===1 && OneShift.saves.validate(OneShift.app.sim.s)) && await desktop.locator('body.shift-opening').count()===0 && await desktop.locator('.shift-opening-card').count()===0 && await desktop.locator('#shift-store').isVisible());
     await desktop.locator('#shift-menu').click();
     await desktop.locator('#shift-settings summary').filter({hasText:'More'}).click();
     await desktop.locator('[data-action="new"][data-id="business"]').click();
-    check('New game restores the same one-action opening', await desktop.locator('body.shift-opening').count()===1 && await desktop.locator('.shift-opening-card [data-action="business-fulfill"]').isVisible() && await desktop.locator('#shift-store').isHidden());
+    await stockedFixture(desktop);
+    check('The stocked fixture after New game restores the same one-action opening', await desktop.locator('body.shift-opening').count()===1 && await desktop.locator('.shift-opening-card [data-action="business-fulfill"]').isVisible() && await desktop.locator('#shift-store').isHidden());
     await desktop.evaluate(() => __oneShift.newGame(1,'normal'));
     check('Legacy mode clears the business and opening presentation', await desktop.locator('body.shift-opening, body.shift-business').count()===0 && await desktop.locator('.shift-brand').isHidden() && await desktop.locator('#shift-view').isHidden() && await desktop.locator('#shift-store').isHidden());
-    await desktop.evaluate(() => __oneShift.newGame(1,'business'));
+    await stockedFixture(desktop);
     check('Returning from legacy restores the business masthead and opening', await desktop.locator('.shift-brand h1').isVisible() && await desktop.locator('body.shift-opening').count()===1);
     const recovery=await browser.newPage({viewport:{width:1512,height:742},deviceScaleFactor:2});
     await boot(recovery,url);
@@ -249,6 +266,7 @@ async function advanceSale(page) {
     });
     await recovery.locator('#shift-menu').click();
     await recovery.locator('[data-action="load"][data-id="1"]').click();
+    await stockedFixture(recovery,false);
     check('A valid save with unavailable first-order stock exposes replenishment instead of trapping the opening',await recovery.locator('body.shift-opening').count()===0 && await recovery.locator('#shift-store').isVisible() && await recovery.locator('.shift-business-tabs').isVisible() && await recovery.locator('[data-action="business-need-stock"][data-item="lantern"]').isVisible() && await recovery.evaluate(()=>OneShift.app.sim.s.commerce.completed===0 && OneShift.app.sim.businessStock('lantern').free===0));
     await recovery.locator('[data-action="business-need-stock"][data-item="lantern"]').click();
     await recovery.locator('#shift-queue [data-action="business-restock"][data-item="lantern"][data-count="16"]').click();
@@ -277,6 +295,7 @@ async function advanceSale(page) {
     });
     await mixed.locator('#shift-menu').click();
     await mixed.locator('[data-action="load"][data-id="1"]').click();
+    await stockedFixture(mixed,false);
     check('A valid no-sale save after cancellation exposes the next customer',await mixed.locator('body.shift-opening').count()===0 && await mixed.locator('[data-action="business-advance"]').isVisible());
     await mixed.locator('[data-action="business-advance"]').click();
     await mixed.evaluate(()=>__oneShift.resume());

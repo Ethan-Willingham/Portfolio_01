@@ -110,7 +110,10 @@ when changing them so deployed edits bypass stale caches.
 `one-shift.css` and `js/one-shift-*.js`. Read `docs/ONE_SHIFT.md` for the model,
 checks and current limits. The simulation modules have no DOM access. Keep it
 on `archive.html` (In Progress). Use four-foot tiles, invented client names,
-procedural Canvas art and landscape mobile play. Bump every changed CSS/script
+procedural Canvas art for the overhead warehouse, and landscape mobile play.
+The receiving dock uses the owner's approved charcoal, rust and cream print art
+with separate generated pallet layers. Read `docs/ONE_SHIFT_RECEIVING_ART.md`
+before changing that art or generating new shipment variants. Bump every changed CSS/script
 query version. Preserve case conservation, lot dates and the ledger; forklift
 training precedes operation, and owning the forklift precedes hiring.
 

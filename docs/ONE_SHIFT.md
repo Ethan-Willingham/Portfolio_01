@@ -1,9 +1,13 @@
 # One Shift
 
-The public game at `one-shift.html` is an inventory business game, version 2.4.
-Start with six stocked pallets and $200. Customer orders arrive through the day.
+The public game at `one-shift.html` is an inventory business game, version 2.5.
+Start at the receiving dock with six pallets of owned stock and $200. Hover or
+tap a front pallet, select it, and scan its label. Each accepted pallet clears
+from the illustrated trailer, exposing the loads behind it. After all six,
+return to the warehouse so the worker can put the stock in the racks.
+Customer orders arrive through the day.
 Queue shipments, buy replenishment stock, and reinvest in handling equipment,
-rack space, doors, and people. The first screen has one order and no tutorial dialog.
+rack space, doors, and people. The receiving scene has no tutorial dialog.
 
 The owner explicitly replaced the service warehouse direction on October 5, 2026.
 The new business owns its inventory. Former client contracts, receipt paperwork,
@@ -23,6 +27,14 @@ The data, pathing, physical work, truck safety, renderer, sound, and input remai
 shared with the legacy model. Always bump every game CSS/script query together.
 Keep the post in In Progress on `archive.html`.
 
+`one-shift-receiving.js` adds the DOM-free manual receipt model after commerce.
+`one-shift-receiving-ui.js` and `one-shift-receiving.css` provide the integrated
+illustrated dock. The public boot opts into manual receiving and moves the six
+existing starting pallets into an opening trailer, preserving their IDs, lots,
+case counts and cost basis. Explicit debug fixtures and legacy modes retain
+the original stocked start. Read [the receiving art guide](ONE_SHIFT_RECEIVING_ART.md)
+before generating or changing receiving imagery.
+
 `new OneShift.Sim(seed, 'business')` creates the public model. The default boot
 uses business mode. Explicit `normal`, `sandbox`, and other former modes retain
 compatibility. The debug API's `newGame()` default deliberately remains normal
@@ -31,7 +43,8 @@ for existing physical regression fixtures; pass `business` to exercise this game
 ## Business rules
 
 - Initial inventory: 40 stove cases, 40 lantern cases, 24 chair cases. The stock
-  has actual rack positions, costs, lots, dates, labels, and physical pallet IDs.
+  has costs, lots, dates, labels, and physical pallet IDs. The public opening
+  places these same cases in a docked trailer for receiving.
   Initial stock and racks are starting capital, not free recurring income.
 - Customer requests arrive individually. Five requests teach the first day.
   Later demand rotates among available products, includes mixed orders and rush
@@ -57,7 +70,14 @@ for existing physical regression fixtures; pass `business` to exercise this game
   $6 and reserves enough rack positions before charging. A small credit line can
   cover stock purchases; its use is shown in the quote. Equipment and hiring need
   cash. Paid late deliveries carry to the next shift, rather than disappearing.
-- Receiving puts paid stock directly into actual racks. Workers with a hand jack
+- Receiving requires an accepted scan in the public game. Each scan reserves
+  one reachable rack position and records its actual pallet barcode, lot and
+  count exactly once. It never adds inventory or pays a receiving fee. Front
+  rows must be scanned first. The dock view holds the business clock while the
+  player scans; physical handling resumes after returning to the warehouse.
+  Received sprites disappear immediately, while cases only become saleable
+  when the worker has actually carried them to the rack.
+  Workers with a hand jack
   use lower positions; the player and drivers can use upper stock after forklift
   ownership and training. Full racks block new purchasing until stock ships or
   capacity grows. Receiving and Shipping are staging areas. Bare floor is never
@@ -91,12 +111,30 @@ scarce vehicle pool. Construction is immediate. These are current abstractions.
 
 ## Presentation and persistence
 
-Steel blue, concrete gray, charcoal, white markings, and restrained safety orange.
+The overhead warehouse uses steel blue, concrete gray, charcoal, white markings,
+and restrained safety orange.
 Local Century Supra, Segoe UI, and Commit Mono fonts. Procedural Canvas art and
 crisp display-resolution labels. The stocked racks show their product and quantity.
 The masthead names the game and its loop: fill orders, build the warehouse.
 The warehouse, dock, order board, and zoom controls share one centered frame.
-A fresh opening shows one order, its quantity and payout, and Ship order.
+The owner-approved receiving view uses image-generated charcoal, muted rust and
+cream screen-print artwork. Two registered empty dock backgrounds and four
+transparent cargo sprites form the scene. Dock appearance stays fixed, trailer
+interiors and pallet variants follow stable shipment IDs, and only actual
+manifest pallets are drawn. Hover highlights follow the alpha silhouette.
+The barcode and all label text are drawn from real game data. Mouse, keyboard
+and landscape touch support the same select, scan and clear loop. Pause,
+portrait gating, and page inactivity stop scan progress independently.
+
+Receive stock in the header, or click a docked supplier truck, to reopen the
+scene for later paid deliveries. Partial scans survive explicit save/load.
+Closing the dock early cancels only an unfinished scan. Accepted loads remain
+queued for putaway; unscanned loads wait. A second dock can keep receiving while
+another door has an unscanned load. Overnight carry keeps remaining freight
+without moving already stored pallets.
+
+After opening stock reaches the racks, the board shows one order, its quantity
+and payout, and Ship order.
 The clock holds for this decision. The source rack is highlighted, and after
 shipping starts a Worker label and Pick, Pack, Ship stages explain the real
 movement. Picking, carrying, packing, truck arrival, and loading have live
@@ -143,6 +181,16 @@ receipts, the order queue, and demand data. All physical cases and cash must rec
 
 Use Node. Browser checks require Playwright in `NODE_PATH`.
 
+- `node tools/test-one-shift-receiving.cjs`: opening capital conservation,
+  row access, duplicate rejection, rack reservations, partial saves, full racks,
+  paid stock, overnight carry, multiple docks and malformed receipt imports.
+- `node tools/test-one-shift-receiving-browser.cjs`: actual hover and click,
+  keyboard and touch scanning, pause, explicit save/load, all six disappearing
+  loads, physical putaway, the first sale, supplier replenishment, landscape,
+  large text, narrow desktop and portrait gating. Uses bundled Playwright
+  Chromium, with an optional `SHIFT_CHROME` executable override. `SHIFT_URL`
+  targets a deployed page; `SHIFT_DUMP` selects the screenshot directory.
+
 - `node tools/test-one-shift-business.cjs`: real shipments, receipts, lead times,
   cash and profit, reservations, grouped picks, cancellation, surplus, full space,
   overnight supply, saves, invalid imports, and multi-day reinvestment.
@@ -152,10 +200,13 @@ Use Node. Browser checks require Playwright in `NODE_PATH`.
 - `node tools/test-one-shift-opening-browser.cjs`: four viewport compositions,
   native keyboard and touch first shipment, actual work stages, receipt and
   physical restocking, fresh reload, saved-game recovery, and legacy transitions.
+  Uses an explicit stocked-start fixture with automatic receiving to isolate
+  the original business interface from the new public receiving workflow.
 - `node tools/test-one-shift-business-browser.cjs`: native mouse and keyboard
   actions, first sale, replenishment, mixed orders, reload, explicit save loading,
   reports, upgrades, right-drag camera, landscape touch, enlarged type, and portrait
   freeze. `SHIFT_URL` targets a deployed build; `SHIFT_DUMP` chooses screenshots.
+  Uses the same explicit stocked-start fixture.
 - `node tools/test-one-shift.cjs`: shared physical simulation, conservation,
   label checksums, recipes, ownership, routes, reservations, cancellations,
   forklift prerequisites, rack-only destinations, layouts, and legacy migrations.
@@ -167,8 +218,10 @@ Use Node. Browser checks require Playwright in `NODE_PATH`.
 - `node tools/test-one-shift-economy.cjs`: former client-service economy, not the
   business game's balance. Retained as a shared-model regression.
 
-Harnesses own `/Users/ethan/.local/bin/agent-chrome-for-testing` and close their
-exact browser in `finally`. Never launch the owner's personal Chrome headlessly.
+The receiving and business browser harnesses use Playwright's test Chromium by
+default and accept `SHIFT_CHROME` for a dedicated test executable. Older legacy
+harnesses name `/Users/ethan/.local/bin/agent-chrome-for-testing`. Harnesses close
+their exact browser in `finally`. Never launch personal Chrome headlessly.
 Automated policies establish reproducible behavior and solvency, not human enjoyment.
 The browser scenarios prove that native controls work, not that every new player
 will understand or enjoy the game. Human feedback should drive further tuning.

@@ -211,7 +211,7 @@
     dock(){const s=this.s;for(const t of s.trucks){
       if(t.status==='scheduled'&&s.minute>=t.arrival&&(!t.deliveryDay||t.deliveryDay<=s.day)){t.status='arriving';t.animation=0;event(s,(t.direction==='in'?'Inbound':'Outbound')+' truck is arriving.','truck');}
       if(t.status==='arriving'){t.animation+=DT;if(t.animation>=4)t.status='yard';}
-      if(t.status==='yard'&&!t.departureRequested){const door=s.map.doors.find(d=>!s.trucks.some(q=>q.door===d.id&&['docked','leaving'].includes(q.status)));if(door){t.door=door.id;t.status='docked';t.animation=0;for(const id of t.manifest){const p=this.p.get(id);Object.assign(p,O.docks.slot(s,door,p.index));}event(s,'Door '+(s.map.doors.indexOf(door)+1)+': '+(t.direction==='in'?'check the seal.':'order ready.'),'dock');}}
+      if(t.status==='yard'&&!t.departureRequested){const door=s.map.doors.find(d=>!s.trucks.some(q=>q.door===d.id&&['docked','leaving'].includes(q.status)));if(door){t.door=door.id;t.status='docked';t.animation=0;for(const id of t.manifest){const p=this.p.get(id);if(p?.place==='trailer')Object.assign(p,O.docks.slot(s,door,p.index));}event(s,'Door '+(s.map.doors.indexOf(door)+1)+': '+(t.direction==='in'?'check the seal.':'order ready.'),'dock');}}
       if(t.status==='leaving'){t.animation+=DT;if(t.animation>=6)t.status='gone';}
       if(['docked','yard'].includes(t.status)&&s.minute>t.arrival+t.freeMinutes){const due=Math.floor((s.minute-t.arrival-t.freeMinutes)/15);if(due>t.detention){O.post(s,'Detention',-(due-t.detention)*4,'Carrier waiting');t.detention=due;}}
       if(['docked','yard'].includes(t.status)&&t.direction==='out'&&s.minute>=t.deadline)this.depart(t);
