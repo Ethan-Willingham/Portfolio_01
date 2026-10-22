@@ -111,11 +111,14 @@ when changing them so deployed edits bypass stale caches.
 checks and current limits. The simulation modules have no DOM access. Keep it
 on `archive.html` (In Progress). Use four-foot tiles only in the hidden simulation,
 invented client names, and landscape mobile play. Every playable scene uses
-standing eye-level charcoal, rust and cream print art with separate selectable
+eye-level charcoal, rust and cream print art with separate selectable
 pallet layers. The owner explicitly removed the top-down view on 2026-10-22;
 do not restore it. Handling is performed directly by the player, by owner
 instruction on 2026-10-22. Do not schedule an invisible worker to unload, put away,
-pick, wrap or load stock. Read `docs/ONE_SHIFT_RECEIVING_ART.md` before changing
+pick, wrap or load stock. Read `docs/ONE_SHIFT_PLACES.md` for the time-card
+entrance, central floor and seated office desk. Clocking out saves a checkpoint;
+desk paperwork uses actual purchases, customer orders and ledger entries.
+Read `docs/ONE_SHIFT_RECEIVING_ART.md` before changing
 that art or generating new shipment variants. Read `docs/ONE_SHIFT_PROCESS.md`
 for the physical receiving and shipping flow. Bump every changed CSS/script
 query version. Preserve case conservation, lot dates and the ledger; forklift

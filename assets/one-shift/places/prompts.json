@@ -1,0 +1,209 @@
+{
+  "generatedOn": "2026-10-22",
+  "tool": "Built-in image_gen",
+  "model": "The built-in tool does not expose a numbered model selector.",
+  "reference": "../receiving/reference-print.png",
+  "dimensions": [
+    1536,
+    1024
+  ],
+  "palette": "Charcoal, muted rust, warm cream limited-ink print",
+  "notes": "All images viewed before acceptance. PNG masters copied unchanged. WebP runtime siblings are lossless encodings. Hotspot coordinates use x, y, width, height in source pixels; normalizedHotspots use fractions of the full image. No generated lettering is consumed as game state.",
+  "assets": [
+    {
+      "name": "clock",
+      "source": "C:/Users/56835/.codex/generated_images/01a164ea-209b-7da2-ada7-00f531bc51a3/exec-ced5197e-0ce5-401b-accc-aaef510555ea.png",
+      "prompt": "Use case: stylized-concept. Project asset: One Shift interactive game background, landscape 1536 by 1024 composition.\nThe supplied image is a STYLE REFERENCE ONLY. Create a new scene in the exact same charcoal-black, muted rust and warm cream limited-ink warehouse print style: broad solid forms, restrained dry ink grain, deliberate edges, no gradients, no glossy or 3D rendering.\nScene: the employee time-card area beside the entrance of a small working warehouse, viewed straight on at standing eye level. Ordinary durable mid-century industrial fittings still in daily use, maintained but rubbed and scuffed. Cream painted concrete block wall with a rust waist-high protective stripe, scuffed concrete floor. A large mechanical punch clock is wall-mounted just LEFT of center, its small circular clock dial blank except tick marks and hands. It has a metal slot for inserting a card and a heavy worn housing. Directly right of it is a clearly separate steel rack of old time-card pockets holding several blank cream paper cards, some edges bent. Far right is a partly open sturdy warehouse access door with dark wired-glass upper panel, metal push plate and glimpses of ceiling trusses through the opening. Narrow cork notice board near far left, almost empty, with one blank paper pinned to it. Main punch clock and time-card rack should dominate the central image and each read as a clear clickable object. Quiet practical space; no people, no hands.\nComposition: wall starts at top; primary clock roughly x25-47 percent,y22-63 percent; card pockets x50-69 percent,y22-67 percent; warehouse access door x77-96 percent,y16-80 percent. Floor visible lower quarter. Straight believable perspective, no fisheye.\nWear is specific and modest: polished metal touch points, rubbed door paint, a few plugged drill holes, a repaired plaster patch, darker floor seams. Not an abandoned ruin, not a pristine showroom. No text, letters, numbers, logos, symbols, UI, labels, furniture clutter or cargo. Preserve the reference's flat ink palette and confident geometric clarity.",
+      "hotspots": {
+        "punch": [
+          414,
+          175,
+          268,
+          393
+        ],
+        "cards": [
+          758,
+          118,
+          244,
+          488
+        ],
+        "exit": [
+          1138,
+          10,
+          370,
+          775
+        ]
+      },
+      "width": 1536,
+      "height": 1024,
+      "png": "clock.png",
+      "webp": "clock.webp",
+      "normalizedHotspots": {
+        "punch": [
+          0.2695,
+          0.1709,
+          0.1745,
+          0.3838
+        ],
+        "cards": [
+          0.4935,
+          0.1152,
+          0.1589,
+          0.4766
+        ],
+        "exit": [
+          0.7409,
+          0.0098,
+          0.2409,
+          0.7568
+        ]
+      }
+    },
+    {
+      "name": "floor",
+      "source": "C:/Users/56835/.codex/generated_images/01a164ea-209b-7da2-ada7-00f531bc51a3/exec-d2c52bae-7836-44bd-9b5a-ec32e8ec45e5.png",
+      "prompt": "Use case: stylized-concept. Project asset: One Shift interactive game central warehouse floor, landscape 1536 by 1024 composition.\nThe supplied image is a STYLE REFERENCE ONLY. Create a new scene in the exact same charcoal-black, muted rust and warm cream limited-ink warehouse print style: broad solid forms, restrained dry ink grain, deliberate edges, no gradients, no glossy or 3D rendering.\nScene: a modest long-used but well maintained working warehouse seen from standing eye level in its central crossroads. The player can clearly choose four separate destinations in one scene. At FAR LEFT is a simple enclosed office with cream block wall and a closed rust-painted pedestrian door with small wired glass window. LEFT-CENTER is a broad warehouse receiving entrance with heavy dark steel posts and dock infrastructure visible farther away, opening completely empty of freight. CENTER is a clear deep storage aisle between empty steel racks, realistic beams and cross braces. RIGHT is the shipping entrance, broad and distinct from receiving, showing an empty staging area and a closed roll-up door deeper inside. FAR RIGHT wall near foreground has a small worn time-card punch clock and card pockets, as a fifth minor destination. Main paths clear and unobstructed, no forklifts, no people, no pallets, no cartons or merchandise.\nComposition should read as a practical place, not five disconnected vignettes: one continuous scuffed concrete floor, shared overhead steel trusses and strip fixtures, coherent perspective and structural spacing. Foreground mostly open floor, visible floor seams and worn lane paint. Destination positions: office x3-20 percent,y27-69 percent; receiving x24-42 percent,y24-67 percent; central inventory aisle x44-62 percent,y24-68 percent; shipping x65-84 percent,y24-68 percent; time clock x87-96 percent,y32-58 percent. Keep all destination thresholds within upper 75 percent of image.\nMaterials: reused durable steel, pale block walls, rust paint protective stripe, gentle patched spots, rubbed corner guards, screws and conduit in plausible positions. No generalized grunge, no ruined building. Realistically aged and operational. Clear dark openings against warm cream walls. No text, letters, numbers, logos, symbols, signs with marks, UI, decorative cargo or invented labels. Strong visual clarity matching the reference style exactly.",
+      "hotspots": {
+        "office": [
+          39,
+          211,
+          134,
+          445
+        ],
+        "receiving": [
+          330,
+          218,
+          261,
+          337
+        ],
+        "inventory": [
+          653,
+          194,
+          292,
+          363
+        ],
+        "shipping": [
+          1012,
+          220,
+          276,
+          339
+        ],
+        "clock": [
+          1425,
+          350,
+          101,
+          155
+        ]
+      },
+      "width": 1536,
+      "height": 1024,
+      "png": "floor.png",
+      "webp": "floor.webp",
+      "normalizedHotspots": {
+        "office": [
+          0.0254,
+          0.2061,
+          0.0872,
+          0.4346
+        ],
+        "receiving": [
+          0.2148,
+          0.2129,
+          0.1699,
+          0.3291
+        ],
+        "inventory": [
+          0.4251,
+          0.1895,
+          0.1901,
+          0.3545
+        ],
+        "shipping": [
+          0.6589,
+          0.2148,
+          0.1797,
+          0.3311
+        ],
+        "clock": [
+          0.9277,
+          0.3418,
+          0.0658,
+          0.1514
+        ]
+      }
+    },
+    {
+      "name": "office",
+      "source": "C:/Users/56835/.codex/generated_images/01a164ea-209b-7da2-ada7-00f531bc51a3/exec-3f221609-3a10-422d-8647-2c3827a0a959.png",
+      "prompt": "Use case: stylized-concept. Project asset: One Shift interactive office desk game background, landscape 1536 by 1024 composition.\nThe supplied image is a STYLE REFERENCE ONLY. Create a new scene in exactly the same charcoal-black, muted rust and warm cream limited-ink warehouse print style: broad flat solid forms, restrained dry ink grain, deliberate edge detail, no gradients, no glossy or 3D rendering.\nScene: seated first-person perspective from the chair behind the ONLY desk in a small practical warehouse office. Eye height at seated level, looking across the work surface toward the opposite wall and an open door back to the warehouse at rear right. One old durable steel desk with a lightly chipped laminate top fills foreground and bottom half. No second desk, no foreground character, no hands. Four distinct clickable desk objects separated by clear desk surface: at foreground left a substantial cream purchase-order pad on a worn clipboard with a pen; at left-center farther back a dark steel wire in-tray with a small neat pile of blank customer-order papers; at right-center a closed thick rust-colored accounting ledger with a plainly visible cloth spine; at foreground right a worn cream equipment catalog, closed, its cover completely blank. These four objects must be large and separately visible, not stacked or overlapping. Optional small old calculator beside ledger and mug far back on the desk are subtle nonprimary props. Keep the four primary objects obvious.\nBackground: cream painted block walls with localized scrapes and one older patched section, narrow interior warehouse window on left with wired glass and faint empty rack structure beyond. Small steel filing cabinet along back wall without adding another desk. Rear-right open rust-painted pedestrian door reveals an empty warehouse walkway and ceiling trusses. The door must be entirely above the desk top and clearly readable as the exit. Ordinary fluorescent ceiling fixture, visible conduit. Quiet workday, clean enough to work, durable and used rather than new or ruined.\nComposition anchors: purchase clipboard x10-34 percent,y59-84 percent; order tray x30-48 percent,y43-62 percent; ledger x53-71 percent,y57-77 percent; blank catalog x73-94 percent,y66-89 percent; exit door x74-93 percent,y12-49 percent. Single natural perspective from seated player, no overhead or isometric view. The desk occupies bottom45% and stretches edge to edge.\nNo letters, text, numbers, brand marks, symbols, UI, labels, signage or writing on paper. No people, extra desks, freight pallets, decorative boxes or merchandise. Broad cream negative space around the objects, reference's exact restrained rust accent and charcoal shadow language.",
+      "hotspots": {
+        "purchases": [
+          4,
+          626,
+          522,
+          294
+        ],
+        "orders": [
+          344,
+          498,
+          360,
+          128
+        ],
+        "ledger": [
+          752,
+          593,
+          402,
+          245
+        ],
+        "equipment": [
+          1152,
+          642,
+          384,
+          278
+        ],
+        "exit": [
+          1019,
+          54,
+          435,
+          511
+        ]
+      },
+      "width": 1536,
+      "height": 1024,
+      "png": "office.png",
+      "webp": "office.webp",
+      "normalizedHotspots": {
+        "purchases": [
+          0.0026,
+          0.6113,
+          0.3398,
+          0.2871
+        ],
+        "orders": [
+          0.224,
+          0.4863,
+          0.2344,
+          0.125
+        ],
+        "ledger": [
+          0.4896,
+          0.5791,
+          0.2617,
+          0.2393
+        ],
+        "equipment": [
+          0.75,
+          0.627,
+          0.25,
+          0.2715
+        ],
+        "exit": [
+          0.6634,
+          0.0527,
+          0.2832,
+          0.499
+        ]
+      }
+    }
+  ]
+}

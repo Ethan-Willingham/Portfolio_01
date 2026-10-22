@@ -1,6 +1,10 @@
 # One Shift
 
-The public game at `one-shift.html` is a hands-on inventory business, version 3.0.
+The public game at `one-shift.html` is a hands-on inventory business, version 3.1.
+Read [the building and office model](ONE_SHIFT_PLACES.md) for its time-card
+entrance, central floor, seated desk, purchase orders and environmental audio.
+The public CSS and script query version is `v33`.
+
 The player now performs every handling step directly. Read
 [the direct handling model](ONE_SHIFT_HANDLING.md) for the current controls,
 rules, source modules, save migration and checks. This supersedes the earlier

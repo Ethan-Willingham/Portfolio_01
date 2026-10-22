@@ -1,5 +1,10 @@
 # One Shift direct handling
 
+Version 3.1 adds the [time cards, central floor and office desk](ONE_SHIFT_PLACES.md)
+around this handling model. Clocking out saves a checkpoint without moving
+freight or settling an unfinished shift. Purchase orders and customer acceptance
+take place at the desk; every physical handling action below remains the player's.
+
 Version 3.0 implements the owner's October 22, 2026 instruction: the player
 performs every warehouse handling step. There is no autonomous worker travel
 or stock handling in public play. Waiting and changing scenes cannot unload,

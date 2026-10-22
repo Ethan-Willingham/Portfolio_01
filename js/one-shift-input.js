@@ -26,7 +26,7 @@
    if(node.dataset.setting){ui.settings[node.dataset.setting]=node.type==='checkbox'?node.checked:Number(node.value);O.saves.savePreferences(ui.settings);app.audio.setVolume(ui.settings.volume);document.documentElement.style.fontSize=(ui.settings.scale*16)+'px';app.scenes.resize();}
    if(node.dataset.key){ui.settings.keys[node.dataset.key]=node.value;O.saves.savePreferences(ui.settings);}
    if(node.id==='shift-queue-worker')ui.queueWorker=Number(node.value);
-   if(node.id==='shift-import'&&node.files[0]){try{app.sim.restore(O.saves.decode(await node.files[0].text()));ui.target=null;ui.selected=[];ui.lastPhase='shift';ui.action({dataset:{action:'menu-close'}});app.scenes.open('storage');ui.update();}catch(error){ui.toast(error.message,true);}}
+   if(node.id==='shift-import'&&node.files[0]){try{const state=O.saves.decode(await node.files[0].text());if(!O.business(state))throw Error('This is an older service-mode save. It cannot be loaded into this warehouse.');app.sim.restore(state);ui.target=null;ui.selected=[];ui.lastPhase='shift';ui.action({dataset:{action:'menu-close'}});app.places.restored();ui.update();}catch(error){ui.saveError(error.message);}}
   });
   document.getElementById('shift-settings').addEventListener('cancel',()=>{app.menuPause=false;});
   const suspend=()=>{app.scenes?.suspend();};window.addEventListener('blur',suspend);

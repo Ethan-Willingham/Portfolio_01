@@ -27,8 +27,9 @@ to the runtime.
 
 ## The warehouse and controls
 
-Every playable view uses standing eye-level illustrated scenery and separate
+Warehouse views use standing eye-level illustrated scenery and separate
 selectable pallet layers, including Receiving staging, storage aisles and Shipping.
+The office uses a seated perspective at one desk, by the owner's direction.
 The owner explicitly corrected the earlier palette-only conversion on October 22,
 2026: there is no public top-down view. Do not restore a map camera or map controls.
 The hidden four-foot simulation grid is not part of the visual presentation.
@@ -53,6 +54,28 @@ flat paper panels, fine ink rules, square controls, serif titles and monospace
 operational labels. Rust identifies actions and current work. Disabled and
 selected states need clear contrast; touch targets remain at least 44px.
 Review receiving, storage and shipping together after every visual change.
+
+## The time cards, floor and office
+
+Version 3.1 adds three generated scenes in `assets/one-shift/places/`:
+the mechanical punch-clock wall, a central warehouse crossroads and the office
+seen from a seated position behind one desk. Exact prompts, source provenance,
+PNG masters, lossless WebP siblings and measured target bounds live together
+in that directory. Read [ONE_SHIFT_PLACES.md](ONE_SHIFT_PLACES.md) for navigation
+and paperwork behavior.
+
+Keep the same limited-ink print style. The building should look maintained,
+durable and used, with rubbed metal touch points, scuffed concrete, old steel
+furniture and repaired walls. Avoid excessive distress and pristine showroom
+surfaces. The central view has separate office, Receiving, Inventory, Shipping
+and time-card entrances. The office desk has a purchase pad, customer in-tray,
+equipment catalog and ledger; its rear door returns to the floor.
+
+Targets are positioned relative to the source image, preserving alignment as
+the full composition scales. Labels are runtime controls with visible keyboard
+focus and at least 44px touch targets. Do not crop away a destination or paint
+fake inventory into these backgrounds. Verify the three new views beside the
+existing dock, racks and shipping scene before accepting new artwork.
 
 ## Layered scene
 

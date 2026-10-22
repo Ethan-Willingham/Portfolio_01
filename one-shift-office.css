@@ -1,0 +1,85 @@
+/* Paperwork is read at the desk, above the office artwork. */
+#shift-office-papers{position:absolute;inset:0;z-index:9;display:flex;align-items:center;justify-content:center;padding:42px 10%;background:#25262070;touch-action:pan-y}
+.office-paper-sheet{width:min(830px,100%);max-height:100%;overflow:auto;overscroll-behavior:contain;padding:26px 34px 30px;background:var(--shift-paper);border:1px solid var(--text);box-shadow:7px 9px 0 #25262045;color:var(--text);font:1rem/1.5 var(--font-body)}
+.office-paper-header{display:flex;align-items:center;justify-content:space-between;gap:20px;border-bottom:2px solid var(--text);padding-bottom:16px;margin-bottom:16px}
+.office-paper-header h2{margin:6px 0 0;font:2.1rem/1.1 var(--font-heading);letter-spacing:-.025em}
+.office-paper-header button{flex-shrink:0}
+.office-paper-eyebrow{font:.625rem/1.4 var(--font-mono);letter-spacing:.1em;color:var(--text-dim)}
+#shift-office-papers button,#shift-office-papers select{min-height:44px;min-width:44px;border-radius:0;font:.75rem/1.3 var(--font-mono)}
+#shift-office-papers button{padding:10px 14px}
+#shift-office-papers button:disabled{opacity:.55}
+.office-paper-meta{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 20px;font:.625rem/1.5 var(--font-mono);padding:0 0 14px;border-bottom:1px solid var(--rule);margin-bottom:22px}
+.office-paper-body h3{font:1.5rem/1.2 var(--font-heading);margin:8px 0 16px}
+.office-paper-body p{font:.875rem/1.5 var(--font-body);margin:12px 0}
+.office-paper-message{padding:10px 14px;margin:0 0 18px;border-left:3px solid var(--shift-primary);background:var(--shift-button);font:.8125rem/1.5 var(--font-body)}
+.office-paper-note{color:var(--text-dim);max-width:62ch}
+.office-purchase-draft>label{display:block;font:.75rem var(--font-mono);margin:14px 0 6px}
+#office-purchase-product{display:block;width:100%;max-width:400px;background:var(--shift-paper);color:var(--text);border:1px solid var(--rule-strong);padding:8px 12px}
+.office-stock-counts{display:flex;gap:24px;margin:12px 0 20px;font:.75rem/1.5 var(--font-body);color:var(--text-dim)}
+.office-stock-counts strong{color:var(--text);font-family:var(--font-mono)}
+.office-purchase-draft fieldset{padding:0;border:0;margin:0 0 18px;min-width:0}
+.office-purchase-draft legend{font:.75rem/1.4 var(--font-mono);padding:0 0 8px}
+.office-paper-quantity{display:flex;gap:8px}
+.office-paper-totals{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:20px;row-gap:10px;margin:20px 0;font:.8125rem/1.5 var(--font-mono)}
+.office-paper-totals dt{color:var(--text-dim)}
+.office-paper-totals dd{margin:0;text-align:right;max-width:30ch;overflow-wrap:anywhere}
+.office-paper-totals .office-total{border-top:1px solid var(--rule-strong);padding-top:12px;margin-top:3px;color:var(--text);font-weight:700}
+.office-paper-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:18px}
+.office-paper-actions>span{font:.75rem/1.4 var(--font-mono);margin-right:auto}
+.office-paper-reason{color:var(--shift-primary);font:.75rem/1.5 var(--font-body)}
+.office-paper-stamp{display:inline-block;border:2px solid var(--shift-primary);color:var(--shift-primary);font:.75rem var(--font-mono);letter-spacing:.08em;padding:8px 12px;margin:0 0 14px}
+.office-purchase-history{margin-top:24px;padding-top:16px;border-top:1px solid var(--rule-strong)}
+.office-purchase-history>summary{min-height:44px;cursor:pointer;font:.8125rem var(--font-mono);padding:12px 0}
+.office-purchase-history article{padding:14px 0;border-top:1px solid var(--rule)}
+.office-purchase-history article header{display:flex;gap:16px;justify-content:space-between;font:.75rem var(--font-mono)}
+.office-purchase-history article p{font-size:.75rem;margin-bottom:0}
+.office-order{padding:22px 0;border-top:1px solid var(--rule-strong)}
+.office-order>header{display:flex;align-items:start;justify-content:space-between;gap:20px}
+.office-order>header>strong{font:1.2rem var(--font-mono);white-space:nowrap}
+.office-order ul{list-style:none;padding:0;margin:0}
+.office-order li{display:flex;justify-content:space-between;gap:20px;font:.875rem/1.6 var(--font-body)}
+.office-order li>span+span{font-size:.75rem;white-space:nowrap}
+.office-order h3{margin-bottom:12px}
+.office-equipment-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 30px}
+.office-equipment{display:flex;flex-direction:column;align-items:start;border-top:1px solid var(--rule-strong);padding-top:16px}
+.office-equipment h3{font-size:1.25rem;margin:0 0 10px}
+.office-equipment p{font-size:.8125rem;flex:1;margin:0 0 14px}
+.office-equipment small{font:.6875rem/1.5 var(--font-mono);margin-top:8px;color:var(--text-dim)}
+.office-ledger-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:18px 0 28px}
+.office-ledger-summary dt{font:.625rem/1.4 var(--font-mono);color:var(--text-dim);margin-bottom:8px}
+.office-ledger-summary dd{font:1.55rem/1.1 var(--font-heading);margin:0;overflow-wrap:anywhere}
+.office-journal{width:100%;border-collapse:collapse;font:.75rem/1.5 var(--font-mono)}
+.office-journal th{text-align:left;font-weight:400;color:var(--text-dim);padding:10px 8px;border-bottom:1px solid var(--rule-strong)}
+.office-journal td{vertical-align:top;padding:12px 8px;border-bottom:1px solid var(--rule)}
+.office-journal th:last-child,.office-journal td:last-child{text-align:right;white-space:nowrap}
+.office-journal td:first-child{white-space:nowrap}
+.office-journal td span{display:block;font:.75rem/1.4 var(--font-body);color:var(--text-dim);margin-top:3px}
+@media(max-width:900px),(max-height:550px){
+ #shift-office-papers{padding:12px 6%}
+ .office-paper-sheet{padding:14px 20px 20px;font-size:.875rem}
+ .office-paper-header{padding-bottom:10px;margin-bottom:12px;gap:12px}
+ .office-paper-header h2{font-size:1.4rem}
+ .office-paper-eyebrow{font-size:.5rem}
+ #shift-office-papers button,#shift-office-papers select{font-size:.625rem}
+ .office-paper-meta{margin-bottom:14px;font-size:.5625rem}
+ .office-paper-body h3{font-size:1.2rem}
+ .office-paper-body p{font-size:.75rem}
+ .office-paper-totals{font-size:.6875rem;gap:8px 16px}
+ .office-stock-counts{font-size:.625rem;gap:14px}
+ .office-equipment-grid{gap:14px 20px}
+ .office-equipment p{font-size:.6875rem}
+ .office-order>header>strong{font-size:.9rem}
+ .office-order li{font-size:.75rem}
+ .office-ledger-summary dd{font-size:1.25rem}
+ .office-journal{font-size:.625rem}
+ .office-journal td span{font-size:.625rem}
+}
+@media(max-width:560px){
+ #shift-office-papers{padding:10px}
+ .office-paper-sheet{padding:12px}
+ .office-paper-header h2{font-size:1.2rem}
+ .office-equipment-grid{grid-template-columns:minmax(0,1fr)}
+ .office-paper-totals{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+ .office-paper-quantity{gap:4px}
+ #shift-office-papers .office-paper-quantity button{padding:8px}
+}
