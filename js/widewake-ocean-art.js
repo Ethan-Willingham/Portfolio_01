@@ -341,10 +341,10 @@
       // A thin broken lip follows the ridge of the swell. A height threshold
       // alone paints broad foam islands and hides the direction of the face.
       float crest=wave.x/max(.2,exposure),ridgeSlope=dot(wave.yz,vec2(-.7909677,.6118579))/max(.2,exposure);
-      float aa=max(fwidth(ridgeSlope),.006),lip=1.-smoothstep(.018+aa,.080+aa,abs(ridgeSlope+.018));
+      float aa=max(fwidth(ridgeSlope),.0015),lip=1.-smoothstep(.005+aa,.020+aa,abs(ridgeSlope+.006));
       float broken=texture(uNoise,p*.004+vec2(time*.0009,-time*.0005)).b;
       float lace=texture(uNoise,p*.018+vec2(time*.001,-time*.0007)).r;
-      float foam=smoothstep(.55,1.55,crest)*lip*smoothstep(.40,.70,broken)*(.30+.70*lace)*exposure*.44;
+      float foam=smoothstep(.90,2.0,crest)*lip*smoothstep(.40,.70,broken)*(.30+.70*lace)*exposure*.44;
       result=mix(result,vec3(.73,.87,.83),foam);
       float fine=texture(uNoise,(p-drift)*vec2(.11,.17)+vec2(time*.012,-time*.009)).r;
       result+=vec3(.018,.032,.035)*(fine-.5)*smoothstep(.4,2.,zoom);

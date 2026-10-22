@@ -4,18 +4,26 @@ const dt=1/60;
 // Analytic gradients and surface velocity agree with finite differences.
 for(const ocean of [true,false])for(let n=0;n<50;n++){const x=n*7.13,y=ocean?n*-11.6:700+n*22,t=n*.31,at=(x,y,t)=>W.sample(x,y,t,22,.7,ocean),q=at(x,y,t),e=.0001;assert.ok(Math.abs((at(x+e,y,t).height-at(x-e,y,t).height)/(2*e)-q.dx)<1e-6);assert.ok(Math.abs((at(x,y+e,t).height-at(x,y-e,t).height)/(2*e)-q.dy)<1e-6);assert.ok(Math.abs((at(x,y,t+e).height-at(x,y,t-e).height)/(2*e)-q.vz)<1e-6);}
 const field=new E.Field(),sea=new W.Sea(field);let sheltered=0,open=0;for(let n=0;n<300;n++){sheltered+=W.sample(-550,600,n*.1,22,1,false).height**2;open+=W.sample(-550,600,n*.1,22,1,true).height**2;}assert.ok(open>sheltered*20,'the same wave packet loses energy in shelter');assert.ok(sea.at(-550,600).exposure<.3&&sea.at(0,2200).exposure>.9);assert.equal(W.sample(0,0,1,-1).height,0);console.log('PASS coherent packet/envelope/time derivatives, dry land and sheltered water');
-// The old long stripes remained >92% correlated when shifted 24 m along their
-// crests. Check all headings so changing the stripe direction cannot pass.
-let crestCorrelation=-1;
-for(let direction=0;direction<24;direction++){
-  const angle=direction*Math.PI/24,dx=Math.cos(angle)*24,dy=Math.sin(angle)*24;let sumA=0,sumB=0,aa=0,bb=0,ab=0,n=0;
-  for(let y=-240;y<=240;y+=24)for(let x=-240;x<=240;x+=24){const a=W.sample(x,y,7.3).height,b=W.sample(x+dx,y+dy,7.3).height;sumA+=a;sumB+=b;aa+=a*a;bb+=b*b;ab+=a*b;n++;}
-  crestCorrelation=Math.max(crestCorrelation,(ab-sumA*sumB/n)/Math.sqrt((aa-sumA*sumA/n)*(bb-sumB*sumB/n)));
+// Moving along an infinite crest leaves the same height everywhere. Test a
+// fraction of the dominant wavelength so wider swells may remain coherent over
+// more metres without bringing back the old screen-spanning parallel stripes.
+const dominant=W.bands.reduce((a,b)=>a.amplitude>b.amplitude?a:b),crestProbeDistance=dominant.length/3;
+const probeAngles=Array.from({length:24},(_,n)=>n*Math.PI/24);probeAngles.push(dominant.angle+Math.PI/2);
+function maxCrestCorrelation(height){let maximum=-1;
+  for(const time of [0,7.3,21.1])for(const angle of probeAngles){
+    const dx=Math.cos(angle)*crestProbeDistance,dy=Math.sin(angle)*crestProbeDistance;let sumA=0,sumB=0,aa=0,bb=0,ab=0;
+    // Irregular sampling avoids accidentally hiding short waves on a grid that
+    // happens to land on the same phase of a harmonic.
+    for(let n=0;n<441;n++){const x=((n*.754877666%1)*2-1)*dominant.length*4,y=((n*.569840291%1)*2-1)*dominant.length*4,a=height(x,y,time),b=height(x+dx,y+dy,time);sumA+=a;sumB+=b;aa+=a*a;bb+=b*b;ab+=a*b;}
+    maximum=Math.max(maximum,(ab-sumA*sumB/441)/Math.sqrt((aa-sumA*sumA/441)*(bb-sumB*sumB/441)));
+  }return maximum;
 }
+assert.ok(maxCrestCorrelation((x,y,t)=>Math.sin((x*dominant.x+y*dominant.y)*dominant.k-t*dominant.omega))>.999,'the finite-front check must reject an unbroken stripe at the current wavelength');
+const crestCorrelation=maxCrestCorrelation((x,y,t)=>W.sample(x,y,t).height);
 assert.ok(crestCorrelation<.7,'wavefronts break into finite spatial patches instead of unbroken parallel lines');
 let seaEnergy=0,seaSamples=0,minHeight=Infinity,maxHeight=-Infinity,projectionSlope=0;const sample={};
 for(let t=0;t<16;t++)for(let y=-600;y<=600;y+=24)for(let x=-600;x<=600;x+=24){W.sample(x,y,t*2.37,22,1,true,sample);seaEnergy+=sample.height**2;seaSamples++;minHeight=Math.min(minHeight,sample.height);maxHeight=Math.max(maxHeight,sample.height);projectionSlope=Math.max(projectionSlope,Math.abs(1.22474487*(sample.dx+sample.dy)));}
-const seaRms=Math.sqrt(seaEnergy/seaSamples);assert.ok(seaRms>1.2&&seaRms<1.9,'localized crests preserve the established ride energy');assert.ok(minHeight>-4&&maxHeight<4,'constructive packets cannot create runaway height');assert.ok(projectionSlope<.85,'representative sea faces remain invertible in the isometric water projection');console.log('PASS broken-front correlation, bounded sea energy and projection slopes',{crestCorrelation,seaRms,minHeight,maxHeight,projectionSlope});
+const seaRms=Math.sqrt(seaEnergy/seaSamples);assert.ok(seaRms>1.2&&seaRms<1.9,'localized crests preserve the established ride energy');assert.ok(minHeight>-4&&maxHeight<4,'constructive packets cannot create runaway height');assert.ok(projectionSlope<.85,'representative sea faces remain invertible in the isometric water projection');console.log('PASS broken-front correlation, bounded sea energy and projection slopes',{crestProbeDistance,crestCorrelation,seaRms,minHeight,maxHeight,projectionSlope});
 const boat=(spec,id=0)=>({...spec,id,x:100,y:2200,px:100,py:2200,angle:0,vx:0,vy:0,hp:100,hold:32,cargo:0});
 const extremes=[];
 for(const type of ['launch','gunboat','oilrig','flagship']){

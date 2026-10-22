@@ -3,18 +3,19 @@
   'use strict';
   const TAU=Math.PI*2,clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
   const smooth=(a,b,v)=>{const t=clamp((v-a)/(b-a),0,1);return t*t*(3-2*t);};
-  // Crossing packets have short, rounded crests. Their cross-wave envelopes
-  // bend and drift with slower group motion instead of spanning the whole sea.
+  // A dominant long swell gives a fast captain time to read each approaching
+  // face. Quiet companion packets vary its height without adding rapid jolts.
+  // Cross-wave envelopes bend and drift rather than spanning the whole sea.
   // The same coefficients generate the shader and its analytic surface normals.
-  // Short boat-scale chop breaks up the large swells. The asymmetric profile
-  // sharpens crests and broadens troughs without adding an unrelated hull bob.
+  // Small ripples keep the surface alive but contribute very little hull motion.
+  // The asymmetric profile sharpens crests and broadens the water between them.
   const bands=Object.freeze([
-    {length:72,amplitude:2.4,angle:-3.8,phase:.7,crestLength:137},
-    {length:49,amplitude:1.5,angle:-.5,phase:2.4,crestLength:101},
-    {length:33,amplitude:1.0,angle:-1.15,phase:4.1,crestLength:64},
-    {length:22,amplitude:.45,angle:-2.9,phase:1.2,crestLength:48},
-    {length:13,amplitude:.40,angle:-3.6,phase:3.5,crestLength:28},
-    {length:8,amplitude:.22,angle:-.8,phase:5.3,crestLength:18}
+    {length:144,amplitude:3.2,angle:-3.8,phase:.7,crestLength:190},
+    {length:208,amplitude:.72,angle:-3.52,phase:2.4,crestLength:240},
+    {length:96,amplitude:.30,angle:-4.05,phase:4.1,crestLength:142},
+    {length:42,amplitude:.08,angle:-2.9,phase:1.2,crestLength:72},
+    {length:24,amplitude:.035,angle:-3.6,phase:3.5,crestLength:45},
+    {length:14,amplitude:.015,angle:-.8,phase:5.3,crestLength:32}
   ].map(b=>Object.freeze({...b,k:TAU/b.length,crossK:TAU/b.crestLength,omega:Math.sqrt(9.81*TAU/b.length),x:Math.cos(b.angle),y:Math.sin(b.angle)})));
   function exposure(x,y,depth=22,salt=1,open=false){return smooth(.3,2.4,depth)*(.20+.80*(open?1:smooth(700,1800,y))*smooth(3,16,depth))*(.75+.25*salt);}
   function sample(x,y,time,depth=22,salt=1,open=true,out={}){

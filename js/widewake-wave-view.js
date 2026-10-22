@@ -76,7 +76,7 @@
         for(let n=0;n<2;n++){W.sample(wx+height*1.22474487,wy+height*1.22474487,v.visualTime,depth,salt,!sea.field,q);height+=clamp((q.height*sea.strength-height)/Math.max(.22,1-1.22474487*(q.dx+q.dy)*sea.strength),-3,3);}
         px=wx+height*1.22474487;py=wy+height*1.22474487;W.sample(px,py,v.visualTime,depth,salt,!sea.field,q);height=q.height*sea.strength;
         const dx=q.dx*sea.strength,dy=q.dy*sea.strength,shelf=Math.exp(-Math.max(0,depth)*.075),normal=Math.hypot(dx,dy,1),face=Math.max(0,(dx*.70-dy*.25+.55)/(normal*Math.hypot(.70,.25,.55))),fresnel=(.025+.975*(1-Math.max(0,(-dx*.61237244-dy*.61237244+.5)/normal))**5)*.72,light=.28+face*1.20;
-        const broken=.5+.25*Math.sin(px*.12+py*.035)+.25*Math.sin(py*.10-px*.045),ridge=(-dx*.7909677+dy*.6118579)/Math.max(.2,q.exposure),lip=1-smooth(.024,.086,Math.abs(ridge+.018)),foam=smooth(.55,1.55,height/Math.max(.2,q.exposure))*lip*smooth(.5,.8,broken)*q.exposure*.32,at=(y*w+x)*4;
+        const broken=.5+.25*Math.sin(px*.12+py*.035)+.25*Math.sin(py*.10-px*.045),ridge=(-dx*.7909677+dy*.6118579)/Math.max(.2,q.exposure),lip=1-smooth(.0065,.0215,Math.abs(ridge+.006)),foam=smooth(.90,2.0,height/Math.max(.2,q.exposure))*lip*smooth(.5,.8,broken)*q.exposure*.32,at=(y*w+x)*4;
         pixels[at]=((10+8*shelf+7*(1-salt))*light*(1-fresnel)+79*fresnel)*(1-foam)+186*foam;
         pixels[at+1]=((46+24*shelf+9*(1-salt))*light*(1-fresnel)+135*fresnel)*(1-foam)+222*foam;
         pixels[at+2]=((64+22*shelf)*light*(1-fresnel)+150*fresnel)*(1-foam)+212*foam;pixels[at+3]=255;

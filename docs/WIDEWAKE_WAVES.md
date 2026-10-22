@@ -1,15 +1,23 @@
-# Widewake waves, v0.31.0
+# Widewake waves, v0.32.0
 
 Owner direction, 2026-10-21: waves are central to the game. Connect their
 appearance to boat handling, make boats substantially faster, and use the ocean
 to communicate scale and movement. Improve the water's entire color treatment.
 
-`js/widewake-waves.js` owns the physical field. Six crossing wave packets also
+The owner's 2026-10-22 follow-up asks for more space between waves, so a captain
+at full speed can identify the approaching face and its effect on the boat.
+
+`js/widewake-waves.js` owns the physical field. Six wave packets also
 generate the GLSL used by `js/widewake-ocean-art.js`. Each front has a smooth
 envelope that varies across the crest and bends with slower group motion.
-This breaks the long diagonal bands into shorter swells. Their asymmetric
-profile gives sharper crests and broader troughs; stronger eight- and
-thirteen-metre chop adds motion on the launch's scale. Analytic
+This breaks the long diagonal bands into finite swells. A dominant 144-metre
+swell replaces the former 72-metre lead wave. Two quieter companion swells
+vary its height and direction; the remaining small ripples add little motion
+to the hull. Their asymmetric profile gives sharper crests and broader troughs.
+The main swell takes about 2.8 seconds to cross a full-speed launch heading
+into it, or 1.65 seconds for the patrol boat. Crossing and following seas take
+longer. These are nominal encounter periods, not timers driving the hull.
+Analytic
 gradients include both the envelope and its bending, so the hulls follow the
 same shaped water seen on screen. A smooth height limit bounds constructive
 interference without clipped peaks. Physics and drawing use simulation time,
@@ -75,6 +83,8 @@ spray and the Canvas sea. Open water uses deep blue, coastal water shifts toward
 teal, and river water stays greener. Directional face lighting and view-dependent
 sky reflection describe the slopes without canceling each other's contrast.
 Broken foam follows narrow crest lips instead of filling every high patch.
+The lip's slope window is narrowed for the longer swells, keeping whitecaps
+close to their tops rather than spreading a foam carpet over the whole face.
 There is no screen-space scrolling overlay.
 Reduced motion removes decorative glitter while retaining essential wave motion
 and physical hull response. Canvas uses the same heights and forces with simpler
@@ -125,8 +135,13 @@ deterministic regression tests can resume it exactly.
   a clearing centre, two broken spreading shoulders, bounded history and
   desktop and landscape-phone images in WebGL and Canvas.
 - `node tools/widewake/test-sea-volume-browser.cjs`: six-frame launch and escort
-  crest crossings at their actual helm zoom, with identical flat-water controls.
-  Actual framebuffer contrast is checked separately from physical hull travel.
+  full-encounter crest crossings at their actual helm zoom, with flat-water
+  controls. Ordinary desktop and landscape-phone following views cover sheltered
+  and exposed water. Actual framebuffer contrast is checked separately from
+  physical hull travel; the wider fixed-camera sequence is supporting evidence.
+- `node tools/widewake/test-swell-readability.cjs`: full-speed crest intervals
+  and corresponding hull motion across multiple headings and starting phases,
+  with a v0.31 spectrum control to catch a return of rapid overlapping jolts.
 - Existing driving, fleet handling, projectile, water-pressure, connected campaign
   and full 16,384-raider battle checks remain regression coverage. Pressure-only
   tests explicitly use flat water to isolate blast integration. Holding-station

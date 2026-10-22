@@ -1883,3 +1883,30 @@ This remains an analytic heightfield with an authored shoreline, without
 overturning breakers or advancing swash. Canvas uses simpler shading and
 painter ordering. Physical-phone performance and the owner's final visual
 assessment remain open.
+
+## Spaced swells and readable riding, 2026-10-22 (v0.32.0)
+
+The owner asked for more space between waves so their individual effects on a
+fast boat are easy to follow. The dominant wavelength increases from 72 to
+144 metres. Two quieter companion swells vary its shape, while the smaller
+ripples contribute much less to hull motion. Overall sea height remains strong;
+the change creates a longer approach, climb and descent with calmer water
+between them. The same wave field still controls water depth, face lighting,
+buoyancy and force. Hull speeds and the carried steering model are unchanged.
+
+Whitecaps now use a narrower crest window. This keeps the stretched swell from
+becoming a broad band of foam and leaves the spreading boat wake readable.
+Full-speed visual sequences cover a complete swell encounter on the launch
+and patrol boat, in sheltered and exposed water at desktop and landscape-phone
+sizes. The open-water launch has roughly 2.8 seconds per head-on crossing,
+and the patrol boat roughly 1.7 seconds, with a visible climb and descent.
+
+A new regression checks 30 full-speed paths against the previous spectrum.
+Every path retains substantial heave, matches at least 90 percent of arriving
+crests to hull rises, and responds within 350 milliseconds. Finite-front checks
+now scale with wavelength and still reject an infinite stripe. Wave stability,
+steering, fleet handling, connected campaign progression and the full battle
+simulation pass. Pixel checks preserve displaced waterlines, visible foam in
+troughs, and solid hull, harbor and bank occlusion. Desktop packaging checks pass.
+Desktop and landscape-phone WebGL and Canvas checks pass, including CPU/shader
+agreement, frozen pause pixels and graphics recovery during combat.
