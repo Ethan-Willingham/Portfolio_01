@@ -6,7 +6,7 @@ const server=http.createServer((req,res)=>{const file=path.resolve(root,'.'+new 
 let browser;const errors=[];
 (async()=>{
   await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port;
-  browser=await(isWebkit?webkit.launch({headless:true}):chromium.launch({headless:true,executablePath:'/Users/ethan/.local/bin/agent-chrome-for-testing'}));
+  browser=await(isWebkit?webkit.launch({headless:true}):chromium.launch({headless:true,...(process.env.WIDEWAKE_CHROME?{executablePath:process.env.WIDEWAKE_CHROME}:{})}));
   const p=await browser.newPage({viewport:{width:1280,height:720}});p.on('pageerror',e=>errors.push(e.message));await p.goto(base+'/widewake-estuary.html?test');await p.waitForFunction(()=>window.__widewakeEstuary?.view.terrain.ready);
   const result=await p.evaluate(()=>{
     const v=__widewakeEstuary.view,g=v.gl;v.reduced=true;v.follow=false;v.camera.x=v.camera.y=0;

@@ -12,7 +12,7 @@ async function inspectAtlas(p,hook){return p.evaluate(hook=>{
 },hook);}
 (async()=>{
   await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port;
-  browser=await(isWebkit?webkit.launch({headless:true}):chromium.launch({headless:true,executablePath:'/Users/ethan/.local/bin/agent-chrome-for-testing'}));
+  browser=await(isWebkit?webkit.launch({headless:true}):chromium.launch({headless:true,...(process.env.WIDEWAKE_CHROME?{executablePath:process.env.WIDEWAKE_CHROME}:{})}));
   const context=await browser.newContext({viewport:{width:1440,height:900}}),p=await context.newPage();p.on('pageerror',e=>errors.push(e.message));
   await p.goto(base+'/widewake-battle.html?test&population=0');await p.waitForFunction(()=>window.__widewakeBattle?.view.atlas);const atlas=await inspectAtlas(p,'__widewakeBattle');assert.equal(atlas.error,0);assert.ok(atlas.bytes<32*1048576);for(const frame of atlas.frames){assert.ok(frame.visible>5,JSON.stringify(frame));assert.equal(frame.border,0,JSON.stringify(frame));}reports.push({scene:'battle',...atlas});
   check('every ship direction has visible, unclipped pixels; the atlas stays below 32 MiB');

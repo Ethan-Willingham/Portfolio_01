@@ -255,3 +255,28 @@ remain required. Physical mobile hardware still needs direct validation.
 The shared sea, faster handling, wake pressure and water appearance now follow
 [WIDEWAKE_WAVES.md](WIDEWAKE_WAVES.md). That document records the physical model,
 bounded rendering, regression checks and remaining device validation.
+
+## Nearby hull detail, v0.34.0
+
+The owner reported severe stair-stepping on the starter launch. At helm zoom
+the eight-pixel-per-metre directional bake was enlarged beyond its source
+resolution, including during the sprite's wave tilt. Nearby friendly hulls now
+draw directly from their original model geometry, with stored face normals,
+the existing nautical materials, display-resolution multisampling where
+available, and actual pitch and roll transforms. The launch is 543 triangles.
+Geometry buffers are prepared once, including after graphics recovery.
+
+Friendly hulls switch to geometry when their conservative projected size reaches
+56 raster pixels. Distant hulls retain the filtered directional atlas. Raiders
+always retain their instanced sprite path, with the same active population.
+Raster and texture budgets remain unchanged. The extra face-normal data is
+about 351 KiB for the full set of friendly hull models. Canvas fallback bakes
+the launch at 16 pixels per metre and other friendly boats at six, retaining its
+smooth sampling and simpler wave transform.
+
+`test-hull-detail-browser.cjs` compares the old sprite path and live geometry
+against a four-times supersampled model reference at helm and closer zoom,
+across five headings. Both comparison hulls must contribute visible pixels.
+It also checks the near/far selection and raider path. The existing atlas,
+motion, readability, waterline, wake, jumping and context-recovery suites remain
+the regression checks. Physical-phone performance still needs direct validation.

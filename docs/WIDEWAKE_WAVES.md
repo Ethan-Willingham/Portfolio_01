@@ -1,4 +1,4 @@
-# Widewake waves, v0.33.0
+# Widewake waves, v0.34.0
 
 Owner direction, 2026-10-21: waves are central to the game. Connect their
 appearance to boat handling, make boats substantially faster, and use the ocean
@@ -50,9 +50,10 @@ The former handling carried about 8 degrees. These are isolated flat-water
 measurements; wave forces also affect the live voyage. Vector navigation and
 autopilot keep their existing conservative steering response.
 
-Ship sprites incline with the sampled water plane and interpolate between physics
-steps. Their inclination is an affine approximation using the existing directional
-sprites. Gun mounts follow the inclined deck; floating salvage and raiders share
+Ship poses incline with the sampled water plane and interpolate between physics
+steps. Nearby friendly boats render their model geometry with pitch and roll.
+Distant hulls and Canvas use an affine approximation on directional sprites.
+Gun mounts follow the inclined deck; floating salvage and raiders share
 the sea's height. Enemy movement uses a staggered, lightweight wave response,
 independent of blast pressure. It allocates two fixed arrays rather than one
 physics body per raider.

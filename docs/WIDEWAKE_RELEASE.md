@@ -1934,3 +1934,24 @@ Wave stability, steering, fleet handling, navigation, connected campaign play
 and projectile contacts pass. Physical-phone performance remains unverified.
 The broader browser suite passes pause, CPU/shader agreement and graphics
 context restoration during combat. Desktop source staging and policy checks pass.
+
+## Crisp nearby boats, 2026-10-22 (v0.34.0)
+
+The owner supplied a close view of severe stair-stepping on the launch. Nearby
+friendly hulls now render from their original 3D models at display resolution,
+with stored face normals and multisampling where available. This removes the
+enlarged sprite pixels and gives wave pitch and roll an actual geometry
+transform. The hull models, scale, materials and physics are unchanged.
+
+Distant boats keep their filtered sprites, and the raider swarm keeps its
+existing instanced path. The extra normal data is about 351 KiB across the
+friendly hull models; buffers are built once. Canvas uses higher-resolution
+friendly boat bakes with smooth sampling.
+
+A pixel comparison covers five headings at helm and closer zoom against a
+supersampled model reference, requiring visible pixels from both hulls. The atlas,
+subpixel sprite motion, high-density raster budget, waterline and jumping
+browser checks pass. Physical-phone performance remains unverified.
+Readability passes across all headings, zoom stops, mixed fleets, desktop and
+landscape-phone viewports. The broader wave browser suite preserves paused
+pixels and graphics recovery during combat. Desktop packaging checks pass.

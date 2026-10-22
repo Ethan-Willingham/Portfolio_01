@@ -43,10 +43,10 @@ async function settle(page,hook){await page.waitForFunction(h=>{const v=window[h
 async function sceneHullPixels(page,hook){return page.evaluate(hook=>{
   const v=window[hook].view,g=v.gl;if(!g)return null;
   const read=()=>{const pixels=new Uint8Array(v.canvas.width*v.canvas.height*4);g.readPixels(0,0,v.canvas.width,v.canvas.height,g.RGBA,g.UNSIGNED_BYTE,pixels);return pixels;};
-  v.render(0);const full=read(),draw=v.atlas.draw,type=v.battle.player.type;
+  v.render(0);const full=read(),draw=v.atlas.draw,type=v.battle.player.type,batch=v.batches[type],drawMesh=batch.draw;
   let without;
-  try{v.atlas.draw=function(name,batch){return name===type?0:draw.call(this,name,batch);};v.render(0);without=read();}
-  finally{v.atlas.draw=draw;v.render(0);}
+  try{v.atlas.draw=function(name,batch){return name===type?0:draw.call(this,name,batch);};batch.draw=()=>0;v.render(0);without=read();}
+  finally{v.atlas.draw=draw;batch.draw=drawMesh;v.render(0);}
   let pixels=0;for(let i=0;i<full.length;i+=4)if(Math.abs(full[i]-without[i])+Math.abs(full[i+1]-without[i+1])+Math.abs(full[i+2]-without[i+2])>12)pixels++;
   return{type,pixels,error:g.getError()};
 },hook);}
