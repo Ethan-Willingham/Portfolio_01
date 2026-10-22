@@ -1825,3 +1825,29 @@ connected Reach progression, pressure, projectiles and the full 180-second
 desktop and landscape phone sizes, visible ride distance, spray, shader parity,
 pause and context recovery. Mobile checks use emulated viewports; physical
 device performance and the owner's final assessment of handling remain open.
+
+## Broken swells and readable foam, 2026-10-22 (v0.30.0)
+
+The owner rejected the long diagonal water bands, disappearing wake sections
+and expanding circular wake crests. Six crossing wave packets now vary along
+their fronts, forming rounded, uneven swells. Face lighting and sky reflection
+describe their volume. The boat physics and shader share this field, including
+its envelope derivatives and smooth height bound. Existing carried steering,
+countersteering and faster hull speeds remain intact.
+
+Circular wake rendering is removed. Physical wake disturbances still affect
+nearby boats, while the visible trail uses continuous churned foam with softer
+edges and restrained spreading. Terrain water no longer writes the old flat
+sea-level depth, which was hiding foam in troughs. Banks, hulls and buildings
+retain depth occlusion. Canvas trails use shared endpoints and soft strips
+without adding extra wave probes per segment.
+
+Desktop and landscape-phone browser scenes pass in WebGL and Canvas, including
+shader parity, visible hull riding, pause and context restoration. A new pixel
+regression verifies positive and negative wave-height foam against a reference
+without depth testing, then verifies real hull, building and bank occlusion.
+Wave math, sustained hull stability, driving, fleet handling, channel navigation,
+connected Reach progression, projectiles and water-pressure checks pass. Fleet
+station tests now check idle helm decisions separately from bounded passive
+wave drift. The full three-minute 16,384-raider battle and desktop packaging
+checks pass. Physical-phone performance remains unverified.

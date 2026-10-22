@@ -320,26 +320,28 @@
       float exposure=seaExposure(p,depth,salt,uOpenSea);
       vec2 drift=current*time*.45;
       float broad=texture(uNoise,p*.0018).r,grain=texture(uNoise,(p-drift)*.037).g;
-      vec3 offshore=vec3(.033,.145,.235),coastal=vec3(.052,.255,.315),river=vec3(.075,.235,.235);
+      vec3 offshore=vec3(.038,.165,.235),coastal=vec3(.058,.275,.305),river=vec3(.075,.235,.235);
       float shelf=exp(-max(depth,0.)*.075);
       vec3 base=mix(offshore,coastal,shelf*.8+.12);base=mix(river,base,salt);
       base*=.90+broad*.18;
       float bottom=exp(-max(depth,0.)*.62);
       base=mix(base,vec3(.23,.39,.32)+grain*.035,bottom*.72);
       vec3 normal=normalize(vec3(-wave.y,-wave.z,1.));
-      float face=dot(normal,normalize(vec3(-.6,-.8,.9)));
-      float lift=wave.x/(.25+exposure*2.4);
-      vec3 result=base*(.72+face*.36+lift*.18);
-      // Long luminous shoulders describe the swell, with quiet troughs between.
-      result+=vec3(.035,.095,.12)*smoothstep(-.03,.29,-wave.y-wave.z)*exposure;
-      float reflection=pow(max(0.,dot(normal,normalize(vec3(.10,.16,1.)))),110.);
+      float face=max(0.,dot(normal,normalize(vec3(-.45,-.65,.8))));
+      float lift=wave.x/(.5+exposure*3.2);
+      // Lit faces and reflected sky give each short swell a rounded shoulder.
+      // Height tint stays weak: a crest must not become a bright diagonal band.
+      float sky=pow(max(0.,dot(normal,normalize(vec3(.32,.18,1.)))),10.);
+      vec3 result=base*(.52+face*.67+lift*.045);
+      result+=vec3(.045,.10,.125)*sky*(.3+exposure*.7);
+      float reflection=pow(max(0.,dot(normal,normalize(vec3(-.10,-.22,1.)))),85.);
       float glitter=texture(uNoise,(p-drift)*.065+vec2(time*.007,0.)).r;
       result+=vec3(.16,.24,.25)*reflection*(.06+.12*smoothstep(.55,.82,glitter))*smoothstep(.1,1.,zoom)*uDetailMotion;
       // Foam breaks into short uneven crests, never a screen-aligned grid.
       float crest=wave.x/(.15+exposure*2.55),aa=max(fwidth(crest),.015);
       float broken=texture(uNoise,p*.004+vec2(time*.0009,-time*.0005)).b;
       float lace=texture(uNoise,p*.018+vec2(time*.001,-time*.0007)).r;
-      float foam=smoothstep(.85-aa,1.06+aa,crest)*smoothstep(.30,.68,broken)*(.45+.55*lace)*exposure*.42;
+      float foam=smoothstep(.70-aa,1.08+aa,crest)*smoothstep(.46,.74,broken)*(.25+.75*lace)*exposure*.44;
       result=mix(result,vec3(.70,.85,.82),foam);
       float fine=texture(uNoise,(p-drift)*vec2(.11,.17)+vec2(time*.012,-time*.009)).r;
       result+=vec3(.018,.032,.035)*(fine-.5)*smoothstep(.4,2.,zoom);
@@ -357,7 +359,7 @@
       for(let id=0;id<this.limit;id++){
         const t=this.tracks[id],s=ships[id],p=poses[id];if(!s||!p||s.hp<=0){t.count=0;continue;}
         const c=Math.cos(p.angle),sn=Math.sin(p.angle),x=p.x-c*s.length*.38,y=p.y-sn*s.length*.38,speed=Math.hypot(s.vx,s.vy);
-        t.width=s.width*.42;t.spread=.3+s.speed*.14;t.liveX=x;t.liveY=y;t.liveTime=time;t.livePower=Math.min(1,speed/(s.speed*.8));
+        t.width=s.width*.40;t.spread=.25+Math.sqrt(s.speed)*.20;t.liveX=x;t.liveY=y;t.liveTime=time;t.livePower=Math.min(1,speed/(s.speed*.8));
         const previous=(t.head+127)%128;
         if(time<t.last||t.count&&Math.hypot(x-t.x[previous],y-t.y[previous])>Math.max(40,s.length*2)){t.count=0;t.last=-1;}
         while(t.count&&time-t.time[(t.head-t.count+128)%128]>this.life)t.count--;
@@ -386,7 +388,7 @@
           const i=(t.head-t.count+n+128)%128,next=Math.min(t.count,n+stride),live=next===t.count,j=(t.head-t.count+next+128)%128;
           const x=t.x[i],y=t.y[i],ex=live?t.liveX:t.x[j],ey=live?t.liveY:t.y[j],endTime=live?t.liveTime:t.time[j],age=now-t.time[i],endAge=now-endTime;
           if(age>=this.life||endTime-t.time[i]>.5||Math.hypot(ex-x,ey-y)<.04)continue;
-          this.tangent(t,n,this.startNormal);this.tangent(t,next,this.endNormal);const left=this.startNormal,right=this.endNormal,width=Math.min(left[2],t.width+age*t.spread*t.power[i]**2),endWidth=Math.min(right[2],t.width+endAge*t.spread*(live?t.livePower:t.power[j])**2);
+          this.tangent(t,n,this.startNormal);this.tangent(t,next,this.endNormal);const left=this.startNormal,right=this.endNormal,width=Math.min(left[2],t.width+Math.max(0,age)**.72*t.spread*t.power[i]**2),endWidth=Math.min(right[2],t.width+Math.max(0,endAge)**.72*t.spread*(live?t.livePower:t.power[j])**2);
           if(!view.visible((x+ex)*.5,(y+ey)*.5,(Math.hypot(ex-x,ey-y)+width)*scale+2))continue;
           const alpha=t.power[i]*Math.pow(Math.max(0,1-age/this.life),1.5)*Math.min(1,n/6),endAlpha=(live?t.livePower:t.power[j])*Math.pow(Math.max(0,1-endAge/this.life),1.5)*Math.min(1,next/6);
           emit(x,y,ex,ey,width,endWidth,alpha,endAlpha,left[0],left[1],right[0],right[1]);
@@ -412,8 +414,17 @@
           if(!wet(1)){if(!wet(0))return;let lo=0,hi=1;for(let n=0;n<6;n++){const mid=(lo+hi)/2;if(wet(mid))lo=mid;else hi=mid;}w*=lo;ew*=lo;}
         }
         const left=surface(x+nx*w,y+ny*w),right=surface(x-nx*w,y-ny*w),endLeft=surface(ex+enx*ew,ey+eny*ew),endRight=surface(ex-enx*ew,ey-eny*ew),opacity=(a+ea)*.5;
-        c.fillStyle='#83b9c0';c.globalAlpha=opacity*.22;c.beginPath();c.moveTo(left.x,left.y);c.lineTo(endLeft.x,endLeft.y);c.lineTo(endRight.x,endRight.y);c.lineTo(right.x,right.y);c.closePath();c.fill();
-        c.strokeStyle='#b0d3d2';c.globalAlpha=opacity*.50;c.lineWidth=Math.max(.65,view.zoom*view.baseScale*.18);c.beginPath();c.moveTo(left.x,left.y);c.lineTo(endLeft.x,endLeft.y);c.moveTo(right.x,right.y);c.lineTo(endRight.x,endRight.y);c.stroke();count++;
+        // Shared projected endpoints keep the feathering continuous through
+        // bends. Interpolate eight soft strips from four surface samples;
+        // a separate linear gradient per segment would leave stair-step seams.
+        c.fillStyle='#c0dfdc';
+        for(let band=8;band>0;band--){const inset=(1-band/8)*.5;
+          c.globalAlpha=opacity*.085;c.beginPath();
+          c.moveTo(left.x+(right.x-left.x)*inset,left.y+(right.y-left.y)*inset);
+          c.lineTo(endLeft.x+(endRight.x-endLeft.x)*inset,endLeft.y+(endRight.y-endLeft.y)*inset);
+          c.lineTo(endRight.x+(endLeft.x-endRight.x)*inset,endRight.y+(endLeft.y-endRight.y)*inset);
+          c.lineTo(right.x+(left.x-right.x)*inset,right.y+(left.y-right.y)*inset);c.closePath();c.fill();
+        }count++;
       });c.restore();view.stats.wakeSegments=count;
     }
   }
@@ -423,7 +434,7 @@
     void main(){uv=aPosition*.5+.5;vec2 p=mix(aWorld.xy,aWorld.zw,uv.x)+mix(aPose.xy,aPose.zw,uv.x)*aPosition.y;world=p+uCamera;opacity=mix(aFade.x,aFade.y,uv.x);vec2 water=mix(aWater.xy,aWater.zw,uv.x);wetDepth=water.x;float z=waveSurface(world,uTime,water.x,water.y,uOpenSea).x+.05;vec2 screen=vec2((p.x-p.y)*.70710678,(p.x+p.y)*.35355339-z*.8660254)*uZoom;gl_Position=vec4(screen.x/uSize.x*2.,-screen.y/uSize.y*2.,clamp(-((p.x+p.y)*.6123724+z*.5)/20000.,-.99,.99),1.);}`;
   const wakeFragment=`#version 300 es
     precision highp float;in vec2 uv;in vec2 world;in float opacity;in float wetDepth;uniform sampler2D uNoise;uniform float uTime;out vec4 color;
-    void main(){if(wetDepth<.3)discard;float y=abs(uv.y*2.-1.);float coarse=texture(uNoise,world*.003+vec2(uTime*.0008,0.)).g;float foam=texture(uNoise,world*.012+vec2(uTime*.0015,0.)).r;float edge=exp(-pow((y-.62-coarse*.16)*7.,2.))*smoothstep(.20,.65,coarse);float churn=exp(-y*y*4.)*smoothstep(.18,.76,foam)*(.4+coarse*.6);float alpha=(edge*.65+churn*.65)*(1.-smoothstep(.8,1.,y))*opacity;if(alpha<.008)discard;color=vec4(.70,.86,.86,alpha);}`;
+    void main(){if(wetDepth<.3)discard;float coarse=texture(uNoise,world*.003+vec2(uTime*.0008,0.)).g;float foam=texture(uNoise,world*.012+vec2(uTime*.0015,0.)).r;float y=abs(uv.y*2.-1.+(coarse-.5)*.18);float core=exp(-y*y*3.2);float feather=1.-smoothstep(.52+coarse*.15,1.,y);float churn=.34+foam*.40+coarse*.22;float alpha=core*feather*churn*opacity;if(alpha<.008)discard;color=vec4(.73,.88,.87,alpha);}`;
   class WaterMotion{
     constructor(view){this.view=view;const gl=view.gl,O=root.WidewakeOcean,vertices=[];
       // Subdivide each ribbon across its width so expanding foam conforms to

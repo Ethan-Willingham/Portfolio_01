@@ -1,16 +1,18 @@
-# Widewake waves, v0.29.0
+# Widewake waves, v0.30.0
 
 Owner direction, 2026-10-21: waves are central to the game. Connect their
 appearance to boat handling, make boats substantially faster, and use the ocean
 to communicate scale and movement. Improve the water's entire color treatment.
 
-`js/widewake-waves.js` owns the physical field. Its four metre-scale wave bands
-also generate the GLSL used by `js/widewake-ocean-art.js`. Wavelengths span 7.5
-to 84 metres. Different directions, periods and gently curved fronts prevent
-the surface from moving as one flat texture. Physics and drawing use simulation
-time, so pause, background inactivity and context recovery do not advance waves.
-The second pass raises the long swell from 1.15 to 2.05 metres of amplitude and
-the crossing band from 0.48 to 0.82 metres. Channels retain a smaller response.
+`js/widewake-waves.js` owns the physical field. Six crossing wave packets also
+generate the GLSL used by `js/widewake-ocean-art.js`. Each front has a smooth
+envelope that varies across the crest and bends with slower group motion.
+This breaks the long diagonal bands into shorter, rounded swells. Analytic
+gradients include both the envelope and its bending, so the hulls follow the
+same shaped water seen on screen. A smooth height limit bounds constructive
+interference without clipped peaks. Physics and drawing use simulation time,
+so pause, background inactivity and context recovery do not advance waves.
+Channels retain a smaller response.
 
 Open water carries the strongest swell. The same depth and salinity inputs used
 by terrain reduce it in channels and toward dry banks. This is an authored,
@@ -61,11 +63,15 @@ Each hull excludes its own wake from its buoyancy probes. Hostile boats sample
 ambient waves only, keeping the endgame load bounded. Existing twelve-second
 foam trails retain turns and stopping history independently of this pressure.
 
-`js/widewake-wave-view.js` draws the physical wake crests in one bounded batch,
-clips them at dry banks and supplies the Canvas sea. Open water uses deep blue,
-coastal water shifts toward teal, and river water stays greener. Surface normals,
-curved wave shoulders, sparse foam, quieter reflections and shallow bottom color
-provide movement cues at world scale. There is no screen-space scrolling overlay.
+The owner rejected the diagonal bands and expanding wake circles on 2026-10-22.
+Physical wake packets now remain invisible. The visible wake is a continuous
+trail of churned foam, with soft irregular edges and slower lateral spreading.
+It follows turns and rides the surface without concentric rings or bright
+outlines. `js/widewake-wave-view.js` supplies bounded bow spray and the Canvas
+sea. Open water uses deep blue, coastal water shifts toward teal, and river water
+stays greener. Light on the rounded faces, reflected sky and broken foam give
+the swells volume. Height tint stays weak so it cannot paint luminous bands.
+There is no screen-space scrolling overlay.
 Reduced motion removes decorative glitter while retaining essential wave motion
 and physical hull response. Canvas uses the same heights and forces with simpler
 shading and translucent wake ribbons. Foam trails and hull shadows now follow
@@ -73,9 +79,13 @@ the displaced water. WebGL trail ribbons are subdivided across their width to
 conform to curved swells. Bounded spray fans sit outside the bow shoulders,
 respond to speed and downward hull motion, and clip at dry banks. Canvas uses
 single tapered ribbons so overlapping segment ends do not form bright beads.
+Terrain water fragments use far-plane depth: the old flat mesh at zero metres
+must not hide displaced foam and hulls in troughs. Land retains real depth,
+and the existing opaque hull and building depth still occludes the foam.
 
-The physical wake buffers use 25,152 bytes. The wake drawing buffer has a fixed
-8,192-segment ceiling. Rendering limits never reduce physical forces or combat
+The physical wake buffers use 25,152 bytes. The spray drawing buffer has a fixed
+8,192-segment ceiling, with at most 32 segments per friendly hull. Persistent
+foam uses the existing 3,120-segment buffer. Rendering limits never reduce physical forces or combat
 damage. The existing session-only policy remains: no save controls or storage
 writes are restored. Dormant snapshot helpers retain bounded wave state so
 deterministic regression tests can resume it exactly.
@@ -87,11 +97,14 @@ deterministic regression tests can resume it exactly.
   expiration, finite buffers, flat-water control and faster player hulls.
 - `node tools/widewake/test-waves-browser.cjs`: real WebGL and Canvas scenes at
   1440 by 900 and 844 by 390, CPU/GPU wave parity, frozen pause pixels, moving
-  hull poses, wake crests, bow spray and graphics-context restoration during
+  hull poses, foam trails, absence of circular wake crests, bow spray and graphics-context restoration during
   endgame combat. The fast launch must show at least 18 pixels of vertical
   travel and 4 pixels of bow inclination at its actual helm zoom.
   Uses Playwright's own cached headless browser. `WIDEWAKE_CHROME` can select an
   explicit testing executable; never point it at a personal browser profile.
+- `node tools/widewake/test-wake-visibility-browser.cjs`: actual foam pixels at
+  positive and negative wave heights, opaque hull and harbor-building occlusion,
+  and dry-bank depth. A depth-disabled reference reveals any hidden trough foam.
 - Existing driving, fleet handling, projectile, water-pressure, connected campaign
   and full 16,384-raider battle checks remain regression coverage. Pressure-only
   tests explicitly use flat water to isolate blast integration. Holding-station

@@ -3,21 +3,32 @@
   'use strict';
   const TAU=Math.PI*2,clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
   const smooth=(a,b,v)=>{const t=clamp((v-a)/(b-a),0,1);return t*t*(3-2*t);};
-  // Long swell, crossing sea, wind waves and short chop. The same coefficients
-  // generate the shader below, so painted crests and buoyancy cannot diverge.
+  // Crossing packets have short, rounded crests. Their cross-wave envelopes
+  // bend and drift with slower group motion instead of spanning the whole sea.
+  // The same coefficients generate the shader and its analytic surface normals.
   const bands=Object.freeze([
-    {length:84,amplitude:2.05,angle:-2.12,phase:.7},
-    {length:38,amplitude:.82,angle:-1.76,phase:2.4},
-    {length:17,amplitude:.21,angle:-2.86,phase:4.1},
-    {length:7.5,amplitude:.045,angle:-1.35,phase:1.2}
-  ].map(b=>Object.freeze({...b,k:TAU/b.length,omega:Math.sqrt(9.81*TAU/b.length),x:Math.cos(b.angle),y:Math.sin(b.angle)})));
+    {length:72,amplitude:2.4,angle:-3.8,phase:.7,crestLength:137},
+    {length:49,amplitude:1.6,angle:-.5,phase:2.4,crestLength:101},
+    {length:33,amplitude:1.0,angle:-1.15,phase:4.1,crestLength:64},
+    {length:22,amplitude:.45,angle:-2.9,phase:1.2,crestLength:48},
+    {length:13,amplitude:.25,angle:-3.6,phase:3.5,crestLength:28},
+    {length:8,amplitude:.08,angle:-.8,phase:5.3,crestLength:18}
+  ].map(b=>Object.freeze({...b,k:TAU/b.length,crossK:TAU/b.crestLength,omega:Math.sqrt(9.81*TAU/b.length),x:Math.cos(b.angle),y:Math.sin(b.angle)})));
   function exposure(x,y,depth=22,salt=1,open=false){return smooth(.3,2.4,depth)*(.20+.80*(open?1:smooth(700,1800,y))*smooth(3,16,depth))*(.75+.25*salt);}
   function sample(x,y,time,depth=22,salt=1,open=true,out={}){
     const e=exposure(x,y,depth,salt,open);let h=0,dx=0,dy=0,vz=0,vx=0,vy=0;
-    for(const b of bands){const cross=(-b.y*x+b.x*y)*.009+b.phase*2,warp=.55*Math.sin(cross),bend=.00495*Math.cos(cross),p=b.k*(b.x*x+b.y*y)+warp-b.omega*time+b.phase,s=Math.sin(p),c=Math.cos(p),c2=Math.cos(2*p),a=b.amplitude*e;
-      h+=a*(s+.16*Math.sin(2*p));const slope=a*(c+.32*c2);dx+=slope*(b.k*b.x-bend*b.y);dy+=slope*(b.k*b.y+bend*b.x);vz-=a*b.omega*(c+.32*c2);vx+=a*b.omega*s*b.x;vy+=a*b.omega*s*b.y;
+    for(const b of bands){
+      const along=b.x*x+b.y*y,across=-b.y*x+b.x*y,group=along*b.k*.31-time*b.omega*.19+b.phase*2.7,groupCos=Math.cos(group),cross=across*b.crossK+.75*Math.sin(group)-time*b.omega*.11+b.phase*1.3;
+      const sx=Math.sin(cross),cx=Math.cos(cross),crossX=-b.y*b.crossK+.75*groupCos*b.k*.31*b.x,crossY=b.x*b.crossK+.75*groupCos*b.k*.31*b.y,crossT=-b.omega*(.11+.75*.19*groupCos);
+      const phase=along*b.k+.40*sx-time*b.omega+b.phase,s=Math.sin(phase),c=Math.cos(phase),shape=s+.40*s*c,slope=c+.40*(2*c*c-1),lobe=.5+.5*cx,envelope=.14+1.16*lobe*lobe,envelopeSlope=-1.16*lobe*sx;
+      const phaseX=b.k*b.x+.40*cx*crossX,phaseY=b.k*b.y+.40*cx*crossY,phaseT=-b.omega+.40*cx*crossT,a=b.amplitude;
+      h+=a*envelope*shape;dx+=a*(envelopeSlope*crossX*shape+envelope*slope*phaseX);dy+=a*(envelopeSlope*crossY*shape+envelope*slope*phaseY);vz+=a*(envelopeSlope*crossT*shape+envelope*slope*phaseT);
+      const orbital=a*envelope*b.omega*s/b.k;vx+=orbital*phaseX;vy+=orbital*phaseY;
     }
-    out.height=h;out.dx=dx;out.dy=dy;out.vz=vz;out.vx=vx;out.vy=vy;out.exposure=e;return out;
+    // A smooth, monotone limit bounds rare constructive packets without hard
+    // clipping. Apply its derivative to every slope and surface velocity.
+    const limit=1/Math.sqrt(1+h*h/16),derivative=limit*limit*limit,height=h*limit,shelter=clamp((y-700)/1100,0,1),ey=open?0:smooth(.3,2.4,depth)*.80*(6*shelter*(1-shelter)/1100)*smooth(3,16,depth)*(.75+.25*salt);
+    out.height=height*e;out.dx=dx*derivative*e;out.dy=dy*derivative*e+height*ey;out.vz=vz*derivative*e;out.vx=vx*limit*e;out.vy=vy*limit*e;out.exposure=e;return out;
   }
   const CAPACITY=384,LIFE=8;
   class Sea{
@@ -89,7 +100,10 @@
     uniform float uSeaStrength;
     float seaExposure(vec2 p,float depth,float salt,float openSea){return smoothstep(.3,2.4,depth)*(.20+.80*mix(smoothstep(700.,1800.,p.y),1.,openSea)*smoothstep(3.,16.,depth))*(.75+.25*salt);}
     vec3 waveSurface(vec2 p,float time,float depth,float salt,float openSea){vec3 q=vec3(0.);float e=seaExposure(p,depth,salt,openSea)*uSeaStrength;
-      ${bands.map(b=>`{vec2 d=vec2(${f(b.x)},${f(b.y)});float crossPhase=dot(p,vec2(-d.y,d.x))*.009+${f(b.phase*2)},bend=.00495*cos(crossPhase),p0=dot(p,d)*${f(b.k)}+.55*sin(crossPhase)-time*${f(b.omega)}+${f(b.phase)},a=${f(b.amplitude)}*e;q.x+=a*(sin(p0)+.16*sin(2.*p0));q.yz+=(d*${f(b.k)}+vec2(-d.y,d.x)*bend)*a*(cos(p0)+.32*cos(2.*p0));}`).join('\n')}
+      ${bands.map(b=>`{vec2 d=vec2(${f(b.x)},${f(b.y)}),n=vec2(-d.y,d.x);float along=dot(p,d),groupPhase=along*${f(b.k*.31)}-time*${f(b.omega*.19)}+${f(b.phase*2.7)},groupCos=cos(groupPhase),crossPhase=dot(p,n)*${f(b.crossK)}+.75*sin(groupPhase)-time*${f(b.omega*.11)}+${f(b.phase*1.3)},sx=sin(crossPhase),cx=cos(crossPhase),phase=along*${f(b.k)}+.40*sx-time*${f(b.omega)}+${f(b.phase)},s=sin(phase),c=cos(phase),shape=s+.40*s*c,slope=c+.40*(2.*c*c-1.),lobe=.5+.5*cx,envelope=.14+1.16*lobe*lobe,envelopeSlope=-1.16*lobe*sx,a=${f(b.amplitude)};vec2 crossGrad=n*${f(b.crossK)}+.75*groupCos*${f(b.k*.31)}*d,phaseGrad=d*${f(b.k)}+.40*cx*crossGrad;q.x+=a*envelope*shape;q.yz+=a*(envelopeSlope*crossGrad*shape+envelope*slope*phaseGrad);}`).join('\n')}
+      float softLimit=inversesqrt(1.+q.x*q.x/16.);q.yz*=softLimit*softLimit*softLimit;q.x*=softLimit;
+      float shelter=clamp((p.y-700.)/1100.,0.,1.),ey=smoothstep(.3,2.4,depth)*.80*(1.-openSea)*(6.*shelter*(1.-shelter)/1100.)*smoothstep(3.,16.,depth)*(.75+.25*salt)*uSeaStrength;
+      q.yz*=e;q.z+=q.x*ey;q.x*=e;
       return q;
     }
   `;

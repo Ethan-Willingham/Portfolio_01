@@ -2,8 +2,20 @@ const assert=require('node:assert/strict');
 const W=require('../../js/widewake-waves.js'),B=require('../../js/widewake-battle-core.js'),E=require('../../js/widewake-estuary-core.js'),R=require('../../js/widewake-reach-game.js');
 const dt=1/60;
 // Analytic gradients and surface velocity agree with finite differences.
-for(let n=0;n<50;n++){const x=n*7.13,y=n*-11.6,t=n*.31,q=W.sample(x,y,t),e=.0001;assert.ok(Math.abs((W.sample(x+e,y,t).height-W.sample(x-e,y,t).height)/(2*e)-q.dx)<1e-6);assert.ok(Math.abs((W.sample(x,y+e,t).height-W.sample(x,y-e,t).height)/(2*e)-q.dy)<1e-6);assert.ok(Math.abs((W.sample(x,y,t+e).height-W.sample(x,y,t-e).height)/(2*e)-q.vz)<1e-6);}
-const field=new E.Field(),sea=new W.Sea(field);let sheltered=0,open=0;for(let n=0;n<300;n++){sheltered+=sea.at(-550,600,n*.1).height**2;open+=sea.at(0,2200,n*.1).height**2;}assert.ok(open>sheltered*20);assert.equal(W.sample(0,0,1,-1).height,0);console.log('PASS coherent derivatives, dry land and sheltered water');
+for(const ocean of [true,false])for(let n=0;n<50;n++){const x=n*7.13,y=ocean?n*-11.6:700+n*22,t=n*.31,at=(x,y,t)=>W.sample(x,y,t,22,.7,ocean),q=at(x,y,t),e=.0001;assert.ok(Math.abs((at(x+e,y,t).height-at(x-e,y,t).height)/(2*e)-q.dx)<1e-6);assert.ok(Math.abs((at(x,y+e,t).height-at(x,y-e,t).height)/(2*e)-q.dy)<1e-6);assert.ok(Math.abs((at(x,y,t+e).height-at(x,y,t-e).height)/(2*e)-q.vz)<1e-6);}
+const field=new E.Field(),sea=new W.Sea(field);let sheltered=0,open=0;for(let n=0;n<300;n++){sheltered+=W.sample(-550,600,n*.1,22,1,false).height**2;open+=W.sample(-550,600,n*.1,22,1,true).height**2;}assert.ok(open>sheltered*20,'the same wave packet loses energy in shelter');assert.ok(sea.at(-550,600).exposure<.3&&sea.at(0,2200).exposure>.9);assert.equal(W.sample(0,0,1,-1).height,0);console.log('PASS coherent packet/envelope/time derivatives, dry land and sheltered water');
+// The old long stripes remained >92% correlated when shifted 24 m along their
+// crests. Check all headings so changing the stripe direction cannot pass.
+let crestCorrelation=-1;
+for(let direction=0;direction<24;direction++){
+  const angle=direction*Math.PI/24,dx=Math.cos(angle)*24,dy=Math.sin(angle)*24;let sumA=0,sumB=0,aa=0,bb=0,ab=0,n=0;
+  for(let y=-240;y<=240;y+=24)for(let x=-240;x<=240;x+=24){const a=W.sample(x,y,7.3).height,b=W.sample(x+dx,y+dy,7.3).height;sumA+=a;sumB+=b;aa+=a*a;bb+=b*b;ab+=a*b;n++;}
+  crestCorrelation=Math.max(crestCorrelation,(ab-sumA*sumB/n)/Math.sqrt((aa-sumA*sumA/n)*(bb-sumB*sumB/n)));
+}
+assert.ok(crestCorrelation<.7,'wavefronts break into finite spatial patches instead of unbroken parallel lines');
+let seaEnergy=0,seaSamples=0,minHeight=Infinity,maxHeight=-Infinity,projectionSlope=0;const sample={};
+for(let t=0;t<16;t++)for(let y=-600;y<=600;y+=24)for(let x=-600;x<=600;x+=24){W.sample(x,y,t*2.37,22,1,true,sample);seaEnergy+=sample.height**2;seaSamples++;minHeight=Math.min(minHeight,sample.height);maxHeight=Math.max(maxHeight,sample.height);projectionSlope=Math.max(projectionSlope,Math.abs(1.22474487*(sample.dx+sample.dy)));}
+const seaRms=Math.sqrt(seaEnergy/seaSamples);assert.ok(seaRms>1.2&&seaRms<1.9,'localized crests preserve the established ride energy');assert.ok(minHeight>-4&&maxHeight<4,'constructive packets cannot create runaway height');assert.ok(projectionSlope<.85,'representative sea faces remain invertible in the isometric water projection');console.log('PASS broken-front correlation, bounded sea energy and projection slopes',{crestCorrelation,seaRms,minHeight,maxHeight,projectionSlope});
 const boat=(spec,id=0)=>({...spec,id,x:100,y:2200,px:100,py:2200,angle:0,vx:0,vy:0,hp:100,hold:32,cargo:0});
 const extremes=[];
 for(const type of ['launch','gunboat','oilrig','flagship']){
@@ -30,4 +42,10 @@ require('../../js/widewake-ocean-art.js');const clipped=new WidewakeOceanArt.Wak
 clipped.segments=(view,emit)=>emit(0,0,10,0,9,9,.7,.7,0,1,0,1);
 const canvas={save(){},restore(){},beginPath(){},closePath(){},fill(){},stroke(){},moveTo(x,y){points.push({x,y});},lineTo(x,y){points.push({x,y});}};
 clipped.drawCanvas({fallback:canvas,battle:{sea:{field:{sample:(x,y,out)=>Object.assign(out,{depth:5-Math.abs(y)})},at:()=>({height:0})}},project:(x,y)=>({x,y}),zoom:1,baseScale:1,visualTime:1,stats:{}});
-assert.ok(points.length>4&&points.some(p=>Math.abs(p.y)>4));assert.ok(points.every(p=>Math.abs(p.y)<=4.7),'foam stays inside both dry banks');console.log('PASS Canvas expanding wake edges clip to channel water');
+assert.ok(points.length>=4&&points.some(p=>Math.abs(p.y)>4));assert.ok(points.every(p=>Math.abs(p.y)<=4.7),'foam stays inside both dry banks');console.log('PASS Canvas expanding wake edges clip to channel water');
+// The fast launch leaves a readable trail rather than an ocean-width fan.
+const trail=new WidewakeOceanArt.WakeTrail(),launch=boat({...E.vessels.launch,speed:36}),pose={x:0,y:2200,angle:0};launch.vx=36;
+for(let n=0;n<=80;n++){pose.x=n*3.6;trail.sample([launch],[pose],n*.1);}
+let trailSegments=0,sixSecondWidth=0,lastEnd=null;
+trail.segments({visualTime:8,zoom:2,baseScale:1,visible:()=>true,battle:{ships:[]}},(x,y,ex,ey,width)=>{trailSegments++;if(lastEnd!==null)assert.ok(Math.abs(x-lastEnd)<.001,'successive foam segments stay connected');lastEnd=ex;if(x>60&&x<78)sixSecondWidth=Math.max(sixSecondWidth,width);});
+assert.ok(trailSegments>60);assert.ok(sixSecondWidth>3&&sixSecondWidth<8,'six-second prop wash stays legible beside a six-metre launch');console.log('PASS continuous launch trail with restrained lateral spreading');

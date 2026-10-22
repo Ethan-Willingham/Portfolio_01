@@ -46,7 +46,7 @@ check('a sudden turn reaches individual crews over several beats, without synchr
 
 const battle=new C.Endgame({population:0}),fixed=battle.ships.slice(1).map(pose);
 step(battle,180,{x:1,y:0});
-for(const [i,s]of battle.ships.slice(1).entries())assert.ok(Math.hypot(s.x-fixed[i].x,s.y-fixed[i].y)<1,'holding crews allow wave drift but do not follow the circling captain');
+for(const [i,s]of battle.ships.slice(1).entries())assert.ok(s.onStation&&Math.hypot(s.x-fixed[i].x,s.y-fixed[i].y)<s.width*.1,'holding crews remain on station within a tenth of their beam while the captain sails away');
 battle.toggleWork();step(battle,900,{x:1,y:0});
 assert.ok(Math.hypot(battle.player.vx,battle.player.vy)>Math.max(...battle.ships.slice(1).map(s=>Math.hypot(s.vx,s.vy)))*1.2);
 assert.ok(new Set(battle.ships.slice(1,13).map(s=>s.followAnchor.x.toFixed(2))).size>=10);
@@ -55,8 +55,8 @@ for(let i=0;i<battle.ships.length;i++)assert.ok(Math.hypot(battle.ships[i].x-bef
 battle.toggleWork();step(battle,4200,{});
 assert.ok(battle.ships.filter(s=>s.working).every(s=>Math.hypot(s.x-battle.center.x-s.slot.x,s.y-battle.center.y-s.slot.y)<30));
 assert.ok(battle.produced.fish>0&&battle.produced.oil>0);
-const settled=battle.ships.slice(1).map(pose);step(battle,300,{x:-.1,y:.1});
-assert.ok(battle.ships.slice(1).every((s,i)=>Math.hypot(s.x-settled[i].x,s.y-settled[i].y)<.1),'station slack prevents constant small corrections');
+const settled=battle.ships.slice(1).map(pose);for(let n=0;n<300;n++){step(battle,1,{x:-.1,y:.1});assert.ok(battle.ships.slice(1).every(s=>s.onStation&&Math.hypot(s.helm.x,s.helm.y)<.01),'settled crews do not chase small wave-induced position errors');}
+assert.ok(battle.ships.slice(1).every((s,i)=>Math.hypot(s.x-settled[i].x,s.y-settled[i].y)<s.width*.25),'passive wave drift remains within a quarter of the hull beam');
 check('independent following positions, no jumps, held stations and working boats that catch up');
 
 const g=new R.Game();g.rank=4;g.coins=10000;assert.ok(g.hire('trawler'));assert.ok(g.hire('gunboat'));g.castOff();g.nextEncounter=1e9;
