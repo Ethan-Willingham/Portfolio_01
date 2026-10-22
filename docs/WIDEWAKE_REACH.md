@@ -299,7 +299,20 @@ Fleet separates owned boats from purchases. Available roles appear as progressio
 opens them; fittings and replacement hulls are separate views. The pause menu keeps
 settings folded until requested. Nested help returns to its parent menu.
 
-The sailing HUD keeps hull and depth together. Zoom is a labelled control with
+The sailing HUD keeps hull and depth together. A persistent north-up minimap
+occupies the upper right at sea, including endgame combat. It follows the player
+independently of camera pan and zoom. The map shows actual channel geometry,
+ports, available work grounds, hazards, fleet boats and nearby enemy density.
+A gold diamond identifies the active course or current objective, including at
+the map edge for distant destinations; its caption gives straight-line distance.
+The sailing map spans 2 km, while the open-water combat map spans 8 km. A scale
+bar and north arrow remain visible. It hides in port and on the title screen.
+Static geography is baked once at eight metres per pixel. Live marks refresh
+at most ten times per second inside the existing activity-controlled frame loop.
+Swarms use a fixed 1,024-cell grid; paused map pixels remain frozen. The map is a
+passive instrument and leaves the existing helm gestures and Chart action intact.
+
+Zoom is a labelled control with
 Close, Fleet and Wide choices on demand. Wheel, pinch and keyboard camera stops
 remain available. Chart and nearby dock/work actions occupy the lower right. All weapons fire
 automatically; do not add a manual fire action. The main-world scale lives on the chart, avoiding action overlaps on phones.
@@ -415,6 +428,7 @@ Earth-port backgrounds or restore the retired world.
 - `js/widewake-combat.js`: disposable endgame watch, loadout, fronts and repair drops.
 - `js/widewake-combat-view.js`: fleet camera, flagship pennant, workboat bars and ram lanes.
 - `js/widewake-reach-ui.js`: original interface marks, cargo art and vessel previews.
+- `js/widewake-minimap.js`: cached waterways and the persistent sailing minimap.
 - `js/widewake-estuary-core.js`: authored waterways, field and route clearance.
 - `js/widewake-estuary-view.js`, `js/widewake-estuary-worker.js`: bounded terrain,
   background route preparation and region overlays.

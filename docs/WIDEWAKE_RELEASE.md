@@ -1973,3 +1973,25 @@ launch-jump and swell-interval checks pass, as do browser checks for shader/CPU
 agreement, frozen pause pixels, waterline occlusion, wake visibility, Canvas
 fallback and graphics recovery during the full 16,384-raider endgame.
 Physical-phone performance and the owner's visual assessment remain open.
+
+## Persistent ocean minimap, 2026-10-22 (v0.36.0)
+
+The owner requested a minimap whenever sailing. A north-up instrument now follows
+the player through normal voyages and endgame combat, independently of the main
+camera. Shared channel geometry supplies shores and shallow banks. It shows the
+player heading, fleet, enemy density, ports, work grounds, physical hazards and
+the active course. The current objective provides a destination when no course
+is set. Distant destinations stay marked at the edge with a distance caption.
+
+A cached eight-metre chart avoids repeated terrain sampling. Live marks update
+at most ten times per second through the existing activity loop. A fixed
+1,024-cell density grid bounds swarm drawing. The map freezes on pause, hides
+in harbor and on the title, and leaves helm gestures and the full chart intact.
+
+Browser checks cover desktop, two landscape-phone sizes and Canvas fallback,
+including shared shoreline agreement, heading changes, map centering, cached
+geography, full-chart access, frozen pause pixels and all 16,384 combat raiders.
+The instrument fits without overlapping hull, pause, course or action controls.
+Physical-phone performance remains unverified.
+The broader interface check passes five phone layouts, harbor services, chart
+selection, nested menus and camera controls. Desktop staging and policy checks pass.
