@@ -10,7 +10,7 @@ const check=(name,ok=true)=>{assert.ok(ok,name);checks++;console.log('PASS '+nam
 const shot=(page,name)=>page.screenshot({path:path.join(dump,name+'.png')});
 const remaining=page=>page.evaluate(()=>OneShift.app.sim.receivingLoads().find(t=>t.id===OneShift.app.receiving.truckId).remaining);
 const headerFits=page=>page.evaluate(()=>{
-  const hud=document.querySelector('.shift-hud').getBoundingClientRect(),view=document.getElementById('shift-view').getBoundingClientRect();
+  const hud=document.querySelector('.shift-hud').getBoundingClientRect(),view=document.getElementById('shift-scenes').getBoundingClientRect();
   const controls=[...document.querySelectorAll('.shift-hud button')].filter(n=>n.getClientRects().length).map(n=>n.getBoundingClientRect());
   return controls.every((a,i)=>a.width>=44&&a.height>=44&&a.left>=hud.left-1&&a.right<=hud.right+1&&a.top>=hud.top-1&&a.bottom<=hud.bottom+1&&controls.slice(i+1).every(b=>a.right<=b.left+1||b.right<=a.left+1||a.bottom<=b.top+1||b.bottom<=a.top+1))&&hud.bottom<=view.top+1;
 });

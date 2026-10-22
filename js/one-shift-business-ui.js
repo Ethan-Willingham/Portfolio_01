@@ -140,7 +140,7 @@
   };
   P.renderHub=function(){const sim=this.app.sim,s=sim.s;if(!O.business(s))return legacy.renderHub.call(this);this.renderQueue();const tab=this.hubTab||'reports',evening=s.phase==='evening';el('hub').hidden=false;
     let html='<header><div class="shift-store-balance"><span>CASH</span><strong>'+O.money(s.cash/100)+'</strong></div><div class="shift-store-title"><p class="shift-kicker">DAY '+s.day+'</p><h2>'+(tab==='reports'?'Shift complete':'Store')+'</h2></div><button data-action="'+(evening?'next':'hub-close')+'" class="'+(evening?'primary':'')+'">'+(evening?'Day '+(s.day+1):'Back')+'</button></header>';
-    if(tab!=='reports')html+='<nav aria-label="Store sections">'+['shop','stock','people','build'].map(id=>'<button data-hub="'+id+'" aria-pressed="'+(tab===id)+'" '+(id==='people'&&!O.has(s,'forklift')?'disabled title="Unlock with a forklift"':'')+'>'+({stock:'Stock',shop:'Equipment',people:'Team',build:'Layout'})[id]+'</button>').join('')+'</nav>';
+    if(tab!=='reports')html+='<nav aria-label="Store sections">'+['shop','stock','people','build'].map(id=>'<button data-hub="'+id+'" aria-pressed="'+(tab===id)+'" '+(id==='people'&&!O.has(s,'forklift')?'disabled title="Unlock with a forklift"':'')+'>'+({stock:'Stock',shop:'Equipment',people:'Team',build:'Capacity'})[id]+'</button>').join('')+'</nav>';
     if(tab==='stock')html+='<div class="shift-business-stock-hub">'+this.businessStockHTML()+'</div>';
     else if(tab==='reports'){
       const r=s.reports.at(-1),today=s.commerce.orders.filter(o=>o.status==='complete'),sales=today.reduce((n,o)=>n+o.paid,0),cogs=s.commerce.orders.reduce((n,o)=>n+o.cogs,0),cost=s.journal.filter(e=>e.day===s.day&&e.cents<0&&!['Inventory','Purchases','Credit'].includes(e.category)).reduce((n,e)=>n-e.cents,0),profit=evening?r?.profit||0:sales-cogs-cost;
@@ -152,7 +152,7 @@
       html+='<div class="shift-grid">';for(const id of O.businessUpgrades){const e=O.equipment.find(e=>e.id===id),reason=O.purchaseReason(s,id),installed=reason==='Already installed.';html+='<article class="shift-card '+(reason?'is-locked':'')+'" data-equipment="'+id+'"><h3>'+e.name+'</h3><p>'+descriptions[id]+'</p>'+btn(installed?'Installed':'Buy / '+O.money(e.cost),'buy','data-id="'+id+'" '+(reason?'disabled':''),!reason)+(reason&&!installed?'<small>'+esc(reason)+'</small>':'<small class="shift-card-status">'+(installed?'':'Available')+'</small>')+'</article>';}html+='</div>';
     }else if(tab==='people'){
       html+='<div class="shift-grid">';for(const w of s.workers.slice(1))html+='<article class="shift-card"><h3>'+esc(w.name)+'</h3><p>'+O.money(w.wage)+' / day</p><button data-action="dismiss" data-id="'+w.id+'" '+(w.task&&!evening?'disabled':'')+'>Dismiss</button></article>';for(const [i,p]of O.staff.entries())html+='<article class="shift-card"><h3>'+esc(p.name)+'</h3><p>'+O.money(p.wage)+' / day</p><button data-action="hire" data-id="'+i+'" '+(!O.has(s,'forklift')||s.cash<7500?'disabled':'')+'>Hire / $75</button></article>';html+='</div>';
-    }else if(tab==='build')html+='<div class="shift-actions"><button data-action="build-rack">Rack / $55</button><button data-action="share">Copy layout</button></div><p id="shift-share-result"></p>';
+    }else if(tab==='build')html+='<p>Each rack adds two pallet positions. A clear aisle is kept for handling.</p><div class="shift-actions"><button data-action="business-buy" data-id="rack">Add rack / $55</button></div>';
     preserveHTML(el('hub'),html);
   };
   P.action=function(node){const app=this.app,sim=app.sim,s=sim.s,name=node.dataset.action;if(!O.business(s)||!name?.startsWith('business-')){const result=legacy.action.call(this,node);if(name==='new'&&node.dataset.id==='business'&&app.sim.s!==s)app.receiving?.attach(true);return result;}
@@ -160,11 +160,11 @@
     if(action==='surplus'){this.issue({type:'sellSurplus',item:node.dataset.item});this.businessTab='orders';}
     else if(action==='tab'||action==='need-stock'){this.businessTab=action==='need-stock'?'stock':node.dataset.id;this.queueOpen=true;if(action==='need-stock')this.stockItem=node.dataset.item;}
     else if(action==='size'){this.stockSize=id;if(app.hubPause)this.renderHub();}
-    else if(action==='fulfill')this.issue({type:'fulfill',order:id});
+    else if(action==='fulfill'){if(this.issue({type:'fulfill',order:id}).ok)app.scenes?.open('storage');}
     else if(action==='cancel')this.issue({type:'cancelOrder',order:id});
     else if(action==='priority')this.issue({type:'orderPriority',order:id,direction:Number(node.dataset.direction)});
     else if(action==='restock'){this.issue({type:'restock',item:node.dataset.item,count:Number(node.dataset.count)});if(app.hubPause)this.renderHub();}
-    else if(action==='buy'){this.issue({type:'buy',id:node.dataset.id});if(app.hubPause)this.renderHub();}
+    else if(action==='buy'){const r=node.dataset.id==='rack'?O.sceneBuyRack(sim):this.issue({type:'buy',id:node.dataset.id});if(!r.ok)this.toast(r.reason,true);if(app.hubPause)this.renderHub();}
     else if(action==='pause')app.paused=!app.paused;
     else if(action==='receiving')app.receiving?.open();
     else if(action==='putaway'){this.target={kind:'putaway',id};this.selected=[id];}
@@ -176,8 +176,8 @@
   P.settingsMenu=function(){const s=this.app.sim.s;if(!O.business(s))return legacy.settingsMenu.call(this);const d=el('settings');this.app.menuPause=true;
     let html='<header class="shift-menu-head"><h2 id="shift-settings-title">One Shift</h2><button class="primary" data-action="menu-close">Resume</button></header><label>Volume<input data-setting="volume" type="range" min="0" max="1" step=".05" value="'+this.settings.volume+'"></label><label>Interface<input data-setting="scale" type="range" min=".85" max="1.3" step=".05" value="'+this.settings.scale+'"></label><details><summary>Accessibility</summary><label>Reduced motion<input data-setting="reducedMotion" type="checkbox" '+(this.settings.reducedMotion?'checked':'')+'></label><label>Color marks<input data-setting="colorblind" type="checkbox" '+(this.settings.colorblind?'checked':'')+'></label></details><h3>Save game</h3>';
     for(let i=1;i<=3;i++){const info=O.saves.info(i);html+='<div class="shift-save-row"><span>'+i+' / '+(info?'Day '+info.day:'Empty')+'</span><button data-action="save" data-id="'+i+'">Save</button><button data-action="load" data-id="'+i+'" '+(!info?'disabled':'')+'>Load</button></div>';}
-    html+='<p class="shift-menu-note">Reload starts fresh. Load a save to continue.</p><details><summary>More</summary><div class="shift-menu-actions"><button data-action="export">Export</button><button data-action="import">Import</button><button data-action="new" data-id="business">New game</button></div><input type="file" id="shift-import" accept="application/json,.json" hidden><a href="archive.html">Leave game</a></details><details><summary>Controls</summary><p>Right-drag or WASD to pan. Wheel or + / - to zoom. Space to pause. Workers move for tasks.</p>';
-    for(const [action,key]of Object.entries(this.settings.keys))html+='<label>'+esc(action.replace(/([A-Z])/g,' $1').replace(/^./,s=>s.toUpperCase()))+'<input type="text" maxlength="12" data-key="'+esc(action)+'" value="'+esc(key)+'"></label>';
+    html+='<p class="shift-menu-note">Reload starts fresh. Load a save to continue.</p><details><summary>More</summary><div class="shift-menu-actions"><button data-action="export">Export</button><button data-action="import">Import</button><button data-action="new" data-id="business">New game</button></div><input type="file" id="shift-import" accept="application/json,.json" hidden><a href="archive.html">Leave game</a></details><details><summary>Controls</summary><p>Choose a floor scene along the bottom. Click or tap a pallet to inspect its stock and lot. Tab moves through targets; Enter selects. At the trailer, select a pallet and scan its label. Prepare an order to start picking. Space pauses; M opens Menu.</p>';
+    for(const [action,key]of Object.entries(this.settings.keys).filter(([action])=>['pause','menu','cancel'].includes(action)))html+='<label>'+esc(action.replace(/^./,s=>s.toUpperCase()))+'<input type="text" maxlength="12" data-key="'+esc(action)+'" value="'+esc(key)+'"></label>';
     d.innerHTML=html+'</details>';if(!d.open)d.showModal();d.querySelector('button').focus();
   };
   P.drawGuide=function(renderer){const s=this.app.sim.s;if(!O.business(s))return legacy.drawGuide?.call(this,renderer);

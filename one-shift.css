@@ -408,3 +408,40 @@
  .shift-business:has(#shift-receiving-open:not([hidden])) .shift-speed {grid-column:2/4;grid-row:2;justify-self:stretch;justify-content:center}
  .shift-business:has(#shift-receiving-open:not([hidden])) #shift-store {grid-column:4;grid-row:2}
 }
+
+/* Eye-level scenes replace the former map surface. */
+.shift-scene-mode {--shift-layout-left:16px!important;--shift-board-width:268px!important;--shift-board-gap:16px!important;--shift-view-top:88px!important;--shift-view-bottom:16px!important;--shift-scene-height:calc(100dvh - var(--shift-view-top) - var(--shift-view-bottom))!important}
+.shift-scene-mode #shift-canvas,.shift-scene-mode #shift-view,.shift-scene-mode .shift-bottom,.shift-scene-mode #shift-selection,.shift-scene-mode #shift-toolbar {display:none!important}
+body.shift-scene-mode .shift-hud {display:flex!important;top:0;left:16px;right:16px;height:78px!important;max-width:none;padding:0!important;gap:16px!important;z-index:4;background:var(--shift-paper);border-bottom:1px solid var(--rule);margin:0}
+.shift-scene-mode .shift-brand {flex:1;min-width:90px}
+.shift-scene-mode .shift-brand h1 {font-size:1.7rem}
+.shift-scene-mode .shift-brand p {font-size:.55rem;letter-spacing:.05em}
+.shift-scene-mode .shift-queue {z-index:3;right:var(--shift-layout-left);top:var(--shift-view-top);width:var(--shift-board-width);max-height:var(--shift-scene-height)}
+.shift-scene-mode .shift-queue[data-open="false"] {width:var(--shift-board-width)}
+.shift-scene-mode .shift-hub {z-index:8;background:var(--shift-paper);inset:var(--shift-view-top) 16px 16px}
+.shift-scene-mode #shift-toast {z-index:9;bottom:80px}
+.shift-scene-mode button {min-height:44px;min-width:44px}
+@media(max-width:1000px) {
+ .shift-scene-mode {--shift-board-width:220px!important;--shift-board-gap:10px!important;--shift-layout-left:10px!important;--shift-view-top:72px!important;--shift-view-bottom:8px!important}
+ body.shift-scene-mode .shift-hud {height:64px!important;left:10px;right:10px;gap:8px!important}
+ .shift-scene-mode .shift-brand h1 {font-size:1.4rem}
+ .shift-scene-mode .shift-brand p {display:none}
+ .shift-scene-mode .shift-clock output,.shift-scene-mode .shift-cash output {font-size:.9rem}
+ .shift-scene-mode #shift-menu,.shift-scene-mode #shift-store,.shift-scene-mode #shift-receiving-open {min-width:44px;padding:7px;font-size:.72rem}
+ .shift-scene-mode .shift-cash {min-width:48px}
+ .shift-scene-mode .shift-speed {padding:0;gap:0}
+ .shift-scene-mode .shift-speed button {padding:6px}
+ .shift-scene-mode .shift-opening-card {padding:14px;gap:12px 5px}
+ .shift-scene-mode .shift-opening-card h2 {font-size:1.4rem}
+ .shift-scene-mode .shift-opening-reward {font-size:1.05rem}
+}
+@media(max-width:740px) {
+ .shift-scene-mode {--shift-board-width:194px!important}
+ .shift-scene-mode .shift-speed [data-speed="2"] {display:none}
+ .shift-scene-mode .shift-brand {min-width:65px}
+ .shift-scene-mode .shift-brand h1 {font-size:1.12rem}
+ body.shift-scene-mode .shift-hud {gap:5px!important}
+ .shift-scene-mode .shift-clock span,.shift-scene-mode .shift-cash span {font-size:.5rem}
+ .shift-scene-mode .shift-clock output,.shift-scene-mode .shift-cash output {font-size:.8rem}
+ .shift-scene-mode .shift-opening-copy,.shift-scene-mode .shift-opening-status {font-size:.75rem}
+}

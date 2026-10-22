@@ -27,7 +27,7 @@
         <header class="receiving-header">
           <div class="receiving-wordmark">One Shift<span>THE RECEIVING DOCK</span></div>
           <div class="receiving-location"><span id="receiving-door">DOCK 01</span><strong id="receiving-trailer">Inbound freight</strong></div>
-          <nav aria-label="Receiving controls"><button id="receiving-pause" aria-pressed="false">Pause</button><button id="receiving-close">Warehouse</button></nav>
+          <nav aria-label="Receiving controls"><button id="receiving-pause" aria-pressed="false">Pause</button><button id="receiving-close">Receiving floor</button></nav>
         </header>
         <div class="receiving-stage">
           <canvas id="receiving-canvas" aria-hidden="true"></canvas>
@@ -143,7 +143,7 @@
       document.body.classList.remove('shift-at-dock');
       for(const [node,old]of this.inert||[])node.inert=old;
       this.inert=[];this.app.input?.suspend();
-      if(focus){const target=this.returnFocus?.isConnected&&!this.returnFocus.hidden&&!this.returnFocus.inert?this.returnFocus:document.getElementById('shift-canvas');target.focus({preventScroll:true});}
+      if(focus){this.app.scenes?.open('staging');this.app.scenes?.element.focus({preventScroll:true});}
     }
     resize() {
       const rect=this.stage.getBoundingClientRect();if(!rect.width||!rect.height)return;
@@ -159,7 +159,7 @@
       const width=276-depth*102;
       const cx=p.side===0?600+depth*67:928-depth*67;
       const bottom=650-depth*128;
-      const art=variants[(hash(p.item)+(this.load.opening?p.id-1:hash(p.id)+hash(p.cases)+hash(this.load.id)))%variants.length];
+      const art=variants[O.palletArtIndex(p)];
       const asset=this.images.get(art);if(!asset?.bounds)return null;
       const b=asset.bounds,height=width*b.h/b.w;
       return {p,asset,x:cx-width/2,y:bottom-height,w:width,h:height,depth};

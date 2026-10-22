@@ -106,14 +106,14 @@ are ordinary scripts, with no bundle step and no Sluice dependencies. Read
 `archive.html` (In Progress). Bump the `?v=` values on its CSS and game scripts
 when changing them so deployed edits bypass stale caches.
 
-**One Shift**, the standalone overhead warehouse game, lives in `one-shift.html`,
+**One Shift**, the standalone illustrated warehouse game, lives in `one-shift.html`,
 `one-shift.css` and `js/one-shift-*.js`. Read `docs/ONE_SHIFT.md` for the model,
 checks and current limits. The simulation modules have no DOM access. Keep it
-on `archive.html` (In Progress). Use four-foot tiles, invented client names,
-landscape mobile play, and the owner's approved charcoal, rust and cream print
-art throughout the game. The warehouse uses dynamic Canvas objects with printed
-linework and a generated paper material; the receiving dock uses separate
-generated pallet layers. Read `docs/ONE_SHIFT_RECEIVING_ART.md` before changing
+on `archive.html` (In Progress). Use four-foot tiles only in the hidden simulation,
+invented client names, and landscape mobile play. Every playable scene uses
+standing eye-level charcoal, rust and cream print art with separate selectable
+pallet layers. The owner explicitly removed the top-down view on 2026-10-22;
+do not restore it. Read `docs/ONE_SHIFT_RECEIVING_ART.md` before changing
 that art or generating new shipment variants. Read `docs/ONE_SHIFT_PROCESS.md`
 for the physical receiving and shipping flow. Bump every changed CSS/script
 query version. Preserve case conservation, lot dates and the ledger; forklift

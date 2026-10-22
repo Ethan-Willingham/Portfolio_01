@@ -1,11 +1,12 @@
 # One Shift
 
-The public game at `one-shift.html` is an inventory business game, version 2.6.
+The public game at `one-shift.html` is an inventory business game, version 2.7.
 Start at the receiving dock with six pallets of owned stock and $200. Hover or
 tap a front pallet, select it, and scan its label. Each accepted pallet clears
 from the illustrated trailer, exposing the loads behind it. After all six,
 return to the warehouse so the worker can unload into Receiving and put the
-stock in the racks. The warehouse and dock share charcoal, rust and cream print art.
+stock in the racks. Every scene uses standing eye-level charcoal, rust and cream print art.
+There is no playable top-down view.
 Customer orders arrive through the day.
 Queue shipments, buy replenishment stock, and reinvest in handling equipment,
 rack space, doors, and people. The receiving scene has no tutorial dialog.
@@ -119,12 +120,18 @@ scarce vehicle pool. Construction is immediate. These are current abstractions.
 ## Presentation and persistence
 
 The whole game uses charcoal, muted rust and warm cream print art, with local
-Century Supra, Segoe UI, and Commit Mono fonts. The overhead warehouse keeps
-dynamic Canvas objects, printed linework, carton and pallet details, subtle ink
-grain and a generated paper material. Racks show their product and quantity.
-Panels use flat paper, fine rules, serif titles and rust actions. The masthead
-names the game and its loop: receive, put away, pick and ship.
-The warehouse, dock, order board, and zoom controls share one centered frame.
+Century Supra, Segoe UI, and Commit Mono fonts. The public camera is always at
+standing eye level. Receiving floor, Storage aisle and Shipping floor are layered
+image scenes with visible, selectable pallets. A paper order board sits beside
+the artwork. Store, reports and settings use the same paper and ink controls.
+
+`one-shift-scenes-model.js` projects the physical simulation into scene pages
+without changing stock. `one-shift-scenes-ui.js` composites generated backgrounds
+and the approved alpha pallet layers, with native keyboard targets, silhouette
+hover and touch selection. `one-shift-scenes.css` supplies the scene layout.
+The four-foot grid remains only in the hidden routing and reservation model.
+No map, camera panning, floor cursor or zoom controls are offered.
+
 The owner-approved receiving view uses image-generated charcoal, muted rust and
 cream screen-print artwork. Two registered empty dock backgrounds and four
 transparent cargo sprites form the scene. Dock appearance stays fixed, trailer
@@ -161,26 +168,19 @@ Their clock runs so a needed supplier can arrive.
 Store and Menu are centered with consistent buttons. Secondary settings and
 stock details stay collapsed. Daily totals appear automatically at closing.
 Later equipment and products stay gray until their order milestones; Team needs
-a forklift. There are no Results or Home buttons. Warehouse walls have a plain
-perimeter without roof stripes, detached pipes, vents, or parking outlines.
+a forklift. There are no Results or Home buttons. Capacity purchases place a rack in a
+reachable free position without opening a map editor.
 
-Right or middle mouse drag pans. Wheel, + and - zoom. The camera starts close
-to the stock, worker, and staging areas. It crops empty warehouse margins and shows the rear of docked trucks; fitting the road,
-parking area, or cab does not reduce that zoom. The world is clipped to the play
-area, keeping yard scenery out of the header and board background. It frames
-the warehouse automatically at launch and when a fitted view resizes or the building expands. Empty floor clicks and taps do nothing.
-Workers move for jobs and mandatory truck exits; manual walking is unavailable.
-Keyboard buttons work natively. Touch uses
-the same layout in landscape, with scrolling and 44px targets. Portrait touch
-freezes behind the rotate screen without changing a deliberate manual pause.
-Large-text landscape views keep the first Prepare order button above the fold.
-When Receive stock is visible, compact screens give it a second header row
-with the time controls and reserve that space above the floor.
+Scene navigation changes the view without pausing work. Click or tap a pallet
+to inspect its product, cases, lot and physical status. Tab and Enter operate
+native targets. Space pauses; M opens Menu. Landscape touch uses the same scenes
+with scrolling and 44px controls. Portrait freezes behind the rotate screen
+without changing manual pause. Hidden tabs and inactive windows stop scheduling.
 
-Trucks ease in, park, and leave along the right road. Before moving out, each
-truck waits for the worker to clear its rear opening, closes its doors, and then
-accelerates. Required exit walks cannot be removed or reassigned. Rendering
-interpolates motion without changing simulation or saved state.
+Trucks and workers still complete real travel, staging and safe dock clearance
+in the simulation. Scene pages show their current work and actual stock, rather
+than a moving overhead representation. Cases become available after putaway;
+loaded freight leaves stock and payment is recorded only on truck release.
 
 Every browser load starts fresh, including history returns. Manual Menu save/load,
 three slots, import/export, and evening autosave remain available. Preferences
@@ -212,16 +212,13 @@ Use Node. Browser checks require Playwright in `NODE_PATH`.
 - `node tools/test-one-shift-business-balance.cjs`: 20 seeds, 24 days, two ordinary
   buying policies, 960 shifts. Validates every shift and compares reinvestment
   against reactive restocking. Writes a source-hashed result.
-- `node tools/test-one-shift-opening-browser.cjs`: four viewport compositions,
-  native keyboard and touch first shipment, actual work stages, receipt and
-  physical restocking, fresh reload, saved-game recovery, and legacy transitions.
-  Uses an explicit stocked-start fixture with automatic receiving to isolate
-  the original business interface from the new public receiving workflow.
-- `node tools/test-one-shift-business-browser.cjs`: native mouse and keyboard
-  actions, first sale, replenishment, mixed orders, reload, explicit save loading,
-  reports, upgrades, right-drag camera, landscape touch, enlarged type, and portrait
-  freeze. `SHIFT_URL` targets a deployed build; `SHIFT_DUMP` chooses screenshots.
-  Uses the same explicit stocked-start fixture.
+- `node tools/test-one-shift-scenes.cjs`: scene classification, actual stock,
+  pagination, rack purchases and conservation through receiving and dispatch.
+- `node tools/test-one-shift-scenes-browser.cjs`: eye-level scene navigation,
+  pallet inspection, storage-to-shipping work, saves, capacity purchases,
+  desktop and landscape touch, large text and portrait gating. The historical
+  opening and business browser suites assert the removed map interface and
+  are retained only as historical fixtures, not current visual acceptance.
 - `node tools/test-one-shift.cjs`: shared physical simulation, conservation,
   label checksums, recipes, ownership, routes, reservations, cancellations,
   forklift prerequisites, rack-only destinations, layouts, and legacy migrations.

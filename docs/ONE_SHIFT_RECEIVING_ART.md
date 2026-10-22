@@ -27,24 +27,29 @@ to the runtime.
 
 ## The warehouse and controls
 
-The overhead warehouse shares the same paper, charcoal and rust inks. Its camera
-remains overhead so routes, racks and working lanes can be read while the player
-plans. Rack frames, pallet bases, carton seams, packing tape, workers and trucks
-use flat shapes, fine ink detail and cached print grain. Avoid steel-blue metal,
-glossy light effects and pixel-art outlines. Preserve real rack geometry and
-one rendered pallet for each physical pallet.
+Every playable view uses standing eye-level illustrated scenery and separate
+selectable pallet layers, including Receiving staging, storage aisles and Shipping.
+The owner explicitly corrected the earlier palette-only conversion on October 22,
+2026: there is no public top-down view. Do not restore a map camera or map controls.
+The hidden four-foot simulation grid is not part of the visual presentation.
 
-`assets/one-shift/warehouse-paper.png` is a generated material master derived
-from the approved print. Its WebP sibling is the runtime asset. The exact prompt
-and source artifact name are in `assets/one-shift/warehouse-paper-prompt.txt`.
-Use this material subtly, with readable labels above it. It contains no baked
-racks, cargo or other geometry, so expansion and stock movements remain dynamic.
+The new scene masters and exact generation prompts live in
+`assets/one-shift/scenes/`. Their WebP siblings are the runtime backgrounds.
+Backgrounds contain empty rack bays and work areas. Pallets are generated alpha
+layers placed from actual physical state, never painted into the background.
+The renderer must distinguish storage, receiving, shipping and loaded freight.
+Pages change which actual pallets are visible; they do not duplicate inventory.
+Storage pages follow fixed physical rack positions, including empty slots.
+Every pallet keeps the same generated cargo variant between trailer and floor.
+The open-door variants are composited only inside each doorway, preserving the
+background outside it. A docked truck opens that aperture and shows its actual
+remaining inbound or loaded outbound cargo. Loaded pallets leave the floor.
 
 The warehouse HUD, order board, selected objects, shop, report and settings use
 flat paper panels, fine ink rules, square controls, serif titles and monospace
 operational labels. Rust identifies actions and current work. Disabled and
-selected states still need clear contrast; touch targets remain at least 44px.
-The dock and warehouse must be reviewed together after any visual change.
+selected states need clear contrast; touch targets remain at least 44px.
+Review receiving, storage and shipping together after every visual change.
 
 ## Layered scene
 

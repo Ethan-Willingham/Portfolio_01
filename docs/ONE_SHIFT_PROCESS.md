@@ -45,8 +45,9 @@ must neither duplicate cases nor teleport a carried pallet into a staging bay.
 ## Readability and limits
 
 The receiving board shows scanning, unloading and putaway separately. Incoming
-cases are distinct from ready stock. The floor marks Receiving, Storage and
-Shipping, and the order board describes the current physical task. The player
+cases are distinct from ready stock. Separate eye-level scenes show Receiving, Storage and Shipping. Each visible
+pallet comes from its actual location and the order board describes the current
+physical task. The hidden routing grid is never displayed. The player
 chooses priorities and purchases; workers execute detailed handling.
 
 The dock view holds the business clock during label checks. It is a compact

@@ -1,0 +1,143 @@
+{
+  "tool": "Built-in image_gen, reference-guided generation",
+  "reference": "../receiving/reference-print.png",
+  "style": "Standing eye-level charcoal, rust and cream screen print. Empty backgrounds. Runtime pallet sprites and text remain separate.",
+  "assets": {
+    "storage": {
+      "master": "storage.png",
+      "runtime": "storage.webp",
+      "artifact": "exec-727b3ef3-b52d-41dd-b815-537dab491234.png",
+      "width": 1536,
+      "height": 1024,
+      "anchors": [
+        {
+          "x": 350,
+          "y": 690
+        },
+        {
+          "x": 770,
+          "y": 690
+        },
+        {
+          "x": 1180,
+          "y": 690
+        }
+      ],
+      "maxPalletWidth": 300,
+      "maxPalletHeight": 480,
+      "prompt": "Use case: illustration-story. Image 1 is a STYLE REFERENCE only. Create an original landscape 1536 by 1024 image, 3:2, matching its charcoal-black, muted rust-orange, warm cream paper screen-print language exactly. Restrained flat ink shapes, precise believable industrial construction, modest locally varied ink grain, irregular cut edges, consistent perspective. No glossy shading, photorealism, gradients, elaborate distress or new colors. This is a game background, so ALL cargo, cartons, pallets and people must be ABSENT. No lettering, labels, symbols, barcodes, UI, logos or watermark. The camera is at a standing worker's EYE LEVEL, looking horizontally into the scene with almost frontal vertical faces and little visible top surface. Absolutely NOT overhead, top-down, bird's-eye, isometric, miniature-diorama or a warehouse plan. Preserve a strong eye-level sense of being physically in the warehouse. Subject: an empty storage aisle in the same warehouse. Face a bank of exactly THREE adjacent industrial pallet-rack bays almost frontally. Charcoal steel uprights, restrained rust horizontal beams and cream worn wall behind. The uprights and beams should be convincing pallet-racking hardware, with modest bolt holes and sparse bracing, not bookshelves. The three GROUND-LEVEL slots are completely empty, broad, tall clear rectangular spaces, ready for separately rendered loaded pallet sprites. Their floor bottom centers should be near x=430, 768 and 1106 pixels, y=768 pixels, and each opening should provide at least 270px of clear usable width and 390px clear height. The three bays together span approximately x=250 to1280. Place the bottom of the ground slot at floor level, not on an elevated shelf. A single rust upper beam above these clear slots defines the rack roof, with a modest empty upper tier if necessary, no cargo anywhere. Broad quiet cream floor extends from the rack feet to the bottom edge, with two or three subtle slab joints. Avoid extra shelving or objects in front of the three slots. Strong simple composition, all ground bays and their footplates fully visible."
+    },
+    "staging": {
+      "master": "staging.png",
+      "runtime": "staging.webp",
+      "artifact": "exec-b412c2a5-7b35-445d-bdb4-884e14607ea3.png",
+      "width": 1536,
+      "height": 1024,
+      "anchors": [
+        {
+          "x": 266,
+          "y": 730
+        },
+        {
+          "x": 770,
+          "y": 730
+        },
+        {
+          "x": 1270,
+          "y": 730
+        }
+      ],
+      "maxPalletWidth": 310,
+      "maxPalletHeight": 410,
+      "prompt": "Use case: illustration-story. Image 1 is a STYLE REFERENCE only. Create an original landscape 1536 by 1024 image, 3:2, matching its charcoal-black, muted rust-orange, warm cream paper screen-print language exactly. Restrained flat ink shapes, precise believable industrial construction, modest locally varied ink grain, irregular cut edges, consistent perspective. No glossy shading, photorealism, gradients, elaborate distress or new colors. This is a game background, so ALL cargo, cartons, pallets and people must be ABSENT. No lettering, labels, symbols, barcodes, UI, logos or watermark. The camera is at a standing worker's EYE LEVEL, looking horizontally into the scene with almost frontal vertical faces and little visible top surface. Absolutely NOT overhead, top-down, bird's-eye, isometric, miniature-diorama or a warehouse plan. Preserve a strong eye-level sense of being physically in the warehouse. Subject: the receiving staging area of the same warehouse, seen standing on the floor facing an interior loading-dock wall. A closed charcoal loading bay door occupies the left background, with black dock bumpers, rust trim and a plain side control box. The wall has a simple muted-rust stripe across its lower part and cream panels above. Wall-to-floor intersection is around y=550 pixels. Across the EMPTY foreground floor show three discreet pallet staging rectangles marked with thin rust paint, in believable ground-plane perspective. Their FRONT edge bottom-centers should be approximately (384,820), (768,820), (1152,820). Each rectangle should have about 270px usable foreground width and leave 390px of unobstructed visual height for later pallet sprites. Ground rectangles recede modestly toward the wall. All three positions must remain clear, no cargo, no pallets or people, no floor numbers. The dock door and wall are background context, not the interaction targets. Quiet cream concrete floor, sparse scuffs and slab joints, a clean graphic composition that leaves clear separation between the three future loads."
+    },
+    "shipping": {
+      "master": "shipping.png",
+      "runtime": "shipping.webp",
+      "artifact": "exec-af5b94e2-6161-4069-b1cb-036e581d6186.png",
+      "width": 1536,
+      "height": 1024,
+      "anchors": [
+        {
+          "x": 275,
+          "y": 752
+        },
+        {
+          "x": 760,
+          "y": 752
+        },
+        {
+          "x": 1265,
+          "y": 752
+        }
+      ],
+      "maxPalletWidth": 310,
+      "maxPalletHeight": 400,
+      "prompt": "Use case: illustration-story. Image 1 is a STYLE REFERENCE only. Create an original landscape 1536 by 1024 image, 3:2, matching its charcoal-black, muted rust-orange, warm cream paper screen-print language exactly. Restrained flat ink shapes, precise believable industrial construction, modest locally varied ink grain, irregular cut edges, consistent perspective. No glossy shading, photorealism, gradients, elaborate distress or new colors. This is a game background, so ALL cargo, cartons, pallets and people must be ABSENT. No lettering, labels, symbols, barcodes, UI, logos or watermark. The camera is at a standing worker's EYE LEVEL, looking horizontally into the scene with almost frontal vertical faces and little visible top surface. Absolutely NOT overhead, top-down, bird's-eye, isometric, miniature-diorama or a warehouse plan. Preserve a strong eye-level sense of being physically in the warehouse. Subject: an empty outbound packing and shipping floor of the same warehouse. A closed loading dock door and plain cream/rust warehouse wall form the background; wall-to-floor intersection around y=550 pixels. Across the center and left foreground, three EMPTY pallet staging positions are indicated by thin rust floor corner marks in modest perspective. Their FRONT edge bottom-centers should be approximately (338,820), (691,820), (1044,820). Each position should have at least 245px usable width and 390px unobstructed visual height for later loaded-pallet sprites. At the far RIGHT edge, beyond x=1290, include a modest fixed stretch-wrap stand: charcoal upright mast, one cream film roll, and low rust circular turntable at floor level. Keep this wrap equipment wholly outside the three clear staging positions, physically believable and subordinate to the usable floor. No pallet on the turntable. A small packing bench may be built into the far rear wall only if it does not overlap those positions, otherwise omit. Quiet cream floor and restrained ink texture, no cargo, boxes, pallets, people, floor text or signs."
+    },
+    "staging-open": {
+      "master": "staging-open.png",
+      "runtime": "staging-open.webp",
+      "artifact": "exec-7f7e99cd-a57a-4171-9306-aee5bd70d9ca.png",
+      "width": 1536,
+      "height": 1024,
+      "anchors": [
+        {
+          "x": 266,
+          "y": 730
+        },
+        {
+          "x": 770,
+          "y": 730
+        },
+        {
+          "x": 1270,
+          "y": 730
+        }
+      ],
+      "maxPalletWidth": 310,
+      "maxPalletHeight": 410,
+      "prompt": "Use case: precise-object-edit. Image 1 is the EDIT TARGET, the existing game background. Image 2 is a SUPPORTING STYLE REFERENCE for an empty trailer interior only. Make ONE local change to image 1: raise its closed roll-up dock door completely and reveal the empty interior of a backed-in dry-van truck trailer beyond the same doorway. Keep the standing eye-level camera, 1536x1024 canvas, exact framing, exact doorway silhouette and position, all wall panels and stripes, columns, control boxes, dock bumpers, foreground floor, slab joints, floor staging marks and every other object IDENTICAL in position and design to image 1. Do not move, resize, crop, straighten or recompose anything. Do not modify the foreground. The new trailer interior must fit entirely inside the former door-panel region. It has charcoal/rust sidewalls, modest roof bows, a warm wood floor continuing from the existing threshold and dark back wall, with the same flat charcoal/rust/cream screen-print ink treatment and local grain. It must be empty of ALL pallets, cartons, people and cargo. The rolling door is raised above the opening, outside the usable aperture. No outside landscape, truck cab, sunlight, cargo shadows, new props, lettering, labels or UI. Never introduce top-down or isometric perspective. Preserve the parent background as an exactly registered counterpart so the game can switch between door-closed and door-open states without a visible scene jump. For this receiving scene, edit ONLY the dark closed door panels occupying approximately x=209 to614, y=42 to515 in image 1. Preserve the black side seals, rust jambs, dock leveler at y515, and all three empty floor rectangles exactly. The empty trailer floor ends at the same existing lower door threshold. All three staging spots remain entirely unchanged and empty.",
+      "editTarget": "staging.png",
+      "supportingReference": "../receiving/trailer-empty.png",
+      "doorBounds": {
+        "x": 209,
+        "y": 42,
+        "width": 405,
+        "height": 473
+      }
+    },
+    "shipping-open": {
+      "master": "shipping-open.png",
+      "runtime": "shipping-open.webp",
+      "artifact": "exec-4e8fd4c7-4bba-4756-b431-6cbd177e0041.png",
+      "width": 1536,
+      "height": 1024,
+      "anchors": [
+        {
+          "x": 275,
+          "y": 752
+        },
+        {
+          "x": 760,
+          "y": 752
+        },
+        {
+          "x": 1265,
+          "y": 752
+        }
+      ],
+      "maxPalletWidth": 310,
+      "maxPalletHeight": 400,
+      "prompt": "Use case: precise-object-edit. Image 1 is the EDIT TARGET, the existing game background. Image 2 is a SUPPORTING STYLE REFERENCE for an empty trailer interior only. Make ONE local change to image 1: raise its closed roll-up dock door completely and reveal the empty interior of a backed-in dry-van truck trailer beyond the same doorway. Keep the standing eye-level camera, 1536x1024 canvas, exact framing, exact doorway silhouette and position, all wall panels and stripes, columns, control boxes, dock bumpers, foreground floor, slab joints, floor staging marks and every other object IDENTICAL in position and design to image 1. Do not move, resize, crop, straighten or recompose anything. Do not modify the foreground. The new trailer interior must fit entirely inside the former door-panel region. It has charcoal/rust sidewalls, modest roof bows, a warm wood floor continuing from the existing threshold and dark back wall, with the same flat charcoal/rust/cream screen-print ink treatment and local grain. It must be empty of ALL pallets, cartons, people and cargo. The rolling door is raised above the opening, outside the usable aperture. No outside landscape, truck cab, sunlight, cargo shadows, new props, lettering, labels or UI. Never introduce top-down or isometric perspective. Preserve the parent background as an exactly registered counterpart so the game can switch between door-closed and door-open states without a visible scene jump. For this shipping scene, edit ONLY the cream closed door panels occupying approximately x=593 to975, y=58 to520 in image 1. Remove the two small black door windows along with the raised door panels. Preserve the black side seals, rust jambs, threshold, wall fixtures, all floor corner markings, and the entire stretch-wrap mast, film roll and turntable at far right exactly. All three staging spots remain entirely unchanged and empty.",
+      "editTarget": "shipping.png",
+      "supportingReference": "../receiving/trailer-empty.png",
+      "doorBounds": {
+        "x": 593,
+        "y": 58,
+        "width": 382,
+        "height": 462
+      }
+    }
+  }
+}
