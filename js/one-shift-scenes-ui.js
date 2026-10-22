@@ -162,7 +162,7 @@
       if (!snapshot.pallets.some(p => p.id === this.selected)) this.selected = null;
       if (!snapshot.pallets.some(p => p.id === this.hover)) this.hover = null;
       this.el('title').textContent = snapshot.title || SCENES[this.scene].name;
-      this.el('work').textContent = (snapshot.dock?'Dock '+snapshot.dock.number+' / ':'')+(snapshot.work[0] || snapshot.subtitle);
+      this.el('work').textContent = snapshot.work[0] || (snapshot.dock?'Dock '+snapshot.dock.number+' / ':'')+snapshot.subtitle;
       this.el('work').title = snapshot.work.join(' / ') || snapshot.subtitle;
       this.el('page').textContent = (snapshot.page + 1) + ' / ' + snapshot.pages;
       this.el('prev').disabled = snapshot.page <= 0;
