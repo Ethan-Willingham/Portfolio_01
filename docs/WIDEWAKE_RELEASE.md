@@ -2008,3 +2008,33 @@ Each button remains at least 44 px in both dimensions, including short browser
 viewports. Mouse, keyboard and touch checks cover zoom limits, actual range
 changes, independent camera zoom, combat, paused pixels, shoreline agreement
 and controls fitting on desktop and landscape phones with Canvas fallback.
+
+## Water-supported rigid hulls, 2026-10-22 (v0.37.0)
+
+The owner rejected the repeated, deliberate launch jump and requested scalable
+physics. The previous crest trigger, upward kick, forced bow-up pose, small-hull
+exemption and landing snap are removed. Five pressure patches now integrate
+buoyancy, gravity, immersion-dependent damping and torque on one rigid hull.
+Draft, cargo, hull dimensions and inertia use the same force calculation at all
+sizes. Dry patches supply no support. A hull carries its actual vertical and
+angular momentum through flight; partial water contact continuously restores
+thrust, rudder and brake authority. Water-entry pressure catches the hull without
+prescribing a landing pose. Splash effects follow the resulting contact event.
+
+Smaller sheltered waves receive stronger crest, shoulder and face contrast at
+ordinary playing zoom. The physical wave spectrum and spacing are unchanged.
+The first visual update had been pushed but was still absent from the public
+build when the owner checked it; verify the served version before calling this
+replacement live.
+
+Checks cover exact gravity, retained rotation, dissipative entry, varying
+successive flights, speed/load/heading response, timestep convergence and
+normalized trajectories across geometrically scaled hulls and waves. The former
+one-rise-per-crest requirement is retired because free flight can cross a later
+wave without adopting its shape. Flat-water image controls retain the hull's
+loaded hydrostatic draft. Browser coverage includes desktop and landscape-phone
+WebGL and Canvas flight sequences, waterline depth, wake gaps, splash pixels,
+pause, CPU/shader agreement and graphics recovery. The connected campaign,
+fleet handling and full three-minute 16,384-raider simulation also pass. Detailed
+contact remains limited to the friendly fleet and retains fixed probe storage.
+Physical-phone performance and the owner's assessment remain open.

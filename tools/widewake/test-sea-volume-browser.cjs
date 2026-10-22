@@ -106,7 +106,7 @@ function savePng(name,url){assert.ok(url.startsWith('data:image/png;base64,'));f
     // The untouched opening frame has essentially no wake. Compare the actual
     // water pixels there, so a brighter wake cannot make flat water pass.
     assert.ok(runs.sea[0].waterLumaRange>runs.flat[0].waterLumaRange+4,'wave faces must add visible framebuffer contrast: '+JSON.stringify({type,sea:runs.sea[0].waterLumaRange,flat:runs.flat[0].waterLumaRange}));
-    assert.ok(runs.flat.every(frame=>Math.abs(frame.z)<1e-6),'flat control has no manufactured bobbing');
+    assert.ok(runs.flat.every(frame=>Math.abs(frame.z-runs.flat[0].z)<1e-6),'flat control keeps its loaded hydrostatic draft without manufactured bobbing');
     reports.push({type,setup,...runs});
     await page.setViewportSize({width:1440,height:900});
     await page.evaluate(()=>{

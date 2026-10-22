@@ -330,7 +330,8 @@
       base=mix(base,vec3(.23,.39,.32)+grain*.035,bottom*.72);
       // Broader face contrast gives each swell a readable rise and falling side.
       // The actual height/depth surface stays identical to the hull simulation.
-      vec3 normal=normalize(vec3(-wave.yz*2.2,1.));
+      float visibility=sqrt(exposure);
+      vec3 normal=normalize(vec3(-wave.yz*2.8/max(.35,visibility),1.));
       vec3 sun=normalize(vec3(-.70,.25,.55)),eye=vec3(.61237244,.61237244,.5);
       float face=max(0.,dot(normal,sun)),fresnel=.025+.975*pow(1.-max(0.,dot(normal,eye)),5.);
       // One coherent light direction: reflected sky reinforces the lit face
@@ -341,7 +342,7 @@
       float glitter=texture(uNoise,(p-drift)*.065+vec2(time*.007,0.)).r;
       result+=vec3(.40,.47,.45)*reflection*(.08+.18*smoothstep(.50,.79,glitter))*smoothstep(.1,1.,zoom)*uDetailMotion;
       vec3 swell=swellFrame(p,time);
-      float crest=wave.x/max(.2,exposure),ridgeSlope=dot(wave.yz,vec2(-.7909677,.6118579))/max(.2,exposure);
+      float crest=wave.x/max(.06,exposure),ridgeSlope=dot(wave.yz,vec2(-.7909677,.6118579))/max(.06,exposure);
       float raised=smoothstep(.35,1.7,crest),packet=smoothstep(.22,.72,swell.y);
       float ridgeAA=max(fwidth(ridgeSlope),.0008);
       float thread=texture(uNoise,vec2(swell.z*.0025,swell.x*.17)).b;
@@ -349,10 +350,12 @@
       float lip=1.-smoothstep(.002+ridgeAA,.009+ridgeAA,abs(ridgeSlope)+(lace-.5)*.005);
       // A continuous blue-green shoulder describes the whole crest, including
       // its curled, narrowing ends. White foam only breaks along the high lip.
-      float shoulder=raised*(1.-smoothstep(.018,.085,abs(ridgeSlope)))*packet*exposure;
-      result=mix(result,vec3(.11,.43,.48),shoulder*.42);
+      float shoulder=raised*(1.-smoothstep(.018,.085,abs(ridgeSlope)))*packet*visibility;
+      float lee=raised*packet*visibility*smoothstep(.003,.014,-ridgeSlope)*(1.-smoothstep(.025,.065,-ridgeSlope));
+      result*=1.-lee*.28;
+      result=mix(result,vec3(.13,.49,.54),shoulder*.66);
       float broken=smoothstep(.36,.64,thread);
-      float foam=raised*lip*packet*exposure*(.09+broken*.73)*(.35+.65*smoothstep(.20,.70,lace));
+      float foam=raised*lip*packet*visibility*(.16+broken*.80)*(.45+.55*smoothstep(.20,.70,lace));
       result=mix(result,vec3(.73,.87,.83),foam);
       float fine=texture(uNoise,(p-drift)*vec2(.11,.17)+vec2(time*.012,-time*.009)).r;
       result+=vec3(.018,.032,.035)*(fine-.5)*smoothstep(.4,2.,zoom);

@@ -13,18 +13,26 @@ let browser;const errors=[],reports=[];
       Object.assign(s,{x:0,y:2400,px:0,py:2400,angle,previousAngle:angle,vx:Math.cos(angle)*36,vy:Math.sin(angle)*36,sea:null});g.time=0;g.sea=new WidewakeWaves.Sea(g.field);v.wakes.clear();v.follow=true;v.lookAhead=true;v.offset={x:0,y:0};v.configureCamera();v.zoom=v.targetZoom=v.stops.helm;v.camera={x:s.x,y:s.y};
       window.jumpStep=()=>{g.step(1/60,{throttle:1,steer:0});v.wakes.sample(g.ships,g.ships,g.time);};
       window.jumpCapture=()=>{v.camera={x:s.x+s.vx*.25,y:s.y+s.vy*.25};v.render(0,1);return{time:g.time,z:s.sea.z,water:g.sea.at(s.x,s.y,g.time,{},s.id).height,gap:s.sea.z-s.sea.surface,airborne:s.sea.airborne,vz:s.sea.vz,splash:v.stats.landingSplashSegments,spray:v.stats.bowSpraySegments,liveWash:v.wakes.tracks[0].livePower,gl:v.gl?.getError()||0};};
-      for(let n=0;n<1200&&!s.sea?.airborne;n++)window.jumpStep();
-      if(!s.sea.airborne)throw Error('No crest takeoff');window.jumpCapture();
+      // Find a complete natural flight, then replay its actual recorded tick
+      // positions. Frame selection follows this encounter's own apex/contact,
+      // rather than assuming a fixed arc duration or forced takeoff velocity.
+      let flight=[],plan=null;
+      for(let n=1;n<2400&&!plan;n++){
+        const was=s.sea?.airborne;jumpStep();const q=s.sea;
+        if(q.airborne&&!was)flight=[];
+        if(q.airborne)flight.push({tick:n,z:q.z,vz:q.vz,gap:q.z-q.surface});
+        if(!q.airborne&&was&&flight.length>30&&flight[0].vz>1&&Math.max(...flight.map(f=>f.gap))>1.2){
+          const apex=flight.reduce((best,f,i)=>f.z>flight[best].z?i:best,0);
+          if(apex>3&&apex<flight.length-4)plan={takeoff:flight[0].tick,rising:flight[Math.floor(apex/2)].tick,apex:flight[apex].tick,falling:flight[Math.floor((apex+flight.length-1)/2)].tick,splashdown:n+8};
+        }
+      }
+      if(!plan)throw Error('No complete rising/descending wave flight');window.jumpPlan=plan;
+      Object.assign(s,{x:0,y:2400,px:0,py:2400,angle,previousAngle:angle,vx:Math.cos(angle)*36,vy:Math.sin(angle)*36,turn:0,throttle:1,sea:null});g.time=g.tick=0;g.sea=new WidewakeWaves.Sea(g.field);v.wakes.clear();window.jumpTicks=0;
     });await p.waitForFunction(()=>__widewakeReach.view.terrain.ready);
     const frames=[];
     for(const stage of ['takeoff','rising','apex','falling','splashdown']){
-      const m=await p.evaluate(stage=>{const {game:g,view:v}=__widewakeReach,s=g.player;
-        if(stage==='rising')for(let n=0;n<18;n++)jumpStep();
-        if(stage==='apex')for(let n=0;n<150&&s.sea.airborne&&s.sea.vz>0;n++)jumpStep();
-        if(stage==='falling')for(let n=0;n<150&&s.sea.airborne&&s.sea.vz>-3;n++)jumpStep();
-        if(stage==='splashdown'){for(let n=0;n<180&&s.sea.airborne;n++)jumpStep();for(let n=0;n<14;n++)jumpStep();}
-        return jumpCapture();
-      },stage);assert.equal(m.gl,0);if(stage!=='splashdown'){assert.ok(m.airborne);assert.equal(m.spray,0);assert.equal(m.liveWash,0);}else{assert.ok(!m.airborne);assert.ok(m.splash>=40);}
+      const m=await p.evaluate(stage=>{while(window.jumpTicks<window.jumpPlan[stage]){jumpStep();window.jumpTicks++;}return jumpCapture();},stage);
+      assert.equal(m.gl,0);if(stage!=='splashdown'){assert.ok(m.airborne);assert.equal(m.spray,0);assert.equal(m.liveWash,0);}else{assert.ok(!m.airborne);assert.ok(m.splash>=40);}
       if(stage==='apex')assert.ok(m.gap>1.2,'the hull visibly clears the physical wave');
       frames.push({stage,...m});await p.screenshot({path:path.join(out,`${width}-${fallback?'canvas':'webgl'}-${stage}.png`)});
     }

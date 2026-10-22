@@ -99,13 +99,13 @@
         W.sample(px,py,v.visualTime,depth,salt,!sea.field,q);let height=q.height*sea.strength;
         for(let n=0;n<2;n++){W.sample(wx+height*1.22474487,wy+height*1.22474487,v.visualTime,depth,salt,!sea.field,q);height+=clamp((q.height*sea.strength-height)/Math.max(.22,1-1.22474487*(q.dx+q.dy)*sea.strength),-3,3);}
         px=wx+height*1.22474487;py=wy+height*1.22474487;W.sample(px,py,v.visualTime,depth,salt,!sea.field,q);height=q.height*sea.strength;
-        const dx=q.dx*sea.strength,dy=q.dy*sea.strength,shelf=Math.exp(-Math.max(0,depth)*.075),normal=Math.hypot(dx*2.2,dy*2.2,1),face=Math.max(0,((dx*.70-dy*.25)*2.2+.55)/(normal*Math.hypot(.70,.25,.55))),fresnel=(.025+.975*(1-Math.max(0,((-dx*.61237244-dy*.61237244)*2.2+.5)/normal))**5)*.72,light=.22+face*1.35;
-        const swell=W.swellFrame(px,py,v.visualTime,this.swell),ridge=(-dx*.7909677+dy*.6118579)/Math.max(.2,q.exposure),raised=smooth(.35,1.7,height/Math.max(.2,q.exposure)),packet=smooth(.22,.72,swell.envelope),aa=Math.max(.0008,v.width/w/scale*.003);
+        const dx=q.dx*sea.strength,dy=q.dy*sea.strength,shelf=Math.exp(-Math.max(0,depth)*.075),visibility=Math.sqrt(q.exposure),normalScale=2.8/Math.max(.35,visibility),normal=Math.hypot(dx*normalScale,dy*normalScale,1),face=Math.max(0,((dx*.70-dy*.25)*normalScale+.55)/(normal*Math.hypot(.70,.25,.55))),fresnel=(.025+.975*(1-Math.max(0,((-dx*.61237244-dy*.61237244)*normalScale+.5)/normal))**5)*.72,light=.22+face*1.35;
+        const swell=W.swellFrame(px,py,v.visualTime,this.swell),ridge=(-dx*.7909677+dy*.6118579)/Math.max(.06,q.exposure),raised=smooth(.35,1.7,height/Math.max(.06,q.exposure)),packet=smooth(.22,.72,swell.envelope),aa=Math.max(.0008,v.width/w/scale*.003);
         const thread=.5+.25*Math.sin(swell.across*.47+swell.phase*8)+.25*Math.sin(swell.across*.21-swell.phase*13),lace=.5+.25*Math.sin(swell.across*1.7+swell.phase*41)+.25*Math.sin(swell.across*.83-swell.phase*67);
-        const lip=1-smooth(.002+aa,.009+aa,Math.abs(ridge)+(lace-.5)*.005),foam=raised*lip*packet*q.exposure*(.09+smooth(.36,.64,thread)*.73)*(.35+.65*smooth(.20,.70,lace)),shoulder=raised*(1-smooth(.018,.085,Math.abs(ridge)))*packet*q.exposure*.42,at=(y*w+x)*4;
-        pixels[at]=(((10+8*shelf+7*(1-salt))*light*(1-fresnel)+79*fresnel)*(1-shoulder)+28*shoulder)*(1-foam)+186*foam;
-        pixels[at+1]=(((46+24*shelf+9*(1-salt))*light*(1-fresnel)+135*fresnel)*(1-shoulder)+110*shoulder)*(1-foam)+222*foam;
-        pixels[at+2]=(((64+22*shelf)*light*(1-fresnel)+150*fresnel)*(1-shoulder)+122*shoulder)*(1-foam)+212*foam;pixels[at+3]=255;
+        const lip=1-smooth(.002+aa,.009+aa,Math.abs(ridge)+(lace-.5)*.005),foam=raised*lip*packet*visibility*(.16+smooth(.36,.64,thread)*.80)*(.45+.55*smooth(.20,.70,lace)),shoulder=raised*(1-smooth(.018,.085,Math.abs(ridge)))*packet*visibility*.66,lee=1-raised*packet*visibility*smooth(.003,.014,-ridge)*(1-smooth(.025,.065,-ridge))*.28,at=(y*w+x)*4;
+        pixels[at]=(((10+8*shelf+7*(1-salt))*light*(1-fresnel)+79*fresnel)*lee*(1-shoulder)+33*shoulder)*(1-foam)+186*foam;
+        pixels[at+1]=(((46+24*shelf+9*(1-salt))*light*(1-fresnel)+135*fresnel)*lee*(1-shoulder)+125*shoulder)*(1-foam)+222*foam;
+        pixels[at+2]=(((64+22*shelf)*light*(1-fresnel)+150*fresnel)*lee*(1-shoulder)+138*shoulder)*(1-foam)+212*foam;pixels[at+3]=255;
       }
       this.ctx.putImageData(this.pixels,0,0);v.fallback.drawImage(this.canvas,0,0,v.width,v.height);
     }

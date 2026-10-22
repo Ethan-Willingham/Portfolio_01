@@ -27,10 +27,10 @@ let browser;const errors=[],reports=[];
       });assert.ok(parity<.035,'CPU/GPU wave phase and slopes agree: '+parity);
 
       const ride=await p.evaluate(()=>{
-        const {game:g,view:v}=__widewakeReach;const s=g.player;Object.assign(s,{x:0,y:2200,px:0,py:2200,angle:0,previousAngle:0,vx:36,vy:0,turn:0,sea:null});g.sea.wake.fill(0);g.sea.count=g.sea.cursor=0;v.wakes.clear();let low=Infinity,high=-Infinity,bow=0,roll=0;
+        const {game:g,view:v}=__widewakeReach;const s=g.player;g.time=g.tick=0;g.sea.begin(0);Object.assign(s,{x:0,y:2200,px:0,py:2200,angle:0,previousAngle:0,vx:36,vy:0,turn:0,sea:null});g.sea.wake.fill(0);g.sea.count=g.sea.cursor=0;v.wakes.clear();let low=Infinity,high=-Infinity,bow=0,roll=0;
         for(let n=0;n<900;n++){g.step(1/60,{throttle:1,steer:Math.sin(n/90)*.18});v.wakes.sample(g.ships,g.ships,g.time);low=Math.min(low,s.sea.z);high=Math.max(high,s.sea.z);bow=Math.max(bow,Math.abs(s.sea.pitch)*s.length*.76);roll=Math.max(roll,Math.abs(s.sea.roll));}
-        v.camera.x=s.x;v.camera.y=s.y;v.render(0,1);return{heaveMetres:high-low,heavePixels:(high-low)*.8660254*v.zoom*v.baseScale,bowPixels:bow*.8660254*v.zoom*v.baseScale,roll,spray:v.stats.bowSpraySegments};
-      });assert.ok(ride.heavePixels>18,'swell riding is visible at actual helm zoom: '+JSON.stringify(ride));assert.ok(ride.bowPixels>4,'bow clearly climbs and descends waves');assert.ok(ride.roll>.15&&ride.roll<.481);reports.push({ride});await p.screenshot({path:path.join(out,'riding-sea.png')});
+        v.camera.x=s.x;v.camera.y=s.y;v.render(0,1);return{heaveMetres:high-low,heavePixels:(high-low)*.8660254*v.zoom*v.baseScale*v.canvas.clientWidth/v.width,bowPixels:bow*.8660254*v.zoom*v.baseScale*v.canvas.clientWidth/v.width,roll,spray:v.stats.bowSpraySegments};
+      });assert.ok(ride.heavePixels>18,'swell riding is visible at actual helm zoom: '+JSON.stringify(ride));assert.ok(ride.bowPixels>4,'bow clearly climbs and descends waves: '+JSON.stringify(ride));assert.ok(ride.roll>.15&&ride.roll<.481);reports.push({ride});await p.screenshot({path:path.join(out,'riding-sea.png')});
 
       await p.evaluate(()=>{const {game:g,view:v}=__widewakeReach;g.player.type='gunboat';Object.assign(g.player,WidewakeBattle.roles.gunboat);v.configureCamera();v.zoom=v.targetZoom=v.stops.helm;v.render(0,1);});await p.screenshot({path:path.join(out,'escort-sea.png')});
       await p.evaluate(()=>{const {view:v}=__widewakeReach;v.zoom=v.targetZoom=v.stops.fleet;v.render(0,1);});await p.screenshot({path:path.join(out,'fleet-sea.png')});

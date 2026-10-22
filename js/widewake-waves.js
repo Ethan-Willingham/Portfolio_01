@@ -71,55 +71,49 @@
     stepShip(s,dt,moving=true){
       const p=this.probes,c=Math.cos(s.angle),sn=Math.sin(s.angle),l=s.length*.38,w=s.width*.42;
       this.at(s.x,s.y,this.time,p[0],s.id);this.at(s.x+c*l,s.y+sn*l,this.time,p[1],s.id);this.at(s.x-c*l,s.y-sn*l,this.time,p[2],s.id);this.at(s.x-sn*w,s.y+c*w,this.time,p[3],s.id);this.at(s.x+sn*w,s.y-c*w,this.time,p[4],s.id);
-      const load=clamp((s.cargo||0)/(s.hold||1),0,1),response=clamp(Math.sqrt(12/s.length),.4,1.4)/(1+load*.3),frequency=5.5*response;
-      const speed=Math.hypot(s.vx,s.vy),plane=smooth(.25,.85,speed/Math.max(1,s.speed))*response*this.strength,bank=clamp(-(s.turn||0)*speed*.006*response,-.20,.20)*this.strength;
-      const target=(p[0].height*2+p[1].height+p[2].height+p[3].height+p[4].height)/6+plane*.18,pitch=clamp((p[1].height-p[2].height)/(2*l)+plane*.065,-.36,.36),roll=clamp((p[3].height-p[4].height)/(2*w)+bank,-.42,.42);
-      // Damping follows the surface travelling under the hull. Damping against
-      // stationary world space alone makes a fast boat lag below every crest.
+      const load=clamp((s.cargo||0)/(s.hold||1),0,1),mass=1+load*.45,draft=s.draft||s.width*.18,gravity=9.81;
+      const target=(p[0].height*2+p[1].height+p[2].height+p[3].height+p[4].height)/6-draft*(mass-1);
       for(const q of p)q.travel=q.vz+q.dx*s.vx+q.dy*s.vy;
-      const rise=(p[0].travel*2+p[1].travel+p[2].travel+p[3].travel+p[4].travel)/6,pitchRate=clamp((p[1].travel-p[2].travel)/(2*l),-1.2,1.2),rollRate=clamp((p[3].travel-p[4].travel)/(2*w),-1.5,1.5);
-      if(!s.sea||Math.hypot(s.x-s.sea.x,s.y-s.sea.y)>Math.max(80,s.speed*2))s.sea={z:target,pitch,roll,vz:0,vp:0,vr:0,x:s.x,y:s.y};
+      const rise=(p[0].travel*2+p[1].travel+p[2].travel+p[3].travel+p[4].travel)/6;
+      if(!s.sea||Math.hypot(s.x-s.sea.x,s.y-s.sea.y)>Math.max(80,s.speed*2))s.sea={z:target,pitch:(p[1].height-p[2].height)/(2*l),roll:(p[3].height-p[4].height)/(2*w),vz:rise,vp:0,vr:0,x:s.x,y:s.y,contact:1,airborne:false,jumpAt:-100,landAt:-100,landCount:0};
       const state=s.sea;state.pz=state.z;state.ppitch=state.pitch;state.proll=state.roll;
-      if(state.lastRise===undefined){state.lastRise=rise;state.trough=target;state.peakRise=0;state.jumpAt=-100;state.landAt=-100;state.airborne=false;state.landCount=0;}
-      state.contact=1;
-      if(state.airborne){
-        // Once the planing hull leaves a crest it follows a ballistic arc.
-        // Water can catch it on the far face, rather than pulling it down.
-        const gravity=12.5;state.z+=state.vz*dt-gravity*dt*dt*.5;state.vz-=gravity*dt;
-        state.vp+=(-state.pitch*.8-.28-state.vp*.5)*dt;state.pitch+=state.vp*dt;
-        state.vr*=Math.exp(-dt*1.6);state.roll+=state.vr*dt;state.contact=0;
-        if(this.time-state.jumpAt>.08&&state.z<=target&&state.vz<rise){
-          const impact=clamp(rise-state.vz,0,20);state.airborne=false;state.contact=1;
-          state.z=target-Math.min(.16,impact*.015);state.vz=rise*.35-impact*.12;state.vp-=Math.min(.65,impact*.06);
-          state.landAt=this.time;state.landX=s.x;state.landY=s.y;state.landAngle=s.angle;state.landSpeed=speed;state.impact=impact;state.landCount++;
-          state.trough=target;state.peakRise=0;
-          if(moving){const grip=1-Math.min(.10,impact*.0075);s.vx*=grip;s.vy*=grip;s.turn=(s.turn||0)*.86;}
+      // Five unilateral pressure patches support a single rigid body. Their
+      // buoyancy depends on displaced water; damping opposes relative contact
+      // velocity. Dry water patches exert no force and cannot pull the hull down.
+      // There is no crest trigger, launch impulse, prescribed pitch or landing snap.
+      const inertiaPitch=(s.length*s.length+draft*draft)/12,inertiaRoll=(s.width*s.width+draft*draft)/12;
+      const damping=1.35*Math.sqrt(gravity/(draft*mass)),steps=Math.max(1,Math.ceil(dt*180/Math.sqrt(s.length/6))),h=dt/steps,airDrag=Math.exp(-h*.06/Math.sqrt(s.length/6)/mass);
+      let horizontalX=0,horizontalY=0;
+      for(let step=0;step<steps;step++){
+        let az=0,ap=0,ar=0,wet=0,closing=0,contactX=0,contactY=0,fx=0,fy=0;
+        const offset=(step+.5)*h-dt;
+        for(let i=0;i<5;i++){
+          const q=p[i],a=i===1?l:i===2?-l:0,b=i===3?w:i===4?-w:0,weight=i===0?1/3:1/6;
+          const level=q.height+q.travel*offset,keel=state.z+state.pitch*a+state.roll*b-draft,immersion=Math.max(0,level-keel);
+          const touching=clamp(immersion/(draft*mass),0,1),relative=q.travel-state.vz-state.vp*a-state.vr*b;
+          const pressure=immersion>0?Math.max(0,gravity*immersion/(draft*mass)+damping*relative*touching):0;
+          az+=(pressure-gravity)*weight;ap+=pressure*weight*a/inertiaPitch;ar+=pressure*weight*b/inertiaRoll;
+          wet+=touching*weight;fx-=q.dx*pressure*weight;fy-=q.dy*pressure*weight;
+          if(immersion>0&&relative>closing){closing=relative;contactX=s.x+c*a-sn*b;contactY=s.y+sn*a+c*b;}
         }
-      }else{
-        state.trough=Math.min(state.trough,target);
-        if(rise>.12)state.peakRise=Math.max(state.peakRise,rise);
-        // A small launch skips from each substantial crest when it is planing.
-        // Crest passage, speed and the measured climb drive takeoff, never a timer.
-        const canJump=moving&&s.length<=12&&speed>Math.max(9,s.speed*.62)&&this.strength>0&&p[0].exposure>.04;
-        if(canJump&&this.time-state.landAt>.35&&state.peakRise>.25&&target-state.trough>.18&&state.lastRise>rise&&rise<state.peakRise*.18){
-          const power=smooth(.55,.95,speed/Math.max(1,s.speed)),kick=(3.6+speed*.065+Math.min(1.8,state.peakRise*.25))*power/(1+load*.3);
-          state.airborne=true;state.contact=0;state.jumpAt=this.time;state.vz=Math.max(state.vz,kick);state.vp=Math.max(0,state.vp)*.35;
-          state.pitch=Math.max(state.pitch,.10+.08*power);state.peakRise=0;
-        }else{
-          for(const [key,velocity,goal,rate]of [['z','vz',target,rise],['pitch','vp',pitch,pitchRate],['roll','vr',roll,rollRate]]){state[velocity]+=(frequency*frequency*(goal-state[key])-1.55*frequency*(state[velocity]-rate*.82))*dt;state[key]+=state[velocity]*dt;}
-          if(rise<0&&state.lastRise>=0){state.trough=target;state.peakRise=0;}
-        }
+        // Lateral water force acts below the centre of mass, banking a turning
+        // hull. Angular momentum otherwise persists, including through flight.
+        ar-=(s.turn||0)*(s.vx*c+s.vy*sn)*draft*.12*wet/inertiaRoll;
+        state.z+=state.vz*h+az*h*h*.5;state.vz+=az*h;state.pitch+=state.vp*h+ap*h*h*.5;state.roll+=state.vr*h+ar*h*h*.5;state.vp=(state.vp+ap*h)*airDrag;state.vr=(state.vr+ar*h)*airDrag;
+        const airborne=wet===0;
+        if(airborne&&!state.airborne)state.jumpAt=this.time;
+        if(!airborne&&state.airborne&&closing>.8){state.landAt=this.time;state.landX=contactX;state.landY=contactY;state.landAngle=s.angle;state.landSpeed=Math.hypot(s.vx,s.vy);state.impact=closing;state.landCount=(state.landCount||0)+1;}
+        state.airborne=airborne;state.contact=wet;horizontalX+=fx/steps;horizontalY+=fy/steps;
+        // Keep the existing non-inverting projection envelope. This constraint
+        // applies equally to every hull and never supplies takeoff velocity.
+        const tilt=Math.hypot(state.pitch,state.roll);if(tilt>.48){const limit=.48/tilt;state.pitch*=limit;state.roll*=limit;state.vp*=limit;state.vr*=limit;}
       }
-      state.lastRise=rise;
-      const tilt=Math.hypot(state.pitch,state.roll);if(tilt>.48){const limit=.48/tilt;state.pitch*=limit;state.roll*=limit;state.vp*=limit;state.vr*=limit;}
       state.x=s.x;state.y=s.y;state.surface=target;state.exposure=p[0].exposure;
-      if(moving&&!state.airborne){
-        // Orbital water and gravity on the face act on world momentum. A bow
-        // meeting a rising face loses a little speed; a following face can surf.
-        const forward=s.vx*c+s.vy*sn,head=p[0].dx*c+p[0].dy*sn,drag=Math.max(0,head)*Math.abs(forward)*.9*response;
-        const ax=(-p[0].dx*6.5+p[0].vx*.6)*response-c*drag,ay=(-p[0].dy*6.5+p[0].vy*.6)*response-sn*drag;
+      if(moving){
+        const response=clamp(Math.sqrt(12/s.length),.4,1.4)/mass,grip=state.contact;
+        const ax=horizontalX*response*.55+p[0].vx*.6*response*grip,ay=horizontalY*response*.55+p[0].vy*.6*response*grip;
         s.vx+=ax*dt;s.vy+=ay*dt;s.x+=ax*dt*dt;s.y+=ay*dt*dt;
-        const yaw=clamp((p[1].dy-p[2].dy)*c-(p[1].dx-p[2].dx)*sn,-.15,.15)*response;
+        const yaw=clamp((p[1].dy-p[2].dy)*c-(p[1].dx-p[2].dx)*sn,-.15,.15)*response*grip;
         s.turn=(s.turn||0)+yaw*dt;s.angle+=yaw*dt*dt;
       }
       this.emit(s);return state;

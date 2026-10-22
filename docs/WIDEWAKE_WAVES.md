@@ -1,4 +1,4 @@
-# Widewake waves, v0.35.1
+# Widewake waves, v0.37.0
 
 Owner direction, 2026-10-21: waves are central to the game. Connect their
 appearance to boat handling, make boats substantially faster, and use the ocean
@@ -15,7 +15,9 @@ ends, and its foam pattern travels in that packet's coordinates. The lip follows
 the combined surface gradient, including companion swells. Foam breaks into
 patches while a quieter shoulder keeps the whole ridge readable. Canvas uses
 the same packet frame and simpler foam detail within its existing raster budget.
-The physical field, wave spacing, boat response and launch jumps are unchanged.
+The physical wave field and spacing remain unchanged. The later rigid-body
+correction below replaces the former launch behavior. Smaller sheltered waves
+now receive stronger crest and face contrast at ordinary helm zoom.
 
 `js/widewake-waves.js` owns the physical field. Six wave packets also
 generate the GLSL used by `js/widewake-ocean-art.js`. Each front has a smooth
@@ -41,16 +43,32 @@ There is no wind menu, capsize penalty or new damage rule.
 
 ## Boats and handling
 
-Each friendly hull samples its centre, bow, stern and both sides. Damped buoyancy
-drives heave, pitch and roll. Hull length and cargo determine response: a launch
-follows short waves more readily than a loaded industrial vessel. Surface slope
-and orbital water velocity act on world momentum, and climbing a face adds
-resistance. Small wave torques disturb heading without replacing rudder input.
-All displacement still passes through the existing bank and pier checks.
-Buoyancy damping follows the surface velocity under the moving hull, including
-its forward speed across a slope. This keeps fast boats riding crests. Speed
-raises the bow slightly, while carried angular momentum banks the hull into
-its turn. Combined inclination is bounded so the sprite projection cannot invert.
+Owner direction, 2026-10-22: jumping must follow scalable physics, with different
+outcomes from different encounters. The former crest detector, speed threshold,
+small-hull exemption, upward kick, minimum bow-up angle and forced landing pose
+are removed. There is no requirement to jump on every wave.
+
+Five pressure patches at the centre, bow, stern and both sides support one rigid
+hull. Each samples the rendered sea. Immersion and draft determine displaced
+water and buoyant force; relative water/hull velocity supplies dissipative
+pressure. Patches outside the water exert no force. The hull integrates gravity,
+vertical velocity, pitch, roll and angular momentum. Patch lever arms and hull
+moments of inertia determine rotation. Cargo increases displacement and inertia.
+The same calculation applies to every hull size without a launch-specific branch.
+
+A hull leaves the water when all its patches lose contact. Its existing velocity
+and rotation carry through free flight, under gravity of 9.81 m/s squared and
+small angular drag. No takeoff impulse or pitch reset is applied. A falling wave
+can expose the keel while the hull is already moving downward. Entry pressures
+catch the hull on whichever patch contacts first, without snapping its height,
+resetting its velocity or prescribing a bow dip. Partial immersion continuously
+scales propeller, rudder and water-brake authority. Dry controls cannot generate
+thrust or countersteer. Banking comes from lateral force below the centre of mass.
+
+The solver uses bounded substeps scaled to the hull's natural time scale. It
+retains the existing five reusable probes and applies detailed contact only to
+the friendly fleet, never one body per raider. Dry-flight and contact events use
+simulation time. Pause and inactivity retain the existing state.
 
 The manual helm carries yaw after steering release, with less sideways grip and
 longer coasting. Countersteering and braking apply stronger control. At full
@@ -60,28 +78,19 @@ The former handling carried about 8 degrees. These are isolated flat-water
 measurements; wave forces also affect the live voyage. Vector navigation and
 autopilot keep their existing conservative steering response.
 
-Ship poses incline with the sampled water plane and interpolate between physics
-steps. Nearby friendly boats render their model geometry with pitch and roll.
+Ship poses use the integrated hull height and rotation, interpolated between
+physics steps. Nearby friendly boats render their model geometry with pitch and roll.
 Distant hulls and Canvas use an affine approximation on directional sprites.
 Gun mounts follow the inclined deck; floating salvage and raiders share
 the sea's height. Enemy movement uses a staggered, lightweight wave response,
 independent of blast pressure. It allocates two fixed arrays rather than one
 physics body per raider.
 
-The owner's next correction asks for the small starter boat to get air and
-splash down on each wave. A planing launch now releases from a substantial
-crest after climbing its face. It carries upward velocity through a ballistic
-arc with gravity, rather than remaining attached to the buoyancy spring.
-Speed and load set takeoff strength. Slow launches and larger vessels retain
-supported buoyancy. There is no jump button or new landing damage penalty.
-
-While airborne, momentum carries the hull forward with little air steering;
-water brakes and rudder grip return on contact. Bow spray and new stern foam
-stop during flight, leaving a gap in the wake. The shadow stays on the water.
-Landing is detected against the live wave surface. Relative impact speed drives
-a brief grip and bow-dip response, two broken sheets of splash, and a splash
-sound. Spray remains at the contact point as the boat moves on. Effects use
-simulation time, pause with the boat and share the existing fixed spray budget.
+Bow spray and new stern foam stop while the hull is dry, leaving a gap in the
+wake. The shadow stays on the water. First water contact records the relative
+closing speed and location for the existing spray sheets and splash sound.
+Effects stay at that contact point, freeze on pause and use the existing fixed
+spray budget. The event supplies no extra landing force or damage penalty.
 
 The launch now makes 36 m/s, the patrol boat 72 m/s, and the frigate 68 m/s before
 upgrades. Endgame captain speed is 72 m/s. Companion cruise speeds rise by 65
@@ -146,9 +155,12 @@ deterministic regression tests can resume it exactly.
 - `node tools/widewake/test-waves.cjs`: analytic gradients, surface velocity,
   shelter, dry land, sustained hull stability, size response, wake crossings,
   expiration, finite buffers, flat-water control and faster player hulls.
-- `node tools/widewake/test-launch-jumps.cjs`: repeated crest takeoffs in exposed
-  and sheltered water, ballistic gravity, real water contact, air momentum,
-  slow/heavy/flat controls, timestep convergence and mid-flight continuation.
+- `node tools/widewake/test-launch-jumps.cjs`: exact unsupported gravity,
+  preserved rotation, dissipative entry, naturally different successive flights,
+  speed/load/heading response, supported slow and sheltered controls, timestep
+  convergence and exact continuation. Geometrically similar 6, 12, 24 and 48 m
+  hulls cross scaled waves with speeds and times scaled by the square root of
+  length; their normalized physical trajectories must agree.
 - `node tools/widewake/test-launch-jumps-browser.cjs`: real takeoff, rising,
   apex, descent and landing frames in desktop and landscape-phone WebGL and
   Canvas. Checks wake gaps in flight, visible splash pixels, frozen effects and
@@ -175,8 +187,9 @@ deterministic regression tests can resume it exactly.
   and exposed water. Actual framebuffer contrast is checked separately from
   physical hull travel; the wider fixed-camera sequence is supporting evidence.
 - `node tools/widewake/test-swell-readability.cjs`: full-speed crest intervals
-  and corresponding hull motion across multiple headings and starting phases,
-  with a v0.31 spectrum control to catch a return of rapid overlapping jolts.
+  across multiple headings and starting phases, with a v0.31 spectrum control
+  to catch a return of rapid overlapping waves. Hull separation and unsupported
+  gravity are checked without requiring a prescribed rise on every crest.
 - Existing driving, fleet handling, projectile, water-pressure, connected campaign
   and full 16,384-raider battle checks remain regression coverage. Pressure-only
   tests explicitly use flat water to isolate blast integration. Holding-station
