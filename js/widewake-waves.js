@@ -6,12 +6,12 @@
   // Long swell, crossing sea, wind waves and short chop. The same coefficients
   // generate the shader below, so painted crests and buoyancy cannot diverge.
   const bands=Object.freeze([
-    {length:84,amplitude:1.15,angle:-2.12,phase:.7},
-    {length:38,amplitude:.48,angle:-1.76,phase:2.4},
-    {length:17,amplitude:.13,angle:-2.86,phase:4.1},
-    {length:7.5,amplitude:.032,angle:-1.35,phase:1.2}
+    {length:84,amplitude:2.05,angle:-2.12,phase:.7},
+    {length:38,amplitude:.82,angle:-1.76,phase:2.4},
+    {length:17,amplitude:.21,angle:-2.86,phase:4.1},
+    {length:7.5,amplitude:.045,angle:-1.35,phase:1.2}
   ].map(b=>Object.freeze({...b,k:TAU/b.length,omega:Math.sqrt(9.81*TAU/b.length),x:Math.cos(b.angle),y:Math.sin(b.angle)})));
-  function exposure(x,y,depth=22,salt=1,open=false){return smooth(.3,2.4,depth)*(.13+.87*(open?1:smooth(700,1800,y))*smooth(3,16,depth))*(.75+.25*salt);}
+  function exposure(x,y,depth=22,salt=1,open=false){return smooth(.3,2.4,depth)*(.20+.80*(open?1:smooth(700,1800,y))*smooth(3,16,depth))*(.75+.25*salt);}
   function sample(x,y,time,depth=22,salt=1,open=true,out={}){
     const e=exposure(x,y,depth,salt,open);let h=0,dx=0,dy=0,vz=0,vx=0,vy=0;
     for(const b of bands){const cross=(-b.y*x+b.x*y)*.009+b.phase*2,warp=.55*Math.sin(cross),bend=.00495*Math.cos(cross),p=b.k*(b.x*x+b.y*y)+warp-b.omega*time+b.phase,s=Math.sin(p),c=Math.cos(p),c2=Math.cos(2*p),a=b.amplitude*e;
@@ -39,21 +39,27 @@
     begin(time){this.time=time;}
     emit(s){
       const id=s.id;if(id<0||id>=24||s.hp<=0)return;
-      const speed=Math.hypot(s.vx,s.vy),time=this.time;if(speed<2||time-this.last[id]<.45)return;
+      const speed=Math.hypot(s.vx,s.vy),time=this.time;if(speed<2||time-this.last[id]<(id===0?.18:.6))return;
       // Recovery or a test teleport starts a new trail without a long ghost wake.
       if(this.last[id]>=0&&Math.hypot(s.x-this.lastX[id],s.y-this.lastY[id])>speed*1.5+80)for(let n=0;n<this.count;n++)if(this.wake[n*8+7]===id)this.wake[n*8+2]=-100;
       this.last[id]=time;this.lastX[id]=s.x;this.lastY[id]=s.y;
       const i=this.cursor*8;this.cursor=(this.cursor+1)%CAPACITY;this.count=Math.min(CAPACITY,this.count+1);
-      this.wake.set([s.x-Math.cos(s.angle)*s.length*.42,s.y-Math.sin(s.angle)*s.length*.42,time,s.angle,s.width*.48,Math.max(1.4,s.width*.25),Math.min(.32,.045+s.width*.012)*Math.min(1,speed/15),id],i);
+      this.wake.set([s.x-Math.cos(s.angle)*s.length*.42,s.y-Math.sin(s.angle)*s.length*.42,time,s.angle,s.width*.48,Math.max(1.6,s.width*.28),Math.min(.55,.11+s.width*.018)*Math.min(1,speed/36),id],i);
     }
     stepShip(s,dt,moving=true){
       const p=this.probes,c=Math.cos(s.angle),sn=Math.sin(s.angle),l=s.length*.38,w=s.width*.42;
       this.at(s.x,s.y,this.time,p[0],s.id);this.at(s.x+c*l,s.y+sn*l,this.time,p[1],s.id);this.at(s.x-c*l,s.y-sn*l,this.time,p[2],s.id);this.at(s.x-sn*w,s.y+c*w,this.time,p[3],s.id);this.at(s.x+sn*w,s.y-c*w,this.time,p[4],s.id);
-      const target=(p[0].height*2+p[1].height+p[2].height+p[3].height+p[4].height)/6,pitch=clamp((p[1].height-p[2].height)/(2*l),-.25,.25),roll=clamp((p[3].height-p[4].height)/(2*w),-.3,.3);
-      const load=clamp((s.cargo||0)/(s.hold||1),0,1),response=clamp(Math.sqrt(12/s.length),.4,1.4)/(1+load*.3),frequency=4.8*response;
+      const load=clamp((s.cargo||0)/(s.hold||1),0,1),response=clamp(Math.sqrt(12/s.length),.4,1.4)/(1+load*.3),frequency=5.5*response;
+      const speed=Math.hypot(s.vx,s.vy),plane=smooth(.25,.85,speed/Math.max(1,s.speed))*response*this.strength,bank=clamp(-(s.turn||0)*speed*.006*response,-.20,.20)*this.strength;
+      const target=(p[0].height*2+p[1].height+p[2].height+p[3].height+p[4].height)/6+plane*.18,pitch=clamp((p[1].height-p[2].height)/(2*l)+plane*.065,-.36,.36),roll=clamp((p[3].height-p[4].height)/(2*w)+bank,-.42,.42);
+      // Damping follows the surface travelling under the hull. Damping against
+      // stationary world space alone makes a fast boat lag below every crest.
+      for(const q of p)q.travel=q.vz+q.dx*s.vx+q.dy*s.vy;
+      const rise=(p[0].travel*2+p[1].travel+p[2].travel+p[3].travel+p[4].travel)/6,pitchRate=clamp((p[1].travel-p[2].travel)/(2*l),-1.2,1.2),rollRate=clamp((p[3].travel-p[4].travel)/(2*w),-1.5,1.5);
       if(!s.sea||Math.hypot(s.x-s.sea.x,s.y-s.sea.y)>Math.max(80,s.speed*2))s.sea={z:target,pitch,roll,vz:0,vp:0,vr:0,x:s.x,y:s.y};
       const state=s.sea;state.pz=state.z;state.ppitch=state.pitch;state.proll=state.roll;
-      for(const [key,velocity,goal]of [['z','vz',target],['pitch','vp',pitch],['roll','vr',roll]]){state[velocity]+=(frequency*frequency*(goal-state[key])-1.65*frequency*state[velocity])*dt;state[key]+=state[velocity]*dt;}
+      for(const [key,velocity,goal,rate]of [['z','vz',target,rise],['pitch','vp',pitch,pitchRate],['roll','vr',roll,rollRate]]){state[velocity]+=(frequency*frequency*(goal-state[key])-1.55*frequency*(state[velocity]-rate*.82))*dt;state[key]+=state[velocity]*dt;}
+      const tilt=Math.hypot(state.pitch,state.roll);if(tilt>.48){const limit=.48/tilt;state.pitch*=limit;state.roll*=limit;state.vp*=limit;state.vr*=limit;}
       state.x=s.x;state.y=s.y;state.surface=target;state.exposure=p[0].exposure;
       if(moving){
         // Orbital water and gravity on the face act on world momentum. A bow
@@ -81,7 +87,7 @@
   const f=n=>Number(n).toFixed(10);
   const glsl=`
     uniform float uSeaStrength;
-    float seaExposure(vec2 p,float depth,float salt,float openSea){return smoothstep(.3,2.4,depth)*(.13+.87*mix(smoothstep(700.,1800.,p.y),1.,openSea)*smoothstep(3.,16.,depth))*(.75+.25*salt);}
+    float seaExposure(vec2 p,float depth,float salt,float openSea){return smoothstep(.3,2.4,depth)*(.20+.80*mix(smoothstep(700.,1800.,p.y),1.,openSea)*smoothstep(3.,16.,depth))*(.75+.25*salt);}
     vec3 waveSurface(vec2 p,float time,float depth,float salt,float openSea){vec3 q=vec3(0.);float e=seaExposure(p,depth,salt,openSea)*uSeaStrength;
       ${bands.map(b=>`{vec2 d=vec2(${f(b.x)},${f(b.y)});float crossPhase=dot(p,vec2(-d.y,d.x))*.009+${f(b.phase*2)},bend=.00495*cos(crossPhase),p0=dot(p,d)*${f(b.k)}+.55*sin(crossPhase)-time*${f(b.omega)}+${f(b.phase)},a=${f(b.amplitude)}*e;q.x+=a*(sin(p0)+.16*sin(2.*p0));q.yz+=(d*${f(b.k)}+vec2(-d.y,d.x)*bend)*a*(cos(p0)+.32*cos(2.*p0));}`).join('\n')}
       return q;

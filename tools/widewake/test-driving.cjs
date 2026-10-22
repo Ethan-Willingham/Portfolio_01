@@ -39,6 +39,30 @@ const fine=boat(),coarse=boat();for(let i=0;i<360;i++)B.helmStep(fine,{throttle:
 const nav=new E.Navigation();assert.ok(nav.setCourse(nav.plan('reeds')));nav.step(dt,{throttle:0,steer:0});assert.ok(nav.route,'released helm preserves course');nav.step(dt,{throttle:0,steer:.5});assert.equal(nav.route,null,'turning takes the helm immediately');
 console.log('PASS boat-relative throttle at eight headings, left/right rudder, jet turns, braking, cargo and route takeover');
 
+// Releasing the rudder carries a useful arc instead of applying a hidden brake.
+// Test actual campaign speeds and both directions, separately from wave forces.
+const flow=[];
+for(const type of ['launch','gunboat','flagship'])for(const direction of [-1,1]){
+  const s={...boat(type),speed:R.hulls[type].speed};advance(s,{throttle:1,steer:0},6);advance(s,{throttle:1,steer:direction},.8);
+  const heading=s.angle,yaw=s.turn,speed=Math.hypot(s.vx,s.vy),release={...s},coast={...s},counter={...s},brake={...s};
+  B.helmStep(release,{throttle:1,steer:0},dt);assert.ok(release.turn*yaw>0&&Math.abs(release.turn)>Math.abs(yaw)*.9,'key release preserves angular momentum');
+  advance(release,{throttle:1,steer:0},.75-dt);
+  const carried=B.angleDelta(release.angle,heading)*direction,remaining=release.turn/yaw;
+  assert.ok(carried>.45&&carried<1.1,'release carries a readable, bounded arc');
+  assert.ok(remaining>.1&&remaining<.7,'yaw decays over several beats rather than stopping or spinning forever');
+  assert.ok(Math.hypot(release.vx,release.vy)>speed*.9,'a powered carve keeps its speed');
+  assert.ok(Math.abs(release.vy*Math.cos(release.angle)-release.vx*Math.sin(release.angle))>s.speed*.15,'momentum remains visibly sideways through the release');
+  B.helmStep(counter,{throttle:1,steer:-direction},dt);assert.ok(counter.turn*yaw>0,'countersteering cannot snap angular velocity to the opposite sign');
+  advance(counter,{throttle:1,steer:-direction},.3-dt);assert.ok(counter.turn*direction<-.2,'deliberate countersteering catches the arc promptly');
+  advance(coast,{throttle:0,steer:0},.75);assert.ok(Math.hypot(coast.vx,coast.vy)>speed*.5,'lifting all controls carries forward momentum through the arc');
+  advance(brake,{throttle:-1,steer:0},1.5);assert.ok(Math.hypot(brake.vx,brake.vy)<1.1,'braking still arrests a fast sideways carve');
+  advance(release,{throttle:1,steer:0},10);assert.ok(Math.abs(release.turn)<.0001,'the carried turn eventually settles');
+  if(direction===1)flow.push({type,releaseDegrees:carried*180/Math.PI,yawRemaining:remaining,coastSpeed:Math.hypot(coast.vx,coast.vy)});
+}
+const releaseRun=step=>{const s={...boat(),speed:R.hulls.launch.speed};for(const [seconds,input]of [[4,{throttle:1,steer:0}],[.8,{throttle:1,steer:1}],[.8,{throttle:1,steer:0}],[.4,{throttle:1,steer:-1}],[1,{throttle:0,steer:0}]])for(let i=0;i<Math.round(seconds/step);i++)B.helmStep(s,input,step);return s;};
+const releaseFine=releaseRun(1/60),releaseCoarse=releaseRun(1/30);assert.ok(Math.hypot(releaseFine.x-releaseCoarse.x,releaseFine.y-releaseCoarse.y)<1.3,'release and countersteer paths converge across fixed timesteps');assert.ok(Math.abs(B.angleDelta(releaseFine.angle,releaseCoarse.angle))<.025);
+console.log('PASS carried rudder release, powered carving, intentional countersteer, neutral slide, brake grip and release timestep convergence',flow);
+
 const wake=new WidewakeOceanArt.WakeTrail(),s=boat(),poses=[s],v={battle:{ships:[s]},poses,zoom:2,baseScale:1,visualTime:0,visible:()=>true};const buffers=wake.tracks.map(t=>t.x);
 for(let i=0;i<3600;i++){const angle=i/60*.3;B.helmStep(s,{x:Math.cos(angle),y:Math.sin(angle)},dt);v.visualTime=i/60;wake.sample([s],poses,v.visualTime);}
 assert.ok(wake.count>80&&wake.count<=128);assert.equal(wake.bytes,61440);assert.ok(wake.tracks.every((t,i)=>t.x===buffers[i]));

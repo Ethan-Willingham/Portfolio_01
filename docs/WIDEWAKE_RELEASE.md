@@ -1802,3 +1802,26 @@ the full three-minute 16,384-raider simulation pass. Desktop source staging
 and protocol policy checks pass. Physical-phone performance and the owner's
 review of appearance and handling remain unverified. Details and limits are
 in [WIDEWAKE_WAVES.md](WIDEWAKE_WAVES.md).
+
+## Swell riding and carried turns, 2026-10-21 (v0.29.0)
+
+The owner asked for more dramatic waves and wakes, clearly visible swell riding,
+and a flowing helm that keeps turning after release. Manual steering now carries
+angular momentum, lateral grip allows carving slides, and neutral throttle
+coasts longer. Countersteering catches the arc and braking still stops the boat.
+Fleet navigation retains its previous steering model.
+
+The main wave bands are about 1.8 times taller. Buoyancy follows the water moving
+under the hull, with bow trim at speed and bank into turns. Stronger physical
+wake crests, bright foam trails and bow spray communicate speed. Trails and
+shadows ride the water surface. Narrower broken foam at wave tops preserves
+boat contrast, and the Canvas renderer draws continuous wake ribbons.
+
+Driving tests now cover release carry, countersteering, sideslip, braking and
+timestep convergence at actual campaign speeds. Wave tests cover sustained
+full-speed riding and bounded inclination. Fleet handling, channel navigation,
+connected Reach progression, pressure, projectiles and the full 180-second
+16,384-raider battle pass. Browser verification covers WebGL and Canvas,
+desktop and landscape phone sizes, visible ride distance, spray, shader parity,
+pause and context recovery. Mobile checks use emulated viewports; physical
+device performance and the owner's final assessment of handling remain open.

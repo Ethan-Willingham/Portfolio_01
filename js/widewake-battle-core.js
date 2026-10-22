@@ -93,15 +93,20 @@
     const throttle=clamp(input.throttle||0,-1,1),steer=clamp(input.steer||0,-1,1),braking=throttle<-.04;
     const target=Math.max(0,throttle)*(input.boost?1.35:1),powered=target>.04;
     const size=clamp(Math.sqrt(18/s.length),.7,1.4),mass=1+.28*clamp((s.cargo||0)/(s.hold||1),0,1),fraction=clamp(Math.hypot(s.vx,s.vy)/s.speed,0,1);
-    const authority=.35+.65*Math.min(1,fraction*2+Math.abs(target)),yaw=steer*(1.8-.3*fraction)*size*authority/Math.sqrt(mass);
-    s.turn=(s.turn||0)+(yaw-(s.turn||0))*(1-Math.exp(-dt*10*size/mass));
-    s.angle=angleDelta(s.angle+s.turn*dt,0);
+    const authority=.35+.65*Math.min(1,fraction*2+Math.abs(target)),yaw=steer*(1.8-.3*fraction)*size*authority/Math.sqrt(mass),turn=s.turn||0;
+    // A released rudder stops adding torque, not the existing turn. At speed
+    // the hull carries its arc; countersteering and braking deliberately catch it.
+    const steering=Math.abs(steer)>.015,counter=steering&&steer*turn<0;
+    const response=(braking?5:steering?(counter?8:6):3.8-2.4*fraction)*size/mass,decay=Math.exp(-dt*response);
+    s.turn=yaw+(turn-yaw)*decay;
+    s.angle=angleDelta(s.angle+yaw*dt+(turn-yaw)*(1-decay)/response,0);
     const c=Math.cos(s.angle),sn=Math.sin(s.angle),forward=s.vx*c+s.vy*sn,side=-s.vx*sn+s.vy*c;
     s.throttle=(s.throttle||0)+(target-(s.throttle||0))*(1-Math.exp(-dt*8*size));
-    const gain=(braking?5:powered?3.2:.7)*size/mass,acceleration=s.speed*(braking?1.3:.8)*size/mass;
+    const gain=(braking?5:powered?3.2:.28)*size/mass,acceleration=s.speed*(braking?1.3:.8)*size/mass;
     const surge=forward+clamp(((braking?0:s.speed*s.throttle)-forward)*(1-Math.exp(-dt*gain)),-acceleration*dt,acceleration*dt);
-    // Grip catches up with the hull instead of rotating velocity on a keypress.
-    const sway=side*Math.exp(-dt*(powered?4.3:2.8)*size/mass);
+    // Planing water grip bends world momentum gradually, leaving a broad carve
+    // through a turn and a longer slide off throttle. Brakes grip both axes.
+    const grip=(braking?5.8:powered?3.1-.8*fraction:.9)*size/mass,sway=side*Math.exp(-dt*grip);
     s.vx=c*surge-sn*sway;s.vy=sn*surge+c*sway;
     if(!powered&&Math.hypot(s.vx,s.vy)<.03)s.vx=s.vy=s.throttle=0;
     s.x+=s.vx*dt;s.y+=s.vy*dt;
