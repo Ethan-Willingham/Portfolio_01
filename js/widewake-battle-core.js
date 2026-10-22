@@ -88,6 +88,12 @@
     return radius;
   }
   function driveHelm(s,input,dt){
+    if(s.sea?.airborne){
+      // Rudder and brakes need water. Carry launch momentum through the jump,
+      // with only a little air steering before the landing catches the hull.
+      const steer=clamp(input.steer||0,-1,1);s.turn=(s.turn||0)*Math.exp(-dt*.8)+steer*dt*.28;
+      s.angle=angleDelta(s.angle+s.turn*dt,0);const drag=Math.exp(-dt*.035);s.vx*=drag;s.vy*=drag;s.x+=s.vx*dt;s.y+=s.vy*dt;return;
+    }
     // The player's throttle follows the bow. Rudder input is relative to the
     // hull, independent of the camera and of the direction of its momentum.
     const throttle=clamp(input.throttle||0,-1,1),steer=clamp(input.steer||0,-1,1),braking=throttle<-.04;
@@ -112,6 +118,9 @@
     s.x+=s.vx*dt;s.y+=s.vy*dt;
   }
   function helmStep(s,input,dt){
+    if(s.sea?.airborne&&!Number.isFinite(input.throttle)&&!Number.isFinite(input.steer)){
+      const x=input.x||0,y=input.y||0;driveHelm(s,{steer:Math.hypot(x,y)>.04?clamp(angleDelta(Math.atan2(y,x),s.angle)*2,-1,1):0},dt);return;
+    }
     if(Number.isFinite(input.throttle)||Number.isFinite(input.steer)){driveHelm(s,input,dt);return;}
     // Surge, sway and yaw, for the bounded friendly fleet only. Velocity stays
     // in world space when the hull turns; lateral water resistance bends its path.

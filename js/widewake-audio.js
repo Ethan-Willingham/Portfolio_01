@@ -81,7 +81,7 @@
     gull(at){this.tone({at,frequency:1050,slide:680,duration:.32,volume:.022,type:'sine',bus:'ambience',pan:.55});this.tone({at:at+.38,frequency:960,slide:700,duration:.26,volume:.015,type:'sine',bus:'ambience',pan:.55});}
     play(kind,detail={}){
       if(!this.ctx||!this.active()||this.settings().sound===false||this.settings().volume<=0||this.settings().effects===0||this.ctx.state!=='running'&&!this.offline||this.ctx.state==='closed')return false;
-      const at=detail.at??this.ctx.currentTime,interval=({shot:.12,'enemy-shot':.28,'escort-shot':.2,impact:.075,sink:.18,hurt:.14,burst:.5,'flak-shot':.23,'mortar-shot':.38,'mortar-hit':.22,pickup:.13,warn:1.5,repair:.4,complete:.8,rare:.8})[kind]??.07;
+      const at=detail.at??this.ctx.currentTime,interval=({shot:.12,'enemy-shot':.28,'escort-shot':.2,impact:.075,sink:.18,hurt:.14,burst:.5,'flak-shot':.23,'mortar-shot':.38,'mortar-hit':.22,pickup:.13,splash:.3,warn:1.5,repair:.4,complete:.8,rare:.8})[kind]??.07;
       if(at-(this.lastPlayed[kind]??-100)<interval||this.voices.size>52){this.stats.skipped++;return false;}this.lastPlayed[kind]=at;this.stats.played++;
       const pan=clamp(detail.pan||0,-.85,.85),v=clamp(detail.volume??1,0,1);
       if(['shot','escort-shot','enemy-shot','burst'].includes(kind)){
@@ -91,6 +91,9 @@
         const mortar=kind!=='flak-shot',hit=kind==='mortar-hit';
         this.noiseVoice({at,duration:hit?.38:mortar?.25:.12,volume:v*(hit?.4:.27),frequency:hit?380:mortar?620:1900,pan});
         this.tone({at,frequency:mortar?82:215,slide:mortar?32:80,duration:mortar?.34:.11,volume:v*.13,type:'triangle',pan,filter:700});
+      }else if(kind==='splash'){
+        this.noiseVoice({at,duration:.48,volume:v*.65,frequency:1250,pan});this.noiseVoice({at:at+.055,duration:.65,volume:v*.30,frequency:420,pan});
+        this.tone({at,frequency:92,slide:38,duration:.19,volume:v*.15,type:'triangle',filter:380,pan});
       }else if(kind==='impact'||kind==='hurt'||kind==='sink'){
         const sink=kind==='sink',hurt=kind==='hurt';this.noiseVoice({at,duration:sink?.62:hurt?.2:.1,volume:v*(sink?.55:hurt?.3:.21),frequency:sink?450:hurt?650:1900,pan});
         this.tone({at,frequency:sink?70:hurt?110:240,slide:sink?32:75,duration:sink?.5:.12,volume:v*(sink?.16:.075),type:'triangle',pan,filter:650});

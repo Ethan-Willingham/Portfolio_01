@@ -53,7 +53,7 @@
     begin(time){this.time=time;}
     emit(s){
       const id=s.id;if(id<0||id>=24||s.hp<=0)return;
-      const speed=Math.hypot(s.vx,s.vy),time=this.time;if(speed<2||time-this.last[id]<(id===0?.18:.6))return;
+      const speed=Math.hypot(s.vx,s.vy),time=this.time;if(s.sea?.airborne||speed<2||time-this.last[id]<(id===0?.18:.6))return;
       // Recovery or a test teleport starts a new trail without a long ghost wake.
       if(this.last[id]>=0&&Math.hypot(s.x-this.lastX[id],s.y-this.lastY[id])>speed*1.5+80)for(let n=0;n<this.count;n++)if(this.wake[n*8+7]===id)this.wake[n*8+2]=-100;
       this.last[id]=time;this.lastX[id]=s.x;this.lastY[id]=s.y;
@@ -72,10 +72,40 @@
       const rise=(p[0].travel*2+p[1].travel+p[2].travel+p[3].travel+p[4].travel)/6,pitchRate=clamp((p[1].travel-p[2].travel)/(2*l),-1.2,1.2),rollRate=clamp((p[3].travel-p[4].travel)/(2*w),-1.5,1.5);
       if(!s.sea||Math.hypot(s.x-s.sea.x,s.y-s.sea.y)>Math.max(80,s.speed*2))s.sea={z:target,pitch,roll,vz:0,vp:0,vr:0,x:s.x,y:s.y};
       const state=s.sea;state.pz=state.z;state.ppitch=state.pitch;state.proll=state.roll;
-      for(const [key,velocity,goal,rate]of [['z','vz',target,rise],['pitch','vp',pitch,pitchRate],['roll','vr',roll,rollRate]]){state[velocity]+=(frequency*frequency*(goal-state[key])-1.55*frequency*(state[velocity]-rate*.82))*dt;state[key]+=state[velocity]*dt;}
+      if(state.lastRise===undefined){state.lastRise=rise;state.trough=target;state.peakRise=0;state.jumpAt=-100;state.landAt=-100;state.airborne=false;state.landCount=0;}
+      state.contact=1;
+      if(state.airborne){
+        // Once the planing hull leaves a crest it follows a ballistic arc.
+        // Water can catch it on the far face, rather than pulling it down.
+        const gravity=12.5;state.z+=state.vz*dt-gravity*dt*dt*.5;state.vz-=gravity*dt;
+        state.vp+=(-state.pitch*.8-.28-state.vp*.5)*dt;state.pitch+=state.vp*dt;
+        state.vr*=Math.exp(-dt*1.6);state.roll+=state.vr*dt;state.contact=0;
+        if(this.time-state.jumpAt>.08&&state.z<=target&&state.vz<rise){
+          const impact=clamp(rise-state.vz,0,20);state.airborne=false;state.contact=1;
+          state.z=target-Math.min(.16,impact*.015);state.vz=rise*.35-impact*.12;state.vp-=Math.min(.65,impact*.06);
+          state.landAt=this.time;state.landX=s.x;state.landY=s.y;state.landAngle=s.angle;state.landSpeed=speed;state.impact=impact;state.landCount++;
+          state.trough=target;state.peakRise=0;
+          if(moving){const grip=1-Math.min(.10,impact*.0075);s.vx*=grip;s.vy*=grip;s.turn=(s.turn||0)*.86;}
+        }
+      }else{
+        state.trough=Math.min(state.trough,target);
+        if(rise>.12)state.peakRise=Math.max(state.peakRise,rise);
+        // A small launch skips from each substantial crest when it is planing.
+        // Crest passage, speed and the measured climb drive takeoff, never a timer.
+        const canJump=moving&&s.length<=12&&speed>Math.max(9,s.speed*.62)&&this.strength>0&&p[0].exposure>.04;
+        if(canJump&&this.time-state.landAt>.35&&state.peakRise>.25&&target-state.trough>.18&&state.lastRise>rise&&rise<state.peakRise*.18){
+          const power=smooth(.55,.95,speed/Math.max(1,s.speed)),kick=(3.6+speed*.065+Math.min(1.8,state.peakRise*.25))*power/(1+load*.3);
+          state.airborne=true;state.contact=0;state.jumpAt=this.time;state.vz=Math.max(state.vz,kick);state.vp=Math.max(0,state.vp)*.35;
+          state.pitch=Math.max(state.pitch,.10+.08*power);state.peakRise=0;
+        }else{
+          for(const [key,velocity,goal,rate]of [['z','vz',target,rise],['pitch','vp',pitch,pitchRate],['roll','vr',roll,rollRate]]){state[velocity]+=(frequency*frequency*(goal-state[key])-1.55*frequency*(state[velocity]-rate*.82))*dt;state[key]+=state[velocity]*dt;}
+          if(rise<0&&state.lastRise>=0){state.trough=target;state.peakRise=0;}
+        }
+      }
+      state.lastRise=rise;
       const tilt=Math.hypot(state.pitch,state.roll);if(tilt>.48){const limit=.48/tilt;state.pitch*=limit;state.roll*=limit;state.vp*=limit;state.vr*=limit;}
       state.x=s.x;state.y=s.y;state.surface=target;state.exposure=p[0].exposure;
-      if(moving){
+      if(moving&&!state.airborne){
         // Orbital water and gravity on the face act on world momentum. A bow
         // meeting a rising face loses a little speed; a following face can surf.
         const forward=s.vx*c+s.vy*sn,head=p[0].dx*c+p[0].dy*sn,drag=Math.max(0,head)*Math.abs(forward)*.9*response;
@@ -86,7 +116,7 @@
       }
       this.emit(s);return state;
     }
-    pose(s,alpha=1,out={}){const p=s.sea;out.z=p?p.pz+(p.z-p.pz)*alpha:0;out.pitch=p?p.ppitch+(p.pitch-p.ppitch)*alpha:0;out.roll=p?p.proll+(p.roll-p.proll)*alpha:0;return out;}
+    pose(s,alpha=1,out={}){const p=s.sea;out.z=p?p.pz+(p.z-p.pz)*alpha:0;out.pitch=p?p.ppitch+(p.pitch-p.ppitch)*alpha:0;out.roll=p?p.proll+(p.roll-p.proll)*alpha:0;out.airborne=!!p?.airborne;return out;}
     snapshot(){return{time:this.time,cursor:this.cursor,count:this.count,strength:this.strength,wake:Array.from(this.wake),last:Array.from(this.last),lastX:Array.from(this.lastX),lastY:Array.from(this.lastY)};}
     restore(data){
       if(!data)return;

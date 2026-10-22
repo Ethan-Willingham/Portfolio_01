@@ -29,7 +29,7 @@ const extremes=[];
 for(const type of ['launch','gunboat','oilrig','flagship']){
   const spec={...(E.vessels[type]||B.roles[type]),speed:R.hulls[type]?.speed||B.roles[type].speed*1.65};
   const s=boat(spec),o=new W.Sea();let low=Infinity,high=-Infinity,maxRoll=0;
-  for(let n=1;n<7200;n++){o.begin(n*dt);B.helmStep(s,{throttle:n<3600?1:0,steer:Math.sin(n*.003)*.3},dt);o.stepShip(s,dt);low=Math.min(low,s.sea.z);high=Math.max(high,s.sea.z);maxRoll=Math.max(maxRoll,Math.abs(s.sea.roll));for(const key of ['x','y','vx','vy','angle'])assert.ok(Number.isFinite(s[key]));assert.ok(Math.abs(s.sea.z)<4.5&&Math.hypot(s.sea.roll,s.sea.pitch)<.481,'buoyancy remains bounded and cannot invert sprite projection');}
+  for(let n=1;n<7200;n++){o.begin(n*dt);B.helmStep(s,{throttle:n<3600?1:0,steer:Math.sin(n*.003)*.3},dt);o.stepShip(s,dt);low=Math.min(low,s.sea.z);high=Math.max(high,s.sea.z);maxRoll=Math.max(maxRoll,Math.abs(s.sea.roll));for(const key of ['x','y','vx','vy','angle'])assert.ok(Number.isFinite(s[key]));assert.ok(Math.abs(s.sea.z)<8&&Math.hypot(s.sea.roll,s.sea.pitch)<.481,'buoyancy and launch flight stay bounded and cannot invert sprite projection');}
   assert.ok(high-low>2.5,'every hull visibly rides the swell at campaign speed');extremes.push({type,speed:s.speed,length:s.length,heave:high-low,maxRoll});assert.ok(o.count<=W.CAPACITY);assert.ok(o.bytes<26000);
 }
 assert.ok(extremes[0].maxRoll>extremes[3].maxRoll*1.2);console.log('PASS sustained hull stability, smaller hull response and fixed wake storage',extremes);

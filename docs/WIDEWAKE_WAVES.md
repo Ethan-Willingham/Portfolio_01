@@ -1,4 +1,4 @@
-# Widewake waves, v0.32.0
+# Widewake waves, v0.33.0
 
 Owner direction, 2026-10-21: waves are central to the game. Connect their
 appearance to boat handling, make boats substantially faster, and use the ocean
@@ -56,6 +56,21 @@ sprites. Gun mounts follow the inclined deck; floating salvage and raiders share
 the sea's height. Enemy movement uses a staggered, lightweight wave response,
 independent of blast pressure. It allocates two fixed arrays rather than one
 physics body per raider.
+
+The owner's next correction asks for the small starter boat to get air and
+splash down on each wave. A planing launch now releases from a substantial
+crest after climbing its face. It carries upward velocity through a ballistic
+arc with gravity, rather than remaining attached to the buoyancy spring.
+Speed and load set takeoff strength. Slow launches and larger vessels retain
+supported buoyancy. There is no jump button or new landing damage penalty.
+
+While airborne, momentum carries the hull forward with little air steering;
+water brakes and rudder grip return on contact. Bow spray and new stern foam
+stop during flight, leaving a gap in the wake. The shadow stays on the water.
+Landing is detected against the live wave surface. Relative impact speed drives
+a brief grip and bow-dip response, two broken sheets of splash, and a splash
+sound. Spray remains at the contact point as the boat moves on. Effects use
+simulation time, pause with the boat and share the existing fixed spray budget.
 
 The launch now makes 36 m/s, the patrol boat 72 m/s, and the frigate 68 m/s before
 upgrades. Endgame captain speed is 72 m/s. Companion cruise speeds rise by 65
@@ -118,6 +133,13 @@ deterministic regression tests can resume it exactly.
 - `node tools/widewake/test-waves.cjs`: analytic gradients, surface velocity,
   shelter, dry land, sustained hull stability, size response, wake crossings,
   expiration, finite buffers, flat-water control and faster player hulls.
+- `node tools/widewake/test-launch-jumps.cjs`: repeated crest takeoffs in exposed
+  and sheltered water, ballistic gravity, real water contact, air momentum,
+  slow/heavy/flat controls, timestep convergence and mid-flight continuation.
+- `node tools/widewake/test-launch-jumps-browser.cjs`: real takeoff, rising,
+  apex, descent and landing frames in desktop and landscape-phone WebGL and
+  Canvas. Checks wake gaps in flight, visible splash pixels, frozen effects and
+  the rendered splash sound through an offline audio context.
 - `node tools/widewake/test-waves-browser.cjs`: real WebGL and Canvas scenes at
   1440 by 900 and 844 by 390, CPU/GPU wave parity, frozen pause pixels, moving
   hull poses, foam trails, absence of circular wake crests, bow spray and graphics-context restoration during

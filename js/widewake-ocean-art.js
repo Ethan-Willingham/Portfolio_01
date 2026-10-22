@@ -363,7 +363,7 @@
       for(let id=0;id<this.limit;id++){
         const t=this.tracks[id],s=ships[id],p=poses[id];if(!s||!p||s.hp<=0){t.count=0;continue;}
         const c=Math.cos(p.angle),sn=Math.sin(p.angle),x=p.x-c*s.length*.38,y=p.y-sn*s.length*.38,speed=Math.hypot(s.vx,s.vy);
-        t.width=s.width*.42;t.spread=Math.min(12,.5+s.speed*.14);t.churn=Math.max(.32,Math.min(1.8,s.length/Math.max(8,s.speed)*1.6));t.liveX=x;t.liveY=y;t.liveTime=time;t.livePower=Math.min(1,speed/(s.speed*.8));
+        t.width=s.width*.42;t.spread=Math.min(12,.5+s.speed*.14);t.churn=Math.max(.32,Math.min(1.8,s.length/Math.max(8,s.speed)*1.6));t.liveX=x;t.liveY=y;t.liveTime=time;t.livePower=s.sea?.airborne?0:Math.min(1,speed/(s.speed*.8));
         const previous=(t.head+127)%128;
         if(time<t.last||t.count&&Math.hypot(x-t.x[previous],y-t.y[previous])>Math.max(40,s.length*2)){t.count=0;t.last=-1;}
         while(t.count&&time-t.time[(t.head-t.count+128)%128]>this.life)t.count--;
@@ -399,7 +399,7 @@
         }
       }
       // Small bow shoulders indicate speed and hull heading without covering it.
-      for(const s of view.battle.ships){if(s.hp<=0)continue;const p=view.poses[s.id],speed=Math.hypot(s.vx,s.vy),power=Math.min(1,speed/(s.speed*.8));if(power<.05||!view.visible(p.x,p.y,40))continue;
+      for(const s of view.battle.ships){if(s.hp<=0||s.sea?.airborne)continue;const p=view.poses[s.id],speed=Math.hypot(s.vx,s.vy),power=Math.min(1,speed/(s.speed*.8));if(power<.05||!view.visible(p.x,p.y,40))continue;
         const c=Math.cos(p.angle),sn=Math.sin(p.angle);for(const side of [-1,1]){
           const x=p.x+c*s.length*.47-sn*s.width*.13*side,y=p.y+sn*s.length*.47+c*s.width*.13*side;
           emit(x,y,x-c*s.length*.3-sn*s.width*.44*side,y-sn*s.length*.3+c*s.width*.44*side,s.width*.025,s.width*.12,power*.75,0);
@@ -463,7 +463,7 @@
   class Shadows{
     constructor(view){this.view=view;this.program=root.WidewakeOcean.program(view.gl,shadowVertex,shadowFragment);this.batch=new root.WidewakeOcean.Batch(view.gl,new Float32Array([-1,-1,1,-1,1,1,-1,-1,1,1,-1,1]),4096,true);}
     draw(){const v=this.view,gl=v.gl;v.uniforms(this.program);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false);const n=this.batch.draw();gl.depthMask(true);gl.disable(gl.BLEND);return n;}
-    ships(){const v=this.view;this.batch.count=0;for(const s of v.battle.ships){if(s.hp<=0||!v.visible(s.x,s.y,100))continue;const p=v.poses[s.id],z=v.battle.sea?.at(p.x,p.y,v.visualTime,this._surface||(this._surface={}),-1,false).height||0;this.batch.add(p.x-v.camera.x,p.y-v.camera.y,z+.08,Math.cos(p.angle),Math.sin(p.angle),s.length,s.width,Math.min(3,s.height*.16));}return this.draw();}
+    ships(){const v=this.view;this.batch.count=0;for(const s of v.battle.ships){if(s.hp<=0||!v.visible(s.x,s.y,100))continue;const p=v.poses[s.id],z=v.battle.sea?.at(p.x,p.y,v.visualTime,this._surface||(this._surface={}),-1,false).height||0;const gap=Math.max(0,(p.z||0)-z),spread=1+Math.min(.25,gap*.035);this.batch.add(p.x-v.camera.x,p.y-v.camera.y,z+.08,Math.cos(p.angle),Math.sin(p.angle),s.length*spread,s.width*spread,Math.min(6,s.height*.16+gap*.65));}return this.draw();}
     dispose(){this.batch.dispose();this.view.gl.deleteProgram(this.program);}
   }
   class Mechanisms{

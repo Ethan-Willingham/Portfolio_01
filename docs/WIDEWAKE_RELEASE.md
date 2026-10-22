@@ -1910,3 +1910,27 @@ simulation pass. Pixel checks preserve displaced waterlines, visible foam in
 troughs, and solid hull, harbor and bank occlusion. Desktop packaging checks pass.
 Desktop and landscape-phone WebGL and Canvas checks pass, including CPU/shader
 agreement, frozen pause pixels and graphics recovery during combat.
+
+## Starter launch airtime and splashdown, 2026-10-22 (v0.33.0)
+
+The owner asked for the starter boat to get air and splash down over waves.
+A fast launch now takes off as its climb reaches the crest, follows gravity
+through the air and lands against the moving water surface. Speed and cargo
+affect the leap. Its airborne momentum carries through steering and braking;
+the landing catches the hull with a brief loss of speed and a bow dip.
+Slow boats and larger hulls keep their supported wave response.
+
+The wake and bow spray cut out during flight. A water-level shadow makes the
+clearance visible. Two broken spray sheets and a synthesized splash mark the
+actual landing point, staying behind as the launch moves away. Effects freeze
+with simulation pause, use bounded storage and add no landing damage rule.
+
+CPU checks cover repeated exposed and sheltered jumps, ballistic motion,
+contact, air controls, slower and heavier hulls, fixed-timestep convergence and
+exact mid-flight test continuation. Browser frames cover takeoff, climb, apex,
+descent and splashdown on desktop and landscape-phone WebGL and Canvas, with
+actual splash pixels, airborne wake gaps, paused effects and rendered audio.
+Wave stability, steering, fleet handling, navigation, connected campaign play
+and projectile contacts pass. Physical-phone performance remains unverified.
+The broader browser suite passes pause, CPU/shader agreement and graphics
+context restoration during combat. Desktop source staging and policy checks pass.
