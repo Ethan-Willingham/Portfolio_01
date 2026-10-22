@@ -1757,3 +1757,48 @@ contact and water blast changes. Saving, reverse and tow remain disabled as the
 owner directed. The wider production goal remains open. Remaining world work
 includes a complete earned economy review of the added objectives, shore NPC
 behavior, authored regional encounters and a human review of boring stretches.
+
+## Boat definition at distance, 2026-10-21 (v0.28.0)
+
+The owner reported that zoomed-out boats looked like rice or fleas. Wide now
+stops before the launch loses its hull shape: at least 16 CSS pixels at its most
+foreshortened heading, with a 12-pixel floor for the smallest enemy. Fleet and
+Close remain distinct. Large companions cannot push the launch below that
+floor, and resizing a panned sailing view preserves the same limit. This shows
+a smaller area on phones; it does not enlarge artwork beyond physical contacts.
+
+The art uses dark hull edges, brighter decks, distinct small-raider structures
+and contrasting cabin roofs. Raider bakes use 2 pixels per metre with existing
+mipmaps and heading interpolation. No generated images, hull physics changes,
+name overlays or new per-frame geometry were added.
+
+The atlas and subpixel-motion browser suites pass, including every direction,
+bounded texture storage, work machinery and Canvas fallback. The focused
+readability suite measures 720 headings and records eight-heading images plus
+real sailing/combat views at desktop and landscape phone sizes. It also checks
+that hull sprites actually contribute pixels to the live scene, rather than
+accepting geometric camera measurements alone. Physical-device review remains.
+
+## Physical sea and faster helm, 2026-10-21 (v0.28.0)
+
+The water and hulls now share four directional wave bands in world metres.
+Boats heave, pitch and roll, climb wave faces and respond to orbital water
+motion. Hull size and cargo affect buoyancy. Bounded stern disturbances spread
+behind moving boats and affect companions that cross them. Channels reduce the
+open-water swell. Wave motion freezes with simulation pause.
+
+The launch increases from 20 to 36 m/s, the patrol boat from 40 to 72 m/s,
+and the frigate from 38 to 68 m/s. Companions gain 65 percent cruise speed.
+Autopilot keeps its conservative channel limits. Ocean color now moves from
+deep blue offshore to teal in shallows and greener river water, with curved
+wave shoulders, restrained reflections, foam and persistent wake trails.
+
+The wave suite covers analytic gradients, shelter, sustained hull stability,
+wake crossing, bounded storage and speed. Browser checks cover matching CPU
+and shader waves, actual moving hull poses, frozen pause pixels, desktop and
+landscape phone layouts, Canvas fallback and context recovery during combat.
+Driving, projectiles, water blasts, fleet handling, connected Reach play and
+the full three-minute 16,384-raider simulation pass. Desktop source staging
+and protocol policy checks pass. Physical-phone performance and the owner's
+review of appearance and handling remain unverified. Details and limits are
+in [WIDEWAKE_WAVES.md](WIDEWAKE_WAVES.md).

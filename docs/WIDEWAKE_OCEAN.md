@@ -249,3 +249,9 @@ the former hold-and-jump motion; integrated brightness catches detail blinking
 in and out. A tiny distant raider must remain visible at every tested position.
 The existing scene, touch, context-recovery, fallback and sustained-combat checks
 remain required. Physical mobile hardware still needs direct validation.
+
+## Physical waves, v0.28.0
+
+The shared sea, faster handling, wake pressure and water appearance now follow
+[WIDEWAKE_WAVES.md](WIDEWAKE_WAVES.md). That document records the physical model,
+bounded rendering, regression checks and remaining device validation.

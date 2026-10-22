@@ -5,7 +5,7 @@ require('../../js/widewake-estuary-core.js');
 const R=require('../../js/widewake-reach-game.js');
 const dt=1/60,rand=B.random(9),check=s=>console.log('PASS '+s);
 const close=(a,b,tolerance=.001)=>assert.ok(Math.abs(a-b)<tolerance,`${a} != ${b}`);
-function empty(){const b=new B.Battle({population:0});b.mounts=[];b.burstCooldown=999;return b;}
+function empty(){const b=new B.Battle({population:0});b.sea.strength=0;b.mounts=[];b.burstCooldown=999;return b;}
 
 const b=empty(),a=b.raiders;
 for(const [x,y,kind]of [[30,0,0],[0,-30,0],[30,0,3],[125,0,0],[141,0,0],[0,0,0]])a.add(x,y,kind,rand);

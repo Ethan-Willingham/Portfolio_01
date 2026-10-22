@@ -4,7 +4,12 @@
   const O=root.WidewakeOcean,clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
   class View extends O.Ocean{
     constructor(canvas,battle){super(canvas,battle);this.lookAhead=true;this.configureCamera();this.zoom=this.targetZoom=this.stops.fleet;this.camera={x:0,y:80};}
-    configureCamera(){const fleet=Math.max(clamp(Math.min(this.width/2500,this.height/1250),this.height>this.width?.19:.13,.3),this.minimumZoom()*this.baseScale/.8);this.stops={helm:Math.max(.55,fleet*1.3)/this.baseScale,fleet:fleet/this.baseScale,survey:fleet*.8/this.baseScale};}
+    configureCamera(){
+      // Even the lightest raider retains a bow, deck and stern at Wide. Keep
+      // every hull at physical scale rather than inflating distant sprites.
+      const readable=Math.max(...root.WidewakeBattle.enemies.map(s=>O.readableScale(s,12))),wide=Math.max(readable,this.minimumZoom()*this.baseScale),fleet=wide*1.22;
+      this.stops={helm:wide*1.55/this.baseScale,fleet:fleet/this.baseScale,survey:wide/this.baseScale};
+    }
     resize(){const old=this.stops,stop=old&&Object.keys(old).find(k=>Math.abs(old[k]-this.targetZoom)<.001),scale=this.baseScale;super.resize();if(old){this.configureCamera();this.zoom=clamp(this.zoom*scale/this.baseScale,this.stops.survey,this.stops.helm*1.5);this.targetZoom=stop?this.stops[stop]:clamp(this.targetZoom*scale/this.baseScale,this.stops.survey,this.stops.helm*1.5);this.anchor=null;}}
     setZoom(value,x,y){super.setZoom(value,x,y);this.targetZoom=clamp(value,this.stops.survey,this.stops.helm*1.5);}
     zoomStop(name){if(this.stops[name]){this.anchor=null;this.offset.x=this.offset.y=0;this.targetZoom=this.stops[name];}}

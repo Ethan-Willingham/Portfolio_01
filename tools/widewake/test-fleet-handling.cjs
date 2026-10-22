@@ -46,7 +46,7 @@ check('a sudden turn reaches individual crews over several beats, without synchr
 
 const battle=new C.Endgame({population:0}),fixed=battle.ships.slice(1).map(pose);
 step(battle,180,{x:1,y:0});
-assert.deepEqual(battle.ships.slice(1).map(s=>({x:s.x,y:s.y})),fixed.map(s=>({x:s.x,y:s.y})), 'holding crews ignore the captain circling them');
+for(const [i,s]of battle.ships.slice(1).entries())assert.ok(Math.hypot(s.x-fixed[i].x,s.y-fixed[i].y)<1,'holding crews allow wave drift but do not follow the circling captain');
 battle.toggleWork();step(battle,900,{x:1,y:0});
 assert.ok(Math.hypot(battle.player.vx,battle.player.vy)>Math.max(...battle.ships.slice(1).map(s=>Math.hypot(s.vx,s.vy)))*1.2);
 assert.ok(new Set(battle.ships.slice(1,13).map(s=>s.followAnchor.x.toFixed(2))).size>=10);

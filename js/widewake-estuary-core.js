@@ -98,14 +98,14 @@
   function createShip(type='launch'){const spec=vessels[type],port=ports[0];return{id:0,type,...spec,maxHp:spec.hp,x:port.x,y:port.y,px:port.x,py:port.y,angle:0,previousAngle:0,vx:0,vy:0,hit:0,working:false};}
   class Navigation{
     constructor({type='launch',field=new Field()}={}){
-      this.field=field;this.ships=[createShip(type)];this.visualRoles=vessels;this.time=0;this.tick=0;this.control={x:0,y:0};this.mounts=[];this.raiders={count:0};this.shots={count:0};this.effects={count:0};this.burstCursor=48;this.lastHit={time:-10};this.contact='';this.contactTime=0;this.route=null;this.arrived=null;this.visited=new Set(['yard']);this.distance=0;this.water={};this.field.sample(this.player.x,this.player.y,this.water);
+      this.field=field;this.sea=new root.WidewakeWaves.Sea(field);this.ships=[createShip(type)];this.visualRoles=vessels;this.time=0;this.tick=0;this.control={x:0,y:0};this.mounts=[];this.raiders={count:0};this.shots={count:0};this.effects={count:0};this.burstCursor=48;this.lastHit={time:-10};this.contact='';this.contactTime=0;this.route=null;this.arrived=null;this.visited=new Set(['yard']);this.distance=0;this.water={};this.field.sample(this.player.x,this.player.y,this.water);
     }
     get player(){return this.ships[0];}
     plan(id){return this.field.route(this.player,id);}
     setCourse(plan){if(!plan)return false;this.route={...plan,index:0};this.arrived=null;return true;}
     cancel(){this.route=null;}
     move(input,dt){
-      const B=root.WidewakeBattle,s=this.player,old={x:s.x,y:s.y,angle:s.angle};B.helmStep(s,input,dt);
+      const B=root.WidewakeBattle,s=this.player,old={x:s.x,y:s.y,angle:s.angle};B.helmStep(s,input,dt);this.sea.stepShip(s,dt);
       const current=this.field.sample(old.x,old.y,this.water);s.x+=current.currentX*dt;s.y+=current.currentY*dt;
       const dx=s.x-old.x,dy=s.y-old.y,da=B.angleDelta(s.angle,old.angle),steps=Math.max(1,Math.ceil(Math.hypot(dx,dy)+Math.abs(da)*s.length*.5));let safe=0;
       let pier=false;for(let i=1;i<=steps;i++){const t=i/steps,x=old.x+dx*t,y=old.y+dy*t,angle=old.angle+da*t;if(this.field.clearance(s,x,y,angle)<.12){pier=this.field.obstruction(s,x,y,angle);break;}safe=t;}
@@ -113,7 +113,7 @@
       return Math.hypot(s.x-old.x,s.y-old.y);
     }
     step(dt,input={x:0,y:0}){
-      dt=clamp(dt,0,1/30);const s=this.player;s.px=s.x;s.py=s.y;s.previousAngle=s.angle;this.time+=dt;this.field.time=this.time;this.tick++;this.control=input;this.contactTime=Math.max(0,this.contactTime-dt);if(!this.contactTime)this.contact='';
+      dt=clamp(dt,0,1/30);const s=this.player;s.px=s.x;s.py=s.y;s.previousAngle=s.angle;this.time+=dt;this.field.time=this.time;this.sea.begin(this.time);this.tick++;this.control=input;this.contactTime=Math.max(0,this.contactTime-dt);if(!this.contactTime)this.contact='';
       const manual=Math.hypot(input.x||0,input.y||0)>.04||Math.abs(input.throttle||0)>.04||Math.abs(input.steer||0)>.04;if(manual){this.route=null;this.arrived=null;}
       let drive=input;
       if(this.route){const r=this.route;while(r.index<r.points.length-1&&Math.hypot(r.points[r.index].x-s.x,r.points[r.index].y-s.y)<Math.max(7,s.speed*.65))r.index++;
@@ -123,7 +123,7 @@
         drive={x:dx/(d||1)*throttle,y:dy/(d||1)*throttle};
         if(end&&d<Math.max(5,s.length*.25)&&Math.hypot(s.vx,s.vy)<3){this.arrived=r.destination;this.visited.add(r.destination.id);this.route=null;drive={x:0,y:0};}
       }
-      if(this.arrived&&!manual){s.vx=s.vy=s.turn=s.throttle=0;this.field.sample(s.x,s.y,this.water);return;}
+      if(this.arrived&&!manual){this.sea.stepShip(s,dt,false);s.vx=s.vy=s.turn=s.throttle=0;this.field.sample(s.x,s.y,this.water);return;}
       this.distance+=this.move(drive,dt);this.field.sample(s.x,s.y,this.water);
     }
     report(){const s=this.player;return{type:s.type,x:s.x,y:s.y,distance:this.distance,depth:this.water.depth,clearance:this.field.clearance(s),salinity:this.water.salinity,contact:this.contact,route:this.route?.destination.id||null,arrived:this.arrived?.id||null,visited:[...this.visited]};}

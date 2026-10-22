@@ -249,6 +249,32 @@ pressure share one local cell query; no global enemy scan is added per explosion
 The new checks are `test-water-blasts.cjs` and `test-water-blasts-browser.cjs`.
 Measured battle comparisons and rendering limits are recorded in the release log.
 
+## Boat definition at distance, v0.28.0
+
+Owner correction, 2026-10-21: distant boats looked like rice or fleas. The old
+Wide camera reduced the six-metre launch to a few pixels. Camera limits now use
+the projected physical hull at its least readable heading. Sailing keeps every
+friendly hull at least 16 CSS pixels across its larger screen dimension; combat
+keeps even the smallest raider at least 12. Fleet and Close step inward from that
+limit. Wheel, pinch, controller zoom and viewport resizing share the same limits.
+Adding a large companion cannot shrink the launch below this floor.
+
+Wide now shows a smaller area, especially on phones. Use camera panning to inspect
+the combat perimeter and the chart for regional navigation. Physical hull size,
+clearance and projectile contacts are unchanged. No oversized boat icons or
+selection rings cover the hulls.
+
+Dark gunwales separate light decks from the water. Small raiders have an open
+skiff, red speedboat cowling or raised armored wheelhouse; their shared physical
+outline remains intact. Friendly cabins, launch benches and colored workboat
+roofs retain larger contrasting shapes. Raider atlas resolution increases from
+1.5 to 2 pixels per metre. Existing mipmaps and directional blending remain.
+
+`test-boat-readability-browser.cjs` checks 720 physical hull headings, camera
+stops, wheel and pinch limits, rotated viewports, and actual hull pixels in the
+water scene. Its eight-heading contact sheet is for visual review. The existing
+art, motion and offscreen-arrival suites cover the shared renderer and zoom.
+
 ## Interface contract, v0.23
 
 The owner explicitly rejected generic website panels and asked for a distinctive

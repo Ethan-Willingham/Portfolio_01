@@ -1,6 +1,7 @@
 /* Ocean combat foundation. No DOM, renderer, wall clock, or campaign storage. */
 (function(root){
   'use strict';
+  const Waves=root.WidewakeWaves||(typeof require==='function'?require('./widewake-waves.js'):null);
   const TAU=Math.PI*2,clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
   const LIMITS=Object.freeze({raiders:32768,shots:8192,hostileReserve:1024,effects:2048,cells:32768,cellSize:48});
   const BLAST=Object.freeze({reach:1.4,drag:2.8,maxSpeed:140,hullResponse:Object.freeze([1,.86,.5,.32])});
@@ -144,15 +145,15 @@
   class Raiders{
     constructor(capacity=LIMITS.raiders){
       this.capacity=Math.min(LIMITS.raiders,capacity);this.count=0;this.dead=0;this.sequence=1;
-      for(const key of ['x','y','px','py','vx','vy','pushX','pushY','hp','cooldown','hitUntil','charge','chargeX','chargeY','reserved'])this[key]=new Float32Array(this.capacity);
+      for(const key of ['x','y','px','py','vx','vy','pushX','pushY','waveX','waveY','hp','cooldown','hitUntil','charge','chargeX','chargeY','reserved'])this[key]=new Float32Array(this.capacity);
       this.id=new Uint32Array(this.capacity);this.kind=new Uint8Array(this.capacity);this.target=new Uint8Array(this.capacity);
       this.next=new Int32Array(this.capacity);this.head=new Int32Array(LIMITS.cells);this.population=new Uint16Array(LIMITS.cells);
       this.cellX=new Int16Array(LIMITS.cells);this.cellY=new Int16Array(LIMITS.cells);this.targetCell=new Uint8Array(LIMITS.cells);this.stamp=new Int32Array(LIMITS.cells);this.stamp.fill(-1);
       this.head.fill(-1);this.peak=0;this.hits=new Int32Array(64);this.hitDistances=new Float32Array(64);
       this.blastUntil=new Float32Array(LIMITS.cells);
     }
-    add(x,y,kind,rand){if(this.count>=this.capacity)return false;const i=this.count++;this.x[i]=this.px[i]=x;this.y[i]=this.py[i]=y;this.vx[i]=this.vy[i]=this.pushX[i]=this.pushY[i]=0;this.kind[i]=kind;this.hp[i]=enemies[kind].hp;this.id[i]=this.sequence++;this.cooldown[i]=.4+rand()*4;this.target[i]=0;this.hitUntil[i]=this.charge[i]=this.chargeX[i]=this.chargeY[i]=this.reserved[i]=0;this.peak=Math.max(this.peak,this.count);return true;}
-    compact(){for(let i=this.count-1;i>=0;i--)if(this.hp[i]<=0){const last=--this.count;for(const k of ['x','y','px','py','vx','vy','pushX','pushY','hp','cooldown','id','kind','target','hitUntil','charge','chargeX','chargeY','reserved'])this[k][i]=this[k][last];}this.dead=0;}
+    add(x,y,kind,rand){if(this.count>=this.capacity)return false;const i=this.count++;this.x[i]=this.px[i]=x;this.y[i]=this.py[i]=y;this.vx[i]=this.vy[i]=this.pushX[i]=this.pushY[i]=this.waveX[i]=this.waveY[i]=0;this.kind[i]=kind;this.hp[i]=enemies[kind].hp;this.id[i]=this.sequence++;this.cooldown[i]=.4+rand()*4;this.target[i]=0;this.hitUntil[i]=this.charge[i]=this.chargeX[i]=this.chargeY[i]=this.reserved[i]=0;this.peak=Math.max(this.peak,this.count);return true;}
+    compact(){for(let i=this.count-1;i>=0;i--)if(this.hp[i]<=0){const last=--this.count;for(const k of ['x','y','px','py','vx','vy','pushX','pushY','waveX','waveY','hp','cooldown','id','kind','target','hitUntil','charge','chargeX','chargeY','reserved'])this[k][i]=this[k][last];}this.dead=0;}
     index(){this.head.fill(-1);this.population.fill(0);this.motion=0;const inv=1/LIMITS.cellSize;for(let i=0;i<this.count;i++){if(this.hp[i]<=0)continue;const cx=Math.floor(this.x[i]*inv),cy=Math.floor(this.y[i]*inv),key=hash(cx,cy);this.next[i]=this.head[key];this.head[key]=i;this.population[key]++;this.motion=Math.max(this.motion,Math.abs(this.x[i]-this.px[i]),Math.abs(this.y[i]-this.py[i]));}}
     nearest(x,y,r,available=false){let best=-1,distance=r*r;const cell=LIMITS.cellSize;for(let cy=Math.floor((y-r)/cell);cy<=Math.floor((y+r)/cell);cy++)for(let cx=Math.floor((x-r)/cell);cx<=Math.floor((x+r)/cell);cx++)for(let i=this.head[hash(cx,cy)];i!==-1;i=this.next[i]){if(this.hp[i]<=0||available&&this.reserved[i]>=this.hp[i]||Math.floor(this.x[i]/cell)!==cx||Math.floor(this.y[i]/cell)!==cy)continue;const dx=this.x[i]-x,dy=this.y[i]-y,d=dx*dx+dy*dy;if(d<distance){distance=d;best=i;}}return best;}
     denseTarget(x,y,r,time=-1){
@@ -196,7 +197,8 @@
     move(i,dt,battle){
       // The helm keeps its heading while pressure slides the hull sideways.
       // Integrate exponential water drag once per tick, without a physics body.
-      const vx=this.vx[i]+this.pushX[i]*this.pushTravel,vy=this.vy[i]+this.pushY[i]*this.pushTravel;
+      if(battle.sea&&(battle.tick+this.id[i])%4===0){const q=battle.sea.at(this.x[i],this.y[i],battle.time,battle._enemySea||(battle._enemySea={}),-1,false),mass=[1,.9,.65,.42][this.kind[i]];this.waveX[i]=(-q.dx*2+q.vx*.4)*mass;this.waveY[i]=(-q.dy*2+q.vy*.4)*mass;}
+      const vx=this.vx[i]+this.pushX[i]*this.pushTravel+this.waveX[i],vy=this.vy[i]+this.pushY[i]*this.pushTravel+this.waveY[i];
       if(battle.moveEnemy){if(battle.moveEnemy(i,dt,vx,vy)===false)this.pushX[i]=this.pushY[i]=0;}
       else{this.x[i]+=vx*dt;this.y[i]+=vy*dt;}
       this.pushX[i]=Math.abs(this.pushX[i])<.05?0:this.pushX[i]*this.pushDecay;
@@ -349,11 +351,11 @@
   const shipNames=['Flagship','Wren','Kestrel','Pipit','Gannet','Tern','Moth','Nettle','Plover','Curlew','Heron','Finch','Snipe','Thunder','Cinder','Ash','Rook','Ward','Sparrow','Minnow','Lark','Petrel','Cormorant','Mender'];
   class Battle{
     constructor({population=16384,seed=48476,duration=180}={}){
-      this.random=random(seed);this.population=clamp(Math.floor(population),0,LIMITS.raiders);this.duration=duration;this.time=0;this.tick=0;this.kills=0;this.spawned=0;this.lost=0;this.burstCooldown=0;this.burstCursor=BROADSIDE.rounds;this.burstTimer=0;this.lastHit={x:0,y:0,time:-10};this.impactBudget=0;this.work=true;this.workTime=0;this.produced={fish:0,oil:0};this.result=null;this.sounds=[];this.soundBudget=0;this.deathBudget=0;this.shots=new Shots();this.effects=new Effects();this.raiders=new Raiders();this.ships=[];this.mounts=[];this.center={x:0,y:0};this.control={x:0,y:0,boost:false,fire:false,aim:null};
+      this.sea=new Waves.Sea();this.random=random(seed);this.population=clamp(Math.floor(population),0,LIMITS.raiders);this.duration=duration;this.time=0;this.tick=0;this.kills=0;this.spawned=0;this.lost=0;this.burstCooldown=0;this.burstCursor=BROADSIDE.rounds;this.burstTimer=0;this.lastHit={x:0,y:0,time:-10};this.impactBudget=0;this.work=true;this.workTime=0;this.produced={fish:0,oil:0};this.result=null;this.sounds=[];this.soundBudget=0;this.deathBudget=0;this.shots=new Shots();this.effects=new Effects();this.raiders=new Raiders();this.ships=[];this.mounts=[];this.center={x:0,y:0};this.control={x:0,y:0,boost:false,fire:false,aim:null};
       const types=['flagship',...Array(12).fill('gunboat'),...Array(4).fill('battery'),...Array(2).fill('screen'),'trawler','trawler','oilrig','oilrig','repair'];
       for(let i=0;i<types.length;i++){
         const type=types[i],spec=roles[type],angle=(i-1)/18*TAU,working=type==='trawler'||type==='oilrig',slot=working?{x:(i%2?1:-1)*95,y:(i<21?-1:1)*105}:type==='repair'?{x:0,y:0}:i===0?{x:0,y:260}:{x:Math.cos(angle)*390,y:Math.sin(angle)*390};
-        const ship={id:i,type,name:shipNames[i],...spec,speed:i===0?40:spec.speed*crewPace(i),maxHp:spec.hp,x:slot.x,y:slot.y,vx:0,vy:0,angle:i===0?-Math.PI/2:angle+Math.PI,slot,working,cargo:0,hold:type==='trawler'?640:type==='oilrig'?440:0,hit:0,flash:0,turret:angle};ship.px=ship.x;ship.py=ship.y;ship.previousAngle=ship.angle;this.ships.push(ship);
+        const ship={id:i,type,name:shipNames[i],...spec,speed:i===0?72:spec.speed*1.65*crewPace(i),maxHp:spec.hp,x:slot.x,y:slot.y,vx:0,vy:0,angle:i===0?-Math.PI/2:angle+Math.PI,slot,working,cargo:0,hold:type==='trawler'?640:type==='oilrig'?440:0,hit:0,flash:0,turret:angle};ship.px=ship.x;ship.py=ship.y;ship.previousAngle=ship.angle;this.ships.push(ship);
         const weapon=type==='battery'?'mortar':type==='screen'?'flak':'gun',n=type==='flagship'?4:type==='battery'?3:type==='gunboat'?2:1;
         if(type!=='repair')for(let j=0;j<n;j++)this.mounts.push({ship:i,weapon,along:working?spec.length*.32:(j-(n-1)/2)*12,angle,flash:0,recoil:0,cooldown:(i*.131+j*.21)%weapons[weapon].interval});
         if(type==='battery'||type==='screen')this.mounts.push({ship:i,weapon:'guard',along:-spec.length*.37,angle,flash:0,recoil:0,cooldown:i*.013});
@@ -378,9 +380,9 @@
     emitBroadside(){for(let n=0;n<2&&this.burstCursor<BROADSIDE.rounds;n++){const shot=broadsideRound(this.player,this.burstCursor++);this.shots.fire(shot.x,shot.y,shot.x+Math.cos(shot.angle)*BROADSIDE.range,shot.y+Math.sin(shot.angle)*BROADSIDE.range,BROADSIDE,0,0);this.effects.add(shot.x,shot.y,14,1);}}
     toggleWork(){this.work=!this.work;this.workActive=false;if(this.work){this.center.x=this.player.x;this.center.y=this.player.y;}return this.work;}
     step(dt,input=this.control){
-      if(this.result)return;dt=clamp(dt,0,1/30);this.time+=dt;this.tick++;this.soundBudget=0;this.deathBudget=0;this.impactBudget=0;this.sounds.length=0;this.burstCooldown=Math.max(0,this.burstCooldown-dt);this.control=input;
+      if(this.result)return;dt=clamp(dt,0,1/30);this.time+=dt;this.tick++;this.soundBudget=0;this.deathBudget=0;this.impactBudget=0;this.sounds.length=0;this.burstCooldown=Math.max(0,this.burstCooldown-dt);this.control=input;this.sea.begin(this.time);
       for(const s of this.ships){s.px=s.x;s.py=s.y;s.previousAngle=s.angle;}
-      const p=this.player;helmStep(p,input,dt);
+      const p=this.player;helmStep(p,input,dt);this.sea.stepShip(p,dt);
       if(this.burstCursor<BROADSIDE.rounds){this.burstTimer-=dt;while(this.burstTimer<=0&&this.burstCursor<BROADSIDE.rounds){this.emitBroadside();this.burstTimer+=BROADSIDE.interval;}}
       if(!this.work){this.center.x+=(p.x-this.center.x)*dt*.4;this.center.y+=(p.y-this.center.y)*dt*.4;}
       for(const s of this.ships){if(s.hp<=0)continue;s.hit=Math.max(0,s.hit-dt);s.flash=Math.max(0,s.flash-dt);if(s===p)continue;
@@ -391,7 +393,7 @@
         // inside the production radius; a new order can pull them off station.
         s.onStation=s.onStation?d<slack*1.8:d<slack;
         const amount=s.onStation?0:Math.min(1,Math.max(0,d-slack*.5)/(s.speed*(1.35+(s.id%4)*.12)));
-        crewStep(s,{x:d?dx/d*amount:0,y:d?dy/d*amount:0},dt,this.tick);
+        crewStep(s,{x:d?dx/d*amount:0,y:d?dy/d*amount:0},dt,this.tick);this.sea.stepShip(s,dt);
         if(s.type==='repair')for(const other of this.ships)if(other.hp>0&&(other.x-s.x)**2+(other.y-s.y)**2<550**2)other.hp=Math.min(other.maxHp,other.hp+dt*5);
       }
       this.raiders.compact();

@@ -19,7 +19,7 @@
         c=vColor*(.88+wide*.12+grass*.10+grain*.025);c=mix(c,vec3(.38,.36,.27)*(1.+grass*.12),mud*.5);}
       color=vec4(c,1.);}`;
   class Terrain{
-    constructor(view){this.view=view;this.cache=new Map();this.queue=[{key:'overview',x:-4096,y:-8192,size:16384,step:128}];this.pending=null;this.serial=1;this.requests=new Map();this.bytes=0;this.clock=0;this.failed=null;this.needed=[];this.props={};this.worker=new Worker('js/widewake-estuary-worker.js?v=0.27.0');this.worker.onmessage=e=>this.receive(e.data);this.worker.onerror=e=>{this.failed=e.message||'Terrain unavailable';this.onError?.(this.failed);};if(view.gl)this.restore();this.pump();}
+    constructor(view){this.view=view;this.cache=new Map();this.queue=[{key:'overview',x:-4096,y:-8192,size:16384,step:128}];this.pending=null;this.serial=1;this.requests=new Map();this.bytes=0;this.clock=0;this.failed=null;this.needed=[];this.props={};this.worker=new Worker('js/widewake-estuary-worker.js?v=0.28.0');this.worker.onmessage=e=>this.receive(e.data);this.worker.onerror=e=>{this.failed=e.message||'Terrain unavailable';this.onError?.(this.failed);};if(view.gl)this.restore();this.pump();}
     restore(){const gl=this.view.gl;this.program=O.program(gl,vertex,fragment);for(const tile of this.cache.values())this.upload(tile);if(this.props)for(const batch of Object.values(this.props))batch.dispose();this.props={};this.initProps();}
     initProps(){if(!this.view.gl)return;const gl=this.view.gl;
       for(const type of ['reed','tree0','tree1','tree2','rock'])this.props[type]=new O.Batch(gl,this.view.meshes[type],1600);
@@ -43,7 +43,7 @@
     evict(){if(this.bytes<24*1048576&&this.cache.size<100)return;const needed=new Set(this.needed.map(t=>t.key)),old=[...this.cache.values()].filter(t=>t.key!=='overview'&&!needed.has(t.key)).sort((a,b)=>a.used-b.used);for(const tile of old){if(this.bytes<20*1048576&&this.cache.size<80)break;this.cache.delete(tile.key);this.bytes-=tile.vertices.byteLength+tile.props.byteLength;this.release(tile);}}
     release(tile){if(this.view.gl&&!this.view.lost){this.view.gl.deleteBuffer(tile.buffer);this.view.gl.deleteVertexArray(tile.vao);}tile.image=null;}
     get ready(){return this.cache.has('overview')&&this.needed.length>0&&this.needed.every(t=>this.cache.has(t.key));}
-    renderGPU(v){this.update();const gl=v.gl;gl.useProgram(this.program);gl.uniform2f(gl.getUniformLocation(this.program,'uSize'),v.width,v.height);gl.uniform2f(gl.getUniformLocation(this.program,'uCamera'),v.camera.x,v.camera.y);gl.uniform1f(gl.getUniformLocation(this.program,'uZoom'),v.zoom*v.baseScale);gl.uniform1f(gl.getUniformLocation(this.program,'uTime'),v.reduced?0:v.visualTime);gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,v.noise);gl.uniform1i(gl.getUniformLocation(this.program,'uNoise'),2);
+    renderGPU(v){this.update();const gl=v.gl;v.uniforms(this.program);gl.uniform2f(gl.getUniformLocation(this.program,'uSize'),v.width,v.height);gl.uniform2f(gl.getUniformLocation(this.program,'uCamera'),v.camera.x,v.camera.y);gl.uniform1f(gl.getUniformLocation(this.program,'uZoom'),v.zoom*v.baseScale);gl.uniform1f(gl.getUniformLocation(this.program,'uTime'),v.visualTime);gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,v.noise);gl.uniform1i(gl.getUniformLocation(this.program,'uNoise'),2);
       const overview=this.cache.get('overview');if(overview){gl.depthMask(false);gl.bindVertexArray(overview.vao);gl.drawArrays(gl.TRIANGLES,0,overview.vertices.length/10);gl.depthMask(true);v.stats.drawCalls++;}
       for(const entry of this.needed){const tile=this.cache.get(entry.key);if(!tile)continue;gl.bindVertexArray(tile.vao);gl.drawArrays(gl.TRIANGLES,0,tile.vertices.length/10);v.stats.drawCalls++;v.stats.triangles+=tile.vertices.length/30;}
       for(const batch of Object.values(this.props))batch.count=0;v.shadows.batch.count=0;
@@ -57,7 +57,7 @@
     renderCanvas(v){this.update();const c=v.fallback;
       // Cached top-down tile images are projected by the same affine isometry.
       for(const entry of [{key:'overview'},...this.needed]){const tile=this.cache.get(entry.key);if(!tile)continue;const n=tile.size/tile.step;
-        if(!tile.image){tile.image=document.createElement('canvas');tile.image.width=tile.image.height=n;const ctx=tile.image.getContext('2d'),pixels=ctx.createImageData(n,n);for(let i=0;i<n*n;i++){const at=i*60;pixels.data[i*4]=tile.vertices[at+3]*255;pixels.data[i*4+1]=tile.vertices[at+4]*255;pixels.data[i*4+2]=tile.vertices[at+5]*255;pixels.data[i*4+3]=255;}ctx.putImageData(pixels,0,0);}
+        if(!tile.image){tile.image=document.createElement('canvas');tile.image.width=tile.image.height=n;const ctx=tile.image.getContext('2d'),pixels=ctx.createImageData(n,n);for(let i=0;i<n*n;i++){const at=i*60;pixels.data[i*4]=tile.vertices[at+3]*255;pixels.data[i*4+1]=tile.vertices[at+4]*255;pixels.data[i*4+2]=tile.vertices[at+5]*255;pixels.data[i*4+3]=tile.vertices[at+6]>0?0:255;}ctx.putImageData(pixels,0,0);}
         const a=v.project(tile.x,tile.y),b=v.project(tile.x+tile.size,tile.y),d=v.project(tile.x,tile.y+tile.size);c.save();c.transform((b.x-a.x)/n,(b.y-a.y)/n,(d.x-a.x)/n,(d.y-a.y)/n,a.x,a.y);c.drawImage(tile.image,0,0);c.restore();}
       const items=[];for(const entry of this.needed){const tile=this.cache.get(entry.key);if(!tile)continue;for(let i=0;i<tile.props.length;i+=5){const p=tile.props,x=p[i],y=p[i+1],kind=p[i+3];if(!v.visible(x,y,30)||(v.zoom<.4&&kind===0))continue;items.push({type:kind===1?'tree'+(Math.floor(Math.abs(x+y))%3):kind===0?'reed':'rock',x,y,z:p[i+2],scale:p[i+4]});}}
       for(const mark of W.landmarks)if(v.visible(mark.x,mark.y,150*v.zoom*v.baseScale+30))items.push({type:'landmark_'+mark.kind,x:mark.x,y:mark.y,z:ground(v.battle.field,mark.x,mark.y),scale:mark.scale});
@@ -71,13 +71,15 @@
   class View extends O.Ocean{
     constructor(canvas,navigation){super(canvas,navigation);this.lookAhead=true;this.configureCamera();this.zoom=this.targetZoom=this.stops.helm;this.terrain=new Terrain(this);}
     configureCamera(){
-      // Camera distances are expressed in screen pixels per metre, so rotating a
-      // phone does not shrink the captain's boat into a dot. Physical hull scale stays intact.
-      const length=this.battle.player.length,largest=Math.max(...this.battle.ships.filter(s=>s.hp>0).map(s=>s.length)),close=40/length;
-      const wide=Math.max(Math.min(.24,close*.28),this.minimumZoom()*this.baseScale),fleet=Math.max(Math.min(close*.45,48/largest),wide*1.25);
-      this.stops={helm:Math.max(close,fleet*1.25)/this.baseScale,fleet:fleet/this.baseScale,survey:wide/this.baseScale};
+      // Bound distance by the smallest hull at its most foreshortened heading.
+      // This changes the camera, leaving visible hulls and physical contacts at
+      // the same metre scale. A large escort cannot shrink the launch into a dot.
+      const ships=this.battle.ships.filter(s=>s.hp>0),length=this.battle.player.length,largest=Math.max(length,...ships.map(s=>s.length)),close=40/length;
+      const friendly=Math.max(...ships.map(s=>O.readableScale(s,16))),hostile=Math.max(...root.WidewakeBattle.enemies.map(s=>O.readableScale(s,12)));
+      const wide=Math.max(friendly,hostile,this.minimumZoom()*this.baseScale),fleet=Math.max(Math.min(close*.5,48/largest),wide*1.3);
+      this.stops={helm:Math.max(close,fleet*1.3)/this.baseScale,fleet:fleet/this.baseScale,survey:wide/this.baseScale};
     }
-    resize(){const old=this.stops,stop=old&&Object.keys(old).find(k=>Math.abs(old[k]-this.targetZoom)<.001),previous=this.baseScale;super.resize();if(old){this.configureCamera();if(this.follow&&previous){this.zoom=E.clamp(this.zoom*previous/this.baseScale,this.stops.survey,this.stops.helm*1.65);this.targetZoom=stop?this.stops[stop]:E.clamp(this.targetZoom*previous/this.baseScale,this.stops.survey,this.stops.helm*1.65);this.anchor=null;}}}
+    resize(){const old=this.stops,stop=old&&Object.keys(old).find(k=>Math.abs(old[k]-this.targetZoom)<.001),previous=this.baseScale;super.resize();if(old){this.configureCamera();if(!this.battle.port&&previous){this.zoom=E.clamp(this.zoom*previous/this.baseScale,this.stops.survey,this.stops.helm*1.65);this.targetZoom=stop?this.stops[stop]:E.clamp(this.targetZoom*previous/this.baseScale,this.stops.survey,this.stops.helm*1.65);this.anchor=null;}}}
     setZoom(value,x,y){super.setZoom(value,x,y);this.targetZoom=E.clamp(value,this.stops.survey,this.stops.helm*1.65);}
     zoomStop(name){if(this.stops?.[name]){this.anchor=null;this.offset.x=this.offset.y=0;this.targetZoom=this.stops[name];}}
     waterwayMotion(c){
