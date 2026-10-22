@@ -2,8 +2,8 @@
 
 The receiving scene uses the warehouse print approved by the owner in this chat.
 The owner requested image-generated artwork, visible selectable pallets, and
-variation between docks, trailers, and shipments. This direction applies to the
-receiving scene. The rest of One Shift keeps its existing renderer.
+variation between docks, trailers, and shipments. On October 22, 2026, the owner
+extended this direction to the whole game, including the warehouse and controls.
 
 ## The visual target
 
@@ -24,6 +24,27 @@ Use the site's local Century Supra, Segoe UI, and Commit Mono typefaces for
 controls and labels. Generate no lettering in the artwork. Product names, exact
 case counts, lot IDs, dock numbers, barcodes, highlights, and scan effects belong
 to the runtime.
+
+## The warehouse and controls
+
+The overhead warehouse shares the same paper, charcoal and rust inks. Its camera
+remains overhead so routes, racks and working lanes can be read while the player
+plans. Rack frames, pallet bases, carton seams, packing tape, workers and trucks
+use flat shapes, fine ink detail and cached print grain. Avoid steel-blue metal,
+glossy light effects and pixel-art outlines. Preserve real rack geometry and
+one rendered pallet for each physical pallet.
+
+`assets/one-shift/warehouse-paper.png` is a generated material master derived
+from the approved print. Its WebP sibling is the runtime asset. The exact prompt
+and source artifact name are in `assets/one-shift/warehouse-paper-prompt.txt`.
+Use this material subtly, with readable labels above it. It contains no baked
+racks, cargo or other geometry, so expansion and stock movements remain dynamic.
+
+The warehouse HUD, order board, selected objects, shop, report and settings use
+flat paper panels, fine ink rules, square controls, serif titles and monospace
+operational labels. Rust identifies actions and current work. Disabled and
+selected states still need clear contrast; touch targets remain at least 44px.
+The dock and warehouse must be reviewed together after any visual change.
 
 ## Layered scene
 

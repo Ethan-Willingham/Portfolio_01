@@ -192,7 +192,7 @@
     remaining(t,line){if(line.parcel&&line.orderId)return Math.max(0,line.cases-t.loaded.filter(q=>q.orderId===line.orderId).reduce((a,q)=>a+q.cases,0));const index=t.order.indexOf(line),before=t.order.slice(0,index).filter(l=>l.item===line.item).reduce((a,l)=>a+l.cases,0),loaded=t.loaded.filter(q=>q.item===line.item).reduce((a,q)=>a+q.cases,0);return Math.max(0,line.cases-Math.max(0,loaded-before));}
     requestTruckExit(t){if(t.departureRequested)return;t.departureRequested=true;t.closingTick=null;
       const matches=q=>q&&(q.truck===t.id||q.dest?.truck===t.id||q.kind==='walk'&&this.inTruck(t,q.end)||q.pallet&&t.manifest.includes(q.pallet)&&this.p.get(q.pallet)?.place==='returned');
-      for(const w of this.s.workers){const kept=w.queue.filter(q=>!matches(q));for(const q of w.queue)if(matches(q))this.release(q);w.queue=[];if(matches(w.task)){const p=w.task?.pallet&&this.p.get(w.task.pallet),parcel=w.task?.parcel&&this.s.parcels.find(q=>q.id===w.task.parcel);this.clearWork(w);if(p?.place==='lane'){const lane=this.lane('shipping',p)||this.lane('receiving',p);if(lane)Object.assign(p,lane);}if(parcel){const station=this.s.map.stations.find(q=>q.id==='pack')||{x:7,y:6};Object.assign(parcel,{x:station.x+1,y:station.y});}}w.queue=kept;}
+      for(const w of this.s.workers){const kept=w.queue.filter(q=>!matches(q));for(const q of w.queue)if(matches(q))this.release(q);w.queue=[];if(matches(w.task)){const p=w.task?.pallet&&this.p.get(w.task.pallet),returnDestination=w.task?.returnDestination,parcel=w.task?.parcel&&this.s.parcels.find(q=>q.id===w.task.parcel);this.clearWork(w);if(p?.place==='lane'){if(this.s.mode==='business')this.returnBusinessPallet(w,p,returnDestination);else{const lane=this.lane('shipping',p)||this.lane('receiving',p);if(lane)Object.assign(p,lane);}}if(parcel){const station=this.s.map.stations.find(q=>q.id==='pack')||{x:7,y:6};Object.assign(parcel,{x:station.x+1,y:station.y});}}w.queue.push(...kept);}
     }
     inTruck(t,w){const d=this.s.map.doors.find(q=>q.id===t.door);if(!d)return false;const east=O.docks.side(this.s)==='east',length=t.kind==='semi'?13:t.kind==='parcel'?4:7;return east?w.x>=d.x-.5&&w.x<=d.x+length+1&&w.y>=d.y-.5&&w.y<d.y+2:w.y>=d.y-.5&&w.y<=d.y+length+1&&w.x>=d.x-.5&&w.x<d.x+2;}
     truckWorkers(t){return this.s.workers.filter(w=>this.inTruck(t,w));}
@@ -267,7 +267,7 @@
       if(t.path?.length){const next=t.path[0],dx=next.x-w.x,dy=next.y-w.y,dist=Math.hypot(dx,dy),move=speed*DT*(lift&&w.battery>2?1:.65);w.angle=Math.atan2(dy,dx);if(dist<=move){w.x=next.x;w.y=next.y;t.path.shift();}else{w.x+=dx/dist*move;w.y+=dy/dist*move;}
         const key=Math.round(w.y)*s.map.w+Math.round(w.x);if(s.tick%10===0)s.map.wear[key]=(s.map.wear[key]||0)+1;
         if(t.phase==='dest'&&t.parcel){const q=s.parcels.find(q=>q.id===t.parcel);q.x=w.x;q.y=w.y;}
-        if(t.output&&(t.phase==='dest'&&['pick','salePick'].includes(t.kind)||t.kind==='salePick'&&t.sourceIndex>0)){const q=this.p.get(t.output);q.x=w.x;q.y=w.y;}
+        if(t.output&&(t.phase==='dest'&&['pick','salePick'].includes(t.kind)||t.kind==='salePick'&&t.pickedUp)){const q=this.p.get(t.output);q.x=w.x;q.y=w.y;}
         if(t.phase==='dest'&&t.pallet&&!['parcelPack','pick','salePick'].includes(t.kind)){const p=this.p.get(t.pallet);p.x=w.x;p.y=w.y;}
         if(lift)w.battery=Math.max(0,w.battery-DT*.025);return;
       }

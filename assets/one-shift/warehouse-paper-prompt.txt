@@ -1,0 +1,6 @@
+One Shift warehouse paper material
+
+Built-in image_gen generation using assets/one-shift/receiving/reference-print.png as a style reference. No numbered model selector was exposed. Original output: exec-c089119a-49d5-4577-abed-b76d424c0987.png. Master: warehouse-paper.png. Runtime: warehouse-paper.webp, encoded at quality 85. Generated size: 1254 by 1254.
+
+Exact prompt:
+Use case: stylized-concept. Asset type: seamless square warehouse-floor paper material for the One Shift game. Input image is a STYLE REFERENCE ONLY: match its warm cream paper, fine worn ink grain and screen-print material. Create a 1024 by 1024 square, edge-to-edge, nearly uniform warm cream (#f1e3c6) texture with restrained tiny paper fibers and faint charcoal and muted rust ink transfer. Very subtle local material variation, suitable at low opacity beneath moving game objects. Flat orthographic material swatch, no scene. No boxes, no pallets, no warehouse geometry, no seams, no border, no shadows, no lighting gradient, no large stains or identifiable marks, no lettering, no vignette. Tileable opposite edges. Preserve the spare handmade print character, avoid noisy grunge and any photoreal concrete.

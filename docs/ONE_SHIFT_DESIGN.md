@@ -1,5 +1,13 @@
 # One Shift: making the warehouse into a business game
 
+The October 22, 2026 update extends the receiving print style across the game
+and makes unloading, Receiving staging and rack putaway separate physical work.
+The public opening now starts with pallet scans. The warehouse process and its
+current limits are recorded in [ONE_SHIFT_PROCESS.md](ONE_SHIFT_PROCESS.md).
+The business rationale and earlier balance results below describe the original
+stocked-start implementation; they are historical evidence, not a fresh balance
+measurement of the updated handling times.
+
 ## Intended experience
 
 The player should feel capable quickly, then feel the pleasure and pressure of

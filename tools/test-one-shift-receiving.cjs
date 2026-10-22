@@ -52,6 +52,58 @@ check('All rows can be scanned while paused, with distinct rack reservations and
   for(const r of truck.receipt) {const p=sim.p.get(r.pallet);assert.equal(p.x,r.destination.x);assert.equal(p.y,r.destination.y);assert.equal(p.level,r.destination.level);}
   until(sim,()=>truck.status==='gone');reconciles(sim);
 });
+check('Every accepted pallet physically stages before putaway and remains unavailable until it reaches its reserved rack',()=>{
+  const {sim,ids}=opening(30),seen=new Set(),stages=new Set();for(const id of ids)scan(sim,id);
+  assert.equal(sim.receivingProgress().awaitingUnload,6);assert.equal(sim.receivingProgress().casesPending,104);
+  until(sim,()=>{
+    const progress=sim.receivingProgress();assert.equal(progress.pending+progress.stored,6);assert.equal(sim.businessCapacity().used,6);
+    for(const id of ids){const p=sim.p.get(id),status=sim.receivingPhysicalStatus(p);stages.add(status);
+      if(p.place==='lane'){seen.add(id);assert.equal(p.lane,'receiving');assert.ok(p.receivingDestination);}
+      if(p.receivingDestination){assert.equal(sim.occupied(p.receivingDestination.x,p.receivingDestination.y,p.receivingDestination.level),true);assert.ok(!sim.businessAvailable(p.item).some(q=>q.id===id));}
+      if(p.place==='storage'){assert.ok(seen.has(id));assert.equal(p.receivingDestination,undefined);}
+    }
+    return ids.every(id=>sim.p.get(id).place==='storage');
+  });
+  assert.equal(seen.size,6);for(const status of ['unloading','staged','puttingAway','stored'])assert.ok(stages.has(status),status);
+  assert.equal(sim.receivingProgress().pending,0);reconciles(sim);
+});
+check('A full Receiving area waits, and multiple workers cannot claim its one free position twice',()=>{
+  const {sim,ids}=opening(31),lane=O.docks.lane(sim.s,'receiving');for(const id of ids)scan(sim,id);
+  sim.addWorker({name:'Receiver',role:'receiver',wage:25});
+  const cells=[];for(let y=lane.y;y<lane.y+lane.h;y++)for(let x=lane.x;x<lane.x+lane.w;x++)cells.push({x,y});
+  sim.s.map.blocks.push(...cells);sim.s.map.revision++;
+  for(let n=0;n<40;n++)sim.tick();assert.ok(ids.every(id=>sim.p.get(id).place==='trailer'));assert.ok(sim.s.workers.every(w=>!w.task&&!w.queue.length));
+  const free=cells.at(-1);sim.s.map.blocks=sim.s.map.blocks.filter(p=>p.x!==free.x||p.y!==free.y);sim.s.map.revision++;
+  const staged=new Set();until(sim,()=>{
+    const unloads=sim.s.workers.flatMap(w=>[w.task,...w.queue].filter(t=>t?.kind==='unload'));
+    assert.ok(unloads.length<=1);for(const t of unloads){assert.equal(t.dest.place,'lane');assert.equal(t.dest.lane,'receiving');assert.equal(t.dest.x,free.x);assert.equal(t.dest.y,free.y);}
+    for(const id of ids)if(sim.p.get(id).place==='lane')staged.add(id);
+    return ids.every(id=>sim.p.get(id).place==='storage');
+  });assert.equal(staged.size,6);reconciles(sim);
+});
+check('Staged stock saves its rack claim, survives overnight, and completes real putaway on the next shift',()=>{
+  const {sim,ids}=opening(32);for(const id of ids)scan(sim,id);
+  until(sim,()=>ids.some(id=>sim.p.get(id).place==='lane'));
+  const id=ids.find(id=>sim.p.get(id).place==='lane'),p=sim.p.get(id),where={x:p.x,y:p.y},destination={...p.receivingDestination};
+  const restored=new O.Sim(1,'business');restored.restore(O.saves.decode(O.saves.encode(sim.s)));assert.equal(restored.hash(),sim.hash());
+  restored.s.minute=restored.s.shiftEnd;until(restored,()=>restored.s.phase==='evening');assert.equal(restored.p.get(id).place,'lane');
+  assert.ok(restored.command({type:'nextDay'}).ok);assert.equal(restored.p.get(id).x,where.x);assert.equal(restored.p.get(id).y,where.y);assert.deepEqual({...restored.p.get(id).receivingDestination},destination);
+  assert.equal(restored.occupied(destination.x,destination.y,destination.level),true);assert.equal(restored.businessAvailable(p.item).some(q=>q.id===id),false);
+  until(restored,()=>ids.every(id=>restored.p.get(id).place==='storage'));reconciles(restored);
+});
+check('Old accepted receipts migrate into pending rack reservations without resending inventory',()=>{
+  const {sim,ids}=opening(33);scan(sim,ids[0]);const old=sim.snapshot();delete old.pallets.find(p=>p.id===ids[0]).receivingDestination;
+  const restored=new O.Sim(1,'business');restored.restore(O.saves.validate(old));assert.ok(restored.p.get(ids[0]).receivingDestination);
+  assert.equal(restored.receivingProgress().awaitingUnload,1);assert.equal(restored.receivingProgress().unscanned,5);assert.equal(restored.reconcile().expected,104);
+  until(restored,()=>restored.p.get(ids[0]).place==='storage');reconciles(restored);
+});
+check('Old direct-to-rack unload saves finish their existing move with a migrated reservation',()=>{
+  const {sim,ids}=opening(34);scan(sim,ids[0]);until(sim,()=>sim.s.workers[0].task?.kind==='unload'&&sim.s.workers[0].task.phase==='dest');
+  const old=sim.snapshot(),p=old.pallets.find(p=>p.id===ids[0]),w=old.workers[0],d={...p.receivingDestination};delete p.receivingDestination;
+  w.task.dest=d;w.task.end={x:d.x,y:d.y+1};w.task.path=O.pathing.path(old,w,w.task.end);
+  const restored=new O.Sim(1,'business');restored.restore(O.saves.validate(old));assert.ok(restored.p.get(ids[0]).receivingDestination);
+  until(restored,()=>restored.p.get(ids[0]).place==='storage');assert.equal(restored.p.get(ids[0]).x,d.x);assert.equal(restored.p.get(ids[0]).y,d.y);assert.equal(restored.p.get(ids[0]).receivingDestination,undefined);reconciles(restored);
+});
 check('A partially scanned save restores acceptance, reservations, lot identity and remaining gameplay',()=>{
   const {sim,truck,ids}=opening(4);scan(sim,ids[0]);scan(sim,ids[1]);
   const saved=O.saves.encode(sim.s), restored=new O.Sim(9,'business');restored.restore(O.saves.decode(saved));
@@ -76,6 +128,8 @@ check('Paid supplier deliveries wait for the scan and retain the original purcha
   assert.equal(purchase.received.length,0);assert.ok(truck.manifest.every(id=>sim.p.get(id).place==='trailer'));
   for(const id of truck.manifest)scan(sim,id);
   assert.equal(purchase.received.length,0);assert.equal(sim.s.cash,cash-q.cost);
+  until(sim,()=>truck.manifest.some(id=>sim.p.get(id).place==='lane'));
+  assert.equal(purchase.received.length,0);assert.equal(purchase.stored,false);assert.equal(sim.s.commerce.restocked,0);assert.equal(sim.businessStock('chair').stored,24);assert.equal(sim.businessStock('chair').incoming,32);
   until(sim,()=>purchase.stored);assert.equal(purchase.received.length,2);assert.equal(sim.s.commerce.restocked,1);
   assert.equal(sim.s.journal.filter(e=>e.category==='Receiving').length,0);assert.equal(sim.s.cash,cash-q.cost);reconciles(sim);
 });
@@ -112,7 +166,9 @@ check('Save validation rejects forged receiving counts, duplicated targets and m
     s=>s.trucks[0].receipt[0].scannedTick=9999,
     s=>s.trucks[0].receipt[1].destination={...s.trucks[0].receipt[0].destination},
     s=>s.trucks[0].receipt.push({...s.trucks[0].receipt[0]}),
-    s=>s.trucks[0].receipt[0].destination.x=30
+    s=>s.trucks[0].receipt[0].destination.x=30,
+    s=>s.pallets[1].receivingDestination={...s.pallets[0].receivingDestination},
+    s=>s.pallets[0].receivingDestination.level=99
   ]) {const state=sim.snapshot();corrupt(state);assert.throws(()=>O.saves.validate(state));}
   assert.equal(truck.receipt.length,2);reconciles(sim);
 });

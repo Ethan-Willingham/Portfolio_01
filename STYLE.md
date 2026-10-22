@@ -70,6 +70,10 @@ Posts pick an accent (or per-section accents) from one shared, muted, chroma-equ
 > (`#e6c074`→`#dfc288`, `#e98e7f`→`#d9978c` or `#b8796d`).
 
 ### What is deliberately NOT on this system (do not "fix")
+- One Shift uses its owner-approved charcoal, rust and cream print palette
+  throughout its warehouse, receiving dock and controls, by owner request on
+  2026-10-22. Its three local fonts remain unchanged. See
+  `docs/ONE_SHIFT_RECEIVING_ART.md` for the artwork and material rules.
 - The SpongeBob fight comparer (`spongebob-fight.html`) is a standalone app with
   its own stylesheet and palette, by owner request on 2026-10-09. It does not use
   the blog shell. Its only portfolio branding is the linked copyright footer.

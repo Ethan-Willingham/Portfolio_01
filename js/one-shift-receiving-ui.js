@@ -42,9 +42,9 @@
             <p id="receiving-scan-note">Ready to receive.</p>
             <button id="receiving-scan"><span>Scan pallet</span><kbd>ENTER</kbd></button>
           </aside>
-          <aside id="receiving-complete" class="receiving-complete" hidden><p class="receiving-eyebrow">LOAD RECEIVED</p><h2>Trailer clear.</h2><p id="receiving-complete-copy"></p><button id="receiving-finish">Back to the warehouse</button></aside>
+          <aside id="receiving-complete" class="receiving-complete" hidden><p class="receiving-eyebrow">READY TO UNLOAD</p><h2>Labels checked.</h2><p id="receiving-complete-copy"></p><button id="receiving-finish">Back to the floor</button></aside>
         </div>
-        <footer class="receiving-footer"><div><strong id="receiving-instruction">Select a pallet.</strong><span id="receiving-help">Work from the dock toward the back.</span></div><div class="receiving-count"><div id="receiving-tally" aria-hidden="true"></div><output id="receiving-count">0 / 6 received</output></div></footer>
+        <footer class="receiving-footer"><div><strong id="receiving-instruction">Select a pallet.</strong><span id="receiving-help">Work from the dock toward the back.</span></div><div class="receiving-count"><div id="receiving-tally" aria-hidden="true"></div><output id="receiving-count">0 / 6 scanned</output></div></footer>
         <p id="receiving-live" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>`;
       document.getElementById('shift-game').append(this.element);
       this.canvas = this.el('canvas');
@@ -198,11 +198,11 @@
       const p=this.pallets.find(p=>p.id===this.selected&&!p.scanned),complete=!this.load.remaining;
       this.el('pause').textContent=this.app.paused?'Resume':'Pause';this.el('pause').setAttribute('aria-pressed',String(this.app.paused));
       this.el('label').hidden=!p;this.el('complete').hidden=!complete||!!this.departing;
-      this.el('count').textContent=this.load.accepted+' / '+this.load.total+' received';
+      this.el('count').textContent=this.load.accepted+' / '+this.load.total+' scanned';
       this.el('tally').innerHTML=this.pallets.map(p=>'<i class="'+(p.scanned?'is-received':'')+'"></i>').join('');
-      this.el('instruction').textContent=this.app.paused?'Shift paused.':complete?'All pallets received.':this.scanning?'Reading pallet label...':p?(p.canScan?'Scan this pallet.':'Receive the front row first.'):'Select a pallet.';
-      this.el('help').textContent=this.notice|| (complete?'Your worker will put the stock away.':p?'The label identifies this load.':'Work from the dock toward the back.');
-      this.el('complete-copy').textContent=this.load.cases+' cases checked in. Your worker will put them in the racks.';
+      this.el('instruction').textContent=this.app.paused?'Shift paused.':complete?'All pallets scanned.':this.scanning?'Reading pallet label...':p?(p.canScan?'Scan this pallet.':'Receive the front row first.'):'Select a pallet.';
+      this.el('help').textContent=this.notice|| (complete?'Unload to Receiving, then put away in the racks.':p?'Match the product, case count and lot.':'Work from the dock toward the back.');
+      this.el('complete-copy').textContent=this.load.cases+' cases checked. Return to the floor to unload and put away the stock.';
       if(!p)return;
       this.el('pallet-number').textContent='PALLET '+pad(p.index+1);
       this.el('product').textContent=p.name;this.el('cases').textContent=p.cases;this.el('lot').textContent=p.lot;
@@ -231,7 +231,7 @@
         if(this.scanning){this.scanning.time+=dt;if(this.scanning.time>=this.scanning.duration){
           const id=this.scanning.id,q=this.layout.find(q=>q.p.id===id);
           const result=this.app.sim.command({type:'receivePallet',pallet:id});this.scanning=null;
-          if(result.ok){this.app.audio.play('scan');this.departing=q?{q,time:0,duration:this.reducedMotion()?.01:.3}:null;this.selected=null;this.hover=null;this.notice='Pallet '+pad(q.p.index+1)+' received.';this.announce(this.notice);}
+          if(result.ok){this.app.audio.play('scan');this.departing=q?{q,time:0,duration:this.reducedMotion()?.01:.3}:null;this.selected=null;this.hover=null;this.notice='Pallet '+pad(q.p.index+1)+' scanned. Ready to unload.';this.announce(this.notice);}
           else{this.notice=result.reason;this.app.audio.play('error');this.announce(result.reason);}
           this.stateKey=null;this.sync();
           const next=this.pallets.find(p=>!p.scanned&&p.canScan);

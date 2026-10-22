@@ -1,13 +1,22 @@
 (function (root) {
   'use strict';
   const O = root.OneShift, P = O.Sim.prototype;
-  const legacy = {schedule:P.schedule, command:P.command, assign:P.assign, depart:P.depart, nextDay:P.nextDay};
+  const legacy = {schedule:P.schedule, command:P.command, assign:P.assign, depart:P.depart, nextDay:P.nextDay, occupied:P.occupied, restore:P.restore};
   const notice = (s,text,kind='notice') => {s.events.push({text,kind,tick:s.tick});if(s.events.length>80)s.events.shift();};
   P.random=function(){let a=this.s.rng|0;a^=a<<13;a^=a>>>17;a^=a<<5;this.s.rng=a>>>0;return this.s.rng/4294967296;};
   const pallet=P.pallet;
   P.pallet=function(...args){const p=pallet.apply(this,args);if(this.s.mode==='business'){p.unitCost=p.unitCost??O.catalog[p.item]?.buy??0;p.costBasis=p.costBasis??p.cases*p.unitCost;}return p;};
   const active = o => o.status === 'queued';
   const stockPlace = p => ['storage','lane'].includes(p.place) && p.cases > 0 && !p.hold;
+  const migrateReceiving=s=>{
+    if(!O.business(s))return;
+    const unloading=new Set(s.workers.flatMap(w=>[w.task,...w.queue].filter(t=>t?.kind==='unload').map(t=>t.pallet)));
+    for(const t of s.trucks.filter(t=>t.supplier))for(const r of t.receipt||[]){
+      const p=s.pallets.find(p=>p.id===r.pallet);
+      if(r.manual&&r.destination&&p&&!p.receivingDestination&&(p.place==='trailer'||unloading.has(p.id)))p.receivingDestination={...r.destination};
+    }
+  };
+  P.restore=function(s){legacy.restore.call(this,s);migrateReceiving(this.s);this.occTick=-1;};
   O.price=cents=>'$'+(cents/100).toLocaleString('en-US',{minimumFractionDigits:cents%100?2:0,maximumFractionDigits:2});
   O.catalog = {
     stove:{name:'Stoves',buy:400,sell:800,unlock:0},
@@ -22,21 +31,31 @@
   O.unlockedGoods = s => Object.keys(O.catalog).filter(id=>s.commerce.completed >= O.catalog[id].unlock);
   O.businessAssets = s => s.cash-s.credit+s.pallets.filter(p=>!['empty','shipped','returned','scrap'].includes(p.place)).reduce((n,p)=>n+(p.costBasis??p.cases*(p.unitCost||0)),0)+Object.entries(s.owned).reduce((n,[id,count])=>n+(O.equipment.find(e=>e.id===id)?.cost||0)*100*count*.7,0);
   P.claimedCases = function(id,except=null) {return this.s.commerce.orders.filter(active).filter(o=>o.id!==except).reduce((n,o)=>n+o.allocations.filter(a=>a.source===id && !a.collected).reduce((n,a)=>n+a.count,0),0);};
-  P.businessAvailable = function(item) {return this.s.pallets.filter(p=>p.item===item&&stockPlace(p)&&p.confirmed&&!p.businessOrder&&(!p.reservedBy||this.s.workers.some(w=>[w.task,...w.queue].some(t=>t?.kind==='salePick'&&t.sources.some(q=>q.pallet===p.id))))).sort((a,b)=>a.receivedDay-b.receivedDay||a.id-b.id);};
+  P.businessAvailable = function(item) {return this.s.pallets.filter(p=>p.item===item&&stockPlace(p)&&p.confirmed&&!p.receivingDestination&&!p.businessOrder&&(!p.reservedBy||this.s.workers.some(w=>[w.task,...w.queue].some(t=>t?.kind==='salePick'&&t.sources.some(q=>q.pallet===p.id))))).sort((a,b)=>a.receivedDay-b.receivedDay||a.id-b.id);};
   P.surplusQuote = function(item) {const p=this.businessAvailable(item).find(p=>!this.claimedCases(p.id)&&!p.reservedBy);return p?{pallet:p.id,count:p.cases,price:Math.round(p.unitCost*.7),value:p.cases*Math.round(p.unitCost*.7)}:null;};
   P.businessStock = function(item) {
     const s=this.s,ps=s.pallets.filter(p=>p.item===item && !['empty','shipped','returned','scrap'].includes(p.place));
     const ready=this.businessAvailable(item),readyIds=new Set(ready.map(p=>p.id));
     const free=ready.reduce((n,p)=>n+Math.max(0,p.cases-this.claimedCases(p.id)),0);
-    return {free,stored:ps.filter(p=>p.place!=='trailer').reduce((n,p)=>n+p.cases,0),incoming:ps.filter(p=>!p.hold&&!p.businessOrder&&!readyIds.has(p.id)).reduce((n,p)=>n+p.cases,0)};
+    return {free,stored:ps.filter(p=>p.place==='storage').reduce((n,p)=>n+p.cases,0),incoming:ps.filter(p=>!p.hold&&!p.businessOrder&&!readyIds.has(p.id)).reduce((n,p)=>n+p.cases,0)};
   };
-  P.businessSpot=function(w,p){const s=this.s,high=O.has(s,'forklift')&&['player','driver','robot'].includes(w.role);for(const r of s.map.racks)for(let level=0;level<(high?r.levels:1);level++)for(let side=0;side<2;side++){const x=r.x+side,y=r.y;if(!this.occupied(x,y,level,p.id)&&O.pathing.path(s,w,{x,y:y+(O.has(s,'forklift')?2:1)},high))return {x,y,level,place:'storage',rack:r.id};}return null;};
+  P.occupied=function(x,y,level=0,except=null){
+    if(legacy.occupied.call(this,x,y,level,except))return true;
+    if(!O.business(this.s))return false;
+    const reserved=d=>d&&d.x===x&&d.y===y&&(d.level||0)===level;
+    return this.s.pallets.some(p=>p.id!==except&&reserved(p.receivingDestination))||this.s.workers.some(w=>[w.task,...w.queue].some(t=>t&&t.pallet!==except&&reserved(t.returnDestination)));
+  };
+  P.businessSpot=function(w,p){
+    const s=this.s,high=O.has(s,'forklift')&&['player','driver','robot'].includes(w.role),d=p.receivingDestination;
+    if(d){const r=s.map.racks.find(r=>r.id===d.rack&&r.y===d.y&&d.x>=r.x&&d.x<r.x+2);return r&&d.level<r.levels&&(!d.level||high)&&!this.occupied(d.x,d.y,d.level,p.id)&&O.pathing.path(s,w,{x:d.x,y:d.y+(O.has(s,'forklift')?2:1)},high)?{...d}:null;}
+    for(const r of s.map.racks)for(let level=0;level<(high?r.levels:1);level++)for(let side=0;side<2;side++){const x=r.x+side,y=r.y;if(!this.occupied(x,y,level,p.id)&&O.pathing.path(s,w,{x,y:y+(O.has(s,'forklift')?2:1)},high))return {x,y,level,place:'storage',rack:r.id};}return null;
+  };
   P.businessCapacity = function() {
     const s=this.s,slots=s.map.racks.reduce((n,r)=>n+2*(O.has(s,'forklift')?r.levels:1),0);
-    const stored=s.pallets.filter(p=>p.place==='storage'&&p.cases>0).length;
-    const moving=s.workers.flatMap(w=>[w.task,...w.queue].filter(Boolean)).filter(t=>t.dest?.place==='storage'&&this.p.get(t.pallet)?.place!=='storage').length;
-    const unstored=s.pallets.filter(p=>p.cases>0&&!p.businessOrder&&['lane','trailer'].includes(p.place)&&!p.reservedBy).length;
-    return {slots,used:stored+moving+unstored,free:Math.max(0,slots-stored-moving-unstored)};
+    // Count each owned pallet once through every receiving leg, including an
+    // active unload whose immediate destination is staging rather than a rack.
+    const used=s.pallets.filter(p=>p.cases>0&&(p.place==='storage'||!p.businessOrder&&['lane','trailer','transit'].includes(p.place))).length;
+    return {slots,used,free:Math.max(0,slots-used)};
   };
   P.restockQuote = function(item,count) {
     const s=this.s,d=O.catalog[item];
@@ -97,12 +116,33 @@
     for(const w of s.workers){
       const task=w.task,kept=w.queue.filter(t=>t.businessOrder!==o.id);
       for(const t of w.queue)if(t.businessOrder===o.id)this.release(t);
-      w.queue=[];if(task?.businessOrder===o.id)this.clearWork(w);w.queue=kept;
+      w.queue=[];
+      if(task?.businessOrder===o.id){
+        const carried=this.p.get(task.output||task.pallet),returning=carried?.place==='transit'&&carried.cases>0;
+        this.clearWork(w);
+        if(returning)this.returnBusinessPallet(w,carried,task.kind==='salePick'?task.dest:task.returnDestination);
+      }
+      w.queue.push(...kept);
     }
-    for(const a of o.allocations){const p=this.p.get(a.output);if(p&&p.place!=='shipped'){p.businessOrder=null;if(!p.cases&&!p.reservedBy&&p.place!=='empty'){p.place='empty';s.emptyPallets++;}if(p.place==='lane'&&p.cases){const lane=this.lane('shipping',p);if(lane?.place==='lane')Object.assign(p,lane);}}}
+    for(const a of o.allocations){const p=this.p.get(a.output);if(p&&p.place!=='shipped'){p.businessOrder=null;if(!p.cases&&!p.reservedBy&&p.place!=='empty'){p.place='empty';s.emptyPallets++;}}}
     o.status=status;s.commerce.firstDecision=false;s.commerce.queue=s.commerce.queue.filter(id=>id!==o.id);
     if(status==='missed'){s.dayMissed++;s.reputation=Math.max(20,s.reputation-2);}
     const t=this.t.get(o.truck);if(t&&!t.departureRequested&&['docked','yard'].includes(t.status))this.depart(t);else if(t?.status==='scheduled')t.status='gone';else if(t?.status==='arriving'){t.status='leaving';t.animation=0;t.opened=false;}
+  };
+  P.returnBusinessPallet=function(w,p,destination=null){
+    if(!p?.cases)return false;
+    let dest=destination;
+    if(!dest||dest.place!=='lane'||this.occupied(dest.x,dest.y,0,p.id))dest=this.lane('shipping',p);
+    if(dest?.place!=='lane')dest=this.lane('receiving',p);
+    if(dest?.place!=='lane')return false;
+    const start={x:Math.round(w.x),y:Math.round(w.y)},end={x:dest.x,y:dest.y};
+    const route=O.pathing.path(this.s,start,end,O.has(this.s,'forklift'));if(!route)return false;
+    // Keep carrying the actual pallet out of a cancelled pick or trailer. This
+    // task is independent of the closed order and still blocks unsafe departure.
+    this.enqueue(w,{kind:'putaway',pallet:p.id,start,end,dest:{...dest},duration:.4,businessOrder:null});
+    w.task=w.queue.pop();w.task.phase='dest';w.task.path=route;
+    Object.assign(p,{place:'transit',x:w.x,y:w.y,level:0});
+    return true;
   };
   P.command = function(c) {
     const s=this.s;if(!O.business(s))return legacy.command.call(this,c);
@@ -151,6 +191,11 @@
     // Business orders own their reservations. Detailed handling remains available for free stock.
     if(['contract','service','parcel','loadParcel','skipScan'].includes(c.type)||!this.businessPlanning&&(['pick','empty','wrap','dispatch'].includes(c.type)||c.type==='move'&&c.dest?.truck))return fail('Use customer orders.');
     if(!this.businessPlanning&&['pick','move','hold','scrap'].includes(c.type)&&c.pallet){const p=this.p.get(c.pallet);if(p?.businessOrder||this.claimedCases(c.pallet))return fail('This stock is reserved for an order.');}
+    if(c.type==='move'){
+      const p=this.p.get(c.pallet),d=p?.receivingDestination;
+      if(p?.place==='trailer'&&this.t.get(p.truckId)?.supplier&&c.dest?.lane!=='receiving')return fail('Unload this pallet into Receiving first.');
+      if(d&&c.dest?.lane!=='receiving'&&(c.dest?.x!==d.x||c.dest?.y!==d.y||(c.dest?.level||0)!==d.level))return fail('This pallet has a reserved rack position.');
+    }
     if(c.type==='hire'&&s.cash<7500)return fail('Need $75 cash.');
     if(c.type==='move'&&(c.dest?.level||this.p.get(c.pallet)?.level)){const w=s.workers.find(w=>w.id===(c.worker||1));if(w&&!['player','driver','robot'].includes(w.role))return fail('Choose a forklift operator for upper stock.');}
     if(c.type==='buy'&&!O.businessUpgrades.includes(c.id))return fail('Choose a warehouse upgrade.');
@@ -166,8 +211,9 @@
     return legacy.command.call(this,c);
   };
   P.businessTask = function(w,command,order) {
+    const p=this.p.get(command.pallet),returnDestination=command.dest?.truck&&p?.place==='lane'?{x:p.x,y:p.y,level:0,place:'lane',lane:p.lane||'shipping'}:null;
     this.businessPlanning=true;let r;try{r=this.command({...command,worker:w.id});}finally{this.businessPlanning=false;}
-    if(r.ok&&w.queue.at(-1)){w.queue.at(-1).businessOrder=order?.id||null;return true;}return false;
+    if(r.ok&&w.queue.at(-1)){const task=w.queue.at(-1);task.businessOrder=order?.id||null;if(returnDestination)task.returnDestination=returnDestination;return true;}return false;
   };
   P.assign = function() {
     const s=this.s;if(!O.business(s))return legacy.assign.call(this);
@@ -189,7 +235,7 @@
           if(!allocations.length||allocations.some(a=>{const p=this.p.get(a.source);return !stockPlace(p)||p.reservedBy||p.level&&!(w.role==='player'||w.role==='driver'||w.role==='robot');}))continue;
           const out=this.p.get(allocations.find(a=>a.output)?.output);if(out?.reservedBy)continue;
           const dest=this.lane('shipping');if(!dest||dest.place!=='lane')continue;
-          const source=this.p.get(allocations[0].source),start=out?.cases?this.approach(out):this.approach(source),end={x:dest.x,y:dest.y};
+          const source=this.p.get(allocations[0].source),start=out?this.approach(out):O.docks.stack(s),end={x:dest.x,y:dest.y};
           let route=start,clear=!!O.pathing.path(s,w,start,O.has(s,'forklift'));
           for(const a of allocations){const next=this.approach(this.p.get(a.source));if(!O.pathing.path(s,route,next,O.has(s,'forklift')))clear=false;route=next;}
           if(!clear||!O.pathing.path(s,route,end,O.has(s,'forklift')))continue;
@@ -198,7 +244,7 @@
           const output=out||this.pallet(source.item,'trail',0,null,{...O.docks.stack(s),confirmed:true,scanned:true,pick:true,wrapped:false,labelled:false,businessOrder:o.id,unitCost:source.unitCost,costBasis:0,lot:source.lot,receivedDay:source.receivedDay,bestBy:source.bestBy});
           for(const a of allocations)o.allocations[a.index].output=output.id;
           const sources=allocations.map(a=>({pallet:a.source,count:a.count,allocation:a.index})),count=sources.reduce((n,q)=>n+q.count,0);
-          this.enqueue(w,{kind:'salePick',pallet:source.id,output:output.id,count,sources,sourceIndex:0,pickedUp:!output.cases,dest,start,end,duration:Math.max(.7,count*.12/(s.owned.cart?1.5:1)),businessOrder:o.id});
+          this.enqueue(w,{kind:'salePick',pallet:source.id,output:output.id,count,sources,sourceIndex:0,sourceProgress:0,pickedUp:false,dest,start,end,duration:.4,businessOrder:o.id});
           const task=w.queue.at(-1);for(const q of sources)this.p.get(q.pallet).reservedBy=task.id;assigned=true;break;
         }
         if(assigned)break;
@@ -208,8 +254,10 @@
       for(const inbound of s.trucks.filter(t=>t.supplier&&t.status==='docked'&&!t.departureRequested)){
         inbound.checked=inbound.inspected=inbound.opened=true;
         for(const p of inbound.manifest.map(id=>this.p.get(id)).filter(p=>p?.place==='trailer'&&!p.reservedBy&&this.reachable(inbound,p)&&(!b.manualReceiving||this.receivingAccepted?.(p.id)))){
-          const dest=this.businessSpot(w,p);
-          if(dest&&this.businessTask(w,{type:'move',pallet:p.id,dest},null)){assigned=true;break;}
+          const rack=this.businessSpot(w,p),dest=this.lane('receiving',p);
+          // A full receiving floor pauses unloading. Never silently bypass it
+          // with lane()'s legacy rack fallback or overbook another worker's slot.
+          if(rack&&dest?.place==='lane'&&this.businessTask(w,{type:'move',pallet:p.id,dest},null)){p.receivingDestination={...rack};this.occTick=-1;assigned=true;break;}
         }
         if(assigned)break;
       }
@@ -253,14 +301,18 @@
     }
     s.trucks=carry;s.pallets=s.pallets.filter(p=>!['empty','shipped','returned','scrap'].includes(p.place));for(const p of s.pallets)p.businessOrder=null;
     c.purchases=c.purchases.filter(p=>!p.stored || p.day>=s.day-6);
-    for(const p of s.pallets.filter(p=>p.place==='lane'&&p.cases)){const lane=this.lane('receiving',p);if(lane?.place==='lane')Object.assign(p,lane);}
+    // Staged stock keeps its actual location and rack reservation overnight.
     s.day++;s.minute=480;s.phase='shift';s.openingCash=s.cash;s.dayShipped=s.dayOnTime=s.dayMissed=0;s.workMinutes={};s.journal=s.journal.filter(e=>e.day>=s.day-60);s.map.revision++;this.reindex();this.schedule();notice(s,'Day '+s.day+' / '+c.headline,'shift');
   };
   P.collectSale=function(w,t){
     const s=this.s,out=this.p.get(t.output),lift=O.has(s,'forklift');
-    if(!t.pickedUp){t.pickedUp=true;out.place='transit';t.path=O.pathing.path(s,w,this.approach(this.p.get(t.sources[0].pallet)),lift);return;}
+    if(!t.pickedUp){t.pickedUp=true;Object.assign(out,{place:'transit',x:w.x,y:w.y,level:0});t.path=O.pathing.path(s,w,this.approach(this.p.get(t.sources[0].pallet)),lift);return;}
     const q=t.sources[t.sourceIndex],p=this.p.get(q.pallet),o=s.commerce.orders.find(o=>o.id===t.businessOrder);
     if(!p||p.cases<q.count||p.hold||p.reservedBy!==t.id){this.clearWork(w);notice(s,'Pick paused. Stock unavailable.');return;}
+    // Case handling happens beside each source, not after the walk to Shipping.
+    t.sourceProgress=(t.sourceProgress||0)+.05;
+    if(t.sourceProgress<Math.max(.35,q.count*.12/(s.owned.cart?1.5:1)))return;
+    t.sourceProgress=0;
     const cost=q.count===p.cases?p.costBasis:Math.round(p.costBasis*q.count/p.cases);
     p.costBasis-=cost;p.cases-=q.count;p.bookCases=p.cases;out.cases+=q.count;out.bookCases=out.cases;out.costBasis+=cost;out.unitCost=Math.round(out.costBasis/out.cases);
     out.receivedDay=Math.min(out.receivedDay,p.receivedDay);out.bestBy=Math.min(out.bestBy,p.bestBy);if(out.lot!==p.lot)out.lot='MIXED';
@@ -273,7 +325,10 @@
   P.release=function(task){release.call(this,task);if(task.kind==='salePick')for(const q of task.sources){const p=this.p.get(q.pallet);if(p?.reservedBy===task.id)p.reservedBy=null;}};
   const finish=P.finish;
   P.finish=function(w,task){const r=finish.call(this,w,task);
-    if(r&&O.business(this.s)&&task.kind==='unload'){const purchase=this.s.commerce.purchases.find(p=>p.pallets.includes(task.pallet));if(purchase){if(!purchase.received.includes(task.pallet))purchase.received.push(task.pallet);}}
+    if(r&&O.business(this.s)&&['unload','putaway'].includes(task.kind)&&task.dest?.place==='storage'){
+      const p=this.p.get(task.pallet);delete p.receivingDestination;
+      const purchase=this.s.commerce.purchases.find(q=>q.pallets.includes(task.pallet));if(purchase&&!purchase.received.includes(task.pallet))purchase.received.push(task.pallet);
+    }
     if(r&&task.kind==='salePick')for(const q of task.sources){const p=this.p.get(q.pallet);if(p?.reservedBy===task.id)p.reservedBy=null;}return r;
   };
   // Service fees belong to the legacy warehouse simulation, never to player-owned stock.
@@ -318,11 +373,29 @@
     if(new Set(c.queue).size!==c.queue.length||c.queue.some(id=>!c.orders.some(o=>o.id===id&&active(o)))||c.orders.filter(active).some(o=>!c.queue.includes(o.id)))throw Error('Invalid order queue.');
     for(const [id,n] of claim)if(s.pallets.find(p=>p.id===id).cases<n)throw Error('Stock reserved twice.');
     for(const p of s.pallets)if(!int(p.unitCost)||p.unitCost>10000||!int(p.costBasis)||p.costBasis>p.cases*10000||p.businessOrder&&!ids.has(p.businessOrder))throw Error('Invalid stock cost.');
+    migrateReceiving(s);
+    const receivingSlots=new Set(),tasks=s.workers.flatMap(w=>[w.task,...w.queue].filter(Boolean));
+    for(const p of s.pallets.filter(p=>p.receivingDestination!==undefined)){
+      const d=p.receivingDestination,r=d&&s.map.racks.find(r=>r.id===d.rack&&r.y===d.y&&d.x>=r.x&&d.x<r.x+2);
+      if(!d||d.place!=='storage'||!int(d.x)||!int(d.y)||!int(d.level)||!r||d.level>=r.levels||!p.cases||p.businessOrder||!['trailer','lane','transit'].includes(p.place))throw Error('Invalid pending putaway.');
+      const key=d.x+'/'+d.y+'/'+d.level;
+      if(receivingSlots.has(key)||s.pallets.some(q=>q.id!==p.id&&q.place==='storage'&&q.cases&&q.x===d.x&&q.y===d.y&&q.level===d.level)||tasks.some(t=>t.pallet!==p.id&&t.dest?.place==='storage'&&t.dest.x===d.x&&t.dest.y===d.y&&(t.dest.level||0)===d.level))throw Error('Receiving rack reserved twice.');
+      receivingSlots.add(key);
+    }
+    const returnSlots=new Set();
+    for(const t of tasks.filter(t=>t.returnDestination!==undefined)){
+      const d=t.returnDestination,key=d&&d.x+'/'+d.y;
+      // Expansion moves painted staging bounds. A load already underway keeps
+      // its original clear return position until that freight is delivered.
+      if(t.kind!=='load'||!d||d.place!=='lane'||d.level!==0||!int(d.x)||!int(d.y)||!['receiving','shipping'].includes(d.lane)||!O.pathing.inside(s,d.x,d.y)||O.pathing.blocked(s,d.x,d.y)||returnSlots.has(key))throw Error('Invalid loading return position.');
+      returnSlots.add(key);
+    }
     for(const purchase of c.purchases)if(!int(purchase.id,1)||purchase.id>=s.nextId||!O.catalog[purchase.item]||!int(purchase.day,1)||!int(purchase.count,1)||!int(purchase.cost,1)||!Array.isArray(purchase.pallets)||typeof purchase.stored!=='boolean'||!purchase.stored&&purchase.pallets.some(id=>!(purchase.received||[]).includes(id)&&!s.pallets.some(p=>p.id===id)))throw Error('Invalid purchase.');
     for(const purchase of c.purchases)if(!Array.isArray(purchase.received)||new Set(purchase.received).size!==purchase.received.length||purchase.received.some(id=>!int(id,1)||!purchase.pallets.includes(id)))throw Error('Invalid supplier receipt.');
     for(const w of s.workers)for(const t of [w.task,...w.queue].filter(Boolean))if(t.kind==='salePick'&&(!int(t.count,1)||!t.output||!Array.isArray(t.sources)||!t.sources.length||new Set(t.sources.map(q=>q.pallet)).size!==t.sources.length||!int(t.sourceIndex)||t.sourceIndex>t.sources.length||typeof t.pickedUp!=='boolean'||t.sources.some(q=>!int(q.count,1)||!int(q.allocation)||!s.pallets.some(p=>p.id===q.pallet&&p.reservedBy===t.id))||!t.businessOrder||!c.orders.some(o=>o.id===t.businessOrder&&active(o))))throw Error('Invalid sale work.');
     for(const w of s.workers)for(const t of [w.task,...w.queue].filter(q=>q?.kind==='salePick')){
       const o=c.orders.find(o=>o.id===t.businessOrder);if(t.count!==t.sources.reduce((n,q)=>n+q.count,0)||t.phase==='dest'&&t.sourceIndex!==t.sources.length||t.phase==='source'&&t.sourceIndex>=t.sources.length)throw Error('Invalid pick stage.');
+      if(t.sourceProgress!==undefined&&(!finite(t.sourceProgress)||t.sourceProgress>1200||t.phase==='dest'&&t.sourceProgress))throw Error('Invalid source picking progress.');
       for(const [index,q]of t.sources.entries()){const a=o.allocations[q.allocation];if(!a||a.source!==q.pallet||a.count!==q.count||a.output!==t.output||a.collected!==(index<t.sourceIndex))throw Error('Invalid grouped pick.');}
     }
     return s;

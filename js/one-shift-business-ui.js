@@ -4,6 +4,28 @@
   const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const btn=(text,action,extra='',primary=false)=>'<button data-action="business-'+action+'" '+extra+' class="'+(primary?'primary':'')+'">'+text+'</button>';
   const orderValue=o=>o.lines.reduce((n,l)=>n+l.cases*l.price,0);
+  const PRINT={ink:'#252620',paper:'#f0e1c6',rust:'#8d3f24',wash:'#8d3f2418'};
+  const receivingWork=sim=>sim.s.commerce?.manualReceiving&&sim.receivingProgress?sim.receivingProgress():null;
+  const firstReceiving=(sim,work=receivingWork(sim))=>!sim.s.commerce.completed&&sim.s.commerce.firstDecision&&work&&(work.unscanned>0||work.pending>0)?work:null;
+  function receivingSummary(work){
+    if(!work?.pending)return '';
+    const unloading=work.awaitingUnload+work.unloading,putaway=work.staged+work.puttingAway;
+    return '<section class="shift-receiving-summary" aria-label="Incoming stock"><strong>Stock moving in</strong><span>'+[unloading?'Receiving '+unloading:'',putaway?'Putaway '+putaway:''].filter(Boolean).join(' / ')+'</span></section>';
+  }
+  function workerStage(ui,w){
+    const task=w.task;
+    if(!task)return {title:'Ready',detail:w.queue.length?'Next job is queued.':'Choose an order.',location:''};
+    const walking=!!task.path?.length;
+    if(task.kind==='unload')return {title:'Unload to Receiving',detail:walking?(task.phase==='source'?'Walking into the trailer.':'Moving the pallet to Receiving.'):task.phase==='source'?'Lifting the pallet in the trailer.':'Lowering the pallet into Receiving.',location:'Trailer > Receiving'};
+    if(task.kind==='putaway'){
+      const shipping=task.dest?.place==='lane'&&task.dest.lane==='shipping';
+      return {title:shipping?'Return to Shipping':'Put stock away',detail:walking?(task.phase==='source'?'Collecting the staged pallet.':shipping?'Taking the pallet back to Shipping.':'Taking the pallet to its rack.'):task.phase==='source'?'Lifting the staged pallet.':shipping?'Setting the pallet in Shipping.':'Placing the pallet in its rack.',location:shipping?'Shipping': 'Receiving > Storage'};
+    }
+    if(task.kind==='salePick')return {title:task.pickedUp?'Pick '+task.count+' cases':'Collect an empty pallet',detail:!task.pickedUp?'Getting a pallet from the empty stack.':task.phase==='dest'?'Taking the picked cases to Shipping.':walking?'Walking to the next source rack.':'Picking cases from the rack.',location:task.pickedUp?'Storage > Shipping':'Empty pallets > Storage'};
+    if(task.kind==='wrap')return {title:'Wrap and label',detail:walking?'Walking to the staged order.':'Securing the load and applying its label.',location:'Shipping'};
+    if(task.kind==='load')return {title:'Load the truck',detail:walking?(task.phase==='source'?'Collecting the staged load.':'Moving the load into the trailer.'):task.phase==='source'?'Lifting the staged load.':'Placing the load in the trailer.',location:'Shipping > Trailer'};
+    return {title:ui.queueTask(task).title,detail:ui.queueStatus(task),location:''};
+  }
   const legacy={update:P.update,selection:P.selection,renderQueue:P.renderQueue,queueLayout:P.queueLayout,renderHub:P.renderHub,action:P.action,guideActive:P.guideActive,drawGuide:P.drawGuide,settingsMenu:P.settingsMenu};
   O.businessOpening=function(sim){const s=sim.s;if(!O.business(s)||s.commerce.completed||s.day!==1)return null;const o=s.commerce.orders[0];return o&&o.lines.length===1&&['offered','queued'].includes(o.status)&&(o.status==='queued'||o.lines.every(l=>sim.businessStock(l.item).free>=l.cases))?o:null;};
   function orderStage(sim,o){
@@ -11,12 +33,13 @@
     const outputs=[...new Set(o.allocations.map(a=>a.output))].map(id=>sim.p.get(id)).filter(Boolean),collected=o.allocations.reduce((n,a)=>n+(a.collected?a.count:0),0),wrapped=outputs.reduce((n,p)=>n+(p.wrapped?p.cases:0),0),progress=(collected+wrapped+loaded)/total;
     if(o.status==='complete')return {index:3,label:'Paid',progress:3};
     if(sim.s.commerce.queue.indexOf(o.id)>0&&!task&&!collected)return {index:0,label:'Queued',progress};
-    if(task?.kind==='wrap')return {index:1,label:'Packing your order',progress};
+    if(task?.kind==='wrap')return {index:1,label:'Wrapping and labeling',progress};
     if(task?.kind==='load')return {index:2,label:'Loading the truck',progress};
-    if(task?.kind==='salePick')return {index:0,label:task.phase==='dest'?'Carrying to packing':'Picking stock',progress};
-    if(outputs.some(p=>p.cases&&!p.wrapped&&o.allocations.filter(a=>a.output===p.id).every(a=>a.collected)))return {index:1,label:'Moving to packing',progress};
-    if(collected<total)return {index:0,label:'Starting your order',progress};
-    return {index:2,label:t?.status==='yard'?'Waiting for a dock':t?.status==='docked'?'Moving to the truck':'Truck arriving',progress};
+    if(task?.kind==='salePick')return {index:task.phase==='dest'?1:0,label:!task.pickedUp?'Collecting an empty pallet':task.phase==='dest'?'Moving cases to Shipping':'Picking stock from racks',progress};
+    if(outputs.some(p=>p.cases&&!p.wrapped&&o.allocations.filter(a=>a.output===p.id).every(a=>a.collected)))return {index:1,label:'Staged for wrapping',progress};
+    if(collected<total)return {index:0,label:'Waiting for a worker',progress};
+    if(loaded>=total)return {index:2,label:'Loaded. Waiting for truck release',progress};
+    return {index:2,label:t?.status==='yard'?'Waiting for a dock':t?.status==='docked'?'Moving the load to the truck':'Wrapped. Truck arriving',progress};
   }
   function preserveHTML(node,html){if(node._businessHTML===html)return;node._businessHTML=html;
     const focused=node.contains(document.activeElement)?{...document.activeElement.dataset}:null,scroll=node.scrollTop;
@@ -40,16 +63,23 @@
     const c=s.commerce,panel=el('queue');panel.hidden=app.hubPause;panel.classList.toggle('is-first',c.firstDecision);this.queueLayout();el('intro').hidden=true;panel.classList.remove('has-guide');document.body.classList.remove('shift-guided');
     const queued=c.queue.map(id=>c.orders.find(o=>o.id===id)).filter(Boolean),offered=c.orders.filter(o=>o.status==='offered'),tab=this.businessTab||'orders';
     panel.querySelector('[data-action="queue-toggle"] strong').textContent=({orders:'Orders',stock:'Stock',work:'Worker'})[tab];el('queue-summary').textContent=tab==='orders'?([queued.length?queued.length+' queued':'',offered.length?offered.length+' new':''].filter(Boolean).join(' / ')||'Clear'):'';
-    const opening=O.businessOpening(sim);
+    const receiving=receivingWork(sim),firstDelivery=firstReceiving(sim,receiving),opening=O.businessOpening(sim);
+    if(firstDelivery){
+      const w=s.workers.find(w=>['unload','putaway'].includes(w.task?.kind)),work=w&&workerStage(this,w),remaining=firstDelivery.unscanned+firstDelivery.pending;
+      let html='<article class="shift-opening-card shift-receiving-card"><p class="shift-kicker">Opening stock</p><h2>'+(firstDelivery.unscanned?'Receive this load':'Put stock away')+'</h2><p class="shift-opening-status" role="status">'+esc(app.paused?'Paused. Resume to move stock.':firstDelivery.unscanned?'Scan the remaining pallets.':work?.detail||'Your worker is moving stock in.')+'</p><p class="shift-receiving-count">'+remaining+' '+(remaining===1?'pallet':'pallets')+' still to rack.</p>';
+      if(firstDelivery.unscanned)html+=btn('Open receiving dock','receiving','',true);
+      else if(app.paused)html+=btn('Resume work','pause','',true);
+      preserveHTML(el('queue-body'),html+'</article>');return;
+    }
     if(opening){
       const o=opening;
       const stage=orderStage(sim,o),line=o.lines[0];
       let html='<article class="shift-opening-card" data-order="'+o.id+'"><p class="shift-kicker">First order</p><h2>'+line.cases+' '+esc(O.catalog[line.item].name)+'</h2><p class="shift-opening-reward">'+O.price(orderValue(o))+'</p>';
-      if(o.status==='offered')html+='<p class="shift-opening-copy">Your worker packs and loads it.</p>'+btn('Ship order','fulfill','data-id="'+o.id+'"',true);
-      else html+='<ol class="shift-opening-stages" aria-label="Order progress">'+['pick','pack','ship'].map((id,i)=>'<li data-stage="'+id+'" data-state="'+(i<stage.index?'done':i===stage.index?'active':'waiting')+'">'+id[0].toUpperCase()+id.slice(1)+'</li>').join('')+'</ol><p class="shift-opening-status" role="status">'+esc(stage.label)+'</p>';
+      if(o.status==='offered')html+='<p class="shift-opening-copy">Your worker picks, stages, wraps and loads.</p>'+btn('Prepare order','fulfill','data-id="'+o.id+'"',true);
+      else html+='<ol class="shift-opening-stages" aria-label="Order progress">'+['pick','stage','load'].map((id,i)=>'<li data-stage="'+id+'" data-state="'+(i<stage.index?'done':i===stage.index?'active':'waiting')+'">'+id[0].toUpperCase()+id.slice(1)+'</li>').join('')+'</ol><p class="shift-opening-status" role="status">'+esc(stage.label)+'</p>';
       preserveHTML(el('queue-body'),html+'</article>');return;
     }
-    let html='';
+    let html=receivingSummary(receiving);
     const firstPaid=c.completed===1&&!c.restocked&&c.orders.find(o=>o.status==='complete'&&!o.buyback);
     if(firstPaid&&tab==='orders'){
       html+='<section class="shift-first-receipt"><strong>+'+O.price(firstPaid.paid)+'</strong><p>First order paid. Buy more stock.</p>'+btn('Buy stock','need-stock','data-item="'+firstPaid.lines[0].item+'"',true)+'</section>';
@@ -59,13 +89,17 @@
     else if(tab==='work'){
       const w=s.workers.find(w=>w.id===this.queueWorker)||s.workers[0];
       html+='<label class="shift-queue-worker">Worker<select id="shift-queue-worker">'+s.workers.map(w=>'<option value="'+w.id+'" '+(w.id===this.queueWorker?'selected':'')+'>'+esc(w.name)+'</option>').join('')+'</select></label>';
-      html+='<section class="shift-business-job"><strong>'+esc(w.task?.kind==='salePick'?'Pick '+w.task.count+' cases':w.task?this.queueTask(w.task).title:'Ready')+'</strong>'+(!w.task?'<p>Choose an order.</p>':'')+btn(app.paused?'Run':'Pause','pause','',app.paused)+'</section>';
+      const work=workerStage(this,w);
+      html+='<section class="shift-business-job"><strong>'+esc(work.title)+'</strong><p class="shift-worker-status">'+esc(app.paused?'Paused. Resume to continue this job.':work.detail)+'</p>'+(work.location?'<p class="shift-worker-location">'+esc(work.location)+'</p>':'')+btn(app.paused?'Resume':'Pause','pause','',app.paused)+'</section>';
       html+=w.queue.length?'<ol class="shift-queue-jobs">'+w.queue.map(t=>'<li><strong>'+esc(t.kind==='salePick'?'Pick '+t.count+' cases':this.queueTask(t).title)+'</strong></li>').join('')+'</ol>':'';
     }else{
       for(const o of [...queued,...offered]){
         const t=sim.t.get(o.truck),loaded=t?.loaded.reduce((n,l)=>n+l.cases,0)||0,missing=o.lines.find(l=>sim.businessStock(l.item).free<l.cases),i=c.queue.indexOf(o.id);
         html+='<article class="shift-order-card '+(o.rush?'rush':'')+'" data-order="'+o.id+'"><header><strong>'+esc(o.customer)+'</strong><span>'+O.price(orderValue(o))+'</span></header><small>'+(o.rush?'RUSH / ':'')+'Due '+O.time(o.due)+'</small><div class="shift-order-lines">'+o.lines.map(l=>'<span><b>'+l.cases+'</b> '+O.catalog[l.item].name+'</span>').join('')+'</div>';
-        if(o.status==='offered')html+=missing?btn('Restock '+O.catalog[missing.item].name,'need-stock','data-item="'+missing.item+'"',true):btn('Ship order','fulfill','data-id="'+o.id+'"',true);
+        if(o.status==='offered'){
+          const pipeline=missing&&sim.businessStock(missing.item);
+          html+=missing?(pipeline.free+pipeline.incoming>=missing.cases?'<button disabled>Waiting for incoming stock</button>':btn('Restock '+O.catalog[missing.item].name,'need-stock','data-item="'+missing.item+'"',true)):btn('Prepare order','fulfill','data-id="'+o.id+'"',true);
+        }
         else{
           const stage=orderStage(sim,o),label=stage.label;
           html+='<div class="shift-order-progress"><span>'+label+'</span><progress value="'+stage.progress+'" max="3"></progress></div><div class="shift-order-actions">'+btn('Up','priority','data-id="'+o.id+'" data-direction="-1" '+(i===0?'disabled':''))+btn('Down','priority','data-id="'+o.id+'" data-direction="1" '+(i===c.queue.length-1?'disabled':''))+btn('Cancel','cancel','data-id="'+o.id+'" '+(loaded?'disabled':''))+'</div>';
@@ -83,18 +117,19 @@
     if(!hit){node.hidden=true;return;}
     const p=sim.p.get(hit.id),t=sim.t.get(hit.id),r=s.map.racks.find(r=>r.id===hit.id&&hit.kind==='rack');let html='<button class="close" data-action="close">Close</button>';
     if(p&&['pallet','putaway'].includes(hit.kind)){
-      html+='<p class="shift-kicker">'+esc(p.place==='storage'?this.position(p):p.place==='trailer'?'DELIVERY':p.businessOrder?'ORDER STOCK':'STOCK')+'</p><h2>'+O.catalog[p.item]?.name+'</h2><strong>'+p.cases+' cases</strong><p>'+ (p.reservedBy?'Moving':p.businessOrder||sim.claimedCases(p.id)?'Reserved':p.place==='trailer'?'Unloading':'Available')+'</p>';
-      if(p.place==='lane'&&!p.reservedBy&&!p.businessOrder)html+=btn('Choose rack','putaway','data-id="'+p.id+'"');
+      const work=s.workers.flatMap(w=>[w.task,...w.queue]).find(q=>q?.pallet===p.id),status=p.place==='trailer'?(work?.kind==='unload'?'Unloading to Receiving.':sim.receivingAccepted?.(p.id)?'Scanned. Awaiting unload.':'Waiting for a scan.'):p.place==='lane'&&p.lane==='receiving'?(p.reservedBy?'Queued for putaway.':'In Receiving. Awaiting putaway.'):p.reservedBy?(work?.kind==='putaway'?(work.dest?.lane==='shipping'?'Returning to Shipping.':'Moving to a rack.'):work?.kind==='unload'?'Moving to Receiving.':'Being handled.'):p.businessOrder||sim.claimedCases(p.id)?'Reserved for an order.':p.place==='storage'?'Available in storage.':p.place==='shipped'?'Loaded on the truck.':'Waiting to be stored.';
+      html+='<p class="shift-kicker">'+esc(p.place==='storage'?this.position(p):p.place==='trailer'?'DELIVERY':p.businessOrder?'ORDER STOCK':'STOCK')+'</p><h2>'+O.catalog[p.item]?.name+'</h2><strong>'+p.cases+' cases</strong><p>'+status+'</p>';
+      if(p.place==='lane'&&!p.reservedBy&&!p.businessOrder&&!p.receivingDestination)html+=btn('Choose rack','putaway','data-id="'+p.id+'"');
       if(hit.kind==='putaway')html+='<div class="shift-storage-chooser">'+this.rackPositions(p).map(q=>this.storageButton(q)).join('')+'</div>';
       html+='<details><summary>Stock details</summary><p>Lot '+esc(p.lot)+' / received day '+p.receivedDay+'</p><p>Cost '+O.price(p.unitCost||0)+'/case</p><canvas class="shift-label" aria-label="Pallet barcode"></canvas></details>';
     }else if(t&&hit.kind==='truck'){
-      const o=s.commerce.orders.find(o=>o.id===t.businessOrder);html+='<p class="shift-kicker">'+(t.supplier?'SUPPLIER':'CUSTOMER')+'</p><h2>'+esc(o?.customer||'Stock delivery')+'</h2><p>'+esc(t.departureRequested?'Departing':t.supplier?'Unloading':'Loading')+'</p><div class="shift-order-lines">'+(t.supplier?t.manifest.map(id=>sim.p.get(id)).filter(Boolean):t.order).map(l=>'<span>'+l.cases+' '+O.catalog[l.item]?.name+'</span>').join('')+'</div>';
+      const o=s.commerce.orders.find(o=>o.id===t.businessOrder),load=t.supplier&&sim.receivingLoads?.().find(q=>q.id===t.id),status=t.departureRequested?'Waiting to clear the dock':t.status==='yard'?'Waiting for a dock':t.status==='arriving'?'Backing into the dock':t.supplier?(load?.remaining?'Labels waiting to be scanned':'Unloading to Receiving'):o?orderStage(sim,o).label:'Loading';html+='<p class="shift-kicker">'+(t.supplier?'SUPPLIER':'CUSTOMER')+'</p><h2>'+esc(o?.customer||'Stock delivery')+'</h2><p>'+esc(status)+'</p><div class="shift-order-lines">'+(t.supplier?t.manifest.map(id=>sim.p.get(id)).filter(Boolean):t.order).map(l=>'<span>'+l.cases+' '+O.catalog[l.item]?.name+'</span>').join('')+'</div>';
     }else if(r){html+='<p class="shift-kicker">STORAGE</p><h2>Rack A'+r.id+'</h2>';for(const q of this.rackPositions(null,[r]))html+='<p>'+ (q.side?'Right':'Left')+' / '+(q.stock?q.stock.cases+' '+O.catalog[q.stock.item]?.name:'Empty')+'</p>';}
     else{node.hidden=true;return;}node.hidden=false;preserveHTML(node,html);this.barcode(p||{});
   };
-  P.update=function(){const app=this.app,s=app.sim.s;if(!O.business(s)){const was=document.body.classList.contains('shift-business');document.body.classList.remove('shift-business','shift-opening','shift-first-sale');el('store').hidden=true;if(was){this.queueOpen=null;this.queueKey=null;el('queue-body')._businessHTML=null;el('selection')._businessHTML=null;el('hub')._businessHTML=null;el('toolbar')._businessHTML=null;el('toolbar').innerHTML=Object.entries({contracts:'Contracts',shop:'Shop',build:'Build',people:'People',services:'Services',reports:'Reports'}).map(([id,label])=>'<button data-hub="'+id+'">'+label+'</button>').join('');}return legacy.update.call(this);}document.body.classList.add('shift-business');document.body.classList.toggle('shift-opening',!!O.businessOpening(app.sim));document.body.classList.toggle('shift-first-sale',s.commerce.completed===1&&!s.commerce.restocked);if(this.businessState!==s){this.businessState=s;el('queue-body')._businessHTML=null;el('selection')._businessHTML=null;el('hub')._businessHTML=null;this.businessTab='orders';this.stockItem=null;this.businessNotice=null;this.queueOpen=true;}
+  P.update=function(){const app=this.app,s=app.sim.s;if(!O.business(s)){const was=document.body.classList.contains('shift-business');document.body.classList.remove('shift-business','shift-opening','shift-first-sale');el('store').hidden=true;if(was){this.queueOpen=null;this.queueKey=null;el('queue-body')._businessHTML=null;el('selection')._businessHTML=null;el('hub')._businessHTML=null;el('toolbar')._businessHTML=null;el('toolbar').innerHTML=Object.entries({contracts:'Contracts',shop:'Shop',build:'Build',people:'People',services:'Services',reports:'Reports'}).map(([id,label])=>'<button data-hub="'+id+'">'+label+'</button>').join('');}return legacy.update.call(this);}document.body.classList.add('shift-business');document.body.classList.toggle('shift-opening',!!(O.businessOpening(app.sim)||firstReceiving(app.sim)));document.body.classList.toggle('shift-first-sale',s.commerce.completed===1&&!s.commerce.restocked);if(this.businessState!==s){this.businessState=s;el('queue-body')._businessHTML=null;el('selection')._businessHTML=null;el('hub')._businessHTML=null;this.businessTab='orders';this.stockItem=null;this.businessNotice=null;this.queueOpen=true;}
     el('day').textContent='DAY '+s.day;el('clock').textContent=O.time(s.minute);el('money').textContent=O.money(s.cash/100);el('pause').textContent=app.paused?'Run':'Pause';el('pause').setAttribute('aria-pressed',String(app.paused));
-    el('toolbar').hidden=true;el('store').hidden=!!O.businessOpening(app.sim);
+    el('toolbar').hidden=true;el('store').hidden=!!(O.businessOpening(app.sim)||firstReceiving(app.sim));
     const start=480,end=s.shiftEnd;el('timeline').innerHTML=s.commerce.orders.map(o=>'<i class="out '+(['complete','missed','cancelled'].includes(o.status)?'gone':'')+'" style="left:'+Math.max(0,Math.min(100,(o.arrival-start)/(end-start)*100))+'%"></i>').join('')+'<b style="left:'+Math.max(0,Math.min(100,(s.minute-start)/(end-start)*100))+'%"></b>';
     el('next-truck').hidden=true;this.selection();el('hint').hidden=true;
     if(this.build){el('hint').textContent='Click to place a rack.';el('hint').hidden=false;}
@@ -120,7 +155,7 @@
     }else if(tab==='build')html+='<div class="shift-actions"><button data-action="build-rack">Rack / $55</button><button data-action="share">Copy layout</button></div><p id="shift-share-result"></p>';
     preserveHTML(el('hub'),html);
   };
-  P.action=function(node){const app=this.app,sim=app.sim,s=sim.s,name=node.dataset.action;if(!O.business(s)||!name?.startsWith('business-'))return legacy.action.call(this,node);
+  P.action=function(node){const app=this.app,sim=app.sim,s=sim.s,name=node.dataset.action;if(!O.business(s)||!name?.startsWith('business-')){const result=legacy.action.call(this,node);if(name==='new'&&node.dataset.id==='business'&&app.sim.s!==s)app.receiving?.attach(true);return result;}
     const action=name.slice(9),id=Number(node.dataset.id);
     if(action==='surplus'){this.issue({type:'sellSurplus',item:node.dataset.item});this.businessTab='orders';}
     else if(action==='tab'||action==='need-stock'){this.businessTab=action==='need-stock'?'stock':node.dataset.id;this.queueOpen=true;if(action==='need-stock')this.stockItem=node.dataset.item;}
@@ -131,6 +166,7 @@
     else if(action==='restock'){this.issue({type:'restock',item:node.dataset.item,count:Number(node.dataset.count)});if(app.hubPause)this.renderHub();}
     else if(action==='buy'){this.issue({type:'buy',id:node.dataset.id});if(app.hubPause)this.renderHub();}
     else if(action==='pause')app.paused=!app.paused;
+    else if(action==='receiving')app.receiving?.open();
     else if(action==='putaway'){this.target={kind:'putaway',id};this.selected=[id];}
     else if(action==='advance'){
       const next=s.commerce.orders.find(o=>o.status==='future');if(next){const limit=next.arrival;let ticks=0;while(s.phase==='shift'&&s.minute<limit&&ticks++<20000)sim.tick();}
@@ -157,18 +193,18 @@
         g.font=size+'px "Commit Mono",monospace';const width=g.measureText(compact?name:label).width+(compact?4:10),height=compact?27:16;
         const box={x:at.x-width/2,y:y-10,w:width,h:height};
         if(plates.some(p=>box.x<p.x+p.w+2&&box.x+box.w+2>p.x&&box.y<p.y+p.h&&box.y+box.h>p.y))return;
-        plates.push(box);g.fillStyle='#182530';g.fillRect(box.x,box.y,box.w,box.h);
-        renderer.text(g,compact?name:label,at.x,y-2,size,'#edf2f6','center','middle');
-        if(compact)renderer.text(g,String(count),at.x,y+10,size,'#edf2f6','center','middle');
+        plates.push(box);g.fillStyle=PRINT.ink;g.fillRect(box.x,box.y,box.w,box.h);
+        renderer.text(g,compact?name:label,at.x,y-2,size,PRINT.paper,'center','middle');
+        if(compact)renderer.text(g,String(count),at.x,y+10,size,PRINT.paper,'center','middle');
       });
     }
     if(O.businessOpening(this.app.sim)){
       const order=O.businessOpening(this.app.sim);
       if(order){
         const sources=order.allocations.length?order.allocations.map(a=>this.app.sim.p.get(a.source)):s.pallets.filter(p=>p.place==='storage'&&order.lines.some(l=>l.item===p.item));
-        g.save();g.strokeStyle='#ea9860';g.fillStyle='#ea986018';g.lineWidth=2;
+        g.save();g.strokeStyle=PRINT.rust;g.fillStyle=PRINT.wash;g.lineWidth=2;
         for(const r of s.map.racks.filter(r=>sources.some(p=>p&&p.y===r.y&&p.x>=r.x&&p.x<r.x+2))){const at=renderer.screen(r.x-.1,r.y-.1);g.fillRect(at.x,at.y,2.2*z,1.2*z);g.strokeRect(at.x,at.y,2.2*z,1.2*z);}
-        if(order.status==='queued'){const w=s.workers.find(w=>w.id===order.worker)||s.workers[0],at=renderer.screen(w.x+.5,w.y-.25);g.font='10px "Commit Mono",monospace';const width=g.measureText('Worker').width+12;g.fillStyle='#182530';g.fillRect(at.x-width/2,at.y-16,width,19);renderer.text(g,'Worker',at.x,at.y-6,10,'#edf2f6','center','middle');}
+        if(order.status==='queued'){const w=s.workers.find(w=>w.id===order.worker)||s.workers[0],at=renderer.screen(w.x+.5,w.y-.25);g.font='10px "Commit Mono",monospace';const width=g.measureText('Worker').width+12;g.fillStyle=PRINT.ink;g.fillRect(at.x-width/2,at.y-16,width,19);renderer.text(g,'Worker',at.x,at.y-6,10,PRINT.paper,'center','middle');}
         g.restore();
       }
     }

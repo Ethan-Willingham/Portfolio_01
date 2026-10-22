@@ -29,7 +29,39 @@ check('Floor walking commands cannot interrupt work, but required trailer exits 
 });
 check('A sale physically picks, wraps, loads, pays once and includes stock cost in profit',()=>{const sim=new O.Sim(1,'business');accept(sim);until(sim,()=>sim.s.commerce.completed===1);for(let i=0;i<100;i++)sim.tick();assert.equal(sim.s.commerce.totalSales,3600);assert.equal(sim.s.commerce.totalCogs,1600);assert.equal(sim.s.cash,23550);assert.ok(sim.s.journal.some(e=>e.category==='Packaging'&&e.cents===-50));assert.ok(!sim.s.journal.some(e=>['Receiving','Shipping','Storage','Wrap and labels'].includes(e.category)));until(sim,()=>sim.s.phase==='evening');assert.equal(sim.s.reports[0].profit,150);reconciles(sim);});
 check('Reservations reject double selling and can be cancelled without creating stock',()=>{const sim=new O.Sim(2,'business'),a=sim.s.commerce.orders[0];assert.ok(sim.command({type:'fulfill',order:a.id}).ok);const b=sim.makeBusinessOrder(480,[{item:'lantern',cases:36}]);sim.businessArrivals();assert.equal(sim.command({type:'fulfill',order:b.id}).ok,false);assert.ok(sim.command({type:'cancelOrder',order:a.id}).ok);assert.equal(sim.businessStock('lantern').free,40);reconciles(sim);});
-check('Cancelling a pick before and after collection conserves its goods and makes them available',()=>{for(const collected of [false,true]){const sim=new O.Sim(3,'business'),o=accept(sim);until(sim,()=>sim.s.workers[0].task?.kind==='salePick'&&!!sim.s.workers[0].task.collected===collected);assert.ok(sim.command({type:'cancelOrder',order:o.id}).ok);reconciles(sim);assert.equal(sim.s.commerce.completed,0);assert.equal(sim.s.commerce.totalSales,0);assert.equal(sim.businessStock('lantern').free,40);}});
+check('Cancelling a pick returns collected freight physically before it becomes available',()=>{for(const collected of [false,true]){const sim=new O.Sim(3,'business'),o=accept(sim);until(sim,()=>sim.s.workers[0].task?.kind==='salePick'&&!!sim.s.workers[0].task.collected===collected);const w=sim.s.workers[0],p=sim.p.get(w.task.output),position={x:p.x,y:p.y};assert.ok(sim.command({type:'cancelOrder',order:o.id}).ok);reconciles(sim);assert.equal(sim.s.commerce.completed,0);assert.equal(sim.s.commerce.totalSales,0);if(collected){assert.equal(p.x,position.x);assert.equal(p.y,position.y);assert.equal(w.task.kind,'putaway');assert.equal(sim.businessStock('lantern').free,32);until(sim,()=>sim.businessStock('lantern').free===40);assert.equal(p.place,'lane');assert.equal(p.lane,'shipping');}else assert.equal(sim.businessStock('lantern').free,40);}});
+check('Grouped picks fetch a real empty pallet and handle cases beside each source',()=>{
+  const sim=new O.Sim(26,'business'),o=sim.makeBusinessOrder(480,[{item:'stove',cases:32}]),w=sim.s.workers[0];sim.s.pallets.filter(p=>p.item==='stove')[1].lot='L002';sim.businessArrivals();assert.ok(sim.command({type:'fulfill',order:o.id}).ok);
+  until(sim,()=>w.task?.kind==='salePick');const task=w.task,out=sim.p.get(task.output),stack=O.docks.stack(sim.s);
+  assert.equal(task.start.x,stack.x);assert.equal(task.start.y,stack.y);assert.equal(task.pickedUp,false);assert.equal(out.cases,0);
+  until(sim,()=>task.pickedUp);assert.equal(w.x,stack.x);assert.equal(w.y,stack.y);
+  for(let index=0;index<task.sources.length;index++){
+    until(sim,()=>task.sourceIndex===index&&task.sourceProgress>0);const source=sim.p.get(task.sources[index].pallet),at=sim.approach(source),cases=source.cases;
+    assert.equal(w.x,at.x);assert.equal(w.y,at.y);assert.equal(task.progress,0);sim.tick();assert.equal(source.cases,cases);
+    const restored=new O.Sim(1,'business');restored.restore(O.saves.decode(O.saves.encode(sim.s)));assert.equal(restored.hash(),sim.hash());
+    until(sim,()=>task.sourceIndex>index);
+  }
+  assert.equal(out.cases,32);assert.equal(out.lot,'MIXED');until(sim,()=>o.status==='complete');assert.equal(o.cogs,12800);reconciles(sim);
+});
+check('Cancelled loading returns freight and clears the worker before the trailer leaves',()=>{
+  const sim=new O.Sim(27,'business'),o=accept(sim),w=sim.s.workers[0];
+  until(sim,()=>w.task?.kind==='load'&&w.task.phase==='dest'&&sim.inTruck(sim.t.get(o.truck),w));
+  const truck=sim.t.get(o.truck),p=sim.p.get(w.task.pallet),position={x:p.x,y:p.y},dest=w.task.returnDestination;
+  assert.ok(sim.occupied(dest.x,dest.y,0));assert.ok(sim.command({type:'cancelOrder',order:o.id}).ok);
+  assert.equal(p.x,position.x);assert.equal(p.y,position.y);assert.equal(truck.departureRequested,true);assert.equal(truck.loaded.length,0);
+  let staged=false;
+  for(let n=0;n<2000&&truck.status!=='gone';n++){sim.tick();if(p.place==='lane'&&p.lane==='shipping')staged=true;if(['leaving','gone'].includes(truck.status))assert.equal(sim.truckWorkers(truck).length,0);if(n%31===0)reconciles(sim);}
+  assert.equal(truck.status,'gone');assert.ok(staged);until(sim,()=>sim.businessStock('lantern').free===40);assert.equal(sim.s.commerce.totalSales,0);reconciles(sim);
+});
+check('Expansion during loading preserves the original reserved return position and its save',()=>{
+  const sim=new O.Sim(28,'business'),o=accept(sim),w=sim.s.workers[0];until(sim,()=>w.task?.kind==='load'&&w.task.phase==='dest');
+  const dest={...w.task.returnDestination},state=sim.snapshot();state.map.building.h+=8;state.map.revision++;
+  const restored=new O.Sim(1,'business');restored.restore(O.saves.validate(state));assert.deepEqual({...restored.s.workers[0].task.returnDestination},dest);
+  assert.equal(restored.occupied(dest.x,dest.y,0),true);assert.ok(restored.command({type:'cancelOrder',order:o.id}).ok);
+  const carrying=restored.s.workers[0].task;assert.equal(carrying.kind,'putaway');assert.equal(carrying.dest.x,dest.x);assert.equal(carrying.dest.y,dest.y);
+  const again=new O.Sim(1,'business');again.restore(O.saves.decode(O.saves.encode(restored.s)));assert.equal(again.hash(),restored.hash());
+  until(again,()=>again.businessStock('lantern').free===40);reconciles(again);
+});
 check('Purchased goods have a lead time, consume cash and reserved rack capacity, and earn no receive fee',()=>{const sim=new O.Sim(4,'business'),cash=sim.s.cash,q=sim.restockQuote('stove',16);assert.ok(sim.command({type:'restock',item:'stove',count:16}).ok);assert.equal(sim.s.cash,cash-q.cost);assert.equal(sim.businessStock('stove').incoming,16);assert.equal(sim.businessCapacity().free,1);assert.equal(sim.s.trucks[0].status,'scheduled');until(sim,()=>sim.s.commerce.restocked===1);assert.equal(sim.businessStock('stove').incoming,0);assert.ok(sim.s.commerce.purchases[0].pallets.every(id=>sim.p.get(id).place==='storage'));assert.ok(!sim.s.journal.some(e=>e.category==='Receiving'));reconciles(sim);});
 check('Full capacity and invalid purchases cannot charge money or manufacture goods',()=>{const sim=new O.Sim(5,'business');assert.ok(sim.command({type:'restock',item:'lantern',count:16}).ok);assert.ok(sim.command({type:'restock',item:'stove',count:16}).ok);const before=sim.hash();for(const bad of [null,undefined,[],true])assert.equal(sim.command(bad).ok,false);assert.equal(sim.command({type:'restock',item:'chair',count:32}).ok,false);assert.equal(sim.command({type:'restock',item:'radio',count:16}).ok,false);assert.equal(sim.command({type:'restock',item:'stove',count:NaN}).ok,false);assert.equal(sim.hash(),before);});
 check('The starting store offers racks and rejects locked equipment without charging cash',()=>{const sim=new O.Sim(6,'business');assert.equal(O.purchaseReason(sim.s,'rack'),'');for(const [id,orders] of Object.entries(O.businessUpgradeUnlocks)){if(!orders)continue;const before=sim.hash();assert.equal(O.purchaseReason(sim.s,id),orders+' orders to unlock');const result=sim.command({type:'buy',id});assert.equal(result.ok,false);assert.equal(result.reason,orders+' orders to unlock');assert.equal(sim.hash(),before);}assert.ok(sim.command({type:'buy',id:'rack'}).ok);assert.equal(sim.s.map.racks.length,5);assert.equal(sim.command({type:'hire',index:0}).ok,false);assert.equal(sim.command({type:'buy',id:'cold'}).ok,false);reconciles(sim);});

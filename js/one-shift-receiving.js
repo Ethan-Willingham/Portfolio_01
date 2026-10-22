@@ -1,7 +1,7 @@
 (function (root) {
   'use strict';
   const O = root.OneShift, P = O.Sim.prototype;
-  const legacy = {command:P.command, occupied:P.occupied, businessSpot:P.businessSpot};
+  const legacy = {command:P.command};
   const supplier = t => t?.direction === 'in' && t.supplier;
   const receiptFor = (t,id) => (t?.receipt || []).find(r => r.pallet === id);
   const failure = reason => ({ok:false,reason});
@@ -23,21 +23,23 @@
       return other?.place === 'trailer' && Math.floor(other.index/2) < Math.floor(p.index/2) && !receiptFor(t,id);
     });
   };
-  P.occupied = function(x,y,level=0,except=null) {
-    if (legacy.occupied.call(this,x,y,level,except)) return true;
-    if (!O.business(this.s)) return false;
-    return this.s.trucks.some(t => supplier(t) && (t.receipt || []).some(r => {
-      const p = this.p.get(r.pallet), d = r.destination;
-      return r.manual && d && p?.place === 'trailer' && p.id !== except && d.x === x && d.y === y && d.level === level;
-    }));
+  P.receivingPhysicalStatus = function(p,t=null) {
+    if(!p)return null;
+    const task=this.s.workers.flatMap(w=>[w.task,...w.queue]).find(q=>q?.pallet===p.id);
+    if(task?.kind==='unload')return 'unloading';
+    if(task?.kind==='putaway'&&p.receivingDestination)return 'puttingAway';
+    if(p.receivingDestination&&p.place==='lane')return 'staged';
+    if(p.place==='trailer')return receiptFor(t||this.t.get(p.truckId),p.id)||p.receivingDestination?'awaitingUnload':'unscanned';
+    return p.receivingDestination?'staged':'stored';
   };
-  P.businessSpot = function(w,p) {
-    const t = p && this.t.get(p.truckId), receipt = receiptFor(t,p?.id), d = receipt?.destination;
-    if (!receipt?.manual || !d || p.place !== 'trailer') return legacy.businessSpot.call(this,w,p);
-    const s = this.s, high = O.has(s,'forklift') && ['player','driver','robot'].includes(w.role);
-    const rack = s.map.racks.find(r => r.id === d.rack && r.y === d.y && d.x >= r.x && d.x < r.x+2);
-    if (!rack || d.level >= rack.levels || d.level && !high || this.occupied(d.x,d.y,d.level,p.id)) return null;
-    return O.pathing.path(s,w,{x:d.x,y:d.y+(O.has(s,'forklift')?2:1)},high) ? {...d} : null;
+  P.receivingProgress = function() {
+    const progress={unscanned:0,awaitingUnload:0,unloading:0,staged:0,puttingAway:0,stored:0,pending:0,casesPending:0};
+    if(!O.business(this.s))return progress;
+    const incoming=new Map();
+    for(const t of this.s.trucks.filter(supplier))for(const id of t.manifest)incoming.set(id,t);
+    for(const p of this.s.pallets)if(p.receivingDestination)incoming.set(p.id,incoming.get(p.id)||null);
+    for(const [id,t]of incoming){const p=this.p.get(id),status=this.receivingPhysicalStatus(p,t);if(!status)continue;progress[status]++;if(!['unscanned','stored'].includes(status)){progress.pending++;progress.casesPending+=p.cases;}}
+    return progress;
   };
   P.receivingPlan = function(id) {
     const s = this.s, p = this.p.get(id), t = p && this.t.get(p.truckId);
@@ -68,7 +70,7 @@
       const p = this.p.get(id);if(!p)return null;
       const receipt = receiptFor(t,id), scanned = !!receipt || p.place !== 'trailer';
       const plan = scanned ? failure('This pallet has already been scanned.') : this.receivingPlan(id);
-      return {id:p.id,index:p.index,row:Math.floor(p.index/2),side:p.index%2,item:p.item,name:O.catalog[p.item]?.name || O.items[p.item].name,cases:receipt?.received ?? p.cases,sscc:p.sscc,label:O.labels.encode(p.sscc).text,lot:receipt?.lot || p.lot,bestBy:p.bestBy,receivedDay:p.receivedDay,place:p.place,scanned,accepted:scanned,busy:!!p.reservedBy,reachable:this.receivingReachable(t,p),canScan:plan.ok,reason:plan.reason || '',destination:receipt?.destination ? {...receipt.destination} : null};
+      return {id:p.id,index:p.index,row:Math.floor(p.index/2),side:p.index%2,item:p.item,name:O.catalog[p.item]?.name || O.items[p.item].name,cases:receipt?.received ?? p.cases,sscc:p.sscc,label:O.labels.encode(p.sscc).text,lot:receipt?.lot || p.lot,bestBy:p.bestBy,receivedDay:p.receivedDay,place:p.place,physicalStatus:this.receivingPhysicalStatus(p,t),scanned,accepted:scanned,busy:!!p.reservedBy,reachable:this.receivingReachable(t,p),canScan:plan.ok,reason:plan.reason || '',destination:receipt?.destination ? {...receipt.destination} : null};
     }).filter(Boolean);
   };
   P.receivingLoads = function() {
@@ -105,6 +107,7 @@
       t.receipt.push(receipt);
       t.checked = t.inspected = t.opened = true;
       p.scanned = p.confirmed = true;p.bookCases = p.cases;p.recordedCondition = 'sound';
+      p.receivingDestination = {...plan.destination};
       this.occTick = -1;
       O.noteTerms(s,['SSCC','GS1-128','Case count','Putaway']);
       event(s,O.catalog[p.item].name+' / '+p.cases+' cases scanned.');
@@ -136,6 +139,7 @@
         accepted.add(p.id);
         const rack = d && s.map.racks.find(q => q.id === d.rack && q.y === d.y && d.x >= q.x && d.x < q.x+2);
         if (!d || d.place !== 'storage' || !Number.isInteger(d.x) || !Number.isInteger(d.y) || !Number.isInteger(d.level) || d.level < 0 || !rack || d.level >= rack.levels) throw Error('Invalid receiving destination.');
+        if(p.receivingDestination&&['x','y','level','rack'].some(k=>p.receivingDestination[k]!==d[k]))throw Error('Putaway does not match its receipt.');
         if (p.place === 'trailer') {
           if (!p.scanned || !p.confirmed || p.cases !== r.received || p.lot !== r.lot) throw Error('Receiving record does not match its pallet.');
           const key = d.x+'/'+d.y+'/'+d.level;

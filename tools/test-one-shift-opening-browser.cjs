@@ -207,10 +207,10 @@ async function advanceSale(page) {
     }));
     await desktop.screenshot({path:path.join(dump,'opening-picking.png')});
     const sale = await advanceSale(desktop);
-    check('Picking, packing and loading each have a truthful active stage', ['salePick','wrap','load'].every(kind=>sale.samples.some(s=>s.task===kind && s.steps.some(step=>step.state==='active' && step.stage.includes(({salePick:'pick',wrap:'pack',load:'ship'})[kind])))));
+    check('Picking, packing and loading each have a truthful active stage', ['salePick','wrap','load'].every(kind=>sale.samples.some(s=>s.task===kind && s.steps.some(step=>step.state==='active' && step.stage.includes(({salePick:'pick',wrap:'stage',load:'load'})[kind])))));
     const runningStages=sale.samples.filter(s=>s.steps.length);
     check('Shipment stages show one current step and never move backward', runningStages.every((s,i)=>s.steps.length===3 && s.steps.filter(step=>step.state==='active').length===1 && s.steps.every(step=>['waiting','active','done'].includes(step.state)) && (!i || s.steps.filter(step=>step.state==='done').length>=runningStages[i-1].steps.filter(step=>step.state==='done').length)));
-    check('Arrival and worker gaps retain a meaningful shipping status', sale.samples.filter(s=>!s.task && s.truck && !s.departure).every(s=>s.status.length>0 && !/^queued$/i.test(s.status) && s.steps.some(step=>step.state==='active' && step.stage.includes('ship'))));
+    check('Arrival and worker gaps retain a meaningful shipping status', sale.samples.filter(s=>!s.task && s.truck && !s.departure).every(s=>s.status.length>0 && !/^queued$/i.test(s.status) && s.steps.some(step=>step.state==='active' && step.stage.includes('load'))));
     check('First sale actually pays once and conserves its cases', sale.completed === 1 && sale.cash === 23550 && sale.balance.expected === sale.balance.accounted);
     check('The laptop loading rear remains visible without the truck front or road',sale.samples.some(s=>s.task==='load')&&sale.samples.filter(s=>s.truck==='docked').every(s=>s.rearVisible));
     check('Unlocking the full header after payment preserves a manually positioned camera',await desktop.evaluate(before=>['x','y','zoom'].every(k=>OneShift.app.renderer.camera[k]===before[k]),manualCamera));
@@ -305,7 +305,7 @@ async function advanceSale(page) {
     await mixed.locator('[data-action="business-fulfill"]').first().click();
     const mixedSale=await advanceSale(mixed);
     check('The mixed first customer ships both products for its actual $122 reward',mixedSale.completed===1 && mixedSale.balance.expected===mixedSale.balance.accounted && await mixed.evaluate(()=>OneShift.app.sim.s.commerce.orders.find(o=>o.status==='complete').paid===12200));
-    check('A mixed order says Packing while its worker actually wraps either product',mixedSale.samples.some(s=>s.task==='wrap') && mixedSale.samples.filter(s=>s.task==='wrap').every(s=>/^packing/i.test(s.status)));
+    check('A mixed order says Wrapping while its worker actually wraps either product',mixedSale.samples.some(s=>s.task==='wrap') && mixedSale.samples.filter(s=>s.task==='wrap').every(s=>/^wrapping/i.test(s.status)));
     const mixedProgress=mixedSale.samples.filter(s=>s.progress);
     check('Mixed-order progress never falls when the worker switches between products',mixedProgress.length>2 && mixedProgress.every((s,i)=>s.progress.max>0 && s.progress.value>=0 && s.progress.value<=s.progress.max && (!i || s.progress.value/s.progress.max>=mixedProgress[i-1].progress.value/mixedProgress[i-1].progress.max)));
     check('The mixed first-sale receipt offers stock for a product that actually shipped',await mixed.locator('.shift-first-receipt [data-action="business-need-stock"]').getAttribute('data-item').then(item=>['stove','chair'].includes(item)));

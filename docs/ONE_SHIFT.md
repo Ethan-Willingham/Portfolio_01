@@ -1,10 +1,11 @@
 # One Shift
 
-The public game at `one-shift.html` is an inventory business game, version 2.5.
+The public game at `one-shift.html` is an inventory business game, version 2.6.
 Start at the receiving dock with six pallets of owned stock and $200. Hover or
 tap a front pallet, select it, and scan its label. Each accepted pallet clears
 from the illustrated trailer, exposing the loads behind it. After all six,
-return to the warehouse so the worker can put the stock in the racks.
+return to the warehouse so the worker can unload into Receiving and put the
+stock in the racks. The warehouse and dock share charcoal, rust and cream print art.
 Customer orders arrive through the day.
 Queue shipments, buy replenishment stock, and reinvest in handling equipment,
 rack space, doors, and people. The receiving scene has no tutorial dialog.
@@ -16,6 +17,8 @@ fixtures, rather than offered in the public business interface.
 
 Read [the design rationale](ONE_SHIFT_DESIGN.md) for the research, intended
 experience, choices, pacing, and limits of automated playtesting.
+Read [the warehouse process](ONE_SHIFT_PROCESS.md) for the receiving, putaway,
+picking, staging and dispatch sequence.
 
 ## Source
 
@@ -50,11 +53,12 @@ for existing physical regression fixtures; pass `business` to exercise this game
   Later demand rotates among available products, includes mixed orders and rush
   requests, and grows to twelve requests as completed orders increase.
   The stock board shows remaining demand, ready cases, incoming cases, and space.
-- Ship order reserves specific source quantities. Several orders can reserve
+- Prepare order reserves specific source quantities. Several orders can reserve
   different cases in one source pallet. Reserved cases cannot be sold twice.
   Workers collect all lots for an item into one shipment pallet, preserving
-  actual case counts and cost basis. They walk from source to source, then stage,
-  wrap, and load. Truck arrival begins after the shipment is ready, keeping the
+  actual case counts and cost basis. They collect an empty shipping pallet, pick
+  at each source rack, then stage, wrap, and load. Truck arrival begins after the
+  shipment is ready, keeping the
   dock available to suppliers during picking. There is no teleport fulfillment.
 - Orders stay on a real high-level queue. Up and Down change which order is
   planned next. Current work finishes safely. Cancel returns unshipped collected
@@ -75,8 +79,11 @@ for existing physical regression fixtures; pass `business` to exercise this game
   count exactly once. It never adds inventory or pays a receiving fee. Front
   rows must be scanned first. The dock view holds the business clock while the
   player scans; physical handling resumes after returning to the warehouse.
-  Received sprites disappear immediately, while cases only become saleable
-  when the worker has actually carried them to the rack.
+  Accepted sprites disappear from the scan view. On returning to the floor,
+  workers unload into Receiving, then carry each pallet to its reserved rack.
+  The receiving board distinguishes these stages. Cases only become saleable
+  after putaway. Rack reservations follow pallets through staging and carrying,
+  including after the supplier trailer leaves.
   Workers with a hand jack
   use lower positions; the player and drivers can use upper stock after forklift
   ownership and training. Full racks block new purchasing until stock ships or
@@ -111,11 +118,12 @@ scarce vehicle pool. Construction is immediate. These are current abstractions.
 
 ## Presentation and persistence
 
-The overhead warehouse uses steel blue, concrete gray, charcoal, white markings,
-and restrained safety orange.
-Local Century Supra, Segoe UI, and Commit Mono fonts. Procedural Canvas art and
-crisp display-resolution labels. The stocked racks show their product and quantity.
-The masthead names the game and its loop: fill orders, build the warehouse.
+The whole game uses charcoal, muted rust and warm cream print art, with local
+Century Supra, Segoe UI, and Commit Mono fonts. The overhead warehouse keeps
+dynamic Canvas objects, printed linework, carton and pallet details, subtle ink
+grain and a generated paper material. Racks show their product and quantity.
+Panels use flat paper, fine rules, serif titles and rust actions. The masthead
+names the game and its loop: receive, put away, pick and ship.
 The warehouse, dock, order board, and zoom controls share one centered frame.
 The owner-approved receiving view uses image-generated charcoal, muted rust and
 cream screen-print artwork. Two registered empty dock backgrounds and four
@@ -129,14 +137,15 @@ portrait gating, and page inactivity stop scan progress independently.
 Receive stock in the header, or click a docked supplier truck, to reopen the
 scene for later paid deliveries. Partial scans survive explicit save/load.
 Closing the dock early cancels only an unfinished scan. Accepted loads remain
-queued for putaway; unscanned loads wait. A second dock can keep receiving while
+queued for unloading and putaway; unscanned loads wait. A second dock can keep receiving while
 another door has an unscanned load. Overnight carry keeps remaining freight
 without moving already stored pallets.
 
-After opening stock reaches the racks, the board shows one order, its quantity
-and payout, and Ship order.
+While opening stock moves through Receiving, the board shows its unloading and
+putaway progress. After stock reaches the racks, the board shows one order, its
+quantity and payout, and Prepare order.
 The clock holds for this decision. The source rack is highlighted, and after
-shipping starts a Worker label and Pick, Pack, Ship stages explain the real
+preparation starts a Worker label and Pick, Stage, Load stages explain the real
 movement. Picking, carrying, packing, truck arrival, and loading have live
 statuses, including gaps between tasks. The first sale takes about 30 seconds
 at 1x. Payment does not imply the departing truck has already cleared the dock.
@@ -164,7 +173,9 @@ Workers move for jobs and mandatory truck exits; manual walking is unavailable.
 Keyboard buttons work natively. Touch uses
 the same layout in landscape, with scrolling and 44px targets. Portrait touch
 freezes behind the rotate screen without changing a deliberate manual pause.
-Large-text landscape views keep the first Ship order button above the fold.
+Large-text landscape views keep the first Prepare order button above the fold.
+When Receive stock is visible, compact screens give it a second header row
+with the time controls and reserve that space above the floor.
 
 Trucks ease in, park, and leave along the right road. Before moving out, each
 truck waits for the worker to clear its rear opening, closes its doors, and then
@@ -183,16 +194,20 @@ Use Node. Browser checks require Playwright in `NODE_PATH`.
 
 - `node tools/test-one-shift-receiving.cjs`: opening capital conservation,
   row access, duplicate rejection, rack reservations, partial saves, full racks,
-  paid stock, overnight carry, multiple docks and malformed receipt imports.
+  staged putaway, receiving-floor capacity, two-worker slot reservations, paid
+  stock, overnight carry, old in-transit save migration, multiple docks and
+  malformed receipt imports.
 - `node tools/test-one-shift-receiving-browser.cjs`: actual hover and click,
   keyboard and touch scanning, pause, explicit save/load, all six disappearing
-  loads, physical putaway, the first sale, supplier replenishment, landscape,
-  large text, narrow desktop and portrait gating. Uses bundled Playwright
+  loads, physical staging and putaway, the first sale, supplier replenishment,
+  receiving header layouts, Menu New game, landscape, large text, narrow desktop
+  and portrait gating. Uses bundled Playwright
   Chromium, with an optional `SHIFT_CHROME` executable override. `SHIFT_URL`
   targets a deployed page; `SHIFT_DUMP` selects the screenshot directory.
 
 - `node tools/test-one-shift-business.cjs`: real shipments, receipts, lead times,
-  cash and profit, reservations, grouped picks, cancellation, surplus, full space,
+  cash and profit, reservations, grouped picks, empty-pallet collection, picking
+  at each rack, physical cancellation returns, surplus, full space,
   overnight supply, saves, invalid imports, and multi-day reinvestment.
 - `node tools/test-one-shift-business-balance.cjs`: 20 seeds, 24 days, two ordinary
   buying policies, 960 shifts. Validates every shift and compares reinvestment
