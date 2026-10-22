@@ -1,0 +1,73 @@
+{
+  "page": "gallery.html",
+  "retrieved": "2026-10-22",
+  "paintings": [
+    {
+      "title": "Farmhouse in Provence",
+      "artist": "Vincent van Gogh",
+      "date": "1888",
+      "requestedUrl": "https://lastmuseum.com/art/farmhouse-in-provence",
+      "collectionUrl": "https://www.nga.gov/artworks/52178-farmhouse-provence",
+      "sourceUrl": "https://api.nga.gov/iiif/51c369a2-cc20-43f6-8262-25877c4377eb/full/full/0/default.jpg",
+      "credit": "National Gallery of Art, Washington, Ailsa Mellon Bruce Collection. Public domain.",
+      "sourceWidth": 4096,
+      "sourceHeight": 3072,
+      "display": "assets/images/gallery-farmhouse-in-provence.jpg",
+      "zoom": "assets/images/gallery-farmhouse-in-provence-zoom.jpg"
+    },
+    {
+      "title": "Young Man at His Window",
+      "artist": "Gustave Caillebotte",
+      "date": "1876",
+      "requestedUrl": "https://lastmuseum.com/art/young-man-at-his-window",
+      "collectionUrl": "https://www.getty.edu/art/collection/object/10A2Y1",
+      "sourceUrl": "https://media.getty.edu/iiif/image/3c77a2e9-fc44-4811-9387-ffabc6bddee7/full/max/0/default.jpg",
+      "credit": "The J. Paul Getty Museum, Los Angeles, 2021.67. Getty Open Content, CC0.",
+      "sourceWidth": 9145,
+      "sourceHeight": 13240,
+      "display": "assets/images/gallery-young-man-at-his-window.jpg",
+      "zoom": "assets/images/gallery-young-man-at-his-window-zoom.jpg"
+    },
+    {
+      "title": "Breakfast Time",
+      "artist": "Hanna Pauli",
+      "date": "1887",
+      "requestedUrl": "https://lastmuseum.com/art/breakfast-time",
+      "collectionUrl": "https://collection.nationalmuseum.se/en/collection/item/18709/",
+      "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/b/b4/Breakfast-Time_%28Hanna_Pauli%29_-_Nationalmuseum_-_18709.tif",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Breakfast-Time_(Hanna_Pauli)_-_Nationalmuseum_-_18709.tif",
+      "credit": "Nationalmuseum, Stockholm, NM 1705. Public domain.",
+      "selectionNote": "Unframed museum TIFF, preferred to the larger framed photograph because it preserves the unobstructed painting and its proportions.",
+      "sourceWidth": 2990,
+      "sourceHeight": 2822,
+      "display": "assets/images/gallery-breakfast-time.jpg",
+      "zoom": "assets/images/gallery-breakfast-time-zoom.jpg"
+    },
+    {
+      "title": "Northeaster",
+      "artist": "Winslow Homer",
+      "date": "1895; reworked by 1901",
+      "requestedUrl": "https://lastmuseum.com/art/northeaster",
+      "collectionUrl": "https://www.metmuseum.org/art/collection/search/11130",
+      "sourceUrl": "https://images.metmuseum.org/CRDImages/ad/original/DT1545.jpg",
+      "credit": "The Metropolitan Museum of Art, New York, Gift of George A. Hearn, 1910. Public domain.",
+      "sourceWidth": 3811,
+      "sourceHeight": 2613,
+      "display": "assets/images/gallery-northeaster.jpg",
+      "zoom": "assets/images/gallery-northeaster-zoom.jpg"
+    },
+    {
+      "title": "The Widow of an Indian Chief Watching the Arms of Her Deceased Husband",
+      "artist": "Joseph Wright of Derby",
+      "date": "exhibited 1785",
+      "requestedUrl": "https://lastmuseum.com/art/the-widow-of-an-indian-chief-watching-the-arms-of-her-deceased-husband",
+      "collectionUrl": "https://derbymuseums.org/collection/joseph-wright-of-derby/",
+      "sourceUrl": "https://derbym-assets.imgix.net/2020/11/The-Widow-of-an-Indian-Chief-watching-the-Arms-of-her-Deceased-Husband-Joseph-Wright-oil-on-canvas-exhibited-1785.-Credit-Derby-Museums-Trust..jpg",
+      "credit": "Derby Museums Trust.",
+      "sourceWidth": 4000,
+      "sourceHeight": 3133,
+      "display": "assets/images/gallery-indian-widow.jpg",
+      "zoom": "assets/images/gallery-indian-widow-zoom.jpg"
+    }
+  ]
+}
