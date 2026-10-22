@@ -1955,3 +1955,21 @@ browser checks pass. Physical-phone performance remains unverified.
 Readability passes across all headings, zoom stops, mixed fleets, desktop and
 landscape-phone viewports. The broader wave browser suite preserves paused
 pixels and graphics recovery during combat. Desktop packaging checks pass.
+
+## Defined wave crests, 2026-10-22 (v0.35.1)
+
+The owner found wave boundaries vague and asked for better-looking water.
+Stronger slope lighting separates the rising face and dark falling side.
+A teal shoulder connects a narrow, irregular foam lip, which tapers at the
+ends of each packet. Foam travels with the dominant swell and follows the
+combined physical surface gradient. The existing wave spacing, boat handling,
+launch flight and water-depth geometry are unchanged. Canvas keeps its bounded
+raster and uses the same moving packet frame with simpler foam detail.
+
+Six-frame crossings at actual helm zoom were reviewed for the launch and escort
+in exposed and sheltered water, on desktop and landscape-phone viewports.
+Flat-water controls distinguish face shading from wake brightness. Shared-wave,
+launch-jump and swell-interval checks pass, as do browser checks for shader/CPU
+agreement, frozen pause pixels, waterline occlusion, wake visibility, Canvas
+fallback and graphics recovery during the full 16,384-raider endgame.
+Physical-phone performance and the owner's visual assessment remain open.

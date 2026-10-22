@@ -17,6 +17,14 @@
     {length:24,amplitude:.035,angle:-3.6,phase:3.5,crestLength:45},
     {length:14,amplitude:.015,angle:-.8,phase:5.3,crestLength:32}
   ].map(b=>Object.freeze({...b,k:TAU/b.length,crossK:TAU/b.crestLength,omega:Math.sqrt(9.81*TAU/b.length),x:Math.cos(b.angle),y:Math.sin(b.angle)})));
+  // Crest decoration travels in the dominant packet's frame, so its tapered
+  // ends and foam stay attached to the water that actually lifts the hull.
+  function swellFrame(x,y,time,out={}){
+    const b=bands[0],along=b.x*x+b.y*y,across=-b.y*x+b.x*y;
+    const group=along*b.k*.31-time*b.omega*.19+b.phase*2.7,cross=across*b.crossK+.75*Math.sin(group)-time*b.omega*.11+b.phase*1.3;
+    const lobe=.5+.5*Math.cos(cross);
+    out.phase=along*b.k+.40*Math.sin(cross)-time*b.omega+b.phase;out.envelope=.14+1.16*lobe*lobe;out.across=across;return out;
+  }
   function exposure(x,y,depth=22,salt=1,open=false){return smooth(.3,2.4,depth)*(.20+.80*(open?1:smooth(700,1800,y))*smooth(3,16,depth))*(.75+.25*salt);}
   function sample(x,y,time,depth=22,salt=1,open=true,out={}){
     const e=exposure(x,y,depth,salt,open);let h=0,dx=0,dy=0,vz=0,vx=0,vy=0;
@@ -131,6 +139,9 @@
   const f=n=>Number(n).toFixed(10);
   const glsl=`
     uniform float uSeaStrength;
+    vec3 swellFrame(vec2 p,float time){
+      ${(()=>{const b=bands[0];return`vec2 d=vec2(${f(b.x)},${f(b.y)});float along=dot(p,d),across=dot(p,vec2(-d.y,d.x)),groupPhase=along*${f(b.k*.31)}-time*${f(b.omega*.19)}+${f(b.phase*2.7)},crossPhase=across*${f(b.crossK)}+.75*sin(groupPhase)-time*${f(b.omega*.11)}+${f(b.phase*1.3)},lobe=.5+.5*cos(crossPhase);return vec3(along*${f(b.k)}+.40*sin(crossPhase)-time*${f(b.omega)}+${f(b.phase)},.14+1.16*lobe*lobe,across);`;})()}
+    }
     float seaExposure(vec2 p,float depth,float salt,float openSea){return smoothstep(.3,2.4,depth)*(.20+.80*mix(smoothstep(700.,1800.,p.y),1.,openSea)*smoothstep(3.,16.,depth))*(.75+.25*salt);}
     vec3 waveSurface(vec2 p,float time,float depth,float salt,float openSea){vec3 q=vec3(0.);float e=seaExposure(p,depth,salt,openSea)*uSeaStrength;
       ${bands.map(b=>`{vec2 d=vec2(${f(b.x)},${f(b.y)}),n=vec2(-d.y,d.x);float along=dot(p,d),groupPhase=along*${f(b.k*.31)}-time*${f(b.omega*.19)}+${f(b.phase*2.7)},groupCos=cos(groupPhase),crossPhase=dot(p,n)*${f(b.crossK)}+.75*sin(groupPhase)-time*${f(b.omega*.11)}+${f(b.phase*1.3)},sx=sin(crossPhase),cx=cos(crossPhase),phase=along*${f(b.k)}+.40*sx-time*${f(b.omega)}+${f(b.phase)},s=sin(phase),c=cos(phase),shape=s+.24*s*c+.35*(s*s-.5),slope=c+.24*(2.*c*c-1.)+.70*s*c,lobe=.5+.5*cx,envelope=.14+1.16*lobe*lobe,envelopeSlope=-1.16*lobe*sx,a=${f(b.amplitude)};vec2 crossGrad=n*${f(b.crossK)}+.75*groupCos*${f(b.k*.31)}*d,phaseGrad=d*${f(b.k)}+.40*cx*crossGrad;q.x+=a*envelope*shape;q.yz+=a*(envelopeSlope*crossGrad*shape+envelope*slope*phaseGrad);}`).join('\n')}
@@ -140,5 +151,5 @@
       return q;
     }
   `;
-  const api={Sea,sample,exposure,bands,glsl,CAPACITY,LIFE};root.WidewakeWaves=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
+  const api={Sea,sample,swellFrame,exposure,bands,glsl,CAPACITY,LIFE};root.WidewakeWaves=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(globalThis);

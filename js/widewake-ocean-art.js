@@ -328,23 +328,31 @@
       base*=.96+broad*.08;
       float bottom=exp(-max(depth,0.)*.62);
       base=mix(base,vec3(.23,.39,.32)+grain*.035,bottom*.72);
-      vec3 normal=normalize(vec3(-wave.y,-wave.z,1.));
+      // Broader face contrast gives each swell a readable rise and falling side.
+      // The actual height/depth surface stays identical to the hull simulation.
+      vec3 normal=normalize(vec3(-wave.yz*2.2,1.));
       vec3 sun=normalize(vec3(-.70,.25,.55)),eye=vec3(.61237244,.61237244,.5);
       float face=max(0.,dot(normal,sun)),fresnel=.025+.975*pow(1.-max(0.,dot(normal,eye)),5.);
       // One coherent light direction: reflected sky reinforces the lit face
       // rather than filling its shadow and cancelling the shape of each wave.
-      vec3 result=base*(.28+face*1.20);
+      vec3 result=base*(.22+face*1.35);
       result=mix(result,vec3(.31,.53,.59),fresnel*.72);
       float reflection=pow(max(0.,dot(normal,normalize(sun+eye))),150.);
       float glitter=texture(uNoise,(p-drift)*.065+vec2(time*.007,0.)).r;
       result+=vec3(.40,.47,.45)*reflection*(.08+.18*smoothstep(.50,.79,glitter))*smoothstep(.1,1.,zoom)*uDetailMotion;
-      // A thin broken lip follows the ridge of the swell. A height threshold
-      // alone paints broad foam islands and hides the direction of the face.
+      vec3 swell=swellFrame(p,time);
       float crest=wave.x/max(.2,exposure),ridgeSlope=dot(wave.yz,vec2(-.7909677,.6118579))/max(.2,exposure);
-      float aa=max(fwidth(ridgeSlope),.0015),lip=1.-smoothstep(.005+aa,.020+aa,abs(ridgeSlope+.006));
-      float broken=texture(uNoise,p*.004+vec2(time*.0009,-time*.0005)).b;
-      float lace=texture(uNoise,p*.018+vec2(time*.001,-time*.0007)).r;
-      float foam=smoothstep(.90,2.0,crest)*lip*smoothstep(.40,.70,broken)*(.30+.70*lace)*exposure*.44;
+      float raised=smoothstep(.35,1.7,crest),packet=smoothstep(.22,.72,swell.y);
+      float ridgeAA=max(fwidth(ridgeSlope),.0008);
+      float thread=texture(uNoise,vec2(swell.z*.0025,swell.x*.17)).b;
+      float lace=texture(uNoise,vec2(swell.z*.014,swell.x*.80-time*.018)).r;
+      float lip=1.-smoothstep(.002+ridgeAA,.009+ridgeAA,abs(ridgeSlope)+(lace-.5)*.005);
+      // A continuous blue-green shoulder describes the whole crest, including
+      // its curled, narrowing ends. White foam only breaks along the high lip.
+      float shoulder=raised*(1.-smoothstep(.018,.085,abs(ridgeSlope)))*packet*exposure;
+      result=mix(result,vec3(.11,.43,.48),shoulder*.42);
+      float broken=smoothstep(.36,.64,thread);
+      float foam=raised*lip*packet*exposure*(.09+broken*.73)*(.35+.65*smoothstep(.20,.70,lace));
       result=mix(result,vec3(.73,.87,.83),foam);
       float fine=texture(uNoise,(p-drift)*vec2(.11,.17)+vec2(time*.012,-time*.009)).r;
       result+=vec3(.018,.032,.035)*(fine-.5)*smoothstep(.4,2.,zoom);

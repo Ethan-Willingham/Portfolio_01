@@ -1,4 +1,4 @@
-# Widewake waves, v0.34.0
+# Widewake waves, v0.35.1
 
 Owner direction, 2026-10-21: waves are central to the game. Connect their
 appearance to boat handling, make boats substantially faster, and use the ocean
@@ -6,6 +6,16 @@ to communicate scale and movement. Improve the water's entire color treatment.
 
 The owner's 2026-10-22 follow-up asks for more space between waves, so a captain
 at full speed can identify the approaching face and its effect on the boat.
+
+The next visual correction asks for clearer wave boundaries and better-looking
+water. Stronger directional slope shading separates the rising face from the
+dark falling face. A teal shoulder and a narrow, irregular foam lip identify
+the crest. The lip tapers with the dominant packet's envelope, revealing its
+ends, and its foam pattern travels in that packet's coordinates. The lip follows
+the combined surface gradient, including companion swells. Foam breaks into
+patches while a quieter shoulder keeps the whole ridge readable. Canvas uses
+the same packet frame and simpler foam detail within its existing raster budget.
+The physical field, wave spacing, boat response and launch jumps are unchanged.
 
 `js/widewake-waves.js` owns the physical field. Six wave packets also
 generate the GLSL used by `js/widewake-ocean-art.js`. Each front has a smooth
@@ -99,8 +109,10 @@ spray and the Canvas sea. Open water uses deep blue, coastal water shifts toward
 teal, and river water stays greener. Directional face lighting and view-dependent
 sky reflection describe the slopes without canceling each other's contrast.
 Broken foam follows narrow crest lips instead of filling every high patch.
-The lip's slope window is narrowed for the longer swells, keeping whitecaps
-close to their tops rather than spreading a foam carpet over the whole face.
+Its slope window has pixel derivatives for distance filtering. The packet frame
+uses the same dominant-wave coefficients as the CPU sampler and generated GLSL,
+so foam stays attached to the approaching ridge. Stronger shading normals reveal
+the faces without changing geometric water depth or hull contact.
 There is no screen-space scrolling overlay.
 Reduced motion removes decorative glitter while retaining essential wave motion
 and physical hull response. Canvas uses the same heights and forces with simpler

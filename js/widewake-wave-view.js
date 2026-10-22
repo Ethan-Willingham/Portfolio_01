@@ -13,7 +13,7 @@
     precision highp float;in float across;in float opacity;out vec4 color;
     void main(){float rim=exp(-across*across*6.);color=vec4(mix(vec3(.035,.16,.23),vec3(.78,.91,.90),rim),opacity*(.08+rim*.92));}`;
   class Surface{
-    constructor(view){this.view=view;this.sample={};this.water={};if(view.gl){this.program=O.program(view.gl,vertex,fragment);this.batch=new O.Batch(view.gl,new Float32Array([-1,-1,1,-1,1,1,-1,-1,1,1,-1,1]),CAPACITY,true);}else{this.canvas=document.createElement('canvas');this.ctx=this.canvas.getContext('2d');this.path=new Float64Array(64*4);}}
+    constructor(view){this.view=view;this.sample={};this.swell={};this.water={};if(view.gl){this.program=O.program(view.gl,vertex,fragment);this.batch=new O.Batch(view.gl,new Float32Array([-1,-1,1,-1,1,1,-1,-1,1,1,-1,1]),CAPACITY,true);}else{this.canvas=document.createElement('canvas');this.ctx=this.canvas.getContext('2d');this.path=new Float64Array(64*4);}}
     height(x,y){const sea=this.view.battle.sea,w=sea.field?.sample(x,y,this.water);if(w&&w.depth<.4)return null;return W.sample(x,y,this.view.visualTime,w?.depth??22,w?.salinity??1,!sea.field,this.sample).height*sea.strength;}
     spray(emit,budget=CAPACITY){const v=this.view,sea=v.battle.sea,time=v.visualTime;let count=0;
       for(const s of v.battle.ships){
@@ -99,11 +99,13 @@
         W.sample(px,py,v.visualTime,depth,salt,!sea.field,q);let height=q.height*sea.strength;
         for(let n=0;n<2;n++){W.sample(wx+height*1.22474487,wy+height*1.22474487,v.visualTime,depth,salt,!sea.field,q);height+=clamp((q.height*sea.strength-height)/Math.max(.22,1-1.22474487*(q.dx+q.dy)*sea.strength),-3,3);}
         px=wx+height*1.22474487;py=wy+height*1.22474487;W.sample(px,py,v.visualTime,depth,salt,!sea.field,q);height=q.height*sea.strength;
-        const dx=q.dx*sea.strength,dy=q.dy*sea.strength,shelf=Math.exp(-Math.max(0,depth)*.075),normal=Math.hypot(dx,dy,1),face=Math.max(0,(dx*.70-dy*.25+.55)/(normal*Math.hypot(.70,.25,.55))),fresnel=(.025+.975*(1-Math.max(0,(-dx*.61237244-dy*.61237244+.5)/normal))**5)*.72,light=.28+face*1.20;
-        const broken=.5+.25*Math.sin(px*.12+py*.035)+.25*Math.sin(py*.10-px*.045),ridge=(-dx*.7909677+dy*.6118579)/Math.max(.2,q.exposure),lip=1-smooth(.0065,.0215,Math.abs(ridge+.006)),foam=smooth(.90,2.0,height/Math.max(.2,q.exposure))*lip*smooth(.5,.8,broken)*q.exposure*.32,at=(y*w+x)*4;
-        pixels[at]=((10+8*shelf+7*(1-salt))*light*(1-fresnel)+79*fresnel)*(1-foam)+186*foam;
-        pixels[at+1]=((46+24*shelf+9*(1-salt))*light*(1-fresnel)+135*fresnel)*(1-foam)+222*foam;
-        pixels[at+2]=((64+22*shelf)*light*(1-fresnel)+150*fresnel)*(1-foam)+212*foam;pixels[at+3]=255;
+        const dx=q.dx*sea.strength,dy=q.dy*sea.strength,shelf=Math.exp(-Math.max(0,depth)*.075),normal=Math.hypot(dx*2.2,dy*2.2,1),face=Math.max(0,((dx*.70-dy*.25)*2.2+.55)/(normal*Math.hypot(.70,.25,.55))),fresnel=(.025+.975*(1-Math.max(0,((-dx*.61237244-dy*.61237244)*2.2+.5)/normal))**5)*.72,light=.22+face*1.35;
+        const swell=W.swellFrame(px,py,v.visualTime,this.swell),ridge=(-dx*.7909677+dy*.6118579)/Math.max(.2,q.exposure),raised=smooth(.35,1.7,height/Math.max(.2,q.exposure)),packet=smooth(.22,.72,swell.envelope),aa=Math.max(.0008,v.width/w/scale*.003);
+        const thread=.5+.25*Math.sin(swell.across*.47+swell.phase*8)+.25*Math.sin(swell.across*.21-swell.phase*13),lace=.5+.25*Math.sin(swell.across*1.7+swell.phase*41)+.25*Math.sin(swell.across*.83-swell.phase*67);
+        const lip=1-smooth(.002+aa,.009+aa,Math.abs(ridge)+(lace-.5)*.005),foam=raised*lip*packet*q.exposure*(.09+smooth(.36,.64,thread)*.73)*(.35+.65*smooth(.20,.70,lace)),shoulder=raised*(1-smooth(.018,.085,Math.abs(ridge)))*packet*q.exposure*.42,at=(y*w+x)*4;
+        pixels[at]=(((10+8*shelf+7*(1-salt))*light*(1-fresnel)+79*fresnel)*(1-shoulder)+28*shoulder)*(1-foam)+186*foam;
+        pixels[at+1]=(((46+24*shelf+9*(1-salt))*light*(1-fresnel)+135*fresnel)*(1-shoulder)+110*shoulder)*(1-foam)+222*foam;
+        pixels[at+2]=(((64+22*shelf)*light*(1-fresnel)+150*fresnel)*(1-shoulder)+122*shoulder)*(1-foam)+212*foam;pixels[at+3]=255;
       }
       this.ctx.putImageData(this.pixels,0,0);v.fallback.drawImage(this.canvas,0,0,v.width,v.height);
     }
