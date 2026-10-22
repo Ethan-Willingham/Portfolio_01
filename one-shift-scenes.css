@@ -57,7 +57,7 @@
   #shift-scenes .scene-nav button{font-size:.5625rem}
 }
 /* Direct handling controls share the scene's paper and ink. */
-.shift-manual #shift-scenes{grid-template-rows:auto minmax(0,1fr) auto auto}
+.shift-manual #shift-scenes{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto auto}
 .shift-manual .hands-carry[hidden]{display:none}
 .hands-carry{display:flex;align-items:center;gap:12px;min-height:60px;border-top:1px solid var(--rule);padding:5px 0}
 .hands-carry canvas{width:52px;height:47px;flex-shrink:0}
