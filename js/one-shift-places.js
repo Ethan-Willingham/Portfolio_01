@@ -3,21 +3,17 @@
   const O=root.OneShift;
   const WORK=['staging','storage','shipping'];
   const names={clock:'Time cards',floor:'Warehouse floor',office:'The office',staging:'Receiving',storage:'Inventory',shipping:'Shipping'};
-  // Bounds are registered to the generated master, rather than the browser window.
-  const targets={
-    floor:[['office','Office',[.025,.206,.088,.435]],['staging','Receiving',[.215,.213,.17,.329]],['storage','Inventory',[.425,.19,.19,.355]],['shipping','Shipping',[.659,.215,.18,.331]],['clock','Time cards',[.927,.342,.067,.152]]],
-    office:[['purchases','Purchase orders',[.01,.61,.33,.29]],['orders','Customer orders',[.224,.486,.234,.125]],['equipment','Equipment catalog',[.75,.627,.25,.272]],['ledger','Ledger',[.49,.579,.26,.239]],['floor','Warehouse floor',[.664,.053,.283,.499]]],
-    clock:[['punch','Clock in',[.27,.171,.175,.384]],['floor','Warehouse floor',[.741,.01,.241,.756]]]
-  };
+  const descriptions={office:'Office / Up the stairs',staging:'Receiving / Incoming stock',storage:'Inventory / Rack aisles',shipping:'Shipping / Outbound orders',clock:'Time cards / Clock out and save',purchases:'Purchase orders / Order stock',orders:'Customer orders / Review requests',equipment:'Equipment catalog / Improve the warehouse',ledger:'Ledger / Cash and operating results',floor:'Return to the warehouse floor'};
   class Places{
     constructor(app){
       this.app=app;this.current='clock';this.clockedIn=false;this.started=false;
       const checkpoint=O.saves.load();this.saved=checkpoint&&O.business(checkpoint)?checkpoint:null;this.legacySaved=checkpoint&&!O.business(checkpoint)?checkpoint:null;
       this.element=document.createElement('section');this.element.id='shift-place';this.element.tabIndex=-1;
-      this.element.innerHTML='<header class="place-heading"><div><p id="place-kicker">ONE SHIFT</p><h2 id="place-title">Time cards</h2></div><div class="place-utilities"><button id="place-sound" aria-pressed="false">Sound off</button><button id="place-menu">Menu</button></div></header><div class="place-stage"><div class="place-art"><img id="place-image" alt="" draggable="false"><div id="place-targets"></div></div><div id="place-loading" role="status">Opening the building...</div><aside id="place-card" class="place-card"></aside></div><footer class="place-footer"><p id="place-note" role="status"></p><span id="place-load"></span><button id="place-back" hidden>Back to the floor</button></footer>';
+      this.element.innerHTML='<header class="place-heading"><div><p id="place-kicker">ONE SHIFT</p><h2 id="place-title">Time cards</h2></div><div class="place-utilities"><button id="place-sound" aria-pressed="false">Sound off</button><button id="place-menu">Menu</button></div></header><div class="place-stage"><div class="place-art"><img id="place-image" alt="" draggable="false"><div id="place-targets"></div></div><div id="place-loading" role="status">Opening the building...</div></div><footer class="place-footer"><p id="place-note" role="status"></p><span id="place-load"></span><aside id="place-card" class="place-card" aria-label="Time card"></aside><button id="place-back" hidden>Back to the floor</button></footer>';
       document.getElementById('shift-game').append(this.element);
       this.image=this.el('image');this.image.addEventListener('load',()=>{this.el('loading').hidden=true;this.resize();});
       this.image.addEventListener('error',()=>{this.el('loading').hidden=false;this.el('loading').innerHTML='The artwork could not load. <button data-place="retry">Try again</button>';});
+      this.art=new O.PlaceArt({container:this.element.querySelector('.place-art'),image:this.image,targets:this.el('targets'),onChoose:id=>this.choose(id),onHover:(id,label)=>{this.hoverLabel=id==='punch'?label:descriptions[id]||label;this.renderNote();}});
       this.element.addEventListener('click',e=>{e.stopPropagation();const n=e.target.closest('[data-place]');if(n)this.choose(n.dataset.place);});
       this.el('menu').addEventListener('click',()=>app.ui.settingsMenu());
       this.el('sound').addEventListener('click',()=>{const on=this.soundOn();app.ui.settings.volume=on?0:(this.lastVolume||.35);if(on)this.lastVolume=app.audio.volume;app.audio.setVolume(app.ui.settings.volume);O.saves.savePreferences(app.ui.settings);app.audio.unlock();this.update();});
@@ -29,7 +25,8 @@
     }
     el(id){return this.element.querySelector('#place-'+id);}
     soundOn(){return this.app.audio.volume>0&&this.app.audio.context?.state==='running';}
-    resize(){const stage=this.element.querySelector('.place-stage'),art=this.element.querySelector('.place-art'),r=stage.getBoundingClientRect();if(!r.width||!r.height)return;const ratio=(this.image.naturalWidth||1536)/(this.image.naturalHeight||1024),w=Math.min(r.width,r.height*ratio);art.style.width=w+'px';art.style.height=w/ratio+'px';}
+    resize(){const stage=this.element.querySelector('.place-stage'),art=this.element.querySelector('.place-art'),r=stage.getBoundingClientRect();if(!r.width||!r.height)return;const ratio=(this.image.naturalWidth||1536)/(this.image.naturalHeight||1024),w=Math.min(r.width,r.height*ratio);art.style.width=w+'px';art.style.height=w/ratio+'px';this.art?.resize();}
+    renderNote(){this.el('note').textContent=this.hoverLabel||this.baseNote||'';}
     choose(id){
       if(this.app.rotated||this.app.hidden||this.app.menuPause)return;
       this.app.audio.unlock();
@@ -63,10 +60,11 @@
       document.body.dataset.place=place;document.body.classList.toggle('shift-in-place',!WORK.includes(place));
       if(WORK.includes(place)){this.app.scenes.open(place);this.app.scenes.element.focus({preventScroll:true});}
       else{
-        const file='assets/one-shift/places/'+place+'.webp';
+        const file='assets/one-shift/places-v2/'+place+'.webp';
         if(this.image.getAttribute('src')!==file){this.el('loading').hidden=false;this.image.src=file;}
         this.el('title').textContent=names[place];
-        this.el('targets').innerHTML=targets[place].filter(([id])=>place!=='clock'||id!=='floor'||this.clockedIn).map(([id,label,b])=>'<button class="place-target" data-place="'+id+'" aria-label="'+label+'" style="left:'+b[0]*100+'%;top:'+b[1]*100+'%;width:'+b[2]*100+'%;height:'+b[3]*100+'%"><span>'+label+'</span></button>').join('');
+        const layout=O.placeLayouts[place];
+        this.art.setScene({...layout,targets:layout.targets.filter(({id})=>place!=='clock'||id!=='floor'||this.clockedIn)});
         this.el('back').hidden=place!=='office'&&!(place==='clock'&&this.clockedIn);
         this.element.focus({preventScroll:true});this.resize();
       }
@@ -85,19 +83,20 @@
       if(this.current!=='staging')document.getElementById('shift-receiving-open').hidden=true;
       document.getElementById('shift-queue').hidden=!WORK.includes(this.current)||this.app.officePause;
       if(this.element.hidden)return;
-      this.el('kicker').textContent='ONE SHIFT / DAY '+(this.saved?.day||s.day)+(this.current==='clock'?'':' / '+O.time(s.minute)+(this.app.paused?' / PAUSED':''));
+      this.el('kicker').textContent='ONE SHIFT / DAY '+(this.saved?.day||s.day)+' / '+O.time(this.saved?.minute??s.minute)+(this.app.paused?' / PAUSED':'');
       this.el('card').hidden=this.current!=='clock';
       if(this.current==='clock'){
         const state=this.saved||s,verb=this.legacySaved?'Start new warehouse':this.clockedIn?'Clock out':state.phase==='evening'?'Clock in / Day '+(state.day+1):this.saved||this.started?'Clock back in':'Clock in';
         const key=[state.day,Math.floor(state.minute),verb,this.started,this.saved?.day].join('/');
-        if(this.cardKey!==key){this.cardKey=key;this.el('card').innerHTML='<p class="place-card-eyebrow">EMPLOYEE TIME CARD</p><h3>One Shift</h3><dl><div><dt>SHIFT</dt><dd>'+String(state.day).padStart(3,'0')+'</dd></div><div><dt>TIME</dt><dd>'+O.time(state.minute)+'</dd></div></dl><p>'+(this.legacySaved?'An older service-mode save is here. A new warehouse keeps a backup you can export from Menu.':this.clockedIn?'Punch out to save your place.':state.phase==='evening'?'Your shift is closed. The next card starts tomorrow.':this.saved||this.started?'Your warehouse is waiting where you left it.':'The first delivery is at Receiving.')+'</p>'+(this.legacySaved?'<button data-place="export-older">Export older save</button>':'')+'<button class="primary" data-place="punch">'+verb+'</button>';}
-        const punch=this.el('targets').querySelector('[data-place="punch"]');punch.setAttribute('aria-label',verb+' at time clock');punch.querySelector('span').textContent=verb;
-        this.el('note').textContent=this.clockedIn?'The shift waits while you are at the time clock.':this.clockNotice||'Punch your card to enter the warehouse.';
-      }else if(this.current==='office')this.el('note').textContent='Choose something on the desk. The door leads back to the floor.';
+        if(this.cardKey!==key){this.cardKey=key;this.el('card').innerHTML=(this.legacySaved?'<button data-place="export-older">Export older save</button>':'')+'<button data-place="punch">'+verb+'</button>';}
+        this.art.setLabel('punch',verb+' at time clock');
+        this.baseNote=this.clockNotice||(this.legacySaved?'An older save is here. Starting keeps a backup in Menu.':this.clockedIn?'Punch the clock to save and leave. Your shift waits here.':state.phase==='evening'?'Your shift is closed. Punch in to start tomorrow.':this.saved||this.started?'Punch the clock to continue where you left off.':'Punch the clock. Your first delivery is at Receiving.');
+      }else if(this.current==='office')this.baseNote='Choose a document on your desk. The door returns to the floor.';
       else{
         const inbound=s.pallets.filter(p=>p.cases&&(p.receivingDestination||p.place==='trailer'&&this.app.sim.t.get(p.truckId)?.supplier)).length,orders=s.commerce.orders.filter(o=>o.status==='offered').length;
-        this.el('note').textContent=inbound?inbound+' incoming pallets to put away.':orders?orders+' customer '+(orders===1?'order':'orders')+' at the office desk.':'Your warehouse. Choose an area to enter.';
+        this.baseNote=inbound?inbound+' incoming pallets at Receiving. Office upstairs. Inventory to the right.':orders?orders+' customer '+(orders===1?'order':'orders')+' at the office desk upstairs.':'Choose a dock, the rack aisle or the office stairs.';
       }
+      this.renderNote();
     }
   }
   O.Places=Places;

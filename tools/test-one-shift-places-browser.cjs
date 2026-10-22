@@ -14,12 +14,19 @@ const shot = (page, name) => page.screenshot({path:path.join(dump,name+'.png')})
 const snapshot = page => page.evaluate(() => JSON.stringify(OneShift.app.sim.snapshot()));
 const stock = page => page.evaluate(() => JSON.stringify({pallets:OneShift.app.sim.s.pallets,hands:OneShift.app.sim.s.commerce.hands,goods:OneShift.app.sim.s.goods,cash:OneShift.app.sim.s.cash}));
 const target = (page, name) => page.locator('#place-targets [data-place="'+name+'"]');
+async function choose(page,name,touch=false){
+  await page.locator('#place-loading').waitFor({state:'hidden'});
+  await target(page,name).waitFor({state:'visible'});
+  const point=await target(page,name).evaluate(node=>{const r=node.closest('.place-art').getBoundingClientRect();return {x:r.left+Number(node.dataset.pointX)*r.width,y:r.top+Number(node.dataset.pointY)*r.height};});
+  assert.ok(Number.isFinite(point.x)&&Number.isFinite(point.y),'Authored interaction point for '+name);
+  if(touch)await page.touchscreen.tap(point.x,point.y);else await page.mouse.click(point.x,point.y);
+}
 const paper = (page, name) => page.locator('#shift-office-papers [data-paper-action="'+name+'"]');
 
 async function boot(page, url) {
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(url);
-  await page.waitForFunction(() => OneShift.app?.places && OneShift.app.office && document.getElementById('place-image').complete && document.getElementById('place-image').naturalWidth > 0);
+  await page.waitForFunction(() => OneShift.app?.places && OneShift.app.office && document.querySelector('#place-targets [data-point-x]') && document.getElementById('place-image').complete && document.getElementById('place-image').naturalWidth > 0);
   await page.bringToFront();
   await page.evaluate(() => document.fonts.ready);
 }
@@ -60,12 +67,12 @@ async function inPlace(page, name) {
   check('Punching in opens the central floor', await page.evaluate(() => OneShift.app.places.clockedIn) && await target(page,'office').isVisible());
   check('Central floor has all five real destinations', await target(page,'office').count() === 1 && await target(page,'staging').count() === 1 && await target(page,'storage').count() === 1 && await target(page,'shipping').count() === 1 && await target(page,'clock').count() === 1);
   await shot(page,'02-central-floor');
-  await target(page,'office').click();
+  await choose(page,'office');
   await inPlace(page,'office');
-  await target(page,'floor').click();
+  await choose(page,'floor');
   await inPlace(page,'floor');
   check('Office doorway round-trip never handles or duplicates freight', await stock(page) === startingStock);
-  await target(page,'office').click();
+  await choose(page,'office');
   await inPlace(page,'office');
   const deskState = await snapshot(page);
   await page.waitForTimeout(350);
@@ -83,7 +90,7 @@ async function inPlace(page, name) {
     check(kind+' Escape returns focus to the same desk object', !await page.locator('#shift-office-papers').isVisible() && await target(page,kind).evaluate(node => document.activeElement === node));
   }
 
-  await target(page,'purchases').click();
+  await choose(page,'purchases');
   await page.locator('#office-purchase-product').selectOption('lantern');
   await page.locator('[data-paper-action="quantity"][data-count="8"]').click();
   const beforePO = await page.evaluate(() => {
@@ -114,12 +121,12 @@ async function inPlace(page, name) {
   await page.keyboard.press(' ');
   check('Player can pause while seated at the desk', await page.evaluate(() => OneShift.app.paused));
   const pausedState = await snapshot(page);
-  await target(page,'floor').click();
-  await target(page,'office').click();
-  await target(page,'ledger').click();
+  await choose(page,'floor');
+  await choose(page,'office');
+  await choose(page,'ledger');
   await paper(page,'close').click();
-  await target(page,'floor').click();
-  await target(page,'clock').click();
+  await choose(page,'floor');
+  await choose(page,'clock');
   check('Manual pause survives room navigation and document close', await page.evaluate(() => OneShift.app.paused) && await snapshot(page) === pausedState);
   await page.locator('#place-card [data-place="punch"]').click();
   check('Clocking out saves the exact current business', await page.evaluate(state => !OneShift.app.places.clockedIn && JSON.stringify(OneShift.saves.load()) === state, pausedState));
@@ -128,7 +135,7 @@ async function inPlace(page, name) {
   await shot(page,'06-clocked-out');
   await page.locator('#place-card [data-place="punch"]').click();
   check('Clocking back in preserves stock, purchases, ledger and manual pause', await page.evaluate(() => OneShift.app.paused && OneShift.app.places.current==='floor') && await snapshot(page) === pausedState);
-  await target(page,'clock').click();
+  await choose(page,'clock');
   await page.locator('#place-card [data-place="punch"]').click();
   const savedText = await page.evaluate(() => localStorage.getItem('one-shift-save-auto'));
   await page.reload();
@@ -192,7 +199,7 @@ async function inPlace(page, name) {
   await page.waitForTimeout(200);
   check('Importing an older JSON save is rejected with a visible explanation',await snapshot(page)===beforeRejection&&await page.locator('#shift-settings').isVisible()&&await page.locator('#shift-settings').innerText().then(text=>text.includes('older service-mode save')));
   await page.locator('[data-action="menu-close"]').click();
-  await target(page,'clock').click();
+  await choose(page,'clock');
   await page.evaluate(()=>{window.testOriginalSave=OneShift.saves.save;OneShift.saves.save=()=>false;});
   await page.locator('#place-card [data-place="punch"]').click();
   await page.waitForTimeout(350);
@@ -208,13 +215,13 @@ async function inPlace(page, name) {
     check(name+' clock punch is at least 44 pixels tall', await p.locator('#place-card [data-place="punch"]').evaluate(node=>node.getBoundingClientRect().height>=44));
     await p.locator('#place-card [data-place="punch"]').tap();
     for (const place of ['floor','office']) {
-      if(place==='office')await target(p,'office').tap();
+      if(place==='office')await choose(p,'office',true);
       await inPlace(p,place);
       const bounds=await p.locator('.place-target').evaluateAll(nodes=>nodes.map(node=>{const r=node.getBoundingClientRect();return {id:node.dataset.place,w:r.width,h:r.height,fit:r.left>=0&&r.top>=0&&r.right<=innerWidth+1&&r.bottom<=innerHeight+1};}));
       check(name+' '+place+' hotspots fit the viewport with 44px targets',bounds.length>0&&bounds.every(box=>box.w>=44&&box.h>=44&&box.fit));
       await shot(p,'07-'+name+'-'+place);
     }
-    await target(p,'purchases').tap();
+    await choose(p,'purchases',true);
     check(name+' office paperwork is visible and has a 44px close control',await paper(p,'close').isVisible()&&await paper(p,'close').evaluate(node=>node.getBoundingClientRect().height>=44));
     await shot(p,'08-'+name+'-paper');
     await paper(p,'close').tap();

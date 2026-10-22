@@ -1,6 +1,6 @@
 # One Shift: the building
 
-Version 3.1, public asset query `v33`, gives the game a time-card entrance,
+Version 3.2, public asset query `v34`, gives the game a time-card entrance,
 central warehouse floor and seated office desk. These are physical destinations
 within the same charcoal, rust and cream print world. This document describes
 the current navigation and paperwork. [ONE_SHIFT_HANDLING.md](ONE_SHIFT_HANDLING.md)
@@ -19,9 +19,18 @@ automatic save stays untouched at the entrance; explicitly starting a new
 warehouse first keeps it in a separate backup, exportable from Menu. Generic
 save decoding and simulation restore remain available to legacy model tests.
 
-The central floor leads to the office, Receiving, Inventory, Shipping and the
-time cards. Each entrance is a focusable target registered to the generated
-image. Tab and Enter, mouse and landscape touch use the same targets. Work
+The central floor looks diagonally across one working cross-aisle. Receiving
+and Shipping share the far exterior wall, rack aisles open on the right, and
+the raised office is reached by steel stairs on the left. The recorder and
+card pockets are beside the staff entrance. The office window and landing
+look back into this same building.
+
+Each object is a focusable target clipped to a traced source-image silhouette.
+Hover, press and keyboard focus draw the same thin cream and rust contour,
+without filling a bounding rectangle or covering the object with a label.
+The footer names the hovered object. Tab and Enter, mouse and landscape touch
+use the same targets. Small touch targets have a nearest-contour allowance;
+dragging, cancellation, rotation and inactivity cannot activate them. Work
 areas return to this central floor. The office's rear door also returns there.
 
 Clocking out is a checkpoint during an unfinished shift. It saves the exact
@@ -73,10 +82,17 @@ while its cost enters operating profit when those cases are sold.
 
 ## Artwork and sound
 
-The three masters live in `assets/one-shift/places/`: `clock.png`, `floor.png`
+The current masters live in `assets/one-shift/places-v2/`: `clock.png`, `floor.png`
 and `office.png`. Their lossless WebP siblings are used at runtime. The exact
-built-in image generation prompts, provenance and measured target bounds are
-in `prompts.json` beside them. The tool did not expose a numbered model selector.
+built-in image generation prompts and provenance are in `prompts.json` beside
+them. `hotspots.json` records detailed contour paths, bounds and interior
+activation points in source pixels. The tool did not expose a numbered model
+selector. The superseded `places/` masters remain preserved.
+
+The clock view is a close-up of a practical card-slot recorder and card rack.
+Its fallback punch button sits in the footer, leaving the artwork unobstructed.
+The office has four separate, fully visible desk objects; the rear door opens
+onto the raised steel landing. Neither view uses floating navigation labels.
 
 Warehouse views stay at standing eye level; the office is deliberately seated
 at one desk. Materials look durable and used: worn paint at touch points,
@@ -95,13 +111,19 @@ Intermittent sounds are driven by the existing update loop, not extra timers.
 
 ## Source contracts
 
-- `js/one-shift-places.js` owns navigation, the clock checkpoint and scene
-  targets. Its `Places` instance is `app.places`; `go(name)` changes location.
+- `js/one-shift-places.js` owns navigation and the clock checkpoint. Its
+  `Places` instance is `app.places`; `go(name)` changes location.
+- `js/one-shift-place-art.js` clips native buttons to the measured contours,
+  draws matching SVG outlines and handles small touch targets without a box.
+  `js/one-shift-place-layouts.js` is generated from the artwork's `hotspots.json`
+  by `node tools/build-one-shift-place-layouts.cjs`. Edit the JSON, then rebuild.
 - `js/one-shift-office.js` owns desk documents. `app.office.open(kind)` accepts
   `purchases`, `orders`, `equipment` or `ledger`; `close()` returns to the desk.
   `update()` changes document markup only when its contents change.
-- `one-shift-places.css` and `one-shift-office.css` style those views with the
-  same three local fonts and approved palette as the receiving scene.
+- `one-shift-places.css`, `one-shift-place-art.css` and `one-shift-office.css`
+  style those views with the same local fonts and receiving palette. Target
+  backgrounds must remain transparent even under the generic business button
+  hover and active rules.
 - `js/one-shift-audio.js` exposes `setPlace(name)` and `clockPunch()` while
   retaining `unlock`, `update`, volume and inactivity handling.
 - `js/one-shift-main.js` integrates location and paperwork pause flags with
@@ -134,3 +156,8 @@ interface scale, 44px controls, portrait gating and no horizontal paper overflow
 Inspect the actual scenes and check browser exceptions before publishing.
 `tools/test-one-shift-places-browser.cjs` covers the entrance, desk documents,
 purchase confirmation, checkpoint reload, import and end-of-day transitions.
+`tools/test-one-shift-place-art-browser.cjs` checks rendered interior hits,
+outside-contour misses, transparent hover/press/focus, unchanged object pixels,
+native keyboard activation and touch cancellation. It saves every desktop
+object highlight and landscape views for visual inspection. Native test clicks
+use authored interior points rather than assuming a polygon's center is inside.

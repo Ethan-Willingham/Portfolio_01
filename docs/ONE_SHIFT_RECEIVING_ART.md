@@ -57,23 +57,27 @@ Review receiving, storage and shipping together after every visual change.
 
 ## The time cards, floor and office
 
-Version 3.1 adds three generated scenes in `assets/one-shift/places/`:
-the mechanical punch-clock wall, a central warehouse crossroads and the office
-seen from a seated position behind one desk. Exact prompts, source provenance,
-PNG masters, lossless WebP siblings and measured target bounds live together
-in that directory. Read [ONE_SHIFT_PLACES.md](ONE_SHIFT_PLACES.md) for navigation
-and paperwork behavior.
+Version 3.2 replaces the initial three scenes with `assets/one-shift/places-v2/`:
+a close card-slot recorder, one continuous warehouse cross-aisle and a seated
+desk in the raised office. Exact prompts, source provenance, PNG masters,
+lossless WebP siblings and traced object contours live together there. Read
+[ONE_SHIFT_PLACES.md](ONE_SHIFT_PLACES.md) for navigation and paperwork behavior.
 
 Keep the same limited-ink print style. The building should look maintained,
 durable and used, with rubbed metal touch points, scuffed concrete, old steel
 furniture and repaired walls. Avoid excessive distress and pristine showroom
 surfaces. The central view has separate office, Receiving, Inventory, Shipping
-and time-card entrances. The office desk has a purchase pad, customer in-tray,
-equipment catalog and ledger; its rear door returns to the floor.
+and time-card targets. Both docks share one exterior wall. The office sits
+above the staff entrance, reached by a real stair and landing; rack aisles
+open to the right. The office desk has a purchase pad, customer in-tray,
+equipment catalog and ledger; its rear door opens onto that landing.
 
-Targets are positioned relative to the source image, preserving alignment as
-the full composition scales. Labels are runtime controls with visible keyboard
-focus and at least 44px touch targets. Do not crop away a destination or paint
+Targets follow the actual object silhouettes in source pixels, preserving
+alignment as the full composition scales. Hover and keyboard focus use thin
+cream and rust contour strokes, with no opaque button fill or floating label.
+Object names appear in the footer. Native controls retain keyboard access and
+small touch targets have an invisible nearest-contour allowance. Do not crop
+away a destination or paint
 fake inventory into these backgrounds. Verify the three new views beside the
 existing dock, racks and shipping scene before accepting new artwork.
 
