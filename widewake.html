@@ -3,25 +3,25 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#101627">
 <title>Widewake</title><meta name="description" content="Build a trading fleet in Bracken Reach. Sail winding waterways, defend working boats, and bring rare catches home.">
 <meta property="og:title" content="Widewake"><meta property="og:description" content="A little boat. A growing fleet. A living on the water."><meta property="og:type" content="website"><meta property="og:url" content="https://ethanwillingham.com/widewake.html"><meta property="og:image" content="https://ethanwillingham.com/assets/widewake/reach-cover.png">
-<link rel="icon" href="favicon.svg"><link rel="stylesheet" href="widewake.css?v=0.36.0"><link rel="stylesheet" href="widewake-reach.css?v=0.36.0">
-<script defer src="js/demo-activity.js?v=0.36.0"></script>
-<script defer src="js/widewake-front.js?v=0.36.0"></script>
-<script defer src="js/widewake-audio.js?v=0.36.0"></script>
-<script defer src="js/widewake-controller.js?v=0.36.0"></script>
-<script defer src="js/widewake-waves.js?v=0.36.0"></script>
-<script defer src="js/widewake-battle-core.js?v=0.36.0"></script>
-<script defer src="js/widewake-waterway-art.js?v=0.36.0"></script>
-<script defer src="js/widewake-ocean-art.js?v=0.36.0"></script>
-<script defer src="js/widewake-ocean.js?v=0.36.0"></script><script defer src="js/widewake-wave-view.js?v=0.36.0"></script>
-<script defer src="js/widewake-combat.js?v=0.36.0"></script>
-<script defer src="js/widewake-combat-view.js?v=0.36.0"></script>
-<script defer src="js/widewake-waterways.js?v=0.36.0"></script>
-<script defer src="js/widewake-estuary-core.js?v=0.36.0"></script>
-<script defer src="js/widewake-estuary-view.js?v=0.36.0"></script>
-<script defer src="js/widewake-reach-game.js?v=0.36.0"></script>
-<script defer src="js/widewake-reach-ui.js?v=0.36.0"></script>
-<script defer src="js/widewake-minimap.js?v=0.36.0"></script>
-<script defer src="js/widewake-reach.js?v=0.36.0"></script>
+<link rel="icon" href="favicon.svg"><link rel="stylesheet" href="widewake.css?v=0.36.1"><link rel="stylesheet" href="widewake-reach.css?v=0.36.1">
+<script defer src="js/demo-activity.js?v=0.36.1"></script>
+<script defer src="js/widewake-front.js?v=0.36.1"></script>
+<script defer src="js/widewake-audio.js?v=0.36.1"></script>
+<script defer src="js/widewake-controller.js?v=0.36.1"></script>
+<script defer src="js/widewake-waves.js?v=0.36.1"></script>
+<script defer src="js/widewake-battle-core.js?v=0.36.1"></script>
+<script defer src="js/widewake-waterway-art.js?v=0.36.1"></script>
+<script defer src="js/widewake-ocean-art.js?v=0.36.1"></script>
+<script defer src="js/widewake-ocean.js?v=0.36.1"></script><script defer src="js/widewake-wave-view.js?v=0.36.1"></script>
+<script defer src="js/widewake-combat.js?v=0.36.1"></script>
+<script defer src="js/widewake-combat-view.js?v=0.36.1"></script>
+<script defer src="js/widewake-waterways.js?v=0.36.1"></script>
+<script defer src="js/widewake-estuary-core.js?v=0.36.1"></script>
+<script defer src="js/widewake-estuary-view.js?v=0.36.1"></script>
+<script defer src="js/widewake-reach-game.js?v=0.36.1"></script>
+<script defer src="js/widewake-reach-ui.js?v=0.36.1"></script>
+<script defer src="js/widewake-minimap.js?v=0.36.1"></script>
+<script defer src="js/widewake-reach.js?v=0.36.1"></script>
 </head><body class="ww-body at-title"><main id="game" class="ww-game" aria-label="Widewake">
     <section id="title-screen" class="ww-title-screen" aria-labelledby="game-title">
       <canvas id="title-sea" class="ww-title-sea" aria-hidden="true"></canvas>
@@ -38,7 +38,7 @@
         </nav>
         <button class="ww-audio-notice" hidden>Enable sound</button>
       </div>
-      <footer class="ww-title-footer"><span id="title-version">0.36.0 / Web edition</span><div><button id="title-fullscreen">Full screen</button><button id="title-credits">Credits</button><button id="title-quit" hidden>Quit</button></div></footer>
+      <footer class="ww-title-footer"><span id="title-version">0.36.1 / Web edition</span><div><button id="title-fullscreen">Full screen</button><button id="title-credits">Credits</button><button id="title-quit" hidden>Quit</button></div></footer>
     </section>
 
 <section id="reach" hidden aria-label="Bracken Reach">
@@ -52,7 +52,7 @@
     <button id="reach-pause" class="quiet-button" aria-label="Pause menu"><span data-icon="pause"></span><kbd>Esc</kbd></button>
   </header>
   <div id="combat-status" hidden><div><strong id="combat-order">Protect the workboats</strong><span id="combat-clock">3:00</span></div><progress id="combat-progress" max="1" value="0" aria-label="Workboats loaded"></progress><small id="combat-tally"></small></div>
-  <aside id="reach-minimap" hidden aria-label="Navigation minimap"><canvas id="reach-minimap-map" role="img" aria-label="North-up map. Your boat points along its heading. Blue marks are fleet boats, coral marks are threats, and the gold diamond is your destination."></canvas><span id="reach-minimap-caption"></span></aside>
+  <aside id="reach-minimap" hidden aria-label="Navigation minimap"><canvas id="reach-minimap-map" role="img" aria-label="North-up map. Your boat points along its heading. Blue marks are fleet boats, coral marks are threats, and the gold diamond is your destination."></canvas><span id="reach-minimap-caption"></span><div id="reach-minimap-zoom" role="group" aria-label="Minimap zoom"><button type="button" data-minimap-zoom="out" aria-label="Zoom minimap out" title="Zoom minimap out">&#8722;</button><button type="button" data-minimap-zoom="in" aria-label="Zoom minimap in" title="Zoom minimap in">+</button></div></aside>
   <div id="reach-notice" role="status" aria-live="polite"></div>
   <div id="reach-course" hidden><span data-icon="chart"></span><span id="course-name"></span><button id="take-helm">Take helm</button></div>
   <div id="work-status" hidden><span data-icon="fleet"></span><div><strong id="work-name"></strong><progress id="work-progress" max="1" value="0" aria-label="Working watch"></progress></div><button id="recall">Recall</button></div>
@@ -91,7 +91,7 @@
   <header><h2 id="pause-title">Paused</h2><span data-icon="sail"></span></header>
   <button data-close="reach-menu" id="reach-resume" class="reach-primary">Resume</button>
   <details id="settings-fold"><summary>Settings</summary><div class="settings-controls"><label>Sound <input type="checkbox" id="sound-enabled" checked></label><label>Volume <input type="range" id="volume" min="0" max="0.5" step=".01" value=".2"></label><label>Reduced motion <input type="checkbox" id="reduce-motion"></label></div></details>
-  <p id="menu-status" role="status"></p><button id="reach-help">Controls</button><button id="menu-combat">Endgame combat</button><button id="leave-combat" hidden>Return to voyage</button><button id="return-title">Title screen</button><small>0.36.0 / Bracken Reach</small>
+  <p id="menu-status" role="status"></p><button id="reach-help">Controls</button><button id="menu-combat">Endgame combat</button><button id="leave-combat" hidden>Return to voyage</button><button id="return-title">Title screen</button><small>0.36.1 / Bracken Reach</small>
 </dialog>
 <dialog id="help-dialog" class="reach-dialog" aria-labelledby="help-title"><header><h2 id="help-title">At the helm</h2><button data-close="help-dialog">Close</button></header><p>W or Up drives forward. A/D or Left/Right turn. S or Down brakes. Release to coast.</p><p id="help-actions">E docks or deploys workboats. M opens the chart. All weapons choose their own targets.</p><p>Touch and drag anywhere on the water to steer. Up drives forward, left and right turn, down brakes. Lift to coast. Use two fingers to look around and pinch to zoom.</p><p>With a mouse, drag the water to look around and use the wheel to zoom. The controller's left stick uses the same throttle and rudder.</p><p id="help-voyage">Buy local exports, sell where prices are higher. A completed delivery opens the fleet yard.</p><p id="help-combat" hidden>Protect the workboats for a three-minute watch. Sail over repair crates to patch the fleet. This combat run does not change your voyage.</p></dialog>
 <dialog id="credits-dialog" class="reach-dialog" aria-labelledby="credits-title"><header><h2 id="credits-title">Widewake</h2><button data-close="credits-dialog">Close</button></header><p>By Ethan Willingham.</p><p>Original nautical artwork and synthesized sound.</p><a href="archive.html">In Progress</a></dialog>

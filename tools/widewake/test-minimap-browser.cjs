@@ -16,6 +16,15 @@ async function fit(page){
     assert.equal(await page.locator('#reach-minimap').isVisible(),false);
     await page.click('#start-voyage');await page.waitForFunction(()=>__widewakeReach.view?.terrain.ready,null,{timeout:60000});assert.equal(await page.locator('#reach-minimap').isVisible(),false,'hidden in harbor');
     await page.click('#cast-off');await page.waitForFunction(()=>__widewakeReach.minimap.stats.draws>0);assert.ok(await page.locator('#reach-minimap').isVisible());await fit(page);
+    const zoomIn=page.locator('[data-minimap-zoom="in"]'),zoomOut=page.locator('[data-minimap-zoom="out"]'),press=locator=>touch?locator.tap():locator.click();
+    for(const button of [zoomIn,zoomOut]){const box=await button.boundingBox();assert.ok(box.width>=44&&box.height>=44,'minimap zoom has a full touch target');}
+    const cameraZoom=await page.evaluate(()=>__widewakeReach.view.targetZoom);await press(zoomIn);assert.equal(await page.evaluate(()=>__widewakeReach.minimap.span),1000);await press(zoomOut);assert.equal(await page.evaluate(()=>__widewakeReach.minimap.span),2000);assert.equal(await page.evaluate(()=>__widewakeReach.view.targetZoom),cameraZoom,'minimap zoom leaves the camera alone');
+    if(name==='desktop'){
+      while(!await zoomIn.isDisabled())await press(zoomIn);assert.equal(await page.evaluate(()=>__widewakeReach.minimap.span),500);
+      while(!await zoomOut.isDisabled())await press(zoomOut);assert.equal(await page.evaluate(()=>__widewakeReach.minimap.span),16000);
+      await zoomIn.focus();await page.keyboard.press('Enter');assert.equal(await page.evaluate(()=>__widewakeReach.minimap.span),8000);
+      for(let i=0;i<2;i++)await press(zoomIn);assert.equal(await page.evaluate(()=>__widewakeReach.minimap.span),2000);
+    }
     await page.click('#reach-pause');const frozen=await page.locator('#reach-minimap-map').evaluate(c=>c.toDataURL());await page.waitForTimeout(250);assert.equal(await page.locator('#reach-minimap-map').evaluate(c=>c.toDataURL()),frozen,'paused map stays frozen');
     const navigation=await page.evaluate(()=>{
       const h=__widewakeReach,m=h.minimap,g=h.game,p=g.player,bakes=m.stats.bakes;
@@ -31,9 +40,10 @@ async function fit(page){
     await page.click('#reach-resume');await page.keyboard.press('m');assert.ok(await page.locator('#reach-chart').isVisible(),'full chart still available');await page.click('[data-close="reach-chart"]');
     await page.evaluate(()=>{const h=__widewakeReach;h.game.route=null;h.game.player.x=350;h.game.player.y=1700;h.game.player.vx=h.game.player.vy=0;h.view.camera={x:350,y:1700};h.minimap.draw(h.game,performance.now(),true);});
     await page.screenshot({path:path.join(out,name+'-sailing.png')});
-    if(name==='small-phone')for(const h of [320,272,240,height]){await page.setViewportSize({width,height:h});await page.evaluate(()=>__widewakeReach.view.resize());await fit(page);assert.ok(await page.locator('#reach-minimap-map').isVisible(),'map survives a reduced browser-toolbar viewport');}
+    if(name==='small-phone')for(const h of [320,272,240,height]){await page.setViewportSize({width,height:h});await page.evaluate(()=>__widewakeReach.view.resize());await fit(page);assert.ok(await page.locator('#reach-minimap-map').isVisible(),'map survives a reduced browser-toolbar viewport');for(const button of [zoomIn,zoomOut]){const box=await button.boundingBox();assert.ok(box.width>=44&&box.height>=44,'short viewport keeps full-sized zoom buttons');}}
     await page.click('#reach-pause');await page.click('#menu-combat');await page.waitForFunction(()=>__widewakeReach.game?.endgame&&__widewakeReach.minimap.span===8000);await fit(page);await page.screenshot({path:path.join(out,name+'-combat.png')});
     const combat=await page.evaluate(()=>{const h=__widewakeReach,m=h.minimap;return{samples:m.stats.enemySamples,cells:m.stats.threatCells,span:m.span,fleet:h.game.ships.length,backend:h.view.stats.backend};});assert.ok(combat.samples>=16000);assert.ok(combat.cells>0&&combat.cells<=1024);assert.equal(combat.fleet,24);if(canvas)assert.match(combat.backend,/Canvas/i);
+    await press(zoomIn);assert.equal(await page.evaluate(()=>__widewakeReach.minimap.span),4000);await press(zoomOut);assert.equal(await page.evaluate(()=>__widewakeReach.minimap.span),8000);
     await page.click('#reach-pause');await page.click('#return-title');assert.equal(await page.locator('#reach-minimap').isVisible(),false,'hidden on return to title');
     reports.push({name,...navigation,combat});await context.close();console.log('PASS '+name+' sailing, chart, heading, coastlines, combat, pause and HUD fit');
   }

@@ -3,8 +3,17 @@
   'use strict';
   const E=root.WidewakeEstuary,R=root.WidewakeReach,W=root.WidewakeWaterways,TAU=Math.PI*2;
   const color={sea:'#173f50',shallow:'#386568',channel:'#27565d',land:'#6b7865',bank:'#99a58d',salt:'#f0e9cf',brass:'#d7b876',fleet:'#8ecfce',enemy:'#ed927d',ink:'#102934'};
+  const ranges=[500,1000,2000,4000,8000,16000];
   class Minimap{
-    constructor(canvas,panel,caption){this.canvas=canvas;this.panel=panel;this.caption=caption;this.context=canvas.getContext('2d');this.cells=new Uint16Array(32*32);this.game=null;this.field=null;this.base=null;this.last=-Infinity;this.stats={draws:0,bakes:0,enemySamples:0,threatCells:0};}
+    constructor(canvas,panel,caption){this.canvas=canvas;this.panel=panel;this.caption=caption;this.context=canvas.getContext('2d');this.cells=new Uint16Array(32*32);this.game=null;this.field=null;this.base=null;this.last=-Infinity;this.zoom={sailing:2,combat:4};this.stats={draws:0,bakes:0,enemySamples:0,threatCells:0};
+      this.zoomIn=panel.querySelector('[data-minimap-zoom="in"]');this.zoomOut=panel.querySelector('[data-minimap-zoom="out"]');
+      this.zoomIn.onclick=()=>this.changeZoom(-1);this.zoomOut.onclick=()=>this.changeZoom(1);
+    }
+    changeZoom(direction){
+      if(!this.game||this.panel.hidden)return;
+      const mode=this.game.endgame?'combat':'sailing';this.zoom[mode]=E.clamp(this.zoom[mode]+direction,0,ranges.length-1);
+      this.draw(this.game,performance.now(),true);
+    }
     show(game){
       this.panel.hidden=!game||!!game.port;
       if(this.panel.hidden)return;
@@ -34,13 +43,14 @@
       if(!size||!force&&!resized&&(ms-this.last<100||this.time===game.time))return;
       if(resized){this.canvas.width=this.canvas.height=pixels;}
       this.last=ms;this.time=game.time;this.stats.draws++;
-      const c=this.context,p=game.player,span=game.endgame?8000:2000,scale=size/span,half=size/2;
+      const index=this.zoom[game.endgame?'combat':'sailing'],c=this.context,p=game.player,span=ranges[index],scale=size/span,half=size/2;
+      this.zoomIn.disabled=index===0;this.zoomOut.disabled=index===ranges.length-1;
       this.center={x:p.x,y:p.y};this.span=span;
       const point=(x,y)=>({x:half+(x-p.x)*scale,y:half+(y-p.y)*scale});this.point=point;
       c.setTransform(ratio,0,0,ratio,0,0);c.clearRect(0,0,size,size);c.fillStyle=game.field?color.land:color.sea;c.fillRect(0,0,size,size);
       if(game.field){this.bake(game.field);c.save();c.translate(half-p.x*scale,half-p.y*scale);c.scale(scale*8,scale*8);c.drawImage(this.base,E.bounds.left/8,E.bounds.top/8);c.restore();}
       c.strokeStyle='#c5d8ca18';c.lineWidth=.7;
-      const spacing=game.endgame?2000:500;
+      const spacing=span/4;
       for(let x=Math.ceil((p.x-span/2)/spacing)*spacing;x<p.x+span/2;x+=spacing){const q=point(x,p.y);c.beginPath();c.moveTo(q.x,0);c.lineTo(q.x,size);c.stroke();}
       for(let y=Math.ceil((p.y-span/2)/spacing)*spacing;y<p.y+span/2;y+=spacing){const q=point(p.x,y);c.beginPath();c.moveTo(0,q.y);c.lineTo(size,q.y);c.stroke();}
       const destinations=game.endgame?[]:[...E.ports,...R.sites.filter(s=>game.rank>=s.rank)],objective=game.endgame?null:game.objective();
@@ -58,14 +68,16 @@
       c.fillStyle=color.enemy;
       for(let i=0;i<this.cells.length;i++)if(this.cells[i]){c.globalAlpha=Math.min(1,.55+Math.sqrt(this.cells[i])*.08);c.fillRect(i%32*size/32,Math.floor(i/32)*size/32,Math.max(2,size/32-1),Math.max(2,size/32-1));this.stats.threatCells++;}c.globalAlpha=1;
       for(const s of game.ships)if(s!==p&&s.hp>0){const q=point(s.x,s.y);c.fillStyle=color.fleet;c.strokeStyle=color.ink;c.lineWidth=1;c.beginPath();c.arc(q.x,q.y,2.5,0,TAU);c.fill();c.stroke();}
-      if(target){
+      if(target&&size>=36){
         const q=point(target.x,target.y),dx=q.x-half,dy=q.y-half,limit=half-9,factor=Math.min(1,limit/Math.max(Math.abs(dx),Math.abs(dy),1)),x=half+dx*factor,y=half+dy*factor;
         c.fillStyle=color.brass;c.strokeStyle=color.ink;c.lineWidth=1.5;c.beginPath();c.moveTo(x,y-5);c.lineTo(x+4,y);c.lineTo(x,y+5);c.lineTo(x-4,y);c.closePath();c.fill();c.stroke();
         if(factor<1){c.strokeStyle=color.brass;c.lineWidth=1.5;const a=Math.atan2(dy,dx);c.beginPath();c.moveTo(x+Math.cos(a)*6,y+Math.sin(a)*6);c.lineTo(x+Math.cos(a)*9,y+Math.sin(a)*9);c.stroke();}
       }
       c.save();c.translate(half,half);c.rotate(p.angle);c.fillStyle=color.salt;c.strokeStyle=color.ink;c.lineWidth=2;c.beginPath();c.moveTo(8,0);c.lineTo(-5,4.5);c.lineTo(-3,0);c.lineTo(-5,-4.5);c.closePath();c.fill();c.stroke();c.restore();c.restore();
-      c.font='9px "Commit Mono",monospace';c.textAlign='center';c.fillStyle=color.ink;c.fillRect(size-23,3,20,25);c.fillStyle=color.salt;c.fillText('N',size-13,13);c.beginPath();c.moveTo(size-13,16);c.lineTo(size-16,23);c.lineTo(size-10,23);c.closePath();c.fill();
-      const metres=game.endgame?2000:500,bar=metres*scale;c.fillStyle=color.ink;c.fillRect(4,size-24,bar+12,21);c.fillStyle=color.salt;c.textAlign='left';c.fillText(game.endgame?'2 km':'500 m',9,size-14);c.strokeStyle=color.salt;c.lineWidth=1;c.beginPath();c.moveTo(9,size-10);c.lineTo(9,size-6);c.lineTo(9+bar,size-6);c.lineTo(9+bar,size-10);c.stroke();
+      if(size>=76){
+        c.font='9px "Commit Mono",monospace';c.textAlign='center';c.fillStyle=color.ink;c.fillRect(size-23,3,20,25);c.fillStyle=color.salt;c.fillText('N',size-13,13);c.beginPath();c.moveTo(size-13,16);c.lineTo(size-16,23);c.lineTo(size-10,23);c.closePath();c.fill();
+        const metres=span/4,bar=metres*scale;c.fillStyle=color.ink;c.fillRect(4,size-24,bar+12,21);c.fillStyle=color.salt;c.textAlign='left';c.fillText(metres>=1000?metres/1000+' km':metres+' m',9,size-14);c.strokeStyle=color.salt;c.lineWidth=1;c.beginPath();c.moveTo(9,size-10);c.lineTo(9,size-6);c.lineTo(9+bar,size-6);c.lineTo(9+bar,size-10);c.stroke();
+      }
       const distance=target?Math.hypot(target.x-p.x,target.y-p.y):0,label=target?target.name+' / '+(distance>=1000?(distance/1000).toFixed(1)+' km':Math.round(distance/10)*10+' m'):game.endgame?'Fleet watch':'Bracken Reach';
       if(this.caption.textContent!==label){this.caption.textContent=label;this.caption.title=label;}
     }

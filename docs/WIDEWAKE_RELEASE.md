@@ -1995,3 +1995,16 @@ The instrument fits without overlapping hull, pause, course or action controls.
 Physical-phone performance remains unverified.
 The broader interface check passes five phone layouts, harbor services, chart
 selection, nested menus and camera controls. Desktop staging and policy checks pass.
+
+## Minimap zoom buttons, 2026-10-22 (v0.36.1)
+
+The owner requested simple zoom buttons under the minimap. Large minus and plus
+buttons now halve or double its range through six steps, from 500 m to 16 km.
+The scale bar follows the selected range, and each button disables at its limit.
+Sailing and combat keep separate choices during the page session. The map
+redraws immediately on a press and reuses its cached geography.
+
+Each button remains at least 44 px in both dimensions, including short browser
+viewports. Mouse, keyboard and touch checks cover zoom limits, actual range
+changes, independent camera zoom, combat, paused pixels, shoreline agreement
+and controls fitting on desktop and landscape phones with Canvas fallback.

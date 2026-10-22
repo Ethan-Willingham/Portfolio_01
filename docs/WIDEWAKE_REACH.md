@@ -305,12 +305,15 @@ independently of camera pan and zoom. The map shows actual channel geometry,
 ports, available work grounds, hazards, fleet boats and nearby enemy density.
 A gold diamond identifies the active course or current objective, including at
 the map edge for distant destinations; its caption gives straight-line distance.
-The sailing map spans 2 km, while the open-water combat map spans 8 km. A scale
+The sailing map defaults to 2 km, while the open-water combat map defaults to 8 km. A scale
 bar and north arrow remain visible. It hides in port and on the title screen.
 Static geography is baked once at eight metres per pixel. Live marks refresh
 at most ten times per second inside the existing activity-controlled frame loop.
-Swarms use a fixed 1,024-cell grid; paused map pixels remain frozen. The map is a
-passive instrument and leaves the existing helm gestures and Chart action intact.
+Swarms use a fixed 1,024-cell grid; paused map pixels remain frozen. Two buttons
+under the minimap halve or double its range, from 500 m to 16 km. Each is at
+least 44 px across. The scale bar follows the chosen range, and buttons disable
+at the limits. Sailing and combat remember separate ranges for the page session.
+Only these buttons take pointer input; the map leaves helm gestures and Chart intact.
 
 Zoom is a labelled control with
 Close, Fleet and Wide choices on demand. Wheel, pinch and keyboard camera stops
