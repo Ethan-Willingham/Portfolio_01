@@ -1,7 +1,7 @@
 {
   "version": 1,
   "source": "https://services.swpc.noaa.gov/json/ovation_aurora_latest.json",
-  "updatedAt": "2026-10-22T01:35:15.578Z",
+  "updatedAt": "2026-10-22T01:40:34.054Z",
   "frames": [
     {
       "file": "20261004T233800Z-20261005T002700Z-dc2bf166a24189e2.json.gz",
@@ -6560,6 +6560,12 @@
       "observation": "2026-10-22T01:22:00.000Z",
       "forecast": "2026-10-22T02:24:00.000Z",
       "sha256": "d4caa07eaac556f675508b3e27431be2aa5ca8409512c2691de060805aa68c36"
+    },
+    {
+      "file": "20261022T012900Z-20261022T022900Z-97f45891690fba70.json.gz",
+      "observation": "2026-10-22T01:29:00.000Z",
+      "forecast": "2026-10-22T02:29:00.000Z",
+      "sha256": "97f45891690fba70f36d6e884cbe22ff61d6e50b89576da7ac8022a9ab595e41"
     }
   ]
 }
