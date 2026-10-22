@@ -5,7 +5,7 @@
  function act(app,node){
   if(app.paused||app.rotated||app.hidden||app.menuPause)return;
   const sim=app.sim,type=node.dataset.hand;if(!O.manualHandling(sim.s))return;
-  if(type==='scene'){app.scenes.open(node.dataset.sceneName);return;}
+  if(type==='scene'){const order=sim.s.commerce.orders.find(o=>o.id===Number(node.dataset.order)&&o.status==='queued');if(order)sim.s.commerce.hands.order=order.id;app.scenes.open(node.dataset.sceneName);return;}
   if(type==='wait'){
    const id=Number(node.dataset.truck),t=sim.t.get(id);if(!t)return;
    if(sim.s.trucks.some(q=>q.id!==id&&q.status==='docked'&&!q.departureRequested)&&sim.s.map.doors.length===1){app.ui.toast('Release the truck at the dock first.',true);return;}
@@ -93,7 +93,7 @@
    html+='<article class="shift-order-card" data-order="'+o.id+'"><header><strong>'+esc(o.customer)+'</strong><span>'+O.price(o.lines.reduce((n,l)=>n+l.cases*l.price,0))+'</span></header><div class="shift-order-lines">'+o.lines.map(l=>'<span><b>'+l.cases+'</b> '+O.catalog[l.item].name+'</span>').join('')+'</div>';
    if(o.status==='offered')html+=ready?'<p>Pick, wrap and load this order yourself.</p><button class="primary" data-action="business-fulfill" data-id="'+o.id+'">Start order</button>':'<p>Receive and put away the required stock first.</p>';
    else{html+='<p class="hands-pick-count">'+collected+' / '+total+' cases picked</p>';
-    if(collected<total)html+=button(carry?'Continue picking':'Go to Storage','scene','data-scene-name="storage"');else html+=button(t?.loaded.length?'Review loaded truck':'Go to Shipping','scene','data-scene-name="shipping"');
+    if(collected<total)html+=button(carry?'Continue picking':'Go to Storage','scene','data-scene-name="storage" data-order="'+o.id+'"');else html+=button(t?.loaded.length?'Review loaded truck':'Go to Shipping','scene','data-scene-name="shipping" data-order="'+o.id+'"');
     html+='<button data-action="business-cancel" data-id="'+o.id+'" '+(t?.loaded.length?'disabled':'')+'>Cancel order</button>';
    }html+='</article>';if(first)break;
   }

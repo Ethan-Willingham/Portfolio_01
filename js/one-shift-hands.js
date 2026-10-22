@@ -39,7 +39,7 @@
    slots.push({...d,index:slots.length,id:r.id+'-'+level+'-'+side,name:'Rack '+r.id+' / '+(side?'right':'left')+(level?' / level '+(level+1):''),pallet:p?.id||null,available:!p&&!locked&&(!!carry?.receivingDestination||!this.occupied(d.x,d.y,level,carry?.id)),locked});
   }return slots;
  };
- P.handOrder=function(){const h=this.s.commerce.hands;return this.s.commerce.orders.find(o=>o.id===h.order&&o.status==='queued')||this.s.commerce.orders.find(o=>o.status==='queued')||null;};
+ P.handOrder=function(){const h=this.s.commerce.hands,carried=this.p.get(h.carry)?.businessOrder;return this.s.commerce.orders.find(o=>o.id===carried&&o.status==='queued')||this.s.commerce.orders.find(o=>o.id===h.order&&o.status==='queued')||this.s.commerce.orders.find(o=>o.status==='queued')||null;};
  P.handFloorSlots=function(kind){const r=O.docks.lane(this.s,kind),slots=[];for(let y=r.y;y<r.y+r.h;y++)for(let x=r.x;x<r.x+r.w;x++)slots.push({x,y,level:0,place:'lane',lane:kind,index:slots.length,id:String(slots.length),available:!this.occupied(x,y,0,this.s.commerce.hands.carry)});return slots;};
  P.handInstruction=function(scene){
   const s=this.s,h=s.commerce.hands,p=this.p.get(h.carry),o=this.handOrder();
