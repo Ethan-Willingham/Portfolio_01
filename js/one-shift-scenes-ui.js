@@ -151,7 +151,8 @@
       this.lastSync = now;
       const snapshot = O.sceneSnapshot(this.app.sim, this.scene, this.page);
       if (!snapshot) return;
-      const truck=this.app.sim.s.trucks.find(t=>t.direction===(this.scene==='staging'?'in':'out')&&t.status==='docked'&&t.closingTick==null);
+      const preferred=O.manualHandling?.(this.app.sim.s)&&this.scene==='shipping'?this.app.sim.t.get(this.app.sim.s.commerce.orders.find(o=>o.id===this.app.sim.p.get(this.app.sim.s.commerce.hands.carry)?.businessOrder)?.truck||this.app.sim.handOrder()?.truck):null;
+      const truck=preferred?.status==='docked'&&preferred.closingTick==null?preferred:this.app.sim.s.trucks.find(t=>t.direction===(this.scene==='staging'?'in':'out')&&t.status==='docked'&&t.closingTick==null);
       snapshot.dock=this.scene!=='storage'&&truck?{id:truck.id,number:this.app.sim.s.map.doors.findIndex(d=>d.id===truck.door)+1,pallets:this.app.sim.s.pallets.filter(p=>this.scene==='staging'?truck.manifest.includes(p.id)&&p.place==='trailer':p.place==='shipped'&&truck.loaded.some(q=>q.pallet===p.id)).map(p=>({id:p.id,item:p.item,cases:p.cases,sscc:p.sscc}))}:null;
       const stateKey = JSON.stringify(snapshot);
       if (!force && stateKey === this.stateKey) return;
@@ -326,7 +327,8 @@
         g.shadowColor = 'transparent'; g.shadowOffsetX = 0; g.shadowOffsetY = 0;
       }
       draw();
-      if (p.sscc && O.labels) {
+      if(p.order&&p.wrapped){g.strokeStyle='#f0e1c6aa';g.lineWidth=1;for(const fraction of [.3,.52,.73]){g.fillStyle='#f0e1c612';g.fillRect(x,y+h*fraction,w,h*.06);g.strokeRect(x,y+h*fraction,w,h*.06);}}
+      if (p.sscc && O.labels && (!p.order || p.labelled)) {
         const lw = Math.max(42, w * .19), lh = lw * .5, lx = x + w * .18, ly = y + h * .58;
         g.fillStyle = PAPER; g.fillRect(lx, ly, lw, lh); g.fillStyle = INK;
         const code = O.labels.encode(p.sscc), scale = (lw - 6) / code.width;

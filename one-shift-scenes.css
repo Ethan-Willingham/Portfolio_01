@@ -56,3 +56,44 @@
   #scene-page{width:29px;text-align:center}
   #shift-scenes .scene-nav button{font-size:.5625rem}
 }
+/* Direct handling controls share the scene's paper and ink. */
+.shift-manual #shift-scenes{grid-template-rows:auto minmax(0,1fr) auto auto}
+.shift-manual .hands-carry[hidden]{display:none}
+.hands-carry{display:flex;align-items:center;gap:12px;min-height:60px;border-top:1px solid var(--rule);padding:5px 0}
+.hands-carry canvas{width:52px;height:47px;flex-shrink:0}
+.hands-carry>div{display:grid;gap:4px;min-width:0}
+.hands-carry span{font:.5rem var(--font-mono);letter-spacing:.08em}
+.hands-carry strong{font:.8125rem var(--font-body)}
+.hands-carry p{margin:0 0 0 auto;font:.6875rem var(--font-body);max-width:240px}
+.hands-carry button{margin-left:auto}
+.hands-zones{position:absolute;inset:0;pointer-events:none}
+.hands-position,.hands-door{position:absolute;display:flex;align-items:flex-end;justify-content:center;pointer-events:none}
+#shift-scenes .hands-position button,#shift-scenes .hands-door button{pointer-events:auto;width:100%;min-height:44px;border:2px dashed var(--shift-primary);background:var(--shift-paper);padding:8px;color:var(--shift-primary);line-height:1.3;box-shadow:0 0 0 3px #f0e1c688}
+#shift-scenes .hands-position button:hover,#shift-scenes .hands-door button:hover{background:var(--shift-primary);color:var(--shift-paper)}
+.hands-tools{position:absolute;left:12px;bottom:12px;display:flex;gap:6px;flex-wrap:wrap;max-width:calc(100% - 24px);background:var(--shift-paper)}
+#shift-scenes .hands-tools button{background:var(--shift-primary);border-color:var(--shift-primary);color:var(--shift-paper);padding:10px 16px}
+.hands-actions{display:grid;gap:8px;margin:10px 0 14px}
+.hands-actions p{font:.75rem var(--font-body);margin:0}
+#shift-scenes .hands-actions button{width:100%;padding:10px;background:var(--shift-primary);color:var(--shift-paper);border-color:var(--shift-primary)}
+#shift-scenes [data-hand="handWrap"]{background:linear-gradient(to right,var(--text) var(--wrap-progress,0%),var(--shift-primary) var(--wrap-progress,0%));touch-action:none;user-select:none;-webkit-user-select:none}
+.shift-manual #scene-barcode{display:none}
+.hands-release{padding:12px;border-bottom:1px solid var(--rule);font:.75rem var(--font-body)}
+.hands-release p{margin:0 0 8px}
+.hands-release button{width:100%}
+.hands-pick-count{font:.75rem var(--font-mono)}
+.shift-manual .shift-order-card>p{font-size:.8125rem;line-height:1.4}
+.shift-manual .shift-order-card>button+button{margin-top:8px}
+@media(max-width:900px),(max-height:550px){
+ .hands-carry{min-height:48px;gap:8px;padding:2px 0}
+ .hands-carry canvas{width:40px;height:38px}
+ .hands-carry strong{font-size:.6875rem}
+ .hands-carry p{display:none}
+ .hands-carry span{font-size:.4375rem}
+ #shift-scenes .hands-position button{font-size:.5rem;padding:3px}
+ .hands-actions{margin:6px 0 8px}
+ .hands-actions p{font-size:.625rem}
+ .hands-tools{left:6px;bottom:6px}
+ #shift-scenes .hands-tools button{padding:6px 10px;font-size:.625rem}
+ .shift-manual .scene-label dl div:nth-child(n+3){display:none}
+ .shift-manual #scene-status{font-size:.625rem}
+}

@@ -39,6 +39,9 @@ Backgrounds contain empty rack bays and work areas. Pallets are generated alpha
 layers placed from actual physical state, never painted into the background.
 The renderer must distinguish storage, receiving, shipping and loaded freight.
 Pages change which actual pallets are visible; they do not duplicate inventory.
+All warehouse handling is performed by the player. Keep direct lift, rack
+placement, individual case pick, wrap hold, label, load and release actions in
+the scenes. Do not portray invisible workers progressing freight on a timer.
 Storage pages follow fixed physical rack positions, including empty slots.
 Every pallet keeps the same generated cargo variant between trailer and floor.
 The open-door variants are composited only inside each doorway, preserving the
@@ -54,7 +57,8 @@ Review receiving, storage and shipping together after every visual change.
 ## Layered scene
 
 A background contains an entirely empty trailer. Each real pallet is a separate
-transparent sprite. Scanning removes its sprite and reveals the same floor,
+transparent sprite. Scanning keeps it visible and exposes Unload to Receiving.
+Unloading removes its sprite and reveals the same floor,
 walls, and deeper loads. The backdrop and camera stay registered throughout the
 shipment.
 

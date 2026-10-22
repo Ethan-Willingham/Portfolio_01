@@ -113,7 +113,9 @@ on `archive.html` (In Progress). Use four-foot tiles only in the hidden simulati
 invented client names, and landscape mobile play. Every playable scene uses
 standing eye-level charcoal, rust and cream print art with separate selectable
 pallet layers. The owner explicitly removed the top-down view on 2026-10-22;
-do not restore it. Read `docs/ONE_SHIFT_RECEIVING_ART.md` before changing
+do not restore it. Handling is performed directly by the player, by owner
+instruction on 2026-10-22. Do not schedule an invisible worker to unload, put away,
+pick, wrap or load stock. Read `docs/ONE_SHIFT_RECEIVING_ART.md` before changing
 that art or generating new shipment variants. Read `docs/ONE_SHIFT_PROCESS.md`
 for the physical receiving and shipping flow. Bump every changed CSS/script
 query version. Preserve case conservation, lot dates and the ledger; forklift

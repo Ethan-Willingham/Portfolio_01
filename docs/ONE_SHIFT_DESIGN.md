@@ -1,5 +1,9 @@
 # One Shift: making the warehouse into a business game
 
+Version 3.0 follows the owner's later direction that the player performs all
+handling directly. See [ONE_SHIFT_HANDLING.md](ONE_SHIFT_HANDLING.md). The
+automated worker design and balance evidence below describe the earlier model.
+
 The October 22, 2026 update replaces every public view with the receiving
 scene format: standing eye-level generated art and selectable pallet layers.
 Unloading, Receiving staging and rack putaway are separate physical work.

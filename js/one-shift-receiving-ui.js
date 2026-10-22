@@ -57,7 +57,7 @@
       this.el('deselect').addEventListener('click', () => this.select(null));
       this.el('scan').addEventListener('click', () => this.scan());
       this.el('pause').addEventListener('click', () => { app.paused = !app.paused; if (app.paused) app.audio.suspend(); else app.audio.unlock(); this.updatePanel(); });
-      this.canvas.addEventListener('pointermove', e => { if (e.pointerType === 'touch' || this.scanning || app.rotated) return; const p = this.hit(e); const id = p?.id ?? null; if (id !== this.hover) { this.hover = id; this.canvas.style.cursor = p?.canScan ? 'pointer' : p ? 'not-allowed' : 'default'; this.draw(); } });
+      this.canvas.addEventListener('pointermove', e => { if (e.pointerType === 'touch' || this.scanning || app.rotated) return; const p = this.hit(e); const id = p?.id ?? null; if (id !== this.hover) { this.hover = id; this.canvas.style.cursor = p&&this.canHandle(p) ? 'pointer' : p ? 'not-allowed' : 'default'; this.draw(); } });
       this.canvas.addEventListener('pointerleave', () => { this.hover = null; this.draw(); });
       this.canvas.addEventListener('pointerup', e => { if (app.rotated || this.scanning || e.button > 0) return; this.select(this.hit(e)?.id ?? null); });
       this.element.addEventListener('keydown', e => this.key(e));
@@ -74,6 +74,10 @@
       this.attach(true);
     }
     el(id) { return document.getElementById('receiving-'+id); }
+    manual(){return O.manualHandling?.(this.app.sim.s);}
+    visiblePallet(p){return this.manual()?p.place==='trailer':!p.scanned;}
+    canHandle(p){return p.canScan||!!p.canUnload;}
+    complete(){return this.manual()?this.pallets.every(p=>p.place!=='trailer'):!this.load.remaining;}
     async loadImage(name) {
       const image = new Image(); image.src = ART+name.replace('.png','.webp')+'?v=1'; await image.decode();
       const asset = {image};
@@ -101,23 +105,23 @@
       if (this.state!==this.app.sim.s) { this.attach(false); return; }
       if (!O.business(this.state)) return;
       this.loads=this.app.sim.receivingLoads();
-      const available=this.loads.filter(t=>t.status==='docked'&&t.remaining>0);
+      const available=this.loads.filter(t=>t.status==='docked'&&(this.manual()?t.pallets.some(p=>p.place==='trailer'):t.remaining>0));
       this.launch.hidden=!available.length;
-      this.launch.textContent=available.length?'Receive stock / '+available.reduce((n,t)=>n+t.remaining,0):'Receive stock';
+      this.launch.textContent=available.length?'Receive stock / '+available.reduce((n,t)=>n+(this.manual()?t.pallets.filter(p=>p.place==='trailer').length:t.remaining),0):'Receive stock';
       if (!this.visible) return;
       const load=this.loads.find(t=>t.id===this.truckId);
       if (!load) { this.close();return; }
       this.load=load;
-      const key=JSON.stringify([load.id,load.remaining,load.pallets.map(p=>[p.id,p.scanned,p.canScan,p.reason]),this.app.paused]);
+      const key=JSON.stringify([load.id,load.remaining,load.pallets.map(p=>[p.id,p.scanned,p.canScan,p.canUnload,p.place,p.reason]),this.app.paused]);
       if(this.stateKey===key)return;this.stateKey=key;
       this.pallets=load.pallets;
-      if(this.selected&&!this.pallets.some(p=>p.id===this.selected&&!p.scanned))this.selected=null;
+      if(this.selected&&!this.pallets.some(p=>p.id===this.selected&&this.visiblePallet(p)))this.selected=null;
       this.updateTargets();this.updatePanel();this.draw();
     }
     open(truckId) {
       if(!O.business(this.app.sim.s))return;
       const loads=this.app.sim.receivingLoads();
-      const load=truckId?loads.find(t=>t.id===truckId&&t.status==='docked'):loads.find(t=>t.status==='docked'&&t.remaining);
+      const load=truckId?loads.find(t=>t.id===truckId&&t.status==='docked'):loads.find(t=>t.status==='docked'&&(t.remaining||this.manual()&&t.pallets.some(p=>p.place==='trailer')));
       if(!load)return;
       this.returnFocus=document.activeElement;
       this.truckId=load.id;this.load=load;this.pallets=load.pallets;this.selected=null;this.hover=null;this.notice='';this.stateKey=null;
@@ -167,13 +171,13 @@
     updateTargets() {
       if(!this.visible||!this.scale)return;
       const records=this.pallets||[];
-      this.layout=records.filter(p=>!p.scanned).map(p=>this.geometry(p)).filter(Boolean).sort((a,b)=>b.p.row-a.p.row||a.p.side-b.p.side);
+      this.layout=records.filter(p=>this.visiblePallet(p)).map(p=>this.geometry(p)).filter(Boolean).sort((a,b)=>b.p.row-a.p.row||a.p.side-b.p.side);
       const parent=this.el('targets');
-      for(const [id,node]of this.nodes)if(!records.some(p=>p.id===id&&!p.scanned)){node.remove();this.nodes.delete(id);}
+      for(const [id,node]of this.nodes)if(!records.some(p=>p.id===id&&this.visiblePallet(p))){node.remove();this.nodes.delete(id);}
       for(const q of this.layout){const p=q.p;let node=this.nodes.get(p.id);if(!node){node=document.createElement('button');node.className='receiving-target';node.dataset.pallet=p.id;node.addEventListener('click',()=>this.select(p.id));node.addEventListener('focus',()=>{this.hover=p.id;this.draw();});node.addEventListener('blur',()=>{this.hover=null;this.draw();});parent.append(node);this.nodes.set(p.id,node);}
         node.setAttribute('aria-label','Pallet '+pad(p.index+1)+', '+p.cases+' cases of '+p.name+(p.canScan?'':'. '+p.reason));
-        node.setAttribute('aria-pressed',String(this.selected===p.id));node.setAttribute('aria-disabled',String(!p.canScan));
-        node.tabIndex=p.canScan?0:-1;
+        node.setAttribute('aria-pressed',String(this.selected===p.id));node.setAttribute('aria-disabled',String(!this.canHandle(p)));
+        node.tabIndex=this.canHandle(p)?0:-1;
         Object.assign(node.style,{left:(this.ox+q.x*this.scale)+'px',top:(this.oy+q.y*this.scale)+'px',width:q.w*this.scale+'px',height:q.h*this.scale+'px'});
       }
     }
@@ -188,27 +192,27 @@
     }
     select(id) {
       if(this.scanning||this.app.rotated)return;
-      const p=this.pallets?.find(p=>p.id===id&&!p.scanned);
+      const p=this.pallets?.find(p=>p.id===id&&this.visiblePallet(p));
       this.selected=p?.id??null;this.notice='';
       this.app.audio.unlock();this.updateTargets();this.updatePanel();this.draw();
-      if(p){this.announce(p.canScan?p.name+', '+p.cases+' cases. Ready to scan.':p.reason);if(p.canScan)this.el('scan').focus({preventScroll:true});}
+      if(p){this.announce(p.canUnload?'Label checked. Ready to unload.':p.canScan?p.name+', '+p.cases+' cases. Ready to scan.':p.reason);if(this.canHandle(p))this.el('scan').focus({preventScroll:true});}
     }
     updatePanel() {
       if(!this.visible)return;
-      const p=this.pallets.find(p=>p.id===this.selected&&!p.scanned),complete=!this.load.remaining;
+      const p=this.pallets.find(p=>p.id===this.selected&&this.visiblePallet(p)),complete=this.complete();
       this.el('pause').textContent=this.app.paused?'Resume':'Pause';this.el('pause').setAttribute('aria-pressed',String(this.app.paused));
       this.el('label').hidden=!p;this.el('complete').hidden=!complete||!!this.departing;
-      this.el('count').textContent=this.load.accepted+' / '+this.load.total+' scanned';
+      const done=this.manual()?this.pallets.filter(p=>p.place!=='trailer').length:this.load.accepted;this.el('count').textContent=done+' / '+this.load.total+(this.manual()?' unloaded':' scanned');
       this.el('tally').innerHTML=this.pallets.map(p=>'<i class="'+(p.scanned?'is-received':'')+'"></i>').join('');
-      this.el('instruction').textContent=this.app.paused?'Shift paused.':complete?'All pallets scanned.':this.scanning?'Reading pallet label...':p?(p.canScan?'Scan this pallet.':'Receive the front row first.'):'Select a pallet.';
-      this.el('help').textContent=this.notice|| (complete?'Unload to Receiving, then put away in the racks.':p?'Match the product, case count and lot.':'Work from the dock toward the back.');
-      this.el('complete-copy').textContent=this.load.cases+' cases checked. Return to the floor to unload and put away the stock.';
+      this.el('instruction').textContent=this.app.paused?'Shift paused.':complete?(this.manual()?'Trailer unloaded.':'All pallets scanned.'):this.scanning?(this.scanning.kind==='handUnload'?'Unloading onto the receiving floor...':'Reading pallet label...'):p?(p.canUnload?'Unload this pallet.':p.canScan?'Scan this pallet.':'Receive the front row first.'):'Select a pallet.';
+      this.el('help').textContent=this.notice|| (complete?(this.manual()?'Lift a floor pallet, then choose its rack.':'Unload to Receiving, then put away in the racks.'):p?'Match the product, case count and lot.':'Work from the dock toward the back.');
+      this.el('complete-copy').textContent=this.load.cases+(this.manual()?' cases unloaded. Lift a floor pallet, then choose its rack position.':' cases checked. Return to the floor to unload and put away the stock.');this.el('complete').querySelector('h2').textContent=this.manual()?'Trailer unloaded.':'Labels checked.';this.el('complete').querySelector('.receiving-eyebrow').textContent=this.manual()?'READY FOR PUTAWAY':'READY TO UNLOAD';this.el('finish').textContent=this.manual()?'Put stock away':'Back to the floor';
       if(!p)return;
       this.el('pallet-number').textContent='PALLET '+pad(p.index+1);
       this.el('product').textContent=p.name;this.el('cases').textContent=p.cases;this.el('lot').textContent=p.lot;
-      this.el('scan-note').textContent=this.notice||(!p.canScan?p.reason:this.scanning?'Reading label...':'Ready to receive.');
-      this.el('scan').disabled=!p.canScan||!!this.scanning||this.app.paused||this.assetFailed;
-      this.el('scan').querySelector('span').textContent=this.scanning?'Scanning...':'Scan pallet';
+      this.el('scan-note').textContent=this.notice||(p.canUnload?'Label checked. Pull this pallet onto the receiving floor.':!p.canScan?p.reason:this.scanning?'Reading label...':'Ready to receive.');
+      this.el('scan').disabled=!this.canHandle(p)||!!this.scanning||this.app.paused||this.assetFailed;
+      this.el('scan').querySelector('span').textContent=this.scanning?(this.scanning.kind==='handUnload'?'Unloading...':'Scanning...'):p.canUnload?'Unload to Receiving':'Scan pallet';
       this.drawBarcode(p);
     }
     drawBarcode(p) {
@@ -219,9 +223,9 @@
       g.font='20px "Commit Mono",monospace';g.textAlign='center';g.fillText(b.text,280,115);
     }
     scan() {
-      const p=this.pallets.find(p=>p.id===this.selected&&!p.scanned);
-      if(!p?.canScan||this.scanning||this.app.paused||this.app.rotated||this.app.hidden||this.assetFailed)return;
-      this.app.audio.unlock();this.scanning={id:p.id,time:0,duration:this.reducedMotion()?.12:.7};this.updatePanel();
+      const p=this.pallets.find(p=>p.id===this.selected&&this.visiblePallet(p));
+      if(!p||!this.canHandle(p)||this.scanning||this.app.paused||this.app.rotated||this.app.hidden||this.assetFailed)return;
+      this.app.audio.unlock();this.scanning={id:p.id,kind:p.canUnload?'handUnload':'receivePallet',time:0,duration:this.reducedMotion()? .12:p.canUnload? .4:.7};this.updatePanel();
     }
     reducedMotion() { return this.app.ui.settings.reducedMotion||matchMedia('(prefers-reduced-motion: reduce)').matches; }
     advance(dt) {
@@ -230,14 +234,14 @@
       if(!this.app.paused&&!this.app.rotated&&!this.app.hidden&&!this.app.menuPause){
         if(this.scanning){this.scanning.time+=dt;if(this.scanning.time>=this.scanning.duration){
           const id=this.scanning.id,q=this.layout.find(q=>q.p.id===id);
-          const result=this.app.sim.command({type:'receivePallet',pallet:id});this.scanning=null;
-          if(result.ok){this.app.audio.play('scan');this.departing=q?{q,time:0,duration:this.reducedMotion()?.01:.3}:null;this.selected=null;this.hover=null;this.notice='Pallet '+pad(q.p.index+1)+' scanned. Ready to unload.';this.announce(this.notice);}
+          const kind=this.scanning.kind||'receivePallet',result=this.app.sim.command({type:kind,pallet:id});this.scanning=null;
+          if(result.ok){this.app.audio.play('scan');this.departing=q&&(!this.manual()||kind==='handUnload')?{q,time:0,duration:this.reducedMotion()?.01:.3}:null;this.selected=this.manual()&&kind==='receivePallet'?id:null;this.hover=null;this.notice=kind==='handUnload'?'Pallet unloaded onto the receiving floor.':this.manual()?'Label checked. Unload this pallet.':'Pallet '+pad(q.p.index+1)+' scanned. Ready to unload.';this.announce(this.notice);}
           else{this.notice=result.reason;this.app.audio.play('error');this.announce(result.reason);}
           this.stateKey=null;this.sync();
-          const next=this.pallets.find(p=>!p.scanned&&p.canScan);
+          const next=this.pallets.find(p=>this.visiblePallet(p)&&this.canHandle(p));if(this.manual()&&kind==='receivePallet'&&result.ok){this.el('scan').focus({preventScroll:true});return;}
           if(next)this.nodes.get(next.id)?.focus({preventScroll:true});else if(result.ok)this.el('finish').focus({preventScroll:true});
         }}
-        if(this.departing){this.departing.time+=dt;if(this.departing.time>=this.departing.duration){this.departing=null;this.updatePanel();if(!this.load.remaining)this.el('finish').focus({preventScroll:true});}}
+        if(this.departing){this.departing.time+=dt;if(this.departing.time>=this.departing.duration){this.departing=null;this.updatePanel();if(this.complete())this.el('finish').focus({preventScroll:true});}}
       }
       if(animated)this.draw();
     }
@@ -257,7 +261,7 @@
       g.save();g.globalAlpha=opacity;
       const draw=(dx=0,dy=0)=>g.drawImage(asset.image,b.x,b.y,b.w,b.h,x+dx,y+dy,w,h);
       // Alpha-aware outline follows the generated wooden pallet and cartons, not a rectangle.
-      if(active&&p.canScan){g.shadowColor=PAPER;g.shadowBlur=0;for(const [dx,dy]of [[-4,0],[4,0],[0,-4],[0,4]]){g.shadowOffsetX=dx*this.scale*this.dpr;g.shadowOffsetY=dy*this.scale*this.dpr;draw();}g.shadowColor='transparent';}
+      if(active&&this.canHandle(p)){g.shadowColor=PAPER;g.shadowBlur=0;for(const [dx,dy]of [[-4,0],[4,0],[0,-4],[0,4]]){g.shadowOffsetX=dx*this.scale*this.dpr;g.shadowOffsetY=dy*this.scale*this.dpr;draw();}g.shadowColor='transparent';}
       if(q.depth>0)g.filter='brightness('+(1-q.depth*.13)+')';
       draw();g.filter='none';
       // A small genuine inventory label is added by the game, keeping AI text out of the artwork.
@@ -266,8 +270,8 @@
       const barcode=O.labels.encode(p.sscc),scale=(lw-5)/barcode.width;
       for(const bar of barcode.bars)g.fillRect(lx+2+bar.x*scale,ly+3,Math.max(.45,bar.w*scale),lh-10);
       g.font='5px "Commit Mono",monospace';g.textAlign='center';g.fillText(pad(p.index+1),lx+lw/2,ly+lh-2);
-      if(active&&p.canScan){g.fillStyle=INK;g.fillRect(x+w/2-28,y-32,56,23);g.fillStyle=PAPER;g.font='13px "Commit Mono",monospace';g.textAlign='center';g.fillText(pad(p.index+1),x+w/2,y-16);}
-      if(this.scanning?.id===p.id&&!this.reducedMotion()){const sy=y+12+(h-24)*Math.min(1,this.scanning.time/this.scanning.duration);g.strokeStyle=PAPER;g.lineWidth=3;g.beginPath();g.moveTo(x-7,sy);g.lineTo(x+w+7,sy);g.stroke();g.fillStyle=RUST;g.fillRect(x-10,sy-4,4,8);g.fillRect(x+w+6,sy-4,4,8);}
+      if(active&&this.canHandle(p)){g.fillStyle=INK;g.fillRect(x+w/2-28,y-32,56,23);g.fillStyle=PAPER;g.font='13px "Commit Mono",monospace';g.textAlign='center';g.fillText(pad(p.index+1),x+w/2,y-16);}
+      if(this.scanning?.id===p.id&&this.scanning.kind!=='handUnload'&&!this.reducedMotion()){const sy=y+12+(h-24)*Math.min(1,this.scanning.time/this.scanning.duration);g.strokeStyle=PAPER;g.lineWidth=3;g.beginPath();g.moveTo(x-7,sy);g.lineTo(x+w+7,sy);g.stroke();g.fillStyle=RUST;g.fillRect(x-10,sy-4,4,8);g.fillRect(x+w+6,sy-4,4,8);}
       g.restore();
     }
     key(e) {

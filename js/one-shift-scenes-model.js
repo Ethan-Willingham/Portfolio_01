@@ -43,6 +43,7 @@
     return null;
   }
   function statusFor(sim,p,job,scene){
+    if(O.manualHandling?.(sim.s))return scene==='staging'?'Lift this pallet and take it to a rack.':scene==='storage'?(sim.claimedCases(p.id)?sim.claimedCases(p.id)+' cases on your pick list':'Available stock'):!p.businessOrder?'Return this stock to a rack.':!p.wrapped?'Wrap this pallet.':!p.labelled?'Apply its shipping label.':'Ready for you to load.';
     const task=job?.task,active=job?.active;
     if(p.hold)return 'On hold';
     if(task?.kind==='unload')return active&&task.phase==='dest'?'Moving into Receiving':'Awaiting unload';
@@ -85,6 +86,7 @@
     const s=sim.s,tasks=tasksOf(s),pallets=[],rackPositions=[];
     if(scene==='storage')for(const rack of s.map.racks.slice().sort((a,b)=>a.id-b.id))for(let level=0;level<rack.levels;level++)for(let side=0;side<2;side++)rackPositions.push({rack:rack.id,x:rack.x+side,y:rack.y,level});
     for(const p of s.pallets){
+      if(O.manualHandling?.(s)&&s.commerce.hands.carry===p.id)continue;
       const job=taskFor(tasks,p);
       if(sceneFor(sim,p,job)!==scene)continue;
       const rack=p.place==='storage'?s.map.racks.find(r=>r.y===p.y&&p.x>=r.x&&p.x<r.x+2):null;
@@ -92,12 +94,13 @@
       pallets.push({id:p.id,item:p.item,name:O.catalog?.[p.item]?.name||O.items[p.item].name,cases:p.cases,lot:p.lot,bestBy:p.bestBy,receivedDay:p.receivedDay,place:p.place,status:statusFor(sim,p,job,scene),selectable:true,sscc:p.sscc,wrapped:!!p.wrapped,labelled:!!p.labelled,order:p.businessOrder||null,worker:job?.worker.name||null,rack:rack?.id||null,level:p.level,moving:p.place==='transit',held:!!p.hold,position});
     }
     pallets.sort((a,b)=>a.id-b.id);
+    const manualFloor=O.manualHandling?.(s)&&scene!=='storage'?sim.handFloorSlots(scene==='staging'?'receiving':'shipping'):null;
     let extra=0;
     pallets.forEach((p,index)=>{
-      p.position=scene==='storage'?(p.position>=0?p.position:rackPositions.length+extra++):index;
+      p.position=scene==='storage'?(p.position>=0?p.position:rackPositions.length+extra++):manualFloor?manualFloor.findIndex(d=>d.x===s.pallets.find(q=>q.id===p.id).x&&d.y===s.pallets.find(q=>q.id===p.id).y):index;
       p.slot=p.position%PAGE_SIZE;p.page=Math.floor(p.position/PAGE_SIZE);
     });
-    const total=pallets.length,capacity=scene==='storage'?rackPositions.length+extra:total,pages=Math.max(1,Math.ceil(capacity/PAGE_SIZE)),requested=Number(page);
+    const total=pallets.length,capacity=scene==='storage'?rackPositions.length+extra:manualFloor?manualFloor.length:total,pages=Math.max(1,Math.ceil(capacity/PAGE_SIZE)),requested=Number(page);
     page=Math.max(0,Math.min(pages-1,Number.isFinite(requested)?Math.trunc(requested):0));
     // Work may mention a pallet still inside a trailer or an empty shipping
     // pallet. Only actual positive-case freight appears in the scene itself.
@@ -110,7 +113,7 @@
       if(cases)work.push(cases+' cases loaded on the '+(truck.departureRequested?'departing':'customer')+' truck.');
     }
     const visible=pallets.filter(p=>p.page===page),emptyText=scene==='storage'&&total&&!visible.length?'No stock in this rack section.':scenes[scene].emptyText;
-    return {scene,...scenes[scene],emptyText,page,pages,total,capacity,pallets:visible,work};
+    return {scene,...scenes[scene],emptyText,page,pages,total,capacity,pallets:visible,work:O.manualHandling?.(s)?[sim.handInstruction(scene)]:work};
   };
   O.sceneBuyRack=function(sim){
     const s=sim.s;

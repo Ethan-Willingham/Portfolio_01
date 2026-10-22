@@ -1,5 +1,11 @@
 # One Shift warehouse process
 
+The current process is controlled directly by the player at every step. Read
+[ONE_SHIFT_HANDLING.md](ONE_SHIFT_HANDLING.md) for the active receiving, putaway,
+individual case picking, wrapping, label, loading and release interactions.
+The worker descriptions below record the preceding automated implementation;
+they are historical and must not be restored to public play.
+
 The owner requested the whole game to match the receiving art and a believable
 warehouse process on October 22, 2026. One Shift remains an inventory business:
 it owns its stock, pays suppliers, and earns sales revenue when customer loads

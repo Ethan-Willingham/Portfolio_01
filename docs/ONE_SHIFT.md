@@ -1,6 +1,19 @@
 # One Shift
 
-The public game at `one-shift.html` is an inventory business game, version 2.7.
+The public game at `one-shift.html` is a hands-on inventory business, version 3.0.
+The player now performs every handling step directly. Read
+[the direct handling model](ONE_SHIFT_HANDLING.md) for the current controls,
+rules, source modules, save migration and checks. This supersedes the earlier
+automatic worker behavior documented below. There is no autonomous handling
+or worker travel in public play.
+
+The player scans and unloads each pallet, lifts it onto a jack and chooses its
+rack. For orders, the player takes an empty pallet, picks each case, sets it in
+Shipping, holds to wrap, applies a label, calls the truck, loads and releases it.
+Waiting never completes those steps. The eye-level print art remains the target.
+
+## Earlier automated model (historical)
+
 Start at the receiving dock with six pallets of owned stock and $200. Hover or
 tap a front pallet, select it, and scan its label. Each accepted pallet clears
 from the illustrated trailer, exposing the loads behind it. After all six,
