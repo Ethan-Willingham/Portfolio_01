@@ -311,43 +311,47 @@
   const waterGLSL=`
     uniform sampler2D uNoise;uniform float uOpenSea;uniform float uDetailMotion;
     ${root.WidewakeWaves?.glsl||''}
-    vec3 seaColor(vec2 world,float depth,float salt,vec2 current,float time,float zoom){
-      // Follow the isometric viewing ray back onto the displaced surface.
-      vec2 p=world;vec3 wave=waveSurface(p,time,depth,salt,uOpenSea);
-      p=world+wave.x*1.22474487;wave=waveSurface(p,time,depth,salt,uOpenSea);
-      p=world+wave.x*1.22474487;wave=waveSurface(p,time,depth,salt,uOpenSea);
-      p=world+wave.x*1.22474487;wave=waveSurface(p,time,depth,salt,uOpenSea);
+    vec3 seaSample(vec2 world,float time,float depth,float salt,out vec2 p){
+      // Intersect the camera ray with the physical surface. Newton correction
+      // resolves both color and depth with the same four wave evaluations.
+      float h=waveSurface(world,time,depth,salt,uOpenSea).x;vec3 q;
+      for(int i=0;i<2;i++){q=waveSurface(world+h*1.22474487,time,depth,salt,uOpenSea);h+=clamp((q.x-h)/max(.22,1.-1.22474487*(q.y+q.z)),-3.,3.);}
+      p=world+h*1.22474487;return waveSurface(p,time,depth,salt,uOpenSea);
+    }
+    vec3 seaColorAt(vec2 p,vec3 wave,float depth,float salt,vec2 current,float time,float zoom){
       float exposure=seaExposure(p,depth,salt,uOpenSea);
       vec2 drift=current*time*.45;
       float broad=texture(uNoise,p*.0018).r,grain=texture(uNoise,(p-drift)*.037).g;
-      vec3 offshore=vec3(.038,.165,.235),coastal=vec3(.058,.275,.305),river=vec3(.075,.235,.235);
+      vec3 offshore=vec3(.032,.175,.235),coastal=vec3(.052,.295,.315),river=vec3(.075,.235,.235);
       float shelf=exp(-max(depth,0.)*.075);
       vec3 base=mix(offshore,coastal,shelf*.8+.12);base=mix(river,base,salt);
-      base*=.90+broad*.18;
+      base*=.96+broad*.08;
       float bottom=exp(-max(depth,0.)*.62);
       base=mix(base,vec3(.23,.39,.32)+grain*.035,bottom*.72);
       vec3 normal=normalize(vec3(-wave.y,-wave.z,1.));
-      float face=max(0.,dot(normal,normalize(vec3(-.45,-.65,.8))));
-      float lift=wave.x/(.5+exposure*3.2);
-      // Lit faces and reflected sky give each short swell a rounded shoulder.
-      // Height tint stays weak: a crest must not become a bright diagonal band.
-      float sky=pow(max(0.,dot(normal,normalize(vec3(.32,.18,1.)))),10.);
-      vec3 result=base*(.52+face*.67+lift*.045);
-      result+=vec3(.045,.10,.125)*sky*(.3+exposure*.7);
-      float reflection=pow(max(0.,dot(normal,normalize(vec3(-.10,-.22,1.)))),85.);
+      vec3 sun=normalize(vec3(-.70,.25,.55)),eye=vec3(.61237244,.61237244,.5);
+      float face=max(0.,dot(normal,sun)),fresnel=.025+.975*pow(1.-max(0.,dot(normal,eye)),5.);
+      // One coherent light direction: reflected sky reinforces the lit face
+      // rather than filling its shadow and cancelling the shape of each wave.
+      vec3 result=base*(.28+face*1.20);
+      result=mix(result,vec3(.31,.53,.59),fresnel*.72);
+      float reflection=pow(max(0.,dot(normal,normalize(sun+eye))),150.);
       float glitter=texture(uNoise,(p-drift)*.065+vec2(time*.007,0.)).r;
-      result+=vec3(.16,.24,.25)*reflection*(.06+.12*smoothstep(.55,.82,glitter))*smoothstep(.1,1.,zoom)*uDetailMotion;
-      // Foam breaks into short uneven crests, never a screen-aligned grid.
-      float crest=wave.x/(.15+exposure*2.55),aa=max(fwidth(crest),.015);
+      result+=vec3(.40,.47,.45)*reflection*(.08+.18*smoothstep(.50,.79,glitter))*smoothstep(.1,1.,zoom)*uDetailMotion;
+      // A thin broken lip follows the ridge of the swell. A height threshold
+      // alone paints broad foam islands and hides the direction of the face.
+      float crest=wave.x/max(.2,exposure),ridgeSlope=dot(wave.yz,vec2(-.7909677,.6118579))/max(.2,exposure);
+      float aa=max(fwidth(ridgeSlope),.006),lip=1.-smoothstep(.018+aa,.080+aa,abs(ridgeSlope+.018));
       float broken=texture(uNoise,p*.004+vec2(time*.0009,-time*.0005)).b;
       float lace=texture(uNoise,p*.018+vec2(time*.001,-time*.0007)).r;
-      float foam=smoothstep(.70-aa,1.08+aa,crest)*smoothstep(.46,.74,broken)*(.25+.75*lace)*exposure*.44;
-      result=mix(result,vec3(.70,.85,.82),foam);
+      float foam=smoothstep(.55,1.55,crest)*lip*smoothstep(.40,.70,broken)*(.30+.70*lace)*exposure*.44;
+      result=mix(result,vec3(.73,.87,.83),foam);
       float fine=texture(uNoise,(p-drift)*vec2(.11,.17)+vec2(time*.012,-time*.009)).r;
       result+=vec3(.018,.032,.035)*(fine-.5)*smoothstep(.4,2.,zoom);
       float edge=exp(-abs(depth-.22)*3.8),wash=.45+.55*sin(time*.95+depth*7.+broad*5.);
       result=mix(result,vec3(.55,.76,.68),edge*(.22+wash*.20));return result;
     }
+    vec3 seaColor(vec2 world,float depth,float salt,vec2 current,float time,float zoom){vec2 p;vec3 wave=seaSample(world,time,depth,salt,p);return seaColorAt(p,wave,depth,salt,current,time,zoom);}
   `;
   // Twelve seconds of world-space history, with fixed storage independent of
   // enemy count or session length. Only friendly hulls produce persistent wakes.
@@ -359,7 +363,7 @@
       for(let id=0;id<this.limit;id++){
         const t=this.tracks[id],s=ships[id],p=poses[id];if(!s||!p||s.hp<=0){t.count=0;continue;}
         const c=Math.cos(p.angle),sn=Math.sin(p.angle),x=p.x-c*s.length*.38,y=p.y-sn*s.length*.38,speed=Math.hypot(s.vx,s.vy);
-        t.width=s.width*.40;t.spread=.25+Math.sqrt(s.speed)*.20;t.liveX=x;t.liveY=y;t.liveTime=time;t.livePower=Math.min(1,speed/(s.speed*.8));
+        t.width=s.width*.42;t.spread=Math.min(12,.5+s.speed*.14);t.churn=Math.max(.32,Math.min(1.8,s.length/Math.max(8,s.speed)*1.6));t.liveX=x;t.liveY=y;t.liveTime=time;t.livePower=Math.min(1,speed/(s.speed*.8));
         const previous=(t.head+127)%128;
         if(time<t.last||t.count&&Math.hypot(x-t.x[previous],y-t.y[previous])>Math.max(40,s.length*2)){t.count=0;t.last=-1;}
         while(t.count&&time-t.time[(t.head-t.count+128)%128]>this.life)t.count--;
@@ -388,10 +392,10 @@
           const i=(t.head-t.count+n+128)%128,next=Math.min(t.count,n+stride),live=next===t.count,j=(t.head-t.count+next+128)%128;
           const x=t.x[i],y=t.y[i],ex=live?t.liveX:t.x[j],ey=live?t.liveY:t.y[j],endTime=live?t.liveTime:t.time[j],age=now-t.time[i],endAge=now-endTime;
           if(age>=this.life||endTime-t.time[i]>.5||Math.hypot(ex-x,ey-y)<.04)continue;
-          this.tangent(t,n,this.startNormal);this.tangent(t,next,this.endNormal);const left=this.startNormal,right=this.endNormal,width=Math.min(left[2],t.width+Math.max(0,age)**.72*t.spread*t.power[i]**2),endWidth=Math.min(right[2],t.width+Math.max(0,endAge)**.72*t.spread*(live?t.livePower:t.power[j])**2);
+          this.tangent(t,n,this.startNormal);this.tangent(t,next,this.endNormal);const left=this.startNormal,right=this.endNormal,width=Math.min(left[2],t.width+Math.max(0,age)*t.spread*t.power[i]**1.2),endWidth=Math.min(right[2],t.width+Math.max(0,endAge)*t.spread*(live?t.livePower:t.power[j])**1.2);
           if(!view.visible((x+ex)*.5,(y+ey)*.5,(Math.hypot(ex-x,ey-y)+width)*scale+2))continue;
           const alpha=t.power[i]*Math.pow(Math.max(0,1-age/this.life),1.5)*Math.min(1,n/6),endAlpha=(live?t.livePower:t.power[j])*Math.pow(Math.max(0,1-endAge/this.life),1.5)*Math.min(1,next/6);
-          emit(x,y,ex,ey,width,endWidth,alpha,endAlpha,left[0],left[1],right[0],right[1]);
+          emit(x,y,ex,ey,width,endWidth,alpha,endAlpha,left[0],left[1],right[0],right[1],Math.max(0,age),Math.max(0,endAge),t.churn);
         }
       }
       // Small bow shoulders indicate speed and hull heading without covering it.
@@ -404,7 +408,7 @@
     }
     drawCanvas(view){const c=view.fallback,sea=view.battle.sea;let count=0;c.save();c.lineJoin='round';
       const surface=(x,y)=>view.project(x,y,(sea?.at(x,y,view.visualTime,this._surface||(this._surface={}),-1,false).height||0)+.05);
-      this.segments(view,(x,y,ex,ey,w,ew,a,ea,nx,ny,enx,eny)=>{
+      this.segments(view,(x,y,ex,ey,w,ew,a,ea,nx,ny,enx,eny,age=0,endAge=0,churn=.5)=>{
         if(sea?.field&&sea.field.sample((x+ex)*.5,(y+ey)*.5,this._water||(this._water={})).depth<.3)return;
         if(nx===undefined){const length=Math.hypot(ex-x,ey-y)||1;nx=enx=-(ey-y)/length;ny=eny=(ex-x)/length;}
         if(sea?.field){
@@ -413,37 +417,42 @@
           const wet=scale=>{for(let n=0;n<=4;n++){const t=n/4,px=x+(ex-x)*t,py=y+(ey-y)*t,ox=(nx*w*(1-t)+enx*ew*t)*scale,oy=(ny*w*(1-t)+eny*ew*t)*scale;for(const side of [-1,1])if(sea.field.sample(px+ox*side,py+oy*side,this._water).depth<.3)return false;}return true;};
           if(!wet(1)){if(!wet(0))return;let lo=0,hi=1;for(let n=0;n<6;n++){const mid=(lo+hi)/2;if(wet(mid))lo=mid;else hi=mid;}w*=lo;ew*=lo;}
         }
-        const left=surface(x+nx*w,y+ny*w),right=surface(x-nx*w,y-ny*w),endLeft=surface(ex+enx*ew,ey+eny*ew),endRight=surface(ex-enx*ew,ey-eny*ew),opacity=(a+ea)*.5;
-        // Shared projected endpoints keep the feathering continuous through
-        // bends. Interpolate eight soft strips from four surface samples;
-        // a separate linear gradient per segment would leave stair-step seams.
-        c.fillStyle='#c0dfdc';
-        for(let band=8;band>0;band--){const inset=(1-band/8)*.5;
-          c.globalAlpha=opacity*.085;c.beginPath();
-          c.moveTo(left.x+(right.x-left.x)*inset,left.y+(right.y-left.y)*inset);
-          c.lineTo(endLeft.x+(endRight.x-endLeft.x)*inset,endLeft.y+(endRight.y-endLeft.y)*inset);
-          c.lineTo(endRight.x+(endLeft.x-endRight.x)*inset,endRight.y+(endLeft.y-endRight.y)*inset);
-          c.lineTo(right.x+(left.x-right.x)*inset,right.y+(left.y-right.y)*inset);c.closePath();c.fill();
+        const left=surface(x+nx*w,y+ny*w),right=surface(x-nx*w,y-ny*w),endLeft=surface(ex+enx*ew,ey+eny*ew),endRight=surface(ex-enx*ew,ey-eny*ew);
+        // Old prop wash clears in the middle. The two widening, broken shoulders
+        // carry the wake after the short, white stern churn has subsided.
+        const shade=(life,across,px,py,power)=>{const noise=.5+.25*Math.sin(px*.71+py*.29)+.25*Math.sin(px*.23-py*.83),mature=1-Math.exp(-life*2.2),flank=.25+.5*mature+(noise-.5)*.12,young=Math.exp(-life/churn*2),shoulder=Math.exp(-(((Math.abs(across)-flank)*9)**2)),core=Math.exp(-across*across*10)*young,broken=Math.max(0,Math.min(1,(noise-.28)/.4)),foam=core*(.55+noise*.35)+shoulder*mature*(.05+broken*.52),wash=(1-across*across)*.035*(1-young),white=Math.max(0,Math.min(1,(foam-.035)/.215)),alpha=(foam+wash)*power;return`rgba(${Math.round(51+145*white)},${Math.round(122+105*white)},${Math.round(143+76*white)},${alpha})`;};
+        const sx=(left.x+right.x)*.5,sy=(left.y+right.y)*.5,tx=(endLeft.x+endRight.x)*.5,ty=(endLeft.y+endRight.y)*.5;
+        for(let band=0;band<24;band++){const lo=band/24,hi=(band+1)/24,across=lo+hi-1,gradient=c.createLinearGradient(sx,sy,tx,ty);
+          gradient.addColorStop(0,shade(age,across,x+nx*w*across,y+ny*w*across,a));gradient.addColorStop(1,shade(endAge,across,ex+enx*ew*across,ey+eny*ew*across,ea));c.globalAlpha=1;c.fillStyle=gradient;c.beginPath();
+          c.moveTo(left.x+(right.x-left.x)*lo,left.y+(right.y-left.y)*lo);
+          c.lineTo(endLeft.x+(endRight.x-endLeft.x)*lo,endLeft.y+(endRight.y-endLeft.y)*lo);
+          c.lineTo(endLeft.x+(endRight.x-endLeft.x)*hi,endLeft.y+(endRight.y-endLeft.y)*hi);
+          c.lineTo(left.x+(right.x-left.x)*hi,left.y+(right.y-left.y)*hi);c.closePath();c.fill();
         }count++;
       });c.restore();view.stats.wakeSegments=count;
     }
   }
   const wakeVertex=`#version 300 es
-    precision highp float;layout(location=0)in vec2 aPosition;layout(location=2)in vec4 aWorld;layout(location=3)in vec4 aPose;layout(location=4)in vec2 aFade;layout(location=5)in vec4 aWater;uniform vec2 uSize;uniform vec2 uCamera;uniform float uZoom;uniform float uTime;uniform float uOpenSea;out vec2 uv;out vec2 world;out float opacity;out float wetDepth;
+    precision highp float;layout(location=0)in vec2 aPosition;layout(location=2)in vec4 aWorld;layout(location=3)in vec4 aPose;layout(location=4)in vec2 aFade;layout(location=5)in vec4 aWater;layout(location=6)in vec3 aLife;layout(location=7)in vec4 aEdges;uniform vec2 uSize;uniform vec2 uCamera;uniform float uZoom;uniform float uTime;uniform float uOpenSea;out vec2 uv;out vec2 world;out vec2 flatWorld;out vec2 wetWater;out float opacity;out float age;out float churn;
     ${root.WidewakeWaves?.glsl||''}
-    void main(){uv=aPosition*.5+.5;vec2 p=mix(aWorld.xy,aWorld.zw,uv.x)+mix(aPose.xy,aPose.zw,uv.x)*aPosition.y;world=p+uCamera;opacity=mix(aFade.x,aFade.y,uv.x);vec2 water=mix(aWater.xy,aWater.zw,uv.x);wetDepth=water.x;float z=waveSurface(world,uTime,water.x,water.y,uOpenSea).x+.05;vec2 screen=vec2((p.x-p.y)*.70710678,(p.x+p.y)*.35355339-z*.8660254)*uZoom;gl_Position=vec4(screen.x/uSize.x*2.,-screen.y/uSize.y*2.,clamp(-((p.x+p.y)*.6123724+z*.5)/20000.,-.99,.99),1.);}`;
+    void main(){uv=aPosition*.5+.5;vec2 p=mix(aWorld.xy,aWorld.zw,uv.x)+mix(aPose.xy,aPose.zw,uv.x)*aPosition.y;world=p+uCamera;opacity=mix(aFade.x,aFade.y,uv.x);wetWater=mix(aWater.xy,aWater.zw,uv.x);vec2 edgeDepth=mix(aEdges.xy,aEdges.zw,uv.x);wetWater.x=mix(wetWater.x,aPosition.y<0.?edgeDepth.x:edgeDepth.y,abs(aPosition.y));age=mix(aLife.x,aLife.y,uv.x);churn=aLife.z;float z=waveSurface(world,uTime,wetWater.x,wetWater.y,uOpenSea).x+.05;flatWorld=world-z*1.22474487;vec2 screen=vec2((p.x-p.y)*.70710678,(p.x+p.y)*.35355339-z*.8660254)*uZoom;gl_Position=vec4(screen.x/uSize.x*2.,-screen.y/uSize.y*2.,clamp(-((p.x+p.y)*.6123724+z*.5)/20000.,-.99,.99),1.);}`;
   const wakeFragment=`#version 300 es
-    precision highp float;in vec2 uv;in vec2 world;in float opacity;in float wetDepth;uniform sampler2D uNoise;uniform float uTime;out vec4 color;
-    void main(){if(wetDepth<.3)discard;float coarse=texture(uNoise,world*.003+vec2(uTime*.0008,0.)).g;float foam=texture(uNoise,world*.012+vec2(uTime*.0015,0.)).r;float y=abs(uv.y*2.-1.+(coarse-.5)*.18);float core=exp(-y*y*3.2);float feather=1.-smoothstep(.52+coarse*.15,1.,y);float churn=.34+foam*.40+coarse*.22;float alpha=core*feather*churn*opacity;if(alpha<.008)discard;color=vec4(.73,.88,.87,alpha);}`;
+    precision highp float;in vec2 uv;in vec2 world;in vec2 flatWorld;in vec2 wetWater;in float opacity;in float age;in float churn;uniform float uTime;uniform vec2 uCamera;out vec4 color;
+    ${waterGLSL}
+    void main(){if(wetWater.x<.3)discard;float coarse=texture(uNoise,world*.003).g,fine=texture(uNoise,world*.018).r;float y=abs(uv.y*2.-1.);float mature=1.-exp(-age*2.2),young=exp(-age/max(.1,churn)*2.);float flank=.25+.5*mature+(coarse-.5)*.12;float shoulder=exp(-pow((y-flank)*9.,2.));float broken=smoothstep(.28,.58,coarse)*smoothstep(.34,.62,fine);float core=exp(-y*y*10.)*young*(.50+.50*smoothstep(.30,.62,fine));float white=core*.86+shoulder*mature*(.045+broken*.64);float wash=(1.-y*y)*.035*(1.-young);float alpha=(white+wash)*opacity*(1.-smoothstep(.90,1.,y));if(alpha<.008)discard;vec2 hitWorld;vec3 wave=seaSample(flatWorld,uTime,wetWater.x,wetWater.y,hitWorld);gl_FragDepth=clamp(.5-((hitWorld.x+hitWorld.y-uCamera.x-uCamera.y)*.6123724+wave.x*.5)/40000.,.005,.995)-.000004;color=vec4(mix(vec3(.20,.48,.56),vec3(.77,.89,.86),smoothstep(.035,.25,white)),alpha);}`;
   class WaterMotion{
     constructor(view){this.view=view;const gl=view.gl,O=root.WidewakeOcean,vertices=[];
       // Subdivide each ribbon across its width so expanding foam conforms to
       // a curved swell instead of cutting one flat triangle through it.
       for(let x=0;x<2;x++)for(let y=0;y<4;y++){const a=x-1,b=x,c=y*.5-1,d=c+.5;vertices.push(a,c,b,c,b,d,a,c,b,d,a,d);}
       this.program=O.program(gl,wakeVertex,wakeFragment);this.batch=new O.Batch(gl,new Float32Array(vertices),3120,true);
-      const b=this.batch;b.data=new Float32Array(b.capacity*14);gl.bindVertexArray(b.vao);gl.bindBuffer(gl.ARRAY_BUFFER,b.instances);gl.bufferData(gl.ARRAY_BUFFER,b.data.byteLength,gl.DYNAMIC_DRAW);for(const [index,size,offset]of [[2,4,0],[3,4,16],[4,2,32],[5,4,40]]){gl.enableVertexAttribArray(index);gl.vertexAttribPointer(index,size,gl.FLOAT,false,56,offset);gl.vertexAttribDivisor(index,1);}}
-    draw(){const v=this.view,gl=v.gl,field=v.battle.sea?.field;this.batch.count=0;v.wakes.segments(v,(x,y,ex,ey,w,ew,a,ea,nx,ny,enx,eny)=>{const b=this.batch;if(b.count>=b.capacity)return;const start=field?.sample(x,y,this._start||(this._start={})),end=field?.sample(ex,ey,this._end||(this._end={}));if(start&&start.depth<.3&&end.depth<.3)return;if(nx===undefined){const length=Math.hypot(ex-x,ey-y)||1;nx=enx=-(ey-y)/length;ny=eny=(ex-x)/length;}let i=b.count++*14;const d=b.data;d[i++]=x-v.camera.x;d[i++]=y-v.camera.y;d[i++]=ex-v.camera.x;d[i++]=ey-v.camera.y;d[i++]=nx*w;d[i++]=ny*w;d[i++]=enx*ew;d[i++]=eny*ew;d[i++]=a;d[i++]=ea;d[i++]=start?.depth??22;d[i++]=start?.salinity??1;d[i++]=end?.depth??22;d[i]=end?.salinity??1;});v.stats.wakeSegments=this.batch.count;
-      v.uniforms(this.program);gl.uniform2f(gl.getUniformLocation(this.program,'uCamera'),v.camera.x,v.camera.y);gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,v.noise);gl.uniform1i(gl.getUniformLocation(this.program,'uNoise'),2);gl.uniform1f(gl.getUniformLocation(this.program,'uTime'),v.visualTime);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false);const b=this.batch;gl.bindVertexArray(b.vao);gl.bindBuffer(gl.ARRAY_BUFFER,b.instances);gl.bufferSubData(gl.ARRAY_BUFFER,0,b.data,0,b.count*14);if(b.count)gl.drawArraysInstanced(gl.TRIANGLES,0,b.vertexCount,b.count);gl.depthMask(true);gl.disable(gl.BLEND);return b.count?1:0;}
+      const b=this.batch;b.data=new Float32Array(b.capacity*21);gl.bindVertexArray(b.vao);gl.bindBuffer(gl.ARRAY_BUFFER,b.instances);gl.bufferData(gl.ARRAY_BUFFER,b.data.byteLength,gl.DYNAMIC_DRAW);for(const [index,size,offset]of [[2,4,0],[3,4,16],[4,2,32],[5,4,40],[6,3,56],[7,4,68]]){gl.enableVertexAttribArray(index);gl.vertexAttribPointer(index,size,gl.FLOAT,false,84,offset);gl.vertexAttribDivisor(index,1);}}
+    draw(){const v=this.view,gl=v.gl,field=v.battle.sea?.field;this.batch.count=0;v.wakes.segments(v,(x,y,ex,ey,w,ew,a,ea,nx,ny,enx,eny,age=0,endAge=0,churn=.5)=>{const b=this.batch;if(b.count>=b.capacity)return;const start=field?.sample(x,y,this._start||(this._start={})),end=field?.sample(ex,ey,this._end||(this._end={}));if(start&&start.depth<.3&&end.depth<.3)return;if(nx===undefined){const length=Math.hypot(ex-x,ey-y)||1;nx=enx=-(ey-y)/length;ny=eny=(ex-x)/length;}let i=b.count++*21;const d=b.data;d[i++]=x-v.camera.x;d[i++]=y-v.camera.y;d[i++]=ex-v.camera.x;d[i++]=ey-v.camera.y;d[i++]=nx*w;d[i++]=ny*w;d[i++]=enx*ew;d[i++]=eny*ew;d[i++]=a;d[i++]=ea;d[i++]=start?.depth??22;d[i++]=start?.salinity??1;d[i++]=end?.depth??22;d[i++]=end?.salinity??1;d[i++]=age;d[i++]=endAge;d[i++]=churn;
+        // The middle can remain navigable while either expanding shoulder
+        // reaches a bank. Carry both edge depths without flattening that channel.
+        const edge=this._edge||(this._edge={});d[i++]=field?.sample(x-nx*w,y-ny*w,edge).depth??22;d[i++]=field?.sample(x+nx*w,y+ny*w,edge).depth??22;d[i++]=field?.sample(ex-enx*ew,ey-eny*ew,edge).depth??22;d[i]=field?.sample(ex+enx*ew,ey+eny*ew,edge).depth??22;
+      });v.stats.wakeSegments=this.batch.count;
+      v.uniforms(this.program);gl.uniform2f(gl.getUniformLocation(this.program,'uCamera'),v.camera.x,v.camera.y);gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,v.noise);gl.uniform1i(gl.getUniformLocation(this.program,'uNoise'),2);gl.uniform1f(gl.getUniformLocation(this.program,'uTime'),v.visualTime);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false);const b=this.batch;gl.bindVertexArray(b.vao);gl.bindBuffer(gl.ARRAY_BUFFER,b.instances);gl.bufferSubData(gl.ARRAY_BUFFER,0,b.data,0,b.count*21);if(b.count)gl.drawArraysInstanced(gl.TRIANGLES,0,b.vertexCount,b.count);gl.depthMask(true);gl.disable(gl.BLEND);return b.count?1:0;}
     dispose(){this.batch.dispose();this.view.gl.deleteProgram(this.program);}
   }
   const shadowVertex=`#version 300 es

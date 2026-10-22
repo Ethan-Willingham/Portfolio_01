@@ -5,25 +5,24 @@
   const ground=(field,x,y)=>{const p=field.sample(x,y);return p.depth>0?0:Math.min(7,.8-p.edge*.055);};
   const vertex=`#version 300 es
     precision highp float;layout(location=0) in vec3 position;layout(location=1) in vec3 tint;layout(location=2) in vec4 water;
-    uniform vec2 uSize;uniform vec2 uCamera;uniform float uZoom;out vec3 vColor;out vec2 vWorld;out vec4 vWater;
+    uniform vec2 uSize;uniform vec2 uCamera;uniform float uZoom;out vec3 vColor;out vec2 vWorld;out vec2 vFlatWorld;out vec4 vWater;
     void main(){vec3 p=position-vec3(uCamera,0.);vec2 screen=vec2((p.x-p.y)*.70710678,(p.x+p.y)*.35355339-p.z*.8660254)*uZoom;
-      gl_Position=vec4(screen.x/uSize.x*2.,-screen.y/uSize.y*2.,clamp(-((p.x+p.y)*.6123724+p.z*.5)/20000.,-.99,.99),1.);vColor=tint;vWorld=position.xy;vWater=water;}`;
+      gl_Position=vec4(screen.x/uSize.x*2.,-screen.y/uSize.y*2.,clamp(-((p.x+p.y)*.6123724+p.z*.5)/20000.,-.99,.99),1.);vColor=tint;vWorld=position.xy;vFlatWorld=position.xy-position.z*1.22474487;vWater=water;}`;
   const fragment=`#version 300 es
-    precision highp float;in vec3 vColor;in vec2 vWorld;in vec4 vWater;uniform float uTime;uniform float uZoom;out vec4 color;
+    precision highp float;in vec3 vColor;in vec2 vWorld;in vec2 vFlatWorld;in vec4 vWater;uniform vec2 uCamera;uniform float uTime;uniform float uZoom;out vec4 color;
     ${root.WidewakeOceanArt.waterGLSL}
-    void main(){vec3 c=vColor;
-      if(vWater.x>0.){c=seaColor(vWorld,vWater.x,vWater.y,vWater.zw,uTime,uZoom);
+    void main(){vec3 c=vColor;gl_FragDepth=gl_FragCoord.z;
+      if(vWater.x>0.){vec2 surfaceWorld;vec3 wave=seaSample(vFlatWorld,uTime,vWater.x,vWater.y,surfaceWorld);c=seaColorAt(surfaceWorld,wave,vWater.x,vWater.y,vWater.zw,uTime,uZoom);
+        gl_FragDepth=clamp(.5-((surfaceWorld.x+surfaceWorld.y-uCamera.x-uCamera.y)*.6123724+wave.x*.5)/40000.,.005,.995);
         ${W.hazards.filter(h=>h.kind==='heat'||h.kind==='vortex').map(h=>`{vec2 q=vWorld-vec2(${h.x.toFixed(1)},${h.y.toFixed(1)});float d=length(q),r=${h.radius.toFixed(1)};if(d<r){float e=1.-d/r;${h.kind==='heat'?'c=mix(c,vec3(.63,.34,.20),e*.8);float bubbles=smoothstep(.94,1.,sin(d*.31-uTime*1.7));c+=vec3(.30,.30,.23)*bubbles*e*.3;':'float a=atan(q.y,q.x);float line=smoothstep(.88,1.,sin(a*5.+d*.075-uTime*1.2));c+=vec3(.19,.27,.28)*line*e*.5;'}}}`).join('')}
       }
       else{float wide=texture(uNoise,vWorld*.0009).r,grass=texture(uNoise,vWorld*.014).g,grain=texture(uNoise,vWorld*.09).b;float mud=exp(vWater.x*1.4);
         c=vColor*(.88+wide*.12+grass*.10+grain*.025);c=mix(c,vec3(.38,.36,.27)*(1.+grass*.12),mud*.5);}
-      // Water color is already displaced by the analytic surface. Its flat
-      // terrain mesh must not hide foam or hulls when they enter a trough.
-      // Land keeps real depth, so banks and scenery still occlude the water.
-      gl_FragDepth=vWater.x>0.?1.:gl_FragCoord.z;
+      // Water writes its displaced surface depth; land keeps its own geometry.
+      // All water effects use this same surface, rather than the old flat plane.
       color=vec4(c,1.);}`;
   class Terrain{
-    constructor(view){this.view=view;this.cache=new Map();this.queue=[{key:'overview',x:-4096,y:-8192,size:16384,step:128}];this.pending=null;this.serial=1;this.requests=new Map();this.bytes=0;this.clock=0;this.failed=null;this.needed=[];this.props={};this.worker=new Worker('js/widewake-estuary-worker.js?v=0.30.0');this.worker.onmessage=e=>this.receive(e.data);this.worker.onerror=e=>{this.failed=e.message||'Terrain unavailable';this.onError?.(this.failed);};if(view.gl)this.restore();this.pump();}
+    constructor(view){this.view=view;this.cache=new Map();this.queue=[{key:'overview',x:-4096,y:-8192,size:16384,step:128}];this.pending=null;this.serial=1;this.requests=new Map();this.bytes=0;this.clock=0;this.failed=null;this.needed=[];this.props={};this.worker=new Worker('js/widewake-estuary-worker.js?v=0.31.0');this.worker.onmessage=e=>this.receive(e.data);this.worker.onerror=e=>{this.failed=e.message||'Terrain unavailable';this.onError?.(this.failed);};if(view.gl)this.restore();this.pump();}
     restore(){const gl=this.view.gl;this.program=O.program(gl,vertex,fragment);for(const tile of this.cache.values())this.upload(tile);if(this.props)for(const batch of Object.values(this.props))batch.dispose();this.props={};this.initProps();}
     initProps(){if(!this.view.gl)return;const gl=this.view.gl;
       for(const type of ['reed','tree0','tree1','tree2','rock'])this.props[type]=new O.Batch(gl,this.view.meshes[type],1600);

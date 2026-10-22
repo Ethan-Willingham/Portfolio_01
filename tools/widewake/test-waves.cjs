@@ -40,12 +40,13 @@ const g=new R.Game();assert.equal(g.player.speed,36);g.coins=10000;g.rank=4;g.ea
 // including when its centre is safely in the channel.
 require('../../js/widewake-ocean-art.js');const clipped=new WidewakeOceanArt.WakeTrail(),points=[];
 clipped.segments=(view,emit)=>emit(0,0,10,0,9,9,.7,.7,0,1,0,1);
-const canvas={save(){},restore(){},beginPath(){},closePath(){},fill(){},stroke(){},moveTo(x,y){points.push({x,y});},lineTo(x,y){points.push({x,y});}};
+const canvas={save(){},restore(){},beginPath(){},closePath(){},fill(){},stroke(){},createLinearGradient(){return{addColorStop(){}};},moveTo(x,y){points.push({x,y});},lineTo(x,y){points.push({x,y});}};
 clipped.drawCanvas({fallback:canvas,battle:{sea:{field:{sample:(x,y,out)=>Object.assign(out,{depth:5-Math.abs(y)})},at:()=>({height:0})}},project:(x,y)=>({x,y}),zoom:1,baseScale:1,visualTime:1,stats:{}});
 assert.ok(points.length>=4&&points.some(p=>Math.abs(p.y)>4));assert.ok(points.every(p=>Math.abs(p.y)<=4.7),'foam stays inside both dry banks');console.log('PASS Canvas expanding wake edges clip to channel water');
-// The fast launch leaves a readable trail rather than an ocean-width fan.
+// The fast launch leaves connected, divergent shoulders. At six seconds the
+// boat is over 200 metres ahead; the sparse foam arms should have spread.
 const trail=new WidewakeOceanArt.WakeTrail(),launch=boat({...E.vessels.launch,speed:36}),pose={x:0,y:2200,angle:0};launch.vx=36;
 for(let n=0;n<=80;n++){pose.x=n*3.6;trail.sample([launch],[pose],n*.1);}
 let trailSegments=0,sixSecondWidth=0,lastEnd=null;
 trail.segments({visualTime:8,zoom:2,baseScale:1,visible:()=>true,battle:{ships:[]}},(x,y,ex,ey,width)=>{trailSegments++;if(lastEnd!==null)assert.ok(Math.abs(x-lastEnd)<.001,'successive foam segments stay connected');lastEnd=ex;if(x>60&&x<78)sixSecondWidth=Math.max(sixSecondWidth,width);});
-assert.ok(trailSegments>60);assert.ok(sixSecondWidth>3&&sixSecondWidth<8,'six-second prop wash stays legible beside a six-metre launch');console.log('PASS continuous launch trail with restrained lateral spreading');
+assert.ok(trailSegments>60);assert.ok(sixSecondWidth>20&&sixSecondWidth<40,'six-second wake shoulders spread while remaining bounded');console.log('PASS continuous launch trail with divergent shoulders');

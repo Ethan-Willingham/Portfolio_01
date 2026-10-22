@@ -72,15 +72,14 @@
       for(let y=0;y<h;y++)for(let x=0;x<w;x++){
         const p=O.unproject(((x+.5)/w-.5)*v.width/scale,((y+.5)/h-.5)*v.height/scale),wx=p.x+v.camera.x,wy=p.y+v.camera.y;
         const water=sea.field?.sample(wx,wy,this.water),depth=water?.depth??22,salt=water?.salinity??1,q=this.sample;let px=wx,py=wy;
-        // Two inverse-viewing-ray steps put lit crests underneath the hulls'
-        // displaced world positions, using the same coefficients as WebGL.
-        for(let n=0;n<3;n++){W.sample(px,py,v.visualTime,depth,salt,!sea.field,q);const offset=q.height*sea.strength*1.22474487;if(n<2){px=wx+offset;py=wy+offset;}}
-        const height=q.height*sea.strength,dx=q.dx*sea.strength,dy=q.dy*sea.strength,shelf=Math.exp(-Math.max(0,depth)*.075),lift=height/(.5+q.exposure*3.2),normal=Math.hypot(dx,dy,1),face=Math.max(0,(dx*.45+dy*.65+.8)/(normal*Math.hypot(.45,.65,.8)));
-        const sky=Math.max(0,(-dx*.32-dy*.18+1)/(normal*Math.hypot(.32,.18,1)))**10*(.3+q.exposure*.7),light=.52+face*.67+lift*.045,crest=height/(.15+q.exposure*2.55),broken=.5+.25*Math.sin(px*.12+py*.035)+.25*Math.sin(py*.10-px*.045);
-        const foam=smooth(.70,1.08,crest)*smooth(.60,.84,broken)*q.exposure*.20,at=(y*w+x)*4;
-        pixels[at]=((11+8*shelf+7*(1-salt))*light+sky*11.5)*(1-foam)+193*foam;
-        pixels[at+1]=((46+24*shelf+9*(1-salt))*light+sky*25.5)*(1-foam)+225*foam;
-        pixels[at+2]=((64+22*shelf)*light+sky*32)*(1-foam)+221*foam;pixels[at+3]=255;
+        W.sample(px,py,v.visualTime,depth,salt,!sea.field,q);let height=q.height*sea.strength;
+        for(let n=0;n<2;n++){W.sample(wx+height*1.22474487,wy+height*1.22474487,v.visualTime,depth,salt,!sea.field,q);height+=clamp((q.height*sea.strength-height)/Math.max(.22,1-1.22474487*(q.dx+q.dy)*sea.strength),-3,3);}
+        px=wx+height*1.22474487;py=wy+height*1.22474487;W.sample(px,py,v.visualTime,depth,salt,!sea.field,q);height=q.height*sea.strength;
+        const dx=q.dx*sea.strength,dy=q.dy*sea.strength,shelf=Math.exp(-Math.max(0,depth)*.075),normal=Math.hypot(dx,dy,1),face=Math.max(0,(dx*.70-dy*.25+.55)/(normal*Math.hypot(.70,.25,.55))),fresnel=(.025+.975*(1-Math.max(0,(-dx*.61237244-dy*.61237244+.5)/normal))**5)*.72,light=.28+face*1.20;
+        const broken=.5+.25*Math.sin(px*.12+py*.035)+.25*Math.sin(py*.10-px*.045),ridge=(-dx*.7909677+dy*.6118579)/Math.max(.2,q.exposure),lip=1-smooth(.024,.086,Math.abs(ridge+.018)),foam=smooth(.55,1.55,height/Math.max(.2,q.exposure))*lip*smooth(.5,.8,broken)*q.exposure*.32,at=(y*w+x)*4;
+        pixels[at]=((10+8*shelf+7*(1-salt))*light*(1-fresnel)+79*fresnel)*(1-foam)+186*foam;
+        pixels[at+1]=((46+24*shelf+9*(1-salt))*light*(1-fresnel)+135*fresnel)*(1-foam)+222*foam;
+        pixels[at+2]=((64+22*shelf)*light*(1-fresnel)+150*fresnel)*(1-foam)+212*foam;pixels[at+3]=255;
       }
       this.ctx.putImageData(this.pixels,0,0);v.fallback.drawImage(this.canvas,0,0,v.width,v.height);
     }

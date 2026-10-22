@@ -1851,3 +1851,35 @@ connected Reach progression, projectiles and water-pressure checks pass. Fleet
 station tests now check idle helm decisions separately from bounded passive
 wave drift. The full three-minute 16,384-raider battle and desktop packaging
 checks pass. Physical-phone performance remains unverified.
+
+## Displaced water and spreading boat wash, 2026-10-22 (v0.31.0)
+
+The owner reported that the v0.30 trail resembled smoke and the ocean still
+looked flat. The water now writes the projected depth of its shared physical
+heightfield. Crests meet and partly cover the hull's waterline; troughs expose
+it. A bounded viewing-ray solver replaces the far-plane depth workaround.
+Directional lighting and sky reflection now preserve face contrast. Sharper
+crests and stronger short chop give the launch smaller waves to climb between
+the large swells. Ambient foam is reduced so it does not compete with the wake.
+
+The visible wash separates into two spreading, broken shoulders with clear
+water between them. Dense churn stays close to the stern and fades according
+to hull length and speed. Turn history stays connected, foam follows displaced
+water, and widening shoulders clip at banks. No circular wave drawings return.
+Faster boats, carried turns and physical wake forces remain in place.
+
+Pixel tests verify real crest/trough occlusion on both WebGL water paths and
+water meeting the launch's hull. Six-frame launch and escort crossings compare
+against identical flat-water runs at actual helm zoom. Separate wash tests
+measure short stern churn, a clearing centre and two irregular shoulders.
+Wave math, sustained hull stability, steering, fleet handling, navigation,
+connected Reach progression, projectile contacts, water pressure and the full
+three-minute 16,384-raider battle pass.
+Desktop and landscape-phone WebGL and Canvas checks pass, including shared
+CPU/shader waves, frozen pause pixels and context recovery during combat.
+Desktop source staging and protocol policy checks pass.
+
+This remains an analytic heightfield with an authored shoreline, without
+overturning breakers or advancing swash. Canvas uses simpler shading and
+painter ordering. Physical-phone performance and the owner's final visual
+assessment remain open.
