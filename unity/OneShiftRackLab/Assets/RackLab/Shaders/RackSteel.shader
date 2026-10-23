@@ -21,6 +21,8 @@ Shader "OneShift/Rack Steel"
             #pragma target 3.0
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
             #pragma multi_compile _ _ADDITIONAL_LIGHTS
+            #pragma multi_compile _ _CLUSTER_LIGHT_LOOP
+            #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
             #pragma multi_compile_fragment _ _SHADOWS_SOFT
             #pragma multi_compile_fragment _ _SHADOWS_SOFT_LOW _SHADOWS_SOFT_MEDIUM _SHADOWS_SOFT_HIGH
             #pragma multi_compile_fog
@@ -104,10 +106,12 @@ Shader "OneShift/Rack Steel"
             #pragma vertex ShadowVertex
             #pragma fragment ShadowFragment
             #pragma multi_compile_instancing
+            #pragma multi_compile_vertex _ _CASTING_PUNCTUAL_LIGHT_SHADOW
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Shadows.hlsl"
             #include "RackFinish.hlsl"
             float3 _LightDirection;
+            float3 _LightPosition;
             struct A {float4 p:POSITION;float3 n:NORMAL;float2 uv:TEXCOORD0;float2 s:TEXCOORD1;UNITY_VERTEX_INPUT_INSTANCE_ID};
             struct V {float4 p:SV_POSITION;float4 uv:TEXCOORD0;};
             V ShadowVertex(A a)
@@ -115,7 +119,12 @@ Shader "OneShift/Rack Steel"
                 UNITY_SETUP_INSTANCE_ID(a);
                 V o;
                 float3 world=TransformObjectToWorld(a.p.xyz);
-                o.p=TransformWorldToHClip(ApplyShadowBias(world,TransformObjectToWorldNormal(a.n),_LightDirection));
+                #if _CASTING_PUNCTUAL_LIGHT_SHADOW
+                    float3 lightDirection=normalize(_LightPosition-world);
+                #else
+                    float3 lightDirection=_LightDirection;
+                #endif
+                o.p=TransformWorldToHClip(ApplyShadowBias(world,TransformObjectToWorldNormal(a.n),lightDirection));
                 #if UNITY_REVERSED_Z
                 o.p.z=min(o.p.z,UNITY_NEAR_CLIP_VALUE*o.p.w);
                 #else

@@ -75,6 +75,8 @@ namespace OneShift.RackLab
                     obj.transform.position = new Vector3(obj.transform.position.x, obj.transform.position.y, 11.76f);
                 }
                 Physics.SyncTransforms();
+                WarehouseLightingBuilder.InstallIntoScene();
+                WarehouseDayNightBuilder.InstallIntoScene();
             }
             catch { Object.DestroyImmediate(root); throw; }
         }
@@ -303,7 +305,15 @@ namespace OneShift.RackLab
             var dustMaterial = DustMaterial();
             int index = 0;
             foreach (float z in SideWindows)
-                Shaft(new Vector3(-11.34f, 6.2f, z), Vector3.back * 3.65f, Vector3.up * 1.67f, SunDirection * 13.2f, shaftMaterial, dustMaterial, index++);
+            {
+                Shaft(new Vector3(-11.34f, 6.2f, z), Vector3.back * 3.65f, Vector3.up * 1.67f, new Vector3(1, -.68f, 0).normalized * 13.2f, shaftMaterial, dustMaterial, index++);
+                Shaft(new Vector3(11.34f, 6.2f, z), Vector3.forward * 3.65f, Vector3.up * 1.67f, new Vector3(-1, -.68f, 0).normalized * 13.2f, shaftMaterial, dustMaterial, index++);
+            }
+            foreach (float x in EndWindows)
+            {
+                Shaft(new Vector3(x, 6.2f, -9.84f), Vector3.right * 3.65f, Vector3.up * 1.67f, new Vector3(0, -.68f, 1).normalized * 13.2f, shaftMaterial, dustMaterial, index++);
+                Shaft(new Vector3(x, 6.2f, 11.84f), Vector3.left * 3.65f, Vector3.up * 1.67f, new Vector3(0, -.68f, -1).normalized * 13.2f, shaftMaterial, dustMaterial, index++);
+            }
         }
 
         static Material DustMaterial()
@@ -332,6 +342,7 @@ namespace OneShift.RackLab
             renderer.shadowCastingMode = ShadowCastingMode.Off; renderer.receiveShadows = false;
             var component = obj.AddComponent<WarehouseSunVolume>();
             component.windowCenter = center; component.windowRight = right; component.windowUp = up; component.travel = travel; component.seed = 41 + index;
+            component.windowInward = Vector3.Cross(right, up).normalized;
             var geometry = new Geometry("Sun volume " + index); geometry.Cube(component.VolumeMatrix());
             obj.GetComponent<MeshFilter>().sharedMesh = geometry.SaveMesh();
             var dustObject = new GameObject("Sparse floating dust"); dustObject.transform.SetParent(obj.transform);
@@ -349,7 +360,7 @@ namespace OneShift.RackLab
             var architecture = GameObject.Find(Name);
             if (architecture == null) throw new Exception("Warehouse shell is missing.");
             if (architecture.GetComponentsInChildren<Transform>().Count(t => t.name == "Clerestory window") != 16) throw new Exception("Expected sixteen clerestory windows.");
-            if (architecture.GetComponentsInChildren<WarehouseSunVolume>().Length != 4) throw new Exception("Expected four west window shafts.");
+            if (architecture.GetComponentsInChildren<WarehouseSunVolume>().Length != 16) throw new Exception("Expected sixteen sun-tracking window volumes.");
             foreach (var shaderName in new[] { "OneShift/Warehouse Masonry", "OneShift/Warehouse Sun Shaft" })
             {
                 var shader = Shader.Find(shaderName);
@@ -366,7 +377,7 @@ namespace OneShift.RackLab
             if (!Physics.Raycast(new Vector3(0, 7.7f, -6), Vector3.up, out var ceiling, 1) || ceiling.collider.name != "Solid roof") throw new Exception("Roof is not enclosed.");
             WarehouseFloorBuilder.Validate(); RackLabBuilder.Validate();
             int triangles = architecture.GetComponentsInChildren<MeshFilter>().Sum(f => f.sharedMesh.triangles.Length / 3);
-            var report = "Warehouse passed: 23 x 22 m enclosure, 8.3 m roof, 16 open clerestory windows, 6 steel trusses, 4 depth-aware sunlight volumes, 288 dust motes, perimeter collision, open window rays, solid ceiling, floor and rack regression checks. Shell triangles: " + triangles + ".";
+            var report = "Warehouse passed: 23 x 22 m enclosure, 8.3 m roof, 16 open clerestory windows, 6 steel trusses, 16 sun-tracking depth-aware volumes, dust visible only in sun-facing windows, perimeter collision, open window rays, solid ceiling, floor and rack regression checks. Shell triangles: " + triangles + ".";
             File.WriteAllText(Root + "Reports/warehouse-environment-validation.txt", report + "\n"); Debug.Log(report); return report;
         }
 

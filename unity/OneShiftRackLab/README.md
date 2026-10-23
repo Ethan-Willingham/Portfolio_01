@@ -15,6 +15,18 @@ to capture the mouse. WASD walks, the mouse looks, Shift runs, Space jumps,
 Escape releases the mouse and R returns to the entrance. Aim at a rack within
 five metres and press E to cycle its finish.
 
+The warehouse starts at 4:30 a.m. Three industrial switches on the south wall,
+beside the entrance electrical cabinet, control the west, centre and east rows
+of ceiling lights. Walk within 2.6 metres, aim at a switch, then press E or click.
+Each switch operates four fixtures. The lever position, indicator, glowing
+diffusers and actual light follow the same circuit state.
+
+A full day lasts twelve real minutes. Sunrise arrives after about 45 seconds;
+the sun crosses the southern sky from east to west, then sets at 6 p.m.
+Window-frame shadows and dust shafts follow its direction. The clock stops
+when the game loses focus. See [warehouse lighting](WAREHOUSE_LIGHTING.md) for
+the controls, tuning and verification.
+
 In the Game view's resolution menu, leave **Low Resolution Aspect Ratios** off
 and keep the zoom at 1x for a sharp preview. The camera renders at full resolution
 with 4x MSAA and high-quality SMAA to smooth fine rack details.

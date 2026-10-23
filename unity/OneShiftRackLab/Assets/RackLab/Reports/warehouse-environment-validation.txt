@@ -1,1 +1,1 @@
-Warehouse passed: 23 x 22 m enclosure, 8.3 m roof, 16 open clerestory windows, 6 steel trusses, 4 depth-aware sunlight volumes, 288 dust motes, perimeter collision, open window rays, solid ceiling, floor and rack regression checks. Shell triangles: 18252.
+Warehouse passed: 23 x 22 m enclosure, 8.3 m roof, 16 open clerestory windows, 6 steel trusses, 16 sun-tracking depth-aware volumes, dust visible only in sun-facing windows, perimeter collision, open window rays, solid ceiling, floor and rack regression checks. Shell triangles: 18396.

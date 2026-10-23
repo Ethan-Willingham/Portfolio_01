@@ -1,0 +1,1 @@
+Passed: night start; nine solar times; east sunrise and west sunset; sixteen aligned window volumes with moving mesh bounds; no night or back-facing shafts; twelve unique shadowed fixtures; independent three-row switching; accessible switch raycasts; midnight wrap; pause. Forward+ and additional-light shadows enabled.

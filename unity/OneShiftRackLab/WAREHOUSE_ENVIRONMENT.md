@@ -38,7 +38,9 @@ out of the draw-call count. The installation uses no downloaded assets.
 
 ## Light shafts
 
-The four west windows have sheared volumes aligned to the directional sun.
+All sixteen windows have sheared volumes aligned to the moving directional sun.
+Only the windows facing the incoming daylight render a shaft. The scene starts
+before dawn, with no shafts. See [warehouse lighting](WAREHOUSE_LIGHTING.md).
 Each volume uses sixteen ray samples. Camera depth clips the rays against
 opaque surfaces, including the floor and stock. Main-light shadow samples
 darken scattering where racks interrupt the sunlight. Soft pane-grid masks
@@ -47,10 +49,11 @@ These are bounded scattering volumes, not a full atmospheric simulation.
 
 The URP pipeline needs camera depth, main-light shadows and the supplied shader.
 The installer enables depth and uses four cascades with a 4096-pixel main-light
-shadow atlas over 45 metres. Four systems hold 72 tiny drifting dust motes each.
+shadow atlas over 45 metres. Each active window holds 72 tiny drifting dust motes.
 Subtle screen-space contact shading defines the roof ribs and structural joints.
 Individual particles use a soft radial sprite and remain inside their window
-volume. Some samples below the floor are hidden by depth testing.
+volume. Mesh bounds, shader coordinates and particle positions follow the same
+sun direction. Some samples below the floor are hidden by depth testing.
 
 ## Verification
 

@@ -21,6 +21,7 @@ namespace OneShift.RackLab
         bool hadFocus = true;
         GUIStyle title, instructions, small;
         RackWearVariant target;
+        WarehouseLightSwitch lightSwitch;
 
         void Awake()
         {
@@ -55,6 +56,16 @@ namespace OneShift.RackLab
 
         void Update()
         {
+            // Resolve the current ray before accepting E or a click, so moving
+            // between a switch and a rack never operates the previous target.
+            target = null;
+            lightSwitch = null;
+            if (Physics.Raycast(eyes.transform.position, eyes.transform.forward, out var hit, 5f, ~0, QueryTriggerInteraction.Ignore))
+            {
+                if (hit.distance <= 2.6f) lightSwitch = hit.collider.GetComponentInParent<WarehouseLightSwitch>();
+                target = hit.collider.GetComponentInParent<RackWearVariant>();
+            }
+            bool alreadyCaptured = captured;
             if (Input.GetKeyDown(KeyCode.Escape)) Capture(false);
             if (hadFocus && Input.GetMouseButtonDown(0)) Capture(true);
             if (captured && hadFocus)
@@ -70,7 +81,9 @@ namespace OneShift.RackLab
                 verticalSpeed += Physics.gravity.y * Time.deltaTime;
                 motor.Move((move + Vector3.up * verticalSpeed) * Time.deltaTime);
                 if (Input.GetKeyDown(KeyCode.R)) ResetPosition();
-                if (Input.GetKeyDown(KeyCode.E) && target != null) target.Cycle();
+                bool use = Input.GetKeyDown(KeyCode.E) || (alreadyCaptured && Input.GetMouseButtonDown(0));
+                if (use && lightSwitch != null) lightSwitch.Toggle();
+                else if (Input.GetKeyDown(KeyCode.E) && target != null) target.Cycle();
             }
             else if (!motor.isGrounded)
             {
@@ -78,9 +91,6 @@ namespace OneShift.RackLab
                 motor.Move(Vector3.up * verticalSpeed * Time.deltaTime);
             }
             if (transform.position.y < -10) ResetPosition();
-            target = null;
-            if (Physics.Raycast(eyes.transform.position, eyes.transform.forward, out var hit, 5f))
-                target = hit.collider.GetComponentInParent<RackWearVariant>();
         }
 
         public void ResetPosition()
@@ -110,7 +120,10 @@ namespace OneShift.RackLab
             GUI.Label(new Rect(32, 26, 340, 28), "ONE SHIFT / RACK FLOOR", title);
             GUI.Label(new Rect(32, 55, 340, 25), "Pallet storage   /   Floor + two beam levels", small);
             GUI.Label(new Rect(32, Screen.height - 67, 670, 25), "WASD move   |   Mouse look   |   Shift run   |   Space jump   |   Esc cursor", small);
-            GUI.Label(new Rect(32, Screen.height - 44, 660, 24), captured ? (target != null ? "E: change this rack's wear   |   R: return to entrance" : "Walk up to a rack to inspect its finish.   R: return to entrance") : "Click inside the game to walk around.", small);
+            GUI.Label(new Rect(32, Screen.height - 44, 660, 24), captured ?
+                (lightSwitch != null ? "E / click: " + lightSwitch.Prompt :
+                target != null ? "E: change this rack's wear   |   R: return to entrance" :
+                "Three light switches by the entrance.   R: return to entrance") : "Click inside the game to walk around.", small);
             if (captured)
             {
                 GUI.color = new Color(.94f,.91f,.83f,.75f);
