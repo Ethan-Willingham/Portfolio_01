@@ -1,0 +1,1 @@
+Play checks passed: floor support, two metres of unobstructed movement, rack collision at (0.00, 0.03, 1.16), wear cycling across every LOD, and spawn reset.

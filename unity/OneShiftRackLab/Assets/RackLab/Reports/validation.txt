@@ -1,0 +1,1 @@
+Rack floor: 3 variants, 3 LODs and 7 box colliders per rack. Player, floor, bounds and shader validated.

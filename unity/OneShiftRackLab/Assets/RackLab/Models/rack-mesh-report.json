@@ -1,0 +1,37 @@
+{
+  "sourceTriangles": 226708,
+  "sourceRenderers": 306,
+  "lods": [
+    {
+      "lod": 0,
+      "triangles": 10632,
+      "vertices": 19592,
+      "renderers": 1,
+      "materials": 1
+    },
+    {
+      "lod": 1,
+      "triangles": 1980,
+      "vertices": 3728,
+      "renderers": 1,
+      "materials": 1
+    },
+    {
+      "lod": 2,
+      "triangles": 724,
+      "vertices": 1424,
+      "renderers": 1,
+      "materials": 1
+    }
+  ],
+  "wearStates": [
+    "Clean",
+    "Used",
+    "Worn"
+  ],
+  "noiseResolution": [
+    512,
+    512
+  ],
+  "notes": "One shared mesh per LOD. Finish colors and face data are vertex attributes. Punched faces and distant wire decks use alpha testing. Simple box colliders are authored in Unity."
+}

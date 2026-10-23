@@ -1,0 +1,1 @@
+Unity 6000.3.27f1, URP 17.3.0. Windows x64 player build succeeded: 98,003,940 bytes and zero build errors. Standalone player launched successfully with Direct3D 11, PhysX and input initialized; no startup exceptions. Editor play loop advanced during verification.

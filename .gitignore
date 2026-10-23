@@ -76,3 +76,15 @@ assets/shop/soviet/masks/
 desktop/node_modules/
 desktop/stage/
 desktop/dist/
+
+# Unity rack prototype: keep source assets, not imported caches or builds.
+unity/**/[Ll]ibrary/
+unity/**/[Tt]emp/
+unity/**/[Oo]bj/
+unity/**/[Ll]ogs/
+unity/**/[Uu]ser[Ss]ettings/
+unity/**/[Bb]uilds/
+unity/**/*.csproj
+unity/**/*.sln
+unity/**/*.user
+unity/**/.vs/
