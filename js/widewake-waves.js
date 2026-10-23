@@ -20,7 +20,9 @@
   function harborExposure(y,depth=22,salt=1,open=false){return smooth(.15,2.4,depth)*(open?1:.25);}
   // A cached chart of upstream water fetch. Land blocks incoming swell; local
   // wind waves grow only over uninterrupted water. No latitude-only river sea.
-  // CPU and GPU bilinearly sample the same cells, including amplitude gradients.
+  // CPU and GPU use the same bounded C1 interpolation and analytic gradients.
+  // Linear cell weights keep height continuous but jump its slope at each edge,
+  // which lights the chart grid as sharp X shapes in the isometric water.
   const environmentKeys=['swell','wind','travel'];
   class Environment{
     constructor(field){this.field=field;this.step=64;this.left=-4032;this.top=-8064;this.width=127;this.height=190;this.data=new Float32Array(this.width*this.height*4);this.ready=new Uint8Array(this.width*this.height);this.water={};}
@@ -40,9 +42,9 @@
       // compresses the incoming phase without rotating a wave abruptly per cell.
       const at=index*4;this.data[at]=swell;this.data[at+1]=depth>0?.12+.88*Math.sqrt(fetch/576):0;this.data[at+2]=swell>.001?travel/swell:0;this.data[at+3]=0;return at;
     }
-    at(x,y,out={}){const u=clamp((x-this.left)/this.step,0,this.width-1.000001),v=clamp((y-this.top)/this.step,0,this.height-1.000001),ix=Math.floor(u),iy=Math.floor(v),fx=u-ix,fy=v-iy,d=this.data;
+    at(x,y,out={}){const u=clamp((x-this.left)/this.step,0,this.width-1.000001),v=clamp((y-this.top)/this.step,0,this.height-1.000001),ix=Math.floor(u),iy=Math.floor(v),tx=u-ix,ty=v-iy,fx=tx*tx*(3-2*tx),fy=ty*ty*(3-2*ty),dx=6*tx*(1-tx)/this.step,dy=6*ty*(1-ty)/this.step,d=this.data;
       const a=this.cell(ix,iy),b=this.cell(ix+1,iy),c=this.cell(ix,iy+1),e=this.cell(ix+1,iy+1);
-      for(let i=0;i<3;i++){const key=environmentKeys[i];out[key]=(d[a+i]*(1-fx)+d[b+i]*fx)*(1-fy)+(d[c+i]*(1-fx)+d[e+i]*fx)*fy;out[key+'X']=((d[b+i]-d[a+i])*(1-fy)+(d[e+i]-d[c+i])*fy)/this.step;out[key+'Y']=((d[c+i]-d[a+i])*(1-fx)+(d[e+i]-d[b+i])*fx)/this.step;}
+      for(let i=0;i<3;i++){const key=environmentKeys[i];out[key]=(d[a+i]*(1-fx)+d[b+i]*fx)*(1-fy)+(d[c+i]*(1-fx)+d[e+i]*fx)*fy;out[key+'X']=((d[b+i]-d[a+i])*(1-fy)+(d[e+i]-d[c+i])*fy)*dx;out[key+'Y']=((d[c+i]-d[a+i])*(1-fx)+(d[e+i]-d[b+i])*fx)*dy;}
       return out;
     }
     complete(){for(let y=0;y<this.height;y++)for(let x=0;x<this.width;x++)this.cell(x,y);return this.data;}
@@ -183,7 +185,8 @@
     vec4 seaEnvironment(vec2 p,out vec3 gx,out vec3 gy){
       vec2 q=clamp((p-vec2(-4032.,-8064.))/64.,vec2(0.),vec2(125.999999,188.999999)),cell=floor(q),t=q-cell;ivec2 c=ivec2(cell);
       vec4 a=texelFetch(uEnvironment,c,0),b=texelFetch(uEnvironment,c+ivec2(1,0),0),d=texelFetch(uEnvironment,c+ivec2(0,1),0),e=texelFetch(uEnvironment,c+ivec2(1,1),0);
-      gx=mix(b.xyz-a.xyz,e.xyz-d.xyz,t.y)/64.;gy=mix(d.xyz-a.xyz,e.xyz-b.xyz,t.x)/64.;return mix(mix(a,b,t.x),mix(d,e,t.x),t.y);
+      vec2 gradient=6.*t*(1.-t)/64.;t=t*t*(3.-2.*t);
+      gx=mix(b.xyz-a.xyz,e.xyz-d.xyz,t.y)*gradient.x;gy=mix(d.xyz-a.xyz,e.xyz-b.xyz,t.x)*gradient.y;return mix(mix(a,b,t.x),mix(d,e,t.x),t.y);
     }
     float seaExposure(vec2 p,float depth,float salt,float openSea){return smoothstep(.2,8.,depth)*mix(smoothstep(900.,2100.,p.y)*smoothstep(.45,.9,salt),1.,openSea);}
     float harborExposure(vec2 p,float depth,float salt,float openSea){return smoothstep(.15,2.4,depth)*mix(.25,1.,openSea);}

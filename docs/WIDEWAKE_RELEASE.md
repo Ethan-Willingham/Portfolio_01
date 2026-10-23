@@ -1,5 +1,20 @@
 # Widewake production goal
 
+## Regional water X-shape correction, 2026-10-23 (v0.40.1)
+
+Reproduced the sharp crosses in the main channel and isolated them to the
+regional wave chart's gradient discontinuities. Bounded cubic cell weights now
+join the height and slope continuously, with the same analytic derivatives on
+CPU and GPU. The chart footprint, storage and four texture reads are unchanged.
+
+The new regression crosses both cell axes at 980 wet positions and phases in
+bank, river, harbor, coast and headwater fixtures. The largest slope difference
+across a 0.2 mm boundary interval drops from 0.1513 to 0.0000102. Shader checks
+also cross the problem boundaries directly. Visual review covers the bank at
+three zooms, the reproduced cell crossing and the existing regional scenes on
+desktop and landscape-mobile WebGL and Canvas. Wave derivatives, hull stability,
+oversteer and wake dynamics remain covered. Physical phone performance is unverified.
+
 ## Manual oversteer and recovery, 2026-10-23 (v0.40.0)
 
 Removed the manual helm's target-yaw controller and special countersteer response.

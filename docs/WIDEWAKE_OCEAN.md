@@ -1,5 +1,18 @@
 # Widewake ocean redesign
 
+## Regional shading seams, 2026-10-23 (v0.40.1)
+
+The sharp X shapes near the bank came from discontinuous slopes at the regional
+chart's 64 m cell edges. Linear interpolation kept height continuous, but its
+amplitude and travel-delay gradients jumped between cells. Water lighting made
+those jumps visible even after the earlier repeating wind fronts were fixed.
+
+The CPU and shader now use bounded cubic interpolation with matching analytic
+derivatives. Heights and slopes join continuously. The same four chart samples
+remain in use, with no extra texture reads, wider sampling footprint or change
+to the geography, fetch rays, wave bands or boat controls. Wave attenuation and
+refraction still affect both the rendered surface and hull support.
+
 ## Sheltered-water lattice correction, 2026-10-23 (v0.39.1)
 
 The three short wind bands crossed at fixed angles, producing a visible diamond
