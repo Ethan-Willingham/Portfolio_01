@@ -1,5 +1,20 @@
 # Widewake production goal
 
+## Sheltered-water grid correction, 2026-10-23 (v0.39.1)
+
+Replaced the three crossing plane-wave patterns in sheltered water with curved,
+shorter wind fronts. Directional spread follows the prevailing wind; continuous
+phase modulation varies crest spacing. CPU buoyancy and GPU lighting retain
+matching heights and slopes; CPU vertical velocity follows the same phase.
+
+The new repetition regression searches translations over several wavelengths.
+It detects the old lattice at 0.973 correlation; the revised fronts peak at
+0.674 while retaining 10 cm RMS at full wind exposure. Regional, derivative,
+hull stability, steering, bow contact and wake scale checks pass. Browser checks
+cover the mouth at three zooms, river, headwaters, coast and offshore water,
+desktop and landscape-mobile WebGL and Canvas, CPU/shader agreement, pause,
+and combat context restoration. Physical phone performance remains unverified.
+
 ## Wake scale and foam motion, 2026-10-23 (v0.39.0)
 
 Replaced the launch's large, long-lived wash with a beam- and speed-scaled trail.

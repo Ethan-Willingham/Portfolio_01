@@ -12,9 +12,9 @@
     {length:83,amplitude:.65,angle:-2.12,phase:4.1,crestLength:227},
     {length:251,amplitude:.72,angle:-.68,phase:1.2,crestLength:613},
     {length:53,amplitude:.32,angle:-1.49,phase:3.5,crestLength:137},
-    {length:29,amplitude:.19,angle:-2.27,phase:5.3,crestLength:79,wind:true},
-    {length:17,amplitude:.10,angle:-.96,phase:1.9,crestLength:47,wind:true},
-    {length:9.7,amplitude:.045,angle:-1.85,phase:4.8,crestLength:31,wind:true}
+    {length:29,amplitude:.19,angle:-2.08,phase:5.3,crestLength:79,wind:true},
+    {length:17,amplitude:.10,angle:-1.79,phase:1.9,crestLength:47,wind:true},
+    {length:9.7,amplitude:.045,angle:-1.96,phase:4.8,crestLength:31,wind:true}
   ].map(b=>Object.freeze({...b,k:TAU/b.length,crossK:TAU/b.crestLength,omega:Math.sqrt(9.81*TAU/b.length),x:Math.cos(b.angle),y:Math.sin(b.angle)})));
   function exposure(x,y,depth=22,salt=1,open=false){return smooth(.2,8,depth)*(open?1:smooth(900,2100,y)*smooth(.45,.9,salt));}
   function harborExposure(y,depth=22,salt=1,open=false){return smooth(.15,2.4,depth)*(open?1:.25);}
@@ -52,11 +52,22 @@
     const wet=smooth(.2,8,depth),windWet=smooth(.15,2.4,depth),e=environment?environment.swell*wet:exposure(x,y,depth,salt,open),localE=environment?environment.wind*windWet:harborExposure(y,depth,salt,open);
     let h=0,dx=0,dy=0,vz=0,vx=0,vy=0,lh=0,ldx=0,ldy=0,lvz=0,lvx=0,lvy=0;
     for(const b of bands){
-      const along=b.x*x+b.y*y,across=-b.y*x+b.x*y,group=along*b.k*.23+across*b.crossK*.71-time*b.omega*.17+b.phase*2.7;
-      const groupX=b.x*b.k*.23-b.y*b.crossK*.71,groupY=b.y*b.k*.23+b.x*b.crossK*.71,groupT=-b.omega*.17,envelope=.78+.22*Math.sin(group),es=.22*Math.cos(group);
+      const along=b.x*x+b.y*y,across=-b.y*x+b.x*y,groupAlong=b.wind?.37:.23,groupAcross=b.wind?2.1:.71,variation=b.wind?.42:.22;
+      const group=along*b.k*groupAlong+across*b.crossK*groupAcross-time*b.omega*.17+b.phase*2.7;
+      const groupX=b.x*b.k*groupAlong-b.y*b.crossK*groupAcross,groupY=b.y*b.k*groupAlong+b.x*b.crossK*groupAcross,groupT=-b.omega*.17,envelope=1-variation+variation*Math.sin(group),es=variation*Math.cos(group);
       const travel=!b.wind&&environment?environment.travel:0,tx=!b.wind&&environment?environment.travelX:0,ty=!b.wind&&environment?environment.travelY:0;
-      const phase=(along+travel)*b.k-time*b.omega+b.phase,s=Math.sin(phase),c=Math.cos(phase),shape=s+.16*s*c,slope=c+.16*(2*c*c-1),a=b.amplitude;
-      const value=a*envelope*shape,gx=a*(es*groupX*shape+envelope*slope*b.k*(b.x+tx)),gy=a*(es*groupY*shape+envelope*slope*b.k*(b.y+ty)),vertical=a*(es*groupT*shape-envelope*slope*b.omega),orbital=a*envelope*b.omega*s;
+      let phase=(along+travel)*b.k-time*b.omega+b.phase,phaseX=b.k*(b.x+tx),phaseY=b.k*(b.y+ty),phaseT=-b.omega;
+      if(b.wind){
+        // Short, curved wind fronts share the prevailing wind. Two independent
+        // phase modulations vary spacing along and across each packet, so three
+        // endless plane waves cannot lay a diamond lattice over sheltered water.
+        const a=(across*.63+along*.11)*b.k-time*b.omega*.13+b.phase*1.7,c=(across*.27-along*.19)*b.k+time*b.omega*.09+b.phase*3.1;
+        const ca=1.25*Math.cos(a),cc=.65*Math.cos(c);phase+=1.25*Math.sin(a)+.65*Math.sin(c);
+        phaseX+=b.k*(ca*(-b.y*.63+b.x*.11)+cc*(-b.y*.27-b.x*.19));
+        phaseY+=b.k*(ca*(b.x*.63+b.y*.11)+cc*(b.x*.27-b.y*.19));phaseT+=b.omega*(-ca*.13+cc*.09);
+      }
+      const s=Math.sin(phase),c=Math.cos(phase),shape=s+.16*s*c,slope=c+.16*(2*c*c-1),a=b.amplitude;
+      const value=a*envelope*shape,gx=a*(es*groupX*shape+envelope*slope*phaseX),gy=a*(es*groupY*shape+envelope*slope*phaseY),vertical=a*(es*groupT*shape+envelope*slope*phaseT),orbital=-a*envelope*phaseT*s;
       if(b.wind){lh+=value;ldx+=gx;ldy+=gy;lvz+=vertical;lvx+=orbital*b.x;lvy+=orbital*b.y;}
       else{h+=value;dx+=gx;dy+=gy;vz+=vertical;vx+=orbital*b.x;vy+=orbital*b.y;}
     }
@@ -176,7 +187,15 @@
     vec3 waveSurface(vec2 p,float time,float depth,float salt,float openSea){vec3 q=vec3(0.),r=vec3(0.);float e=seaExposure(p,depth,salt,openSea),localE=harborExposure(p,depth,salt,openSea),travel=0.;vec2 eg=vec2(0.),wg=vec2(0.),tg=vec2(0.);
       if(uEnvironmentEnabled){vec3 gx,gy;vec4 env=seaEnvironment(p,gx,gy);float wet=smoothstep(.2,8.,depth),windWet=smoothstep(.15,2.4,depth);e=env.x*wet;localE=env.y*windWet;eg=vec2(gx.x,gy.x)*wet;wg=vec2(gx.y,gy.y)*windWet;travel=env.z;tg=vec2(gx.z,gy.z);}
       else{float t=clamp((p.y-900.)/1200.,0.,1.);eg.y=(1.-openSea)*smoothstep(.2,8.,depth)*smoothstep(.45,.9,salt)*6.*t*(1.-t)/1200.;}
-      ${bands.map(b=>{const sum=b.wind?'r':'q';return`{vec2 d=vec2(${f(b.x)},${f(b.y)}),n=vec2(-d.y,d.x);float along=dot(p,d),groupPhase=along*${f(b.k*.23)}+dot(p,n)*${f(b.crossK*.71)}-time*${f(b.omega*.17)}+${f(b.phase*2.7)},envelope=.78+.22*sin(groupPhase),es=.22*cos(groupPhase),phase=(along+${b.wind?'0.':'travel'})*${f(b.k)}-time*${f(b.omega)}+${f(b.phase)},s=sin(phase),c=cos(phase),shape=s+.16*s*c,slope=c+.16*(2.*c*c-1.),a=${f(b.amplitude)};vec2 groupGrad=d*${f(b.k*.23)}+n*${f(b.crossK*.71)};${sum}.x+=a*envelope*shape;${sum}.yz+=a*(es*groupGrad*shape+envelope*slope*(d+${b.wind?'vec2(0.)':'tg'})*${f(b.k)});}`;}).join('\n')}
+      ${bands.map(b=>{const sum=b.wind?'r':'q',ga=b.k*(b.wind?.37:.23),gc=b.crossK*(b.wind?2.1:.71),variation=b.wind?.42:.22;return`{
+        vec2 d=vec2(${f(b.x)},${f(b.y)}),n=vec2(-d.y,d.x);float along=dot(p,d),across=dot(p,n);
+        float groupPhase=along*${f(ga)}+across*${f(gc)}-time*${f(b.omega*.17)}+${f(b.phase*2.7)},envelope=${f(1-variation)}+${f(variation)}*sin(groupPhase),es=${f(variation)}*cos(groupPhase);
+        float phase=(along+${b.wind?'0.':'travel'})*${f(b.k)}-time*${f(b.omega)}+${f(b.phase)};vec2 phaseGrad=(d+${b.wind?'vec2(0.)':'tg'})*${f(b.k)};
+        ${b.wind?`float a=(across*.63+along*.11)*${f(b.k)}-time*${f(b.omega*.13)}+${f(b.phase*1.7)},b=(across*.27-along*.19)*${f(b.k)}+time*${f(b.omega*.09)}+${f(b.phase*3.1)};
+        phase+=1.25*sin(a)+.65*sin(b);phaseGrad+=${f(b.k)}*(1.25*cos(a)*(n*.63+d*.11)+.65*cos(b)*(n*.27-d*.19));`:''}
+        float s=sin(phase),c=cos(phase),shape=s+.16*s*c,slope=c+.16*(2.*c*c-1.),amplitude=${f(b.amplitude)};vec2 groupGrad=d*${f(ga)}+n*${f(gc)};
+        ${sum}.x+=amplitude*envelope*shape;${sum}.yz+=amplitude*(es*groupGrad*shape+envelope*slope*phaseGrad);
+      }`;}).join('\n')}
       float softLimit=inversesqrt(1.+q.x*q.x/25.);q.yz*=softLimit*softLimit*softLimit;q.x*=softLimit;
       q.yz=q.yz*e+q.x*eg+r.yz*localE+r.x*wg;q.x=q.x*e+r.x*localE;return q*uSeaStrength;
     }

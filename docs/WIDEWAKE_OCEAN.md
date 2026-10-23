@@ -1,5 +1,18 @@
 # Widewake ocean redesign
 
+## Sheltered-water lattice correction, 2026-10-23 (v0.39.1)
+
+The three short wind bands crossed at fixed angles, producing a visible diamond
+lattice in otherwise sheltered water. Layer-isolation views identified the
+physical wind fronts as the main source. They now follow a narrower prevailing
+wind direction, with shorter groups and two continuous phase modulations per
+band. Crests curve, vary their spacing and lose strength along their length.
+
+The CPU and shader share the new phase and its analytic spatial derivatives.
+CPU vertical velocity follows the same phase. Hull support follows the rendered surface. Offshore swell,
+fetch and shelter, current-driven detail, and emitted wake foam keep their
+existing models. The band count and storage remain unchanged.
+
 ## Hull-scaled wash and living foam, 2026-10-23 (v0.39.0)
 
 The owner rejected the launch's oversized stern wake and the impression that
