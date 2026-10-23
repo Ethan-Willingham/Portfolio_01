@@ -1,0 +1,1 @@
+Concrete floor passed: 23 x 22 metres, top Y=0, 650 triangles, one renderer/material, one box collider, 49 supported edge/joint samples, four PBR maps and no floor shader errors.

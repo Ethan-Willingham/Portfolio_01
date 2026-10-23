@@ -1,0 +1,20 @@
+{
+  "seed": 230619,
+  "dimensions_metres": [
+    23,
+    0.24,
+    22
+  ],
+  "triangles": 650,
+  "renderers": 1,
+  "materials": 1,
+  "slabs": 36,
+  "joint_width_mm": 8,
+  "joint_depth_mm": 6,
+  "albedo_resolution": 4096,
+  "normal_and_mask_resolution": 2048,
+  "detail_normal_resolution": 1024,
+  "detail_tile_metres": 1.5,
+  "collision": "One continuous box supplied by Unity",
+  "blender_source": "assets/one-shift/models/warehouse-floor.blend"
+}

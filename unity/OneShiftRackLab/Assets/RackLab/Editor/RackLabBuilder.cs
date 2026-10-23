@@ -189,6 +189,7 @@ namespace OneShift.RackLab
             PlayerSettings.defaultScreenWidth=1440;PlayerSettings.defaultScreenHeight=900;
             PlayerSettings.fullScreenMode=FullScreenMode.Windowed;
             PlayerSettings.runInBackground=false;
+            WarehouseFloorBuilder.ReplaceSurface();
             EditorSceneManager.SaveScene(SceneManager.GetActiveScene(),ScenePath);
             EditorBuildSettings.scenes=new[]{new EditorBuildSettingsScene(ScenePath,true)};
             AssetDatabase.SaveAssets();
