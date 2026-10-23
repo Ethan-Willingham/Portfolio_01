@@ -29,6 +29,27 @@ Reverse and tow-back are removed completely, including their buttons, R and RT
 bindings, negative propeller thrust and tow-history playback. Steer to turn and
 release the helm to coast. The navigation trial uses the same simplified controls.
 
+## Manual oversteer, 2026-10-23 (v0.40.0)
+
+The owner rejected automatic correction that kept hard turns in a safe arc.
+Manual helm now applies angular torque against passive linear and quadratic
+water resistance. Holding the helm adds rotation, releasing it leaves angular
+momentum, and opposite helm must overcome that momentum before reversing it.
+Analog steering has a progressive response for smaller corrections.
+
+Lateral water acceleration is limited. When the bow rotates faster than the
+water can redirect the hull, the boat skids across its heading. Sideways flow
+reduces drive efficiency and adds drag, so sustained hard turns can spin the
+boat and scrub speed. Cargo changes inertia; actual lateral force drives bank.
+There is no timed spinout penalty, heading reset or automatic countersteering.
+The existing non-inverting hull projection remains; this does not add capsizing.
+Crew navigation retains its course-following controller. Controls and reverse
+removal are unchanged.
+
+The force/resistance separation follows the structure described in
+[Fossen's marine craft model](https://www.fossen.biz/html/marineCraftModel.html).
+The coefficients are tuned for Widewake's handling, not a calibrated real vessel.
+
 ## Waterway expansion, v0.27
 
 The active route plan is [WIDEWAKE_WATERWAYS.md](WIDEWAKE_WATERWAYS.md). Ten

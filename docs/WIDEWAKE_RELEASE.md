@@ -1,5 +1,29 @@
 # Widewake production goal
 
+## Manual oversteer and recovery, 2026-10-23 (v0.40.0)
+
+Removed the manual helm's target-yaw controller and special countersteer response.
+Steering adds torque; passive resistance dissipates rotation. Limited lateral
+water force allows the bow to rotate past the direction of travel. Sideways
+flow costs drive efficiency and speed. Banking uses the lateral force actually
+applied to the hull. Crew steering retains its navigation controller.
+
+The launch's full-speed flat-water fixture rotates about 175 degrees in 1.5 s,
+exceeds 90 degrees of sideslip and slows from 36 to about 8 m/s. A 30-percent
+helm input over that same interval retains about 35 m/s. Larger hull fixtures
+take longer to overcommit. These are diagnostic cases, not promised values in
+waves or with cargo. Opposite helm has to cancel momentum and can itself be
+overheld. Deliberate correction restores control without resetting the boat.
+
+Regression coverage includes both turn directions, three hulls, loaded inertia,
+gentle carving, spinout, overcorrection, recovery, passive energy loss, matching
+30/60/120 Hz force integration, braking, dry controls and force-driven bank.
+The earlier assertion that a hard powered carve must keep its speed is replaced
+by a speed-loss assertion. Browser review covers keyboard and touch steering,
+actual turn-history wakes, recovery and pause on desktop and landscape mobile
+with WebGL and Canvas. Regional waves, flight, contact, fleet and connected
+campaign checks remain part of this pass. Physical phone handling is unverified.
+
 ## Sheltered-water grid correction, 2026-10-23 (v0.39.1)
 
 Replaced the three crossing plane-wave patterns in sheltered water with curved,

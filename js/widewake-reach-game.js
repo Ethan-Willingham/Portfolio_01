@@ -3,7 +3,7 @@
 (function(root){
   'use strict';
   const E=root.WidewakeEstuary,B=root.WidewakeBattle,clamp=E.clamp;
-  const version='0.39.1',SAVE_VERSION=1;
+  const version='0.40.0',SAVE_VERSION=1;
   const goods={salt:{name:'Salt',color:'#d8d8bd'},tools:{name:'Tools',color:'#92a9ad'},grain:{name:'Grain',color:'#c4ac72'},timber:{name:'Timber',color:'#a68b65'},fish:{name:'Fish',color:'#78b3b5'},oil:{name:'Oil',color:'#8a909e'},relic:{name:'Salvage',color:'#dbc18c'}};
   const markets={yard:{salt:12,tools:30,grain:23,timber:25,fish:18,oil:44,relic:140},reeds:{salt:22,tools:48,grain:10,timber:24,fish:9,oil:35,relic:155},mill:{salt:27,tools:54,grain:18,timber:11,fish:24,oil:52,relic:190}};
   Object.assign(markets,{

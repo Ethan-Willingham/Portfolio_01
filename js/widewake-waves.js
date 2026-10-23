@@ -141,7 +141,8 @@
         }
         // Lateral water force acts below the centre of mass, banking a turning
         // hull. Angular momentum otherwise persists, including through flight.
-        ar-=(s.turn||0)*(s.vx*c+s.vy*sn)*draft*.12*wet/inertiaRoll;
+        const lateral=Number.isFinite(s.helmLateralAccel)?s.helmLateralAccel:(s.turn||0)*(s.vx*c+s.vy*sn)*wet;
+        ar-=lateral*draft*.12/inertiaRoll;
         state.z+=state.vz*h+az*h*h*.5;state.vz+=az*h;state.pitch+=state.vp*h+ap*h*h*.5;state.roll+=state.vr*h+ar*h*h*.5;state.vp=(state.vp+ap*h)*airDrag;state.vr=(state.vr+ar*h)*airDrag;
         const airborne=wet===0;
         if(airborne&&!state.airborne)state.jumpAt=this.time;
@@ -159,6 +160,9 @@
         const yaw=clamp(yawTorque/((s.length*s.length+s.width*s.width)/12),-.3,.3)*response*.55;
         s.turn=(s.turn||0)+yaw*dt;s.angle+=yaw*dt*dt;
       }
+      // The helm force belongs to this integration step. A later mooring or
+      // passive buoyancy update must not keep applying a previous turn's load.
+      s.helmLateralAccel=undefined;
       this.emit(s);return state;
     }
     pose(s,alpha=1,out={}){const p=s.sea;out.z=p?p.pz+(p.z-p.pz)*alpha:0;out.pitch=p?p.ppitch+(p.pitch-p.ppitch)*alpha:0;out.roll=p?p.proll+(p.roll-p.proll)*alpha:0;out.airborne=!!p?.airborne;return out;}
