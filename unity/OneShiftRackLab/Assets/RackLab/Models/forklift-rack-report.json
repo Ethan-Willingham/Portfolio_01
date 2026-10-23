@@ -13,13 +13,13 @@
   "rackLODs": [
     {
       "name": "Rack_LOD0",
-      "triangles": 8864,
+      "triangles": 8080,
       "renderers": 1,
       "materials": 1
     },
     {
       "name": "Rack_LOD1",
-      "triangles": 1720,
+      "triangles": 1576,
       "renderers": 1,
       "materials": 1
     },
@@ -46,6 +46,64 @@
     {
       "name": "Pallet_LOD2",
       "triangles": 170,
+      "renderers": 1,
+      "materials": 1
+    }
+  ],
+  "modules": [
+    {
+      "name": "Frame_LOD0",
+      "triangles": 1488,
+      "renderers": 1,
+      "materials": 1
+    },
+    {
+      "name": "Frame_LOD1",
+      "triangles": 408,
+      "renderers": 1,
+      "materials": 1
+    },
+    {
+      "name": "Frame_LOD2",
+      "triangles": 212,
+      "renderers": 1,
+      "materials": 1
+    },
+    {
+      "name": "Bay_LOD0",
+      "triangles": 5104,
+      "renderers": 1,
+      "materials": 1
+    },
+    {
+      "name": "Bay_LOD1",
+      "triangles": 760,
+      "renderers": 1,
+      "materials": 1
+    },
+    {
+      "name": "Bay_LOD2",
+      "triangles": 184,
+      "renderers": 1,
+      "materials": 1
+    }
+  ],
+  "cargoLODs": [
+    {
+      "name": "Cargo_LOD0",
+      "triangles": 1226,
+      "renderers": 1,
+      "materials": 1
+    },
+    {
+      "name": "Cargo_LOD1",
+      "triangles": 122,
+      "renderers": 1,
+      "materials": 1
+    },
+    {
+      "name": "Cargo_LOD2",
+      "triangles": 86,
       "renderers": 1,
       "materials": 1
     }

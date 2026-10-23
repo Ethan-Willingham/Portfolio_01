@@ -38,10 +38,11 @@ def label(g, x, y, z, w, h, color):
     g.face([(x-w/2,y,z-h/2),(x+w/2,y,z-h/2),(x+w/2,y,z+h/2),(x-w/2,y,z+h/2)],
            color, [(0,0),(1,0),(1,1),(0,1)], (w,h))
 
-def rack(lod):
+def rack(lod, part="full"):
     g=GameMesh()
     for ob in source:
         name=ob.name.lower()
+        centre=ob.matrix_world @ (sum((Vector(p) for p in ob.bound_box),Vector())/8)
         if any(s in name for s in ('punched upright','welded wire mesh','paint wear','contact scuff','foot weld')):
             continue
         if lod>=1 and any(s in name for s in ('anchor washer','exposed anchor','connector stud','retaining tab','brace welded','channel fold')):
@@ -49,10 +50,12 @@ def rack(lod):
         if lod>=2 and any(s in name for s in ('hex anchor','locking pin','connector return','adhesive','protector sole','channel web')):
             continue
         level_part=any(s in name for s in ('step beam','beam connector','connector','locking pin','retaining tab','adhesive','deck support'))
+        if part == 'frame' and (level_part or centre.x > 0): continue
+        if part == 'bay' and not level_part: continue
         frame_part=any(s in name for s in ('frame horizontal','frame diagonal','brace welded'))
         delta=0
         if level_part:
-            index=min(range(3), key=lambda i:abs(ob.matrix_world.translation.z-(1.12,2.24,3.36)[i]))
+            index=min(range(3), key=lambda i:abs(centre.z-(1.12,2.24,3.36)[i]))
             if index==2: continue
             delta=LEVELS[index]-(1.12,2.24)[index]
         mat=ob.data.materials[0]
@@ -65,9 +68,14 @@ def rack(lod):
             for i in polygon.vertices:
                 p=ob.matrix_world@ob.data.vertices[i].co
                 p.z=p.z*HEIGHT/3.66 if frame_part else p.z+delta
+                if part == 'frame': p.x += 1.265
+                if part == 'bay' and any(s in name for s in ('connector','locking pin','retaining tab')):
+                    post = -1.265 if centre.x < 0 else 1.265
+                    # Adjacent bays each use one of the two upright connection columns.
+                    p.x = post + (p.x-post)*.5 + (.022 if post < 0 else -.022)
                 points.append(p)
             g.face(points,color)
-    for x in (-1.265,1.265):
+    for x in (() if part == 'bay' else (0,) if part == 'frame' else (-1.265,1.265)):
         for y in (-.495,.495):
             sign=1 if y<0 else -1
             def p(dx,dy,z): return (x+dx,y+dy*sign,z)
@@ -77,7 +85,7 @@ def rack(lod):
                 g.face([p(xx,.04,.012),p(inner,.04,.012),p(inner,.04,HEIGHT),p(xx,.04,HEIGHT)],blue)
             g.face([p(-.045,-.04,.012),p(.045,-.04,.012),p(.045,-.04,HEIGHT),p(-.045,-.04,HEIGHT)],
                    blue,[(0,0),(1,0),(1,(HEIGHT-.012)/.0508),(0,(HEIGHT-.012)/.0508)],(-1,0 if lod<2 else 1))
-    for top in LEVELS:
+    for top in (() if part == 'frame' else LEVELS):
         z=top+.004
         for cx in (-.61,.61):
             lo,hi=cx-.597,cx+.597
@@ -92,30 +100,31 @@ def rack(lod):
             else:
                 g.face([(lo,-.539,z),(hi,-.539,z),(hi,.539,z),(lo,.539,z)],zinc,
                        [(0,0),(24,0),(24,11),(0,11)],(-2,0))
-    return g.finish(lod)
+    return g.finish(lod, "Frame" if part == "frame" else "Bay" if part == "bay" else "Rack")
 
-def pallet(lod):
+def pallet(lod, cargo_only=False):
     g=GameMesh()
     wood=(.39,.235,.11,.2)
     pale=(.47,.30,.15,.2)
-    # 48-inch stringers run front to back; two notches give four-way fork access.
-    for x in (-.466,0,.466):
+    if not cargo_only:
+        # 48-inch stringers run front to back; two notches give four-way fork access.
+        for x in (-.466,0,.466):
+            if lod<2:
+                box(g,(x,0,.1005),(.038,PALLET_D,.051),wood)
+                for a,b in ((-.6096,-.44),(-.18,.18),(.44,.6096)):
+                    box(g,(x,(a+b)/2,.0465),(.038,b-a,.057),wood)
+            else:
+                box(g,(x,0,.072),(.038,PALLET_D,.108),wood)
+        for y in (-.5396,0,.5396): box(g,(0,y,.009),(PALLET_W,.14,.018),wood)
         if lod<2:
-            box(g,(x,0,.1005),(.038,PALLET_D,.051),wood)
-            for a,b in ((-.6096,-.44),(-.18,.18),(.44,.6096)):
-                box(g,(x,(a+b)/2,.0465),(.038,b-a,.057),wood)
-        else:
-            box(g,(x,0,.072),(.038,PALLET_D,.108),wood)
-    for y in (-.5396,0,.5396): box(g,(0,y,.009),(PALLET_W,.14,.018),wood)
-    if lod<2:
-        for j in range(7):
-            y=-.5446+j*(1.0892/6)
-            box(g,(0,y,.135),(PALLET_W,.13,.018),pale if j%3==0 else wood)
-            if lod==0:
-                for x in (-.466,0,.466):
-                    for dy in (-.025,.025):
-                        box(g,(x,y+dy,.1443),(.003,.003,.0006),(.07,.065,.055,.8))
-    else: box(g,(0,0,.135),(PALLET_W,PALLET_D,.018),wood)
+            for j in range(7):
+                y=-.5446+j*(1.0892/6)
+                box(g,(0,y,.135),(PALLET_W,.13,.018),pale if j%3==0 else wood)
+                if lod==0:
+                    for x in (-.466,0,.466):
+                        for dy in (-.025,.025):
+                            box(g,(x,y+dy,.1443),(.003,.003,.0006),(.07,.065,.055,.8))
+        else: box(g,(0,0,.135),(PALLET_W,PALLET_D,.018),wood)
     tier_h=(LOAD_H-PALLET_H)/4
     if lod==0:
         for tier in range(4):
@@ -141,7 +150,10 @@ def pallet(lod):
         for y in (-.585,.585): box(g,(x,y,(PALLET_H+LOAD_H)*.5),(.018,.002,LOAD_H-PALLET_H),(.035,.038,.031,.8))
         box(g,(x,0,LOAD_H+.001),(.018,1.172,.002),(.035,.038,.031,.8))
     label(g,.04,-.587,.98,.25,.16,(.9,.89,.83,.01))
-    return g.finish(lod,'Pallet')
+    if cargo_only:
+        delta = .144-.12065
+        for v in g.vertices: v.z -= delta
+    return g.finish(lod,'Cargo' if cargo_only else 'Pallet')
 
 def material(name, organic=False):
     mat=bpy.data.materials.new(name)
@@ -158,6 +170,10 @@ rack_objects=[rack(i) for i in range(3)]
 pallet_objects=[pallet(i) for i in range(3)]
 steel=material('Selective rack powder coating')
 cargo=material('Wood pallet and corrugated cartons',True)
+modules=[rack(i, part) for part in ('frame','bay') for i in range(3)]
+cartons=[pallet(i,True) for i in range(3)]
+for ob in modules: ob.data.materials.append(steel)
+for ob in cartons: ob.data.materials.append(cargo)
 for ob in rack_objects: ob.data.materials.append(steel)
 for ob in pallet_objects: ob.data.materials.append(cargo)
 
@@ -169,10 +185,13 @@ def export(objects, filename):
         object_types={'MESH'},use_mesh_modifiers=False,add_leaf_bones=False,bake_anim=False,
         axis_forward='-Z',axis_up='Y',apply_unit_scale=True,bake_space_transform=True,
         mesh_smooth_type='FACE',colors_type='LINEAR',path_mode='AUTO')
+export(modules,'connected-rack-modules.fbx')
+export(cartons,'carton-load-lods.fbx')
 export(rack_objects,'forklift-pallet-rack-lods.fbx')
 export(pallet_objects,'standard-loaded-pallet-lods.fbx')
 for ob in list(bpy.data.objects):
-    if ob not in rack_objects+pallet_objects: bpy.data.objects.remove(ob,do_unlink=True)
+    if ob not in rack_objects+pallet_objects+modules+cartons: bpy.data.objects.remove(ob,do_unlink=True)
+for ob in modules+cartons: ob.hide_set(True);ob.hide_render=True
 for objects in (rack_objects,pallet_objects):
     for i,ob in enumerate(objects): ob.hide_set(i!=0);ob.hide_render=i!=0
 pallet_objects[0].location.x=3.5
@@ -181,8 +200,8 @@ bpy.context.preferences.filepaths.save_version=0
 bpy.ops.wm.save_as_mainfile(filepath=str(ROOT/'assets/one-shift/models/forklift-pallet-rack.blend'),compress=True)
 report={'rackHeightM':HEIGHT,'beamTopsM':LEVELS,'floorStorage':True,'palletWidthM':PALLET_W,
         'palletDepthM':PALLET_D,'palletHeightM':PALLET_H,'loadedPalletHeightM':LOAD_H,
-        'palletPositionsPerBay':6,'rackLODs':[],'palletLODs':[]}
-for key,objects in (('rackLODs',rack_objects),('palletLODs',pallet_objects)):
+        'palletPositionsPerBay':6,'rackLODs':[],'palletLODs':[],'modules':[],'cargoLODs':[]}
+for key,objects in (('rackLODs',rack_objects),('palletLODs',pallet_objects),('modules',modules),('cargoLODs',cartons)):
     for ob in objects:
         ob.data.calc_loop_triangles()
         report[key].append({'name':ob.name,'triangles':len(ob.data.loop_triangles),'renderers':1,'materials':1})

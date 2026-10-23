@@ -1,0 +1,174 @@
+[
+  {
+    "variant": "01_Fresh_Pine",
+    "source_objects": 16,
+    "lods": [
+      {
+        "lod": 0,
+        "triangles": 11700,
+        "bounds_m": [
+          1.0160000324249268,
+          1.2192000150680542,
+          0.12165600061416626
+        ],
+        "materials": [
+          "01_Fresh_Pine | pine PBR",
+          "01_Fresh_Pine | nail steel"
+        ]
+      },
+      {
+        "lod": 1,
+        "triangles": 468,
+        "bounds_m": [
+          1.0160000324249268,
+          1.2192000150680542,
+          0.12072903662919998
+        ],
+        "materials": [
+          "01_Fresh_Pine | pine PBR"
+        ]
+      },
+      {
+        "lod": 2,
+        "triangles": 468,
+        "bounds_m": [
+          1.0160000324249268,
+          1.2192000150680542,
+          0.12072903662919998
+        ],
+        "materials": [
+          "01_Fresh_Pine | pine PBR"
+        ]
+      }
+    ]
+  },
+  {
+    "variant": "02_Working_Wear",
+    "source_objects": 16,
+    "lods": [
+      {
+        "lod": 0,
+        "triangles": 12124,
+        "bounds_m": [
+          1.0160000324249268,
+          1.2192000150680542,
+          0.1218860074877739
+        ],
+        "materials": [
+          "02_Working_Wear | pine PBR",
+          "02_Working_Wear | nail steel"
+        ]
+      },
+      {
+        "lod": 1,
+        "triangles": 856,
+        "bounds_m": [
+          1.0160000324249268,
+          1.2192000150680542,
+          0.12146245688199997
+        ],
+        "materials": [
+          "02_Working_Wear | pine PBR"
+        ]
+      },
+      {
+        "lod": 2,
+        "triangles": 536,
+        "bounds_m": [
+          1.0160000324249268,
+          1.2192000150680542,
+          0.12112300097942352
+        ],
+        "materials": [
+          "02_Working_Wear | pine PBR"
+        ]
+      }
+    ]
+  },
+  {
+    "variant": "03_Split_Battered",
+    "source_objects": 19,
+    "lods": [
+      {
+        "lod": 0,
+        "triangles": 12372,
+        "bounds_m": [
+          1.0160000324249268,
+          1.2192000150680542,
+          0.1272680014371872
+        ],
+        "materials": [
+          "03_Split_Battered | pine PBR",
+          "03_Split_Battered | nail steel"
+        ]
+      },
+      {
+        "lod": 1,
+        "triangles": 1528,
+        "bounds_m": [
+          1.0160000324249268,
+          1.2192000150680542,
+          0.12706837058067322
+        ],
+        "materials": [
+          "03_Split_Battered | pine PBR"
+        ]
+      },
+      {
+        "lod": 2,
+        "triangles": 648,
+        "bounds_m": [
+          1.0160000324249268,
+          1.2192000150680542,
+          0.12701205909252167
+        ],
+        "materials": [
+          "03_Split_Battered | pine PBR"
+        ]
+      }
+    ]
+  },
+  {
+    "variant": "04_Repaired",
+    "source_objects": 16,
+    "lods": [
+      {
+        "lod": 0,
+        "triangles": 12288,
+        "bounds_m": [
+          1.0160000324249268,
+          1.2192000150680542,
+          0.1218860074877739
+        ],
+        "materials": [
+          "04_Repaired | pine PBR",
+          "04_Repaired | nail steel"
+        ]
+      },
+      {
+        "lod": 1,
+        "triangles": 1188,
+        "bounds_m": [
+          1.0160000324249268,
+          1.2192000150680542,
+          0.12148367613554001
+        ],
+        "materials": [
+          "04_Repaired | pine PBR"
+        ]
+      },
+      {
+        "lod": 2,
+        "triangles": 616,
+        "bounds_m": [
+          1.0160000324249268,
+          1.2192000150680542,
+          0.12114427983760834
+        ],
+        "materials": [
+          "04_Repaired | pine PBR"
+        ]
+      }
+    ]
+  }
+]

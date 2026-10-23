@@ -16,6 +16,7 @@ namespace OneShift.RackLab
         public float sensitivity = 1.8f;
         CharacterController motor;
         float pitch, verticalSpeed;
+        Quaternion spawnRotation;
         bool captured;
         bool hadFocus = true;
         GUIStyle title, instructions, small;
@@ -25,6 +26,7 @@ namespace OneShift.RackLab
         {
             motor = GetComponent<CharacterController>();
             spawnPosition = transform.position;
+            spawnRotation = transform.rotation;
             Application.targetFrameRate = 120;
             RefreshPerspective();
         }
@@ -84,7 +86,7 @@ namespace OneShift.RackLab
         public void ResetPosition()
         {
             motor.enabled = false;
-            transform.SetPositionAndRotation(spawnPosition, Quaternion.identity);
+            transform.SetPositionAndRotation(spawnPosition, spawnRotation);
             motor.enabled = true;
             pitch = verticalSpeed = 0;
             eyes.transform.localRotation = Quaternion.identity;
