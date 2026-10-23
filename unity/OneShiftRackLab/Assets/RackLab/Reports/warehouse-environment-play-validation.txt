@@ -1,0 +1,1 @@
+Play checks passed: 4 window volumes, 288 dust particles, a deterministic two-second motion step in each volume, particles within beam bounds, and no observed movement while the Game view was unfocused. Floor crossing, grounded movement, rack collision and wear cycling passed.

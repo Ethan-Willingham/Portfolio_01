@@ -4,6 +4,11 @@ A standalone Unity 6.3 URP prototype for inspecting a warehouse pallet rack at
 human scale. This is a 3D asset trial for One Shift. It does not read or
 write the browser game's saves.
 
+The room now has concrete block walls, ribbed upper cladding, an exposed steel
+roof, high multi-pane windows and warm sunlight with sparse drifting dust.
+See [warehouse walls and daylight](WAREHOUSE_ENVIRONMENT.md) for the targeted
+installer, source geometry, lighting setup and checks.
+
 Open `Assets/RackLab/Scenes/RackFloor.unity` and press Play, or launch the local
 build at `Builds/Windows/OneShiftRackLab.exe`. Click the Game view
 to capture the mouse. WASD walks, the mouse looks, Shift runs, Space jumps,
