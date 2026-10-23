@@ -65,8 +65,8 @@ console.log('PASS carried rudder release, powered carving, intentional counterst
 
 const wake=new WidewakeOceanArt.WakeTrail(),s=boat(),poses=[s],v={battle:{ships:[s]},poses,zoom:2,baseScale:1,visualTime:0,visible:()=>true};const buffers=wake.tracks.map(t=>t.x);
 for(let i=0;i<3600;i++){const angle=i/60*.3;B.helmStep(s,{x:Math.cos(angle),y:Math.sin(angle)},dt);v.visualTime=i/60;wake.sample([s],poses,v.visualTime);}
-assert.ok(wake.count>80&&wake.count<=128);assert.equal(wake.bytes,61440);assert.ok(wake.tracks.every((t,i)=>t.x===buffers[i]));
-let segments=0;wake.segments(v,(...p)=>{assert.ok(p.every(Number.isFinite));segments++;});assert.ok(segments>70&&segments<=130);
+assert.ok(wake.count>80&&wake.count<=128);assert.equal(wake.bytes,110592);assert.ok(wake.tracks.every((t,i)=>t.x===buffers[i]));
+let segments=0;wake.segments(v,(...p)=>{assert.ok(p.every(Number.isFinite));segments++;});assert.ok(segments>10&&segments<40);
 const t=wake.tracks[0],last=(t.head+127)%128,point={x:t.x[last],y:t.y[last]};s.vx=s.vy=0;s.angle+=1;v.visualTime+=1;wake.sample([s],poses,v.visualTime);assert.equal(t.x[last],point.x);assert.equal(t.y[last],point.y);assert.ok(wake.count>50,'water keeps the wake when the boat stops');v.visualTime+=13;wake.sample([s],poses,v.visualTime);assert.equal(wake.count,0);
 const fleet=Array.from({length:24},(_,id)=>({...boat(),id,vx:12,vy:0}));
 for(let n=0;n<400;n++){const time=n*.1;fleet.forEach((s,i)=>{s.x=time*12;s.y=2000+i*12;});wake.sample(fleet,fleet,time);}

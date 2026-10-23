@@ -1,5 +1,27 @@
 # Widewake ocean redesign
 
+## Hull-scaled wash and living foam, 2026-10-23 (v0.39.0)
+
+The owner rejected the launch's oversized stern wake and the impression that
+wakes and waves reveal a pre-existing texture. Wake width now grows with beam,
+speed through water and the square root of age. Hull length sets the decay
+timescale. The 6 m launch's visible envelope stays under three beams and loses
+its aerated trail within roughly three seconds at full speed. Low-speed wash is
+shorter and weaker; larger hulls retain broader wash for longer.
+
+Each stern sample stores its emitted material coordinate, current and churn.
+Foam travels with that history, stretches with the spreading wash, develops
+small eddies and dissolves. Current moves old samples without sliding a world
+texture underneath them. Throttle changes cannot resize or brighten old foam.
+Twelve seconds of fixed-capacity history use 108 KiB for all 24 friendly hulls.
+
+Wave foam no longer comes from a height mask over noise. A bounded 20 KiB pool
+emits separate foam patches at exposed breaking crests and shallow arrivals.
+Each patch has a birth, velocity, size and lifetime. Uneven cells spread, drift
+and fade after the crest passes. Sheltered rivers do not emit ocean whitecaps.
+Both WebGL and Canvas use these same patches; pause and context recovery retain
+their state. This is a bounded presentation model, not a fluid solver.
+
 ## Ripple folds and detached bow foam, 2026-10-23 (v0.38.1)
 
 The owner spotted repeated chevrons around Salt windpumps and a separate V near

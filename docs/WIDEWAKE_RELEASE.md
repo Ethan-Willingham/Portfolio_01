@@ -1,5 +1,21 @@
 # Widewake production goal
 
+## Wake scale and foam motion, 2026-10-23 (v0.39.0)
+
+Replaced the launch's large, long-lived wash with a beam- and speed-scaled trail.
+Foam has material coordinates tied to stern history, current advection, local
+churn and age-dependent dissolution. Wave crests now emit independently drifting
+foam cells with their own lifetime instead of revealing a noise texture.
+
+Regression checks cover slow and fast launches, escorts, monotonic fade, stable
+old wake strength after throttle changes, current transport, continuity through
+turns, bank clipping, fixed storage, and quiet sheltered water. A rendered wake
+translated 83 m retains its foam pattern; aging changes the pattern beyond a
+uniform fade. Desktop and landscape-mobile WebGL and Canvas comparisons include
+both hull scales, sea-foam birth and decay, paused pixels and context recovery.
+Physical phone performance remains unverified. Existing tests that required a
+six-second launch wake tens of metres wide now require it to have dispersed.
+
 ## Ripple and bow-contact correction, 2026-10-23 (v0.38.1)
 
 Removed the repeated angular ripple pattern caused by rotating world coordinates
