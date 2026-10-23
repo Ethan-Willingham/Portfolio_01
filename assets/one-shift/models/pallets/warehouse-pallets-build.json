@@ -1,0 +1,47 @@
+{
+  "blender": "5.2.3 LTS",
+  "units": "metres",
+  "footprint_m": [
+    1.016,
+    1.2191999999999998
+  ],
+  "height_m": 0.12065,
+  "variants": [
+    {
+      "name": "01_Fresh_Pine",
+      "boards": 15,
+      "nail_heads": 84,
+      "mesh_objects": 16,
+      "evaluated_triangles": 11700,
+      "source_manifold": true,
+      "open_splits": 0
+    },
+    {
+      "name": "02_Working_Wear",
+      "boards": 15,
+      "nail_heads": 84,
+      "mesh_objects": 16,
+      "evaluated_triangles": 12124,
+      "source_manifold": true,
+      "open_splits": 1
+    },
+    {
+      "name": "03_Split_Battered",
+      "boards": 15,
+      "nail_heads": 81,
+      "mesh_objects": 19,
+      "evaluated_triangles": 12372,
+      "source_manifold": true,
+      "open_splits": 4
+    },
+    {
+      "name": "04_Repaired",
+      "boards": 15,
+      "nail_heads": 83,
+      "mesh_objects": 16,
+      "evaluated_triangles": 12288,
+      "source_manifold": true,
+      "open_splits": 2
+    }
+  ]
+}
