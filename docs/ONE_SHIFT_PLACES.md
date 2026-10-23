@@ -5,6 +5,7 @@ central warehouse floor and seated office desk. These are physical destinations
 within the same charcoal, rust and cream print world. This document describes
 the current navigation and paperwork. [ONE_SHIFT_HANDLING.md](ONE_SHIFT_HANDLING.md)
 remains the source for direct pallet handling and case conservation.
+Hover and keyboard focus labels use public asset query `v36`.
 
 ## Entering and leaving
 
@@ -28,7 +29,13 @@ look back into this same building.
 Each object is a focusable target clipped to a traced source-image silhouette.
 Hover, press and keyboard focus draw the same thin cream and rust contour,
 without filling a bounding rectangle or covering the object with a label.
-The footer names the hovered object. Tab and Enter, mouse and landscape touch
+The footer names the hovered object. A compact paper tooltip also names each
+hovered object beside the pointer, with a short description of its action.
+Keyboard focus shows the same label and an applicable key hint. Labels also
+cover pallets, inventory positions, paperwork, handling and menu controls.
+They stay within the viewport, remain readable while hovered, and dismiss on
+Escape, activation, scene changes and inactivity. Touch keeps single-tap actions.
+Tab and Enter, mouse and landscape touch
 use the same targets. Small touch targets have a nearest-contour allowance;
 dragging, cancellation, rotation and inactivity cannot activate them. Work
 areas return to this central floor. The office's rear door also returns there.
@@ -92,7 +99,7 @@ selector. The superseded `places/` masters remain preserved.
 The clock view is a close-up of a practical card-slot recorder and card rack.
 Its fallback punch button sits in the footer, leaving the artwork unobstructed.
 The office has four separate, fully visible desk objects; the rear door opens
-onto the raised steel landing. Neither view uses floating navigation labels.
+onto the raised steel landing. Labels appear only on hover or keyboard focus.
 
 Warehouse views stay at standing eye level; the office is deliberately seated
 at one desk. Materials look durable and used: worn paint at touch points,
@@ -128,6 +135,11 @@ Intermittent sounds are driven by the existing update loop, not extra timers.
   retaining `unlock`, `update`, volume and inactivity handling.
 - `js/one-shift-main.js` integrates location and paperwork pause flags with
   the existing simulation and DemoActivity frame loop.
+- `js/one-shift-tooltips.js` and `one-shift-tooltips.css` provide shared hover
+  and focus labels. The controller uses native controls and the existing pallet
+  alpha hit tests, reads live state, and never issues simulation commands.
+  `tools/test-one-shift-tooltips-browser.cjs` checks label coverage, dismissal,
+  dialog layering, keyboard access, viewport edges and landscape touch.
 
 These presentation modules issue existing simulation commands. Simulation
 modules remain DOM-free. The floor grid remains hidden, and navigation does
