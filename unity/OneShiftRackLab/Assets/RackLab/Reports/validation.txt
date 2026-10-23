@@ -1,1 +1,1 @@
-Rack floor: 3 variants, 3 LODs and 7 box colliders per rack. Player, floor, bounds and shader validated.
+Rack floor: 3 variants, 3 LODs, 10 steel colliders and 6 pallet positions per rack. Ten loaded 48 x 40 inch pallets, front and side fork openings, 100 mm lift clearance, player, floor, bounds and shader validated.

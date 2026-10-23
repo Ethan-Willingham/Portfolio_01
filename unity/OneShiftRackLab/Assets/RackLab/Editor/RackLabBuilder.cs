@@ -23,16 +23,8 @@ namespace OneShift.RackLab
             if (EditorApplication.isPlaying) throw new InvalidOperationException("Stop Play mode before rebuilding the floor.");
             foreach (var folder in new[] { "Materials", "Prefabs", "Scenes", "Reports" }) Directory.CreateDirectory(Root + folder);
             AssetDatabase.Refresh();
-            var importer = (ModelImporter)AssetImporter.GetAtPath(Root + "Models/warehouse-rack-lods.fbx");
-            importer.materialImportMode = ModelImporterMaterialImportMode.None;
-            importer.importCameras = importer.importLights = importer.importAnimation = false;
-            importer.importNormals = ModelImporterNormals.Import;
-            importer.importTangents = ModelImporterTangents.CalculateMikk;
-            importer.meshCompression = ModelImporterMeshCompression.Off;
-            importer.isReadable = false;
-            importer.addCollider = false;
-            importer.globalScale = 1;
-            importer.SaveAndReimport();
+            PrepareModel("forklift-pallet-rack-lods.fbx");
+            PrepareModel("standard-loaded-pallet-lods.fbx");
             var noiseImporter = (TextureImporter)AssetImporter.GetAtPath(Root + "Textures/rack-wear-noise.png");
             noiseImporter.sRGBTexture = false;
             noiseImporter.wrapMode = TextureWrapMode.Repeat;
@@ -45,6 +37,7 @@ namespace OneShift.RackLab
             var shader = Shader.Find("OneShift/Rack Steel");
             if (shader == null) throw new Exception("Rack shader did not import.");
             var noise = AssetDatabase.LoadAssetAtPath<Texture2D>(Root + "Textures/rack-wear-noise.png");
+            var loadPrefab = CreatePalletPrefab(noise, shader);
             var conditions = new[] { "Clean", "Used", "Worn" };
             var wears = new[] { 0f, .32f, .94f };
             var finishes = new Material[3];
@@ -54,9 +47,31 @@ namespace OneShift.RackLab
                 finishes[i].SetTexture("_WearNoise", noise);
                 finishes[i].SetTexture("_RackLabel", AssetDatabase.LoadAssetAtPath<Texture2D>(Root + "Textures/rack-location-label.png"));
                 finishes[i].SetFloat("_Wear", wears[i]);
+                finishes[i].SetFloat("_SurfaceKind", 0);
                 finishes[i] = Save(finishes[i], Root + "Materials/Rack" + conditions[i] + ".mat");
             }
             font = Resources.Load<Font>("RackLabFont");
+            BuildRoom(finishes, conditions, loadPrefab);
+            return Validate();
+        }
+
+        static void PrepareModel(string filename)
+        {
+            var importer = (ModelImporter)AssetImporter.GetAtPath(Root + "Models/" + filename);
+            if(importer==null)throw new Exception("Generate model first: "+filename);
+            importer.materialImportMode = ModelImporterMaterialImportMode.None;
+            importer.importCameras = importer.importLights = importer.importAnimation = false;
+            importer.importNormals = ModelImporterNormals.Import;
+            importer.importTangents = ModelImporterTangents.CalculateMikk;
+            importer.meshCompression = ModelImporterMeshCompression.Off;
+            importer.isReadable = false;
+            importer.addCollider = false;
+            importer.globalScale = 1;
+            importer.SaveAndReimport();
+        }
+
+        static void BuildRoom(Material[] finishes, string[] conditions, GameObject loadPrefab)
+        {
             var floor = Lit("Concrete", new Color(.31f, .33f, .31f), .08f, .22f);
             var wall = Lit("Warm wall paint", new Color(.60f, .59f, .53f), 0, .2f);
             var frame = Lit("Building steel", new Color(.18f, .21f, .19f), .4f, .35f);
@@ -88,13 +103,26 @@ namespace OneShift.RackLab
             {
                 var rack = CreateRack(conditions[i], i, finishes);
                 rack.transform.position = new Vector3((i-1)*4.2f,0,2);
-                // Labels sit in front of each rack at readable standing height.
-                var plaque = Box("Condition board",new Vector3((i-1)*4.2f,4.05f,2.05f),new Vector3(2,.47f,.045f),frame,false);
-                var label = Label(conditions[i].ToUpperInvariant(), new Vector3((i-1)*4.2f,4.05f,2.015f), .15f);
+                float postX=(i-1)*4.2f-1.265f;
+                Box("Bay address plate",new Vector3(postX,1.5f,1.285f),new Vector3(.15f,.26f,.008f),frame,false);
+                Label("A0"+(i+1),new Vector3(postX,1.55f,1.278f),.05f);
+                var label = Label(conditions[i].ToUpperInvariant(), new Vector3(postX,1.44f,1.278f), .022f);
                 rack.GetComponent<RackWearVariant>().conditionLabel = label;
+                var bay=rack.GetComponent<PalletRackBay>();
+                var occupied=i==0?new int[0]:i==1?new[]{0,2,3,5}:new[]{0,1,2,3,4,5};
+                bay.exampleLoads=new GameObject[occupied.Length];
+                for(int j=0;j<occupied.Length;j++)
+                {
+                    var load=(GameObject)PrefabUtility.InstantiatePrefab(loadPrefab);
+                    load.name="Loaded pallet A0"+(i+1)+"-"+occupied[j];
+                    load.transform.SetParent(bay.palletPositions[occupied[j]],false);
+                    bay.exampleLoads[j]=load;
+                }
                 Label("0"+(i+1),new Vector3((i-1)*4.2f,.008f,-.1f),.22f).transform.rotation=Quaternion.Euler(90,0,0);
                 Box("Rack bay marking",new Vector3((i-1)*4.2f,.005f,.65f),new Vector3(3.25f,.004f,.06f),yellow,false);
             }
+            Box("Forklift aisle boundary",new Vector3(0,.005f,-2.5f),new Vector3(14.5f,.004f,.06f),yellow,false);
+            Label("FORKLIFT AISLE",new Vector3(0,.008f,-3.15f),.12f).transform.rotation=Quaternion.Euler(90,0,0);
             Label("ONE SHIFT",new Vector3(-8.4f,3.8f,10.87f),.38f);
             Label("STORAGE / 01",new Vector3(-8.4f,3.28f,10.87f),.12f);
             var sunObj = new GameObject("High warehouse daylight");
@@ -126,7 +154,7 @@ namespace OneShift.RackLab
                 fill.color=new Color(.9f,.94f,1);fill.shadows=LightShadows.None;
             }
             var player=new GameObject("Player");
-            player.transform.position=new Vector3(0,.04f,-5.5f);
+            player.transform.position=new Vector3(0,.04f,-7f);
             var controller=player.AddComponent<CharacterController>();
             controller.height=RackWalkController.StandingHeight;controller.radius=RackWalkController.BodyRadius;
             controller.center=Vector3.up*(RackWalkController.StandingHeight*.5f);
@@ -165,12 +193,11 @@ namespace OneShift.RackLab
             EditorBuildSettings.scenes=new[]{new EditorBuildSettingsScene(ScenePath,true)};
             AssetDatabase.SaveAssets();
             Physics.SyncTransforms();
-            return Validate();
         }
 
         static GameObject CreateRack(string condition,int index,Material[] finishes)
         {
-            var asset=AssetDatabase.LoadAssetAtPath<GameObject>(Root+"Models/warehouse-rack-lods.fbx");
+            var asset=AssetDatabase.LoadAssetAtPath<GameObject>(Root+"Models/forklift-pallet-rack-lods.fbx");
             if(asset==null)throw new Exception("FBX missing");
             var rack=new GameObject("Rack - "+condition);
             var instance=(GameObject)PrefabUtility.InstantiatePrefab(asset);
@@ -189,17 +216,74 @@ namespace OneShift.RackLab
                 lods[i]=new LOD(new[]{.24f,.10f,.018f}[i],new Renderer[]{render});
             }
             var group=rack.AddComponent<LODGroup>();group.SetLODs(lods);group.RecalculateBounds();
-            // Seven primitive colliders: side frames, shelf volumes and two guards.
+            // The floor opening stays clear. Beam and deck colliders follow the steel.
             foreach(float x in new[]{-1.265f,1.265f})
             {
-                ColliderBox(rack,"End frame collision",new Vector3(x,1.83f,0),new Vector3(.10f,3.66f,1.08f));
+                ColliderBox(rack,"End frame collision",new Vector3(x,PalletRackBay.FrameHeight/2,0),new Vector3(.10f,PalletRackBay.FrameHeight,1.08f));
                 ColliderBox(rack,"Guard collision",new Vector3(x,.18f,-.55f),new Vector3(.315f,.36f,.30f));
             }
-            foreach(float y in new[]{1.12f,2.24f,3.36f})
-                ColliderBox(rack,"Shelf collision",new Vector3(0,y-.055f,0),new Vector3(2.44f,.14f,1.08f));
+            for(int level=1;level<=2;level++)
+            {
+                float y=PalletRackBay.BeamPitch*level;
+                foreach(float z in new[]{-.495f,.495f})
+                    ColliderBox(rack,"Load beam collision",new Vector3(0,y-.065f,z),new Vector3(2.44f,.13f,.07f));
+                ColliderBox(rack,"Wire deck collision",new Vector3(0,y+.005f,0),new Vector3(2.414f,.012f,1.078f));
+            }
+            var bay=rack.AddComponent<PalletRackBay>();
+            bay.palletPositions=new Transform[6];bay.exampleLoads=new GameObject[0];
+            for(int level=0;level<3;level++)for(int side=0;side<2;side++)
+            {
+                var slot=new GameObject("Pallet position "+level+(side==0?"L":"R"));
+                slot.transform.SetParent(rack.transform,false);
+                slot.transform.localPosition=new Vector3((side==0?-1:1)*PalletRackBay.PalletCenterOffset,
+                    level==0?.002f:level*PalletRackBay.BeamPitch+PalletRackBay.DeckAboveBeam+.001f,0);
+                bay.palletPositions[level*2+side]=slot.transform;
+            }
             var wear=rack.AddComponent<RackWearVariant>();wear.finishes=finishes;wear.condition=index;
             PrefabUtility.SaveAsPrefabAsset(rack,Root+"Prefabs/Rack"+condition+".prefab");
             return rack;
+        }
+
+        static GameObject CreatePalletPrefab(Texture2D noise, Shader shader)
+        {
+            var material=new Material(shader){name="Pallet load",enableInstancing=true};
+            material.SetTexture("_WearNoise",noise);
+            material.SetTexture("_RackLabel",AssetDatabase.LoadAssetAtPath<Texture2D>(Root+"Textures/pallet-load-label.png"));
+            material.SetFloat("_SurfaceKind",1);
+            material=Save(material,Root+"Materials/PalletLoad.mat");
+            var root=new GameObject("Standard loaded pallet 48 x 40");
+            var model=(GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(Root+"Models/standard-loaded-pallet-lods.fbx"));
+            model.transform.SetParent(root.transform,false);model.transform.localRotation=Quaternion.Euler(0,180,0);
+            var imported=model.GetComponent<LODGroup>();if(imported!=null)UnityEngine.Object.DestroyImmediate(imported);
+            var lods=new LOD[3];
+            for(int i=0;i<3;i++)
+            {
+                var renderer=model.GetComponentsInChildren<MeshRenderer>(true).Single(r=>r.name=="Pallet_LOD"+i);
+                renderer.sharedMaterial=material;renderer.gameObject.SetActive(true);
+                lods[i]=new LOD(new[]{.12f,.045f,.012f}[i],new Renderer[]{renderer});
+            }
+            var group=root.AddComponent<LODGroup>();group.SetLODs(lods);group.RecalculateBounds();
+            // Compound boxes preserve both front fork pockets and the side notches.
+            foreach(float x in new[]{-.466f,0,.466f})
+            {
+                ColliderBox(root,"Stringer upper",new Vector3(x,.1005f,0),new Vector3(.038f,.051f,1.2192f));
+                foreach(var range in new[]{new Vector2(-.6096f,-.44f),new Vector2(-.18f,.18f),new Vector2(.44f,.6096f)})
+                    ColliderBox(root,"Stringer foot",new Vector3(x,.0465f,(range.x+range.y)/2),new Vector3(.038f,.057f,range.y-range.x));
+            }
+            foreach(float z in new[]{-.5396f,0,.5396f})
+                ColliderBox(root,"Bottom board",new Vector3(0,.009f,z),new Vector3(1.016f,.018f,.14f));
+            for(int i=0;i<7;i++)
+                ColliderBox(root,"Top board",new Vector3(0,.135f,-.5446f+i*(1.0892f/6)),new Vector3(1.016f,.018f,.13f));
+            ColliderBox(root,"Carton load",new Vector3(0,(PalletRackBay.PalletHeight+PalletRackBay.LoadedHeight)/2,0),
+                new Vector3(.972f,PalletRackBay.LoadedHeight-PalletRackBay.PalletHeight,1.172f));
+            foreach(float x in new[]{-.25f,.25f})
+            {
+                var entry=new GameObject(x<0?"Left fork entry":"Right fork entry");
+                entry.transform.SetParent(root.transform,false);entry.transform.localPosition=new Vector3(x,.073f,-.61f);
+            }
+            var prefab=PrefabUtility.SaveAsPrefabAsset(root,Root+"Prefabs/StandardLoadedPallet.prefab");
+            UnityEngine.Object.DestroyImmediate(root);
+            return prefab;
         }
 
         static void ColliderBox(GameObject rack,string name,Vector3 center,Vector3 size)
@@ -288,16 +372,38 @@ namespace OneShift.RackLab
                     int triangles=0;for(int i=0;i<mesh.subMeshCount;i++)triangles+=(int)mesh.GetIndexCount(i)/3;
                     if(triangles>=previous)throw new Exception("LOD triangles must decrease.");previous=triangles;
                     if(r.sharedMaterials.Length!=1)throw new Exception("Expected one material.");
-                    if(Mathf.Abs(r.bounds.size.y-3.66f)>.05f)throw new Exception("Rack height or export axes are wrong: "+r.bounds);
+                    if(Mathf.Abs(r.bounds.size.y-PalletRackBay.FrameHeight)>.01f)throw new Exception("Rack height or export axes are wrong: "+r.bounds);
                 }
-                if(rack.GetComponentsInChildren<BoxCollider>().Length!=7)throw new Exception("Rack needs seven simple colliders.");
+                if(rack.GetComponentsInChildren<BoxCollider>().Count(c=>c.transform.parent==rack.transform)!=10)
+                    throw new Exception("Rack needs ten frame, guard, beam and deck colliders.");
+                var bay=rack.GetComponent<PalletRackBay>();
+                if(bay==null||bay.palletPositions.Length!=6)throw new Exception("Expected six pallet positions: floor plus two beam levels.");
+                foreach(var slot in bay.palletPositions)
+                {
+                    // Model a pair of 120 mm wide, 40 mm thick forks through the real openings.
+                    foreach(float x in new[]{-.25f,.25f})
+                        if(Physics.CheckBox(slot.position+new Vector3(x,.073f,-.05f),new Vector3(.06f,.02f,.55f)))
+                            throw new Exception("Front fork pocket obstructed at "+slot.name);
+                    foreach(float z in new[]{-.31f,.31f})
+                        if(Physics.CheckBox(slot.position+new Vector3(0,.05f,z),new Vector3(.49f,.015f,.05f)))
+                            throw new Exception("Side fork notch obstructed at "+slot.name);
+                }
+                foreach(var load in bay.exampleLoads)
+                {
+                    var bounds=load.GetComponent<LODGroup>().GetLODs()[0].renderers[0].bounds;
+                    if(Mathf.Abs(bounds.size.x-PalletRackBay.PalletWidth)>.005f||Mathf.Abs(bounds.size.z-PalletRackBay.PalletDepth)>.005f||Mathf.Abs(bounds.size.y-PalletRackBay.LoadedHeight)>.005f)
+                        throw new Exception("Loaded pallet dimensions are wrong: "+bounds.size);
+                    var lifted=Physics.OverlapBox(bounds.center+Vector3.up*.10f,bounds.extents-Vector3.one*.005f);
+                    if(lifted.Any(c=>!c.transform.IsChildOf(load.transform)))
+                        throw new Exception("Insufficient lift clearance above "+load.name);
+                }
             }
             var player=UnityEngine.Object.FindObjectOfType<RackWalkController>();
             if(player==null||player.eyes==null)throw new Exception("Player missing.");
             if(!Physics.Raycast(player.transform.position+Vector3.up,Vector3.down,2))throw new Exception("Player has no floor.");
             var errors=ShaderUtil.GetShaderMessages(Shader.Find("OneShift/Rack Steel")).Where(m=>m.severity==ShaderCompilerMessageSeverity.Error).ToArray();
             if(errors.Length>0)throw new Exception(string.Join("\n",errors.Select(e=>e.message)));
-            report+="3 LODs and 7 box colliders per rack. Player, floor, bounds and shader validated.";
+            report+="3 LODs, 10 steel colliders and 6 pallet positions per rack. Ten loaded 48 x 40 inch pallets, front and side fork openings, 100 mm lift clearance, player, floor, bounds and shader validated.";
             File.WriteAllText(Root+"Reports/validation.txt",report+"\n");
             Debug.Log(report);return report;
         }
@@ -314,16 +420,17 @@ namespace OneShift.RackLab
             if(!EditorApplication.isPlaying)throw new Exception("Enter Play mode first.");
             var player=UnityEngine.Object.FindObjectOfType<RackWalkController>();
             var motor=player.GetComponent<CharacterController>();
-            var rack=UnityEngine.Object.FindObjectsOfType<RackWearVariant>().OrderBy(r=>r.transform.position.x).ElementAt(1);
+            var rack=UnityEngine.Object.FindObjectsOfType<RackWearVariant>().OrderBy(r=>r.transform.position.x).First();
             var condition=rack.condition;
             try
             {
                 player.ResetPosition();
+                motor.enabled=false;player.transform.position+=Vector3.right*rack.transform.position.x;motor.enabled=true;
                 for(int i=0;i<30;i++)motor.Move(Vector3.down*.04f);
                 if(!motor.isGrounded||Mathf.Abs(player.transform.position.y)>.08f)
                     throw new Exception("The character does not stand on the floor.");
                 for(int i=0;i<40;i++)motor.Move(Vector3.forward*.05f);
-                if(Mathf.Abs(player.transform.position.z+3.5f)>.08f)
+                if(Mathf.Abs(player.transform.position.z-(player.spawnPosition.z+2f))>.08f)
                     throw new Exception("The character cannot move freely in the aisle.");
                 for(int i=0;i<160;i++)motor.Move(Vector3.forward*.05f);
                 var stopped=player.transform.position;

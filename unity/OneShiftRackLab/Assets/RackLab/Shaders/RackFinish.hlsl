@@ -5,6 +5,7 @@ sampler2D _WearNoise;
 sampler2D _RackLabel;
 CBUFFER_START(UnityPerMaterial)
 float _Wear;
+float _SurfaceKind;
 CBUFFER_END
 
 float RackCoverage(float2 uv, float2 surface)
@@ -32,6 +33,22 @@ void RackFinish(float3 position, float3 normal, float2 uv, float2 surface, float
     float2 noiseUV = axis.y > max(axis.x,axis.z) ? position.xz : (axis.x > axis.z ? position.zy : position.xy);
     float4 noise = tex2D(_WearNoise,noiseUV*.85);
     float grain = tex2D(_WearNoise,noiseUV*9.1).g;
+    if (_SurfaceKind > .5)
+    {
+        float label = 1-step(.05,finish.a);
+        float wood = step(.05,finish.a)*(1-step(.35,finish.a));
+        float tape = step(.65,finish.a);
+        float woodGrain = tex2D(_WearNoise,noiseUV*float2(.65,32)).g;
+        float2 edgeDistance = min(uv,1-uv)*surface;
+        float edgeShade = 1-smoothstep(.0005,.003,min(edgeDistance.x,edgeDistance.y));
+        albedo = finish.rgb * (1 + (grain-.5)*.08);
+        albedo *= lerp(1, .76+woodGrain*.42, wood);
+        albedo *= 1-edgeShade*.10;
+        albedo = lerp(albedo,finish.rgb*tex2D(_RackLabel,uv).rgb,label);
+        metallic = 0;
+        smoothness = lerp(.13,.36,tape);
+        return;
+    }
     float edge = 0;
     if (surface.x > 0)
     {
@@ -42,7 +59,7 @@ void RackFinish(float3 position, float3 normal, float2 uv, float2 surface, float
         edge = 1-smoothstep(.02,.12,min(frac(uv.x),1-frac(uv.x)));
 
     float low = 1-smoothstep(.04,.8,position.y);
-    float beamContact = exp(-abs(position.y-1.02)*16);
+    float beamContact = exp(-abs(position.y-1.73)*16);
     float contact = max(low,beamContact*.8);
     float paint = step(.6,finish.a);
     float label = 1-step(.05,finish.a);

@@ -5,6 +5,7 @@ Shader "OneShift/Rack Steel"
         _WearNoise("Wear pattern",2D) = "gray" {}
         _RackLabel("Location sticker",2D) = "white" {}
         _Wear("Wear",Range(0,1)) = 0
+        _SurfaceKind("Surface kind (steel or pallet load)",Float) = 0
     }
     SubShader
     {

@@ -106,7 +106,7 @@ namespace OneShift.RackLab
             GUI.DrawTexture(new Rect(18, Screen.height - 72, 690, 52), Texture2D.whiteTexture);
             GUI.color = Color.white;
             GUI.Label(new Rect(32, 26, 340, 28), "ONE SHIFT / RACK FLOOR", title);
-            GUI.Label(new Rect(32, 55, 340, 25), "Clean     /     Used     /     Worn", small);
+            GUI.Label(new Rect(32, 55, 340, 25), "Pallet storage   /   Floor + two beam levels", small);
             GUI.Label(new Rect(32, Screen.height - 67, 670, 25), "WASD move   |   Mouse look   |   Shift run   |   Space jump   |   Esc cursor", small);
             GUI.Label(new Rect(32, Screen.height - 44, 660, 24), captured ? (target != null ? "E: change this rack's wear   |   R: return to entrance" : "Walk up to a rack to inspect its finish.   R: return to entrance") : "Click inside the game to walk around.", small);
             if (captured)

@@ -1,0 +1,53 @@
+{
+  "rackHeightM": 4.8768,
+  "beamTopsM": [
+    1.8288,
+    3.6576
+  ],
+  "floorStorage": true,
+  "palletWidthM": 1.016,
+  "palletDepthM": 1.2192,
+  "palletHeightM": 0.144,
+  "loadedPalletHeightM": 1.55,
+  "palletPositionsPerBay": 6,
+  "rackLODs": [
+    {
+      "name": "Rack_LOD0",
+      "triangles": 8864,
+      "renderers": 1,
+      "materials": 1
+    },
+    {
+      "name": "Rack_LOD1",
+      "triangles": 1720,
+      "renderers": 1,
+      "materials": 1
+    },
+    {
+      "name": "Rack_LOD2",
+      "triangles": 608,
+      "renderers": 1,
+      "materials": 1
+    }
+  ],
+  "palletLODs": [
+    {
+      "name": "Pallet_LOD0",
+      "triangles": 1994,
+      "renderers": 1,
+      "materials": 1
+    },
+    {
+      "name": "Pallet_LOD1",
+      "triangles": 386,
+      "renderers": 1,
+      "materials": 1
+    },
+    {
+      "name": "Pallet_LOD2",
+      "triangles": 170,
+      "renderers": 1,
+      "materials": 1
+    }
+  ]
+}
