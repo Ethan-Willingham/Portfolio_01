@@ -37,8 +37,8 @@ for(const scale of [2,4,8]){
 assert.equal(hump({speed:5}).flights.length,0,'a slow crossing need not leave the water');
 // Consecutive real-wave encounters, speed, heading and cargo determine the
 // measured takeoff velocities, attitudes and airtimes. No random jump variance.
-function voyage({speed=36,heading=0,load=0,shelter=false,dt=1/60}={}){
-  const sea=new W.Sea(shelter?{sample:(x,y,out={})=>Object.assign(out,{depth:9,salinity:.77})}:null),s=make(1,load),events=[];let event,maxGap=0,maxZ=0,gravityError=0;
+function voyage({speed=36,heading=null,load=0,shelter=false,dt=1/60}={}){
+  heading??=shelter?0:W.bands[0].angle+Math.PI;const sea=new W.Sea(shelter?{sample:(x,y,out={})=>Object.assign(out,{depth:9,salinity:.77})}:null),s=make(1,load),events=[];let event,maxGap=0,maxZ=0,gravityError=0;
   Object.assign(s,{y:shelter?600:2400,angle:heading,vx:Math.cos(heading)*speed,vy:Math.sin(heading)*speed});
   for(let n=0;n<60/dt;n++){
     const previous=s.sea&&{...s.sea};sea.begin(n*dt);B.helmStep(s,{throttle:speed/s.speed,steer:0},dt);sea.stepShip(s,dt);const q=s.sea;
@@ -58,10 +58,10 @@ assert.ok(open.gravityError<1e-8,'unsupported flights retain gravity');
 assert.ok(Math.abs(coarse.events.length-open.events.length)<=3&&Math.abs(coarse.maxGap-open.maxGap)<1.5,'contact integration converges across frame steps');
 assert.ok(Math.abs(open.maxZ-loaded.maxZ)>.2,'cargo changes displacement and subsequent flight');
 assert.ok(following.events.length<open.events.length,'following seas produce a different contact response');
-assert.equal(voyage({speed:12}).events.length,0);assert.equal(voyage({shelter:true}).events.length,0);
+const slow=voyage({speed:12});assert.ok(slow.maxGap<.7&&slow.events.every(e=>e.duration<.2),'slow exposed travel has no sustained flight');const harbor=voyage({shelter:true});assert.equal(harbor.events.length,0,'sheltered local chop does not launch the boat like offshore swell');assert.equal(voyage({shelter:true,speed:12}).events.length,0,'slow harbor travel remains supported');
 const air={...make(),vx:36,turn:.4,sea:{airborne:true}};B.helmStep(air,{throttle:-1,steer:-1},.1);assert.ok(air.vx>35.5&&Math.abs(air.vy)<1e-6&&air.turn>.39,'dry helm cannot brake or countersteer');
 // Dormant test snapshots retain continuous contact and momentum exactly.
-const g=new R.Game();g.castOff();Object.assign(g.player,{x:0,y:2400,px:0,py:2400,vx:36,vy:0,angle:0});g.nextEncounter=1e9;g.mounts=[];
+const g=new R.Game();g.castOff();Object.assign(g.player,{x:0,y:2400,px:0,py:2400,vx:-W.bands[0].x*36,vy:-W.bands[0].y*36,angle:W.bands[0].angle+Math.PI});g.nextEncounter=1e9;g.mounts=[];
 for(let n=0;n<900&&!g.player.sea?.airborne;n++)g.step(1/60,{throttle:1,steer:0});assert.ok(g.player.sea.airborne);
 const again=R.Game.restore(g.save());assert.deepEqual(again.player.sea,g.player.sea);
 for(let n=0;n<180;n++){g.step(1/60,{throttle:1,steer:0});again.step(1/60,{throttle:1,steer:0});assert.deepEqual(again.player.sea,g.player.sea);assert.equal(again.player.x,g.player.x);}

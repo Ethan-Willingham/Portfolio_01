@@ -1,5 +1,47 @@
 # Widewake production goal
 
+## Regional sea and hull response, 2026-10-23 (v0.38.0)
+
+The owner rejected the repeating dark wave ridges, weak boat response and uniform
+water behavior across oceans, coasts and rivers. The sea now combines eight
+directional swell and wind-wave bands. Softer face lighting, sky reflections,
+filtered current-following ripples and selective whitecaps replace the dark
+stamped ridges. Exposed coastal foam follows arriving water; river banks do not
+generate surf. Canvas uses the same physical surface with simpler lighting.
+
+An approximately 400 KiB chart samples the actual waterway geometry. Rays trace
+offshore access, shallow dissipation, travel delay and uninterrupted wind fetch.
+Incoming swell travels toward the mainland, compresses in exposed shallows and
+loses energy inside narrow reaches. The artificial large harbor wave is removed.
+At the review locations, offshore water spans about four metres vertically,
+the starter harbor about thirty centimetres, and Reed cut about one centimetre.
+These are samples of this sea state, not fixed limits for every location.
+
+Nine weighted pressure points replace the five-point cross beneath friendly
+hulls. All four quarters contribute buoyancy and torque, including yaw from
+off-centre horizontal pressure. Patch velocity includes the turning hull.
+Reduced contact damping makes the response less sluggish while retaining
+gravity, cargo displacement, natural flight and water-entry forces. Nearby
+hull geometry now uses a length-preserving rigid rotation for pitch and roll.
+
+Checks pass for regional CPU/shader agreement (under 1.3 cm at the sampled
+points), analytic surface derivatives, shallow phase compression, fixed chart
+storage, heading-dependent heave/pitch/roll/yaw/sway, sustained hull stability,
+dimensional scaling, natural flight, landing splashes, submerged waterlines,
+paused pixels and context recovery. Desktop and landscape-phone WebGL and Canvas
+frames cover harbor, river, fresh headwaters, coast and open sea. Nearby hull
+detail checks, connected trading/fishing/oil/river convoys, fleet handling and
+projectile contacts pass. The full three-minute battle keeps 16,384 active-target
+raiders, all 24 friendly boats and bounded buffers. Desktop staging and policy
+checks pass.
+
+The route-ETA regression remains a separate pre-existing failure: yard to Lantern
+takes 56.35 seconds with the previous wave code and 56.32 with this code, against
+the same 36.09-second estimate. Do not report the entire waterways suite as passing.
+The regional chart approximates refraction and dissipation; it does not solve
+overturning breakers, advancing beach swash or turbulence. Physical-phone
+performance and the owner's final visual assessment remain open.
+
 Owner direction, 2026-10-19: keep improving the whole game in repeated passes.
 Treat the tiny actions, the connected experience and mobile play as seriously as
 the large features. A playable public build is not the finish line. Opening the

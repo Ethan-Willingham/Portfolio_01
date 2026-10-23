@@ -1,5 +1,41 @@
 # Widewake ocean redesign
 
+## Regional water and hull motion, 2026-10-23
+
+The owner rejected the repeating dark wave ridges and asked for a substantially
+better ocean and boat response on every axis. Water must also behave according
+to its location. Rivers cannot inherit an offshore swell, and the coast cannot
+appear to generate large waves travelling out to sea.
+
+Version 0.38 uses crossing swell and wind-wave bands with shared CPU and shader
+heights, slopes and velocities. The incoming swell travels from the southern
+sea toward the mainland. A cached chart traces through the actual channel and
+bank geometry to determine offshore access, shallow-water travel delay and
+local wind fetch. Land blocks swell. Shallow and narrow passages dissipate it.
+The accumulated delay compresses and bends the phase in exposed shallows.
+River surface detail follows the local current, while smaller wind waves use
+the available fetch. Do not restore the former latitude-only shelter or the
+large artificial harbor packet to make the starter boat jump.
+
+The chart uses 64-metre cells and 32-metre rays. It is a bounded approximation,
+not a breaking-wave fluid solver. The exact terrain depth still gates the
+surface, foam and navigation. All regions share the same wave field with the
+hull solver; visible swell must not be a separate scrolling overlay.
+
+Nine weighted water-contact points cover each friendly hull, including all four
+quarters. Their pressure drives heave, pitch, roll, surge, sway and yaw. Cargo,
+inertia, partial water contact and retained airborne momentum remain physical.
+Nearby hull geometry rotates rigidly instead of stretching under a tilt.
+
+The revised water uses sky reflection, filtered small ripples, softer face
+lighting, selective crest foam and shallow surf limited to exposed coasts.
+Validate the harbor, river, fresh headwaters, coast, open sea and endgame on both
+WebGL and Canvas, including graphics restoration and stopped simulation time.
+
+Reference principles: [NVIDIA's layered wave models](https://developer.nvidia.com/gpugems/gpugems/part-i-natural-effects/chapter-1-effective-water-simulation-physical-models)
+and [NOAA's account of wind, fetch and coastal waves](https://oceanservice.noaa.gov/education/tutorial_currents/03coastal1.html).
+The implementation and art are original.
+
 Owner direction, 2026-10-19. This supersedes the Earth requirement and the old
 1,200-enemy ceiling as an endgame design target. Keep the approved title screen.
 Final image generation is still deferred.

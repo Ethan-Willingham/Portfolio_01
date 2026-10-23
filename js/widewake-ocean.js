@@ -80,14 +80,15 @@
     uniform vec2 uSize;
     uniform float uZoom;
     out vec3 vColor;out vec3 vWorld;out vec3 vNormal;out vec3 vLocal;
+    vec3 tiltHull(vec3 p){vec3 n=normalize(vec3(-aTilt,1.)),v=vec3(-n.y,n.x,0.);return p+cross(v,p)+cross(v,cross(v,p))/(1.+n.z);}
     void main(){
       vec3 q=aPosition*aPose.y;
       if(aPose.w<0.)q.x*=-aPose.w;
-      vec3 p=vec3(q.x*aWorld.w-q.y*aPose.x,q.x*aPose.x+q.y*aWorld.w,q.z);p.z+=dot(p.xy,aTilt);p.xy-=q.z*aTilt;p+=aWorld.xyz;
+      vec3 p=tiltHull(vec3(q.x*aWorld.w-q.y*aPose.x,q.x*aPose.x+q.y*aWorld.w,q.z))+aWorld.xyz;
       vec2 screen=vec2((p.x-p.y)*.70710678,(p.x+p.y)*.35355339-p.z*.8660254)*uZoom;
       gl_Position=vec4(screen.x/uSize.x*2.,-screen.y/uSize.y*2.,clamp(-((p.x+p.y)*.6123724+p.z*.5)/20000.,-.99,.99),1.);
       vColor=mix(aColor,vec3(1.,.94,.77),aPose.z);vWorld=p;
-      vec3 n=vec3(aNormal.x*aWorld.w-aNormal.y*aPose.x,aNormal.x*aPose.x+aNormal.y*aWorld.w,aNormal.z);vNormal=vec3(n.xy-n.z*aTilt,n.z+dot(n.xy,aTilt));vLocal=aPosition;
+      vec3 n=vec3(aNormal.x*aWorld.w-aNormal.y*aPose.x,aNormal.x*aPose.x+aNormal.y*aWorld.w,aNormal.z);vNormal=tiltHull(n);vLocal=aPosition;
     }`;
   const fragment=`#version 300 es
     precision highp float;in vec3 vColor;in vec3 vWorld;in vec3 vNormal;in vec3 vLocal;out vec4 color;
@@ -212,7 +213,7 @@
       if(this.anchor){const q=unproject(this.anchor.sx/(this.zoom*this.baseScale),this.anchor.sy/(this.zoom*this.baseScale));this.camera.x=this.anchor.x-q.x;this.camera.y=this.anchor.y-q.y;this.offset.x=this.camera.x-p.x;this.offset.y=this.camera.y-p.y;if(Math.abs(this.zoom-this.targetZoom)<.0001)this.anchor=null;}
       else if(this.follow){if(Math.hypot(this.battle.control.x||0,this.battle.control.y||0,this.battle.control.throttle||0,this.battle.control.steer||0)>.1){const ease=Math.exp(-dt*2.5);this.offset.x*=ease;this.offset.y*=ease;}const ship=this.battle.player,velocity=project(ship.vx,ship.vy),limit=Math.min(this.width,this.height)*.13,lead=this.lookAhead?.85*Math.min(1,limit/(Math.hypot(velocity.x,velocity.y)*this.zoom*this.baseScale*.85||1)):0;this.camera.x+=(p.x+ship.vx*lead+this.offset.x-this.camera.x)*(1-Math.exp(-dt*5));this.camera.y+=(p.y+ship.vy*lead+this.offset.y-this.camera.y)*(1-Math.exp(-dt*5));}
     }
-    uniforms(p){const gl=this.gl;gl.useProgram(p);gl.uniform2f(gl.getUniformLocation(p,'uSize'),this.width,this.height);gl.uniform1f(gl.getUniformLocation(p,'uZoom'),this.zoom*this.baseScale);gl.uniform1f(gl.getUniformLocation(p,'uSeaStrength'),this.battle.sea?.strength??1);gl.uniform1f(gl.getUniformLocation(p,'uOpenSea'),this.battle.field?0:1);gl.uniform1f(gl.getUniformLocation(p,'uDetailMotion'),this.reduced?0:1);}
+    uniforms(p){const gl=this.gl;gl.useProgram(p);gl.uniform2f(gl.getUniformLocation(p,'uSize'),this.width,this.height);gl.uniform1f(gl.getUniformLocation(p,'uZoom'),this.zoom*this.baseScale);gl.uniform1f(gl.getUniformLocation(p,'uSeaStrength'),this.battle.sea?.strength??1);gl.uniform1f(gl.getUniformLocation(p,'uOpenSea'),this.battle.field?0:1);gl.uniform1f(gl.getUniformLocation(p,'uDetailMotion'),this.reduced?0:1);this.surface?.bindEnvironment(p);}
     visible(x,y,r=25){const dx=x-this.camera.x,dy=y-this.camera.y,z=this.zoom*this.baseScale;return Math.abs((dx-dy)*A*z)<this.width/2+r&&Math.abs((dx+dy)*B*z)<this.height/2+r;}
     render(dt=1/60,alpha=1){this.alpha=clamp(alpha,0,1);this.visualTime=Math.max(0,this.battle.time-(1-this.alpha)/60);for(const s of this.battle.ships){const p=this.poses[s.id]||(this.poses[s.id]={});p.x=s.px+(s.x-s.px)*this.alpha;p.y=s.py+(s.y-s.py)*this.alpha;p.angle=s.previousAngle+root.WidewakeBattle.angleDelta(s.angle,s.previousAngle)*this.alpha;this.battle.sea?.pose(s,this.alpha,p);p.z=p.z||0;p.gx=(p.pitch||0)*Math.cos(p.angle)-(p.roll||0)*Math.sin(p.angle);p.gy=(p.pitch||0)*Math.sin(p.angle)+(p.roll||0)*Math.cos(p.angle);}if(this.battle.port)this.wakes?.clear();else this.wakes?.sample(this.battle.ships,this.poses,this.visualTime);this.stats.wakePoints=this.wakes?.count||0;this.stats.wakeBytes=this.wakes?.bytes||0;this.updateCamera(dt);this.prepareSpawns();if(this.lost)return;const start=performance.now();this.gl?this.renderGPU():this.renderCanvas();this.labels();this.stats.cpuRenderMs=performance.now()-start;}
     // Nearby friendly boats use their original geometry at display resolution.

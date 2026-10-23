@@ -319,48 +319,53 @@
       p=world+h*1.22474487;return waveSurface(p,time,depth,salt,uOpenSea);
     }
     vec3 seaColorAt(vec2 p,vec3 wave,float depth,float salt,vec2 current,float time,float zoom){
-      float exposure=seaExposure(p,depth,salt,uOpenSea);
-      vec2 drift=current*time*.45;
-      float broad=texture(uNoise,p*.0018).r,grain=texture(uNoise,(p-drift)*.037).g;
+      float exposure=seaExposure(p,depth,salt,uOpenSea),wind=harborExposure(p,depth,salt,uOpenSea),incoming=exposure;
+      if(uEnvironmentEnabled){vec3 gx,gy;vec4 env=seaEnvironment(p,gx,gy);incoming=env.x;exposure=env.x*smoothstep(.2,8.,depth);wind=env.y*smoothstep(.15,2.4,depth);}
+      vec2 drift=current*time;
+      float broad=texture(uNoise,p*.00004).r,grain=texture(uNoise,(p-drift)*.037).g;
       vec3 offshore=vec3(.032,.175,.235),coastal=vec3(.052,.295,.315),river=vec3(.075,.235,.235);
       float shelf=exp(-max(depth,0.)*.075);
       vec3 base=mix(offshore,coastal,shelf*.8+.12);base=mix(river,base,salt);
       base*=.96+broad*.08;
       float bottom=exp(-max(depth,0.)*.62);
       base=mix(base,vec3(.23,.39,.32)+grain*.035,bottom*.72);
-      // Broader face contrast gives each swell a readable rise and falling side.
-      // The actual height/depth surface stays identical to the hull simulation.
-      float visibility=sqrt(exposure);
-      vec3 normal=normalize(vec3(-wave.yz*2.8/max(.35,visibility),1.));
-      vec3 sun=normalize(vec3(-.70,.25,.55)),eye=vec3(.61237244,.61237244,.5);
-      float face=max(0.,dot(normal,sun)),fresnel=.025+.975*pow(1.-max(0.,dot(normal,eye)),5.);
-      // One coherent light direction: reflected sky reinforces the lit face
-      // rather than filling its shadow and cancelling the shape of each wave.
-      vec3 result=base*(.22+face*1.35);
-      result=mix(result,vec3(.31,.53,.59),fresnel*.72);
-      float reflection=pow(max(0.,dot(normal,normalize(sun+eye))),150.);
-      float glitter=texture(uNoise,(p-drift)*.065+vec2(time*.007,0.)).r;
-      result+=vec3(.40,.47,.45)*reflection*(.08+.18*smoothstep(.50,.79,glitter))*smoothstep(.1,1.,zoom)*uDetailMotion;
-      vec3 swell=swellFrame(p,time);
-      float crest=wave.x/max(.06,exposure),ridgeSlope=dot(wave.yz,vec2(-.7909677,.6118579))/max(.06,exposure);
-      float raised=smoothstep(.35,1.7,crest),packet=smoothstep(.22,.72,swell.y);
-      float ridgeAA=max(fwidth(ridgeSlope),.0008);
-      float thread=texture(uNoise,vec2(swell.z*.0025,swell.x*.17)).b;
-      float lace=texture(uNoise,vec2(swell.z*.014,swell.x*.80-time*.018)).r;
-      float lip=1.-smoothstep(.002+ridgeAA,.009+ridgeAA,abs(ridgeSlope)+(lace-.5)*.005);
-      // A continuous blue-green shoulder describes the whole crest, including
-      // its curled, narrowing ends. White foam only breaks along the high lip.
-      float shoulder=raised*(1.-smoothstep(.018,.085,abs(ridgeSlope)))*packet*visibility;
-      float lee=raised*packet*visibility*smoothstep(.003,.014,-ridgeSlope)*(1.-smoothstep(.025,.065,-ridgeSlope));
-      result*=1.-lee*.28;
-      result=mix(result,vec3(.13,.49,.54),shoulder*.66);
-      float broken=smoothstep(.36,.64,thread);
-      float foam=raised*lip*packet*visibility*(.16+broken*.80)*(.45+.55*smoothstep(.20,.70,lace));
-      result=mix(result,vec3(.73,.87,.83),foam);
-      float fine=texture(uNoise,(p-drift)*vec2(.11,.17)+vec2(time*.012,-time*.009)).r;
-      result+=vec3(.018,.032,.035)*(fine-.5)*smoothstep(.4,2.,zoom);
-      float edge=exp(-abs(depth-.22)*3.8),wash=.45+.55*sin(time*.95+depth*7.+broad*5.);
-      result=mix(result,vec3(.55,.76,.68),edge*(.22+wash*.20));return result;
+      // Short wind facets ride the long surface. River facets advect with the
+      // local current instead of inheriting offshore swell direction or height.
+      float detail=smoothstep(.18,.9,zoom)*uDetailMotion;
+      vec2 flow=length(current)>.03?normalize(current):vec2(-.15,-.99),crossFlow=vec2(-flow.y,flow.x),rippleP=vec2(dot(p-drift,flow),dot(p-drift,crossFlow));
+      float a=rippleP.x*1.17+rippleP.y*.32-time*2.7+.65*sin(rippleP.y*.19),b=rippleP.x*.47-rippleP.y*.93-time*3.4+.5*sin(rippleP.x*.13);
+      float ca=cos(a)*(1.-smoothstep(.7,2.2,fwidth(a))),cb=cos(b)*(1.-smoothstep(.7,2.2,fwidth(b)));
+      vec2 small=vec2(ca*.60+cb*.25,ca*.16-cb*.5);
+      float capillary=sin(rippleP.x*2.4+sin(rippleP.y*.71)-time*3.2)*(1.-smoothstep(1.,3.,fwidth(rippleP.x*2.4)));
+      vec2 micro=(flow*(small.x+capillary*.12)+crossFlow*small.y)*(.010+.025*wind)*detail;
+      vec3 normal=normalize(vec3(-wave.yz*1.45+micro,1.)),eye=vec3(.61237244,.61237244,.5),sun=normalize(vec3(-.42,-.55,.72));
+      float ndv=clamp(dot(normal,eye),0.,1.),fresnel=.02+.98*pow(1.-ndv,5.);
+      vec3 reflected=reflect(-eye,normal);
+      float skyBand=smoothstep(-.12,.72,reflected.z),cloud=.5+.5*sin(reflected.x*3.+.4)*sin(reflected.y*2.1+1.7);
+      vec3 sky=mix(vec3(.58,.69,.71),vec3(.17,.39,.53),skyBand);sky+=vec3(.10,.11,.10)*smoothstep(.42,.75,cloud);
+      float face=dot(normal,sun),trough=smoothstep(-2.6,1.5,wave.x);
+      vec3 result=base*(.78+.30*face+.14*trough);
+      result=mix(result,sky,clamp(.13+fresnel*.85,0.,.85));
+      // Broad subsurface light on approaching shoulders, with no black lee stripe.
+      float scatter=pow(max(0.,dot(normal,normalize(vec3(.25,.8,.48)))),4.)*smoothstep(.25,2.7,wave.x)*exposure;
+      result+=vec3(.015,.10,.105)*scatter;
+      float highlight=pow(max(0.,dot(normal,normalize(sun+eye))),110.);
+      result+=vec3(.76,.78,.70)*highlight*(.035+.085*wind)*detail;
+      // Whitecaps occur only on high, convergent crests of the combined field.
+      // Patch noise travels with the swell. The wide, dim trailing foam lies
+      // behind the lip; it is not an outline stamped on every wave.
+      vec2 windward=vec2(-.14865,-.98889),foamP=p-windward*time*14.8;
+      float foamPatch=texture(uNoise,foamP*.00024).r*.7+texture(uNoise,foamP*.00081).b*.3,lace=texture(uNoise,foamP*.021).g;
+      float ridge=dot(wave.yz,windward),aa=max(fwidth(ridge),.0015);
+      float high=smoothstep(.8,2.4,wave.x)*smoothstep(.35,.85,exposure),lip=(1.-smoothstep(.003+aa,.019+aa,abs(ridge)));
+      float broken=smoothstep(.43,.61,foamPatch),bubbles=smoothstep(.31,.67,lace);
+      float foam=high*lip*broken*(.25+.75*bubbles);
+      float residue=high*smoothstep(-.095,-.025,ridge)*(1.-smoothstep(-.025,.025,ridge))*smoothstep(.55,.78,foamPatch)*bubbles*.24;
+      result=mix(result,vec3(.74,.86,.83),clamp(foam*.78+residue,0.,.85));
+      // Shallow, exposed water can break. Sheltered river banks do not surf.
+      float shore=smoothstep(.15,.65,depth)*(1.-smoothstep(1.1,3.5,depth))*incoming;
+      float arrival=smoothstep(.1,.85,wave.x/max(.035,exposure));
+      result=mix(result,vec3(.62,.78,.71),shore*arrival*(.16+.48*bubbles));return result;
     }
     vec3 seaColor(vec2 world,float depth,float salt,vec2 current,float time,float zoom){vec2 p;vec3 wave=seaSample(world,time,depth,salt,p);return seaColorAt(p,wave,depth,salt,current,time,zoom);}
   `;

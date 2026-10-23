@@ -19,10 +19,10 @@ let browser;const errors=[],reports=[];
       const parity=await p.evaluate(()=>{
         const {view:v}=__widewakeReach,gl=v.gl,program=WidewakeOcean.program(gl,`#version 300 es
           layout(location=0)in vec2 p;void main(){gl_Position=vec4(p,0.,1.);}`,`#version 300 es
-          precision highp float;uniform vec3 samplePoint;out vec4 color;${WidewakeWaves.glsl}
-          void main(){vec3 w=waveSurface(samplePoint.xy,samplePoint.z,22.,1.,1.);color=vec4(w.x/8.+.5,w.yz*.5+.5,1.);}`);
+          precision highp float;uniform vec3 samplePoint;uniform vec3 waterState;out vec4 color;${WidewakeWaves.glsl}
+          void main(){vec3 w=waveSurface(samplePoint.xy,samplePoint.z,waterState.x,waterState.y,waterState.z);color=vec4(w.x/8.+.5,w.yz*.5+.5,1.);}`);
         gl.useProgram(program);gl.uniform1f(gl.getUniformLocation(program,'uSeaStrength'),1);gl.bindVertexArray(v.quad.vao);gl.viewport(0,0,1,1);gl.disable(gl.DEPTH_TEST);const bytes=new Uint8Array(4);let error=0;
-        for(let i=0;i<20;i++){const x=i*53.71,y=i*-71.33,t=i*.73,q=WidewakeWaves.sample(x,y,t);gl.uniform3f(gl.getUniformLocation(program,'samplePoint'),x,y,t);gl.drawArrays(gl.TRIANGLES,0,6);gl.readPixels(0,0,1,1,gl.RGBA,gl.UNSIGNED_BYTE,bytes);error=Math.max(error,Math.abs((bytes[0]/255-.5)*8-q.height),Math.abs((bytes[1]/255-.5)*2-q.dx),Math.abs((bytes[2]/255-.5)*2-q.dy));}
+        for(const [depth,salt,open]of [[22,1,1],[9,.77,0]])for(let i=0;i<20;i++){const x=depth===9?-550+i*33.71:i*53.71,y=depth===9?600+i*57:i*-71.33,t=i*.73,q=WidewakeWaves.sample(x,y,t,depth,salt,!!open);gl.uniform3f(gl.getUniformLocation(program,'waterState'),depth,salt,open);gl.uniform3f(gl.getUniformLocation(program,'samplePoint'),x,y,t);gl.drawArrays(gl.TRIANGLES,0,6);gl.readPixels(0,0,1,1,gl.RGBA,gl.UNSIGNED_BYTE,bytes);error=Math.max(error,Math.abs((bytes[0]/255-.5)*8-q.height),Math.abs((bytes[1]/255-.5)*2-q.dx),Math.abs((bytes[2]/255-.5)*2-q.dy));}
         gl.deleteProgram(program);gl.enable(gl.DEPTH_TEST);v.render(0,1);return error;
       });assert.ok(parity<.035,'CPU/GPU wave phase and slopes agree: '+parity);
 

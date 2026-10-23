@@ -3,49 +3,73 @@
   'use strict';
   const TAU=Math.PI*2,clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
   const smooth=(a,b,v)=>{const t=clamp((v-a)/(b-a),0,1);return t*t*(3-2*t);};
-  // A dominant long swell gives a fast captain time to read each approaching
-  // face. Quiet companion packets vary its height without adding rapid jolts.
-  // Cross-wave envelopes bend and drift rather than spanning the whole sea.
-  // The same coefficients generate the shader and its analytic surface normals.
-  // Small ripples keep the surface alive but contribute very little hull motion.
-  // The asymmetric profile sharpens crests and broadens the water between them.
+  // A directional spectrum: long ocean swell, crossing swell, then wind waves.
+  // All offshore energy travels toward the northern mainland, never out of it.
+  // Incommensurate wavelengths and independent groups avoid a tiled crest stamp.
   const bands=Object.freeze([
-    {length:144,amplitude:3.2,angle:-3.8,phase:.7,crestLength:190},
-    {length:208,amplitude:.72,angle:-3.52,phase:2.4,crestLength:240},
-    {length:96,amplitude:.30,angle:-4.05,phase:4.1,crestLength:142},
-    {length:42,amplitude:.08,angle:-2.9,phase:1.2,crestLength:72},
-    {length:24,amplitude:.035,angle:-3.6,phase:3.5,crestLength:45},
-    {length:14,amplitude:.015,angle:-.8,phase:5.3,crestLength:32}
+    {length:173,amplitude:1.85,angle:-1.72,phase:.7,crestLength:421},
+    {length:119,amplitude:1.12,angle:-1.26,phase:2.4,crestLength:293},
+    {length:83,amplitude:.65,angle:-2.12,phase:4.1,crestLength:227},
+    {length:251,amplitude:.72,angle:-.68,phase:1.2,crestLength:613},
+    {length:53,amplitude:.32,angle:-1.49,phase:3.5,crestLength:137},
+    {length:29,amplitude:.19,angle:-2.27,phase:5.3,crestLength:79,wind:true},
+    {length:17,amplitude:.10,angle:-.96,phase:1.9,crestLength:47,wind:true},
+    {length:9.7,amplitude:.045,angle:-1.85,phase:4.8,crestLength:31,wind:true}
   ].map(b=>Object.freeze({...b,k:TAU/b.length,crossK:TAU/b.crestLength,omega:Math.sqrt(9.81*TAU/b.length),x:Math.cos(b.angle),y:Math.sin(b.angle)})));
-  // Crest decoration travels in the dominant packet's frame, so its tapered
-  // ends and foam stay attached to the water that actually lifts the hull.
-  function swellFrame(x,y,time,out={}){
-    const b=bands[0],along=b.x*x+b.y*y,across=-b.y*x+b.x*y;
-    const group=along*b.k*.31-time*b.omega*.19+b.phase*2.7,cross=across*b.crossK+.75*Math.sin(group)-time*b.omega*.11+b.phase*1.3;
-    const lobe=.5+.5*Math.cos(cross);
-    out.phase=along*b.k+.40*Math.sin(cross)-time*b.omega+b.phase;out.envelope=.14+1.16*lobe*lobe;out.across=across;return out;
-  }
-  function exposure(x,y,depth=22,salt=1,open=false){return smooth(.3,2.4,depth)*(.20+.80*(open?1:smooth(700,1800,y))*smooth(3,16,depth))*(.75+.25*salt);}
-  function sample(x,y,time,depth=22,salt=1,open=true,out={}){
-    const e=exposure(x,y,depth,salt,open);let h=0,dx=0,dy=0,vz=0,vx=0,vy=0;
-    for(const b of bands){
-      const along=b.x*x+b.y*y,across=-b.y*x+b.x*y,group=along*b.k*.31-time*b.omega*.19+b.phase*2.7,groupCos=Math.cos(group),cross=across*b.crossK+.75*Math.sin(group)-time*b.omega*.11+b.phase*1.3;
-      const sx=Math.sin(cross),cx=Math.cos(cross),crossX=-b.y*b.crossK+.75*groupCos*b.k*.31*b.x,crossY=b.x*b.crossK+.75*groupCos*b.k*.31*b.y,crossT=-b.omega*(.11+.75*.19*groupCos);
-      const phase=along*b.k+.40*sx-time*b.omega+b.phase,s=Math.sin(phase),c=Math.cos(phase),shape=s+.24*s*c+.35*(s*s-.5),slope=c+.24*(2*c*c-1)+.70*s*c,lobe=.5+.5*cx,envelope=.14+1.16*lobe*lobe,envelopeSlope=-1.16*lobe*sx;
-      const phaseX=b.k*b.x+.40*cx*crossX,phaseY=b.k*b.y+.40*cx*crossY,phaseT=-b.omega+.40*cx*crossT,a=b.amplitude;
-      h+=a*envelope*shape;dx+=a*(envelopeSlope*crossX*shape+envelope*slope*phaseX);dy+=a*(envelopeSlope*crossY*shape+envelope*slope*phaseY);vz+=a*(envelopeSlope*crossT*shape+envelope*slope*phaseT);
-      const orbital=a*envelope*b.omega*s/b.k;vx+=orbital*phaseX;vy+=orbital*phaseY;
+  function exposure(x,y,depth=22,salt=1,open=false){return smooth(.2,8,depth)*(open?1:smooth(900,2100,y)*smooth(.45,.9,salt));}
+  function harborExposure(y,depth=22,salt=1,open=false){return smooth(.15,2.4,depth)*(open?1:.25);}
+  // A cached chart of upstream water fetch. Land blocks incoming swell; local
+  // wind waves grow only over uninterrupted water. No latitude-only river sea.
+  // CPU and GPU bilinearly sample the same cells, including amplitude gradients.
+  const environmentKeys=['swell','wind','travel'];
+  class Environment{
+    constructor(field){this.field=field;this.step=64;this.left=-4032;this.top=-8064;this.width=127;this.height=190;this.data=new Float32Array(this.width*this.height*4);this.ready=new Uint8Array(this.width*this.height);this.water={};}
+    cell(ix,iy){const index=iy*this.width+ix;if(this.ready[index])return index*4;this.ready[index]=1;
+      const x=this.left+ix*this.step,y=this.top+iy*this.step,w=this.field.sample(x,y,this.water),depth=w.depth;let swell=0,fetch=0,travel=0;
+      if(depth>0){
+        for(const angle of [-1.95,-1.57,-1.19]){let transmission=1,delay=0,reached=false;const dx=-Math.cos(angle),dy=-Math.sin(angle);
+          for(let distance=0;distance<=4096;distance+=32){const q=this.field.sample(x+dx*distance,y+dy*distance,this.water);if(q.depth<=.1){transmission=0;break;}if(q.channel==='sea'&&q.depth>=12){reached=true;break;}
+            transmission=Math.min(transmission,smooth(.1,3,q.depth))*Math.exp(-32*(.00015+.003*(1-smooth(3,14,q.depth))+.0015*(1-smooth(50,250,q.edge))));delay+=32*(Math.sqrt(Math.tanh(bands[0].k*22)/Math.tanh(bands[0].k*Math.max(.8,q.depth)))-1);if(transmission<.001)break;
+          }
+          if(reached){swell+=transmission/3;travel+=Math.max(0,delay)*transmission/3;}
+        }
+        // Short fetch inside a bend cannot generate a metre-high ocean packet.
+        let alive=1,previous=0;for(const distance of [16,40,80,144,240,384,576]){const q=this.field.sample(x+.35*distance,y+.93675*distance,this.water);alive*=smooth(.05,1.8,q.depth);fetch+=alive*(distance-previous);previous=distance;if(alive<.001)break;}
+      }
+      // Optical distance increases in shallows. Its spatial gradient bends and
+      // compresses the incoming phase without rotating a wave abruptly per cell.
+      const at=index*4;this.data[at]=swell;this.data[at+1]=depth>0?.12+.88*Math.sqrt(fetch/576):0;this.data[at+2]=swell>.001?travel/swell:0;this.data[at+3]=0;return at;
     }
-    // A smooth, monotone limit bounds rare constructive packets without hard
-    // clipping. Apply its derivative to every slope and surface velocity.
-    const limit=1/Math.sqrt(1+h*h/16),derivative=limit*limit*limit,height=h*limit,shelter=clamp((y-700)/1100,0,1),ey=open?0:smooth(.3,2.4,depth)*.80*(6*shelter*(1-shelter)/1100)*smooth(3,16,depth)*(.75+.25*salt);
-    out.height=height*e;out.dx=dx*derivative*e;out.dy=dy*derivative*e+height*ey;out.vz=vz*derivative*e;out.vx=vx*limit*e;out.vy=vy*limit*e;out.exposure=e;return out;
+    at(x,y,out={}){const u=clamp((x-this.left)/this.step,0,this.width-1.000001),v=clamp((y-this.top)/this.step,0,this.height-1.000001),ix=Math.floor(u),iy=Math.floor(v),fx=u-ix,fy=v-iy,d=this.data;
+      const a=this.cell(ix,iy),b=this.cell(ix+1,iy),c=this.cell(ix,iy+1),e=this.cell(ix+1,iy+1);
+      for(let i=0;i<3;i++){const key=environmentKeys[i];out[key]=(d[a+i]*(1-fx)+d[b+i]*fx)*(1-fy)+(d[c+i]*(1-fx)+d[e+i]*fx)*fy;out[key+'X']=((d[b+i]-d[a+i])*(1-fy)+(d[e+i]-d[c+i])*fy)/this.step;out[key+'Y']=((d[c+i]-d[a+i])*(1-fx)+(d[e+i]-d[b+i])*fx)/this.step;}
+      return out;
+    }
+    complete(){for(let y=0;y<this.height;y++)for(let x=0;x<this.width;x++)this.cell(x,y);return this.data;}
+  }
+  function swellFrame(x,y,time,out={},depth=22,salt=1,open=true){const b=bands[0];out.phase=(b.x*x+b.y*y)*b.k-time*b.omega+b.phase;out.envelope=1;out.across=-b.y*x+b.x*y;return out;}
+  function sample(x,y,time,depth=22,salt=1,open=true,out={},environment=null){
+    const wet=smooth(.2,8,depth),windWet=smooth(.15,2.4,depth),e=environment?environment.swell*wet:exposure(x,y,depth,salt,open),localE=environment?environment.wind*windWet:harborExposure(y,depth,salt,open);
+    let h=0,dx=0,dy=0,vz=0,vx=0,vy=0,lh=0,ldx=0,ldy=0,lvz=0,lvx=0,lvy=0;
+    for(const b of bands){
+      const along=b.x*x+b.y*y,across=-b.y*x+b.x*y,group=along*b.k*.23+across*b.crossK*.71-time*b.omega*.17+b.phase*2.7;
+      const groupX=b.x*b.k*.23-b.y*b.crossK*.71,groupY=b.y*b.k*.23+b.x*b.crossK*.71,groupT=-b.omega*.17,envelope=.78+.22*Math.sin(group),es=.22*Math.cos(group);
+      const travel=!b.wind&&environment?environment.travel:0,tx=!b.wind&&environment?environment.travelX:0,ty=!b.wind&&environment?environment.travelY:0;
+      const phase=(along+travel)*b.k-time*b.omega+b.phase,s=Math.sin(phase),c=Math.cos(phase),shape=s+.16*s*c,slope=c+.16*(2*c*c-1),a=b.amplitude;
+      const value=a*envelope*shape,gx=a*(es*groupX*shape+envelope*slope*b.k*(b.x+tx)),gy=a*(es*groupY*shape+envelope*slope*b.k*(b.y+ty)),vertical=a*(es*groupT*shape-envelope*slope*b.omega),orbital=a*envelope*b.omega*s;
+      if(b.wind){lh+=value;ldx+=gx;ldy+=gy;lvz+=vertical;lvx+=orbital*b.x;lvy+=orbital*b.y;}
+      else{h+=value;dx+=gx;dy+=gy;vz+=vertical;vx+=orbital*b.x;vy+=orbital*b.y;}
+    }
+    const limit=1/Math.sqrt(1+h*h/25),derivative=limit*limit*limit,height=h*limit;
+    let ex=0,ey=0,wx=0,wy=0;if(environment){ex=environment.swellX*wet;ey=environment.swellY*wet;wx=environment.windX*windWet;wy=environment.windY*windWet;}
+    else if(!open){const t=clamp((y-900)/1200,0,1);ey=wet*smooth(.45,.9,salt)*6*t*(1-t)/1200;}
+    out.height=height*e+lh*localE;out.dx=dx*derivative*e+height*ex+ldx*localE+lh*wx;out.dy=dy*derivative*e+height*ey+ldy*localE+lh*wy;out.vz=vz*derivative*e+lvz*localE;out.vx=vx*limit*e+lvx*localE;out.vy=vy*limit*e+lvy*localE;out.exposure=e;out.chop=localE;return out;
   }
   const CAPACITY=384,LIFE=8;
   class Sea{
-    constructor(field=null){this.field=field;this.time=0;this.cursor=0;this.count=0;this.water={};this.probes=Array.from({length:5},()=>({}));this.last=new Float64Array(24).fill(-1);this.lastX=new Float64Array(24);this.lastY=new Float64Array(24);this.wake=new Float64Array(CAPACITY*8);this.strength=1;}
+    constructor(field=null){this.field=field;this.environment=field?.paths?new Environment(field):null;this.environmentSample={};this.time=0;this.cursor=0;this.count=0;this.water={};this.probes=Array.from({length:9},()=>({}));this.last=new Float64Array(24).fill(-1);this.lastX=new Float64Array(24);this.lastY=new Float64Array(24);this.wake=new Float64Array(CAPACITY*8);this.strength=1;}
     at(x,y,time=this.time,out={},owner=-1,wakes=true){
-      const w=this.field?.sample(x,y,this.water);sample(x,y,time,w?.depth??22,w?.salinity??1,!this.field,out);
+      const w=this.field?.sample(x,y,this.water);sample(x,y,time,w?.depth??22,w?.salinity??1,!this.field,out,this.environment?.at(x,y,this.environmentSample));
       out.height*=this.strength;out.dx*=this.strength;out.dy*=this.strength;out.vz*=this.strength;out.vx*=this.strength;out.vy*=this.strength;
       if(wakes&&(!w||w.depth>.3))for(let n=0;n<this.count;n++){
         const i=n*8,a=time-this.wake[i+2];if(a<0||a>LIFE||this.wake[i+7]===owner)continue;
@@ -69,31 +93,39 @@
       this.wake.set([s.x-Math.cos(s.angle)*s.length*.42,s.y-Math.sin(s.angle)*s.length*.42,time,s.angle,s.width*.48,Math.max(1.6,s.width*.28),Math.min(.55,.11+s.width*.018)*Math.min(1,speed/36),id],i);
     }
     stepShip(s,dt,moving=true){
-      const p=this.probes,c=Math.cos(s.angle),sn=Math.sin(s.angle),l=s.length*.38,w=s.width*.42;
-      this.at(s.x,s.y,this.time,p[0],s.id);this.at(s.x+c*l,s.y+sn*l,this.time,p[1],s.id);this.at(s.x-c*l,s.y-sn*l,this.time,p[2],s.id);this.at(s.x-sn*w,s.y+c*w,this.time,p[3],s.id);this.at(s.x+sn*w,s.y-c*w,this.time,p[4],s.id);
+      const p=this.probes,c=Math.cos(s.angle),sn=Math.sin(s.angle),l=s.length*Math.sqrt(.6)*.5,w=s.width*Math.sqrt(.6)*.5;
+      // Nine area quadrature points see all four quarters, rather than a cross
+      // that misses oblique crests. Weights integrate the hull's area and inertia.
+      let mean=0,rise=0,pitch=0,roll=0;
+      for(let row=0;row<3;row++)for(let col=0;col<3;col++){
+        const q=p[row*3+col],a=(row-1)*l,b=(col-1)*w,weight=(row===1?8:5)*(col===1?8:5)/324;
+        this.at(s.x+c*a-sn*b,s.y+sn*a+c*b,this.time,q,s.id);q.a=a;q.b=b;q.weight=weight;
+        // Each pressure patch moves sideways while the hull yaws.
+        q.travel=q.vz+q.dx*(s.vx-(s.turn||0)*(sn*a+c*b))+q.dy*(s.vy+(s.turn||0)*(c*a-sn*b));
+        mean+=q.height*weight;rise+=q.travel*weight;pitch+=q.height*a*weight;roll+=q.height*b*weight;
+      }
       const load=clamp((s.cargo||0)/(s.hold||1),0,1),mass=1+load*.45,draft=s.draft||s.width*.18,gravity=9.81;
-      const target=(p[0].height*2+p[1].height+p[2].height+p[3].height+p[4].height)/6-draft*(mass-1);
-      for(const q of p)q.travel=q.vz+q.dx*s.vx+q.dy*s.vy;
-      const rise=(p[0].travel*2+p[1].travel+p[2].travel+p[3].travel+p[4].travel)/6;
-      if(!s.sea||Math.hypot(s.x-s.sea.x,s.y-s.sea.y)>Math.max(80,s.speed*2))s.sea={z:target,pitch:(p[1].height-p[2].height)/(2*l),roll:(p[3].height-p[4].height)/(2*w),vz:rise,vp:0,vr:0,x:s.x,y:s.y,contact:1,airborne:false,jumpAt:-100,landAt:-100,landCount:0};
+      const target=mean-draft*(mass-1);
+      if(!s.sea||Math.hypot(s.x-s.sea.x,s.y-s.sea.y)>Math.max(80,s.speed*2))s.sea={z:target,pitch:pitch/(s.length*s.length/12),roll:roll/(s.width*s.width/12),vz:rise,vp:0,vr:0,x:s.x,y:s.y,contact:1,airborne:false,jumpAt:-100,landAt:-100,landCount:0};
       const state=s.sea;state.pz=state.z;state.ppitch=state.pitch;state.proll=state.roll;
-      // Five unilateral pressure patches support a single rigid body. Their
+      // Unilateral pressure patches support a single rigid body. Their
       // buoyancy depends on displaced water; damping opposes relative contact
       // velocity. Dry water patches exert no force and cannot pull the hull down.
       // There is no crest trigger, launch impulse, prescribed pitch or landing snap.
       const inertiaPitch=(s.length*s.length+draft*draft)/12,inertiaRoll=(s.width*s.width+draft*draft)/12;
-      const damping=1.35*Math.sqrt(gravity/(draft*mass)),steps=Math.max(1,Math.ceil(dt*180/Math.sqrt(s.length/6))),h=dt/steps,airDrag=Math.exp(-h*.06/Math.sqrt(s.length/6)/mass);
-      let horizontalX=0,horizontalY=0;
+      const damping=.95*Math.sqrt(gravity/(draft*mass)),steps=Math.max(1,Math.ceil(dt*180/Math.sqrt(s.length/6))),h=dt/steps,airDrag=Math.exp(-h*.06/Math.sqrt(s.length/6)/mass);
+      let horizontalX=0,horizontalY=0,yawTorque=0;
       for(let step=0;step<steps;step++){
         let az=0,ap=0,ar=0,wet=0,closing=0,contactX=0,contactY=0,fx=0,fy=0;
         const offset=(step+.5)*h-dt;
-        for(let i=0;i<5;i++){
-          const q=p[i],a=i===1?l:i===2?-l:0,b=i===3?w:i===4?-w:0,weight=i===0?1/3:1/6;
+        for(let i=0;i<9;i++){
+          const q=p[i],a=q.a,b=q.b,weight=q.weight;
           const level=q.height+q.travel*offset,keel=state.z+state.pitch*a+state.roll*b-draft,immersion=Math.max(0,level-keel);
           const touching=clamp(immersion/(draft*mass),0,1),relative=q.travel-state.vz-state.vp*a-state.vr*b;
           const pressure=immersion>0?Math.max(0,gravity*immersion/(draft*mass)+damping*relative*touching):0;
           az+=(pressure-gravity)*weight;ap+=pressure*weight*a/inertiaPitch;ar+=pressure*weight*b/inertiaRoll;
           wet+=touching*weight;fx-=q.dx*pressure*weight;fy-=q.dy*pressure*weight;
+          yawTorque+=pressure*weight*(-a*(-q.dx*sn+q.dy*c)+b*(q.dx*c+q.dy*sn))/steps;
           if(immersion>0&&relative>closing){closing=relative;contactX=s.x+c*a-sn*b;contactY=s.y+sn*a+c*b;}
         }
         // Lateral water force acts below the centre of mass, banking a turning
@@ -108,12 +140,12 @@
         // applies equally to every hull and never supplies takeoff velocity.
         const tilt=Math.hypot(state.pitch,state.roll);if(tilt>.48){const limit=.48/tilt;state.pitch*=limit;state.roll*=limit;state.vp*=limit;state.vr*=limit;}
       }
-      state.x=s.x;state.y=s.y;state.surface=target;state.exposure=p[0].exposure;
+      state.x=s.x;state.y=s.y;state.surface=target;state.exposure=p[4].exposure;
       if(moving){
         const response=clamp(Math.sqrt(12/s.length),.4,1.4)/mass,grip=state.contact;
-        const ax=horizontalX*response*.55+p[0].vx*.6*response*grip,ay=horizontalY*response*.55+p[0].vy*.6*response*grip;
+        const ax=horizontalX*response*.55+p[4].vx*.6*response*grip,ay=horizontalY*response*.55+p[4].vy*.6*response*grip;
         s.vx+=ax*dt;s.vy+=ay*dt;s.x+=ax*dt*dt;s.y+=ay*dt*dt;
-        const yaw=clamp((p[1].dy-p[2].dy)*c-(p[1].dx-p[2].dx)*sn,-.15,.15)*response*grip;
+        const yaw=clamp(yawTorque/((s.length*s.length+s.width*s.width)/12),-.3,.3)*response*.55;
         s.turn=(s.turn||0)+yaw*dt;s.angle+=yaw*dt*dt;
       }
       this.emit(s);return state;
@@ -132,18 +164,22 @@
   }
   const f=n=>Number(n).toFixed(10);
   const glsl=`
-    uniform float uSeaStrength;
-    vec3 swellFrame(vec2 p,float time){
-      ${(()=>{const b=bands[0];return`vec2 d=vec2(${f(b.x)},${f(b.y)});float along=dot(p,d),across=dot(p,vec2(-d.y,d.x)),groupPhase=along*${f(b.k*.31)}-time*${f(b.omega*.19)}+${f(b.phase*2.7)},crossPhase=across*${f(b.crossK)}+.75*sin(groupPhase)-time*${f(b.omega*.11)}+${f(b.phase*1.3)},lobe=.5+.5*cos(crossPhase);return vec3(along*${f(b.k)}+.40*sin(crossPhase)-time*${f(b.omega)}+${f(b.phase)},.14+1.16*lobe*lobe,across);`;})()}
+    uniform float uSeaStrength;uniform bool uEnvironmentEnabled;uniform sampler2D uEnvironment;
+    vec4 seaEnvironment(vec2 p,out vec3 gx,out vec3 gy){
+      vec2 q=clamp((p-vec2(-4032.,-8064.))/64.,vec2(0.),vec2(125.999999,188.999999)),cell=floor(q),t=q-cell;ivec2 c=ivec2(cell);
+      vec4 a=texelFetch(uEnvironment,c,0),b=texelFetch(uEnvironment,c+ivec2(1,0),0),d=texelFetch(uEnvironment,c+ivec2(0,1),0),e=texelFetch(uEnvironment,c+ivec2(1,1),0);
+      gx=mix(b.xyz-a.xyz,e.xyz-d.xyz,t.y)/64.;gy=mix(d.xyz-a.xyz,e.xyz-b.xyz,t.x)/64.;return mix(mix(a,b,t.x),mix(d,e,t.x),t.y);
     }
-    float seaExposure(vec2 p,float depth,float salt,float openSea){return smoothstep(.3,2.4,depth)*(.20+.80*mix(smoothstep(700.,1800.,p.y),1.,openSea)*smoothstep(3.,16.,depth))*(.75+.25*salt);}
-    vec3 waveSurface(vec2 p,float time,float depth,float salt,float openSea){vec3 q=vec3(0.);float e=seaExposure(p,depth,salt,openSea)*uSeaStrength;
-      ${bands.map(b=>`{vec2 d=vec2(${f(b.x)},${f(b.y)}),n=vec2(-d.y,d.x);float along=dot(p,d),groupPhase=along*${f(b.k*.31)}-time*${f(b.omega*.19)}+${f(b.phase*2.7)},groupCos=cos(groupPhase),crossPhase=dot(p,n)*${f(b.crossK)}+.75*sin(groupPhase)-time*${f(b.omega*.11)}+${f(b.phase*1.3)},sx=sin(crossPhase),cx=cos(crossPhase),phase=along*${f(b.k)}+.40*sx-time*${f(b.omega)}+${f(b.phase)},s=sin(phase),c=cos(phase),shape=s+.24*s*c+.35*(s*s-.5),slope=c+.24*(2.*c*c-1.)+.70*s*c,lobe=.5+.5*cx,envelope=.14+1.16*lobe*lobe,envelopeSlope=-1.16*lobe*sx,a=${f(b.amplitude)};vec2 crossGrad=n*${f(b.crossK)}+.75*groupCos*${f(b.k*.31)}*d,phaseGrad=d*${f(b.k)}+.40*cx*crossGrad;q.x+=a*envelope*shape;q.yz+=a*(envelopeSlope*crossGrad*shape+envelope*slope*phaseGrad);}`).join('\n')}
-      float softLimit=inversesqrt(1.+q.x*q.x/16.);q.yz*=softLimit*softLimit*softLimit;q.x*=softLimit;
-      float shelter=clamp((p.y-700.)/1100.,0.,1.),ey=smoothstep(.3,2.4,depth)*.80*(1.-openSea)*(6.*shelter*(1.-shelter)/1100.)*smoothstep(3.,16.,depth)*(.75+.25*salt)*uSeaStrength;
-      q.yz*=e;q.z+=q.x*ey;q.x*=e;
-      return q;
+    float seaExposure(vec2 p,float depth,float salt,float openSea){return smoothstep(.2,8.,depth)*mix(smoothstep(900.,2100.,p.y)*smoothstep(.45,.9,salt),1.,openSea);}
+    float harborExposure(vec2 p,float depth,float salt,float openSea){return smoothstep(.15,2.4,depth)*mix(.25,1.,openSea);}
+    vec3 swellFrame(vec2 p,float time,float depth,float salt,float openSea){return vec3(dot(p,vec2(${f(bands[0].x)},${f(bands[0].y)}))*${f(bands[0].k)}-time*${f(bands[0].omega)}+${f(bands[0].phase)},1.,dot(p,vec2(${f(-bands[0].y)},${f(bands[0].x)})));}
+    vec3 waveSurface(vec2 p,float time,float depth,float salt,float openSea){vec3 q=vec3(0.),r=vec3(0.);float e=seaExposure(p,depth,salt,openSea),localE=harborExposure(p,depth,salt,openSea),travel=0.;vec2 eg=vec2(0.),wg=vec2(0.),tg=vec2(0.);
+      if(uEnvironmentEnabled){vec3 gx,gy;vec4 env=seaEnvironment(p,gx,gy);float wet=smoothstep(.2,8.,depth),windWet=smoothstep(.15,2.4,depth);e=env.x*wet;localE=env.y*windWet;eg=vec2(gx.x,gy.x)*wet;wg=vec2(gx.y,gy.y)*windWet;travel=env.z;tg=vec2(gx.z,gy.z);}
+      else{float t=clamp((p.y-900.)/1200.,0.,1.);eg.y=(1.-openSea)*smoothstep(.2,8.,depth)*smoothstep(.45,.9,salt)*6.*t*(1.-t)/1200.;}
+      ${bands.map(b=>{const sum=b.wind?'r':'q';return`{vec2 d=vec2(${f(b.x)},${f(b.y)}),n=vec2(-d.y,d.x);float along=dot(p,d),groupPhase=along*${f(b.k*.23)}+dot(p,n)*${f(b.crossK*.71)}-time*${f(b.omega*.17)}+${f(b.phase*2.7)},envelope=.78+.22*sin(groupPhase),es=.22*cos(groupPhase),phase=(along+${b.wind?'0.':'travel'})*${f(b.k)}-time*${f(b.omega)}+${f(b.phase)},s=sin(phase),c=cos(phase),shape=s+.16*s*c,slope=c+.16*(2.*c*c-1.),a=${f(b.amplitude)};vec2 groupGrad=d*${f(b.k*.23)}+n*${f(b.crossK*.71)};${sum}.x+=a*envelope*shape;${sum}.yz+=a*(es*groupGrad*shape+envelope*slope*(d+${b.wind?'vec2(0.)':'tg'})*${f(b.k)});}`;}).join('\n')}
+      float softLimit=inversesqrt(1.+q.x*q.x/25.);q.yz*=softLimit*softLimit*softLimit;q.x*=softLimit;
+      q.yz=q.yz*e+q.x*eg+r.yz*localE+r.x*wg;q.x=q.x*e+r.x*localE;return q*uSeaStrength;
     }
   `;
-  const api={Sea,sample,swellFrame,exposure,bands,glsl,CAPACITY,LIFE};root.WidewakeWaves=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
+  const api={Sea,Environment,sample,swellFrame,exposure,harborExposure,bands,glsl,CAPACITY,LIFE};root.WidewakeWaves=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(globalThis);

@@ -14,7 +14,11 @@
     void main(){float rim=exp(-across*across*6.);color=vec4(mix(vec3(.035,.16,.23),vec3(.78,.91,.90),rim),opacity*(.08+rim*.92));}`;
   class Surface{
     constructor(view){this.view=view;this.sample={};this.swell={};this.water={};if(view.gl){this.program=O.program(view.gl,vertex,fragment);this.batch=new O.Batch(view.gl,new Float32Array([-1,-1,1,-1,1,1,-1,-1,1,1,-1,1]),CAPACITY,true);}else{this.canvas=document.createElement('canvas');this.ctx=this.canvas.getContext('2d');this.path=new Float64Array(64*4);}}
-    height(x,y){const sea=this.view.battle.sea,w=sea.field?.sample(x,y,this.water);if(w&&w.depth<.4)return null;return W.sample(x,y,this.view.visualTime,w?.depth??22,w?.salinity??1,!sea.field,this.sample).height*sea.strength;}
+    height(x,y){const sea=this.view.battle.sea,w=sea.field?.sample(x,y,this.water);if(w&&w.depth<.4)return null;return sea.at(x,y,this.view.visualTime,this.sample,-1,false).height;}
+    bindEnvironment(program){const gl=this.view.gl,env=this.view.battle.sea?.environment;gl.uniform1i(gl.getUniformLocation(program,'uEnvironmentEnabled'),env?1:0);if(!env)return;
+      if(!this.environmentTexture){this.environmentTexture=gl.createTexture();gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,this.environmentTexture);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA32F,env.width,env.height,0,gl.RGBA,gl.FLOAT,env.complete());gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);}
+      gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,this.environmentTexture);gl.uniform1i(gl.getUniformLocation(program,'uEnvironment'),3);
+    }
     spray(emit,budget=CAPACITY){const v=this.view,sea=v.battle.sea,time=v.visualTime;let count=0;
       for(const s of v.battle.ships){
         if(s.hp<=0||s.sea?.airborne)continue;const p=v.poses[s.id],speed=Math.hypot(s.vx,s.vy),power=smooth(2,Math.max(8,s.speed*.8),speed);
@@ -88,6 +92,7 @@
       }
       // Pressure packets still rock nearby boats, but never draw circular rings.
       v.stats.waveCrests=0;v.stats.bowSpraySegments=spray;v.stats.landingSplashSegments=splash;
+      v.stats.environmentBytes=v.battle.sea.environment?v.battle.sea.environment.data.byteLength+v.battle.sea.environment.ready.byteLength:0;
       v.stats.waveBytes=v.battle.sea.bytes+(this.batch?.data.byteLength||0)+(this.batch?.tilts.byteLength||0)+(this.path?.byteLength||0);return count?1:0;
     }
     background(){const v=this.view,sea=v.battle.sea;if(!sea)return;const w=Math.min(200,Math.ceil(v.width/4)),h=Math.min(120,Math.ceil(v.height/4)),scale=v.zoom*v.baseScale;
@@ -96,20 +101,20 @@
       for(let y=0;y<h;y++)for(let x=0;x<w;x++){
         const p=O.unproject(((x+.5)/w-.5)*v.width/scale,((y+.5)/h-.5)*v.height/scale),wx=p.x+v.camera.x,wy=p.y+v.camera.y;
         const water=sea.field?.sample(wx,wy,this.water),depth=water?.depth??22,salt=water?.salinity??1,q=this.sample;let px=wx,py=wy;
-        W.sample(px,py,v.visualTime,depth,salt,!sea.field,q);let height=q.height*sea.strength;
-        for(let n=0;n<2;n++){W.sample(wx+height*1.22474487,wy+height*1.22474487,v.visualTime,depth,salt,!sea.field,q);height+=clamp((q.height*sea.strength-height)/Math.max(.22,1-1.22474487*(q.dx+q.dy)*sea.strength),-3,3);}
-        px=wx+height*1.22474487;py=wy+height*1.22474487;W.sample(px,py,v.visualTime,depth,salt,!sea.field,q);height=q.height*sea.strength;
-        const dx=q.dx*sea.strength,dy=q.dy*sea.strength,shelf=Math.exp(-Math.max(0,depth)*.075),visibility=Math.sqrt(q.exposure),normalScale=2.8/Math.max(.35,visibility),normal=Math.hypot(dx*normalScale,dy*normalScale,1),face=Math.max(0,((dx*.70-dy*.25)*normalScale+.55)/(normal*Math.hypot(.70,.25,.55))),fresnel=(.025+.975*(1-Math.max(0,((-dx*.61237244-dy*.61237244)*normalScale+.5)/normal))**5)*.72,light=.22+face*1.35;
-        const swell=W.swellFrame(px,py,v.visualTime,this.swell),ridge=(-dx*.7909677+dy*.6118579)/Math.max(.06,q.exposure),raised=smooth(.35,1.7,height/Math.max(.06,q.exposure)),packet=smooth(.22,.72,swell.envelope),aa=Math.max(.0008,v.width/w/scale*.003);
-        const thread=.5+.25*Math.sin(swell.across*.47+swell.phase*8)+.25*Math.sin(swell.across*.21-swell.phase*13),lace=.5+.25*Math.sin(swell.across*1.7+swell.phase*41)+.25*Math.sin(swell.across*.83-swell.phase*67);
-        const lip=1-smooth(.002+aa,.009+aa,Math.abs(ridge)+(lace-.5)*.005),foam=raised*lip*packet*visibility*(.16+smooth(.36,.64,thread)*.80)*(.45+.55*smooth(.20,.70,lace)),shoulder=raised*(1-smooth(.018,.085,Math.abs(ridge)))*packet*visibility*.66,lee=1-raised*packet*visibility*smooth(.003,.014,-ridge)*(1-smooth(.025,.065,-ridge))*.28,at=(y*w+x)*4;
-        pixels[at]=(((10+8*shelf+7*(1-salt))*light*(1-fresnel)+79*fresnel)*lee*(1-shoulder)+33*shoulder)*(1-foam)+186*foam;
-        pixels[at+1]=(((46+24*shelf+9*(1-salt))*light*(1-fresnel)+135*fresnel)*lee*(1-shoulder)+125*shoulder)*(1-foam)+222*foam;
-        pixels[at+2]=(((64+22*shelf)*light*(1-fresnel)+150*fresnel)*lee*(1-shoulder)+138*shoulder)*(1-foam)+212*foam;pixels[at+3]=255;
+        sea.at(px,py,v.visualTime,q,-1,false);let height=q.height;
+        for(let n=0;n<2;n++){sea.at(wx+height*1.22474487,wy+height*1.22474487,v.visualTime,q,-1,false);height+=clamp((q.height-height)/Math.max(.22,1-1.22474487*(q.dx+q.dy)),-3,3);}
+        px=wx+height*1.22474487;py=wy+height*1.22474487;sea.at(px,py,v.visualTime,q,-1,false);height=q.height;
+        const dx=q.dx*1.45,dy=q.dy*1.45,norm=Math.hypot(dx,dy,1),ndv=clamp((.5-.61237244*(dx+dy))/norm,0,1),fresnel=.13+.85*(.02+.98*(1-ndv)**5),face=(.42*dx+.55*dy+.72)/norm,light=.78+.30*face+.14*smooth(-2.6,1.5,height),shelf=Math.exp(-Math.max(0,depth)*.075);
+        const fp=px+.14865*v.visualTime*14.8,fy=py+.98889*v.visualTime*14.8,patch=.5+.25*Math.sin(fp*.09+fy*.043)+.25*Math.sin(fp*.027-fy*.077),lace=.5+.25*Math.sin(fp*.81+fy*.37)+.25*Math.sin(fp*.29-fy*.69),ridge=q.dx*-.14865+q.dy*-.98889,aa=Math.max(.0015,v.width/w/scale*.001);
+        const foam=smooth(1,2.7,height)*smooth(.35,.85,q.exposure)*(1-smooth(.012+aa,.042+aa,Math.abs(ridge)))*smooth(.43,.67,patch)*(.25+.75*smooth(.31,.67,lace))*.78,at=(y*w+x)*4;
+        const flowX=water?.currentX||0,flowY=water?.currentY||0,ripple=Math.sin((px-flowX*v.visualTime)*1.3+(py-flowY*v.visualTime)*.8)*Math.sin((px-flowX*v.visualTime)*.28-(py-flowY*v.visualTime)*.73)*Math.min(1,scale)*1.5;
+        pixels[at]=((10+8*shelf+7*(1-salt))*light*(1-fresnel)+105*fresnel+ripple)*(1-foam)+189*foam;
+        pixels[at+1]=((46+24*shelf+9*(1-salt))*light*(1-fresnel)+153*fresnel+ripple)*(1-foam)+219*foam;
+        pixels[at+2]=((64+22*shelf)*light*(1-fresnel)+171*fresnel+ripple)*(1-foam)+212*foam;pixels[at+3]=255;
       }
       this.ctx.putImageData(this.pixels,0,0);v.fallback.drawImage(this.canvas,0,0,v.width,v.height);
     }
-    dispose(){if(this.view.gl){this.batch.dispose();this.view.gl.deleteProgram(this.program);}}
+    dispose(){if(this.view.gl){this.batch.dispose();this.view.gl.deleteProgram(this.program);this.view.gl.deleteTexture(this.environmentTexture);}}
   }
   root.WidewakeWaveView={Surface};
 })(globalThis);
