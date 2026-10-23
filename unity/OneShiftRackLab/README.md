@@ -10,6 +10,10 @@ to capture the mouse. WASD walks, the mouse looks, Shift runs, Space jumps,
 Escape releases the mouse and R returns to the entrance. Aim at a rack within
 five metres and press E to cycle its finish.
 
+In the Game view's resolution menu, leave **Low Resolution Aspect Ratios** off
+and keep the zoom at 1x for a sharp preview. The camera renders at full resolution
+with 4x MSAA and high-quality SMAA to smooth fine rack details.
+
 The scene places Clean, Used and Worn racks next to one another. The wear is
 cosmetic: faded coating, chipped edges, exposed steel, rust and contact scratches.
 The three materials share the same model, a 512-pixel noise texture and a

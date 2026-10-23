@@ -135,6 +135,10 @@ namespace OneShift.RackLab
             var camera=eyes.AddComponent<Camera>();camera.fieldOfView=66;camera.nearClipPlane=.04f;camera.farClipPlane=100;
             camera.clearFlags=CameraClearFlags.SolidColor;camera.backgroundColor=RenderSettings.fogColor;
             camera.allowHDR=true;eyes.AddComponent<AudioListener>();
+            var cameraData=eyes.AddComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>();
+            cameraData.renderPostProcessing=true;
+            cameraData.antialiasing=UnityEngine.Rendering.Universal.AntialiasingMode.SubpixelMorphologicalAntiAliasing;
+            cameraData.antialiasingQuality=UnityEngine.Rendering.Universal.AntialiasingQuality.High;
             player.AddComponent<RackWalkController>().eyes=camera;
             var body=GameObject.CreatePrimitive(PrimitiveType.Capsule);body.name="Player shadow";
             UnityEngine.Object.DestroyImmediate(body.GetComponent<Collider>());
@@ -251,6 +255,10 @@ namespace OneShift.RackLab
             GraphicsSettings.defaultRenderPipeline=pipeline;
             QualitySettings.renderPipeline=pipeline;
             var urp=(UniversalRenderPipelineAsset)pipeline;
+            var rendererData=AssetDatabase.LoadAssetAtPath<UnityEngine.Rendering.Universal.UniversalRendererData>(Root+"Materials/RackLabRenderer.asset");
+            rendererData.postProcessData=AssetDatabase.LoadAssetAtPath<UnityEngine.Rendering.Universal.PostProcessData>("Packages/com.unity.render-pipelines.universal/Runtime/Data/PostProcessData.asset");
+            EditorUtility.SetDirty(rendererData);
+            urp.renderScale=1;
             urp.msaaSampleCount=4;
             urp.shadowDistance=30;
             urp.shadowCascadeCount=2;
