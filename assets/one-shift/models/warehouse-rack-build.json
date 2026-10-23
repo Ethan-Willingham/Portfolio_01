@@ -1,0 +1,11 @@
+{
+  "objects": 306,
+  "mesh_vertices": 30214,
+  "levels": [
+    1.12,
+    2.24,
+    3.36
+  ],
+  "native": "warehouse-rack.blend",
+  "portable": "warehouse-rack.glb"
+}
