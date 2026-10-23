@@ -4533,8 +4533,8 @@ Transform:
   m_GameObject: {fileID: 1461963763}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.9, z: 0}
-  m_LocalScale: {x: 0.5, y: 0.85, z: 0.5}
+  m_LocalPosition: {x: 0, y: 0.89, z: 0}
+  m_LocalScale: {x: 0.5, y: 0.89, z: 0.5}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1733954082}
@@ -4918,7 +4918,7 @@ Camera:
     height: 1
   near clip plane: 0.04
   far clip plane: 100
-  field of view: 66
+  field of view: 50.030586
   orthographic: 0
   orthographic size: 5
   m_Depth: 0
@@ -4953,7 +4953,7 @@ Transform:
   m_GameObject: {fileID: 1501396210}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.67, z: 0}
+  m_LocalPosition: {x: 0, y: 1.65, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5877,8 +5877,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::OneShift.RackLab.RackWalkController
   eyes: {fileID: 1501396211}
   spawnPosition: {x: 0, y: 0, z: 0}
-  walkSpeed: 3.2
-  runSpeed: 5.5
+  walkSpeed: 1.5
+  runSpeed: 4.2
   sensitivity: 1.8
 --- !u!143 &1733954081
 CharacterController:
@@ -5898,13 +5898,13 @@ CharacterController:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Height: 1.8
-  m_Radius: 0.28
+  m_Height: 1.78
+  m_Radius: 0.25
   m_SlopeLimit: 45
   m_StepOffset: 0.25
   m_SkinWidth: 0.025
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0.9, z: 0}
+  m_Center: {x: 0, y: 0.89, z: 0}
 --- !u!4 &1733954082
 Transform:
   m_ObjectHideFlags: 0

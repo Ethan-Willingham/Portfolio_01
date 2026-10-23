@@ -14,6 +14,11 @@ In the Game view's resolution menu, leave **Low Resolution Aspect Ratios** off
 and keep the zoom at 1x for a sharp preview. The camera renders at full resolution
 with 4x MSAA and high-quality SMAA to smooth fine rack details.
 
+One Unity unit is one metre. The player is 1.78 m tall (about 5 feet 10 inches),
+with eyes 1.65 m above the feet, beside 3.66 m (12-foot) racks. The view keeps a
+90-degree horizontal field of view on wide windows, with vertical field of view
+capped at 65 degrees on taller windows. Walking is 1.5 m/s and running is 4.2 m/s.
+
 The scene places Clean, Used and Worn racks next to one another. The wear is
 cosmetic: faded coating, chipped edges, exposed steel, rust and contact scratches.
 The three materials share the same model, a 512-pixel noise texture and a

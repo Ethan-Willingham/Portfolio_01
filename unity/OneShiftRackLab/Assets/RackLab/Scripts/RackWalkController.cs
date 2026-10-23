@@ -5,10 +5,14 @@ namespace OneShift.RackLab
     [RequireComponent(typeof(CharacterController))]
     public sealed class RackWalkController : MonoBehaviour
     {
+        public const float StandingHeight = 1.78f;
+        public const float StandingEyeHeight = 1.65f;
+        public const float BodyRadius = .25f;
+        public const float HorizontalFieldOfView = 90f;
         public Camera eyes;
         public Vector3 spawnPosition;
-        public float walkSpeed = 3.2f;
-        public float runSpeed = 5.5f;
+        public float walkSpeed = 1.5f;
+        public float runSpeed = 4.2f;
         public float sensitivity = 1.8f;
         CharacterController motor;
         float pitch, verticalSpeed;
@@ -22,7 +26,16 @@ namespace OneShift.RackLab
             motor = GetComponent<CharacterController>();
             spawnPosition = transform.position;
             Application.targetFrameRate = 120;
+            RefreshPerspective();
         }
+
+        public void RefreshPerspective()
+        {
+            // Keep wide Editor windows from stretching the view and making the room feel tiny.
+            eyes.fieldOfView = Mathf.Min(65f, Camera.HorizontalToVerticalFieldOfView(HorizontalFieldOfView, eyes.aspect));
+        }
+
+        void LateUpdate() { RefreshPerspective(); }
 
         void OnDisable() { Capture(false); }
         void OnApplicationFocus(bool focus)
