@@ -68,3 +68,12 @@ collision as well as dust population and movement.
 The architecture and effects are intended for this warehouse room. Profile
 the window raymarch and shadow sampling before extending them to a larger
 warehouse with many visible volumes.
+
+The masonry starts at Y=0.3, where the concrete plinth ends. The two finishes
+must not occupy the same visible wall faces, which causes flickering when the
+camera moves. Roof decking, ribs and painted structural steel use a dull finish
+without environment-probe reflections, avoiding bright repeated ceiling stripes.
+**One Shift > Repair ceiling glare and baseboard surfaces** updates these surfaces
+in an existing scene without rebuilding its lighting setup. The repair checks
+all four plinth sections and the roof deck plus 77 ribs; its report is saved as
+`Assets/RackLab/Reports/warehouse-surface-validation.txt`.

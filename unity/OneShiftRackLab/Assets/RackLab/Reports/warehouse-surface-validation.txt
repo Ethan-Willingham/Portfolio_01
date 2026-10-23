@@ -1,0 +1,1 @@
+Surface checks passed: masonry starts at Y=0.3 above four complete plinths; no overlapping baseboard wall faces; roof deck and 77 ribs use a rough nonemissive material without probe reflections; painted structural steel has a matte reflection response.

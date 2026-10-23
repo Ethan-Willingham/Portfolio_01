@@ -87,7 +87,8 @@ namespace OneShift.RackLab
             if (shader == null) throw new Exception("Warehouse masonry shader is missing.");
             masonry = Save(new Material(shader) { name = "Painted concrete blocks", enableInstancing = true }, Root + "Materials/Environment/Masonry.mat");
             panel = Lit("Warm galvanized wall panels", new Color(.61f, .62f, .57f), .32f, .3f);
-            steel = Lit("Charcoal structural steel", new Color(.17f, .20f, .19f), .62f, .34f);
+            steel = Lit("Charcoal structural steel", new Color(.17f, .20f, .19f), .15f, .18f);
+            WarehouseSurfaceRepair.UseMatteReflections(steel);
             trim = Lit("Concrete plinth", new Color(.32f, .34f, .31f), 0, .2f);
             zinc = Lit("Brushed galvanized metal", new Color(.44f, .48f, .47f), .7f, .42f);
             rubber = Lit("Window gaskets", new Color(.065f, .077f, .07f), 0, .2f);
@@ -123,10 +124,11 @@ namespace OneShift.RackLab
                 Box(center, size, mat);
                 if (solid) Collider(wall.transform, label, center, size);
             };
-            section("Block wall collision", 0, 1.6f, length, 3.2f, masonry, true);
+            // The plinth occupies the bottom course. Do not draw masonry over it.
+            section("Block wall collision", 0, 1.75f, length, 2.9f, masonry, true);
             section("Upper cladding", 0, 4.25f, length, 2.1f, panel, true);
             section("Window header", 0, 7.7f, length, 1.2f, panel, true);
-            section("Concrete kick plinth", 0, .15f, length, .3f, trim, false);
+            section("Concrete kick plinth", 0, .15f, length, .3f, trim, true);
             float cursor = -length * .5f;
             foreach (float x in openings)
             {
@@ -180,10 +182,11 @@ namespace OneShift.RackLab
 
         static void Roof()
         {
-            Box(new Vector3(0, Height + .10f, 1), new Vector3(23.4f, .2f, 22.4f), panel);
+            var roofMetal = WarehouseSurfaceRepair.RoofMaterial();
+            Box(new Vector3(0, Height + .10f, 1), new Vector3(23.4f, .2f, 22.4f), roofMetal);
             Collider(root.transform, "Solid roof", new Vector3(0, Height + .1f, 1), new Vector3(23.4f, .2f, 22.4f));
             for (float x = -11.4f; x < 11.5f; x += .3f)
-                Box(new Vector3(x, Height - .035f, 1), new Vector3(.055f, .07f, 22), zinc);
+                Box(new Vector3(x, Height - .035f, 1), new Vector3(.055f, .07f, 22), roofMetal);
             foreach (float z in new[] { -9f, -5f, -1f, 3f, 7f, 11f })
             {
                 // Deep open-web roof trusses, with double chords and alternating diagonals.
