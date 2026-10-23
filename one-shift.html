@@ -1,88 +1,74 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="js/demo-activity.js?v=1"></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#f0e1c6">
+  <meta name="theme-color" content="#303931">
   <title>One Shift</title>
-  <meta name="description" content="Receive incoming pallets. Stock the racks. Ship customer orders and grow your warehouse.">
+  <meta name="description" content="Walk a warehouse before dawn. Watch the sunlight cross the racks and switch three rows of industrial lights.">
   <link rel="canonical" href="https://ethanwillingham.com/one-shift.html">
   <meta property="og:title" content="One Shift">
-  <meta property="og:description" content="Receive incoming pallets. Stock the racks. Ship customer orders and grow your warehouse.">
+  <meta property="og:description" content="Walk a warehouse before dawn. Watch the sunlight cross the racks and switch three rows of industrial lights.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://ethanwillingham.com/one-shift.html">
-  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/one-shift-og.jpg?v=37">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="A stocked warehouse with steel racks, customer orders and a truck at the dock.">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/one-shift-unity/preview.png?v=1">
+  <meta property="og:image:alt" content="Morning sunlight crossing steel pallet racks and warehouse aisles.">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="one-shift.css?v=37">
-  <link rel="stylesheet" href="one-shift-receiving.css?v=37">
-  <link rel="stylesheet" href="one-shift-scenes.css?v=37">
-  <link rel="stylesheet" href="one-shift-places.css?v=37">
-  <link rel="stylesheet" href="one-shift-place-art.css?v=37">
-  <link rel="stylesheet" href="one-shift-office.css?v=37">
-  <link rel="stylesheet" href="one-shift-inventory.css?v=37">
-  <link rel="stylesheet" href="one-shift-tooltips.css?v=37">
+  <link rel="stylesheet" href="one-shift-unity.css?v=1">
+  <script src="js/demo-activity.js?v=1" defer></script>
+  <script src="js/one-shift-unity.js?v=1" defer></script>
 </head>
-<body class="shift-page shift-scene-mode">
-<main id="shift-game" aria-label="One Shift warehouse game">
-  <canvas id="shift-canvas" hidden aria-hidden="true"></canvas>
-  <div id="shift-view" aria-hidden="true"></div>
-  <header class="shift-hud">
-    <div class="shift-brand"><h1>One Shift</h1><p>Receive. Put away. Pick. Ship.</p></div>
-    <div class="shift-clock"><span id="shift-day">DAY 1</span><output id="shift-clock">8:00 AM</output></div>
-    <div class="shift-speed" role="group" aria-label="Time controls"><button id="shift-pause" aria-label="Pause" aria-pressed="false">Pause</button><button data-speed="1" aria-pressed="true">1x</button><button data-speed="2" aria-pressed="false">2x</button><button data-speed="3" aria-pressed="false">3x</button></div>
-    <div class="shift-cash"><span>CASH</span><output id="shift-money">$200</output></div>
-    <button id="shift-store" data-hub="shop" hidden>Store</button>
-    <button id="shift-receiving-open" hidden>Receive stock</button>
-    <button id="shift-menu" aria-label="Open game menu">Menu</button>
-    <div id="shift-timeline" aria-label="Today's truck schedule"></div>
-  </header>
-  <button id="shift-next-truck" data-action="next-truck" hidden>Next truck</button>
-  <aside id="shift-selection" class="shift-panel" aria-label="Selected object" hidden></aside>
-  <aside id="shift-queue" class="shift-queue" aria-label="Customer orders, stock and worker queue"><section id="shift-intro" aria-label="Your next step" hidden></section><button data-action="queue-toggle" aria-expanded="true" aria-controls="shift-queue-body"><strong>Work queue</strong><span id="shift-queue-summary">Ready</span></button><div id="shift-queue-body"></div></aside>
-  <nav class="shift-toolbar" id="shift-toolbar" aria-label="Warehouse tools" hidden><button data-hub="contracts">Contracts</button><button data-hub="shop">Shop</button><button data-hub="build">Build</button><button data-hub="people">People</button><button data-hub="services">Services</button><button data-hub="reports">Reports</button></nav>
-  <div class="shift-bottom"><span class="shift-wordmark">One Shift</span><p id="shift-hint" role="status">A truck is on its way to Door 1.</p><div class="shift-camera"><button id="shift-zoom-out" aria-label="Zoom out">-</button><button id="shift-zoom-in" aria-label="Zoom in">+</button></div></div>
-  <p id="shift-toast" role="status" aria-live="polite" hidden></p>
-  <section id="shift-hub" class="shift-hub" aria-label="Warehouse evening" hidden></section>
-  <dialog id="shift-settings" aria-labelledby="shift-settings-title"></dialog>
-  <div id="shift-rotate" hidden><h2>Turn your phone sideways.</h2><p>Your shift will wait.</p></div>
-  <p class="sr-only" id="shift-live" aria-live="polite" aria-atomic="true"></p>
+<body class="warehouse-page">
+<main id="warehouse-stage" aria-label="One Shift warehouse game">
+  <canvas id="warehouse-canvas" width="1280" height="720" tabindex="0" aria-label="Warehouse game. WASD to walk, mouse to look, E to use a switch." hidden></canvas>
+  <section id="warehouse-launcher" class="warehouse-launcher" aria-labelledby="warehouse-title">
+    <div class="warehouse-cover" aria-hidden="true"></div>
+    <div class="warehouse-intro">
+      <a class="warehouse-back" href="archive.html">In Progress</a>
+      <p class="warehouse-kicker">The warehouse floor</p>
+      <h1 id="warehouse-title">One Shift</h1>
+      <p class="warehouse-dek">Arrive before dawn. Walk the aisles as sunlight moves through the windows. Each row of lights has its own switch.</p>
+      <div class="warehouse-start">
+        <button id="warehouse-play" class="warehouse-primary" type="button">Enter the warehouse</button>
+        <p>Keyboard and mouse</p>
+      </div>
+      <div id="warehouse-loading" hidden>
+        <label for="warehouse-progress" id="warehouse-load-status" role="status" aria-live="polite">Loading warehouse...</label>
+        <progress id="warehouse-progress" value="0" max="100">0%</progress>
+      </div>
+      <p id="warehouse-error" class="warehouse-error" role="alert" hidden></p>
+      <dl class="warehouse-keys" aria-label="Keyboard controls">
+        <div><dt>W A S D</dt><dd>Walk</dd></div>
+        <div><dt>Mouse</dt><dd>Look</dd></div>
+        <div><dt>E / click</dt><dd>Use a switch</dd></div>
+        <div><dt>Shift / Space</dt><dd>Run / jump</dd></div>
+        <div><dt>R</dt><dd>Return to entrance</dd></div>
+        <div><dt>Esc / P</dt><dd>Release mouse / pause</dd></div>
+      </dl>
+      <p class="warehouse-classic">The earlier illustrated game and your saved warehouse are <a href="one-shift-classic.html">still here</a>.</p>
+    </div>
+  </section>
+  <nav id="warehouse-tools" class="warehouse-tools" aria-label="Game controls" hidden>
+    <button id="warehouse-pause" type="button" aria-pressed="false">Pause</button>
+    <button id="warehouse-help" type="button" aria-expanded="false" aria-controls="warehouse-controls">Controls</button>
+    <button id="warehouse-fullscreen" type="button">Fullscreen</button>
+  </nav>
+  <aside id="warehouse-controls" class="warehouse-controls" hidden>
+    <h2>On the floor</h2>
+    <p>WASD to walk. Move the mouse to look. Shift to run, Space to jump, R to return to the entrance.</p>
+    <p>Aim at a wall switch and press E or click. E also changes a rack's finish. Escape releases the mouse; P pauses the game.</p>
+    <p><a href="one-shift-classic.html">Earlier illustrated game</a> <span aria-hidden="true">/</span> <a href="archive.html">In Progress</a></p>
+    <button id="warehouse-close-help" type="button">Close controls</button>
+  </aside>
+  <div id="warehouse-paused" class="warehouse-gate" hidden>
+    <div><p class="warehouse-kicker">One Shift</p><h2>Paused</h2><p>The warehouse will wait.</p><button id="warehouse-resume" class="warehouse-primary" type="button">Resume</button></div>
+  </div>
+  <div id="warehouse-rotate" class="warehouse-gate warehouse-rotate" hidden>
+    <div><p class="warehouse-kicker">One Shift</p><h2>Turn your screen sideways.</h2><p>The warehouse uses a keyboard and mouse.</p><p><a href="one-shift-classic.html">Play the illustrated game with touch</a></p></div>
+  </div>
+  <noscript><div class="warehouse-gate"><div><h2>JavaScript is needed to play.</h2><p>Enable JavaScript, then reload this page.</p><a href="archive.html">Back to In Progress</a></div></div></noscript>
 </main>
-<script src="js/one-shift-data.js?v=37"></script>
-<script src="js/one-shift-content.js?v=37"></script>
-<script src="js/one-shift-labels.js?v=37"></script>
-<script src="js/one-shift-pathing.js?v=37"></script>
-<script src="js/one-shift-economy.js?v=37"></script>
-<script src="js/one-shift-sim.js?v=37"></script>
-<script src="js/one-shift-fulfillment.js?v=37"></script>
-<script src="js/one-shift-rules.js?v=37"></script>
-<script src="js/one-shift-saves.js?v=37"></script>
-<script src="js/one-shift-commerce.js?v=37"></script>
-<script src="js/one-shift-receiving.js?v=37"></script>
-<script src="js/one-shift-hands.js?v=37"></script>
-<script src="js/one-shift-scenes-model.js?v=37"></script>
-<script src="js/one-shift-inventory-model.js?v=37"></script>
-<script src="js/one-shift-audio.js?v=37"></script>
-<script src="js/one-shift-ui.js?v=37"></script>
-<script src="js/one-shift-queue.js?v=37"></script>
-<script src="js/one-shift-intro.js?v=37"></script>
-<script src="js/one-shift-business-ui.js?v=37"></script>
-<script src="js/one-shift-receiving-ui.js?v=37"></script>
-<script src="js/one-shift-scenes-ui.js?v=37"></script>
-<script src="js/one-shift-hands-ui.js?v=37"></script>
-<script src="js/one-shift-office.js?v=37"></script>
-<script src="js/one-shift-place-layouts.js?v=37"></script>
-<script src="js/one-shift-place-art.js?v=37"></script>
-<script src="js/one-shift-inventory-layout.js?v=37"></script>
-<script src="js/one-shift-inventory-ui.js?v=37"></script>
-<script src="js/one-shift-places.js?v=37"></script>
-<script src="js/one-shift-input.js?v=37"></script>
-<script src="js/one-shift-main.js?v=37"></script>
-<script src="js/one-shift-tooltips.js?v=37"></script>
 </body>
 </html>

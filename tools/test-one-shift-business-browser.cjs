@@ -11,7 +11,7 @@ async function boot(page,url){page.on('pageerror',e=>errors.push(e.message));awa
 async function draw(page){await page.evaluate(()=>{OneShift.app.ui.update();__oneShift.draw();});}
 async function work(page,until='sale'){return page.evaluate(until=>{const sim=OneShift.app.sim,initial=sim.s.commerce.completed;for(let n=0;n<6000;n++){sim.tick();if(until==='sale'&&sim.s.commerce.completed>initial||until==='stock'&&sim.s.commerce.restocked>0)break;}OneShift.saves.validate(sim.s);OneShift.app.ui.update();__oneShift.draw();return sim.snapshot();},until);}
 (async()=>{try{
- await new Promise(r=>server.listen(0,'127.0.0.1',r));const url=process.env.SHIFT_URL||'http://127.0.0.1:'+server.address().port+'/one-shift.html';
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));const url=process.env.SHIFT_URL||'http://127.0.0.1:'+server.address().port+'/one-shift-classic.html';
  browser=await chromium.launch({headless:true,...(process.env.SHIFT_CHROME?{executablePath:process.env.SHIFT_CHROME}:{})});const p=await browser.newPage({viewport:{width:1440,height:900},deviceScaleFactor:2});await boot(p,url);
  check('Stocked fixture shows six stocked pallets and a customer order immediately',await p.evaluate(()=>OneShift.app.sim.s.mode==='business'&&OneShift.app.sim.s.pallets.filter(p=>p.place==='storage').length===6)&&await p.locator('[data-action="business-fulfill"]').isVisible());
  check('Opening game board uses fewer than 35 words',await p.locator('#shift-queue').innerText().then(t=>t.trim().split(/\s+/).length<35));

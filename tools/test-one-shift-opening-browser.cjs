@@ -128,7 +128,7 @@ async function advanceSale(page) {
 (async () => {
   try {
     await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-    const url = process.env.SHIFT_URL || 'http://127.0.0.1:' + server.address().port + '/one-shift.html';
+    const url = process.env.SHIFT_URL || 'http://127.0.0.1:' + server.address().port + '/one-shift-classic.html';
     browser = await chromium.launch({headless:true,...(process.env.SHIFT_CHROME?{executablePath:process.env.SHIFT_CHROME}:{})});
     let desktop, phone;
     for (const [label, width, height, mobile] of [

@@ -106,12 +106,22 @@ are ordinary scripts, with no bundle step and no Sluice dependencies. Read
 `archive.html` (In Progress). Bump the `?v=` values on its CSS and game scripts
 when changing them so deployed edits bypass stale caches.
 
-**One Shift**, the standalone illustrated warehouse game, lives in `one-shift.html`,
-`one-shift.css` and `js/one-shift-*.js`. Read `docs/ONE_SHIFT.md` for the model,
-checks and current limits. The simulation modules have no DOM access. Keep it
-on `archive.html` (In Progress). Use four-foot tiles only in the hidden simulation,
-invented client names, and landscape mobile play. Every playable scene uses
-eye-level charcoal, rust and cream print art with separate selectable
+**One Shift** opens the Unity warehouse from `one-shift.html`, with its browser
+launcher in `one-shift-unity.css` and `js/one-shift-unity.js`. Editable Unity source
+lives in `unity/OneShiftRackLab`; read its `README.md` and `WAREHOUSE_LIGHTING.md`
+before changing the scene. **One Shift > Build browser player** exports to
+`assets/one-shift-unity/Build/OneShiftWeb.*`. Keep the click-to-load entry,
+keyboard and mouse controls, landscape gate, and independent browser inactivity
+and manual pause. Verify an actual browser build before publishing. Keep the
+post on `archive.html` (In Progress), with its stable `one-shift.html` URL.
+
+The earlier illustrated game remains at `one-shift-classic.html`, using
+`one-shift.css` and the original `js/one-shift-*.js` simulation modules. Its saves
+and assets remain intact; the Unity warehouse does not read or change them.
+Read `docs/ONE_SHIFT.md` for both versions, controls, checks and current limits.
+The illustrated simulation modules have no DOM access. Use four-foot tiles only
+in that hidden simulation, invented client names, and landscape mobile play.
+Its playable scenes use eye-level charcoal, rust and cream print art with separate selectable
 pallet layers. The owner explicitly removed the top-down view on 2026-10-22;
 do not restore it. Handling is performed directly by the player, by owner
 instruction on 2026-10-22. Do not schedule an invisible worker to unload, put away,
@@ -121,7 +131,8 @@ desk paperwork uses actual purchases, customer orders and ledger entries.
 Read `docs/ONE_SHIFT_RECEIVING_ART.md` before changing
 that art or generating new shipment variants. Read `docs/ONE_SHIFT_PROCESS.md`
 for the physical receiving and shipping flow. Bump every changed CSS/script
-query version. Preserve case conservation, lot dates and the ledger; forklift
+query version, including the Unity build URLs when exporting a new player.
+Preserve case conservation, lot dates and the ledger; forklift
 training precedes operation, and owning the forklift precedes hiring.
 
 **Hunting Game**, the JavaScript port of the owner's Unity hunting prototype,

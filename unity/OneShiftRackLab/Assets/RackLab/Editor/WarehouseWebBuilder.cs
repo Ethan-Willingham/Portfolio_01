@@ -71,6 +71,7 @@ namespace OneShift.RackLab
                 });
                 if (report.summary.result != BuildResult.Succeeded)
                     throw new InvalidOperationException("Browser build failed: " + report.summary.result);
+                WarehouseWebFramework.PrepareFile(Path.Combine(staging, "Build", BuildName + ".framework.js.unityweb"));
                 var files = new[] { BuildName + ".loader.js", BuildName + ".data.unityweb",
                     BuildName + ".framework.js.unityweb", BuildName + ".wasm.unityweb" };
                 string stagingBuild = Path.Combine(staging, "Build");

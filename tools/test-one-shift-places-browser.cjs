@@ -49,7 +49,7 @@ async function inPlace(page, name) {
       });
     });
     await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-    url = 'http://127.0.0.1:'+server.address().port+'/one-shift.html';
+    url = 'http://127.0.0.1:'+server.address().port+'/one-shift-classic.html';
   }
   browser = await chromium.launch({headless:true});
   const context = await browser.newContext({viewport:{width:1440,height:900}});

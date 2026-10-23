@@ -120,7 +120,7 @@ async function inspectScene(page,name){
       fs.readFile(file,(err,data)=>{if(err){res.writeHead(404).end();return;}res.setHeader('Content-Type',({'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json','.webp':'image/webp','.png':'image/png','.woff2':'font/woff2'})[path.extname(file)]||'application/octet-stream');res.end(data);});
     });
     await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
-    url='http://127.0.0.1:'+server.address().port+'/one-shift.html';
+    url='http://127.0.0.1:'+server.address().port+'/one-shift-classic.html';
   }
   browser=await chromium.launch({headless:true});
   const desktop=await browser.newContext({viewport:{width:1440,height:900}}),page=await desktop.newPage();

@@ -1,6 +1,63 @@
 # One Shift
 
-The public game at `one-shift.html` is a hands-on inventory business, version 3.4.
+The warehouse at `one-shift.html` has a click-to-load Unity browser launcher.
+The build is produced by **One Shift > Build browser player** in
+`unity/OneShiftRackLab`, or `OneShift.RackLab.WarehouseWebBuilder.BuildWeb()`.
+It stages the browser player locally, then copies the four verified build files
+to `assets/one-shift-unity/Build/OneShiftWeb.*`. Gzip decompression fallback uses
+`.unityweb` data, framework and WebAssembly files on GitHub Pages. The loader
+keeps its `.loader.js` extension. Bump the launcher CSS/script query versions and
+the build version in `js/one-shift-unity.js` whenever the published build changes.
+
+The Unity scene is a walkable warehouse with a moving sun, window shadows,
+twelve fixtures and three industrial wall switches. It uses a keyboard and
+mouse and requires WebGL 2. WASD walks, the mouse looks, Shift runs, Space jumps,
+E or a click operates a nearby switch, and R returns to the entrance. E also
+cycles a targeted rack's finish. Escape releases the mouse, P pauses, and the
+page controls offer fullscreen. Mobile portrait shows a rotation gate; a
+keyboard and mouse are still needed in landscape. Touch players can follow the
+link to the illustrated game.
+
+`DemoActivity` gates the Unity player on tab visibility, window focus and stage
+visibility. It calls `BrowserLifecycle.SetBrowserActive` to suspend simulation,
+clear input and suspend audio, then pauses the engine's main loop. Resume reverses
+that order. The build also exposes Unity's separate display refresh monitor so
+the page can stop its animation callbacks during inactivity. Manual pause and
+the portrait gate remain independent. Verify these
+engine hooks against the generated player before publishing a new Unity version.
+The loader downloads only after the player chooses to enter, reports progress,
+and provides a retry if the download or initialization fails.
+
+Run `node tools/test-one-shift-unity-browser.cjs` for the launcher's browser
+checks with a simulated loader. After exporting the actual Unity player, run
+`node tools/test-one-shift-unity-browser.cjs --real` to exercise the compiled
+WebGL player. That pass reads the browser bridge's `ReportState` diagnostics,
+checks the opening dawn, frame and clock suspension, zero paused animation
+callbacks in a browser trace, movement, reset, fullscreen,
+and shader/runtime errors, and saves screenshots and console logs. Set
+`SHIFT_TEST_URL=https://ethanwillingham.com/one-shift.html` to run the same real
+checks against the deployed page. `SHIFT_DUMP` selects the report directory.
+Both checks use Playwright; the real pass also uses Sharp to inspect rendered pixels.
+The real pass uses full Chromium with GPU rendering enabled and reports its actual
+renderer. Set `SHIFT_BROWSER_CHANNEL=chrome` to use installed Chrome, including
+on this Windows workstation. The console report retains Unity's known startup
+internal-format probe warnings; shader failures and render-time GL errors fail
+the check. It also identifies startup messages for three bundled shaders unused
+by this compatibility-mode scene: CoreCopy, StencilDitherMaskSeed and HDRDebugView.
+RenderGraph and runtime debug display remain disabled; revisit that classification
+if those settings change.
+
+The earlier hands-on inventory business, version 3.4, is preserved at
+`one-shift-classic.html`. Its scripts, local save keys and assets remain intact;
+the Unity warehouse does not read or change those saves. Browser regression
+fixtures for the illustrated game target that legacy URL. Existing `#layout=`
+links at the original URL redirect to the illustrated game with the layout intact.
+Its model is documented
+below. The Unity project has its own scene and build documentation in
+`unity/OneShiftRackLab/README.md` and `WAREHOUSE_ENVIRONMENT.md`.
+
+## Illustrated game
+
 Read [the building and office model](ONE_SHIFT_PLACES.md) for its time-card
 entrance, central floor, seated desk, purchase orders and environmental audio.
 The public CSS and script query version is `v37`. Its entrance, central floor

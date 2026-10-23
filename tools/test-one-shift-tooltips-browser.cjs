@@ -29,7 +29,7 @@ async function palletPoint(p,viewName){return p.evaluate(viewName=>{
   let url=process.env.SHIFT_URL;
   if(!url){
     server=http.createServer((req,res)=>{const file=path.resolve(root,'.'+new URL(req.url,'http://local').pathname);if(!file.startsWith(root+path.sep)){res.writeHead(403).end();return;}fs.readFile(file,(error,data)=>{if(error){res.writeHead(404).end();return;}res.setHeader('Content-Type',({'.html':'text/html','.js':'text/javascript','.css':'text/css','.webp':'image/webp','.png':'image/png','.woff2':'font/woff2'})[path.extname(file)]||'application/octet-stream');res.end(data);});});
-    await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));url='http://127.0.0.1:'+server.address().port+'/one-shift.html';
+    await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));url='http://127.0.0.1:'+server.address().port+'/one-shift-classic.html';
   }
   browser=await chromium.launch({headless:true});page=await browser.newPage({viewport:{width:1440,height:900}});
   page.on('pageerror',error=>errors.push(error.message));await page.goto(url);await ready(page);

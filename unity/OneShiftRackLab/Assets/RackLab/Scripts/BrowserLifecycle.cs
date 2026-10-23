@@ -41,6 +41,37 @@ namespace OneShift.RackLab
             ApplyState();
         }
 
+        [Preserve]
+        public void ReportState(string unused)
+        {
+            var dayNight = Object.FindFirstObjectByType<WarehouseDayNight>();
+            var player = Object.FindFirstObjectByType<RackWalkController>();
+            var rowOn = new bool[3];
+            foreach (var row in Object.FindObjectsByType<WarehouseLightRow>(FindObjectsSortMode.None))
+                if (row.RowNumber >= 1 && row.RowNumber <= rowOn.Length) rowOn[row.RowNumber - 1] = row.IsOn;
+            var position = player != null ? player.transform.position : Vector3.zero;
+            Debug.Log("ONE_SHIFT_STATE " + JsonUtility.ToJson(new BrowserState
+            {
+                frameCount = Time.frameCount,
+                hour = dayNight != null ? dayNight.Hour : -1,
+                timeScale = Time.timeScale,
+                rowOn = rowOn,
+                playerPosition = new[] { position.x, position.y, position.z },
+                browserSuspended = suspended
+            }));
+        }
+
+        [System.Serializable, Preserve]
+        sealed class BrowserState
+        {
+            public int frameCount;
+            public float hour;
+            public float timeScale;
+            public bool[] rowOn;
+            public float[] playerPosition;
+            public bool browserSuspended;
+        }
+
         void OnApplicationFocus(bool focused)
         {
             windowFocused = focused;

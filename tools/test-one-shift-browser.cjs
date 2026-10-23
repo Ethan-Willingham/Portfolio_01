@@ -9,7 +9,7 @@ async function readyDraw(p){await p.evaluate(()=>new Promise(resolve=>requestAni
 async function shot(p,name){await readyDraw(p);await p.screenshot({path:path.join(dump,name+'.png')});}
 const check=(name,condition)=>{assert.ok(condition,name);console.log('PASS '+name);};
 (async()=>{try{
- await new Promise(r=>server.listen(0,'127.0.0.1',r));const url='http://127.0.0.1:'+server.address().port+'/one-shift.html';
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));const url='http://127.0.0.1:'+server.address().port+'/one-shift-classic.html';
  browser=await chromium.launch({executablePath:'/Users/ethan/.local/bin/agent-chrome-for-testing',headless:true,args:['--disable-gpu-vsync','--disable-frame-rate-limit']});
  const context=await browser.newContext({viewport:{width:1440,height:900},deviceScaleFactor:1});const p=await boot(context,url);
  check('Fresh start has no menu or tutorial screen',await p.locator('#shift-hub').isHidden()&&!await p.locator('#shift-settings').evaluate(e=>e.open));
