@@ -39,8 +39,8 @@ Shader "OneShift/Warehouse Sky"
                 float twilight = (1-smoothstep(.08,.40,abs(_SunDirection.y))) * smoothstep(-.18,0,_SunDirection.y);
                 color += float3(.63,.16,.025) * twilight * pow(alignment,8) * pow(1-up,3);
                 float disc = smoothstep(cos(.30*UNITY_PI/180),cos(.24*UNITY_PI/180),alignment);
-                float halo = pow(alignment,400) * .14;
-                color += _SunColor.rgb * (disc*5+halo) * smoothstep(-.012,.01,_SunDirection.y);
+                float halo = pow(alignment,400) * .105;
+                color += _SunColor.rgb * (disc*3.75+halo) * smoothstep(-.012,.01,_SunDirection.y);
                 float2 cell = floor(float2(atan2(ray.z,ray.x),asin(ray.y))*950);
                 float star = frac(sin(dot(cell,float2(127.1,311.7)))*43758.5453);
                 color += smoothstep(.9985,1,star) * .32 * (1-_Daylight) * smoothstep(0,.2,up);

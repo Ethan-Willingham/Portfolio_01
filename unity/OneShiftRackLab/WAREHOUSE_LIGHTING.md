@@ -1,11 +1,13 @@
 # Warehouse lighting
 
 The room starts at 4:30 a.m. with its three ceiling-light rows on. The exterior
-is dark, and the high windows admit no direct sunlight until dawn. A twelve-minute
-cycle covers 24 game hours. Sunrise is at 6 a.m., noon at 12 and sunset at 6 p.m.
+is dark, and the high windows admit no direct sunlight until dawn. The opening
+night reaches 7 a.m. in about 17 seconds. The clock then slows: 7 a.m. to sunset
+takes nine real minutes. The following night takes 90 seconds. Sunrise is at
+6 a.m., noon at 12 and sunset at 6 p.m.
 The sun travels from the east wall, across the southern sky, to the west wall.
 The 41-degree latitude gives a 49-degree midday elevation at this equinox setting.
-Start time, latitude, cycle length and manual pause are Inspector fields on
+Start time, latitude, day and night duration, light intensity and manual pause are Inspector fields on
 `High warehouse daylight > Warehouse Day Night`. The clock stops on loss of focus.
 
 ## Switches and fixtures
@@ -18,6 +20,9 @@ The switch has a physical lever, an indicator and a mechanical click.
 
 The twelve spotlights use distance falloff, a broad downward distribution and
 soft real-time shadows. The roof fixture housings remain the existing geometry.
+Fixture intensity is 26, peak sunlight is 2.35, and window shafts use 75 percent
+of their former energy. Daytime ambient and luminous lenses are softer, while
+the low night ambient remains unchanged.
 Forward+ lighting allows all twelve fixtures to illuminate the combined room
 meshes, without the eight-light-per-object limit. Additional shadows have a
 4096-pixel atlas with 1024-pixel high-resolution slices. The rack shader supports
@@ -55,7 +60,9 @@ lighting setup. **Build Windows player** produces the local standalone game.
 `WarehouseDayNightBuilder.Validate()` checks nine times across the cycle,
 sun-facing volume selection and alignment, moving mesh bounds, twelve unique
 shadowed fixtures, independent row states, switch reachability, midnight wrapping
-and pause. It restores the pre-test row states and night start in Edit mode.
+and pause. It also checks the fast opening dawn, nine-minute day, faster night
+and a continuous transition across morning at different frame intervals.
+It restores the pre-test row states and night start in Edit mode.
 The report is `Assets/RackLab/Reports/warehouse-lighting-validation.txt`.
 Also inspect night, morning, noon and afternoon captures; verify all-off and each
 row independently in Play mode, check the console, and run the floor and rack

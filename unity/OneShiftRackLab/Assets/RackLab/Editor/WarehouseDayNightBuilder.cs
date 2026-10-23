@@ -29,7 +29,11 @@ namespace OneShift.RackLab
             cycle.sun = sun;
             cycle.windows = Object.FindObjectsByType<WarehouseSunVolume>(FindObjectsSortMode.None);
             cycle.startHour = 4.5f;
-            cycle.dayLengthMinutes = 12;
+            cycle.dayLengthMinutes = 9;
+            cycle.nightLengthMinutes = 1.5f;
+            cycle.peakSunIntensity = 2.35f;
+            cycle.beamIntensity = .75f;
+            cycle.daytimeAmbientIntensity = .8f;
             sun.lightmapBakeType = LightmapBakeType.Realtime;
             sun.shadows = LightShadows.Soft;
             sun.shadowBias = .018f;
@@ -51,7 +55,7 @@ namespace OneShift.RackLab
                 probe.timeSlicingMode = ReflectionProbeTimeSlicingMode.IndividualFaces;
                 probe.resolution = 128;
                 probe.clearFlags = ReflectionProbeClearFlags.Skybox;
-                probe.intensity = .65f;
+                probe.intensity = .55f;
                 probe.boxProjection = true;
                 probe.shadowDistance = 30;
                 probe.farClipPlane = 60;
@@ -75,6 +79,7 @@ namespace OneShift.RackLab
             var cycle = Object.FindFirstObjectByType<WarehouseDayNight>();
             Require(cycle != null && cycle.sun != null, "Sun cycle missing.");
             Require(cycle.startHour < 6 && cycle.windows.Length == 16, "Night start or window bindings invalid.");
+            Require(cycle.dayLengthMinutes >= 8 && cycle.dayLengthMinutes <= 10, "Daylight should last eight to ten real minutes.");
             var rows = Object.FindObjectsByType<WarehouseLightRow>(FindObjectsSortMode.None);
             var switches = Object.FindObjectsByType<WarehouseLightSwitch>(FindObjectsSortMode.None);
             Require(rows.Length == 3 && switches.Length == 3, "Expected three independent rows and three switches.");
@@ -120,6 +125,26 @@ namespace OneShift.RackLab
                     for (int row = 0; row < 3; row++)
                         Require(rows[row].FixtureLights.All(light => light.enabled == (row == selected)), "Switch affects another row or leaves a light behind.");
                 }
+                float nightHours = 24 - (WarehouseDayNight.SunsetHour - WarehouseDayNight.MorningHour);
+                float openingSeconds = (WarehouseDayNight.MorningHour - cycle.startHour) * cycle.nightLengthMinutes * 60 / nightHours;
+                Require(openingSeconds >= 15 && openingSeconds <= 20, "The opening night should reach morning in fifteen to twenty seconds.");
+                cycle.SetHour(cycle.startHour);
+                cycle.Advance(openingSeconds);
+                Require(Mathf.Abs(cycle.Hour - WarehouseDayNight.MorningHour) < .001f, "Opening night fails to arrive at morning.");
+                cycle.Advance(60);
+                Require(cycle.Hour > 7 && cycle.Hour < 9, "Morning does not slow down for the working day.");
+                cycle.SetHour(WarehouseDayNight.MorningHour);
+                cycle.Advance(cycle.dayLengthMinutes * 60);
+                Require(Mathf.Abs(cycle.Hour - WarehouseDayNight.SunsetHour) < .001f && cycle.sun.intensity < .0001f,
+                    "The slow day must finish at sunset without skipping it.");
+                cycle.Advance(cycle.nightLengthMinutes * 60);
+                Require(Mathf.Abs(cycle.Hour - WarehouseDayNight.MorningHour) < .001f, "The fast overnight period fails to reach the next morning.");
+                cycle.SetHour(cycle.startHour);
+                cycle.Advance(30);
+                float wholeStepHour = cycle.Hour;
+                cycle.SetHour(cycle.startHour);
+                for (int step = 0; step < 60; step++) cycle.Advance(.5f);
+                Require(Mathf.Abs(cycle.Hour - wholeStepHour) < .001f, "Crossing the fast-to-slow boundary depends on frame rate.");
                 cycle.SetHour(23.99f);
                 cycle.Advance(1);
                 Require(cycle.Hour < 1, "Clock fails at midnight.");
@@ -141,7 +166,7 @@ namespace OneShift.RackLab
                 cycle.SetHour(Application.isPlaying ? originalHour : cycle.startHour);
                 for (int i = 0; i < rows.Length; i++) rows[i].SetOn(originalStates[i]);
             }
-            string report = "Passed: night start; nine solar times; east sunrise and west sunset; sixteen aligned window volumes with moving mesh bounds; no night or back-facing shafts; twelve unique shadowed fixtures; independent three-row switching; accessible switch raycasts; midnight wrap; pause. Forward+ and additional-light shadows enabled.";
+            string report = "Passed: night start; morning reached in 15-20 seconds; slow eight-to-ten-minute daylight; faster overnight return; frame-independent morning transition; nine solar times; east sunrise and west sunset; sixteen aligned window volumes with moving mesh bounds; no night or back-facing shafts; twelve unique shadowed fixtures; independent three-row switching; accessible switch raycasts; midnight wrap; pause. Forward+ and additional-light shadows enabled.";
             File.WriteAllText(Root + "Reports/warehouse-lighting-validation.txt", report + "\n");
             Debug.Log(report);
             return report;

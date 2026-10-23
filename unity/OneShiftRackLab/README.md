@@ -21,8 +21,9 @@ of ceiling lights. Walk within 2.6 metres, aim at a switch, then press E or clic
 Each switch operates four fixtures. The lever position, indicator, glowing
 diffusers and actual light follow the same circuit state.
 
-A full day lasts twelve real minutes. Sunrise arrives after about 45 seconds;
-the sun crosses the southern sky from east to west, then sets at 6 p.m.
+The opening night reaches 7 a.m. in about 17 seconds. Daylight then lasts nine
+real minutes until sunset at 6 p.m.; the following night lasts 90 seconds.
+The sun crosses the southern sky from east to west with softer light and glare.
 Window-frame shadows and dust shafts follow its direction. The clock stops
 when the game loses focus. See [warehouse lighting](WAREHOUSE_LIGHTING.md) for
 the controls, tuning and verification.
@@ -136,6 +137,19 @@ materials, prefabs and validation report. This replaces the trial scene, so
 save any manual scene changes under a different name first.
 
 Choose **One Shift > Build Windows player** to rebuild the standalone version.
+With Unity's Web Build Support module installed, choose **One Shift > Build
+browser player** to export the browser version. `WarehouseWebBuilder.BuildWeb()`
+stages the build under `Builds/WebGL/OneShiftWeb` and copies its four compressed
+player files to `assets/one-shift-unity/Build` in the site repository. Gzip
+decompression fallback supports static hosting without custom encoding headers.
+The Web profile keeps Forward+ lighting with smaller shadow maps, 2x MSAA and
+64-pixel reflection faces. Desktop settings are restored after the build.
+
+The browser page controls focus, visibility, manual pause and portrait gating.
+`BrowserLifecycle` clears held input and freezes the clock and audio before the
+page stops Unity's main loop. Returning requires a fresh click to capture the
+mouse. Keyboard and mouse controls are required for this 3D trial.
+
 The Editor builder validates the mesh bounds, LODs, colliders, materials,
 shader, original rack preservation, four shared frames, all four pallet finishes,
 six pallet positions per bay, front and side fork passage and a 100 mm

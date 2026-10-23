@@ -13,8 +13,8 @@ namespace OneShift.RackLab
         public string RowLabel = "West";
         public Light[] FixtureLights = Array.Empty<Light>();
         public Renderer[] Diffusers = Array.Empty<Renderer>();
-        [Min(0)] public float FixtureIntensity = 34f;
-        [ColorUsage(false, true)] public Color EmissionColor = new Color(3.8f, 3.35f, 2.8f);
+        [Min(0)] public float FixtureIntensity = 26f;
+        [ColorUsage(false, true)] public Color EmissionColor = new Color(2.85f, 2.5125f, 2.1f);
         public Color LitDiffuserColor = new Color(.92f, .91f, .84f);
         public Color UnlitDiffuserColor = new Color(.43f, .45f, .43f);
         [SerializeField] bool isOn = true;

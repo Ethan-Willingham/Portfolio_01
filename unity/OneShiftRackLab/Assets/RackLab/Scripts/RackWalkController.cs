@@ -19,6 +19,7 @@ namespace OneShift.RackLab
         Quaternion spawnRotation;
         bool captured;
         bool hadFocus = true;
+        bool browserActive = true;
         GUIStyle title, instructions, small;
         RackWearVariant target;
         WarehouseLightSwitch lightSwitch;
@@ -54,8 +55,19 @@ namespace OneShift.RackLab
             Cursor.visible = !value;
         }
 
+        public void SetBrowserActive(bool active)
+        {
+            browserActive = active;
+            Capture(false);
+            verticalSpeed = 0;
+            target = null;
+            lightSwitch = null;
+            Input.ResetInputAxes();
+        }
+
         void Update()
         {
+            if (!browserActive) return;
             // Resolve the current ray before accepting E or a click, so moving
             // between a switch and a rack never operates the previous target.
             target = null;
