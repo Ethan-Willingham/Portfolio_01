@@ -1,11 +1,14 @@
 # One Shift
 
-The public game at `one-shift.html` is a hands-on inventory business, version 3.2.
+The public game at `one-shift.html` is a hands-on inventory business, version 3.4.
 Read [the building and office model](ONE_SHIFT_PLACES.md) for its time-card
 entrance, central floor, seated desk, purchase orders and environmental audio.
-The public CSS and script query version is `v34`. Its entrance, central floor
+The public CSS and script query version is `v37`. Its entrance, central floor
 and raised office use connected warehouse architecture and object contours for
 interaction. The clock and desk remain visible beneath transparent targets.
+Read [the inventory aisles](ONE_SHIFT_INVENTORY.md) for the four-aisle view,
+two-position bays, four browsable levels, numbered rack destinations, visible
+rows behind the current rack, stable rack addresses and stock controls.
 
 The player now performs every handling step directly. Read
 [the direct handling model](ONE_SHIFT_HANDLING.md) for the current controls,
@@ -149,7 +152,8 @@ without changing stock. `one-shift-scenes-ui.js` composites generated background
 and the approved alpha pallet layers, with native keyboard targets, silhouette
 hover and touch selection. `one-shift-scenes.css` supplies the scene layout.
 The four-foot grid remains only in the hidden routing and reservation model.
-No map, camera panning, floor cursor or zoom controls are offered.
+No map, floor cursor or zoom controls are offered. Inventory's Up and Down
+controls pan between its four rack levels.
 
 The owner-approved receiving view uses image-generated charcoal, muted rust and
 cream screen-print artwork. Two registered empty dock backgrounds and four

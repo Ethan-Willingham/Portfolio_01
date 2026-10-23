@@ -16,7 +16,8 @@ put away, pick, wrap, label or load stock.
 2. Unload to Receiving. The same pallet moves to a floor position. Rear rows
    stay blocked until their front pallets are physically removed.
 3. Select a receiving pallet and lift it onto the player's jack.
-4. Open Storage and click an empty rack position to place that pallet there.
+4. Open Inventory, choose one of four aisles, then click an available position
+   in its four-level rack bay to place that pallet there.
    Its cases become available for orders after putaway.
 5. Release the empty supplier trailer to free its dock.
 6. Start an order to reserve exact cases, then take an empty shipping pallet.

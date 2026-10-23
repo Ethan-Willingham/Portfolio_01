@@ -43,7 +43,11 @@ Pages change which actual pallets are visible; they do not duplicate inventory.
 All warehouse handling is performed by the player. Keep direct lift, rack
 placement, individual case pick, wrap hold, label, load and release actions in
 the scenes. Do not portray invisible workers progressing freight on a timer.
-Storage pages follow fixed physical rack positions, including empty slots.
+Inventory opens onto four aisles and then a selected rack bay, with two pallet
+positions across and four levels high. The aisle and bay masters are in
+`assets/one-shift/inventory-v1/`. Read [ONE_SHIFT_INVENTORY.md](ONE_SHIFT_INVENTORY.md)
+for stable addresses, upper-level access and direct stock controls. Every bay
+follows fixed physical rack positions, including empty and locked slots.
 Every pallet keeps the same generated cargo variant between trailer and floor.
 The open-door variants are composited only inside each doorway, preserving the
 background outside it. A docked truck opens that aperture and shows its actual

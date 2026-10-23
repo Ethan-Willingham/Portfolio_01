@@ -120,7 +120,7 @@
    else if(action==='load'){const q=O.saves.load(id);if(q){app.sim.restore(q);this.target=null;this.selected=[];this.lastPhase='shift';el('settings').close();app.menuPause=false;app.renderer.home(q);this.update();}}
    else if(action==='export'){const a=document.createElement('a'),url=URL.createObjectURL(new Blob([O.saves.encode(s)],{type:'application/json'}));a.href=url;a.download='one-shift-day-'+s.day+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
    else if(action==='import')el('import').click();
-   else if(action==='new'){app.sim=new O.Sim(1,node.dataset.id);this.target=null;this.selected=[];this.lastPhase='shift';this.osdSeen=false;this.osdUntil=0;this.guideSkipped=false;this.closeHub();el('settings').close();app.menuPause=false;app.paused=false;app.renderer.home(app.sim.s);this.update();}
+   else if(action==='new'){app.sim=new O.Sim(1,node.dataset.id);if(O.business?.(app.sim.s)){app.sim.setManualHandling?.();O.ensureInventoryLayout?.(app.sim);}this.target=null;this.selected=[];this.lastPhase='shift';this.osdSeen=false;this.osdUntil=0;this.guideSkipped=false;this.closeHub();el('settings').close();app.menuPause=false;app.paused=false;app.renderer.home(app.sim.s);this.update();}
    this.update();
   }
  }

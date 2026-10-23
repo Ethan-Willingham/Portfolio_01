@@ -13,7 +13,7 @@
   }
   if(type==='handWrap')return;
   const c={type};for(const k of ['pallet','order','truck'])if(node.dataset[k])c[k]=Number(node.dataset[k]);if(node.dataset.slot!==undefined)c.slot=node.dataset.slot;
-  const r=sim.command(c);if(!r.ok)app.ui.toast(r.reason,true);else{app.audio.play(type==='handPickCase'||type==='handLabel'?'scan':'click');if(type==='handBeginPick'){const source=sim.handOrder().allocations.find(a=>!a.collected&&a.output===r.pallet)?.source;app.scenes.open('storage');const p=sim.p.get(source),slot=sim.handRackSlots().find(d=>d.pallet===p?.id);if(slot)app.scenes.page=Math.floor(slot.index/3);}if(type==='handLift'&&!sim.p.get(r.pallet).businessOrder)app.scenes.announce('Pallet on your jack. Go to Storage and choose an empty rack.');}
+  const r=sim.command(c);if(!r.ok)app.ui.toast(r.reason,true);else{app.audio.play(type==='handPickCase'||type==='handLabel'?'scan':'click');if(type==='handBeginPick'&&!app.scenes.inventoryEnabled){const source=sim.handOrder().allocations.find(a=>!a.collected&&a.output===r.pallet)?.source;app.scenes.open('storage');const p=sim.p.get(source),slot=sim.handRackSlots().find(d=>d.pallet===p?.id);if(slot)app.scenes.page=Math.floor(slot.index/3);}if(type==='handLift'&&!sim.p.get(r.pallet).businessOrder)app.scenes.announce('Pallet on your jack. Go to Storage and choose an empty rack.');}
   app.ui.update();app.scenes.sync(true);app.receiving?.sync();
  }
  const Base=O.WarehouseScenes;

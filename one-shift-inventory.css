@@ -1,0 +1,43 @@
+/* Inventory keeps every aisle and level in the same physical scene. */
+.inventory-surface{position:absolute;pointer-events:none;z-index:2}
+.inventory-overview-image{display:block;width:100%;height:100%;user-select:none}
+.inventory-view[data-inventory-mode="overview"] .inventory-surface{pointer-events:auto}
+.inventory-surface .place-target{pointer-events:auto}
+.inventory-view #scene-loading{display:none!important}
+.inventory-loading{position:absolute;inset:0;z-index:8;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;background:var(--shift-paper);font:.75rem var(--font-mono)}
+.inventory-loading p{margin:0}
+.inventory-note{margin:0;padding:6px 0;font:.65rem/1.35 var(--font-body);min-height:30px}
+.shift-manual #shift-scenes.inventory-view{grid-template-rows:auto minmax(0,1fr) auto auto auto auto}
+.inventory-view .scene-label{z-index:6}
+.inventory-view .hands-tools{z-index:5}
+.inventory-view .scene-nav.inventory-bay-nav{grid-template-columns:1fr 1fr}
+.inventory-view .scene-pages{gap:4px}
+.inventory-view #scene-page{width:auto}
+.inventory-view .hands-carry{min-height:50px}
+.inventory-levels{position:absolute;left:4px;top:50%;transform:translateY(-50%);width:50px;z-index:3;background:var(--shift-paper);display:grid;justify-items:stretch;border:1px solid var(--rule)}
+#shift-scenes .inventory-levels button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;border:0;font-size:.55rem;padding:4px 0}
+.inventory-levels output{text-align:center;padding:5px 0;display:grid;gap:3px;font-family:var(--font-mono)}
+.inventory-levels output span{font-size:.45rem;letter-spacing:.04em}
+.inventory-levels output b{font-size:.75rem;font-weight:400}
+.inventory-arrow{display:block;width:9px;height:9px;border-top:2px solid currentColor;border-left:2px solid currentColor}
+.inventory-arrow.up{transform:rotate(45deg)}
+.inventory-arrow.down{transform:rotate(225deg)}
+.inventory-route{display:flex;gap:6px;min-width:0;overflow-x:auto;overscroll-behavior-x:contain;touch-action:pan-x;padding:4px 0;scrollbar-width:thin}
+#shift-scenes .inventory-route button{flex:1 0 82px;display:flex;align-items:center;justify-content:center;gap:8px;padding:4px 8px;border-color:var(--rule);font-size:.625rem;white-space:nowrap}
+.inventory-route strong{font-weight:400}
+.inventory-route span{font-size:.5625rem;color:var(--text-dim)}
+#shift-scenes .inventory-route button[aria-current="location"]{background:var(--scene-ink);color:var(--scene-paper);border-color:var(--scene-ink)}
+#shift-scenes .inventory-route button[aria-current="location"] span,#shift-scenes .inventory-route button:hover span{color:inherit}
+@media(max-width:900px),(max-height:550px){
+ .inventory-note{font-size:.5rem;min-height:24px;padding:3px 0}
+ .inventory-view .scene-heading{min-height:38px}
+ .inventory-view .scene-heading h2{font-size:.9375rem}
+ .inventory-view .scene-nav{min-height:44px;margin-top:0;padding-top:0}
+ .inventory-view .hands-carry{min-height:44px}
+ .inventory-view .hands-carry canvas{height:32px;width:34px}
+ .inventory-view #scene-page{font-size:.5rem}
+ .inventory-route{gap:3px;padding:2px 0}
+ #shift-scenes .inventory-route button{flex-basis:70px;padding:3px 5px;gap:5px;font-size:.5625rem}
+ .inventory-route span{font-size:.5rem}
+ .inventory-view[data-inventory-mode="bay"]:not(.inventory-slot-inspected) .inventory-note{display:none}
+}
