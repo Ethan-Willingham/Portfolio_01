@@ -318,6 +318,21 @@
       for(int i=0;i<2;i++){q=waveSurface(world+h*1.22474487,time,depth,salt,uOpenSea);h+=clamp((q.x-h)/max(.22,1.-1.22474487*(q.y+q.z)),-3.,3.);}
       p=world+h*1.22474487;return waveSurface(p,time,depth,salt,uOpenSea);
     }
+    vec2 rippleField(vec2 p){
+      // Fixed world axes preserve phase through bends. Independent, filtered
+      // noise scales give short irregular ripples instead of intersecting lines.
+      vec2 a=mat2(.819,-.574,.574,.819)*p,b=mat2(.438,.899,-.899,.438)*p;
+      return (texture(uNoise,a*vec2(.0021,.0069)).rg-.5)*.72
+        +(texture(uNoise,b*vec2(.0083,.0127)+vec2(.31,.67)).gb-.5)*.28;
+    }
+    vec2 seaRipples(vec2 p,vec2 current,float time){
+      // Two overlapping flow intervals bound distortion even after hours of
+      // sailing. Each reset happens at zero weight, with zero blend derivative.
+      float phase=fract(time/6.),other=fract(phase+.5),blend=.5-.5*cos(phase*6.28318530718);
+      vec2 windDrift=vec2(-.15,-.99)*time*.7;
+      return mix(rippleField(p-windDrift-current*(other-.5)*6.),
+        rippleField(p-windDrift-current*(phase-.5)*6.),blend);
+    }
     vec3 seaColorAt(vec2 p,vec3 wave,float depth,float salt,vec2 current,float time,float zoom){
       float exposure=seaExposure(p,depth,salt,uOpenSea),wind=harborExposure(p,depth,salt,uOpenSea),incoming=exposure;
       if(uEnvironmentEnabled){vec3 gx,gy;vec4 env=seaEnvironment(p,gx,gy);incoming=env.x;exposure=env.x*smoothstep(.2,8.,depth);wind=env.y*smoothstep(.15,2.4,depth);}
@@ -332,12 +347,7 @@
       // Short wind facets ride the long surface. River facets advect with the
       // local current instead of inheriting offshore swell direction or height.
       float detail=smoothstep(.18,.9,zoom)*uDetailMotion;
-      vec2 flow=length(current)>.03?normalize(current):vec2(-.15,-.99),crossFlow=vec2(-flow.y,flow.x),rippleP=vec2(dot(p-drift,flow),dot(p-drift,crossFlow));
-      float a=rippleP.x*1.17+rippleP.y*.32-time*2.7+.65*sin(rippleP.y*.19),b=rippleP.x*.47-rippleP.y*.93-time*3.4+.5*sin(rippleP.x*.13);
-      float ca=cos(a)*(1.-smoothstep(.7,2.2,fwidth(a))),cb=cos(b)*(1.-smoothstep(.7,2.2,fwidth(b)));
-      vec2 small=vec2(ca*.60+cb*.25,ca*.16-cb*.5);
-      float capillary=sin(rippleP.x*2.4+sin(rippleP.y*.71)-time*3.2)*(1.-smoothstep(1.,3.,fwidth(rippleP.x*2.4)));
-      vec2 micro=(flow*(small.x+capillary*.12)+crossFlow*small.y)*(.010+.025*wind)*detail;
+      vec2 micro=seaRipples(p,current,time)*(.018+.045*wind)*detail;
       vec3 normal=normalize(vec3(-wave.yz*1.45+micro,1.)),eye=vec3(.61237244,.61237244,.5),sun=normalize(vec3(-.42,-.55,.72));
       float ndv=clamp(dot(normal,eye),0.,1.),fresnel=.02+.98*pow(1.-ndv,5.);
       vec3 reflected=reflect(-eye,normal);
@@ -414,13 +424,8 @@
           emit(x,y,ex,ey,width,endWidth,alpha,endAlpha,left[0],left[1],right[0],right[1],Math.max(0,age),Math.max(0,endAge),t.churn);
         }
       }
-      // Small bow shoulders indicate speed and hull heading without covering it.
-      for(const s of view.battle.ships){if(s.hp<=0||s.sea?.airborne)continue;const p=view.poses[s.id],speed=Math.hypot(s.vx,s.vy),power=Math.min(1,speed/(s.speed*.8));if(power<.05||!view.visible(p.x,p.y,40))continue;
-        const c=Math.cos(p.angle),sn=Math.sin(p.angle);for(const side of [-1,1]){
-          const x=p.x+c*s.length*.47-sn*s.width*.13*side,y=p.y+sn*s.length*.47+c*s.width*.13*side;
-          emit(x,y,x-c*s.length*.3-sn*s.width*.44*side,y-sn*s.length*.3+c*s.width*.44*side,s.width*.025,s.width*.12,power*.75,0);
-        }
-      }
+      // Bow contact belongs to Surface.spray. This history contains only water
+      // actually passed by the stern, never a second decorative V at the bow.
     }
     drawCanvas(view){const c=view.fallback,sea=view.battle.sea;let count=0;c.save();c.lineJoin='round';
       const surface=(x,y)=>view.project(x,y,(sea?.at(x,y,view.visualTime,this._surface||(this._surface={}),-1,false).height||0)+.05);

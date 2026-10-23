@@ -1,5 +1,22 @@
 # Widewake production goal
 
+## Ripple and bow-contact correction, 2026-10-23 (v0.38.1)
+
+Removed the repeated angular ripple pattern caused by rotating world coordinates
+with the current. Filtered irregular detail now advects in bounded, overlapping
+intervals. Removed the second bow V from the wake renderer. Bow spray requires
+local immersion, responds separately to each shoulder and stops at a dry bow.
+
+New checks cover current sensitivity and flow-reset continuity after hours of
+simulation, stern-only wake history, spray placement at four headings, raised
+bow and roll contact, flight, rest and bounded output. Browser frames cover Salt
+windpumps, straight travel, turning and countersteering on desktop and landscape
+mobile WebGL and Canvas. Existing checks cover divergent wash, bank clipping,
+physical waves, regional behavior, paused pixels and graphics context recovery.
+The broader wave test now leaves spray contact assertions to the focused contact
+test, since a supported stern does not require a wet bow. Physical phone testing
+remains outstanding.
+
 ## Regional sea and hull response, 2026-10-23 (v0.38.0)
 
 The owner rejected the repeating dark wave ridges, weak boat response and uniform

@@ -1,5 +1,18 @@
 # Widewake ocean redesign
 
+## Ripple folds and detached bow foam, 2026-10-23 (v0.38.1)
+
+The owner spotted repeated chevrons around Salt windpumps and a separate V near
+the bow. Rotating absolute texture coordinates with the local current folded
+the ripple phase where the current changed. Fine detail now uses irregular,
+filtered noise on fixed world axes. Two overlapping six-second flow intervals
+carry it with the current without accumulating distortion or snapping at resets.
+
+Wake history no longer adds a decorative pair of bow lines. The separate spray
+system checks water contact at each forward shoulder, fades with immersion and
+varies the two sides independently. A raised bow can stop spraying while its
+stern remains supported. Persistent stern wash still follows actual turn history.
+
 ## Regional water and hull motion, 2026-10-23
 
 The owner rejected the repeating dark wave ridges and asked for a substantially

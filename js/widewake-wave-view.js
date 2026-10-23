@@ -30,11 +30,12 @@
           // farther outboard as it falls, so spray never crosses the deck.
           const along=s.length*(.36-lane*.025),across=(s.width*(.32+lane*.025)+.08)*side;
           const bx=p.x+c*along-sn*across,by=p.y+sn*along+c*across,bh=this.height(bx,by);if(bh===null)continue;
-          const hull=(p.z||0)+(p.pitch||0)*along+(p.roll||0)*across,contact=clamp(1-(hull-bh)/Math.max(.7,s.width*.25),.12,1);
-          const flutter=v.reduced?1:.86+.14*Math.sin(time*(7+lane)+s.id*2.3+side+lane*2.1),lift=Math.min(2.4,Math.max(.45+small*.35,s.width*.13))*strength*(.65+lane*.16)*flutter;
+          const hull=(p.z||0)+(p.pitch||0)*along+(p.roll||0)*across,draft=s.draft||s.width*.18;
+          const contact=smooth(0,Math.max(.15,draft*.65),bh-hull+draft*.45);if(contact<.025)continue;
+          const flutter=v.reduced?1:.78+.22*Math.sin(time*(7+lane)+s.id*2.3+side*1.7+lane*2.1),lift=Math.min(2.4,Math.max(.45+small*.35,s.width*.13))*strength*contact*(.65+lane*.16)*flutter;
           let last=null;
           for(let j=0;j<=4;j++){
-            const t=j/4,back=reach*t*(.45+lane*.13),out=spread*t*(.48+lane*.22)*side,x=bx-c*back-sn*out,y=by-sn*back+c*out,h=this.height(x,y);
+            const t=j/4,back=reach*t*(.45+lane*.13),out=spread*t*(.48+lane*.22)*side*flutter,x=bx-c*back-sn*out,y=by-sn*back+c*out,h=this.height(x,y);
             if(h===null){last=null;continue;}const z=h+.05+Math.sin(Math.PI*t)*lift;
             if(last&&(!sea.field||sea.field.sample((last.x+x)*.5,(last.y+y)*.5,this.water).depth>=.4)){if(count>=budget)return count;const opacity=strength*contact*(.50-lane*.07)*(1-t*.65),width=Math.max(.12,s.width*.025)*(1-t*.55);emit(last.x,last.y,x,y,last.z,z,width,opacity);count++;}
             last={x,y,z};
