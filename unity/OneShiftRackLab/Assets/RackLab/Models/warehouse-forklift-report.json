@@ -1,0 +1,27 @@
+{
+  "dimensions_m": [
+    1.325,
+    3.425,
+    2.34
+  ],
+  "bounds_min_m": [
+    -0.675000011920929,
+    -1.25,
+    -0.00500001385807991
+  ],
+  "bounds_max_m": [
+    0.6500000357627869,
+    2.1750001907348633,
+    2.3350000381469727
+  ],
+  "triangles": 89200,
+  "mesh_objects": 43,
+  "materials": 10,
+  "blade_length_m": 1.07,
+  "fork_centres_m": 0.55,
+  "blade_width_m": 0.1,
+  "blade_heel_thickness_m": 0.04,
+  "floor_clearance_under_forks_m": 0.1,
+  "overhead_guard_height_m": 2.1775,
+  "status": "Art asset only. LODs, compound colliders and lifting gameplay are not installed."
+}
