@@ -1,27 +1,29 @@
 {
+  "design": "Classic yellow LPG forklift, rebuilt from scratch",
   "dimensions_m": [
-    1.325,
-    3.425,
-    2.34
+    1.41,
+    3.997,
+    2.3515
   ],
   "bounds_min_m": [
-    -0.675000011920929,
-    -1.25,
-    -0.00500001385807991
+    -0.7049999833106995,
+    -1.5920002460479736,
+    0.0010000169277191162
   ],
   "bounds_max_m": [
-    0.6500000357627869,
-    2.1750001907348633,
-    2.3350000381469727
+    0.7049999237060547,
+    2.4050002098083496,
+    2.3524999618530273
   ],
-  "triangles": 89200,
+  "triangles": 220208,
   "mesh_objects": 43,
-  "materials": 10,
-  "blade_length_m": 1.07,
+  "materials": 14,
+  "blade_length_m": 1.06,
   "fork_centres_m": 0.55,
   "blade_width_m": 0.1,
-  "blade_heel_thickness_m": 0.04,
-  "floor_clearance_under_forks_m": 0.1,
-  "overhead_guard_height_m": 2.1775,
-  "status": "Art asset only. LODs, compound colliders and lifting gameplay are not installed."
+  "blade_heel_thickness_m": 0.043,
+  "floor_clearance_under_forks_m": 0.077,
+  "wheelbase_m": 1.71,
+  "guard_height_m": 2.195,
+  "status": "Art asset and FBX. Driving and lifting gameplay are not installed."
 }
