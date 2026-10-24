@@ -4,6 +4,7 @@ blender --background --python-exit-code 1 --python tools/blender/check-forklift-
 The report is local scratch, not a collision or physics model for Unity.
 """
 import bpy
+import argparse
 import json
 import math
 import sys
@@ -178,6 +179,21 @@ def check_pose(label, moving_objects, static_geometry, depsgraph):
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--steering-limit', type=int, default=35,
+                        help='Check a wider runtime steering range without changing the source file.')
+    parser.add_argument('--suspension-travel', type=float, default=0,
+                        help='Also check both wheels at half this travel above and below their saved centres, in metres.')
+    args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else [])
+    if not 1 <= args.steering_limit <= 80:
+        raise ValueError('Steering limit must be between 1 and 80 degrees.')
+    if not 0 <= args.suspension_travel <= .2:
+        raise ValueError('Suspension travel must be between 0 and 0.2 metres.')
+    report_path = REPORT if args.steering_limit == 35 else REPORT.with_name(
+        'clearance-steer' + str(args.steering_limit) + '.json')
+    if args.suspension_travel:
+        report_path = report_path.with_stem(report_path.stem + '-travel' +
+                                           str(round(args.suspension_travel * 1000)) + 'mm')
     bpy.ops.wm.open_mainfile(filepath=str(SOURCE))
     root = require('OneShift_ClassicForklift')
     chassis = require('Chassis')
@@ -187,12 +203,15 @@ def main():
     brake = require('ParkingBrake_Pivot')
     poses = [axle, *steering, brake]
     original_rotations = {obj: obj.rotation_euler.copy() for obj in poses}
+    original_roll_locations = {obj: obj.location.copy() for obj in rolls}
     bpy.context.view_layer.update()
     depsgraph = bpy.context.evaluated_depsgraph_get()
 
     report = {
         'source': str(SOURCE.relative_to(ROOT)).replace('\\', '/'),
         'units': 'metres', 'contact_tolerance_m': EPSILON,
+        'steering_limit_degrees': args.steering_limit,
+        'suspension_travel_m': args.suspension_travel,
         'method': 'Evaluated mesh BVH candidates, confirmed triangle crossings '
                   'and closed mesh containment samples.',
         'exclusions': ['Rear axle, knuckles and steering joints are intentional '
@@ -226,15 +245,23 @@ def main():
     fixed = collect(fixed_objects, depsgraph)
     engine = collect([require('Engine bonnet'), require('Engine compartment')], depsgraph)
     try:
-        for oscillation in (-3, 0, 3):
-            axle.rotation_euler.y = math.radians(oscillation)
-            for angle in (-35, -20, 0, 20, 35):
-                for obj in steering:
-                    obj.rotation_euler.z = math.radians(angle)
-                bpy.context.view_layer.update()
-                report['wheel_poses'].append(check_pose(
-                    f'rear steer {angle:+d} deg, axle {oscillation:+d} deg',
-                    wheel_objects, fixed, depsgraph))
+        steering_angles = sorted({-args.steering_limit, 0, args.steering_limit} |
+                                {angle for angle in (-60, -45, -35, -20, 20, 35, 45, 60)
+                                 if abs(angle) <= args.steering_limit})
+        suspension_offsets = (-args.suspension_travel / 2, 0, args.suspension_travel / 2) if args.suspension_travel else (0,)
+        for suspension in suspension_offsets:
+            for roll in rolls:
+                roll.location = original_roll_locations[roll] + Vector((0, 0, suspension))
+            for oscillation in (-3, 0, 3):
+                axle.rotation_euler.y = math.radians(oscillation)
+                for angle in steering_angles:
+                    for obj in steering:
+                        obj.rotation_euler.z = math.radians(angle)
+                    bpy.context.view_layer.update()
+                    label = f'rear steer {angle:+d} deg, axle {oscillation:+d} deg'
+                    if args.suspension_travel:
+                        label += f', hub offset {suspension * 1000:+.1f} mm'
+                    report['wheel_poses'].append(check_pose(label, wheel_objects, fixed, depsgraph))
         for angle in (-10, 0, 12):
             brake.rotation_euler.x = math.radians(angle)
             bpy.context.view_layer.update()
@@ -243,18 +270,20 @@ def main():
     finally:
         for obj, rotation in original_rotations.items():
             obj.rotation_euler = rotation
+        for obj, location in original_roll_locations.items():
+            obj.location = location
         bpy.context.view_layer.update()
     clipping_pairs = sum(len(pose['intersections']) for pose in
                          report['wheel_poses'] + report['parking_brake_poses'])
     report['clipping_pairs'] = clipping_pairs
     report['passed'] = clipping_pairs == 0 and not report['failures']
-    REPORT.parent.mkdir(parents=True, exist_ok=True)
-    REPORT.write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    report_path.write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
     print('Forklift clearance: ' + ('PASS' if report['passed'] else 'FAIL') +
           f', {len(report["wheel_poses"])} rear wheel poses, '
           f'{len(report["parking_brake_poses"])} brake poses, '
           f'{clipping_pairs} clipping pairs.', flush=True)
-    print('Report: ' + str(REPORT), flush=True)
+    print('Report: ' + str(report_path), flush=True)
     if not report['passed']:
         raise RuntimeError('Unexpected forklift clipping or invalid rest bounds; see report.')
 

@@ -15,6 +15,15 @@ to capture the mouse. WASD walks, the mouse looks, Shift runs, Space jumps,
 Escape releases the mouse and R returns to the entrance. Aim at a rack within
 five metres and press E to cycle its finish.
 
+The yellow forklift is parked ahead of the entrance. Walk close and press E,
+read the familiarisation screen, then press Enter. W/S drives and reverses;
+A/D steers the rear wheels. Space brakes, Shift inches forward slowly, F sets
+the parking brake, and E steps out once stopped. C changes between the rear
+camera and cab, V centres the view, and H sounds the horn. Hold R while stopped
+to recover an overturned truck to its parking bay. Reverse one side onto the
+narrow ramp east of the bay; its uneven support can roll the truck.
+See [forklift driving and model](FORKLIFT.md) for the physics and remaining lift work.
+
 The warehouse starts at 4:30 a.m. Three industrial switches on the south wall,
 beside the entrance electrical cabinet, control the west, centre and east rows
 of ceiling lights. Walk within 2.6 metres, aim at a switch, then press E or click.
@@ -136,9 +145,20 @@ In Unity, choose **One Shift > Build rack floor** to regenerate the room,
 materials, prefabs and validation report. This replaces the trial scene, so
 save any manual scene changes under a different name first.
 
+After rebuilding the room, choose **One Shift > Install forklift driving** to
+restore the truck and its practice area. This targeted installer preserves the
+room and saves a scene backup under `Temp/ForkliftBackup`. Choose
+**One Shift > Validate forklift driving** to run the actual prefab through
+isolated PhysX scenes, including acceleration, braking, steering, ramps and
+rollover. It writes `Assets/RackLab/Reports/forklift-driving-validation.json`.
+
 Choose **One Shift > Build Windows player** to rebuild the standalone version.
 With Unity's Web Build Support module installed, choose **One Shift > Build
 browser player** to export the browser version. `WarehouseWebBuilder.BuildWeb()`
+requires Web as the active platform in Build Profiles. After changing between
+Web and Windows, wait for the platform import and script compilation to finish
+before exporting; otherwise Unity can omit platform-specific input assemblies.
+The browser builder
 stages the build under `Builds/WebGL/OneShiftWeb` and copies its four compressed
 player files to `assets/one-shift-unity/Build` in the site repository. Gzip
 decompression fallback supports static hosting without custom encoding headers.

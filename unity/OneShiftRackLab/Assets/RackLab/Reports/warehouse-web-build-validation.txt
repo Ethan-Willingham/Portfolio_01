@@ -1,1 +1,1 @@
-Browser build succeeded: 49170609 compressed bytes, 0 errors. Published files: C:\Users\56835\OneDrive\Desktop\website\assets\one-shift-unity\Build. Player and refresh-monitor animation loops suspend together.
+Browser build succeeded: 55027420 compressed bytes, 0 errors. Published files: C:\Users\56835\OneDrive\Desktop\website\assets\one-shift-unity\Build

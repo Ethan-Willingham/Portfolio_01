@@ -20,6 +20,11 @@ namespace OneShift.RackLab
         bool captured;
         bool hadFocus = true;
         bool browserActive = true;
+        bool vehicleMode;
+        int suppressUseFrame = -1;
+        public bool IsCaptured => captured;
+        public bool CanControl => captured && hadFocus && browserActive && Time.timeScale > 0;
+        public bool VehicleMode => vehicleMode;
         GUIStyle title, instructions, small;
         RackWearVariant target;
         WarehouseLightSwitch lightSwitch;
@@ -39,7 +44,33 @@ namespace OneShift.RackLab
             eyes.fieldOfView = Mathf.Min(65f, Camera.HorizontalToVerticalFieldOfView(HorizontalFieldOfView, eyes.aspect));
         }
 
-        void LateUpdate() { RefreshPerspective(); }
+        void LateUpdate() { if (!vehicleMode) RefreshPerspective(); }
+
+        public void SetVehicleMode(bool active)
+        {
+            if (motor == null) motor = GetComponent<CharacterController>();
+            vehicleMode = active;
+            motor.enabled = !active;
+            verticalSpeed = 0;
+            target = null;
+            lightSwitch = null;
+            Capture(false);
+        }
+
+        public void ResumeFromVehicle(Vector3 position, Quaternion rotation)
+        {
+            if (motor == null) motor = GetComponent<CharacterController>();
+            motor.enabled = false;
+            transform.SetPositionAndRotation(position, rotation);
+            pitch = verticalSpeed = 0;
+            eyes.transform.localRotation = Quaternion.identity;
+            vehicleMode = false;
+            motor.enabled = true;
+            // The driver's Update runs first. Consume the exit E press so
+            // walking cannot also operate a rack or switch later this frame.
+            suppressUseFrame = Time.frameCount;
+            Capture(true);
+        }
 
         void OnDisable() { Capture(false); }
         void OnApplicationFocus(bool focus)
@@ -67,7 +98,7 @@ namespace OneShift.RackLab
 
         void Update()
         {
-            if (!browserActive) return;
+            if (!browserActive || vehicleMode || Time.timeScale <= 0) return;
             // Resolve the current ray before accepting E or a click, so moving
             // between a switch and a rack never operates the previous target.
             target = null;
@@ -93,9 +124,10 @@ namespace OneShift.RackLab
                 verticalSpeed += Physics.gravity.y * Time.deltaTime;
                 motor.Move((move + Vector3.up * verticalSpeed) * Time.deltaTime);
                 if (Input.GetKeyDown(KeyCode.R)) ResetPosition();
-                bool use = Input.GetKeyDown(KeyCode.E) || (alreadyCaptured && Input.GetMouseButtonDown(0));
+                bool use = Time.frameCount != suppressUseFrame &&
+                    (Input.GetKeyDown(KeyCode.E) || (alreadyCaptured && Input.GetMouseButtonDown(0)));
                 if (use && lightSwitch != null) lightSwitch.Toggle();
-                else if (Input.GetKeyDown(KeyCode.E) && target != null) target.Cycle();
+                else if (use && Input.GetKeyDown(KeyCode.E) && target != null) target.Cycle();
             }
             else if (!motor.isGrounded)
             {
@@ -116,6 +148,7 @@ namespace OneShift.RackLab
 
         void OnGUI()
         {
+            if (vehicleMode) return;
             if (title == null)
             {
                 title = new GUIStyle(GUI.skin.label) { fontSize = 19, fontStyle = FontStyle.Bold };

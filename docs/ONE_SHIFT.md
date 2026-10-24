@@ -18,6 +18,16 @@ page controls offer fullscreen. Mobile portrait shows a rotation gate; a
 keyboard and mouse are still needed in landscape. Touch players can follow the
 link to the illustrated game.
 
+The yellow LPG forklift is parked near the entrance. E opens its first-session
+familiarisation, then Enter begins driving. W/S drives and reverses, A/D steers
+the rear wheels, Space brakes, Shift gives a slow approach, F sets the parking
+brake, and E steps out once stopped. C changes the rear/cab camera, V centres
+the view, H sounds the horn, and holding R while stopped recovers the truck.
+The one-wheel ramp east of the bay can physically overturn it. The truck uses
+rigidbodies, front drive, an oscillating rear axle and compound collision.
+Fork lifting, dynamic pallets and load imbalance remain future work. See
+`unity/OneShiftRackLab/FORKLIFT.md` for the runtime architecture and checks.
+
 `DemoActivity` gates the Unity player on tab visibility, window focus and stage
 visibility. It calls `BrowserLifecycle.SetBrowserActive` to suspend simulation,
 clear input and suspend audio, then pauses the engine's main loop. Resume reverses
@@ -33,7 +43,8 @@ checks with a simulated loader. After exporting the actual Unity player, run
 `node tools/test-one-shift-unity-browser.cjs --real` to exercise the compiled
 WebGL player. That pass reads the browser bridge's `ReportState` diagnostics,
 checks the opening dawn, frame and clock suspension, zero paused animation
-callbacks in a browser trace, movement, reset, fullscreen,
+callbacks in a browser trace, walking, reset, forklift entry and driving,
+braking, rear steering, camera switching, driving pause recovery, fullscreen,
 and shader/runtime errors, and saves screenshots and console logs. Set
 `SHIFT_TEST_URL=https://ethanwillingham.com/one-shift.html` to run the same real
 checks against the deployed page. `SHIFT_DUMP` selects the report directory.

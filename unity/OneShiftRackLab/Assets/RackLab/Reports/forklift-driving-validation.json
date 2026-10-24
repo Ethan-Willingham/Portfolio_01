@@ -1,0 +1,351 @@
+{
+    "generatedUtc": "2026-10-24T13:34:16.7010337Z",
+    "unityVersion": "6000.3.27f1",
+    "prefab": "Assets/RackLab/Prefabs/WarehouseForklift.prefab",
+    "method": "Isolated PhysX scene, fixed 0.02 second steps matching the project, actual prefab rigidbodies, wheel colliders and compound colliders.",
+    "scope": "Unloaded driving physics. Does not certify load capacity, lifting, pallet interaction, tire behavior on every surface, or a published player.",
+    "passed": true,
+    "checks": [
+        {
+            "name": "settles on all four tires",
+            "passed": true,
+            "expectation": "An unloaded stationary truck settles within 0.2 m of authored floor height with four supported wheels, less than 0.15 m/s motion and less than 3 degrees lean.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "root height",
+                    "value": -0.01488947868347168,
+                    "units": "m"
+                },
+                {
+                    "name": "remaining speed",
+                    "value": 0.0462760254740715,
+                    "units": "m/s"
+                },
+                {
+                    "name": "body lean",
+                    "value": 1.5276468992233277,
+                    "units": "degrees"
+                },
+                {
+                    "name": "grounded wheels",
+                    "value": 4.0,
+                    "units": "count"
+                },
+                {
+                    "name": "total physical mass",
+                    "value": 3620.0,
+                    "units": "kg"
+                },
+                {
+                    "name": "main body center of mass height",
+                    "value": 0.7200000286102295,
+                    "units": "m"
+                },
+                {
+                    "name": "lowest solid collider above floor",
+                    "value": 0.08579277992248535,
+                    "units": "m"
+                },
+                {
+                    "name": "lowest fork blade above floor",
+                    "value": 0.09846177697181702,
+                    "units": "m"
+                }
+            ]
+        },
+        {
+            "name": "forward acceleration",
+            "passed": true,
+            "expectation": "Full throttle moves the actual rigidbody at least 8 m in 7 seconds, reaches 2 to 5.5 m/s, and stays straight and upright on level concrete.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "forward travel",
+                    "value": 22.875591278076173,
+                    "units": "m"
+                },
+                {
+                    "name": "peak speed",
+                    "value": 4.166132926940918,
+                    "units": "m/s"
+                },
+                {
+                    "name": "peak lean",
+                    "value": 1.9298584461212159,
+                    "units": "degrees"
+                },
+                {
+                    "name": "sideways drift",
+                    "value": 0.11073265969753266,
+                    "units": "m"
+                }
+            ]
+        },
+        {
+            "name": "service braking",
+            "passed": true,
+            "expectation": "Braking from driving speed stops within 4 seconds and 7 m, while preserving a nonzero physical stopping distance.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "speed before braking",
+                    "value": 4.159367084503174,
+                    "units": "m/s"
+                },
+                {
+                    "name": "stopping distance",
+                    "value": 1.665407419204712,
+                    "units": "m"
+                },
+                {
+                    "name": "stopping time",
+                    "value": 0.8199997544288635,
+                    "units": "s"
+                },
+                {
+                    "name": "remaining speed",
+                    "value": 0.028570720925927163,
+                    "units": "m/s"
+                }
+            ]
+        },
+        {
+            "name": "inching decelerates physically",
+            "passed": true,
+            "expectation": "The inching pedal slows a moving truck to below 1.2 m/s without instantly replacing its velocity.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "speed before inching",
+                    "value": 4.136568069458008,
+                    "units": "m/s"
+                },
+                {
+                    "name": "speed after first 60 milliseconds",
+                    "value": 4.038381099700928,
+                    "units": "m/s"
+                },
+                {
+                    "name": "speed after four seconds",
+                    "value": 0.8290418386459351,
+                    "units": "m/s"
+                }
+            ]
+        },
+        {
+            "name": "reverse",
+            "passed": true,
+            "expectation": "Reverse produces at least 3 m of backward travel and a final backward speed between 0.8 and 3.8 m/s.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "backward travel",
+                    "value": 11.511585235595704,
+                    "units": "m"
+                },
+                {
+                    "name": "signed final speed",
+                    "value": -2.943089008331299,
+                    "units": "m/s"
+                }
+            ]
+        },
+        {
+            "name": "right rear steering",
+            "passed": true,
+            "expectation": "A right input at low speed turns the nose right. Front wheels remain unsteered and rear wheels steer left.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "nose turn toward requested side",
+                    "value": 32.979957580566409,
+                    "units": "degrees"
+                },
+                {
+                    "name": "front axle travel toward requested side",
+                    "value": 0.3155553936958313,
+                    "units": "m"
+                },
+                {
+                    "name": "body center lateral travel",
+                    "value": -0.08617168664932251,
+                    "units": "m"
+                },
+                {
+                    "name": "front wheel steer",
+                    "value": 0.0,
+                    "units": "degrees"
+                },
+                {
+                    "name": "average rear wheel steer",
+                    "value": -50.499000549316409,
+                    "units": "degrees"
+                }
+            ]
+        },
+        {
+            "name": "left rear steering",
+            "passed": true,
+            "expectation": "A left input at low speed turns the nose left. Front wheels remain unsteered and rear wheels steer right.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "nose turn toward requested side",
+                    "value": 33.05255126953125,
+                    "units": "degrees"
+                },
+                {
+                    "name": "front axle travel toward requested side",
+                    "value": 0.3196452260017395,
+                    "units": "m"
+                },
+                {
+                    "name": "body center lateral travel",
+                    "value": -0.08268022537231446,
+                    "units": "m"
+                },
+                {
+                    "name": "front wheel steer",
+                    "value": 0.0,
+                    "units": "degrees"
+                },
+                {
+                    "name": "average rear wheel steer",
+                    "value": 50.499000549316409,
+                    "units": "degrees"
+                }
+            ]
+        },
+        {
+            "name": "both tire tracks climb",
+            "passed": true,
+            "expectation": "Both pairs of tires climb a 0.8 m high, 6 m long ramp, raising the body by at least 0.35 m with visible pitch and no rollover.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "maximum body rise",
+                    "value": 0.8074765205383301,
+                    "units": "m"
+                },
+                {
+                    "name": "maximum pitch",
+                    "value": 14.940550804138184,
+                    "units": "degrees"
+                },
+                {
+                    "name": "maximum lean",
+                    "value": 14.94243049621582,
+                    "units": "degrees"
+                },
+                {
+                    "name": "final forward position",
+                    "value": 30.94678497314453,
+                    "units": "m"
+                }
+            ]
+        },
+        {
+            "name": "one sided ramp rollover",
+            "passed": true,
+            "expectation": "Reversing one side onto the playable 1.05 m high, 3.8 m long ramp produces a physical roll past 90 degrees without injected roll forces or scripted rotation. The lowered mast correctly blocks a forward approach.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "maximum body lean",
+                    "value": 92.5185775756836,
+                    "units": "degrees"
+                },
+                {
+                    "name": "maximum lateral roll before overturn",
+                    "value": 89.88986206054688,
+                    "units": "degrees"
+                },
+                {
+                    "name": "first overturn after throttle",
+                    "value": 3.5399973392486574,
+                    "units": "s"
+                },
+                {
+                    "name": "maximum body height",
+                    "value": 0.634806215763092,
+                    "units": "m"
+                },
+                {
+                    "name": "final forward position",
+                    "value": 6.375353813171387,
+                    "units": "m"
+                }
+            ]
+        },
+        {
+            "name": "airborne gravity and free rotation",
+            "passed": true,
+            "expectation": "An airborne truck falls under gravity and retains angular momentum, with no upright lock.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "fall distance",
+                    "value": 1.46659517288208,
+                    "units": "m"
+                },
+                {
+                    "name": "vertical velocity",
+                    "value": -6.073114395141602,
+                    "units": "m/s"
+                },
+                {
+                    "name": "free rotation",
+                    "value": 51.57280731201172,
+                    "units": "degrees"
+                }
+            ]
+        },
+        {
+            "name": "solid obstacle collision",
+            "passed": true,
+            "expectation": "The truck stops against a 3 m high wall and its body never passes through it.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "maximum body forward position",
+                    "value": 5.353051662445068,
+                    "units": "m"
+                },
+                {
+                    "name": "final speed against wall",
+                    "value": 0.032925888895988467,
+                    "units": "m/s"
+                },
+                {
+                    "name": "maximum final wall penetration",
+                    "value": 0.00004363059997558594,
+                    "units": "m"
+                }
+            ]
+        },
+        {
+            "name": "pause clears driving input",
+            "passed": true,
+            "expectation": "Deactivation zeros wheel motor torque immediately. Reactivation without a fresh input leaves torque at zero.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "motor torque before deactivation",
+                    "value": 2200.001953125,
+                    "units": "Nm"
+                },
+                {
+                    "name": "motor torque immediately inactive",
+                    "value": 0.0,
+                    "units": "Nm"
+                },
+                {
+                    "name": "motor torque after resume without fresh input",
+                    "value": 0.0,
+                    "units": "Nm"
+                }
+            ]
+        }
+    ]
+}

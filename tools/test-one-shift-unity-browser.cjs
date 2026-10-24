@@ -85,6 +85,25 @@ async function realSmoke(browser, url) {
     await page.keyboard.up(key);
     return after;
   }
+  async function pollState(label, predicate, timeout = 20000) {
+    const deadline = Date.now() + timeout;
+    let latest;
+    do {
+      latest = await state();
+      if (predicate(latest)) return latest;
+      await delay(100);
+    } while (Date.now() < deadline);
+    throw new Error(label + ' timed out: ' + JSON.stringify(latest));
+  }
+  async function keyUntil(key, label, predicate, timeout) {
+    await page.keyboard.down(key);
+    try { return await pollState(label, predicate, timeout); }
+    finally { await page.keyboard.up(key); }
+  }
+  async function pressForFrames(key, label, predicate = () => true) {
+    const before = await state();
+    return keyUntil(key, label, current => current.frameCount >= before.frameCount + 3 && predicate(current));
+  }
   async function animationCallbacks() {
     const cdp = await context.newCDPSession(page);
     await cdp.send('Tracing.start', {categories:'devtools.timeline', transferMode:'ReturnAsStream'});
@@ -181,6 +200,88 @@ async function realSmoke(browser, url) {
     await page.locator('#warehouse-canvas').click({position:{x:600,y:400}});
     const recaptured = await holdKey('w', 600);
     check('REAL: Clicking the warehouse restores movement after Escape', distance(recaptured.playerPosition, uncaptured.playerPosition) > .3);
+
+    // Exercise the compiled forklift through the same keyboard and mouse
+    // controls as a player. ReportState is read-only; no test teleports or
+    // controller method calls bypass the interaction and physics paths.
+    const forkliftStates = {};
+    forkliftStates.walkingReset = await pressForFrames('r', 'Reset walking position', current => distance(current.playerPosition, initial.playerPosition) < .3);
+    check('REAL: Yellow forklift exists as a settled physical vehicle',
+      forkliftStates.walkingReset.forkliftPosition?.length === 3 &&
+      forkliftStates.walkingReset.forkliftGrounded >= 3 &&
+      forkliftStates.walkingReset.forkliftUp[1] > .95);
+    const parkingPosition = forkliftStates.walkingReset.forkliftPosition;
+    const groundDistance = (a, b) => Math.hypot(a[0] - b[0], a[2] - b[2]);
+    forkliftStates.approach = await keyUntil('w', 'Walk within forklift reach', current =>
+      groundDistance(current.playerPosition, current.forkliftPosition) < 2.25);
+    forkliftStates.training = await pressForFrames('e', 'Open forklift familiarisation', current => current.forkliftTraining);
+    check('REAL: Forklift entry requires familiarisation before driving', forkliftStates.training.forkliftTraining && !forkliftStates.training.forkliftDriving);
+    await capture('unity-real-forklift-training');
+    forkliftStates.entered = await pressForFrames('Enter', 'Begin forklift driving', current => current.forkliftDriving && current.forkliftCaptured);
+    check('REAL: Enter completes familiarisation and captures vehicle controls', forkliftStates.entered.forkliftDriving && !forkliftStates.entered.forkliftTraining);
+    check('REAL: Driver starts in the rear chase view', forkliftStates.entered.forkliftCabView === false);
+    await capture('unity-real-forklift-chase');
+    forkliftStates.cab = await pressForFrames('c', 'Switch to forklift cab', current => current.forkliftCabView);
+    await capture('unity-real-forklift-cab');
+    forkliftStates.chase = await pressForFrames('c', 'Restore forklift chase camera', current => !current.forkliftCabView);
+    check('REAL: C switches between the cab and chase cameras', forkliftStates.cab.forkliftCabView && !forkliftStates.chase.forkliftCabView);
+
+    forkliftStates.forward = await keyUntil('w', 'Accelerate the forklift forward', current =>
+      current.forkliftSignedSpeed > .85 && groundDistance(current.forkliftPosition, forkliftStates.entered.forkliftPosition) > .25);
+    check('REAL: W drives the physical forklift forward', forkliftStates.forward.forkliftThrottle > .5 && forkliftStates.forward.forkliftSignedSpeed > .85);
+    forkliftStates.braked = await keyUntil('Space', 'Stop the forklift with the service brake', current => Math.abs(current.forkliftSignedSpeed) < .06);
+    check('REAL: Space brakes the moving forklift to a stop', Math.abs(forkliftStates.braked.forkliftSignedSpeed) < .06);
+    forkliftStates.reverse = await keyUntil('s', 'Reverse the forklift', current =>
+      current.forkliftSignedSpeed < -.6 && groundDistance(current.forkliftPosition, forkliftStates.braked.forkliftPosition) > .15);
+    check('REAL: S reverses through the vehicle powertrain', forkliftStates.reverse.forkliftThrottle < -.5 && forkliftStates.reverse.forkliftSignedSpeed < -.6);
+    forkliftStates.reverseStop = await keyUntil('Space', 'Brake after reversing', current => Math.abs(current.forkliftSignedSpeed) < .06);
+    forkliftStates.rearSteer = await keyUntil('d', 'Turn the rear steering wheels', current => current.forkliftSteer < -35);
+    check('REAL: Right steering turns the rear wheels in the correct opposite direction', forkliftStates.rearSteer.forkliftSteer < -35);
+    await page.keyboard.down('d');
+    try {
+      forkliftStates.turn = await keyUntil('w', 'Drive through a rear-steered turn', current =>
+        current.forkliftSignedSpeed > .45 && Math.abs(current.forkliftPosition[0] - forkliftStates.rearSteer.forkliftPosition[0]) > .08);
+    } finally { await page.keyboard.up('d'); }
+    check('REAL: Steering changes the moving truck path', Math.abs(forkliftStates.turn.forkliftPosition[0] - forkliftStates.rearSteer.forkliftPosition[0]) > .08);
+    forkliftStates.turnStop = await keyUntil('Space', 'Brake after turning', current => Math.abs(current.forkliftSignedSpeed) < .06);
+    forkliftStates.recovered = await keyUntil('r', 'Explicitly recover to the parking bay', current =>
+      current.forkliftParked && groundDistance(current.forkliftPosition, parkingPosition) < .1, 25000);
+    check('REAL: Holding R explicitly restores the stopped truck to its parking bay', forkliftStates.recovered.forkliftParked && groundDistance(forkliftStates.recovered.forkliftPosition, parkingPosition) < .1);
+    await pollState('Release recovery input', current => current.forkliftCaptured);
+    forkliftStates.unparked = await pressForFrames('f', 'Release forklift parking brake', current => !current.forkliftParked);
+
+    await page.keyboard.down('w');
+    try {
+      forkliftStates.beforePause = await pollState('Accelerate before held-input pause', current => current.forkliftSignedSpeed > .5 && current.forkliftThrottle > .5);
+      await page.keyboard.press('p');
+      forkliftStates.paused = await state();
+      check('REAL: Pausing while driving clears held throttle and capture', forkliftStates.paused.browserSuspended && forkliftStates.paused.timeScale === 0 && forkliftStates.paused.forkliftThrottle === 0 && !forkliftStates.paused.forkliftCaptured);
+      await delay(300);
+      forkliftStates.pausedLater = await state();
+      check('REAL: Paused forklift physics and rendering stay frozen',
+        forkliftStates.pausedLater.frameCount === forkliftStates.paused.frameCount &&
+        distance(forkliftStates.pausedLater.forkliftPosition, forkliftStates.paused.forkliftPosition) < .0001);
+      await page.keyboard.press('p');
+      forkliftStates.resumed = await pollState('Resume forklift simulation', current => !current.browserSuspended && current.frameCount > forkliftStates.paused.frameCount);
+      check('REAL: Resume preserves the driver but requires fresh mouse capture', forkliftStates.resumed.forkliftDriving && !forkliftStates.resumed.forkliftCaptured && forkliftStates.resumed.forkliftThrottle === 0);
+      await page.locator('#warehouse-canvas').focus();
+      // Repeat the still-held key after Unity clears its input axes. Capturing
+      // with a key down must wait for neutral instead of starting the engine.
+      await page.keyboard.down('w');
+      await page.locator('#warehouse-canvas').click({position:{x:600,y:400}});
+      const resumeFrame = forkliftStates.resumed.frameCount;
+      forkliftStates.heldOnRecapture = await pollState('Observe neutral gate after recapture', current => current.frameCount >= resumeFrame + 5);
+      check('REAL: A held throttle cannot drive immediately after recapture', forkliftStates.heldOnRecapture.forkliftThrottle === 0 && !forkliftStates.heldOnRecapture.forkliftCaptured);
+    } finally { await page.keyboard.up('w'); }
+    forkliftStates.neutral = await pollState('Release held throttle to enable driving', current => current.forkliftCaptured && current.forkliftThrottle === 0);
+    forkliftStates.freshThrottle = await keyUntil('w', 'Drive after a fresh throttle press', current => current.forkliftThrottle > .5 && current.forkliftSignedSpeed > .6);
+    check('REAL: Releasing and pressing throttle restores normal driving', forkliftStates.neutral.forkliftCaptured && forkliftStates.freshThrottle.forkliftSignedSpeed > .6);
+    forkliftStates.exitStop = await keyUntil('Space', 'Stop before stepping out', current => Math.abs(current.forkliftSignedSpeed) < .04);
+    forkliftStates.exited = await pressForFrames('e', 'Step out of the stopped forklift', current => !current.forkliftDriving);
+    check('REAL: E restores walking and leaves the forklift parked', !forkliftStates.exited.forkliftDriving && forkliftStates.exited.forkliftParked && groundDistance(forkliftStates.exited.playerPosition, forkliftStates.exited.forkliftPosition) < 3);
+    forkliftStates.walkingAgain = await keyUntil('w', 'Walk after leaving the forklift', current => distance(current.playerPosition, forkliftStates.exited.playerPosition) > .3);
+    check('REAL: Walking controls work after leaving the truck', distance(forkliftStates.walkingAgain.playerPosition, forkliftStates.exited.playerPosition) > .3);
+    fs.writeFileSync(path.join(dump, 'unity-real-forklift-states.json'), JSON.stringify(forkliftStates, null, 2));
     await page.keyboard.press('Escape');
     await page.locator('#warehouse-fullscreen').click();
     await page.waitForFunction(() => document.fullscreenElement?.id === 'warehouse-stage');

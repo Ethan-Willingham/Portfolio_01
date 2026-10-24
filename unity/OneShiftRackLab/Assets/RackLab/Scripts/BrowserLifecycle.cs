@@ -46,6 +46,8 @@ namespace OneShift.RackLab
         {
             var dayNight = Object.FindFirstObjectByType<WarehouseDayNight>();
             var player = Object.FindFirstObjectByType<RackWalkController>();
+            var forklift = Object.FindFirstObjectByType<ForkliftDriveController>();
+            var driver = Object.FindFirstObjectByType<ForkliftPlayerInteraction>();
             var rowOn = new bool[3];
             foreach (var row in Object.FindObjectsByType<WarehouseLightRow>(FindObjectsSortMode.None))
                 if (row.RowNumber >= 1 && row.RowNumber <= rowOn.Length) rowOn[row.RowNumber - 1] = row.IsOn;
@@ -57,7 +59,18 @@ namespace OneShift.RackLab
                 timeScale = Time.timeScale,
                 rowOn = rowOn,
                 playerPosition = new[] { position.x, position.y, position.z },
-                browserSuspended = suspended
+                browserSuspended = suspended,
+                forkliftPosition = forklift != null ? new[] {forklift.transform.position.x, forklift.transform.position.y, forklift.transform.position.z} : null,
+                forkliftUp = forklift != null ? new[] {forklift.transform.up.x, forklift.transform.up.y, forklift.transform.up.z} : null,
+                forkliftSignedSpeed = forklift != null ? forklift.SignedSpeedMps : 0,
+                forkliftThrottle = forklift != null ? forklift.ThrottleInput : 0,
+                forkliftSteer = forklift != null ? forklift.SteerAngle : 0,
+                forkliftGrounded = forklift != null ? forklift.GroundedWheelCount : 0,
+                forkliftDriving = driver != null && driver.IsDriving,
+                forkliftTraining = driver != null && driver.TrainingOpen,
+                forkliftCabView = driver != null && driver.CabView,
+                forkliftCaptured = driver != null && driver.ControlsCaptured,
+                forkliftParked = forklift != null && forklift.ParkingBrake
             }));
         }
 
@@ -70,6 +83,10 @@ namespace OneShift.RackLab
             public bool[] rowOn;
             public float[] playerPosition;
             public bool browserSuspended;
+            public float[] forkliftPosition, forkliftUp;
+            public float forkliftSignedSpeed, forkliftThrottle, forkliftSteer;
+            public int forkliftGrounded;
+            public bool forkliftDriving, forkliftTraining, forkliftCaptured, forkliftParked, forkliftCabView;
         }
 
         void OnApplicationFocus(bool focused)
@@ -103,6 +120,10 @@ namespace OneShift.RackLab
             }
             foreach (var walking in Object.FindObjectsByType<RackWalkController>(FindObjectsSortMode.None))
                 walking.SetBrowserActive(!suspended);
+            foreach (var forklift in Object.FindObjectsByType<ForkliftDriveController>(FindObjectsSortMode.None))
+                forklift.SetBrowserActive(!suspended);
+            foreach (var driver in Object.FindObjectsByType<ForkliftPlayerInteraction>(FindObjectsSortMode.None))
+                driver.SetBrowserActive(!suspended);
         }
 
         void OnDestroy()
