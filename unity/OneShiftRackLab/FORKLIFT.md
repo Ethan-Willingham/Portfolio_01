@@ -24,6 +24,14 @@ The mesh is original and is not a replica of a manufacturer's model.
 - Geometry measurements: `Assets/RackLab/Models/warehouse-forklift-report.json`.
 - Generator: `../../tools/blender/build-warehouse-forklift.py`.
 
+`warehouse-forklift-comparison.blend` puts the original orange electric model
+beside the classic yellow LPG model at their original metre scale. It opens with
+both forklifts framed in a colored viewport, orange on the left and yellow on
+the right. The studio helpers are hidden from the viewport. Numpad 0 restores
+the comparison camera after orbiting. Rebuild it with
+`../../tools/blender/show-forklift-comparison.py`; the script recovers the orange
+source from its original Git commit into ignored local scratch.
+
 Run the generator using Blender 5.2's background Python runner. The native file
 keeps named editable parts, bevel modifiers, curve hoses and text. The FBX bakes
 those into meshes, includes UVs and material assignments, and excludes the studio
