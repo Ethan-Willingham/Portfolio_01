@@ -18,11 +18,13 @@ five metres and press E to cycle its finish.
 The yellow forklift is parked ahead of the entrance. Walk close and press E,
 read the familiarisation screen, then press Enter. W/S drives and reverses;
 A/D steers the rear wheels. Space brakes, Shift inches forward slowly, F sets
-the parking brake, and E steps out once stopped. C changes between the rear
+the parking brake, and E steps out once stopped. Q raises the forks, Z lowers
+them, T tilts the mast forward and G tilts it back. C changes between the rear
 camera and cab, V centres the view, and H sounds the horn. Hold R while stopped
 to recover an overturned truck to its parking bay. Reverse one side onto the
 narrow ramp east of the bay; its uneven support can roll the truck.
-See [forklift driving and model](FORKLIFT.md) for the physics and remaining lift work.
+See [forklift driving and handling](FORKLIFT.md) for the physical mechanism,
+load examples and checks.
 
 The warehouse starts at 4:30 a.m. Three industrial switches on the south wall,
 beside the entrance electrical cabinet, control the west, centre and east rows
@@ -56,6 +58,10 @@ original board geometry, splits, splinters, nails, UVs and PBR maps. Empty examp
 of fresh pine, working wear, split and battered, and repaired pallets are laid out
 on the left. Fresh, used and repaired variants also occupy the rack. The damaged
 sample stays empty. The source file in `assets/one-shift/models/pallets` is unchanged.
+All eighteen existing pallets are dynamic, including the loaded pallets on the
+upper rack. Four additional packages in the northwest floor area demonstrate
+light, ordinary, excessive and off-centre loads. Their labels show pounds first
+and kilograms second; the actual total masses are 80, 800, 3,500 and 800 kg.
 
 ## Rack and pallet dimensions
 
@@ -104,8 +110,12 @@ source roughness into alpha for URP/Lit. Normal maps are imported as normal maps
 All collision uses compound boxes. Pallet board colliders preserve front fork
 pockets and rounded side-notch shoulders. Fork-entry transforms are included.
 The connected row has 18 named placement anchors, with 14 occupied slots: 12
-loaded pallets and two empty pallets. Mast controls and lifting gameplay
-are not implemented in this asset trial.
+loaded pallets and two empty pallets. Each empty pallet weighs 25 kg, and each
+existing strapped carton package weighs 450 kg including its pallet. Each is
+one freely moving rigidbody with its original compound board colliders and
+open front fork pockets. The fork heel fits through the 40-inch front or rear
+face; it is thicker than the original side notch. Enter from the front or rear.
+Cartons remain strapped to their own pallet. Nothing attaches a load to the truck.
 
 `Assets/RackLab/Prefabs` contains four `Pallet_` variants, `CartonLoad`,
 `PalletRackUpright`, `PalletRackBay`, and `ConnectedPalletRackRow`. The existing
@@ -151,6 +161,18 @@ room and saves a scene backup under `Temp/ForkliftBackup`. Choose
 **One Shift > Validate forklift driving** to run the actual prefab through
 isolated PhysX scenes, including acceleration, braking, steering, ramps and
 rollover. It writes `Assets/RackLab/Reports/forklift-driving-validation.json`.
+Then choose **One Shift > Install physical pallet handling** to add the jointed
+lift mechanism, upgrade the pallet and connected-row prefabs, and restore the
+four mass examples. This preserves the warehouse and saves a scene backup under
+`Temp/ForkliftHandlingBackup`. Reinstall handling after rebuilding the driving
+prefab. The source Blender file retains its shorter authoring mast; the derived
+Unity prefab extends the rails and uses a taller physical duplex lift.
+
+Choose **One Shift > Validate forklift handling** for physical pickup, transport,
+release, rack placement and retrieval with the saved prefabs. It also measures
+overload and off-centre load behavior. **One Shift > Validate forklift camera**
+checks tight turns at several frame rates and camera obstacle clearance. Their
+reports are saved beside the driving report under `Assets/RackLab/Reports`.
 
 Choose **One Shift > Build Windows player** to rebuild the standalone version.
 With Unity's Web Build Support module installed, choose **One Shift > Build

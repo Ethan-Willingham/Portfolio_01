@@ -1,0 +1,106 @@
+{
+    "generatedUtc": "2026-10-24T18:47:00.4042514Z",
+    "unityVersion": "6000.3.27f1",
+    "method": "Isolated PhysX at the production 0.005 second timestep. Saved forklift, pallet, cargo and rack prefabs. Pickup, carrying and release use actual contacts; no load parenting, attached carrying joints or pose writes after initial placement.",
+    "passed": true,
+    "checks": [
+        {
+            "name": "loaded backward and forward mast tilt",
+            "passed": true,
+            "expectation": "An 800 kg independent package follows both commanded mast directions to their physical limits, remains supported by fork contact and stays at least 30 mm clear of the floor.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "initial gap from fork tips to pallet",
+                    "value": 0.4498562812805176,
+                    "units": "m"
+                },
+                {
+                    "name": "actual fork top at entry",
+                    "value": 0.0785364955663681,
+                    "units": "m"
+                },
+                {
+                    "name": "actual pocket lower surface",
+                    "value": 0.015875007957220079,
+                    "units": "m"
+                },
+                {
+                    "name": "actual pocket upper surface",
+                    "value": 0.10477499663829804,
+                    "units": "m"
+                },
+                {
+                    "name": "pallet displacement before lift",
+                    "value": 2.4106114437927319e-7,
+                    "units": "m"
+                },
+                {
+                    "name": "actual tine penetration beyond pallet front",
+                    "value": 1.02616548538208,
+                    "units": "m"
+                },
+                {
+                    "name": "actual load mass",
+                    "value": 800.0,
+                    "units": "kg"
+                },
+                {
+                    "name": "initial lifted load bottom",
+                    "value": 0.29568541049957278,
+                    "units": "m"
+                },
+                {
+                    "name": "backward mast angle relative to chassis",
+                    "value": -7.993231296539307,
+                    "units": "degrees"
+                },
+                {
+                    "name": "backward tilt nearest fork-board separation",
+                    "value": 0.000003106775920969085,
+                    "units": "m"
+                },
+                {
+                    "name": "backward tilt load bottom",
+                    "value": 0.35125648975372317,
+                    "units": "m"
+                },
+                {
+                    "name": "backward tilt load world angle",
+                    "value": 7.5771965980529789,
+                    "units": "degrees"
+                },
+                {
+                    "name": "forward mast angle relative to chassis",
+                    "value": 6.004854679107666,
+                    "units": "degrees"
+                },
+                {
+                    "name": "forward tilt nearest fork-board separation",
+                    "value": 0.0,
+                    "units": "m"
+                },
+                {
+                    "name": "forward tilt load bottom",
+                    "value": 0.1305714249610901,
+                    "units": "m"
+                },
+                {
+                    "name": "forward tilt load world angle",
+                    "value": 6.522365570068359,
+                    "units": "degrees"
+                },
+                {
+                    "name": "required floor clearance",
+                    "value": 0.029999999329447748,
+                    "units": "m"
+                },
+                {
+                    "name": "minimum floor clearance throughout both tilts",
+                    "value": 0.12101852893829346,
+                    "units": "m"
+                }
+            ]
+        }
+    ]
+}

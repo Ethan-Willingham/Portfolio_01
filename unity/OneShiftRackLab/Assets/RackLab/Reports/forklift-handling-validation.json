@@ -1,0 +1,1911 @@
+{
+    "generatedUtc": "2026-10-24T18:45:18.5527815Z",
+    "unityVersion": "6000.3.27f1",
+    "method": "Isolated PhysX at the production 0.005 second timestep. Saved forklift, pallet, cargo and rack prefabs. Pickup, carrying and release use actual contacts; no load parenting, attached carrying joints or pose writes after initial placement.",
+    "passed": true,
+    "checks": [
+        {
+            "name": "measured pallet and rack geometry",
+            "passed": true,
+            "expectation": "Every pallet has independent dynamic collision, open front fork pockets and actual placement anchors at floor and both raised rack levels.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "actual rack slot count",
+                    "value": 18.0,
+                    "units": "count"
+                },
+                {
+                    "name": "lowest rack anchor",
+                    "value": 0.0020000000949949028,
+                    "units": "m"
+                },
+                {
+                    "name": "highest rack anchor",
+                    "value": 3.669600009918213,
+                    "units": "m"
+                },
+                {
+                    "name": "highest deck collider top",
+                    "value": 3.668600082397461,
+                    "units": "m"
+                },
+                {
+                    "name": "installed warehouse pallets",
+                    "value": 22.0,
+                    "units": "count"
+                },
+                {
+                    "name": "installed pallets with independent dynamic bodies",
+                    "value": 22.0,
+                    "units": "count"
+                },
+                {
+                    "name": "Pallet_01_Fresh_Pine physical mass",
+                    "value": 25.0,
+                    "units": "kg"
+                },
+                {
+                    "name": "Pallet_01_Fresh_Pine board width",
+                    "value": 1.016000747680664,
+                    "units": "m"
+                },
+                {
+                    "name": "Pallet_01_Fresh_Pine board depth",
+                    "value": 1.2192000150680543,
+                    "units": "m"
+                },
+                {
+                    "name": "Pallet_01_Fresh_Pine front pocket height",
+                    "value": 0.08889999240636826,
+                    "units": "m"
+                },
+                {
+                    "name": "Pallet_01_Fresh_Pine physical board collider count",
+                    "value": 36.0,
+                    "units": "count"
+                },
+                {
+                    "name": "Pallet_02_Working_Wear physical mass",
+                    "value": 25.0,
+                    "units": "kg"
+                },
+                {
+                    "name": "Pallet_02_Working_Wear board width",
+                    "value": 1.016000747680664,
+                    "units": "m"
+                },
+                {
+                    "name": "Pallet_02_Working_Wear board depth",
+                    "value": 1.2192000150680543,
+                    "units": "m"
+                },
+                {
+                    "name": "Pallet_02_Working_Wear front pocket height",
+                    "value": 0.08889999240636826,
+                    "units": "m"
+                },
+                {
+                    "name": "Pallet_02_Working_Wear physical board collider count",
+                    "value": 36.0,
+                    "units": "count"
+                },
+                {
+                    "name": "Pallet_03_Split_Battered physical mass",
+                    "value": 25.0,
+                    "units": "kg"
+                },
+                {
+                    "name": "Pallet_03_Split_Battered board width",
+                    "value": 1.016000747680664,
+                    "units": "m"
+                },
+                {
+                    "name": "Pallet_03_Split_Battered board depth",
+                    "value": 1.2192000150680543,
+                    "units": "m"
+                },
+                {
+                    "name": "Pallet_03_Split_Battered front pocket height",
+                    "value": 0.08889999240636826,
+                    "units": "m"
+                },
+                {
+                    "name": "Pallet_03_Split_Battered physical board collider count",
+                    "value": 36.0,
+                    "units": "count"
+                },
+                {
+                    "name": "Pallet_04_Repaired physical mass",
+                    "value": 25.0,
+                    "units": "kg"
+                },
+                {
+                    "name": "Pallet_04_Repaired board width",
+                    "value": 1.0159997940063477,
+                    "units": "m"
+                },
+                {
+                    "name": "Pallet_04_Repaired board depth",
+                    "value": 1.2192000150680543,
+                    "units": "m"
+                },
+                {
+                    "name": "Pallet_04_Repaired front pocket height",
+                    "value": 0.08889999240636826,
+                    "units": "m"
+                },
+                {
+                    "name": "Pallet_04_Repaired physical board collider count",
+                    "value": 36.0,
+                    "units": "count"
+                }
+            ]
+        },
+        {
+            "name": "physical full lift travel",
+            "passed": true,
+            "expectation": "Finite hydraulic actuation raises the actual forks above the highest measured rack pocket, retaining clearance for a 100 mm pickup.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "actual maximum fork top",
+                    "value": 3.9727439880371095,
+                    "units": "m"
+                },
+                {
+                    "name": "fork rise under hydraulic force",
+                    "value": 3.896979331970215,
+                    "units": "m"
+                },
+                {
+                    "name": "highest actual rack anchor",
+                    "value": 3.669600009918213,
+                    "units": "m"
+                },
+                {
+                    "name": "fork top required for upper pickup with 100 mm clearance",
+                    "value": 3.874375104904175,
+                    "units": "m"
+                },
+                {
+                    "name": "measured lift travel",
+                    "value": 3.8971266746520998,
+                    "units": "m"
+                },
+                {
+                    "name": "maximum hydraulic force",
+                    "value": 16285.0,
+                    "units": "N"
+                }
+            ]
+        },
+        {
+            "name": "Pallet_01_Fresh_Pine floor pickup transport release",
+            "passed": true,
+            "expectation": "Drive in from outside the pallet, lift through fork contact, reverse with the independent load, lower and withdraw without carrying the released pallet.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "initial gap from fork tips to pallet",
+                    "value": 0.4498562812805176,
+                    "units": "m"
+                },
+                {
+                    "name": "actual fork top at entry",
+                    "value": 0.0785364955663681,
+                    "units": "m"
+                },
+                {
+                    "name": "actual pocket lower surface",
+                    "value": 0.015875011682510377,
+                    "units": "m"
+                },
+                {
+                    "name": "actual pocket upper surface",
+                    "value": 0.10477500408887863,
+                    "units": "m"
+                },
+                {
+                    "name": "pallet displacement before lift",
+                    "value": 7.224986120490939e-7,
+                    "units": "m"
+                },
+                {
+                    "name": "actual tine penetration beyond pallet front",
+                    "value": 1.0261712074279786,
+                    "units": "m"
+                },
+                {
+                    "name": "load rise after contact lift",
+                    "value": 0.30382609367370608,
+                    "units": "m"
+                },
+                {
+                    "name": "nearest fork to board surface separation while lifted",
+                    "value": 0.0,
+                    "units": "m"
+                },
+                {
+                    "name": "truck reverse transport",
+                    "value": 0.9904499650001526,
+                    "units": "m"
+                },
+                {
+                    "name": "independent pallet reverse transport",
+                    "value": 0.990685760974884,
+                    "units": "m"
+                },
+                {
+                    "name": "load bottom after lowering",
+                    "value": -1.6391277313232423e-7,
+                    "units": "m"
+                },
+                {
+                    "name": "released pallet movement while forks withdraw",
+                    "value": 0.0,
+                    "units": "m"
+                },
+                {
+                    "name": "final pallet speed",
+                    "value": 0.0,
+                    "units": "m/s"
+                },
+                {
+                    "name": "final lateral placement change",
+                    "value": 0.00005255634096101858,
+                    "units": "m"
+                },
+                {
+                    "name": "load mass",
+                    "value": 25.0,
+                    "units": "kg"
+                }
+            ]
+        },
+        {
+            "name": "Pallet_01_Fresh_Pine floor rack placement retrieval",
+            "passed": true,
+            "expectation": "Place within the actual floor rack slot, fully withdraw, then re-enter and retrieve through the existing rack geometry.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "initial gap from fork tips to pallet",
+                    "value": 0.4498558044433594,
+                    "units": "m"
+                },
+                {
+                    "name": "actual fork top at entry",
+                    "value": 0.07853992283344269,
+                    "units": "m"
+                },
+                {
+                    "name": "actual pocket lower surface",
+                    "value": 0.015875019133090974,
+                    "units": "m"
+                },
+                {
+                    "name": "actual pocket upper surface",
+                    "value": 0.10477499663829804,
+                    "units": "m"
+                },
+                {
+                    "name": "pallet displacement before lift",
+                    "value": 2.384185791015625e-7,
+                    "units": "m"
+                },
+                {
+                    "name": "actual tine penetration beyond pallet front",
+                    "value": 1.0262296199798585,
+                    "units": "m"
+                },
+                {
+                    "name": "pallet bottom on rack support",
+                    "value": -1.4901161193847657e-8,
+                    "units": "m"
+                },
+                {
+                    "name": "actual rack slot height",
+                    "value": 0.0020000000949949028,
+                    "units": "m"
+                },
+                {
+                    "name": "rack placement horizontal error",
+                    "value": 0.008301712572574616,
+                    "units": "m"
+                },
+                {
+                    "name": "rack pallet movement after complete fork withdrawal",
+                    "value": 3.3527612686157229e-8,
+                    "units": "m"
+                },
+                {
+                    "name": "rack pallet resting speed",
+                    "value": 0.0,
+                    "units": "m/s"
+                },
+                {
+                    "name": "rack retrieval initial gap from fork tips to pallet",
+                    "value": 0.3151664733886719,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval actual fork top at entry",
+                    "value": 0.08478116989135742,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval actual pocket lower surface",
+                    "value": 0.01587504893541336,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval actual pocket upper surface",
+                    "value": 0.10477488487958908,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval pallet displacement before lift",
+                    "value": 4.76837158203125e-7,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval actual tine penetration beyond pallet front",
+                    "value": 1.026606559753418,
+                    "units": "m"
+                },
+                {
+                    "name": "rack pickup actual pallet rise",
+                    "value": 0.12543049454689027,
+                    "units": "m"
+                },
+                {
+                    "name": "pallet retrieved clear of rack",
+                    "value": 1.3911091089248658,
+                    "units": "m"
+                },
+                {
+                    "name": "retrieved pallet bottom after lowering to floor",
+                    "value": -2.2351741790771486e-8,
+                    "units": "m"
+                }
+            ]
+        },
+        {
+            "name": "Pallet_01_Fresh_Pine upper rack placement retrieval",
+            "passed": true,
+            "expectation": "Pick up from the floor, place on the actual upper rack deck, withdraw, then re-enter and retrieve the independently resting pallet.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "initial gap from fork tips to pallet",
+                    "value": 0.4498558044433594,
+                    "units": "m"
+                },
+                {
+                    "name": "actual fork top at entry",
+                    "value": 0.07853992283344269,
+                    "units": "m"
+                },
+                {
+                    "name": "actual pocket lower surface",
+                    "value": 0.015875019133090974,
+                    "units": "m"
+                },
+                {
+                    "name": "actual pocket upper surface",
+                    "value": 0.10477499663829804,
+                    "units": "m"
+                },
+                {
+                    "name": "pallet displacement before lift",
+                    "value": 2.384185791015625e-7,
+                    "units": "m"
+                },
+                {
+                    "name": "actual tine penetration beyond pallet front",
+                    "value": 1.0262296199798585,
+                    "units": "m"
+                },
+                {
+                    "name": "pallet bottom on rack support",
+                    "value": 3.6685686111450197,
+                    "units": "m"
+                },
+                {
+                    "name": "actual rack slot height",
+                    "value": 3.669600009918213,
+                    "units": "m"
+                },
+                {
+                    "name": "rack placement horizontal error",
+                    "value": 0.01159150991588831,
+                    "units": "m"
+                },
+                {
+                    "name": "rack pallet movement after complete fork withdrawal",
+                    "value": 9.830249609876774e-7,
+                    "units": "m"
+                },
+                {
+                    "name": "rack pallet resting speed",
+                    "value": 0.0,
+                    "units": "m/s"
+                },
+                {
+                    "name": "rack retrieval initial gap from fork tips to pallet",
+                    "value": 0.3131122589111328,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval actual fork top at entry",
+                    "value": 3.7541675567626955,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval actual pocket lower surface",
+                    "value": 3.684511661529541,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval actual pocket upper surface",
+                    "value": 3.773343563079834,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval pallet displacement before lift",
+                    "value": 9.5367431640625e-7,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval actual tine penetration beyond pallet front",
+                    "value": 1.025071144104004,
+                    "units": "m"
+                },
+                {
+                    "name": "rack pickup actual pallet rise",
+                    "value": 0.12537193298339845,
+                    "units": "m"
+                },
+                {
+                    "name": "pallet retrieved clear of rack",
+                    "value": 1.3894075155258179,
+                    "units": "m"
+                },
+                {
+                    "name": "retrieved pallet bottom after lowering to floor",
+                    "value": -1.1175870895385743e-8,
+                    "units": "m"
+                }
+            ]
+        },
+        {
+            "name": "Pallet_02_Working_Wear floor pickup transport release",
+            "passed": true,
+            "expectation": "Drive in from outside the pallet, lift through fork contact, reverse with the independent load, lower and withdraw without carrying the released pallet.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "initial gap from fork tips to pallet",
+                    "value": 0.4498562812805176,
+                    "units": "m"
+                },
+                {
+                    "name": "actual fork top at entry",
+                    "value": 0.0785364955663681,
+                    "units": "m"
+                },
+                {
+                    "name": "actual pocket lower surface",
+                    "value": 0.015875011682510377,
+                    "units": "m"
+                },
+                {
+                    "name": "actual pocket upper surface",
+                    "value": 0.10477500408887863,
+                    "units": "m"
+                },
+                {
+                    "name": "pallet displacement before lift",
+                    "value": 7.224986120490939e-7,
+                    "units": "m"
+                },
+                {
+                    "name": "actual tine penetration beyond pallet front",
+                    "value": 1.0261712074279786,
+                    "units": "m"
+                },
+                {
+                    "name": "load rise after contact lift",
+                    "value": 0.30382609367370608,
+                    "units": "m"
+                },
+                {
+                    "name": "nearest fork to board surface separation while lifted",
+                    "value": 0.0,
+                    "units": "m"
+                },
+                {
+                    "name": "truck reverse transport",
+                    "value": 0.9904499650001526,
+                    "units": "m"
+                },
+                {
+                    "name": "independent pallet reverse transport",
+                    "value": 0.990685760974884,
+                    "units": "m"
+                },
+                {
+                    "name": "load bottom after lowering",
+                    "value": -1.6391277313232423e-7,
+                    "units": "m"
+                },
+                {
+                    "name": "released pallet movement while forks withdraw",
+                    "value": 0.0,
+                    "units": "m"
+                },
+                {
+                    "name": "final pallet speed",
+                    "value": 0.0,
+                    "units": "m/s"
+                },
+                {
+                    "name": "final lateral placement change",
+                    "value": 0.00005255634096101858,
+                    "units": "m"
+                },
+                {
+                    "name": "load mass",
+                    "value": 25.0,
+                    "units": "kg"
+                }
+            ]
+        },
+        {
+            "name": "Pallet_02_Working_Wear floor rack placement retrieval",
+            "passed": true,
+            "expectation": "Place within the actual floor rack slot, fully withdraw, then re-enter and retrieve through the existing rack geometry.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "initial gap from fork tips to pallet",
+                    "value": 0.449857234954834,
+                    "units": "m"
+                },
+                {
+                    "name": "actual fork top at entry",
+                    "value": 0.07853575050830841,
+                    "units": "m"
+                },
+                {
+                    "name": "actual pocket lower surface",
+                    "value": 0.015874993056058885,
+                    "units": "m"
+                },
+                {
+                    "name": "actual pocket upper surface",
+                    "value": 0.10477495193481446,
+                    "units": "m"
+                },
+                {
+                    "name": "pallet displacement before lift",
+                    "value": 0.0,
+                    "units": "m"
+                },
+                {
+                    "name": "actual tine penetration beyond pallet front",
+                    "value": 1.0261435508728028,
+                    "units": "m"
+                },
+                {
+                    "name": "pallet bottom on rack support",
+                    "value": -0.000026848167181015015,
+                    "units": "m"
+                },
+                {
+                    "name": "actual rack slot height",
+                    "value": 0.0020000000949949028,
+                    "units": "m"
+                },
+                {
+                    "name": "rack placement horizontal error",
+                    "value": 0.0080007528886199,
+                    "units": "m"
+                },
+                {
+                    "name": "rack pallet movement after complete fork withdrawal",
+                    "value": 0.0000030528112802130637,
+                    "units": "m"
+                },
+                {
+                    "name": "rack pallet resting speed",
+                    "value": 0.0,
+                    "units": "m/s"
+                },
+                {
+                    "name": "rack retrieval initial gap from fork tips to pallet",
+                    "value": 0.3155498504638672,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval actual fork top at entry",
+                    "value": 0.0852901041507721,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval actual pocket lower surface",
+                    "value": 0.015878833830356599,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval actual pocket upper surface",
+                    "value": 0.10477001965045929,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval pallet displacement before lift",
+                    "value": 4.172325134277344e-7,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval actual tine penetration beyond pallet front",
+                    "value": 1.0266761779785157,
+                    "units": "m"
+                },
+                {
+                    "name": "rack pickup actual pallet rise",
+                    "value": 0.12554439902305604,
+                    "units": "m"
+                },
+                {
+                    "name": "pallet retrieved clear of rack",
+                    "value": 1.390772819519043,
+                    "units": "m"
+                },
+                {
+                    "name": "retrieved pallet bottom after lowering to floor",
+                    "value": -2.9802322387695315e-8,
+                    "units": "m"
+                }
+            ]
+        },
+        {
+            "name": "Pallet_02_Working_Wear upper rack placement retrieval",
+            "passed": true,
+            "expectation": "Pick up from the floor, place on the actual upper rack deck, withdraw, then re-enter and retrieve the independently resting pallet.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "initial gap from fork tips to pallet",
+                    "value": 0.449857234954834,
+                    "units": "m"
+                },
+                {
+                    "name": "actual fork top at entry",
+                    "value": 0.07853575050830841,
+                    "units": "m"
+                },
+                {
+                    "name": "actual pocket lower surface",
+                    "value": 0.015874993056058885,
+                    "units": "m"
+                },
+                {
+                    "name": "actual pocket upper surface",
+                    "value": 0.10477495193481446,
+                    "units": "m"
+                },
+                {
+                    "name": "pallet displacement before lift",
+                    "value": 0.0,
+                    "units": "m"
+                },
+                {
+                    "name": "actual tine penetration beyond pallet front",
+                    "value": 1.0261435508728028,
+                    "units": "m"
+                },
+                {
+                    "name": "pallet bottom on rack support",
+                    "value": 3.6685686111450197,
+                    "units": "m"
+                },
+                {
+                    "name": "actual rack slot height",
+                    "value": 3.669600009918213,
+                    "units": "m"
+                },
+                {
+                    "name": "rack placement horizontal error",
+                    "value": 0.012058182619512082,
+                    "units": "m"
+                },
+                {
+                    "name": "rack pallet movement after complete fork withdrawal",
+                    "value": 0.0000014612257928092732,
+                    "units": "m"
+                },
+                {
+                    "name": "rack pallet resting speed",
+                    "value": 0.0,
+                    "units": "m/s"
+                },
+                {
+                    "name": "rack retrieval initial gap from fork tips to pallet",
+                    "value": 0.31229400634765627,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval actual fork top at entry",
+                    "value": 3.7543139457702638,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval actual pocket lower surface",
+                    "value": 3.684511661529541,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval actual pocket upper surface",
+                    "value": 3.773343563079834,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval pallet displacement before lift",
+                    "value": 5.092622927804769e-7,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval actual tine penetration beyond pallet front",
+                    "value": 1.0245885848999024,
+                    "units": "m"
+                },
+                {
+                    "name": "rack pickup actual pallet rise",
+                    "value": 0.1257767677307129,
+                    "units": "m"
+                },
+                {
+                    "name": "pallet retrieved clear of rack",
+                    "value": 1.3891087770462037,
+                    "units": "m"
+                },
+                {
+                    "name": "retrieved pallet bottom after lowering to floor",
+                    "value": -1.601874828338623e-7,
+                    "units": "m"
+                }
+            ]
+        },
+        {
+            "name": "Pallet_03_Split_Battered floor pickup transport release",
+            "passed": true,
+            "expectation": "Drive in from outside the pallet, lift through fork contact, reverse with the independent load, lower and withdraw without carrying the released pallet.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "initial gap from fork tips to pallet",
+                    "value": 0.4498562812805176,
+                    "units": "m"
+                },
+                {
+                    "name": "actual fork top at entry",
+                    "value": 0.0785364955663681,
+                    "units": "m"
+                },
+                {
+                    "name": "actual pocket lower surface",
+                    "value": 0.015875011682510377,
+                    "units": "m"
+                },
+                {
+                    "name": "actual pocket upper surface",
+                    "value": 0.10477500408887863,
+                    "units": "m"
+                },
+                {
+                    "name": "pallet displacement before lift",
+                    "value": 7.224986120490939e-7,
+                    "units": "m"
+                },
+                {
+                    "name": "actual tine penetration beyond pallet front",
+                    "value": 1.0261712074279786,
+                    "units": "m"
+                },
+                {
+                    "name": "load rise after contact lift",
+                    "value": 0.30382609367370608,
+                    "units": "m"
+                },
+                {
+                    "name": "nearest fork to board surface separation while lifted",
+                    "value": 0.0,
+                    "units": "m"
+                },
+                {
+                    "name": "truck reverse transport",
+                    "value": 0.9904499650001526,
+                    "units": "m"
+                },
+                {
+                    "name": "independent pallet reverse transport",
+                    "value": 0.990685760974884,
+                    "units": "m"
+                },
+                {
+                    "name": "load bottom after lowering",
+                    "value": -1.6391277313232423e-7,
+                    "units": "m"
+                },
+                {
+                    "name": "released pallet movement while forks withdraw",
+                    "value": 0.0,
+                    "units": "m"
+                },
+                {
+                    "name": "final pallet speed",
+                    "value": 0.0,
+                    "units": "m/s"
+                },
+                {
+                    "name": "final lateral placement change",
+                    "value": 0.00005255634096101858,
+                    "units": "m"
+                },
+                {
+                    "name": "load mass",
+                    "value": 25.0,
+                    "units": "kg"
+                }
+            ]
+        },
+        {
+            "name": "Pallet_03_Split_Battered floor rack placement retrieval",
+            "passed": true,
+            "expectation": "Place within the actual floor rack slot, fully withdraw, then re-enter and retrieve through the existing rack geometry.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "initial gap from fork tips to pallet",
+                    "value": 0.4498586654663086,
+                    "units": "m"
+                },
+                {
+                    "name": "actual fork top at entry",
+                    "value": 0.07853968441486359,
+                    "units": "m"
+                },
+                {
+                    "name": "actual pocket lower surface",
+                    "value": 0.01587502472102642,
+                    "units": "m"
+                },
+                {
+                    "name": "actual pocket upper surface",
+                    "value": 0.10477498173713684,
+                    "units": "m"
+                },
+                {
+                    "name": "pallet displacement before lift",
+                    "value": 0.0,
+                    "units": "m"
+                },
+                {
+                    "name": "actual tine penetration beyond pallet front",
+                    "value": 1.0260744094848633,
+                    "units": "m"
+                },
+                {
+                    "name": "pallet bottom on rack support",
+                    "value": -1.1175870895385743e-8,
+                    "units": "m"
+                },
+                {
+                    "name": "actual rack slot height",
+                    "value": 0.0020000000949949028,
+                    "units": "m"
+                },
+                {
+                    "name": "rack placement horizontal error",
+                    "value": 0.008552850224077702,
+                    "units": "m"
+                },
+                {
+                    "name": "rack pallet movement after complete fork withdrawal",
+                    "value": 1.1175870895385743e-8,
+                    "units": "m"
+                },
+                {
+                    "name": "rack pallet resting speed",
+                    "value": 0.0,
+                    "units": "m/s"
+                },
+                {
+                    "name": "rack retrieval initial gap from fork tips to pallet",
+                    "value": 0.31536197662353518,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval actual fork top at entry",
+                    "value": 0.08528280258178711,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval actual pocket lower surface",
+                    "value": 0.015875032171607019,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval actual pocket upper surface",
+                    "value": 0.10477498173713684,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval pallet displacement before lift",
+                    "value": 4.915124804938387e-7,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval actual tine penetration beyond pallet front",
+                    "value": 1.026484489440918,
+                    "units": "m"
+                },
+                {
+                    "name": "rack pickup actual pallet rise",
+                    "value": 0.12553754448890687,
+                    "units": "m"
+                },
+                {
+                    "name": "pallet retrieved clear of rack",
+                    "value": 1.3909841775894166,
+                    "units": "m"
+                },
+                {
+                    "name": "retrieved pallet bottom after lowering to floor",
+                    "value": -0.000017192214727401733,
+                    "units": "m"
+                }
+            ]
+        },
+        {
+            "name": "Pallet_03_Split_Battered upper rack placement retrieval",
+            "passed": true,
+            "expectation": "Pick up from the floor, place on the actual upper rack deck, withdraw, then re-enter and retrieve the independently resting pallet.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "initial gap from fork tips to pallet",
+                    "value": 0.4498586654663086,
+                    "units": "m"
+                },
+                {
+                    "name": "actual fork top at entry",
+                    "value": 0.07853968441486359,
+                    "units": "m"
+                },
+                {
+                    "name": "actual pocket lower surface",
+                    "value": 0.01587502472102642,
+                    "units": "m"
+                },
+                {
+                    "name": "actual pocket upper surface",
+                    "value": 0.10477498173713684,
+                    "units": "m"
+                },
+                {
+                    "name": "pallet displacement before lift",
+                    "value": 0.0,
+                    "units": "m"
+                },
+                {
+                    "name": "actual tine penetration beyond pallet front",
+                    "value": 1.0260744094848633,
+                    "units": "m"
+                },
+                {
+                    "name": "pallet bottom on rack support",
+                    "value": 3.6685686111450197,
+                    "units": "m"
+                },
+                {
+                    "name": "actual rack slot height",
+                    "value": 3.669600009918213,
+                    "units": "m"
+                },
+                {
+                    "name": "rack placement horizontal error",
+                    "value": 0.011621314100921154,
+                    "units": "m"
+                },
+                {
+                    "name": "rack pallet movement after complete fork withdrawal",
+                    "value": 0.0000030994415283203126,
+                    "units": "m"
+                },
+                {
+                    "name": "rack pallet resting speed",
+                    "value": 0.0,
+                    "units": "m/s"
+                },
+                {
+                    "name": "rack retrieval initial gap from fork tips to pallet",
+                    "value": 0.3129310607910156,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval actual fork top at entry",
+                    "value": 3.754101276397705,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval actual pocket lower surface",
+                    "value": 3.6844799518585207,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval actual pocket upper surface",
+                    "value": 3.773369312286377,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval pallet displacement before lift",
+                    "value": 0.0,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval actual tine penetration beyond pallet front",
+                    "value": 1.0244827270507813,
+                    "units": "m"
+                },
+                {
+                    "name": "rack pickup actual pallet rise",
+                    "value": 0.12565183639526368,
+                    "units": "m"
+                },
+                {
+                    "name": "pallet retrieved clear of rack",
+                    "value": 1.3888788223266602,
+                    "units": "m"
+                },
+                {
+                    "name": "retrieved pallet bottom after lowering to floor",
+                    "value": -5.960464477539063e-8,
+                    "units": "m"
+                }
+            ]
+        },
+        {
+            "name": "Pallet_04_Repaired floor pickup transport release",
+            "passed": true,
+            "expectation": "Drive in from outside the pallet, lift through fork contact, reverse with the independent load, lower and withdraw without carrying the released pallet.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "initial gap from fork tips to pallet",
+                    "value": 0.4498562812805176,
+                    "units": "m"
+                },
+                {
+                    "name": "actual fork top at entry",
+                    "value": 0.0785364955663681,
+                    "units": "m"
+                },
+                {
+                    "name": "actual pocket lower surface",
+                    "value": 0.015875011682510377,
+                    "units": "m"
+                },
+                {
+                    "name": "actual pocket upper surface",
+                    "value": 0.10477500408887863,
+                    "units": "m"
+                },
+                {
+                    "name": "pallet displacement before lift",
+                    "value": 7.224986120490939e-7,
+                    "units": "m"
+                },
+                {
+                    "name": "actual tine penetration beyond pallet front",
+                    "value": 1.0261712074279786,
+                    "units": "m"
+                },
+                {
+                    "name": "load rise after contact lift",
+                    "value": 0.30382609367370608,
+                    "units": "m"
+                },
+                {
+                    "name": "nearest fork to board surface separation while lifted",
+                    "value": 0.0,
+                    "units": "m"
+                },
+                {
+                    "name": "truck reverse transport",
+                    "value": 0.9904499650001526,
+                    "units": "m"
+                },
+                {
+                    "name": "independent pallet reverse transport",
+                    "value": 0.990685760974884,
+                    "units": "m"
+                },
+                {
+                    "name": "load bottom after lowering",
+                    "value": -1.6391277313232423e-7,
+                    "units": "m"
+                },
+                {
+                    "name": "released pallet movement while forks withdraw",
+                    "value": 0.0,
+                    "units": "m"
+                },
+                {
+                    "name": "final pallet speed",
+                    "value": 0.0,
+                    "units": "m/s"
+                },
+                {
+                    "name": "final lateral placement change",
+                    "value": 0.00005255634096101858,
+                    "units": "m"
+                },
+                {
+                    "name": "load mass",
+                    "value": 25.0,
+                    "units": "kg"
+                }
+            ]
+        },
+        {
+            "name": "Pallet_04_Repaired floor rack placement retrieval",
+            "passed": true,
+            "expectation": "Place within the actual floor rack slot, fully withdraw, then re-enter and retrieve through the existing rack geometry.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "initial gap from fork tips to pallet",
+                    "value": 0.4498579502105713,
+                    "units": "m"
+                },
+                {
+                    "name": "actual fork top at entry",
+                    "value": 0.07853049039840698,
+                    "units": "m"
+                },
+                {
+                    "name": "actual pocket lower surface",
+                    "value": 0.015875007957220079,
+                    "units": "m"
+                },
+                {
+                    "name": "actual pocket upper surface",
+                    "value": 0.10477498173713684,
+                    "units": "m"
+                },
+                {
+                    "name": "pallet displacement before lift",
+                    "value": 0.0,
+                    "units": "m"
+                },
+                {
+                    "name": "actual tine penetration beyond pallet front",
+                    "value": 1.0259666442871094,
+                    "units": "m"
+                },
+                {
+                    "name": "pallet bottom on rack support",
+                    "value": -7.078051567077637e-8,
+                    "units": "m"
+                },
+                {
+                    "name": "actual rack slot height",
+                    "value": 0.0020000000949949028,
+                    "units": "m"
+                },
+                {
+                    "name": "rack placement horizontal error",
+                    "value": 0.008739933371543885,
+                    "units": "m"
+                },
+                {
+                    "name": "rack pallet movement after complete fork withdrawal",
+                    "value": 1.1973200741977053e-7,
+                    "units": "m"
+                },
+                {
+                    "name": "rack pallet resting speed",
+                    "value": 0.0,
+                    "units": "m/s"
+                },
+                {
+                    "name": "rack retrieval initial gap from fork tips to pallet",
+                    "value": 0.3156585693359375,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval actual fork top at entry",
+                    "value": 0.0847758799791336,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval actual pocket lower surface",
+                    "value": 0.015875065699219705,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval actual pocket upper surface",
+                    "value": 0.10477492958307266,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval pallet displacement before lift",
+                    "value": 4.76837158203125e-7,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval actual tine penetration beyond pallet front",
+                    "value": 1.0269088745117188,
+                    "units": "m"
+                },
+                {
+                    "name": "rack pickup actual pallet rise",
+                    "value": 0.12541349232196809,
+                    "units": "m"
+                },
+                {
+                    "name": "pallet retrieved clear of rack",
+                    "value": 1.3909434080123902,
+                    "units": "m"
+                },
+                {
+                    "name": "retrieved pallet bottom after lowering to floor",
+                    "value": -4.842877388000488e-8,
+                    "units": "m"
+                }
+            ]
+        },
+        {
+            "name": "Pallet_04_Repaired upper rack placement retrieval",
+            "passed": true,
+            "expectation": "Pick up from the floor, place on the actual upper rack deck, withdraw, then re-enter and retrieve the independently resting pallet.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "initial gap from fork tips to pallet",
+                    "value": 0.4498579502105713,
+                    "units": "m"
+                },
+                {
+                    "name": "actual fork top at entry",
+                    "value": 0.07853049039840698,
+                    "units": "m"
+                },
+                {
+                    "name": "actual pocket lower surface",
+                    "value": 0.015875007957220079,
+                    "units": "m"
+                },
+                {
+                    "name": "actual pocket upper surface",
+                    "value": 0.10477498173713684,
+                    "units": "m"
+                },
+                {
+                    "name": "pallet displacement before lift",
+                    "value": 0.0,
+                    "units": "m"
+                },
+                {
+                    "name": "actual tine penetration beyond pallet front",
+                    "value": 1.0259666442871094,
+                    "units": "m"
+                },
+                {
+                    "name": "pallet bottom on rack support",
+                    "value": 3.6685943603515627,
+                    "units": "m"
+                },
+                {
+                    "name": "actual rack slot height",
+                    "value": 3.669600009918213,
+                    "units": "m"
+                },
+                {
+                    "name": "rack placement horizontal error",
+                    "value": 0.012570224702358246,
+                    "units": "m"
+                },
+                {
+                    "name": "rack pallet movement after complete fork withdrawal",
+                    "value": 0.0000011246181657043053,
+                    "units": "m"
+                },
+                {
+                    "name": "rack pallet resting speed",
+                    "value": 0.0,
+                    "units": "m/s"
+                },
+                {
+                    "name": "rack retrieval initial gap from fork tips to pallet",
+                    "value": 0.31267833709716799,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval actual fork top at entry",
+                    "value": 3.754110813140869,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval actual pocket lower surface",
+                    "value": 3.6844887733459474,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval actual pocket upper surface",
+                    "value": 3.773359537124634,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval pallet displacement before lift",
+                    "value": 4.915124804938387e-7,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval actual tine penetration beyond pallet front",
+                    "value": 1.0253210067749024,
+                    "units": "m"
+                },
+                {
+                    "name": "rack pickup actual pallet rise",
+                    "value": 0.12548160552978517,
+                    "units": "m"
+                },
+                {
+                    "name": "pallet retrieved clear of rack",
+                    "value": 1.3893046379089356,
+                    "units": "m"
+                },
+                {
+                    "name": "retrieved pallet bottom after lowering to floor",
+                    "value": -4.842877388000488e-8,
+                    "units": "m"
+                }
+            ]
+        },
+        {
+            "name": "middle rack placement retrieval",
+            "passed": true,
+            "expectation": "The working-wear pallet can also be placed and retrieved on the actual middle deck, preserving clearance beneath the upper beam.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "initial gap from fork tips to pallet",
+                    "value": 0.449857234954834,
+                    "units": "m"
+                },
+                {
+                    "name": "actual fork top at entry",
+                    "value": 0.07853575050830841,
+                    "units": "m"
+                },
+                {
+                    "name": "actual pocket lower surface",
+                    "value": 0.015874993056058885,
+                    "units": "m"
+                },
+                {
+                    "name": "actual pocket upper surface",
+                    "value": 0.10477495193481446,
+                    "units": "m"
+                },
+                {
+                    "name": "pallet displacement before lift",
+                    "value": 0.0,
+                    "units": "m"
+                },
+                {
+                    "name": "actual tine penetration beyond pallet front",
+                    "value": 1.0261435508728028,
+                    "units": "m"
+                },
+                {
+                    "name": "pallet bottom on rack support",
+                    "value": 1.8397841453552247,
+                    "units": "m"
+                },
+                {
+                    "name": "actual rack slot height",
+                    "value": 1.8407999277114869,
+                    "units": "m"
+                },
+                {
+                    "name": "rack placement horizontal error",
+                    "value": 0.008970648981630803,
+                    "units": "m"
+                },
+                {
+                    "name": "rack pallet movement after complete fork withdrawal",
+                    "value": 3.5762786865234377e-7,
+                    "units": "m"
+                },
+                {
+                    "name": "rack pallet resting speed",
+                    "value": 0.0,
+                    "units": "m/s"
+                },
+                {
+                    "name": "rack retrieval initial gap from fork tips to pallet",
+                    "value": 0.3143949508666992,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval actual fork top at entry",
+                    "value": 1.9253196716308594,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval actual pocket lower surface",
+                    "value": 1.8556886911392213,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval actual pocket upper surface",
+                    "value": 1.9445592164993287,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval pallet displacement before lift",
+                    "value": 4.76837158203125e-7,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval actual tine penetration beyond pallet front",
+                    "value": 1.024871826171875,
+                    "units": "m"
+                },
+                {
+                    "name": "rack pickup actual pallet rise",
+                    "value": 0.1256260871887207,
+                    "units": "m"
+                },
+                {
+                    "name": "pallet retrieved clear of rack",
+                    "value": 1.3905606269836426,
+                    "units": "m"
+                },
+                {
+                    "name": "retrieved pallet bottom after lowering to floor",
+                    "value": 3.725290298461914e-9,
+                    "units": "m"
+                }
+            ]
+        },
+        {
+            "name": "Cargo_Light80 physical handling",
+            "passed": true,
+            "expectation": "The saved light or working load can be lifted, transported and released by contact with the forks.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "initial gap from fork tips to pallet",
+                    "value": 0.4498562812805176,
+                    "units": "m"
+                },
+                {
+                    "name": "actual fork top at entry",
+                    "value": 0.07853801548480988,
+                    "units": "m"
+                },
+                {
+                    "name": "actual pocket lower surface",
+                    "value": 0.015875015407800676,
+                    "units": "m"
+                },
+                {
+                    "name": "actual pocket upper surface",
+                    "value": 0.10477492213249207,
+                    "units": "m"
+                },
+                {
+                    "name": "pallet displacement before lift",
+                    "value": 0.0000033382077617716278,
+                    "units": "m"
+                },
+                {
+                    "name": "actual tine penetration beyond pallet front",
+                    "value": 1.026054859161377,
+                    "units": "m"
+                },
+                {
+                    "name": "load rise after contact lift",
+                    "value": 0.3037000894546509,
+                    "units": "m"
+                },
+                {
+                    "name": "nearest fork to board surface separation while lifted",
+                    "value": 0.0,
+                    "units": "m"
+                },
+                {
+                    "name": "truck reverse transport",
+                    "value": 0.9906917214393616,
+                    "units": "m"
+                },
+                {
+                    "name": "independent pallet reverse transport",
+                    "value": 0.9907229542732239,
+                    "units": "m"
+                },
+                {
+                    "name": "load bottom after lowering",
+                    "value": -0.0000015832483768463135,
+                    "units": "m"
+                },
+                {
+                    "name": "released pallet movement while forks withdraw",
+                    "value": 0.0,
+                    "units": "m"
+                },
+                {
+                    "name": "final pallet speed",
+                    "value": 0.0,
+                    "units": "m/s"
+                },
+                {
+                    "name": "final lateral placement change",
+                    "value": 0.0007354614790529013,
+                    "units": "m"
+                },
+                {
+                    "name": "load mass",
+                    "value": 80.0,
+                    "units": "kg"
+                }
+            ]
+        },
+        {
+            "name": "Cargo_Working800 physical handling",
+            "passed": true,
+            "expectation": "The saved light or working load can be lifted, transported and released by contact with the forks.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "initial gap from fork tips to pallet",
+                    "value": 0.4498562812805176,
+                    "units": "m"
+                },
+                {
+                    "name": "actual fork top at entry",
+                    "value": 0.0785364955663681,
+                    "units": "m"
+                },
+                {
+                    "name": "actual pocket lower surface",
+                    "value": 0.015875007957220079,
+                    "units": "m"
+                },
+                {
+                    "name": "actual pocket upper surface",
+                    "value": 0.10477499663829804,
+                    "units": "m"
+                },
+                {
+                    "name": "pallet displacement before lift",
+                    "value": 2.4106114437927319e-7,
+                    "units": "m"
+                },
+                {
+                    "name": "actual tine penetration beyond pallet front",
+                    "value": 1.02616548538208,
+                    "units": "m"
+                },
+                {
+                    "name": "load rise after contact lift",
+                    "value": 0.29568541049957278,
+                    "units": "m"
+                },
+                {
+                    "name": "nearest fork to board surface separation while lifted",
+                    "value": 0.0,
+                    "units": "m"
+                },
+                {
+                    "name": "truck reverse transport",
+                    "value": 0.9903745055198669,
+                    "units": "m"
+                },
+                {
+                    "name": "independent pallet reverse transport",
+                    "value": 0.9903843402862549,
+                    "units": "m"
+                },
+                {
+                    "name": "load bottom after lowering",
+                    "value": -4.470348358154297e-8,
+                    "units": "m"
+                },
+                {
+                    "name": "released pallet movement while forks withdraw",
+                    "value": 0.0,
+                    "units": "m"
+                },
+                {
+                    "name": "final pallet speed",
+                    "value": 0.0,
+                    "units": "m/s"
+                },
+                {
+                    "name": "final lateral placement change",
+                    "value": 0.0017320375191047788,
+                    "units": "m"
+                },
+                {
+                    "name": "load mass",
+                    "value": 800.0,
+                    "units": "kg"
+                }
+            ]
+        },
+        {
+            "name": "working cargo upper rack placement retrieval",
+            "passed": true,
+            "expectation": "The actual 800 kg working package reaches the highest deck, rests independently after fork withdrawal, and can be retrieved and lowered.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "initial gap from fork tips to pallet",
+                    "value": 0.4498558044433594,
+                    "units": "m"
+                },
+                {
+                    "name": "actual fork top at entry",
+                    "value": 0.07853992283344269,
+                    "units": "m"
+                },
+                {
+                    "name": "actual pocket lower surface",
+                    "value": 0.015875034034252168,
+                    "units": "m"
+                },
+                {
+                    "name": "actual pocket upper surface",
+                    "value": 0.10477497428655625,
+                    "units": "m"
+                },
+                {
+                    "name": "pallet displacement before lift",
+                    "value": 2.384185791015625e-7,
+                    "units": "m"
+                },
+                {
+                    "name": "actual tine penetration beyond pallet front",
+                    "value": 1.0262272357940674,
+                    "units": "m"
+                },
+                {
+                    "name": "pallet bottom on rack support",
+                    "value": 3.6685986518859865,
+                    "units": "m"
+                },
+                {
+                    "name": "actual rack slot height",
+                    "value": 3.669600009918213,
+                    "units": "m"
+                },
+                {
+                    "name": "rack placement horizontal error",
+                    "value": 0.031524378806352618,
+                    "units": "m"
+                },
+                {
+                    "name": "rack pallet movement after complete fork withdrawal",
+                    "value": 0.0,
+                    "units": "m"
+                },
+                {
+                    "name": "rack pallet resting speed",
+                    "value": 0.0,
+                    "units": "m/s"
+                },
+                {
+                    "name": "rack retrieval initial gap from fork tips to pallet",
+                    "value": 0.3167991638183594,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval actual fork top at entry",
+                    "value": 3.7474114894866945,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval actual pocket lower surface",
+                    "value": 3.6844797134399416,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval actual pocket upper surface",
+                    "value": 3.7733733654022219,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval pallet displacement before lift",
+                    "value": 5.331201577973843e-7,
+                    "units": "m"
+                },
+                {
+                    "name": "rack retrieval actual tine penetration beyond pallet front",
+                    "value": 1.0259876251220704,
+                    "units": "m"
+                },
+                {
+                    "name": "rack pickup actual pallet rise",
+                    "value": 0.1698145866394043,
+                    "units": "m"
+                },
+                {
+                    "name": "pallet retrieved clear of rack",
+                    "value": 1.3886077404022217,
+                    "units": "m"
+                },
+                {
+                    "name": "retrieved pallet bottom after lowering to floor",
+                    "value": -3.46451997756958e-7,
+                    "units": "m"
+                }
+            ]
+        },
+        {
+            "name": "overload respects hydraulic force",
+            "passed": true,
+            "expectation": "The saved heavy load remains near its support while a full raise command reaches the finite pressure limit, rather than moving at the normal lift rate.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "initial gap from fork tips to pallet",
+                    "value": 0.4498562812805176,
+                    "units": "m"
+                },
+                {
+                    "name": "actual fork top at entry",
+                    "value": 0.07853779196739197,
+                    "units": "m"
+                },
+                {
+                    "name": "actual pocket lower surface",
+                    "value": 0.01587514765560627,
+                    "units": "m"
+                },
+                {
+                    "name": "actual pocket upper surface",
+                    "value": 0.10477491468191147,
+                    "units": "m"
+                },
+                {
+                    "name": "pallet displacement before lift",
+                    "value": 1.9357406699782587e-7,
+                    "units": "m"
+                },
+                {
+                    "name": "actual tine penetration beyond pallet front",
+                    "value": 1.026179313659668,
+                    "units": "m"
+                },
+                {
+                    "name": "heavy load mass",
+                    "value": 3500.0,
+                    "units": "kg"
+                },
+                {
+                    "name": "heavy load weight",
+                    "value": 34335.0,
+                    "units": "N"
+                },
+                {
+                    "name": "finite carriage lift force",
+                    "value": 16285.0,
+                    "units": "N"
+                },
+                {
+                    "name": "maximum heavy load rise",
+                    "value": 0.00001496821641921997,
+                    "units": "m"
+                },
+                {
+                    "name": "carriage travel with overload",
+                    "value": 0.04652353376150131,
+                    "units": "m"
+                },
+                {
+                    "name": "peak hydraulic pressure fraction",
+                    "value": 1.0,
+                    "units": "fraction"
+                },
+                {
+                    "name": "time stalled at full raise input",
+                    "value": 5.184999942779541,
+                    "units": "s"
+                }
+            ]
+        },
+        {
+            "name": "off center load changes physical response",
+            "passed": true,
+            "expectation": "Moving the working load's centre of mass toward one edge changes measured pallet tilt, slip or wheel load distribution relative to its centered control.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "centered load maximum tilt",
+                    "value": 2.158942461013794,
+                    "units": "degrees"
+                },
+                {
+                    "name": "offset load maximum tilt",
+                    "value": 2.1702444553375246,
+                    "units": "degrees"
+                },
+                {
+                    "name": "centered load lateral slip",
+                    "value": 0.0002947453176602721,
+                    "units": "m"
+                },
+                {
+                    "name": "offset load lateral slip",
+                    "value": 0.0003699362277984619,
+                    "units": "m"
+                },
+                {
+                    "name": "centered mean signed front wheel load imbalance",
+                    "value": 0.00040849100332707167,
+                    "units": "fraction"
+                },
+                {
+                    "name": "offset mean signed front wheel load imbalance",
+                    "value": 0.1319424957036972,
+                    "units": "fraction"
+                }
+            ]
+        },
+        {
+            "name": "pause clears held hydraulic input",
+            "passed": true,
+            "expectation": "Deactivation clears lift and tilt commands immediately; reactivation without fresh input cannot resume their motion.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "lift command before pause",
+                    "value": 1.0,
+                    "units": "input"
+                },
+                {
+                    "name": "initial hydraulic settling after resume",
+                    "value": 0.043284475803375247,
+                    "units": "m"
+                },
+                {
+                    "name": "combined hydraulic commands immediately inactive",
+                    "value": 0.0,
+                    "units": "input"
+                },
+                {
+                    "name": "combined hydraulic commands after resume",
+                    "value": 0.0,
+                    "units": "input"
+                },
+                {
+                    "name": "lift travel after resume without fresh command",
+                    "value": -0.014324262738227845,
+                    "units": "m"
+                },
+                {
+                    "name": "tilt change after resume without fresh command",
+                    "value": 0.10856962203979492,
+                    "units": "degrees"
+                }
+            ]
+        }
+    ]
+}

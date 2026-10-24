@@ -1,0 +1,46 @@
+{
+    "generatedUtc": "2026-10-24T18:48:14.2318293Z",
+    "unityVersion": "6000.3.27f1",
+    "method": "Saved prefab in ForkliftHandlingValidation's isolated Rig, production 0.005 second PhysX step. Settle 3 s, full raise command 20 s, neutral 1 s. Cache all three mechanism bodies relative to chassis, call explicit ResetVehicle translated 7 m in X and -9 m in Z with 83 degree yaw. Compare immediate world poses with the expected rigid pose delta, resume physical simulation for 3 s, then measure relative pose drift and retained lift travel. No load is attached or repositioned.",
+    "passed": true,
+    "checks": [
+        {
+            "name": "full extension recovery preserves mechanism",
+            "passed": true,
+            "expectation": "Translated and rotated explicit recovery preserves all moving body poses, then resumes stable physical simulation.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "lift travel before recovery",
+                    "value": 3.8971266746520998,
+                    "units": "m"
+                },
+                {
+                    "name": "immediate maximum mechanism position error",
+                    "value": 0.0000011026859283447266,
+                    "units": "m"
+                },
+                {
+                    "name": "immediate maximum mechanism rotation error",
+                    "value": 0.0,
+                    "units": "degrees"
+                },
+                {
+                    "name": "settled mechanism relative displacement",
+                    "value": 0.0005266552325338125,
+                    "units": "m"
+                },
+                {
+                    "name": "lift travel after recovery and simulation",
+                    "value": 3.8971288204193117,
+                    "units": "m"
+                },
+                {
+                    "name": "chassis speed after settling",
+                    "value": 0.00030161344329826534,
+                    "units": "m/s"
+                }
+            ]
+        }
+    ]
+}

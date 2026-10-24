@@ -14,6 +14,7 @@ namespace OneShift.RackLab
         [Header("Physical parts, FL / FR / RL / RR")]
         public Rigidbody body;
         public Rigidbody rearAxleBody;
+        public Rigidbody[] additionalSupportedBodies = new Rigidbody[0];
         public WheelCollider[] wheels = new WheelCollider[4];
 
         [Header("Imported visual pivots")]
@@ -129,6 +130,12 @@ namespace OneShift.RackLab
             float massMoment = body.mass * body.centerOfMass.z;
             if (rearAxleBody != null)
                 massMoment += rearAxleBody.mass * body.transform.InverseTransformPoint(rearAxleBody.worldCenterOfMass).z;
+            foreach (var part in additionalSupportedBodies)
+            {
+                if (part == null || part == body || part == rearAxleBody) continue;
+                totalMass += part.mass;
+                massMoment += part.mass * body.transform.InverseTransformPoint(part.worldCenterOfMass).z;
+            }
             float frontSupport = (massMoment - totalMass * rearZ) / (frontZ - rearZ);
             supportedMasses[0] = supportedMasses[1] = frontSupport * .5f;
             supportedMasses[2] = supportedMasses[3] = (totalMass - frontSupport) * .5f;
@@ -382,10 +389,31 @@ namespace OneShift.RackLab
             if (body == null) return;
             ClearDriverInput();
             SteerAngle = 0;
+            Vector3 previousPosition = body.position;
+            Quaternion poseDelta = rotation * Quaternion.Inverse(body.rotation);
+            var partPositions = new Vector3[additionalSupportedBodies.Length];
+            var partRotations = new Quaternion[additionalSupportedBodies.Length];
+            for (int i = 0; i < additionalSupportedBodies.Length; i++)
+            {
+                var part = additionalSupportedBodies[i];
+                if (part == null || part == body || part == rearAxleBody) continue;
+                partPositions[i] = position + poseDelta * (part.position - previousPosition);
+                partRotations[i] = poseDelta * part.rotation;
+            }
             body.position = position;
             body.rotation = rotation;
             body.linearVelocity = Vector3.zero;
             body.angularVelocity = Vector3.zero;
+            for (int i = 0; i < additionalSupportedBodies.Length; i++)
+            {
+                var part = additionalSupportedBodies[i];
+                if (part == null || part == body || part == rearAxleBody) continue;
+                part.position = partPositions[i];
+                part.rotation = partRotations[i];
+                part.linearVelocity = Vector3.zero;
+                part.angularVelocity = Vector3.zero;
+                part.WakeUp();
+            }
             if (rearAxleBody != null)
             {
                 rearAxleBody.position = position + rotation * axleRestPosition;
@@ -396,6 +424,8 @@ namespace OneShift.RackLab
             }
             ApplyRearSteering();
             body.WakeUp();
+            var lift = GetComponent<ForkliftLiftController>();
+            if (lift != null) lift.ResetHydraulics();
             GroundedWheelCount = 0;
             UpdateVisuals();
         }

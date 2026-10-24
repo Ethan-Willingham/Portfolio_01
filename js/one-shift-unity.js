@@ -25,7 +25,7 @@
   var instance = null, starting = false, failed = false, manuallyPaused = false;
   var portrait = false, lastActive = null, loopPaused = false;
   var build = 'assets/one-shift-unity/Build/OneShiftWeb';
-  var version = '?v=3';
+  var version = '?v=4';
 
   function syncActivity() {
     paused.hidden = !instance || !manuallyPaused;

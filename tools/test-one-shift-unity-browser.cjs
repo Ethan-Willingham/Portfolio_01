@@ -238,6 +238,25 @@ async function realSmoke(browser, url) {
     forkliftStates.chase = await pressForFrames('c', 'Restore forklift chase camera', current => !current.forkliftCabView);
     check('REAL: C switches between the cab and chase cameras', forkliftStates.cab.forkliftCabView && !forkliftStates.chase.forkliftCabView);
 
+    forkliftStates.handlingPark = await pressForFrames('f', 'Park for hydraulic controls', current => current.forkliftParked);
+    const loweredHeight = forkliftStates.handlingPark.forkliftLiftHeight;
+    forkliftStates.raised = await keyUntil('q', 'Raise the physical forks', current => current.forkliftLiftHeight > loweredHeight + .45);
+    check('REAL: Q raises the physical fork carriage', forkliftStates.raised.forkliftLiftInput > .5 && forkliftStates.raised.forkliftLiftHeight > loweredHeight + .45);
+    forkliftStates.liftReleased = await pollState('Release hydraulic lever', current => current.forkliftLiftInput === 0);
+    const releaseFrame = forkliftStates.liftReleased.frameCount;
+    forkliftStates.liftHeld = await pollState('Hold raised fork height', current => current.frameCount >= releaseFrame + 25);
+    check('REAL: Releasing Q holds the carriage', Math.abs(forkliftStates.liftHeld.forkliftLiftHeight - forkliftStates.liftReleased.forkliftLiftHeight) < .06);
+    await capture('unity-real-forklift-raised');
+    // Tilt while raised so the fork tips have clearance above the floor.
+    forkliftStates.tilted = await keyUntil('t', 'Tilt the mast forward', current => current.forkliftTiltDegrees > 2);
+    check('REAL: T tilts the physical mast forward', forkliftStates.tilted.forkliftTiltInput > .5);
+    forkliftStates.tiltBack = await keyUntil('g', 'Tilt the mast back to level', current => current.forkliftTiltDegrees < .35);
+    check('REAL: G tilts the physical mast back', forkliftStates.tiltBack.forkliftTiltInput < -.5);
+    await pollState('Release tilt control', current => current.forkliftTiltInput === 0);
+    forkliftStates.lowered = await keyUntil('z', 'Lower the physical forks', current => current.forkliftLiftHeight < loweredHeight + .04);
+    check('REAL: Z lowers the physical fork carriage', forkliftStates.lowered.forkliftLiftInput < -.5);
+    await pressForFrames('f', 'Release parking for driving', current => !current.forkliftParked);
+
     forkliftStates.forward = await keyUntil('w', 'Accelerate the forklift forward', current =>
       current.forkliftSignedSpeed > .85 && groundDistance(current.forkliftPosition, forkliftStates.entered.forkliftPosition) > .25);
     check('REAL: W drives the physical forklift forward', forkliftStates.forward.forkliftThrottle > .5 && forkliftStates.forward.forkliftSignedSpeed > .85);
@@ -263,16 +282,19 @@ async function realSmoke(browser, url) {
     forkliftStates.unparked = await pressForFrames('f', 'Release forklift parking brake', current => !current.forkliftParked);
 
     await page.keyboard.down('w');
+    await page.keyboard.down('q');
     try {
-      forkliftStates.beforePause = await pollState('Accelerate before held-input pause', current => current.forkliftSignedSpeed > .5 && current.forkliftThrottle > .5);
+      forkliftStates.beforePause = await pollState('Accelerate before held-input pause', current => current.forkliftSignedSpeed > .5 && current.forkliftThrottle > .5 && current.forkliftLiftInput > .5);
       await page.keyboard.press('p');
       forkliftStates.paused = await state();
       check('REAL: Pausing while driving clears held throttle and capture', forkliftStates.paused.browserSuspended && forkliftStates.paused.timeScale === 0 && forkliftStates.paused.forkliftThrottle === 0 && !forkliftStates.paused.forkliftCaptured);
+      check('REAL: Pausing clears held hydraulic levers', forkliftStates.paused.forkliftLiftInput === 0 && forkliftStates.paused.forkliftTiltInput === 0);
       await delay(300);
       forkliftStates.pausedLater = await state();
       check('REAL: Paused forklift physics and rendering stay frozen',
         forkliftStates.pausedLater.frameCount === forkliftStates.paused.frameCount &&
         distance(forkliftStates.pausedLater.forkliftPosition, forkliftStates.paused.forkliftPosition) < .0001);
+      check('REAL: Paused hydraulic bodies stay frozen', Math.abs(forkliftStates.pausedLater.forkliftLiftHeight - forkliftStates.paused.forkliftLiftHeight) < .0001);
       await page.keyboard.press('p');
       forkliftStates.resumed = await pollState('Resume forklift simulation', current => !current.browserSuspended && current.frameCount > forkliftStates.paused.frameCount);
       check('REAL: Resume preserves the driver but requires fresh mouse capture', forkliftStates.resumed.forkliftDriving && !forkliftStates.resumed.forkliftCaptured && forkliftStates.resumed.forkliftThrottle === 0);
@@ -280,11 +302,13 @@ async function realSmoke(browser, url) {
       // Repeat the still-held key after Unity clears its input axes. Capturing
       // with a key down must wait for neutral instead of starting the engine.
       await page.keyboard.down('w');
+      await page.keyboard.down('q');
       await page.locator('#warehouse-canvas').click({position:{x:600,y:400}});
       const resumeFrame = forkliftStates.resumed.frameCount;
       forkliftStates.heldOnRecapture = await pollState('Observe neutral gate after recapture', current => current.frameCount >= resumeFrame + 5);
       check('REAL: A held throttle cannot drive immediately after recapture', forkliftStates.heldOnRecapture.forkliftThrottle === 0 && !forkliftStates.heldOnRecapture.forkliftCaptured);
-    } finally { await page.keyboard.up('w'); }
+      check('REAL: Held hydraulics cannot resume after recapture', forkliftStates.heldOnRecapture.forkliftLiftInput === 0);
+    } finally { await page.keyboard.up('w'); await page.keyboard.up('q'); }
     forkliftStates.neutral = await pollState('Release held throttle to enable driving', current => current.forkliftCaptured && current.forkliftThrottle === 0);
     forkliftStates.freshThrottle = await keyUntil('w', 'Drive after a fresh throttle press', current => current.forkliftThrottle > .5 && current.forkliftSignedSpeed > .6);
     check('REAL: Releasing and pressing throttle restores normal driving', forkliftStates.neutral.forkliftCaptured && forkliftStates.freshThrottle.forkliftSignedSpeed > .6);

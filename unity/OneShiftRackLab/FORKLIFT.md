@@ -1,6 +1,7 @@
 # Warehouse forklift
 
-The classic yellow LPG counterbalance forklift is drivable in One Shift.
+The classic yellow LPG counterbalance forklift drives and handles physical
+pallet loads in One Shift.
 It was rebuilt from a fresh scene at the owner's request. The longer body has
 a rounded cast counterweight, black engine bonnet, horizontal aluminium propane
 bottle, large front tyres, smaller rear tyres and ivory dished wheels. The rear
@@ -86,11 +87,12 @@ Sheaves and piston rods travel with the inner stage. Tilt-cylinder barrels aim
 at their moving mast anchors and their rods remain separate. Hose ports are
 named for later flexible hose routing.
 
-This short duplex lift is an animation study, not the warehouse's final lift
-specification. Its 1.8 m carriage travel does not reach the 3.6576 m rack level.
-Choose and model the required longer or additional mast stage before implementing
-that interaction. Export preserves authoring transforms without animation clips
-or Blender constraints. The Python pose solver is not a Unity runtime controller.
+This short duplex lift remains the native animation study. Its 1.8 m carriage
+travel does not reach the 3.6576 m rack level. The handling installer extends the
+derived Unity mast rails to approximately 2.9 m, with 3.9 m of total carriage
+travel. It keeps the original Blender source intact. Export preserves authoring
+transforms without animation clips or Blender constraints; a separate Unity
+controller drives the physical runtime mechanism.
 
 Run Blender with `--background --python-exit-code 1 --python` followed by the
 generator path. Add `-- --no-render` for geometry and export only, or `-- --quick`
@@ -120,11 +122,15 @@ exported. Unity uses URP materials when integrated.
 warehouse without rebuilding its racks or lighting. It backs up the scene under
 ignored `Temp/ForkliftBackup`. Re-run this installer after regenerating the room.
 The prefab has URP materials and batches rigid geometry by moving assembly and
-material. The lowered leaf chains become two render groups. The source FBX
-retains every individual link, and the runtime retains their transform anchors.
+material. Its initial lowered leaf chains become two render groups. Installing
+physical pallet handling then replaces those render groups with moving chain
+geometry. The source FBX retains every individual link, and the runtime retains
+their transform anchors.
 
 `ForkliftDriveController` applies wheel torque and tyre braking to a 3,500 kg
-main rigidbody and a 120 kg rear axle joined by a physical hinge. Its three-degree
+main assembly and a 120 kg rear axle joined by a physical hinge. The handling
+installer divides the main assembly into a 2,980 kg chassis, 220 kg outer mast,
+140 kg inner stage and 160 kg carriage with forks. Its three-degree rear axle
 oscillation ends at mechanical stops. Four WheelColliders represent solid tyres
 with short compliance. The main centre of mass is 0.72 m above the model origin,
 0.18 m behind it. These are game tuning values for this original truck.
@@ -143,7 +149,7 @@ Tyre rest loads come from the whole truck's mass, centre of mass and axle
 positions: about 798.25 kg supported by each front wheel and 1,011.75 kg by
 each rear wheel. The controller applies these sprung masses after native
 vehicle initialization; setting them earlier is overwritten. Actual body
-masses remain 3,500 kg and 120 kg. This accounts for the chassis weight passing
+masses total 3,500 kg for the main assembly and 120 kg for the rear axle. This accounts for the chassis weight passing
 through the rear hinge, which the axle's automatic 60 kg per wheel omits.
 Native tyre friction remains finite and allows slip. There is no anti-roll
 force or velocity snapping.
@@ -174,7 +180,8 @@ The wheels, rear axle and steering wheel follow their physical state.
 capsule while seated, and requires a brief familiarisation before first entry.
 Controls are E to enter/exit, W/S to drive/reverse, A/D to steer, Space to brake,
 Shift to inch, F to park, C for rear/cab camera, V to centre, H for the horn,
-and hold R while stopped to recover. Leaving requires clear floor beside the
+Q/Z to raise/lower, T/G to tilt forward/back, and hold R while stopped to recover.
+Leaving requires clear floor beside the
 truck. Recovery checks that the parking bay is clear. Focus loss and browser
 pause clear driving inputs; resuming requires a fresh click and neutral controls.
 
@@ -182,22 +189,64 @@ The practice ramp is a narrow tyre track, outside the fork spacing. A normal
 wide ramp can catch the lowered forks, which have physical tapered collision.
 Reverse onto the practice ramp so the low mast foot follows the tyres. Driving
 straight at its steep entrance with the mast first correctly stops against it.
-Body, mast, guard, carriage and fork colliders are compound shapes. Forks and
-carriage currently remain fixed to the truck; warehouse pallets are static.
+Body, mast, guard, carriage and fork colliders are compound shapes. The fork
+blades retain tapered convex collision, including their heels and thin tips.
 
-## Next physical interactions
+## Physical pallet handling
 
-Lifting needs a force-limited hydraulic actuator, moving mast/carriage bodies,
-and a runtime chain and hose solution. Pallets and cargo need their own mass,
-centre of mass, inertia and collision geometry. Supporting a load through fork
-contacts should transmit its weight and moment into the truck, so an overloaded
-actuator can stall and an off-centre load can tilt or topple the system. Do not
-implement carrying by parenting cargo to the truck or directly teleporting it.
-The short mast's travel must also be redesigned before reaching the upper rack.
+`ForkliftHandlingBuilder.InstallHandling()` upgrades the existing truck, the four
+pallet prefabs, the connected rack-row prefab and all scene pallet packages. It
+backs up the scene under ignored `Temp/ForkliftHandlingBackup`. Run it after the
+driving installer, which rebuilds the base truck.
+
+`ForkliftLiftController` connects the outer mast to the chassis with a tilt hinge
+and connects the inner stage and carriage with two sliding joints. A hydraulic
+force acts equally and oppositely on the outer and inner mast. Tension in the
+reeved chains transfers that force to the carriage at a two-to-one travel ratio.
+The actuator has a finite pressure limit; moving a load depends on its actual
+weight and leverage. The visual leaf chains follow the anchors and sheaves.
+The collision bodies and fork contacts carry the weight, without pickup joints,
+cargo parenting, teleportation or an upright-restoring force.
+
+The native slider drive limits cylinder force to 33,943.4 N, equivalent to
+16,285 N at the carriage after supporting the inner mast. Lowering vents the
+cylinder when downward drive would otherwise be required. Releasing either
+lever captures the attained position and preserves its supporting pressure or
+torque, avoiding a load drop when the position target changes. The pressure
+gauge reports bounded actuator demand; PhysX joint reaction force excludes the
+native drive contribution.
+
+The derived truck lowers the original fork resting pose by 40 mm to enter the
+floor pallets. Its two 1.95 m sliding stages provide 3.9 m of total fork travel.
+The taller rails retain overlap at maximum extension. The source short mast's
+Blender animation study remains available separately.
+
+`PalletCargo` assigns each package its real mass, weighted centre of mass and
+inertia, with full translational and rotational freedom. The original board
+colliders leave the front pockets open. The 43 mm fork heels cannot pass through
+the original 38.1 mm side notch, so approach either 40-inch end. Strapped cartons
+share a rigidbody with their own pallet; individual carton unloading is not
+simulated. The fourteen rack packages comprise twelve 450 kg carton loads and
+two 25 kg empty pallets. The four existing floor pallets also weigh 25 kg.
+
+Four additional floor packages show different mass distributions. A timber
+crate totals 80 kg, a centred carton package totals 800 kg, steel billets total
+3,500 kg, and a second 800 kg carton package sits 180 mm off centre on its pallet.
+The two 800 kg examples separate load balance from total weight. Their visible
+labels show pounds followed by kilograms. Physical values use kilograms.
+
 The driving root uses metre scale and Unity +Z forward. Imported mechanical
-pivots retain the FBX scale and Blender local axes; future lift motion should
-use normalized control frames or body/world-space distances rather than adding
-metres directly to an imported pivot's local Y coordinate.
+pivots retain the FBX scale and Blender local axes. The physical lift uses
+normalized body frames and world-space distances. Chassis mass and centre of
+mass are corrected when the three moving bodies are split off, preserving the
+unloaded truck's total mass and moment.
+
+The chase camera keeps one orbit around the interpolated chassis pose. It
+smooths the viewing angle and outward obstacle clearance without separately
+lagging the camera's world position. The former distance check could mistake
+that lag for an obstruction during a sharp turn and repeatedly snap the view.
+
+## Validation
 
 `ForkliftDrivingValidation.ValidateAndSave()` advances the actual prefab in
 isolated PhysX scenes and saves measured results to
@@ -211,12 +260,39 @@ the production 0.005-second physics step. This pass covers unloaded driving,
 not load capacity or lifting. The browser test additionally exercises the
 compiled player's entry, driving controls, cameras and pause behavior.
 
-The 24 October 2026 grip validation passed all 19 checks. In steady forward and
+`ForkliftHandlingValidation.ValidateAndSave()` checks all four pallet variants
+through floor pickup, transport, release, and placement and retrieval at floor
+and upper rack levels. It also checks the middle level, the light and working
+packages, an 800 kg upper-rack cycle, hydraulic overload, off-centre loading and
+pause input. It uses the saved prefabs and actual collision geometry at the same
+physics timestep. `ForkliftCameraValidation.ValidateAndSave()` checks sharp
+turns at 30, 60, 120 and 144 Hz, obstruction clearance, and a frozen timestep.
+
+The 24 October 2026 handling validation passed all 21 checks. The 800 kg package
+completed the upper-rack placement and retrieval cycle, resting independently
+on the 3.6696 m deck with no movement after full fork withdrawal. The maximum
+fork top reached 3.9727 m. The 3,500 kg package rose less than 0.02 mm during six
+seconds of full raise input. Moving the 800 kg package off centre changed the
+mean signed front-wheel load imbalance from 0.04 percent to 13.19 percent.
+All six camera checks passed, with orbit-radius error below 0.002 mm.
+The separate `ValidateLoadedTiltAndSave()` check also passed: the 800 kg package
+remained in contact through approximately eight degrees backward and six degrees
+forward tilt, with at least 121 mm of floor clearance throughout the motion.
+
+The 24 October 2026 grip validation with the moving mast passed all 19 checks.
+In steady forward and
 reverse travel, each tyre's 95th-percentile rolling-speed error stayed below
-1 percent; the largest measured value was 0.537 percent. Rear lateral contact
-speed at the same percentile stayed below 0.146 m/s in sustained tight turns.
-Maximum horizontal drift during 30 seconds parked on level ground was below
-0.1 mm. On the eight-degree slope, facing either direction, parked
-drift stayed below 1.3 cm over 10 seconds; releasing into neutral let gravity
-roll the truck 5.54 to 5.55 m in three seconds. The one-sided ramp still overturned
-the truck after 3.56 seconds, reaching 94.4 degrees of body lean.
+1 percent; the largest measured value was 0.769 percent. Rear lateral contact
+speed at the same percentile stayed below 0.126 m/s in sustained tight turns.
+Maximum horizontal drift during 30 seconds parked on level ground was 1.67 mm.
+On the eight-degree slope, facing either direction, parked drift stayed below
+1.74 cm over 10 seconds; releasing into neutral let gravity roll the truck
+5.54 to 5.55 m in three seconds. The one-sided ramp still overturned the truck
+after 3.63 seconds, reaching 95.0 degrees of body lean.
+
+The browser release `v=4` passed all 51 compiled-player checks in Chrome with
+WebGL 2, including lift, neutral hold, mast tilt, camera switching, driving,
+recovery and hydraulic input clearing on pause. The launcher passed its 22
+lifecycle checks. Browser and Windows exports completed with zero build errors.
+Run `node tools/test-one-shift-unity-browser.cjs --real` from the site root to
+exercise the compiled player, or omit `--real` for the launcher checks.

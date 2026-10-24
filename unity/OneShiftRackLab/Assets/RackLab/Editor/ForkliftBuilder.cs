@@ -199,7 +199,9 @@ namespace OneShift.RackLab
             try
             {
                 var drive = root.GetComponent<ForkliftDriveController>();
-                ConfigureBody(drive.body, 3500);
+                // Handling splits mast/carriage mass off this body. Refreshing
+                // tire contact must preserve the installed assembly's mass.
+                ConfigureBody(drive.body, drive.body.mass);
                 ConfigureBody(drive.rearAxleBody, 120);
                 for (int i = 0; i < 4; i++)
                 {

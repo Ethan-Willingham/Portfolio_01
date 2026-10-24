@@ -1,0 +1,6 @@
+PASS sharp turns at 30 Hz: radius error 1.90735E-06 m, aim error 0.0197823 deg, peak yaw 65.001 deg/s.
+PASS sharp turns at 60 Hz: radius error 1.90735E-06 m, aim error 0.0197823 deg, peak yaw 65.001 deg/s.
+PASS sharp turns at 120 Hz: radius error 1.90735E-06 m, aim error 0.0197823 deg, peak yaw 65.002 deg/s.
+PASS sharp turns at 144 Hz: radius error 1.90735E-06 m, aim error 0.0197823 deg, peak yaw 65.004 deg/s.
+PASS obstacle: immediate inward clearance and monotonic damped return without overshoot.
+PASS zero simulation time preserves camera state.

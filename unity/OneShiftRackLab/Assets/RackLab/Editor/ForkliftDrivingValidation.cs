@@ -599,6 +599,7 @@ namespace OneShift.RackLab
             public readonly BoxCollider Floor;
             public readonly GameObject Vehicle;
             public readonly ForkliftDriveController Controller;
+            public readonly ForkliftLiftController LiftController;
             public Rigidbody Body { get { return Controller.body; } }
 
             public Rig()
@@ -620,6 +621,13 @@ namespace OneShift.RackLab
                     Controller.SetOccupied(true);
                     Controller.SetBrowserActive(true);
                     Controller.ClearDriverInput();
+                    LiftController = Vehicle.GetComponent<ForkliftLiftController>();
+                    if (LiftController != null)
+                    {
+                        LiftController.Initialize();
+                        LiftController.SetBrowserActive(true);
+                        LiftController.ClearInput();
+                    }
                     // No render or camera behavior participates in simulation.
                     foreach (var camera in Vehicle.GetComponentsInChildren<Camera>()) camera.enabled = false;
                     Physics.SyncTransforms();
@@ -643,6 +651,7 @@ namespace OneShift.RackLab
                 for (int index = 0; index < count; ++index)
                 {
                     Controller.TickPhysics(StepSeconds);
+                    if (LiftController != null) LiftController.TickPhysics(StepSeconds);
                     physics.Simulate(StepSeconds);
                     sample?.Invoke();
                     if (float.IsNaN(Body.position.sqrMagnitude) || Body.position.sqrMagnitude > 1e8f)

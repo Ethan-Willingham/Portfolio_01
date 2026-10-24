@@ -21,11 +21,18 @@ link to the illustrated game.
 The yellow LPG forklift is parked near the entrance. E opens its first-session
 familiarisation, then Enter begins driving. W/S drives and reverses, A/D steers
 the rear wheels, Space brakes, Shift gives a slow approach, F sets the parking
-brake, and E steps out once stopped. C changes the rear/cab camera, V centres
+brake, and E steps out once stopped. Q raises the forks, Z lowers them, T tilts
+the mast forward and G tilts it back. C changes the rear/cab camera, V centres
 the view, H sounds the horn, and holding R while stopped recovers the truck.
 The one-wheel ramp east of the bay can physically overturn it. The truck uses
 rigidbodies, front drive, an oscillating rear axle and compound collision.
-Fork lifting, dynamic pallets and load imbalance remain future work. See
+The mast, inner stage and carriage are jointed physical bodies. Force-limited
+hydraulics lift pallets through ordinary fork contacts, transmitting the load's
+weight and moment into the truck. All eighteen existing pallets are dynamic,
+including the upper rack. Four marked floor examples provide 80 kg, balanced
+800 kg, 3,500 kg and off-centre 800 kg packages; visible labels use pounds first
+and kilograms second. Approach the pallets through their 40-inch front or rear
+face. The original side notches are too shallow for these fork heels. See
 `unity/OneShiftRackLab/FORKLIFT.md` for the runtime architecture and checks.
 
 `DemoActivity` gates the Unity player on tab visibility, window focus and stage

@@ -48,6 +48,7 @@ namespace OneShift.RackLab
             var player = Object.FindFirstObjectByType<RackWalkController>();
             var forklift = Object.FindFirstObjectByType<ForkliftDriveController>();
             var driver = Object.FindFirstObjectByType<ForkliftPlayerInteraction>();
+            var lift = Object.FindFirstObjectByType<ForkliftLiftController>();
             var rowOn = new bool[3];
             foreach (var row in Object.FindObjectsByType<WarehouseLightRow>(FindObjectsSortMode.None))
                 if (row.RowNumber >= 1 && row.RowNumber <= rowOn.Length) rowOn[row.RowNumber - 1] = row.IsOn;
@@ -72,6 +73,12 @@ namespace OneShift.RackLab
                 forkliftSteer = forklift != null ? forklift.SteerAngle : 0,
                 forkliftGrounded = forklift != null ? forklift.GroundedWheelCount : 0,
                 forkliftSprungMasses = sprungMasses,
+                forkliftLiftHeight = lift != null ? lift.LiftHeightMeters : -1,
+                forkliftTiltDegrees = lift != null ? lift.TiltDegrees : 0,
+                forkliftLiftInput = lift != null ? lift.LiftInput : 0,
+                forkliftTiltInput = lift != null ? lift.TiltInput : 0,
+                forkliftHydraulicPressure = lift != null ? lift.HydraulicPressure : 0,
+                forkliftLiftStalled = lift != null && lift.IsStalled,
                 forkliftDriving = driver != null && driver.IsDriving,
                 forkliftTraining = driver != null && driver.TrainingOpen,
                 forkliftCabView = driver != null && driver.CabView,
@@ -91,6 +98,8 @@ namespace OneShift.RackLab
             public bool browserSuspended;
             public float[] forkliftPosition, forkliftUp, forkliftSprungMasses;
             public float forkliftSignedSpeed, forkliftThrottle, forkliftSteer;
+            public float forkliftLiftHeight, forkliftTiltDegrees, forkliftLiftInput, forkliftTiltInput, forkliftHydraulicPressure;
+            public bool forkliftLiftStalled;
             public int forkliftGrounded;
             public bool forkliftDriving, forkliftTraining, forkliftCaptured, forkliftParked, forkliftCabView;
         }
@@ -130,6 +139,8 @@ namespace OneShift.RackLab
                 forklift.SetBrowserActive(!suspended);
             foreach (var driver in Object.FindObjectsByType<ForkliftPlayerInteraction>(FindObjectsSortMode.None))
                 driver.SetBrowserActive(!suspended);
+            foreach (var lift in Object.FindObjectsByType<ForkliftLiftController>(FindObjectsSortMode.None))
+                lift.SetBrowserActive(!suspended);
         }
 
         void OnDestroy()

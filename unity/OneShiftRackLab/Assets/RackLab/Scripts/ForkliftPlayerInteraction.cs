@@ -22,12 +22,14 @@ namespace OneShift.RackLab
         Vector3 originalCameraPosition, spawnPosition;
         Quaternion originalCameraRotation, spawnRotation;
         Transform operatorEye;
+        ForkliftLiftController lift;
         bool driving, trainingOpen, trained, captured, parkingBrake;
         bool browserActive = true, focused = true, awaitNeutral, applicationPaused;
         bool cabView;
         float orbitYaw, orbitPitch = 18, recoverHeld, noticeUntil;
         string notice;
-        Vector3 cameraVelocity;
+        readonly ForkliftCameraRigState cameraRig = new ForkliftCameraRigState();
+        readonly RaycastHit[] cameraHits = new RaycastHit[96];
         GUIStyle heading, copy, fine;
         AudioSource engine, effects;
         AudioClip engineClip, hornClip, reverseClip;
@@ -39,6 +41,7 @@ namespace OneShift.RackLab
             if (vehicle == null) vehicle = FindFirstObjectByType<ForkliftDriveController>();
             if (walking == null || walking.eyes == null || vehicle == null) { enabled = false; return; }
             view = walking.eyes;
+            lift = vehicle.GetComponent<ForkliftLiftController>();
             originalNearClip = view.nearClipPlane;
             originalCameraParent = view.transform.parent;
             originalCameraPosition = view.transform.localPosition;
@@ -54,6 +57,7 @@ namespace OneShift.RackLab
         {
             Capture(false);
             if (vehicle != null) { vehicle.SetDriverInput(0, 0, true, true, false); vehicle.SetOccupied(false); }
+            if (lift != null) { lift.ClearInput(); lift.SetOccupied(false); }
             if (engine != null) engine.Stop();
             if (effects != null) effects.Stop();
         }
@@ -101,6 +105,7 @@ namespace OneShift.RackLab
             Cursor.lockState = active ? CursorLockMode.Locked : CursorLockMode.None;
             Cursor.visible = !active;
             if (vehicle != null && !active) vehicle.SetDriverInput(0, 0, true, parkingBrake, false);
+            if (lift != null && !active) lift.ClearInput();
         }
 
         bool NearTruck()
@@ -138,8 +143,8 @@ namespace OneShift.RackLab
             }
             if (Input.GetKeyDown(KeyCode.Escape)) Capture(false);
             if (!captured && Input.GetMouseButtonDown(0)) Capture(true);
-            if (!captured) { vehicle.SetDriverInput(0, 0, true, parkingBrake, false); return; }
-            if (Input.GetKeyDown(KeyCode.C)) { cabView = !cabView; cameraVelocity = Vector3.zero; }
+            if (!captured) { vehicle.SetDriverInput(0, 0, true, parkingBrake, false); if (lift != null) lift.ClearInput(); return; }
+            if (Input.GetKeyDown(KeyCode.C)) { cabView = !cabView; cameraRig.Reset(); }
             if (Input.GetKeyDown(KeyCode.F)) parkingBrake = !parkingBrake;
             if (Input.GetKeyDown(KeyCode.H)) effects.PlayOneShot(hornClip, .32f);
             if (Input.GetKeyDown(KeyCode.E)) { TryExit(); if (!driving) return; }
@@ -147,13 +152,17 @@ namespace OneShift.RackLab
             float throttle = Input.GetAxisRaw("Vertical");
             float steer = Input.GetAxisRaw("Horizontal");
             bool brake = Input.GetKey(KeyCode.Space);
+            float liftInput = (Input.GetKey(KeyCode.Q) ? 1 : 0) - (Input.GetKey(KeyCode.Z) ? 1 : 0);
+            float tiltInput = (Input.GetKey(KeyCode.T) ? 1 : 0) - (Input.GetKey(KeyCode.G) ? 1 : 0);
             if (awaitNeutral)
             {
-                if (Mathf.Abs(throttle) < .01f && Mathf.Abs(steer) < .01f && !brake) awaitNeutral = false;
-                throttle = steer = 0;
+                if (Mathf.Abs(throttle) < .01f && Mathf.Abs(steer) < .01f && !brake &&
+                    !Input.GetKey(KeyCode.Q) && !Input.GetKey(KeyCode.Z) && !Input.GetKey(KeyCode.T) && !Input.GetKey(KeyCode.G)) awaitNeutral = false;
+                throttle = steer = liftInput = tiltInput = 0;
                 brake = true;
             }
             vehicle.SetDriverInput(throttle, steer, brake, parkingBrake, Input.GetKey(KeyCode.LeftShift));
+            if (lift != null) lift.SetInput(liftInput, tiltInput);
             orbitYaw += Input.GetAxisRaw("Mouse X") * 1.7f;
             orbitPitch = Mathf.Clamp(orbitPitch - Input.GetAxisRaw("Mouse Y") * 1.3f, cabView ? -55 : 6, cabView ? 65 : 55);
             if (Input.GetKeyDown(KeyCode.V)) { orbitYaw = 0; orbitPitch = 18; }
@@ -177,7 +186,8 @@ namespace OneShift.RackLab
             walking.SetVehicleMode(true);
             view.transform.SetParent(null, true);
             vehicle.SetOccupied(true);
-            cameraVelocity = Vector3.zero;
+            if (lift != null) lift.SetOccupied(true);
+            cameraRig.Reset();
             Capture(true);
             UpdateCamera(true);
             engine.Play();
@@ -197,6 +207,7 @@ namespace OneShift.RackLab
                 parkingBrake = true;
                 vehicle.SetDriverInput(0, 0, true, true, false);
                 vehicle.SetOccupied(false);
+                if (lift != null) { lift.ClearInput(); lift.SetOccupied(false); }
                 driving = false;
                 engine.Stop();
                 view.transform.SetParent(originalCameraParent, false);
@@ -212,11 +223,52 @@ namespace OneShift.RackLab
 
         void Recover()
         {
-            var obstruction = Physics.OverlapBox(spawnPosition + spawnRotation * new Vector3(0, 1.2f, .44f),
-                new Vector3(.77f, 1.15f, 2.04f), spawnRotation, ~0, QueryTriggerInteraction.Ignore);
+            // Recovery preserves the mast's current lift and tilt. Enclose its
+            // actual shape in truck space, including raised forks, before moving.
+            // Mesh-local bounds avoid inflating an overturned truck's world AABB.
+            var truckFromWorld = vehicle.transform.worldToLocalMatrix;
+            Bounds clearance = default;
+            bool hasBounds = false;
+            foreach (var solid in vehicle.GetComponentsInChildren<Collider>())
+            {
+                if (!solid.enabled || solid.isTrigger || solid is WheelCollider) continue;
+                Bounds shape;
+                Matrix4x4 truckFromShape;
+                if (solid is BoxCollider box)
+                {
+                    shape = new Bounds(box.center, box.size);
+                    truckFromShape = truckFromWorld * box.transform.localToWorldMatrix;
+                }
+                else if (solid is MeshCollider mesh && mesh.sharedMesh != null)
+                {
+                    shape = mesh.sharedMesh.bounds;
+                    truckFromShape = truckFromWorld * mesh.transform.localToWorldMatrix;
+                }
+                else
+                {
+                    shape = solid.bounds;
+                    truckFromShape = truckFromWorld;
+                }
+                for (int corner = 0; corner < 8; corner++)
+                {
+                    var signs = new Vector3((corner & 1) == 0 ? -1 : 1,
+                        (corner & 2) == 0 ? -1 : 1, (corner & 4) == 0 ? -1 : 1);
+                    Vector3 point = truckFromShape.MultiplyPoint3x4(shape.center + Vector3.Scale(shape.extents, signs));
+                    if (!hasBounds) { clearance = new Bounds(point, Vector3.zero); hasBounds = true; }
+                    else clearance.Encapsulate(point);
+                }
+            }
+            if (!hasBounds) { Tell("Cannot check the parking bay for this forklift."); return; }
+            // A low forward-tilted fork can sit below the chassis origin. Lift
+            // the recovery pose just enough to keep every solid above the floor.
+            Vector3 recoveryPosition = spawnPosition;
+            recoveryPosition.y += Mathf.Max(0, .02f - (recoveryPosition.y + clearance.min.y));
+            var obstruction = Physics.OverlapBox(recoveryPosition + spawnRotation * clearance.center,
+                clearance.extents + new Vector3(.01f, .005f, .01f), spawnRotation, ~0, QueryTriggerInteraction.Ignore);
             foreach (var hit in obstruction)
                 if (!hit.transform.IsChildOf(vehicle.transform)) { Tell("The parking bay is blocked. Clear it before recovering."); return; }
-            vehicle.ResetVehicle(spawnPosition, spawnRotation);
+            vehicle.ResetVehicle(recoveryPosition, spawnRotation);
+            if (lift != null) lift.ClearInput();
             parkingBrake = true;
             awaitNeutral = true;
             UpdateCamera(true);
@@ -238,16 +290,15 @@ namespace OneShift.RackLab
                 return;
             }
             Vector3 focus = vehicle.transform.position - Quaternion.Euler(0, vehicle.transform.eulerAngles.y, 0) * Vector3.forward * .4f + Vector3.up * .95f;
-            Quaternion orbit = Quaternion.Euler(orbitPitch, yaw, 0);
-            Vector3 direction = orbit * Vector3.back;
-            float distance = 5.8f;
-            foreach (var hit in Physics.SphereCastAll(focus, .18f, direction, distance, ~0, QueryTriggerInteraction.Ignore))
-                if (!hit.transform.IsChildOf(vehicle.transform)) distance = Mathf.Min(distance, Mathf.Max(.12f, hit.distance - .12f));
-            Vector3 desired = focus + direction * distance;
-            // Pull in immediately at an obstruction; smooth only the return outward.
-            bool obstructed = Vector3.Distance(view.transform.position, focus) > distance + .05f;
-            view.transform.position = snap || obstructed ? desired : Vector3.SmoothDamp(view.transform.position, desired, ref cameraVelocity, .12f);
-            view.transform.rotation = Quaternion.LookRotation(focus - view.transform.position, Vector3.up);
+            cameraRig.Aim(yaw, orbitPitch, Time.deltaTime, snap);
+            float distance = ForkliftCameraRigState.MaximumDistance;
+            int hitCount = Physics.SphereCastNonAlloc(focus, .18f, cameraRig.Direction, cameraHits,
+                distance, ~0, QueryTriggerInteraction.Ignore);
+            for (int i = 0; i < hitCount; i++)
+                if (!cameraHits[i].transform.IsChildOf(vehicle.transform))
+                    distance = Mathf.Min(distance, Mathf.Max(.12f, cameraHits[i].distance - .12f));
+            var pose = cameraRig.Place(focus, distance, Time.deltaTime, snap);
+            view.transform.SetPositionAndRotation(pose.position, pose.rotation);
             view.fieldOfView = Mathf.Min(65, Camera.HorizontalToVerticalFieldOfView(90, view.aspect));
             view.nearClipPlane = .08f;
         }
@@ -300,28 +351,31 @@ namespace OneShift.RackLab
             float w = Screen.width / scale, h = Screen.height / scale;
             if (trainingOpen)
             {
-                Rect panel = new Rect((w-620)/2, (h-330)/2, 620, 330);
+                Rect panel = new Rect((w-620)/2, (h-410)/2, 620, 410);
                 Panel(panel);
                 GUI.Label(new Rect(panel.x+24,panel.y+20,572,32), "FORKLIFT FAMILIARISATION", heading);
-                GUI.Label(new Rect(panel.x+24,panel.y+68,572,170),
-                    "W / S drive forward and reverse. Space brakes.\n\nThe rear wheels steer, and the tail swings wide. Slow for corners and ramps. One wheel riding high can roll the truck.\n\nShift gives a slow approach. F sets the parking brake. C changes between the rear and cab views.", copy);
-                GUI.Label(new Rect(panel.x+24,panel.y+265,572,48), "Enter: begin driving     Escape: return to walking", copy);
+                GUI.Label(new Rect(panel.x+24,panel.y+68,572,275),
+                    "W / S drive forward and reverse. Space brakes.\n\nThe rear wheels steer, and the tail swings wide. Slow for corners and ramps. One wheel riding high can roll the truck.\n\nQ / Z raise and lower the forks. T / G tilt forward and back. Slide both forks fully into the pallet, lift clear, then carry low. Heavy or off-centre loads affect balance; the hydraulic lift can stall.\n\nShift gives a slow approach. F parks. C changes the rear and cab views.", copy);
+                GUI.Label(new Rect(panel.x+24,panel.y+355,572,48), "Enter: begin driving     Escape: return to walking", copy);
             }
             else if (driving)
             {
-                Panel(new Rect(18,18,310,85));
+                Panel(new Rect(18,18,310,112));
                 string direction = vehicle.SignedSpeedMps < -.1f ? "REV" : vehicle.SignedSpeedMps > .1f ? "FWD" : "N";
                 GUI.Label(new Rect(32,25,284,30), (vehicle.SpeedMps * 2.236936f).ToString("0.0") + " mph    " + direction, heading);
                 GUI.Label(new Rect(32,60,284,25), parkingBrake ? "PARKING BRAKE" : "04 / YELLOW LPG", fine);
-                Panel(new Rect(18,h-92,w-36,74));
-                GUI.Label(new Rect(32,h-86,w-64,24), "W/S drive   A/D steer   Space brake   Shift slow   F park   E step out", fine);
-                GUI.Label(new Rect(32,h-62,w-64,24), "Mouse look   C camera   V centre view   H horn   Hold R recover   Esc cursor", fine);
+                if (lift != null) GUI.Label(new Rect(32,86,284,25), "FORKS " + (lift.LiftHeightMeters * 3.28084f).ToString("0.0") + " ft" +
+                    (lift.IsStalled ? "   LIFT LIMIT" : "   TILT " + lift.TiltDegrees.ToString("0") + " deg"), fine);
+                Panel(new Rect(18,h-116,w-36,98));
+                GUI.Label(new Rect(32,h-110,w-64,24), "W/S drive   A/D steer   Space brake   Shift slow   F park   E step out", fine);
+                GUI.Label(new Rect(32,h-86,w-64,24), "Q/Z raise/lower   T/G tilt forward/back   C camera   V centre view", fine);
+                GUI.Label(new Rect(32,h-62,w-64,24), "Mouse look   H horn   Hold R recover   Esc cursor", fine);
                 string status = !captured ? "Click inside the game to drive." :
                     Time.unscaledTime < noticeUntil ? notice :
                     vehicle.IsOverturned ? "Forklift overturned. Hold R while stopped to recover." :
                     recoverHeld > 0 ? "Hold R to return to the parking bay..." :
                     "";
-                if (status.Length > 0) { Panel(new Rect((w-620)/2,h-145,620,38)); GUI.Label(new Rect((w-590)/2,h-139,590,28),status,fine); }
+                if (status.Length > 0) { Panel(new Rect((w-620)/2,h-169,620,38)); GUI.Label(new Rect((w-590)/2,h-163,590,28),status,fine); }
             }
             else if (walking.CanControl && NearTruck())
             {
