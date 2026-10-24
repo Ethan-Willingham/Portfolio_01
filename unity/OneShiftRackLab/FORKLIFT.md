@@ -134,14 +134,36 @@ Only the player's explicit recovery command resets its pose.
 
 The rear inertia tensor includes the outboard wheel masses; deriving it from
 the narrow axle housing alone made the joint unstable. Rear springs use
-600 kN/m with 1 kN s/m damping. Wheel sprung masses remain automatic for each
-rigidbody. The separate unpowered axle also needs a 0.001 Nm numerical wake
-signal while rolling, because Unity does not expose PhysX's sticky tyre reset
-for jointed vehicles. Its combined tyre force is below 0.008 N. See the
+600 kN/m with 6 kN s/m damping. Physics advances at 200 Hz so the chassis,
+rear axle and hinge respond together every 0.005 seconds. Both bodies use
+the project's default joint solver iterations. Wheel forces act 0.02 m above
+the resting tyre base to reduce contact jitter.
+
+Tyre rest loads come from the whole truck's mass, centre of mass and axle
+positions: about 798.25 kg supported by each front wheel and 1,011.75 kg by
+each rear wheel. The controller applies these sprung masses after native
+vehicle initialization; setting them earlier is overwritten. Actual body
+masses remain 3,500 kg and 120 kg. This accounts for the chassis weight passing
+through the rear hinge, which the axle's automatic 60 kg per wheel omits.
+Native tyre friction remains finite and allows slip. There is no anti-roll
+force or velocity snapping.
+
+The separate unpowered axle also needs a 0.001 Nm numerical wake signal
+whenever the parking brake is released, including in neutral so gravity can
+roll the truck. Unity does not expose PhysX's sticky tyre reset for jointed
+vehicles. The same signal reaches the front wheels when neutral driveline drag
+is effectively zero. It has no meaningful propulsion; the combined force of
+all four wake signals is below 0.014 N. See the
 [PhysX jointed truck example](https://nvidia-omniverse.github.io/PhysX/physx/5.1.1/docs/Vehicles.html).
 Parking and inactivity clear that signal along with engine torque.
 
-The front wheels drive and brake. The rear wheels use separate inside/outside
+The front wheels drive and brake. In neutral, driveline drag opposes each front
+wheel's rotation, up to 45 Nm per wheel, and tapers smoothly to zero below
+0.25 m/s tyre rolling speed. Neutral does not apply the service brake. Using
+brake torque for this small drag had incorrectly held the truck on an
+eight-degree slope after the parking brake was released.
+
+The rear wheels use separate inside/outside
 steering angles, with a 60-degree inside limit at low speed reducing to
 12 degrees at speed. Engine torque tapers towards 4.3 m/s forward and 3 m/s
 reverse. Selecting the opposite direction brakes before reverse drive engages.
@@ -182,6 +204,19 @@ isolated PhysX scenes and saves measured results to
 `Assets/RackLab/Reports/forklift-driving-validation.json`. It checks floor support,
 acceleration, service braking, inching, reverse, steering in both directions,
 two-track ramp climbing, one-sided ramp rollover, free fall and rotation, wall
-collision and cleared pause input. This pass covers unloaded driving, not load
-capacity or lifting. The browser test additionally exercises the compiled
-player's entry, driving controls, cameras and pause behavior.
+collision and cleared pause input. Grip checks measure tyre rolling in both
+directions, rear tyre contact during sustained turns, parking hold, and parking
+then releasing the brake on uphill and downhill slopes. The validation uses
+the production 0.005-second physics step. This pass covers unloaded driving,
+not load capacity or lifting. The browser test additionally exercises the
+compiled player's entry, driving controls, cameras and pause behavior.
+
+The 24 October 2026 grip validation passed all 19 checks. In steady forward and
+reverse travel, each tyre's 95th-percentile rolling-speed error stayed below
+1 percent; the largest measured value was 0.537 percent. Rear lateral contact
+speed at the same percentile stayed below 0.146 m/s in sustained tight turns.
+Maximum horizontal drift during 30 seconds parked on level ground was below
+0.1 mm. On the eight-degree slope, facing either direction, parked
+drift stayed below 1.3 cm over 10 seconds; releasing into neutral let gravity
+roll the truck 5.54 to 5.55 m in three seconds. The one-sided ramp still overturned
+the truck after 3.56 seconds, reaching 94.4 degrees of body lean.

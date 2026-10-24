@@ -16,7 +16,7 @@ namespace OneShift.RackLab
     {
         const string PrefabPath = "Assets/RackLab/Prefabs/WarehouseForklift.prefab";
         const string ReportPath = "Assets/RackLab/Reports/forklift-driving-validation.json";
-        const float StepSeconds = .02f;
+        const float StepSeconds = .005f;
 
         [Serializable]
         public sealed class Measurement
@@ -48,7 +48,7 @@ namespace OneShift.RackLab
             public string generatedUtc;
             public string unityVersion;
             public string prefab = PrefabPath;
-            public string method = "Isolated PhysX scene, fixed 0.02 second steps matching the project, actual prefab rigidbodies, wheel colliders and compound colliders.";
+            public string method = "Isolated PhysX scene, fixed 0.005 second steps matching the project, actual prefab rigidbodies, wheel colliders and compound colliders.";
             public string scope = "Unloaded driving physics. Does not certify load capacity, lifting, pallet interaction, tire behavior on every surface, or a published player.";
             public bool passed;
             public List<Check> checks = new List<Check>();
@@ -76,6 +76,8 @@ namespace OneShift.RackLab
         {
             if (EditorApplication.isPlayingOrWillChangePlaymode)
                 throw new InvalidOperationException("Stop Play before running isolated forklift validation.");
+            if (Mathf.Abs(Time.fixedDeltaTime - StepSeconds) > .000001f)
+                throw new InvalidOperationException("Validation requires the production fixed timestep to be 0.005 seconds. Current Time.fixedDeltaTime: " + Time.fixedDeltaTime);
             if (AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath) == null)
                 throw new InvalidOperationException("Build the WarehouseForklift prefab before validation.");
 
@@ -92,6 +94,13 @@ namespace OneShift.RackLab
             RunCheck(report, "airborne gravity and free rotation", "An airborne truck falls under gravity and retains angular momentum, with no upright lock.", FallsFreely);
             RunCheck(report, "solid obstacle collision", "The truck stops against a 3 m high wall and its body never passes through it.", Collides);
             RunCheck(report, "pause clears driving input", "Deactivation zeros wheel motor torque immediately. Reactivation without a fresh input leaves torque at zero.", ClearsPausedInput);
+            RunCheck(report, "steady forward tire rolling", "During two seconds of steady forward travel above 1 m/s, each tire stays grounded for at least 95 percent of samples, has less than 15 percent P95 rolling error and less than 10 percent integrated rolling-distance error.", (rig, check) => SteadyRolling(rig, check, 1f));
+            RunCheck(report, "steady reverse tire rolling", "During two seconds of steady reverse travel above 1 m/s, each tire stays grounded for at least 95 percent of samples, has less than 15 percent P95 rolling error and less than 10 percent integrated rolling-distance error.", (rig, check) => SteadyRolling(rig, check, -1f));
+            RunCheck(report, "sustained right rear tire grip", "A sustained powered right circle near 1.5 m/s turns the nose right, with each rear tire's lateral contact speed below 0.15 m/s RMS and 0.25 m/s P95.", (rig, check) => SustainedTireGrip(rig, check, 1f));
+            RunCheck(report, "sustained left rear tire grip", "A sustained powered left circle near 1.5 m/s turns the nose left, with each rear tire's lateral contact speed below 0.15 m/s RMS and 0.25 m/s P95.", (rig, check) => SustainedTireGrip(rig, check, -1f));
+            RunCheck(report, "parking brake tire hold", "After driving and stopping, 30 seconds parked produces less than 0.05 m drift, less than 0.02 m/s P95 body speed and less than 0.02 m/s P95 tread speed on each rear tire.", ParkedTireHold);
+            RunCheck(report, "uphill slope parking and release", "Facing uphill on an 8 degree slope, the parked truck holds for 10 seconds within 0.05 m, then rolls more than 0.25 m downhill within 3 seconds after release into neutral.", (rig, check) => SlopeHoldAndRelease(rig, check, true));
+            RunCheck(report, "downhill slope parking and release", "Facing downhill on an 8 degree slope, the parked truck holds for 10 seconds within 0.05 m, then rolls more than 0.25 m downhill within 3 seconds after release into neutral.", (rig, check) => SlopeHoldAndRelease(rig, check, false));
             report.passed = report.checks.All(check => check.passed);
             return report;
         }
@@ -312,12 +321,282 @@ namespace OneShift.RackLab
             check.passed = before > 1f && paused < .001f && resumed < .001f;
         }
 
+        static void SteadyRolling(Rig rig, Check check, float direction)
+        {
+            rig.Step(2f);
+            rig.Input(direction, 0f);
+            rig.Step(5f);
+            var tires = NewTireSamples();
+            float minimumSpeed = float.MaxValue;
+            rig.Step(2f, () =>
+            {
+                minimumSpeed = Mathf.Min(minimumSpeed, direction * rig.Controller.SignedSpeedMps);
+                CaptureTires(rig, tires);
+            });
+            check.Measure("minimum requested-direction speed in sampling window", minimumSpeed, "m/s");
+            bool passed = minimumSpeed > 1f;
+            for (int i = 0; i < tires.Length; ++i)
+            {
+                tires[i].Measure(check, TireName(i));
+                passed &= tires[i].GroundedFraction >= .95f && tires[i].ExpectedGroundFraction >= .95f && tires[i].MinimumContactSpeed > 1f &&
+                    Percentile95(tires[i].rollingErrors) < .15f && tires[i].RollingDistanceError < .10f;
+            }
+            check.passed = passed;
+        }
+
+        static void SustainedTireGrip(Rig rig, Check check, float direction)
+        {
+            // Restrict engine road speed, without assigning either rigidbody's
+            // velocity, so a powered turn can settle before measuring tire slip.
+            // A lower governor also changes the controller's steering limiter.
+            // Retain the roughly 58 degree production limit at 1.5 m/s, so the
+            // 60 percent steering input still produces a meaningful tight turn.
+            rig.Controller.highSpeedRearSteerAngle = 58f;
+            rig.Controller.maximumForwardSpeed = 1.5f;
+            rig.Step(2f);
+            rig.Input(1f, 0f);
+            rig.Step(3f);
+            rig.Input(1f, direction * .6f);
+            rig.Step(3f);
+            var tires = NewTireSamples();
+            Vector3 previousForward = Vector3.ProjectOnPlane(rig.Body.rotation * Vector3.forward, Vector3.up);
+            Vector3 previousNose = FrontAxleCenter(rig);
+            float heading = 0f, noseTravel = 0f, speedTotal = 0f, minimumSpeed = float.MaxValue;
+            int samples = 0;
+            rig.Step(4f, () =>
+            {
+                Vector3 forward = Vector3.ProjectOnPlane(rig.Body.rotation * Vector3.forward, Vector3.up);
+                heading += direction * Vector3.SignedAngle(previousForward, forward, Vector3.up);
+                previousForward = forward;
+                Vector3 nose = FrontAxleCenter(rig);
+                noseTravel += Vector3.ProjectOnPlane(nose - previousNose, Vector3.up).magnitude;
+                previousNose = nose;
+                float speed = rig.Controller.SignedSpeedMps;
+                speedTotal += speed;
+                minimumSpeed = Mathf.Min(minimumSpeed, speed);
+                samples++;
+                CaptureTires(rig, tires);
+            });
+            float averageSpeed = check.Measure("mean forward speed during turn", speedTotal / samples, "m/s");
+            check.Measure("minimum forward speed during turn", minimumSpeed, "m/s");
+            check.Measure("accumulated nose turn toward requested side", heading, "degrees");
+            check.Measure("front axle apparent turn radius", noseTravel / Mathf.Max(.001f, Mathf.Abs(heading) * Mathf.Deg2Rad), "m");
+            float frontSteer = check.Measure("maximum front wheel steer", Mathf.Max(Mathf.Abs(rig.Controller.wheels[0].steerAngle), Mathf.Abs(rig.Controller.wheels[1].steerAngle)), "degrees");
+            float rearSteer = check.Measure("average rear wheel steer", (rig.Controller.wheels[2].steerAngle + rig.Controller.wheels[3].steerAngle) * .5f, "degrees");
+            float insideRearSteer = check.Measure("inside rear wheel steer magnitude", Mathf.Max(Mathf.Abs(rig.Controller.wheels[2].steerAngle), Mathf.Abs(rig.Controller.wheels[3].steerAngle)), "degrees");
+            bool passed = heading > 20f && averageSpeed > 1f && averageSpeed < 1.8f && minimumSpeed > .75f &&
+                frontSteer < .01f && rearSteer * direction < -2f && insideRearSteer > 25f && !rig.Controller.IsOverturned;
+            for (int i = 0; i < tires.Length; ++i)
+            {
+                tires[i].Measure(check, TireName(i));
+                passed &= tires[i].GroundedFraction >= .95f && tires[i].ExpectedGroundFraction >= .95f;
+                if (i >= 2) passed &= RootMeanSquare(tires[i].lateralSpeeds) < .15f && Percentile95(tires[i].lateralSpeeds) < .25f;
+            }
+            check.passed = passed;
+        }
+
+        static void ParkedTireHold(Rig rig, Check check)
+        {
+            rig.Step(2f);
+            rig.Input(1f, 0f);
+            rig.Step(2f);
+            float drivenSpeed = check.Measure("speed before parking approach", rig.Controller.SpeedMps, "m/s");
+            rig.Input(0f, 0f, true);
+            rig.Step(5f);
+            float stoppedSpeed = check.Measure("speed after service brake stop", rig.Controller.SpeedMps, "m/s");
+            rig.Controller.SetDriverInput(0f, 0f, false, true, false);
+            rig.Step(1f);
+            Vector3 start = rig.Body.position;
+            var speeds = new List<float>();
+            var tires = NewTireSamples();
+            float maximumDrift = 0f;
+            rig.Step(30f, () =>
+            {
+                maximumDrift = Mathf.Max(maximumDrift, Vector3.ProjectOnPlane(rig.Body.position - start, Vector3.up).magnitude);
+                speeds.Add(rig.Controller.SpeedMps);
+                CaptureTires(rig, tires);
+            });
+            check.Measure("parked sampling duration", 30f, "s");
+            check.Measure("maximum parked horizontal drift", maximumDrift, "m");
+            float speed95 = check.Measure("parked body speed P95", Percentile95(speeds), "m/s");
+            bool passed = drivenSpeed > 1f && stoppedSpeed < .12f && maximumDrift < .05f && speed95 < .02f;
+            for (int i = 0; i < tires.Length; ++i)
+            {
+                tires[i].Measure(check, TireName(i));
+                passed &= tires[i].GroundedFraction >= .95f && tires[i].ExpectedGroundFraction >= .95f;
+                if (i >= 2) passed &= Percentile95(tires[i].treadSpeeds) < .02f;
+            }
+            check.passed = passed;
+        }
+
+        static void SlopeHoldAndRelease(Rig rig, Check check, bool faceUphill)
+        {
+            // Spawn on a broad inclined surface above the ordinary floor. This
+            // measures tire hold, without asking lowered forks to climb an edge.
+            Quaternion slopeRotation = Quaternion.Euler(-8f, 0f, 0f);
+            Vector3 normal = slopeRotation * Vector3.up;
+            Vector3 topCenter = new Vector3(0f, 6f, 0f);
+            var platform = rig.Box("8 degree slope support", topCenter - normal * .5f, new Vector3(30f, 1f, 60f));
+            platform.transform.rotation = slopeRotation;
+            Quaternion vehicleRotation = slopeRotation * Quaternion.Euler(0f, faceUphill ? 0f : 180f, 0f);
+            rig.Controller.ResetVehicle(topCenter + normal * .15f, vehicleRotation);
+            rig.Controller.SetDriverInput(0f, 0f, false, true, false);
+            Physics.SyncTransforms();
+            rig.Step(3f);
+            float penetration = MaximumPenetration(rig, platform);
+            Vector3 start = rig.Body.position;
+            var speeds = new List<float>();
+            var parkedTires = NewTireSamples();
+            float maximumDrift = 0f;
+            rig.Step(10f, () =>
+            {
+                maximumDrift = Mathf.Max(maximumDrift, Vector3.ProjectOnPlane(rig.Body.position - start, normal).magnitude);
+                speeds.Add(rig.Controller.SpeedMps);
+                CaptureTires(rig, parkedTires, platform);
+            });
+            check.Measure("slope angle", 8f, "degrees");
+            check.Measure("maximum parked slope drift", maximumDrift, "m");
+            float speed95 = check.Measure("parked slope speed P95", Percentile95(speeds), "m/s");
+            check.Measure("solid collider penetration into slope after settling", penetration, "m");
+            bool passed = maximumDrift < .05f && speed95 < .02f && penetration < .005f;
+            for (int i = 0; i < parkedTires.Length; ++i)
+            {
+                parkedTires[i].Measure(check, "parked " + TireName(i));
+                passed &= parkedTires[i].GroundedFraction >= .95f && parkedTires[i].ExpectedGroundFraction >= .95f;
+            }
+
+            Vector3 downhill = Vector3.ProjectOnPlane(Vector3.down, normal).normalized;
+            Vector3 releaseStart = rig.Body.position;
+            var releasedTires = NewTireSamples();
+            rig.Input(0f, 0f);
+            rig.Step(3f, () => CaptureTires(rig, releasedTires, platform));
+            float descent = check.Measure("downhill travel three seconds after neutral release", Vector3.Dot(rig.Body.position - releaseStart, downhill), "m");
+            check.Measure("downhill speed after neutral release", Vector3.Dot(rig.Body.linearVelocity, downhill), "m/s");
+            check.Measure("front brake torque after neutral release", rig.Controller.wheels[0].brakeTorque, "Nm");
+            for (int i = 0; i < releasedTires.Length; ++i)
+            {
+                releasedTires[i].Measure(check, "released " + TireName(i));
+                passed &= releasedTires[i].ExpectedGroundFraction >= .95f;
+            }
+            check.passed = passed && descent > .25f;
+        }
+
+        static float MaximumPenetration(Rig rig, Collider surface)
+        {
+            float maximum = 0f;
+            foreach (var collider in rig.Vehicle.GetComponentsInChildren<Collider>())
+            {
+                if (collider is WheelCollider || collider.isTrigger || !collider.enabled) continue;
+                if (Physics.ComputePenetration(collider, collider.transform.position, collider.transform.rotation,
+                    surface, surface.transform.position, surface.transform.rotation, out _, out float distance))
+                    maximum = Mathf.Max(maximum, distance);
+            }
+            return maximum;
+        }
+
+        static Vector3 FrontAxleCenter(Rig rig)
+        {
+            return (rig.Controller.wheels[0].transform.position + rig.Controller.wheels[1].transform.position) * .5f;
+        }
+
+        static string TireName(int index) { return new[] { "FL", "FR", "RL", "RR" }[index]; }
+
+        static TireSamples[] NewTireSamples()
+        {
+            return new[] { new TireSamples(), new TireSamples(), new TireSamples(), new TireSamples() };
+        }
+
+        static void CaptureTires(Rig rig, TireSamples[] samples, Collider expectedGround = null)
+        {
+            if (expectedGround == null) expectedGround = rig.Floor;
+            for (int i = 0; i < samples.Length; ++i) samples[i].Capture(rig.Controller.wheels[i], expectedGround);
+        }
+
+        static float Percentile95(List<float> samples)
+        {
+            if (samples.Count == 0) return 0f;
+            var sorted = samples.ToArray();
+            Array.Sort(sorted);
+            return sorted[Mathf.Clamp(Mathf.CeilToInt(sorted.Length * .95f) - 1, 0, sorted.Length - 1)];
+        }
+
+        static float RootMeanSquare(List<float> samples)
+        {
+            if (samples.Count == 0) return 0f;
+            double sum = 0;
+            foreach (float value in samples) sum += value * value;
+            return (float)Math.Sqrt(sum / samples.Count);
+        }
+
+        sealed class TireSamples
+        {
+            public readonly List<float> rollingErrors = new List<float>();
+            public readonly List<float> lateralSpeeds = new List<float>();
+            public readonly List<float> treadSpeeds = new List<float>();
+            readonly List<float> lateralAngles = new List<float>();
+            readonly List<float> reportedForwardSlips = new List<float>();
+            readonly List<float> reportedSidewaysSlips = new List<float>();
+            int samples, groundedSamples, expectedGroundSamples;
+            float contactTravel, rollingTravel, minimumContactSpeed = float.MaxValue;
+            public float GroundedFraction => samples > 0 ? groundedSamples / (float)samples : 0f;
+            public float ExpectedGroundFraction => samples > 0 ? expectedGroundSamples / (float)samples : 0f;
+            public float MinimumContactSpeed => groundedSamples > 0 ? minimumContactSpeed : 0f;
+            public float RollingDistanceError => Mathf.Abs(rollingTravel - contactTravel) / Mathf.Max(contactTravel, .001f);
+
+            public void Capture(WheelCollider wheel, Collider expectedGround)
+            {
+                samples++;
+                if (wheel == null) return;
+                float rollingSpeed = wheel.rpm * 2f * Mathf.PI * wheel.radius / 60f;
+                treadSpeeds.Add(Mathf.Abs(rollingSpeed));
+                if (!wheel.GetGroundHit(out WheelHit hit)) return;
+                groundedSamples++;
+                if (expectedGround == null || hit.collider == expectedGround) expectedGroundSamples++;
+                // Rear contact velocity comes from the oscillating axle, not
+                // the main body. Point velocity includes its angular motion.
+                Vector3 relativeVelocity = wheel.attachedRigidbody.GetPointVelocity(hit.point);
+                var groundBody = hit.collider != null ? hit.collider.attachedRigidbody : null;
+                if (groundBody != null) relativeVelocity -= groundBody.GetPointVelocity(hit.point);
+                float longitudinal = Vector3.Dot(relativeVelocity, hit.forwardDir.normalized);
+                float lateral = Vector3.Dot(relativeVelocity, hit.sidewaysDir.normalized);
+                float longitudinalMagnitude = Mathf.Abs(longitudinal);
+                minimumContactSpeed = Mathf.Min(minimumContactSpeed, longitudinalMagnitude);
+                contactTravel += longitudinalMagnitude * StepSeconds;
+                rollingTravel += Mathf.Abs(rollingSpeed) * StepSeconds;
+                rollingErrors.Add(Mathf.Abs(rollingSpeed - longitudinal) / Mathf.Max(longitudinalMagnitude, .5f));
+                lateralSpeeds.Add(Mathf.Abs(lateral));
+                lateralAngles.Add(Mathf.Atan2(Mathf.Abs(lateral), Mathf.Max(longitudinalMagnitude, .5f)) * Mathf.Rad2Deg);
+                // Report native slip, but judge grip from independent motion.
+                // Sticky tire constraints can suppress the native slip signal.
+                reportedForwardSlips.Add(Mathf.Abs(hit.forwardSlip));
+                reportedSidewaysSlips.Add(Mathf.Abs(hit.sidewaysSlip));
+            }
+
+            public void Measure(Check check, string prefix)
+            {
+                check.Measure(prefix + " grounded sample fraction", GroundedFraction, "fraction");
+                check.Measure(prefix + " expected surface sample fraction", ExpectedGroundFraction, "fraction");
+                check.Measure(prefix + " minimum longitudinal contact speed", MinimumContactSpeed, "m/s");
+                check.Measure(prefix + " rolling error P95", Percentile95(rollingErrors), "fraction");
+                check.Measure(prefix + " integrated rolling distance error", RollingDistanceError, "fraction");
+                check.Measure(prefix + " contact travel", contactTravel, "m");
+                check.Measure(prefix + " wheel circumference travel", rollingTravel, "m");
+                check.Measure(prefix + " lateral contact speed RMS", RootMeanSquare(lateralSpeeds), "m/s");
+                check.Measure(prefix + " lateral contact speed P95", Percentile95(lateralSpeeds), "m/s");
+                check.Measure(prefix + " lateral contact angle P95", Percentile95(lateralAngles), "degrees");
+                check.Measure(prefix + " tread speed P95", Percentile95(treadSpeeds), "m/s");
+                check.Measure(prefix + " reported forward slip P95", Percentile95(reportedForwardSlips), "native slip");
+                check.Measure(prefix + " reported sideways slip P95", Percentile95(reportedSidewaysSlips), "native slip");
+            }
+        }
+
         sealed class Rig : IDisposable
         {
             readonly Scene scene;
             readonly Scene previousActive;
             readonly PhysicsScene physics;
             readonly List<Mesh> meshes = new List<Mesh>();
+            public readonly BoxCollider Floor;
             public readonly GameObject Vehicle;
             public readonly ForkliftDriveController Controller;
             public Rigidbody Body { get { return Controller.body; } }
@@ -331,7 +610,7 @@ namespace OneShift.RackLab
                 {
                     if (!physics.IsValid() || physics == Physics.defaultPhysicsScene)
                         throw new InvalidOperationException("Validation requires an isolated physics scene.");
-                    Box("validation concrete floor", new Vector3(0f, -.5f, 30f), new Vector3(200f, 1f, 200f));
+                    Floor = Box("validation concrete floor", new Vector3(0f, -.5f, 30f), new Vector3(200f, 1f, 200f));
                     Vehicle = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath), scene);
                     Vehicle.name = "Disposable validation forklift";
                     Vehicle.transform.SetPositionAndRotation(new Vector3(0f, .15f, 0f), Quaternion.identity);

@@ -71,6 +71,7 @@ namespace OneShift.RackLab
         bool browserActive = true;
         bool applicationFocused = true;
         bool applicationPaused;
+        readonly float[] supportedMasses = new float[4];
 
         bool SimulationActive => browserActive && applicationFocused && !applicationPaused && Time.timeScale > 0;
 
@@ -116,6 +117,21 @@ namespace OneShift.RackLab
                 }
             }
             if (steeringWheelVisual != null) steeringWheelRestRotation = steeringWheelVisual.localRotation;
+
+            // The rear tires support the counterweight through the hinge, not
+            // merely half the axle's own mass. PhysX uses these rest loads to
+            // calibrate its tire forces. Keep the real rigidbody masses intact.
+            float frontZ = (body.transform.InverseTransformPoint(Wheel(0).transform.position).z +
+                body.transform.InverseTransformPoint(Wheel(1).transform.position).z) * .5f;
+            float rearZ = (body.transform.InverseTransformPoint(Wheel(2).transform.position).z +
+                body.transform.InverseTransformPoint(Wheel(3).transform.position).z) * .5f;
+            float totalMass = body.mass + (rearAxleBody != null ? rearAxleBody.mass : 0);
+            float massMoment = body.mass * body.centerOfMass.z;
+            if (rearAxleBody != null)
+                massMoment += rearAxleBody.mass * body.transform.InverseTransformPoint(rearAxleBody.worldCenterOfMass).z;
+            float frontSupport = (massMoment - totalMass * rearZ) / (frontZ - rearZ);
+            supportedMasses[0] = supportedMasses[1] = frontSupport * .5f;
+            supportedMasses[2] = supportedMasses[3] = (totalMass - frontSupport) * .5f;
 
             // PhysX substeps each body separately: front wheels support the
             // chassis; rear wheel forces pass through the oscillating axle joint.
@@ -197,6 +213,17 @@ namespace OneShift.RackLab
         {
             if (!initialized) Initialize();
             if (body == null || dt <= 0) return;
+            // Native vehicle creation replaces values set before the first
+            // simulation step. Reapply only when necessary, including after
+            // Unity rebuilds a wheel's native state. The next step then uses
+            // the complete jointed truck's static support distribution.
+            for (int i = 0; i < 4; i++)
+            {
+                var wheel = Wheel(i);
+                if (wheel != null && supportedMasses[i] > 0 &&
+                    Mathf.Abs(wheel.sprungMass - supportedMasses[i]) > .1f)
+                    wheel.sprungMass = supportedMasses[i];
+            }
             GroundedWheelCount = 0;
             for (int i = 0; i < 4; i++)
                 if (Wheel(i) != null && Wheel(i).isGrounded) GroundedWheelCount++;
@@ -247,8 +274,7 @@ namespace OneShift.RackLab
             }
             AppliedDriveTorque = drive;
 
-            float brake = parked ? parkingBrakeTorque : braking ? serviceBrakeTorque :
-                Mathf.Abs(request) < 0.03f ? coastingBrakeTorque : 0;
+            float brake = parked ? parkingBrakeTorque : braking ? serviceBrakeTorque : 0;
             if (Inching && !parked && !braking)
             {
                 // An inching pedal disengages drive and progressively applies
@@ -260,8 +286,9 @@ namespace OneShift.RackLab
             // PhysX treats the jointed rear axle as an unpowered vehicle and
             // can leave its low-speed tire constraints locked. Unity exposes
             // no acceleration-intent API, so a negligible torque wakes that
-            // solver while the powered body is driving or already rolling.
-            float rearWakeTorque = !parked && (Mathf.Abs(drive) > .0001f || SpeedMps > .025f)
+            // solver whenever parking is released, including neutral so the
+            // truck can roll downhill under gravity without accelerator input.
+            float rearWakeTorque = !parked
                 ? Mathf.Sign(Mathf.Abs(speed) > .025f ? speed : request) * .001f : 0;
             for (int i = 0; i < 4; i++)
             {
@@ -269,7 +296,17 @@ namespace OneShift.RackLab
                 if (wheel == null) continue;
                 // The service and parking brakes act on the drive axle.
                 // The rear axle has no meaningful propulsion torque.
-                wheel.motorTorque = i < 2 ? drive : rearWakeTorque;
+                float torque = i < 2 ? drive : rearWakeTorque;
+                if (i < 2 && !parked && !braking && Mathf.Abs(request) < .03f)
+                {
+                    // Driveline drag opposes wheel rotation. Using brakeTorque
+                    // for coasting makes PhysX hold a stationary truck on a
+                    // slope even when that small brake cannot oppose gravity.
+                    float rollingSpeed = wheel.rpm * Mathf.PI / 30 * wheel.radius;
+                    torque = -coastingBrakeTorque * Mathf.Clamp(rollingSpeed / .25f, -1, 1);
+                    if (Mathf.Abs(torque) < .0001f) torque = rearWakeTorque;
+                }
+                wheel.motorTorque = torque;
                 wheel.brakeTorque = i < 2 ? brake : 0;
             }
         }

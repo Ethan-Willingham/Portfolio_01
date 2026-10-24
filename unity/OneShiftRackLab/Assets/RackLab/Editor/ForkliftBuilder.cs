@@ -136,8 +136,8 @@ namespace OneShift.RackLab
                 {
                     Wheel(vehicle.transform, "Front left contact", new Vector3(-.52f, .355f, .75f), .35f, 80, 800000, 40000),
                     Wheel(vehicle.transform, "Front right contact", new Vector3(.52f, .355f, .75f), .35f, 80, 800000, 40000),
-                    Wheel(axle.transform, "Rear left contact", new Vector3(-.49f, 0, 0), .27f, 45, 600000, 1000),
-                    Wheel(axle.transform, "Rear right contact", new Vector3(.49f, 0, 0), .27f, 45, 600000, 1000)
+                    Wheel(axle.transform, "Rear left contact", new Vector3(-.49f, 0, 0), .27f, 45, 600000, 6000),
+                    Wheel(axle.transform, "Rear right contact", new Vector3(.49f, 0, 0), .27f, 45, 600000, 6000)
                 };
                 // Natural gravity and contact forces can roll or pitch this body all the way over.
                 // The COM includes the rear counterweight; there is no anti-roll force or frozen axis.
@@ -169,8 +169,6 @@ namespace OneShift.RackLab
             body.angularDamping = .04f;
             body.maxAngularVelocity = 10;
             body.maxDepenetrationVelocity = 3;
-            body.solverIterations = 16;
-            body.solverVelocityIterations = 8;
         }
 
         static WheelCollider Wheel(Transform parent, string name, Vector3 position, float radius, float mass, float spring, float damper)
@@ -182,15 +180,49 @@ namespace OneShift.RackLab
             wheel.mass = mass;
             wheel.wheelDampingRate = .65f;
             wheel.suspensionDistance = .055f;
-            wheel.forceAppPointDistance = 0;
+            wheel.forceAppPointDistance = .02f;
             wheel.suspensionSpring = new JointSpring { spring = spring, damper = damper, targetPosition = .5f };
-            // Leave PhysX sprung mass automatic for each owning Rigidbody. The joint
-            // transfers chassis loads; assigning the truck's mass to the 120 kg axle
-            // would not describe that body's suspension mass and is not serialized.
-            wheel.forwardFriction = new WheelFrictionCurve { extremumSlip = .35f, extremumValue = 1, asymptoteSlip = .8f, asymptoteValue = .65f, stiffness = 1.2f };
+            // Runtime sets the jointed truck's supported tire masses after native
+            // creation; these values are not serialized by WheelCollider.
+            bool front = mass > 50;
+            wheel.forwardFriction = new WheelFrictionCurve { extremumSlip = front ? .18f : .35f, extremumValue = 1, asymptoteSlip = front ? .45f : .8f, asymptoteValue = .65f, stiffness = 1.2f };
             wheel.sidewaysFriction = new WheelFrictionCurve { extremumSlip = .12f, extremumValue = 1, asymptoteSlip = .35f, asymptoteValue = .7f, stiffness = 1.1f };
             wheel.ConfigureVehicleSubsteps(4, 12, 12);
             return wheel;
+        }
+
+        // Update contact tuning without regenerating the mesh or practice area.
+        public static string RefreshContactPhysics()
+        {
+            if (EditorApplication.isPlaying) throw new InvalidOperationException("Stop Play before updating tire contact.");
+            var root = PrefabUtility.LoadPrefabContents(PrefabPath);
+            try
+            {
+                var drive = root.GetComponent<ForkliftDriveController>();
+                ConfigureBody(drive.body, 3500);
+                ConfigureBody(drive.rearAxleBody, 120);
+                for (int i = 0; i < 4; i++)
+                {
+                    var wheel = drive.wheels[i];
+                    wheel.forceAppPointDistance = .02f;
+                    var spring = wheel.suspensionSpring;
+                    spring.damper = i < 2 ? 40000 : 6000;
+                    wheel.suspensionSpring = spring;
+                    wheel.forwardFriction = new WheelFrictionCurve { extremumSlip = i < 2 ? .18f : .35f,
+                        extremumValue = 1, asymptoteSlip = i < 2 ? .45f : .8f, asymptoteValue = .65f, stiffness = 1.2f };
+                }
+                PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
+                var timeSettings = new SerializedObject(AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TimeManager.asset")[0]);
+                // Unity 6 stores this setting as rational ticks, not a float.
+                var timestep = timeSettings.FindProperty("Fixed Timestep");
+                long numerator = timestep.FindPropertyRelative("m_Rate.m_Numerator").longValue;
+                long denominator = timestep.FindPropertyRelative("m_Rate.m_Denominator").longValue;
+                timestep.FindPropertyRelative("m_Count").longValue = (long)Math.Round(.005 * numerator / denominator);
+                timeSettings.ApplyModifiedPropertiesWithoutUndo();
+                AssetDatabase.SaveAssets();
+                return "Updated supported tire contact, rear damping and 200 Hz jointed physics.";
+            }
+            finally { PrefabUtility.UnloadPrefabContents(root); }
         }
 
         static void AddBodyColliders(Transform body, Transform visual)

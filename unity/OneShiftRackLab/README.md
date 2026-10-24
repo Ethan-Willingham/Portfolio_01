@@ -104,7 +104,7 @@ source roughness into alpha for URP/Lit. Normal maps are imported as normal maps
 All collision uses compound boxes. Pallet board colliders preserve front fork
 pockets and rounded side-notch shoulders. Fork-entry transforms are included.
 The connected row has 18 named placement anchors, with 14 occupied slots: 12
-loaded pallets and two empty pallets. Driving, mast controls and lifting gameplay
+loaded pallets and two empty pallets. Mast controls and lifting gameplay
 are not implemented in this asset trial.
 
 `Assets/RackLab/Prefabs` contains four `Pallet_` variants, `CartonLoad`,

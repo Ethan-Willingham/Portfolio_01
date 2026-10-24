@@ -155,6 +155,18 @@ async function realSmoke(browser, url) {
     check('REAL: Warehouse geometry replaces the Unity splash', coloredFraction > .08);
     const nightState = await state();
     check('REAL: Night scene was captured before sunrise', nightState.hour < 6);
+    // Native WheelCollider creation can replace values assigned before the
+    // first physics step. Inspect the exported player after it has run, rather
+    // than accepting prefab values or the loader's first reported frame.
+    const physicsState = await pollState('Wait for running forklift physics', current =>
+      current.frameCount >= initial.frameCount + 15 && !current.browserSuspended &&
+      current.timeScale > 0 && current.forkliftGrounded >= 3);
+    check('REAL: Exported physics uses the calibrated 0.005 second timestep',
+      Number.isFinite(physicsState.fixedDeltaTime) && Math.abs(physicsState.fixedDeltaTime - .005) < .000001);
+    const expectedSprungMasses = [798.2456, 798.2456, 1011.7544, 1011.7544];
+    check('REAL: Running tires retain their complete-truck supported masses',
+      Array.isArray(physicsState.forkliftSprungMasses) && physicsState.forkliftSprungMasses.length === 4 &&
+      physicsState.forkliftSprungMasses.every((mass, index) => Number.isFinite(mass) && Math.abs(mass - expectedSprungMasses[index]) < 2));
     let morning = initial;
     const dawnDeadline = Date.now() + 120000;
     while (morning.hour < 7 && Date.now() < dawnDeadline) { await delay(750); morning = await state(); }
@@ -300,7 +312,7 @@ async function realSmoke(browser, url) {
     const firstState = messages.findIndex(message => message.text.includes(prefix));
     const unusedShaderWarnings = messages.filter((message, index) => index < firstState && message.type === 'log' && unusedShaders.some(name => message.text.trim() === name + ' shader is not supported on this GPU (none of subshaders/fallbacks are suitable)'));
     const shaderFailures = messages.filter(message => !startupProbeWarnings.includes(message) && !unusedShaderWarnings.includes(message) && (message.type === 'error' || /shader.*(?:error|failed|unsupported|not supported)|INVALID_(?:OPERATION|ENUM|VALUE)|GL_INVALID|RuntimeError|memory access out of bounds|WebGL context lost/i.test(message.text)));
-    fs.writeFileSync(path.join(dump,'unity-real-states.json'), JSON.stringify({initial,nightState,morning,stopped,still,resumed,blurred,blurredLater,walkingStart,walked,reset,released,uncaptured,recaptured,activeCallbacks,pausedCallbacks}, null, 2));
+    fs.writeFileSync(path.join(dump,'unity-real-states.json'), JSON.stringify({initial,nightState,physicsState,morning,stopped,still,resumed,blurred,blurredLater,walkingStart,walked,reset,released,uncaptured,recaptured,activeCallbacks,pausedCallbacks}, null, 2));
     if (startupProbeWarnings.length) console.log('KNOWN STARTUP WARNINGS: ' + startupProbeWarnings.length + ' Unity internal-format probes (retained in console report)');
     if (unusedShaderWarnings.length) console.log('UNUSED ENGINE SHADERS: ' + unusedShaderWarnings.map(message => message.text.trim().split(' shader ')[0]).join(', ') + ' (retained in console report)');
     if (shaderFailures.length || failures.length) console.error(JSON.stringify({shaderFailures:shaderFailures.slice(0,5),failures}, null, 2));

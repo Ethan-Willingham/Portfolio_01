@@ -52,11 +52,16 @@ namespace OneShift.RackLab
             foreach (var row in Object.FindObjectsByType<WarehouseLightRow>(FindObjectsSortMode.None))
                 if (row.RowNumber >= 1 && row.RowNumber <= rowOn.Length) rowOn[row.RowNumber - 1] = row.IsOn;
             var position = player != null ? player.transform.position : Vector3.zero;
+            var sprungMasses = new float[4];
+            if (forklift != null && forklift.wheels != null)
+                for (int i = 0; i < sprungMasses.Length && i < forklift.wheels.Length; ++i)
+                    if (forklift.wheels[i] != null) sprungMasses[i] = forklift.wheels[i].sprungMass;
             Debug.Log("ONE_SHIFT_STATE " + JsonUtility.ToJson(new BrowserState
             {
                 frameCount = Time.frameCount,
                 hour = dayNight != null ? dayNight.Hour : -1,
                 timeScale = Time.timeScale,
+                fixedDeltaTime = Time.fixedDeltaTime,
                 rowOn = rowOn,
                 playerPosition = new[] { position.x, position.y, position.z },
                 browserSuspended = suspended,
@@ -66,6 +71,7 @@ namespace OneShift.RackLab
                 forkliftThrottle = forklift != null ? forklift.ThrottleInput : 0,
                 forkliftSteer = forklift != null ? forklift.SteerAngle : 0,
                 forkliftGrounded = forklift != null ? forklift.GroundedWheelCount : 0,
+                forkliftSprungMasses = sprungMasses,
                 forkliftDriving = driver != null && driver.IsDriving,
                 forkliftTraining = driver != null && driver.TrainingOpen,
                 forkliftCabView = driver != null && driver.CabView,
@@ -79,11 +85,11 @@ namespace OneShift.RackLab
         {
             public int frameCount;
             public float hour;
-            public float timeScale;
+            public float timeScale, fixedDeltaTime;
             public bool[] rowOn;
             public float[] playerPosition;
             public bool browserSuspended;
-            public float[] forkliftPosition, forkliftUp;
+            public float[] forkliftPosition, forkliftUp, forkliftSprungMasses;
             public float forkliftSignedSpeed, forkliftThrottle, forkliftSteer;
             public int forkliftGrounded;
             public bool forkliftDriving, forkliftTraining, forkliftCaptured, forkliftParked, forkliftCabView;
