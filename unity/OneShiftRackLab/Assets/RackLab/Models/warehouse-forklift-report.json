@@ -1,22 +1,22 @@
 {
-  "design": "Classic yellow LPG forklift, rebuilt from scratch",
+  "design": "Classic yellow LPG forklift, sculpted rear and articulated leaf chains",
   "dimensions_m": [
     1.41,
-    3.997,
+    3.9715,
     2.3515
   ],
   "bounds_min_m": [
     -0.7049999833106995,
-    -1.5920002460479736,
+    -1.5464999675750732,
     0.0010000169277191162
   ],
   "bounds_max_m": [
     0.7049999237060547,
-    2.4050002098083496,
+    2.4250001907348633,
     2.3524999618530273
   ],
-  "triangles": 220208,
-  "mesh_objects": 43,
+  "triangles": 398038,
+  "mesh_objects": 452,
   "materials": 14,
   "blade_length_m": 1.06,
   "fork_centres_m": 0.55,
@@ -25,5 +25,196 @@
   "floor_clearance_under_forks_m": 0.077,
   "wheelbase_m": 1.71,
   "guard_height_m": 2.195,
-  "status": "Art asset and FBX. Driving and lifting gameplay are not installed."
+  "rear_arch_radius_m": 0.345,
+  "rear_steering_range_degrees": [
+    -35,
+    35
+  ],
+  "mechanism": {
+    "mast_type": "Original duplex mast, paired 3x4 leaf chains on smooth sheaves",
+    "inner_travel_m": 0.9,
+    "carriage_travel_m": 1.8,
+    "carriage_ratio": 2,
+    "chain_pitch_m": 0.01905,
+    "chain_links_each": 175,
+    "chain_length_each_m": 3.33375,
+    "chain_anchor_lowered_z_m": 0.09566993020957915,
+    "pin_path_nominal_radius_m": 0.105,
+    "sheave_running_radius_m": 0.095,
+    "min_inner_outer_rail_overlap_m": 1.025,
+    "carriage_roller_to_flange_clearance_m": 0.0065,
+    "carriage_roller_to_web_clearance_m": 0.0075,
+    "lower_inner_stage_roller_to_flange_clearance_m": 0.0065,
+    "lower_inner_stage_roller_to_web_clearance_m": 0.01,
+    "upper_fixed_guide_to_inner_flange_clearance_m": 0.0045,
+    "lift_piston_barrel_overlap_at_max_m": 0.35,
+    "return_chain_to_lift_barrel_clearance_m": 0.05495,
+    "tilt_cylinder_to_front_tyre_axial_clearance_m": 0.0437,
+    "tilt_cylinder_to_front_mudguard_axial_clearance_m": 0.011,
+    "chain_contact_method": "Exact rigid pitch; tiny radial wrap adjustment closes both fixed anchors. Pose reports adjustment and residual.",
+    "unity_note": "Separate exported transforms; no runtime driver, colliders, rig constraints or gameplay installed.",
+    "lowered_pose": {
+      "inner_lift_m": 0.0,
+      "carriage_lift_m": 0.0,
+      "tilt_degrees": 0.0,
+      "chain_pitch_error_m": 5.479297571220343e-14,
+      "chain_endpoint_error_m": 2.1938006966593093e-13,
+      "wrap_radius_adjustment_m": -6.984690603673016e-14,
+      "min_chain_plate_sheave_clearance_m": 0.0005170807423891394,
+      "tilt_ram_overlap_m": 0.1072652553631872
+    },
+    "pose_checks": [
+      {
+        "inner_lift_m": 0.0,
+        "carriage_lift_m": 0.0,
+        "tilt_degrees": -6.000000000000001,
+        "chain_pitch_error_m": 5.479297571220343e-14,
+        "chain_endpoint_error_m": 2.1938006966593093e-13,
+        "wrap_radius_adjustment_m": -6.984690603673016e-14,
+        "min_chain_plate_sheave_clearance_m": 0.0005170807423891394,
+        "tilt_ram_overlap_m": 0.06454060506655057
+      },
+      {
+        "inner_lift_m": 0.0,
+        "carriage_lift_m": 0.0,
+        "tilt_degrees": 0.0,
+        "chain_pitch_error_m": 5.479297571220343e-14,
+        "chain_endpoint_error_m": 2.1938006966593093e-13,
+        "wrap_radius_adjustment_m": -6.984690603673016e-14,
+        "min_chain_plate_sheave_clearance_m": 0.0005170807423891394,
+        "tilt_ram_overlap_m": 0.1072652553631872
+      },
+      {
+        "inner_lift_m": 0.0,
+        "carriage_lift_m": 0.0,
+        "tilt_degrees": 8.0,
+        "chain_pitch_error_m": 5.479297571220343e-14,
+        "chain_endpoint_error_m": 2.1938006966593093e-13,
+        "wrap_radius_adjustment_m": -6.984690603673016e-14,
+        "min_chain_plate_sheave_clearance_m": 0.0005170807423891394,
+        "tilt_ram_overlap_m": 0.1647121546265885
+      },
+      {
+        "inner_lift_m": 0.225,
+        "carriage_lift_m": 0.45,
+        "tilt_degrees": -6.000000000000001,
+        "chain_pitch_error_m": 4.1917858073503567e-14,
+        "chain_endpoint_error_m": 6.705747068735946e-14,
+        "wrap_radius_adjustment_m": 5.401057424081479e-07,
+        "min_chain_plate_sheave_clearance_m": 0.0005176230842875162,
+        "tilt_ram_overlap_m": 0.06454060506655057
+      },
+      {
+        "inner_lift_m": 0.225,
+        "carriage_lift_m": 0.45,
+        "tilt_degrees": 0.0,
+        "chain_pitch_error_m": 4.1917858073503567e-14,
+        "chain_endpoint_error_m": 6.705747068735946e-14,
+        "wrap_radius_adjustment_m": 5.401057424081479e-07,
+        "min_chain_plate_sheave_clearance_m": 0.0005176230842875162,
+        "tilt_ram_overlap_m": 0.1072652553631872
+      },
+      {
+        "inner_lift_m": 0.225,
+        "carriage_lift_m": 0.45,
+        "tilt_degrees": 8.0,
+        "chain_pitch_error_m": 4.1917858073503567e-14,
+        "chain_endpoint_error_m": 6.705747068735946e-14,
+        "wrap_radius_adjustment_m": 5.401057424081479e-07,
+        "min_chain_plate_sheave_clearance_m": 0.0005176230842875162,
+        "tilt_ram_overlap_m": 0.1647121546265885
+      },
+      {
+        "inner_lift_m": 0.45,
+        "carriage_lift_m": 0.9,
+        "tilt_degrees": -6.000000000000001,
+        "chain_pitch_error_m": 5.628483790154348e-14,
+        "chain_endpoint_error_m": 1.2356782264077992e-13,
+        "wrap_radius_adjustment_m": 4.590843105667375e-07,
+        "min_chain_plate_sheave_clearance_m": 0.000517541727421203,
+        "tilt_ram_overlap_m": 0.06454060506655057
+      },
+      {
+        "inner_lift_m": 0.45,
+        "carriage_lift_m": 0.9,
+        "tilt_degrees": 0.0,
+        "chain_pitch_error_m": 5.628483790154348e-14,
+        "chain_endpoint_error_m": 1.2356782264077992e-13,
+        "wrap_radius_adjustment_m": 4.590843105667375e-07,
+        "min_chain_plate_sheave_clearance_m": 0.000517541727421203,
+        "tilt_ram_overlap_m": 0.1072652553631872
+      },
+      {
+        "inner_lift_m": 0.45,
+        "carriage_lift_m": 0.9,
+        "tilt_degrees": 8.0,
+        "chain_pitch_error_m": 5.628483790154348e-14,
+        "chain_endpoint_error_m": 1.2356782264077992e-13,
+        "wrap_radius_adjustment_m": 4.590843105667375e-07,
+        "min_chain_plate_sheave_clearance_m": 0.000517541727421203,
+        "tilt_ram_overlap_m": 0.1647121546265885
+      },
+      {
+        "inner_lift_m": 0.675,
+        "carriage_lift_m": 1.35,
+        "tilt_degrees": -6.000000000000001,
+        "chain_pitch_error_m": 4.653916141350578e-14,
+        "chain_endpoint_error_m": 9.237055564881302e-14,
+        "wrap_radius_adjustment_m": 5.372811807402567e-07,
+        "min_chain_plate_sheave_clearance_m": 0.0005176202480319664,
+        "tilt_ram_overlap_m": 0.06454060506655057
+      },
+      {
+        "inner_lift_m": 0.675,
+        "carriage_lift_m": 1.35,
+        "tilt_degrees": 0.0,
+        "chain_pitch_error_m": 4.653916141350578e-14,
+        "chain_endpoint_error_m": 9.237055564881302e-14,
+        "wrap_radius_adjustment_m": 5.372811807402567e-07,
+        "min_chain_plate_sheave_clearance_m": 0.0005176202480319664,
+        "tilt_ram_overlap_m": 0.1072652553631872
+      },
+      {
+        "inner_lift_m": 0.675,
+        "carriage_lift_m": 1.35,
+        "tilt_degrees": 8.0,
+        "chain_pitch_error_m": 4.653916141350578e-14,
+        "chain_endpoint_error_m": 9.237055564881302e-14,
+        "wrap_radius_adjustment_m": 5.372811807402567e-07,
+        "min_chain_plate_sheave_clearance_m": 0.0005176202480319664,
+        "tilt_ram_overlap_m": 0.1647121546265885
+      },
+      {
+        "inner_lift_m": 0.9,
+        "carriage_lift_m": 1.8,
+        "tilt_degrees": -6.000000000000001,
+        "chain_pitch_error_m": 4.009986787067987e-14,
+        "chain_endpoint_error_m": 9.481304630298837e-14,
+        "wrap_radius_adjustment_m": 8.714909201235077e-08,
+        "min_chain_plate_sheave_clearance_m": 0.0005171682523578552,
+        "tilt_ram_overlap_m": 0.06454060506655057
+      },
+      {
+        "inner_lift_m": 0.9,
+        "carriage_lift_m": 1.8,
+        "tilt_degrees": 0.0,
+        "chain_pitch_error_m": 4.009986787067987e-14,
+        "chain_endpoint_error_m": 9.481304630298837e-14,
+        "wrap_radius_adjustment_m": 8.714909201235077e-08,
+        "min_chain_plate_sheave_clearance_m": 0.0005171682523578552,
+        "tilt_ram_overlap_m": 0.1072652553631872
+      },
+      {
+        "inner_lift_m": 0.9,
+        "carriage_lift_m": 1.8,
+        "tilt_degrees": 8.0,
+        "chain_pitch_error_m": 4.009986787067987e-14,
+        "chain_endpoint_error_m": 9.481304630298837e-14,
+        "wrap_radius_adjustment_m": 8.714909201235077e-08,
+        "min_chain_plate_sheave_clearance_m": 0.0005171682523578552,
+        "tilt_ram_overlap_m": 0.1647121546265885
+      }
+    ]
+  },
+  "status": "Editable mechanical art asset and FBX. Driving and lifting gameplay are not installed."
 }

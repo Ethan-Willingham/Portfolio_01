@@ -1,7 +1,7 @@
 """Build the classic LPG forklift from a fresh Blender scene. Metres, +Y forward.
 Blender 5.2 --background --python tools/blender/build-warehouse-forklift.py
 """
-import bpy, bmesh, math, json, random
+import bpy, bmesh, math, json, random, runpy, sys
 from pathlib import Path
 from mathutils import Vector
 ROOT=Path(__file__).resolve().parents[2]
@@ -108,17 +108,62 @@ def profile(name,points,width,mat=yellow,parent=body,bevel=.035):
     faces=[tuple(reversed(range(n))),tuple(range(n,2*n))]+[(i,(i+1)%n,(i+1)%n+n,i+n) for i in range(n)]
     return mesh(name,vs,faces,mat,parent,bevel,5)
 
-# Long engine body, rounded counterweight, and a genuinely open low step.
-box('Heavy chassis belly',(0,-.17,.34),(1.09,2.43,.34),black,bevel=.07,segments=5)
-profile('Cast rear counterweight',[(-1.48,.31),(-1.48,.81),(-1.33,1.04),(-.89,1.05),(-.74,.83),(-.74,.31)],1.2,bevel=.105)
-profile('Engine compartment',[(-.94,.36),(-.94,.89),(-.66,1.02),(-.19,1.02),(.16,.72),(.18,.36)],1.04,bevel=.055)
+# Rounded cast shoulders, an inset service grille, and real open wheel arches.
+def rounded_ring(width,rear,front,radius,z):
+    pts=[]
+    for cx,cy,start in [(width/2-radius,front-radius,0),(-width/2+radius,front-radius,90),(-width/2+radius,rear+radius,180),(width/2-radius,rear+radius,270)]:
+        for i in range(9):
+            a=math.radians(start+i*90/8); pts.append((cx+radius*math.cos(a),cy+radius*math.sin(a),z))
+    return pts
+
+def cast_shell(name,rings,mat):
+    vs=[v for z,w,rear,front,r in rings for v in rounded_ring(w,rear,front,r,z)]
+    n=36; fs=[tuple(reversed(range(n))),tuple(range((len(rings)-1)*n,len(rings)*n))]
+    for j in range(len(rings)-1):
+        for i in range(n):fs.append((j*n+i,j*n+(i+1)%n,(j+1)*n+(i+1)%n,(j+1)*n+i))
+    return mesh(name,vs,fs,mat,body,0)
+
+def subtract(o,cutter):
+    bpy.ops.object.select_all(action='DESELECT'); o.select_set(True); bpy.context.view_layer.objects.active=o
+    for mod in list(o.modifiers):bpy.ops.object.modifier_apply(modifier=mod.name)
+    mod=o.modifiers.new('Machined clearance','BOOLEAN'); mod.operation='DIFFERENCE'; mod.solver='EXACT'; mod.object=cutter
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+belly=box('Heavy chassis belly',(0,-.17,.34),(1.09,2.43,.34),black,bevel=.07,segments=5)
+counterweight=cast_shell('Sculpted cast counterweight',[
+    (.30,1.00,-1.40,-.72,.14),(.34,1.11,-1.48,-.70,.15),
+    (.43,1.21,-1.525,-.70,.16),(.79,1.21,-1.525,-.70,.17),
+    (.90,1.19,-1.50,-.71,.18),(.98,1.10,-1.43,-.74,.18),
+    (1.02,1.00,-1.35,-.77,.17)],yellow)
+engine=profile('Engine compartment',[(-.94,.36),(-.94,.89),(-.66,1.02),(-.19,1.02),(.16,.72),(.18,.36)],1.04,bevel=.055)
+arch=cyl('Rear wheel arch tool',(0,-.96,.275),.345,1.8,black,None,'X',96,0)
+for o in [belly,counterweight,engine]:subtract(o,arch)
+bpy.data.objects.remove(arch,do_unlink=True)
+for o in [belly,counterweight,engine]:
+    mod=o.modifiers.new('Wheel arch lip softness','BEVEL'); mod.width=.005; mod.segments=3
+    mod=o.modifiers.new('Cast surface normals','WEIGHTED_NORMAL'); mod.keep_sharp=True
 profile('Engine bonnet',[(-.93,.89),(-.68,1.07),(-.2,1.07),(.18,.76),(.15,.71),(-.24,1.01),(-.68,1.01),(-.93,.84)],1.07,black,bevel=.02)
-box('Rear rub strip',(0,-1.47,.33),(1.07,.095,.13),black,bevel=.04)
-box('Rear radiator grille',(0,-1.489,.68),(.65,.018,.25),black,bevel=.03)
-for z in [.58,.62,.66,.70,.74,.78]:box('Radiator louvre',(0,-1.505,z),(.58,.025,.018),black,bevel=.006)
-box('Grille centre rib',(0,-1.522,.68),(.025,.025,.23),black)
-rod('Tow pin',(0,-1.57,.25),(0,-1.57,.41),.022)
-for z in [.26,.40]:box('Towing clevis',(0,-1.5,z),(.16,.16,.035),steel)
+grilletool=box('Grille recess tool',(0,-1.51,.655),(.85,.13,.295),black,None,.045,6)
+subtract(counterweight,grilletool); bpy.data.objects.remove(grilletool,do_unlink=True)
+box('Recessed rear grille surround',(0,-1.486,.655),(.835,.045,.28),black,bevel=.038,segments=6)
+box('Grille dark inner well',(0,-1.515,.655),(.765,.012,.22),rubber,bevel=.025)
+for z in [.57,.61,.65,.69,.73]:
+    box('Wide pressed louvre',(0,-1.532,z),(.74,.026,.017),black,bevel=.006)
+for x in [-.355,.355]:
+    for z in [.548,.76]:cyl('Grille captive screw',(x,-1.535,z),.007,.009,steel,axis='Y',vertices=12,bevel=.001)
+box('Rear maker plaque',(0,-1.532,.845),(.26,.018,.058),steel,bevel=.009)
+label('Rear maker lettering','ONE SHIFT',(0,-1.543,.832),.028,mat=cream)
+# The tow pin is recessed inside the bumper instead of hanging over the rear face.
+for x in [-.322,.322]:box('Wraparound rear bumper',(x,-1.465,.315),(.49,.16,.155),black,bevel=.055,segments=6)
+box('Tow pocket shadow',(0,-1.424,.315),(.155,.04,.12),rubber,bevel=.025)
+for z in [.264,.366]:box('Recessed tow jaw',(0,-1.466,z),(.14,.10,.022),steel,bevel=.009)
+rod('Captive tow pin',(0,-1.475,.27),(0,-1.475,.38),.014)
+torus('Tow pin pull ring',(0,-1.475,.395),.019,.003,steel,axis='Y')
+for x in [-.49,.49]:box('Rear reflector',(x,-1.535,.412),(.072,.009,.019),red,bevel=.006)
+for s in [-1,1]:
+    # A thin, dark arch edge makes the tyre clearance readable from behind.
+    points=[(s*.598,-.96+.35*math.cos(a),.275+.35*math.sin(a)) for a in [math.radians(43+i*128/24) for i in range(25)]]
+    hose('Rear wheel arch edge',points,.008,black)
 for x in [-.52,.52]:
     box('Front body sill',(x,.49,.4),(.15,1.17,.28),yellow,bevel=.03)
     box('Entry step',(x,.04,.3),(.23,.58,.055),black,bevel=.015)
@@ -126,9 +171,9 @@ for x in [-.52,.52]:
     box('Engine service hatch',(x*1.009,-.48,.68),(.014,.53,.28),yellow,bevel=.018)
     for y in [-.67,-.60,-.53,-.46,-.39]:box('Side cooling slot',(x*1.027,y,.70),(.014,.028,.14),black,bevel=.01)
     cyl('Hood latch',(x*1.045,-.13,.73),.023,.014,steel,axis='X',vertices=16)
-box('Operator footwell',(0,.39,.46),(.9,.82,.06),black,bevel=.02)
-box('Floor mat',(0,.38,.499),(.79,.7,.019),rubber,bevel=.02)
-for x in [-.32,-.24,-.16,-.08,0,.08,.16,.24,.32]:box('Floor mat ribs',(x,.36,.513),(.012,.55,.007),rubber,bevel=.002)
+floor_parts=[box('Operator footwell',(0,.39,.46),(.9,.82,.06),black,bevel=.02),
+             box('Floor mat',(0,.38,.499),(.79,.7,.019),rubber,bevel=.02)]
+for x in [-.32,-.24,-.16,-.08,0,.08,.16,.24,.32]:floor_parts.append(box('Floor mat ribs',(x,.36,.513),(.012,.55,.007),rubber,bevel=.002))
 def fender(x):
     n=24; vs=[]
     for xx in [x-.14,x+.14]:
@@ -142,8 +187,8 @@ def fender(x):
 for x in [-.51,.51]:fender(x)
 
 # Tyre sidewalls and rounded shoulders, ivory dished rims and recessed hubs.
-def wheel(name,loc,r,w):
-    p=empty(name,loc,root); n=64
+def wheel(name,loc,r,w,parent=root):
+    p=empty(name,loc,parent); p['motion_axis']='local X rotation'; n=64
     rings=[(-w*.51,r*.64),(-w*.51,r*.82),(-w*.46,r*.94),(-w*.36,r),(w*.36,r),(w*.46,r*.94),(w*.51,r*.82),(w*.51,r*.64)]
     vs=[(x,rr*math.cos(i*math.tau/n),rr*math.sin(i*math.tau/n)) for x,rr in rings for i in range(n)]
     fs=[(j*n+i,j*n+(i+1)%n,((j+1)%len(rings))*n+(i+1)%n,((j+1)%len(rings))*n+i) for j in range(len(rings)) for i in range(n)]
@@ -162,12 +207,24 @@ def wheel(name,loc,r,w):
         for side in [-1,1]:
             o=box('Chevron tread',(0,0,0),(w*.46,.026,.012),rubber,p,.003)
             o.location=(side*w*.22,math.sin(a)*(r-.002),math.cos(a)*(r-.002)); o.rotation_euler=(-a,0,side*math.radians(23))
+rear_axle=empty('RearAxle_Oscillation',(0,-.96,.275),root)
+rear_axle['motion_axis']='local Y rotation'; rear_axle['preview_limit_degrees']=3
+box('Rear axle central carrier',(0,-.96,.47),(.17,.28,.36),black,bevel=.035)
+cyl('Rear axle trunnion bearing',(0,-.96,.275),.085,.31,steel,axis='Y',vertices=32)
+rear_steering=[]
 for s in [-1,1]:
     suffix='L' if s<0 else 'R'
     wheel('FrontWheel_'+suffix+'_Pivot',(s*.52,.75,.355),.35,.23)
-    wheel('RearWheel_'+suffix+'_Pivot',(s*.49,-.96,.275),.27,.185)
+    knuckle=empty('RearSteer_'+suffix+'_Pivot',(s*.49,0,0),rear_axle)
+    knuckle['motion_axis']='local Z rotation'; knuckle['preview_limit_degrees']=35; rear_steering.append(knuckle)
+    wheel('RearWheel_'+suffix+'_Pivot',(0,0,0),.27,.185,knuckle)
+    cyl('Kingpin',(0,0,0),.028,.16,steel,knuckle)
+    bar('Steering knuckle arm',(0,0,0),(-s*.07,-.13,0),.025,.035,steel,knuckle)
+    empty('TieRod_'+suffix+'_End',(-s*.07,-.13,0),knuckle)
 rod('Drive axle',(-.52,.75,.355),(.52,.75,.355),.09,black)
-rod('Steering axle',(-.49,-.96,.275),(.49,-.96,.275),.06,steel)
+rod('Steering axle',(-.49,0,0),(.49,0,0),.06,steel,rear_axle)
+tie=empty('RearSteering_TieRod',parent=rear_axle)
+rod('Steering tie rod',(-.42,-.13,0),(.42,-.13,0),.018,steel,tie)
 
 # The instantly recognisable rear-mounted propane bottle, with cradle and valve.
 tank=empty('PropaneBottle',(0,-1.11,1.24),body)
@@ -196,12 +253,19 @@ for z in [.99,1.02,1.05]:box('Suspension bellows',(0,-.28,z),(.46,.44,.016),rubb
 box('Seat cushion',(0,-.20,1.14),(.52,.48,.15),vinyl,bevel=.065,segments=6)
 back=box('Contoured seat back',(0,0,0),(.54,.14,.43),vinyl,bevel=.06,segments=6)
 back.location=(0,-.46,1.42); back.rotation_euler.x=math.radians(-11)
+for x in [-.18,.18]:
+    bar('Seat back support arm',(x,-.36,1.08),(x,-.52,1.30),.035,.045,black)
+    cyl('Seat recline pivot',(x,-.38,1.12),.031,.05,steel,axis='X',vertices=24)
 for x in [-.22,.22]:box('Seat bolster',(x,-.2,1.19),(.08,.41,.10),vinyl,bevel=.035,segments=5)
 for x in [-.15,-.075,0,.075,.15]:hose('Seat seam',[(x,-.36,1.216),(x,-.16,1.219),(x,-.025,1.21)],.0025,black)
 rod('Belt receiver',(.25,-.25,1.1),(.29,-.19,1.22),.012,black)
 box('Belt buckle',(.29,-.19,1.23),(.045,.06,.035),red)
 hose('Seat belt',[(-.26,-.35,1.16),(-.25,-.15,1.21),(-.19,-.01,1.2)],.014)
-profile('Sloping dashboard',[(.57,.51),(.82,.51),(.82,1.13),(.63,1.17),(.49,.93)],.82,black,bevel=.035)
+dashboard=profile('Sloping dashboard',[(.57,.51),(.82,.51),(.82,1.13),(.63,1.17),(.49,.93)],.82,black,bevel=.035)
+for x in [-.31,.31]:
+    clearance=box('Tilt ram pass-through tool',(x,.70,.57),(.13,.32,.40),black,None,.015)
+    for o in [dashboard]+floor_parts:subtract(o,clearance)
+    bpy.data.objects.remove(clearance,do_unlink=True)
 rod('Steering column',(-.16,.61,.72),(-.16,.34,1.2),.033,black)
 steer=empty('SteeringWheel_Pivot',(-.16,.34,1.2),root); steer.rotation_euler.x=math.radians(32)
 torus('Steering wheel',(0,0,0),.177,.015,rubber,steer)
@@ -213,13 +277,21 @@ for x in [-.19,0,.19]:
     cyl('Gauge bezel',(x,.599,1.105),.046,.018,steel,axis='Y')
     cyl('Gauge dial',(x,.586,1.105),.038,.006,black,axis='Y')
     rod('Gauge needle',(x,.581,1.105),(x-.017,.581,1.13),.002,cream)
-for i in range(3):
-    x=.23+i*.072; rod('Hydraulic lever',(x,.48,.85),(x,.29,1.16-i*.018),.009,steel)
-    cyl('Lever grip',(x,.29,1.18-i*.018),.022,.07,black)
-for x,w in [(-.22,.14),(.02,.13),(.23,.085)]:
-    o=box('Pedal',(0,0,0),(w,.18,.033),rubber); o.location=(x,.57,.565); o.rotation_euler.x=math.radians(22)
-rod('Parking brake',(-.35,.21,.65),(-.35,.05,.87),.013,steel)
-rod('Brake grip',(-.35,.05,.87),(-.35,-.01,.91),.022,black)
+box('Hydraulic control pedestal',(.33,.43,.95),(.25,.18,.12),black,bevel=.025)
+for i,name in enumerate(['Lift','Tilt','Auxiliary']):
+    p=empty(name+'Lever_Pivot',(.25+i*.075,.40,1.01),root); p['motion_axis']='local X rotation'
+    for z,r in [(.012,.03),(.028,.025),(.043,.018)]:cyl('Lever gaiter',(0,0,z),r,.02,rubber,p)
+    rod('Hydraulic lever',(0,0,.035),(0,-.09,.21-i*.018),.009,steel,p)
+    cyl('Lever grip',(0,-.09,.23-i*.018),.022,.065,black,p)
+for (x,w),name in zip([(-.18,.13),(.02,.13),(.19,.085)],['Inching','Brake','Throttle']):
+    p=empty(name+'Pedal_Pivot',(x,.64,.55),root); p['motion_axis']='local X rotation'
+    o=box('Pedal',(0,-.07,.015),(w,.18,.033),rubber,p); o.rotation_euler.x=math.radians(22)
+brake=empty('ParkingBrake_Pivot',(-.35,.40,.565),root)
+brake['motion_axis']='local X rotation'; brake['travel_degrees']=[-10,12]
+box('Parking brake floor mount',(-.35,.40,.535),(.095,.14,.055),black,bevel=.015)
+cyl('Brake pivot pin',(0,0,0),.027,.085,steel,brake,'X')
+rod('Parking brake',(0,0,.015),(0,-.075,.25),.013,steel,brake)
+rod('Brake grip',(0,-.075,.25),(0,-.10,.325),.023,black,brake)
 
 # Slightly inclined posts and a broad flat slatted overhead guard.
 for x in [-.49,.49]:
@@ -233,9 +305,11 @@ for x in [-.4,.4]:
     box('Headlamp housing',(x,.75,1.83),(.16,.12,.13),black,bevel=.025)
     box('Headlamp lens',(x,.817,1.83),(.125,.018,.092),glass,bevel=.012)
     for xx in [-.04,-.02,0,.02,.04]:box('Fluted glass',(x+xx,.829,1.83),(.006,.005,.08),glass,bevel=.002)
-    box('Rear lamp housing',(x,-1.43,.89),(.17,.075,.105),black,bevel=.025)
-    box('Tail light',(x-.035,-1.474,.89),(.08,.014,.07),red,bevel=.008)
-    box('Turn signal',(x+.041,-1.474,.89),(.045,.014,.07),amber,bevel=.006)
+    s=-1 if x<0 else 1
+    box('Inset rear lamp housing',(s*.445,-1.495,.865),(.178,.07,.108),black,bevel=.029,segments=5)
+    box('Tail light',(s*.422,-1.536,.865),(.084,.014,.065),red,bevel=.014,segments=5)
+    box('Turn signal',(s*.485,-1.536,.865),(.028,.014,.065),amber,bevel=.009)
+    for dx in [-.025,0,.025]:box('Tail lens prism',(s*.422+dx,-1.545,.865),(.004,.003,.044),red,bevel=.001)
 cyl('Beacon base',(.37,-.59,2.23),.064,.04,black)
 cyl('Amber beacon',(.37,-.59,2.3),.053,.105,amber,vertices=48,bevel=.018)
 rod('Mirror stalk',(-.49,.59,1.97),(-.61,.53,2.01),.01,black)
@@ -243,49 +317,17 @@ box('Mirror housing',(-.61,.51,2.01),(.13,.055,.15),black,bevel=.025)
 box('Mirror face',(-.61,.479,2.01),(.105,.009,.122),chrome,bevel=.015)
 box('Safety label',(.529,-.646,1.62),(.006,.06,.18),cream,bevel=.002)
 for z in [1.57,1.6,1.63,1.66]:box('Safety label rules',(.533,-.646,z),(.003,.044,.005),black,bevel=.001)
-for s in [-1,1]:label('Fleet number','04',(s*.604,-1.13,.6),.135,(math.pi/2,0,s*math.pi/2),black)
+for s in [-1,1]:label('Fleet number','04',(s*.606,-1.10,.72),.125,(math.pi/2,0,s*math.pi/2),black)
 
-# Heavy channel mast with twin hydraulic rams, chains and independent carriage.
-mast=empty('MastTilt_Pivot',(0,1.075,.34),root); mast['tilt_axis']='local X'
-inner=empty('InnerMast_Lift',parent=mast)
-for x in [-.40,.40]:
-    box('Mast channel web',(x,0,.74),(.055,.16,2.01),black,mast)
-    for y in [-.08,.08]:box('Mast channel flange',(x,y,.74),(.14,.028,2.01),black,mast)
-    cyl('Mast tilt pin',(x,0,0),.067,.16,steel,mast,'X')
-    rod('Tilt cylinder',(x,.40,.48),(x,.78,.61),.044,black)
-    rod('Tilt piston',(x,.78,.61),(x,1.07,.7),.023,chrome)
-for z in [-.15,1.72]:box('Mast cross tie',(0,-.035,z),(.92,.16,.11),black,mast)
-for x in [-.29,.29]:
-    box('Sliding mast rail',(x,.06,.79),(.05,.12,1.94),steel,inner)
-    for y in [.005,.115]:box('Sliding mast flange',(x,y,.79),(.1,.026,1.94),black,inner)
-box('Inner mast header',(0,.06,1.79),(.7,.16,.09),black,inner)
-for x in [-.185,.185]:
-    cyl('Lift ram barrel',(x,-.065,.44),.047,1.16,black,mast)
-    cyl('Lift piston',(x,-.065,1.2),.025,.51,chrome,mast)
-    cyl('Chain pulley',(x,.045,1.46),.061,.038,steel,mast,'X')
-    for i in range(43):
-        z=-.03+i*.034; box('Lift chain link',(x,.117,z),(.027,.012,.025),steel,mast,.003)
-        if i%2==0:cyl('Chain pin',(x,.126,z),.006,.036,steel,mast,'X',8,0)
-    hose('Hydraulic hose',[(x,-.13,-.12),(x,-.15,.6),(x,-.15,1.4),(x,-.08,1.55),(x,.01,1.4)],.009,rubber,mast)
-carriage=empty('ForkCarriage_Lift',(0,.20,0),mast)
-for z in [.05,.49]:box('Carriage rail',(0,0,z),(1.05,.1,.10),steel,carriage)
-for x in [-.46,.46]:
-    box('Carriage end plate',(x,0,.27),(.08,.1,.52),black,carriage)
-    for z in [.05,.49]:cyl('Carriage guide roller',(x*.65,-.09,z),.061,.045,steel,carriage,'X')
-for z in [.53,1.20]:box('Backrest horizontal',(0,.015,z),(1.12,.055,.055),black,carriage)
-for x in [-.53,-.353,-.176,0,.176,.353,.53]:box('Backrest vertical',(x,.015,.865),(.029,.04,.67),black,carriage)
-for x in [-.275,.275]:
-    fork=empty('Fork_Left' if x<0 else 'Fork_Right',(x,0,0),carriage)
-    # Continuous L-section connects the taper to the vertical heel.
-    profile('Continuous forged fork',[(.018,.58),(.07,.58),(.07,-.19),(.105,-.22),(1.13,-.22),(1.13,-.232),(.12,-.263),(.045,-.263),(.018,-.23)],.10,steel,fork,.006)
-    box('Carriage hook',(0,.002,.53),(.12,.10,.055),steel,fork)
-    cyl('Fork spacing lock',(0,.005,.58),.014,.045,steel,fork)
-    for i in range(3):box('Fork use polish',(-.029+i*.027,.62,-.219),(.004,.76,.001),chrome,fork,.0002)
+# Articulated leaf chains and a duplex mast live in a separately testable module.
+mechanism=runpy.run_path(str(Path(__file__).with_name('forklift-mast.py')))['build_mast'](globals())
+mast=mechanism['mast']; inner=mechanism['inner']; carriage=mechanism['carriage']
+mechanism['metadata']['pose_checks']=[mechanism['pose'](h,math.radians(t)) for h in [0,.225,.45,.675,.9] for t in [-6,0,8]]
+mechanism['pose']()
 for s in [-1,1]:
     for i in range(12):box('Sill paint chip',(s*.596,random.uniform(-.1,.99),random.uniform(.32,.44)),(.002,random.uniform(.012,.045),random.uniform(.002,.006)),scuff,bevel=.0004)
-    for i in range(7):box('Counterweight scuff',(s*.601,random.uniform(-1.31,-.96),.49+random.uniform(-.03,.03)),(.002,random.uniform(.016,.055),.003),scuff,bevel=.0004)
+    for i in range(5):box('Counterweight scuff',(s*.606,random.uniform(-1.26,-.96),.74+random.uniform(-.025,.025)),(.002,random.uniform(.016,.035),.002),scuff,bevel=.0004)
 empty('OperatorSeat',(0,-.2,1.215),root); empty('OperatorEye',(0,-.22,1.77),root)
-empty('ForkTips',(0,1.13,-.22),carriage); empty('LoadCentre',(0,.61,-.20),carriage)
 
 # Separate studio collection, excluded from the game export.
 studio=bpy.data.collections.new('STUDIO | excluded from export'); scene.collection.children.link(studio)
@@ -304,7 +346,8 @@ bpy.ops.object.camera_add(location=(5.4,6.7,3.65)); camera=studio_object(bpy.con
 camera.name='Preview camera'; camera.data.type='ORTHO'; camera.data.ortho_scale=4.9
 def aim(loc,target=(0,.2,1.05)):
     camera.location=loc; camera.rotation_euler=(Vector(target)-camera.location).to_track_quat('-Z','Y').to_euler()
-aim((5.4,6.7,3.65)); scene.camera=camera
+aim((4.8,-6.6,3.3),(0,-.15,1.05)); scene.camera=camera
+camera.name='Rear inspection camera'; camera.data.ortho_scale=4.7
 scene.render.engine='CYCLES'; scene.cycles.samples=48; scene.cycles.use_denoising=True
 scene.render.resolution_x=1600; scene.render.resolution_y=1400; scene.render.resolution_percentage=100
 scene.render.image_settings.file_format='PNG'; scene.view_settings.view_transform='AgX'
@@ -312,8 +355,17 @@ scene.view_settings.look='AgX - Medium High Contrast'; scene.view_settings.expos
 for screen in bpy.data.screens:
     for area in screen.areas:
         if area.type=='VIEW_3D':
-            area.spaces.active.region_3d.view_distance=5.7; area.spaces.active.region_3d.view_location=(0,.2,1)
-            area.spaces.active.region_3d.view_rotation=camera.rotation_euler.to_quaternion(); area.spaces.active.clip_end=500
+            space=area.spaces.active
+            space.shading.type='SOLID'; space.shading.color_type='MATERIAL'; space.shading.light='STUDIO'
+            space.shading.show_shadows=True; space.shading.show_cavity=True; space.shading.cavity_type='BOTH'
+            space.shading.curvature_ridge_factor=1.05; space.shading.curvature_valley_factor=.8
+            space.overlay.show_overlays=False; space.show_region_ui=False; space.show_region_toolbar=False
+            space.region_3d.view_distance=5.7; space.region_3d.view_location=(0,-.15,1.05)
+            space.region_3d.view_rotation=camera.rotation_euler.to_quaternion(); space.clip_end=500
+            space.region_3d.view_perspective='CAMERA'; space.region_3d.view_camera_zoom=8; space.region_3d.view_camera_offset=(0,0)
+for o in studio.objects:o.hide_set(True)
+scene['Navigation']='Middle mouse: orbit. Wheel: zoom. Numpad 0: return to the rear inspection camera.'
+scene['Mechanism']='Separate wheel spin, rear steer, axle, controls, mast, hydraulic rods, sheaves, forks and leaf-chain link pivots for later Unity integration.'
 bpy.ops.object.select_all(action='DESELECT'); root.select_set(True); bpy.context.view_layer.objects.active=root
 bpy.ops.file.pack_all()
 bpy.ops.wm.save_as_mainfile(filepath=str(OUT/'warehouse-forklift.blend'))
@@ -332,6 +384,7 @@ for (parent,mat),objects in groups.items():
     bpy.context.view_layer.objects.active=objects[0]
     if len(objects)>1:bpy.ops.object.join()
     objects[0].name=parent.name+' | '+mat.name.split('|')[-1].strip()
+    if objects[0].data.users>1:objects[0].data=objects[0].data.copy()
     bpy.ops.object.transform_apply(location=True,rotation=True,scale=True)
 asset=[root]+list(root.children_recursive); bpy.ops.object.select_all(action='DESELECT')
 for o in asset:o.select_set(True)
@@ -342,8 +395,10 @@ lo=[min(p[i] for p in points) for i in range(3)]; hi=[max(p[i] for p in points) 
 for o in meshes:o.data.calc_loop_triangles(); triangles+=len(o.data.loop_triangles)
 assert len([o for o in asset if o.type=='EMPTY' and o.name.startswith(('FrontWheel_','RearWheel_'))])==4
 assert -.015<lo[2]<.02
-report={'design':'Classic yellow LPG forklift, rebuilt from scratch','dimensions_m':[round(hi[i]-lo[i],4) for i in range(3)],'bounds_min_m':lo,'bounds_max_m':hi,'triangles':triangles,'mesh_objects':len(meshes),'materials':len({m.name for o in meshes for m in o.data.materials}),'blade_length_m':1.06,'fork_centres_m':.55,'blade_width_m':.10,'blade_heel_thickness_m':.043,'floor_clearance_under_forks_m':.077,'wheelbase_m':1.71,'guard_height_m':2.195,'status':'Art asset and FBX. Driving and lifting gameplay are not installed.'}
+report={'design':'Classic yellow LPG forklift, sculpted rear and articulated leaf chains','dimensions_m':[round(hi[i]-lo[i],4) for i in range(3)],'bounds_min_m':lo,'bounds_max_m':hi,'triangles':triangles,'mesh_objects':len(meshes),'materials':len({m.name for o in meshes for m in o.data.materials}),'blade_length_m':1.06,'fork_centres_m':.55,'blade_width_m':.10,'blade_heel_thickness_m':.043,'floor_clearance_under_forks_m':.077,'wheelbase_m':1.71,'guard_height_m':2.195,'rear_arch_radius_m':.345,'rear_steering_range_degrees':[-35,35],'mechanism':mechanism['metadata'],'status':'Editable mechanical art asset and FBX. Driving and lifting gameplay are not installed.'}
 (UNITY/'warehouse-forklift-report.json').write_text(json.dumps(report,indent=2)+'\n'); print(json.dumps(report,indent=2),flush=True)
-for filename,loc,target in [('warehouse-forklift-preview.png',(5.4,6.7,3.65),(0,.2,1.05)),('warehouse-forklift-rear.png',(-5.7,-6.8,3.7),(0,-.05,1.05)),('warehouse-forklift-side.png',(7,0,2.1),(0,.25,1.05))]:
-    aim(loc,target); scene.render.filepath=str(OUT/filename); bpy.ops.render.render(write_still=True)
+if '--no-render' not in sys.argv:
+    if '--quick' in sys.argv:scene.cycles.samples=16; scene.render.resolution_percentage=60
+    for filename,loc,target,scale in [('warehouse-forklift-preview.png',(5.4,6.7,3.65),(0,.2,1.05),4.9),('warehouse-forklift-rear.png',(4.8,-6.6,3.3),(0,-.15,1.05),4.7),('warehouse-forklift-side.png',(7,0,2.1),(0,.25,1.05),4.9),('warehouse-forklift-chain.png',(2.7,3.6,2.9),(0,1.12,1.73),1.25)]:
+        aim(loc,target); camera.data.ortho_scale=scale; scene.render.filepath=str(OUT/filename); bpy.ops.render.render(write_still=True)
 print('Classic forklift completed',flush=True)
