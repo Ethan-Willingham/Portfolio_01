@@ -1,5 +1,46 @@
 # Bracken Reach, the playable world
 
+## Gunfire, contact and raider handling, 2026-10-25 (v0.42.0)
+
+The owner asked for a substantial improvement to rounds leaving guns, enemy hits
+and enemy movement. Friendly turrets now traverse before firing. The simulation
+and renderer share the barrel endpoint, including hull heave, pitch, roll and
+recoil. Direct rounds inherit the firing vessel's velocity; lead uses relative
+motion. Their height follows gravity and is swept against the actual moving
+hull outline and deck height. A round passing above a boat cannot damage it.
+Mortars retain their authored flight timing and arcing presentation.
+
+Missed rounds meet the moving water surface. Contact effects originate at the
+actual entry point and carry the incoming direction. Small kinetic hits transfer
+limited hull-weighted momentum and yaw; explosive pressure retains its separate
+larger response. Metal strikes, water fans and heavy explosions use different
+presentation. Destroyed enemies leave a bounded drifting hull that settles into
+the water, rather than disappearing on the damage frame. Damage and removal
+remain independent of visual and sound budgets.
+
+Raiders keep heading, yaw and propulsion separately from world velocity. Their
+bow turns before lateral momentum catches up. Gunners approach a stable handed
+standoff arc, light boats have their own acceleration and steering, and rams
+retain a committed warning and charge. Local anticipation and contact braking
+keep crossing traffic and queues from passing straight through one another.
+Navigation still checks the shared water field and existing bank clearances.
+
+Small projectile heads and thin tapered tracers replace the large opaque rods.
+Muzzle flashes, smoke, hostile gun mounts, compact enemy wakes, directional
+strikes and sinking use bounded instancing or effect storage. Canvas mirrors the
+same events; reduced motion suppresses muzzle flashes and extra wake cues.
+Gunfire, metal contacts and water strikes have separate synthesized cues, with
+distance attenuation and bounded voice cleanup.
+
+This pass does not enable saving. The parked pure snapshot helpers preserve
+trajectory, turret and enemy steering state for continuation checks, accepting
+optional defaults for older records. The normal voyage still lives in memory.
+
+Focused checks in `tools/widewake/`: `test-combat-ballistics.cjs`,
+`test-enemy-motion.cjs`, `test-combat-snapshots.cjs`, `test-combat-audio.cjs`,
+`test-combat-feel-browser.cjs` and `test-combat-runtime-browser.cjs`. The shared
+projectile, water-pressure, connected-voyage and full-watch suites remain active.
+
 ## Harbors, fleet desk and voyage cues, 2026-10-25 (v0.41.0)
 
 All ten ports now use surveyed banks shared by terrain, structures and pier

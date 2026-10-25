@@ -48,7 +48,12 @@
         for(const side of [-1,1])g.box(-l*.16,side*w*.33,h+1.55,l*.23,.12,.72,'#253d4a','#253d4a');
         g.box(-l*.01,0,h+1.55,.15,w*.54,.72,'#253d4a','#253d4a');
       }
-      cylinder(l*.26,0,h+.25,w*.21,.75,'#364952',10);beam([l*.25,0,h+1.1],[l*.47,0,h+1.2],.3,'#bbb7a0');
+      if(type==='raider0'||type==='raider1'){
+        // A seated helmsman and stern motor belong to these boarding boats.
+        // Only the armored gunner carries the separately aimed cannon.
+        g.box(-l*.20,0,h+.30,l*.07,w*.2,.65,'#665e4d','#3d4542');cylinder(-l*.20,0,h+.95,.34,.45,'#b49673',8);
+        g.box(-l*.46,0,h*.35,l*.10,w*.30,.85,'#586972','#2c434b');
+      }
       return new Float32Array(g.out);
     }
     if(small){

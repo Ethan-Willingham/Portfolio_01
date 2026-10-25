@@ -3,6 +3,7 @@
   'use strict';
   const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
   const pitch=midi=>440*Math.pow(2,(midi-69)/12);
+  const combatCues=Object.freeze({gun:'shot',guard:'escort-shot',hostile:'enemy-shot',broadside:'burst',flak:'flak-shot',mortar:'mortar-shot',loss:'sink'});
   const motifs=[
     [69,null,72,71,69,null,67,null,64,null,67,null,69,null,72,76,74,null,72,null,69,null,null,null],
     [64,null,67,69,72,null,71,null,67,null,64,null,62,null,64,67,69,null,67,null,64,null,null,null],
@@ -119,14 +120,27 @@
     }
     pluck(note,at,volume,bus='effects',pan=0){this.tone({at,frequency:pitch(note),duration:1.1,volume,type:'triangle',filter:1600,bus,pan});this.tone({at,frequency:pitch(note+12),duration:.19,volume:volume*.14,type:'sine',bus,pan});}
     gull(at){this.tone({at,frequency:1050,slide:680,duration:.32,volume:.022,type:'sine',bus:'ambience',pan:.55});this.tone({at:at+.38,frequency:960,slide:700,duration:.26,volume:.015,type:'sine',bus:'ambience',pan:.55});}
+    combat(kind,detail={}){
+      const cue=combatCues[kind]||kind;
+      return this.play(cue,detail);
+    }
     play(kind,detail={}){
       if(!this.ctx||!this.active()||this.settings().sound===false||this.settings().volume<=0||this.settings().effects===0||this.ctx.state!=='running'&&!this.offline||this.ctx.state==='closed')return false;
-      const at=detail.at??this.ctx.currentTime,interval=({shot:.12,'enemy-shot':.28,'escort-shot':.2,impact:.075,sink:.18,hurt:.14,burst:.5,'flak-shot':.23,'mortar-shot':.38,'mortar-hit':.22,pickup:.13,splash:.3,warn:1.5,repair:.4,complete:.8,rare:.8})[kind]??.07;
+      const at=detail.at??this.ctx.currentTime,interval=({shot:.085,'enemy-shot':.24,'escort-shot':.14,'metal-hit':.08,'water-hit':.14,impact:.075,sink:.18,hurt:.14,burst:.5,'flak-shot':.23,'mortar-shot':.38,'mortar-hit':.22,pickup:.13,splash:.3,warn:1.5,repair:.4,complete:.8,rare:.8})[kind]??.07;
       if(at-(this.lastPlayed[kind]??-100)<interval||this.voices.size>52){this.stats.skipped++;return false;}this.lastPlayed[kind]=at;this.stats.played++;
       const pan=clamp(detail.pan||0,-.85,.85),v=clamp(detail.volume??1,0,1);
       if(['shot','escort-shot','enemy-shot','burst'].includes(kind)){
-        const big=kind==='burst',enemy=kind==='enemy-shot',vol=v*(big?.65:kind==='shot'?.38:.2);
-        this.noiseVoice({at,duration:big?.48:.23,volume:vol,frequency:enemy?550:1100,pan});this.tone({at,frequency:big?95:145,slide:big?38:50,duration:big?.4:.19,volume:vol*.42,pan,type:'triangle',filter:500});
+        const big=kind==='burst',enemy=kind==='enemy-shot',light=kind==='escort-shot',vol=v*(big?.64:light?.24:enemy?.22:.36);
+        this.noiseVoice({at,duration:big?.32:light?.075:.11,volume:vol,frequency:enemy?1600:light?3400:2600,highpass:big?80:320,pan});
+        this.tone({at,frequency:big?104:light?185:145,slide:big?41:light?82:57,duration:big?.29:light?.11:.16,volume:vol*.48,pan,type:'triangle',filter:big?420:740});
+        if(!light)this.noiseVoice({at:at+.025,duration:big?.43:.17,volume:vol*.26,frequency:big?520:780,highpass:70,pan});
+      }else if(kind==='metal-hit'){
+        this.noiseVoice({at,duration:.055,volume:v*.24,frequency:3900,highpass:1100,pan});
+        this.tone({at,frequency:1180,slide:810,duration:.12,volume:v*.052,type:'triangle',filter:2600,pan});
+        this.tone({at:at+.003,frequency:1733,slide:1470,duration:.075,volume:v*.026,type:'sine',pan});
+      }else if(kind==='water-hit'){
+        this.noiseVoice({at,duration:.13,volume:v*.17,frequency:1850,highpass:260,pan});
+        this.noiseVoice({at:at+.035,duration:.24,volume:v*.10,frequency:630,highpass:90,pan});
       }else if(kind==='flak-shot'||kind==='mortar-shot'||kind==='mortar-hit'){
         const mortar=kind!=='flak-shot',hit=kind==='mortar-hit';
         this.noiseVoice({at,duration:hit?.38:mortar?.25:.12,volume:v*(hit?.4:.27),frequency:hit?380:mortar?620:1900,pan});

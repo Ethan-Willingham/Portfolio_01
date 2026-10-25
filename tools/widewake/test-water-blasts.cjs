@@ -19,20 +19,22 @@ assert.equal(b.effects.kind[0],3);close(b.effects.size[0],140);
 check('radial pressure, hull resistance, nonlethal shoulder and a finite center hit');
 
 const lethal=empty();lethal.raiders.add(10,0,0,rand);lethal.raiders.index();lethal.raiders.blast(0,0,100,100,lethal);assert.equal(lethal.kills,1);assert.equal(lethal.raiders.pushX[0],0);lethal.raiders.blast(0,0,100,100,lethal);assert.equal(lethal.kills,1);
+const contactPush=[];
 for(const explosive of [false,true]){
-  const hit=empty();hit.raiders.add(20,0,3,rand);hit.raiders.index();
-  const hits=hit.raiders.segment(0,0,100,0,explosive?1.12:.7),contact=hit.raiders.hitDistances[0]*100;assert.equal(hits,1);assert.ok(contact>0&&contact<20);
-  hit.shots.fire(0,0,100,0,{...(explosive?B.weapons.flak:B.weapons.gun),damage:1,speed:6000,pierce:1});hit.shots.step(dt,hit);
-  assert.equal(hit.shots.count,0);assert.equal(hit.raiders.pushX[0]>0,explosive);
+  const hit=empty();hit.raiders.add(20,0,3,rand);hit.raiders.vx[0]=1;hit.raiders.index();
+  const hits=hit.raiders.segment(0,0,100,0,explosive?.18:.09),contact=hit.raiders.hitDistances[0]*100;assert.equal(hits,1);assert.ok(contact>0&&contact<20);
+  hit.shots.fire(0,0,100,0,{...(explosive?B.weapons.flak:B.weapons.gun),damage:1,speed:6000,pierce:1},0,255,200,1,1);hit.shots.step(dt,hit);
+  assert.equal(hit.shots.count,0);assert.ok(hit.raiders.pushX[0]>0);contactPush.push(hit.raiders.pushX[0]);
   const water=Array.from(hit.effects.kind.subarray(0,hit.effects.count)).indexOf(3);
   if(explosive){assert.ok(water>=0);close(hit.effects.x[water],contact);assert.equal(hit.raiders.hp[0],1799,'direct target takes damage once and still drifts');assert.equal(hit.shots.blastHits,0);}else assert.equal(water,-1);
 }
+assert.ok(contactPush[0]<1&&contactPush[1]>contactPush[0]*10,'small kinetic contacts remain distinct from explosive water pressure');
 for(const spec of [B.weapons.mortar,B.weapons.flak]){
   const miss=empty();miss.shots.fire(0,0,100,0,spec,0,0,100);
   for(let n=0;n<1000&&miss.shots.count;n++)miss.shots.step(dt,miss);
-  assert.equal(miss.shots.count,0);assert.equal(miss.effects.count,1);assert.equal(miss.effects.kind[0],3);close(miss.effects.height[0],.2);assert.equal(miss.shots.detonations,1);close(miss.effects.x[0],100,.01);
+  assert.equal(miss.shots.count,0);assert.equal(miss.effects.count,1);assert.equal(miss.effects.kind[0],3);close(miss.effects.height[0],0);assert.equal(miss.shots.detonations,1);close(miss.effects.x[0],100,.01);
 }
-check('lethal hits reward once, bullets do not shove, shells use swept contact and misses splash');
+check('lethal hits reward once, kinetic contacts stay modest, shells use swept contact and misses splash');
 
 const pushed=empty(),control=empty();
 for(const game of [pushed,control]){game.player.x=-1000;game.player.y=0;game.raiders.add(80,0,2,rand);game.raiders.index();}

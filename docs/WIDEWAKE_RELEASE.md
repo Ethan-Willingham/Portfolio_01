@@ -1,5 +1,56 @@
 # Widewake production goal
 
+## Physical gunfire and enemy handling, 2026-10-25 (v0.42.0)
+
+The owner asked for a major improvement to bullets, the way they hit enemies
+and enemy movement. The old combat could display a round above a boat while
+its flat collision test still damaged the hull, and enemies changed velocity
+without turning their bows. This pass corrects both behaviors.
+
+Turrets traverse before firing from a shared, tilted barrel endpoint. Direct
+rounds inherit boat motion, compensate their lead, fall under gravity, and
+sweep through moving hulls with actual vertical clearance. Small bore allowances
+replace the old broad collision padding. Surface-contact checks put sparks
+within 11 cm of the outline in the focused fixture. Misses meet the wave
+surface. Mortars keep their existing pacing and respect bank blocking.
+
+Kinetic contacts add a small momentum and yaw response; pressure from explosive
+weapons remains separate. Directional chips, smoke, water fans and drifting
+sinking hulls replace the generic contact flash and immediate disappearance.
+Thin tapered tracers end at their simulated tips. Gunfire, metal and water
+contacts have distinct synthesized cues and bounded priority within the mix.
+
+Enemy heading, yaw, drive and lateral water response now have their own state.
+Gunners circle at a stable firing distance, rams accelerate along their committed
+charge, and close traffic anticipates and brakes for hulls. Twelve-boat crossing
+and queue fixtures retain positive polygon gaps without separation teleports.
+Large battles use deterministic distance tiers: detailed local contacts near
+the fleet, staggered anticipation farther out, and damped course following for
+distant reinforcements. Normal campaign groups retain the detailed checks.
+
+The first traffic pass cost almost three times the previous simulation. Bounded
+neighbor work, cached heading bases and distance tiers reduced the measured
+short native 16,384-enemy median to 12.1 ms from 26.7 ms, compared with 9.0 ms
+before this pass on this host. These are simulation samples, not universal frame
+rates or physical-phone measurements. Rendering remains instanced and capped;
+the focused live sample used 31 draw calls.
+
+The live input checks on this host use SwiftShader software graphics. Both the
+previous and revised builds render slowly there, so these runs establish actual
+helm, firing, pause and recovery behavior rather than hardware frame rates.
+
+Focused checks cover wave-relative hull hits, moving firing boats, crossing
+targets, turret alignment, near-edge misses, water strikes, exact continuation,
+crowd gaps and finite fixed buffers. Desktop WebGL and landscape-phone WebGL and
+Canvas review covers muzzle, flight, strike, sinking, reduced motion and graphics
+recovery. The normal browser voyage still has no save or load flow.
+
+The three-minute automatic watch passes with 16,384 active enemies, all 24
+friendly boats firing, 61,191 kills, 11,522 projectile contacts and 16 friendly
+boats surviving. No projectile admission is rejected; the simulation buffers
+remain fixed at 5,505,554 bytes. These are the deterministic test loadout's
+results, not a claim of finished difficulty balance.
+
 ## Integrated harbors and fleet decisions, 2026-10-25 (v0.41.0)
 
 The owner's next pass requests ports that belong to the terrain, a satisfying

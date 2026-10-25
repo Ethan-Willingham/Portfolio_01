@@ -2,9 +2,11 @@
 const assert=require('node:assert/strict');
 const B=require('../../js/widewake-battle-core.js'),E=require('../../js/widewake-estuary-core.js'),R=require('../../js/widewake-reach-game.js');
 const dt=1/60,r=B.random(27),close=(a,b)=>assert.ok(Math.abs(a-b)<.002,`${a} != ${b}`);
-const fixture=()=>{const b=new B.Battle({population:0});b.mounts=[];return b;};
+const fixture=()=>{const b=new B.Battle({population:0});b.mounts=[];b.sea.strength=0;return b;};
 function enemy(b,x,y,kind=0,angle=0,hp=1000){const a=b.raiders;a.add(x,y,kind,r);const i=a.count-1;a.hp[i]=hp;a.vx[i]=Math.cos(angle);a.vy[i]=Math.sin(angle);a.index();return i;}
-function fire(b,x,y,tx,ty,spec={...B.weapons.guard,speed:6000}){assert.ok(b.shots.fire(x,y,tx,ty,spec));}
+// These fixtures isolate the plan-view sweep at deck height. High rounds and
+// moving water are covered separately in test-combat-ballistics.cjs.
+function fire(b,x,y,tx,ty,spec={...B.weapons.guard,speed:6000}){assert.ok(b.shots.fire(x,y,tx,ty,spec,0,255,spec.range+120,1,spec.kind===2?0:1));}
 
 // A visible bow or stern counts at every orientation, not just the centre disk.
 for(let kind=0;kind<4;kind++)for(let n=0;n<16;n++)for(const along of [-.44,.44]){
@@ -19,7 +21,7 @@ console.log('PASS bow/stern hits on four silhouettes at 16 headings; clean water
 
 const moving=fixture();enemy(moving,50,20,1,Math.PI/2);moving.raiders.py[0]=-20;moving.raiders.index();fire(moving,0,0,100,0);moving.shots.step(dt,moving);close(moving.raiders.hp[0],970);
 const ordered=fixture();enemy(ordered,40,0,0,Math.PI/2);enemy(ordered,50,0,3);fire(ordered,0,0,100,0);ordered.shots.step(dt,ordered);close(ordered.raiders.hp[0],1000);close(ordered.raiders.hp[1],970);
-const pierce=fixture();enemy(pierce,30,0,2);enemy(pierce,60,0,2);enemy(pierce,90,0,2);fire(pierce,17,0,150,0,{...B.weapons.gun,speed:120});for(let n=0;n<45;n++)pierce.shots.step(dt,pierce);close(pierce.raiders.hp[0],968);close(pierce.raiders.hp[1],968);close(pierce.raiders.hp[2],1000);assert.equal(pierce.shots.contacts,2);assert.equal(pierce.shots.count,0);
+const pierce=fixture();enemy(pierce,30,0,2);enemy(pierce,60,0,2);enemy(pierce,90,0,2);fire(pierce,17,0,100,0,{...B.weapons.gun,speed:120});for(let n=0;n<45;n++)pierce.shots.step(dt,pierce);close(pierce.raiders.hp[0],968);close(pierce.raiders.hp[1],968);close(pierce.raiders.hp[2],1000);assert.equal(pierce.shots.contacts,2);assert.equal(pierce.shots.count,0);
 console.log('PASS crossing boats are swept in relative motion; first hull contact wins; piercing never repeats a hit');
 
 const flak=fixture();enemy(flak,30,0,2);enemy(flak,44,15);enemy(flak,100,0);fire(flak,0,0,200,0,{...B.weapons.flak,speed:6000,splash:40});flak.shots.step(dt,flak);close(flak.raiders.hp[0],940);close(flak.raiders.hp[1],961);close(flak.raiders.hp[2],1000);assert.equal(flak.shots.detonations,1);assert.equal(flak.shots.blastHits,1);assert.ok(flak.effects.x[0]<30,'explosion stays on contact, not the end of a fast simulation step');

@@ -3,7 +3,7 @@
 (function(root){
   'use strict';
   const E=root.WidewakeEstuary,B=root.WidewakeBattle,clamp=E.clamp;
-  const version='0.41.0',SAVE_VERSION=1;
+  const version='0.42.0',SAVE_VERSION=1;
   const goods={salt:{name:'Salt',color:'#d8d8bd'},tools:{name:'Tools',color:'#92a9ad'},grain:{name:'Grain',color:'#c4ac72'},timber:{name:'Timber',color:'#a68b65'},fish:{name:'Fish',color:'#78b3b5'},oil:{name:'Oil',color:'#8a909e'},relic:{name:'Salvage',color:'#dbc18c'}};
   const markets={yard:{salt:12,tools:30,grain:23,timber:25,fish:18,oil:44,relic:140},reeds:{salt:22,tools:48,grain:10,timber:24,fish:9,oil:35,relic:155},mill:{salt:27,tools:54,grain:18,timber:11,fish:24,oil:52,relic:190}};
   Object.assign(markets,{
@@ -184,7 +184,7 @@
       if(this.player.hp<=0)this.recover();
     }
     save(){
-      const pack=(part,keys)=>({count:part.count,...Object.fromEntries(keys.map(k=>[k,Array.from(part[k].subarray(0,part.count))]))});
+      const pack=(part,keys)=>{if(part===this.raiders)keys=[...keys,'angle','turn','desiredAngle','desiredSpeed','drive','steeringReady','gunAngle','fireAt','surface','surfaceReady'];if(part===this.shots)keys=[...keys,'verticalSpeed','targetHeight'];return{count:part.count,...Object.fromEntries(keys.map(k=>[k,Array.from(part[k].subarray(0,part.count))]))};};
       return JSON.stringify({schema:'widewake-reach',version:SAVE_VERSION,build:version,convoyOrder:this.convoyOrder,sea:this.sea.snapshot(),coins:this.coins,rank:this.rank,levels:this.levels,ships:this.ships,port:this.port,lastPort:this.lastPort,time:this.time,tick:this.tick,distance:this.distance,visited:[...this.visited],discoveries:this.discoveries,stats:this.stats,earned:this.earned,collection:this.collection,marketTurn:this.marketTurn,marketVolumes:this.marketVolumes,operation:this.operation,center:this.center,workTime:this.workTime,nextEncounter:this.nextEncounter,encounter:this.encounter,random:this.random.state(),kills:this.kills,spawned:this.spawned,lost:this.lost,loot:this.loot,route:this.route,arrived:this.arrived?.id||null,convoyTrail:this.convoyTrail,traveled:this.traveled,burstCooldown:this.burstCooldown,burstCursor:this.burstCursor,burstTimer:this.burstTimer,mounts:this.mounts.map(({spec,grade,...mount})=>mount),raiders:pack(this.raiders,['x','y','vx','vy','pushX','pushY','waveX','waveY','hp','cooldown','id','kind','target']),raiderSequence:this.raiders.sequence,shots:pack(this.shots,['x','y','vx','vy','life','total','damage','splash','height','startHeight','pierce','kind','startX','startY','endX','endY','previousHit','owner'])});
     }
     static restore(text){try{return Game.readSave(text);}catch(error){const known=['Save too large','This is not a Bracken Reach save.','This voyage uses a different save version.'];throw Error(known.includes(error.message)?error.message:'This voyage is damaged or incomplete.');}}
@@ -200,14 +200,27 @@
       g.arrived=[...E.ports,...sites].find(p=>p.id===d.arrived)||null;need(Array.isArray(d.loot)&&d.loot.length<=128);g.loot=d.loot.map(p=>{need(goods[p.good]);return{...point(p),good:p.good,count:num(p.count,1,10),life:num(p.life,0,240)};});
       const unpack=(target,data,limit,keys)=>{need(data&&Number.isInteger(data.count)&&data.count>=0&&data.count<=limit);target.count=data.count;for(const key of keys){need(Array.isArray(data[key])&&data[key].length===data.count);for(let i=0;i<data.count;i++)target[key][i]=num(data[key][i],-100000,1e9);}target.px.set(target.x);target.py.set(target.y);};
       unpack(g.raiders,d.raiders,2048,['x','y','vx','vy','hp','cooldown','id','kind','target']);for(let i=0;i<g.raiders.count;i++)need(g.raiders.kind[i]<=2&&g.raiders.target[i]<g.ships.length);
+      const motionKeys=['angle','turn','desiredAngle','desiredSpeed','drive','steeringReady','gunAngle','fireAt','surface','surfaceReady'],hasMotion=motionKeys.some(k=>d.raiders[k]!==undefined);
+      if(hasMotion)for(const key of motionKeys){need(Array.isArray(d.raiders[key])&&d.raiders[key].length===g.raiders.count);for(let i=0;i<g.raiders.count;i++){
+        const flag=key==='steeringReady'||key==='surfaceReady',angle=['angle','desiredAngle','gunAngle'].includes(key),min=flag?0:angle?-Math.PI*2:key==='fireAt'?-1000:key==='surface'?-100:key==='turn'?-4:0,max=flag?1:angle?Math.PI*2:key==='fireAt'?1e9:key==='surface'?100:key==='turn'?4:180;
+        const value=num(d.raiders[key][i],min,max);if(flag)need(Number.isInteger(value));g.raiders[key][i]=value;
+      }}else for(let i=0;i<g.raiders.count;i++){g.raiders.angle[i]=g.raiders.desiredAngle[i]=g.raiders.gunAngle[i]=Math.atan2(g.raiders.vy[i],g.raiders.vx[i]);g.raiders.drive[i]=g.raiders.desiredSpeed[i]=Math.hypot(g.raiders.vx[i],g.raiders.vy[i]);g.raiders.steeringReady[i]=1;g.raiders.fireAt[i]=-1000;}
+      g.raiders.previousAngle.set(g.raiders.angle);
+      for(let i=0;i<g.raiders.count;i++){g.raiders.forwardX[i]=Math.cos(g.raiders.angle[i]);g.raiders.forwardY[i]=Math.sin(g.raiders.angle[i]);}
       // Version-one saves before water blasts have no residual pressure.
       for(const key of ['waveX','waveY'])if(d.raiders[key]!==undefined){need(Array.isArray(d.raiders[key])&&d.raiders[key].length===g.raiders.count);for(let i=0;i<g.raiders.count;i++)g.raiders[key][i]=num(d.raiders[key][i],-10,10);}
       if(d.raiders.pushX!==undefined||d.raiders.pushY!==undefined){
         for(const key of ['pushX','pushY']){need(Array.isArray(d.raiders[key])&&d.raiders[key].length===g.raiders.count);for(let i=0;i<g.raiders.count;i++)g.raiders[key][i]=num(d.raiders[key][i],-B.BLAST.maxSpeed,B.BLAST.maxSpeed);}
         for(let i=0;i<g.raiders.count;i++)need(Math.hypot(g.raiders.pushX[i],g.raiders.pushY[i])<=B.BLAST.maxSpeed+.001);
       }
-      g.raiders.sequence=num(d.raiderSequence,1,4294967295);g.raiders.index();unpack(g.shots,d.shots,8192,['x','y','vx','vy','life','total','damage','splash','height','pierce','kind','startX','startY','endX','endY','previousHit','owner']);if(d.shots.startHeight!==undefined)need(Array.isArray(d.shots.startHeight)&&d.shots.startHeight.length===g.shots.count);for(let i=0;i<g.shots.count;i++)g.shots.startHeight[i]=d.shots.startHeight===undefined?g.shots.height[i]:num(d.shots.startHeight[i],0,200);g.shots.previousHeight.set(g.shots.height);g.shots.hostile=0;for(let i=0;i<g.shots.count;i++){need(Number.isInteger(g.shots.kind[i])&&g.shots.kind[i]>=0&&g.shots.kind[i]<=3&&g.shots.total[i]>0&&g.shots.life[i]>0&&g.shots.life[i]<=g.shots.total[i]+.01&&g.shots.damage[i]>0&&g.shots.damage[i]<=10000&&g.shots.splash[i]>=0&&g.shots.splash[i]<=1000&&g.shots.pierce[i]>=1&&(g.shots.owner[i]===255||g.shots.owner[i]<g.ships.length));if(g.shots.kind[i]===3)g.shots.hostile++;}
-      g.rebuildMounts();if(Array.isArray(d.mounts)&&d.mounts.length===g.mounts.length)g.mounts.forEach((m,i)=>{m.cooldown=num(d.mounts[i].cooldown,-1e9,20);m.angle=num(d.mounts[i].angle,-7,7);});g.field.time=g.time;g.field.sample(g.player.x,g.player.y,g.water);return g;
+      g.raiders.sequence=num(d.raiderSequence,1,4294967295);g.raiders.index();unpack(g.shots,d.shots,8192,['x','y','vx','vy','life','total','damage','splash','height','pierce','kind','startX','startY','endX','endY','previousHit','owner']);if(d.shots.startHeight!==undefined)need(Array.isArray(d.shots.startHeight)&&d.shots.startHeight.length===g.shots.count);for(let i=0;i<g.shots.count;i++)g.shots.startHeight[i]=d.shots.startHeight===undefined?g.shots.height[i]:num(d.shots.startHeight[i],-100,200);g.shots.previousHeight.set(g.shots.height);g.shots.hostile=0;for(let i=0;i<g.shots.count;i++){need(Number.isInteger(g.shots.kind[i])&&g.shots.kind[i]>=0&&g.shots.kind[i]<=3&&g.shots.total[i]>0&&g.shots.life[i]>0&&g.shots.life[i]<=g.shots.total[i]+.01&&g.shots.damage[i]>0&&g.shots.damage[i]<=10000&&g.shots.splash[i]>=0&&g.shots.splash[i]<=1000&&g.shots.pierce[i]>=1&&(g.shots.owner[i]===255||g.shots.owner[i]<g.ships.length));if(g.shots.kind[i]===3)g.shots.hostile++;}
+      const trajectory=d.shots.verticalSpeed!==undefined||d.shots.targetHeight!==undefined;
+      if(trajectory)for(const key of ['verticalSpeed','targetHeight'])need(Array.isArray(d.shots[key])&&d.shots[key].length===g.shots.count);
+      for(let i=0;i<g.shots.count;i++){
+        g.shots.targetHeight[i]=trajectory?num(d.shots.targetHeight[i],-100,200):g.shots.kind[i]===2?0:1.05;
+        g.shots.verticalSpeed[i]=trajectory?num(d.shots.verticalSpeed[i],-100000,100000):g.shots.kind[i]===2?0:B.Shots.launchVertical(g.shots.startHeight[i],g.shots.targetHeight[i],Math.hypot(g.shots.endX[i]-g.shots.startX[i],g.shots.endY[i]-g.shots.startY[i]),Math.hypot(g.shots.vx[i],g.shots.vy[i]));
+      }
+      g.rebuildMounts();if(Array.isArray(d.mounts)&&d.mounts.length===g.mounts.length)g.mounts.forEach((m,i)=>{m.cooldown=num(d.mounts[i].cooldown,-1e9,20);m.angle=num(d.mounts[i].angle,-7,7);m.desiredAngle=d.mounts[i].desiredAngle===undefined?m.angle:num(d.mounts[i].desiredAngle,-7,7);});g.field.time=g.time;g.field.sample(g.player.x,g.player.y,g.water);return g;
     }
   }
   const api={Game,version,goods,markets,boats,hulls,sites,upgrades,used};root.WidewakeReach=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;

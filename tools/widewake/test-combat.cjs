@@ -11,7 +11,8 @@ check('lead aiming solves the moving intercept; fleet fire and area strikes spre
 const ram=new C.Endgame({population:0});ram.mounts=[];ram.burstCooldown=999;ram.raiders.add(500,0,3,r);ram.raiders.cooldown[0]=0;ram.ships.slice(1).forEach(s=>{s.hp=0;s.working=false;});ram.ships[19].hp=2400;ram.ships[19].working=true;ram.ships[19].x=ram.ships[19].y=0;ram.player.x=ram.player.y=0;
 ram.raiders.step(dt,ram);const direction=[ram.raiders.chargeX[0],ram.raiders.chargeY[0]],position=ram.raiders.x[0];assert.ok(ram.raiders.charge[0]>1);
 ram.player.y=300;ram.ships[19].y=300;for(let i=0;i<55;i++)ram.raiders.step(dt,ram);
-assert.deepEqual([ram.raiders.chargeX[0],ram.raiders.chargeY[0]],direction);assert.ok(ram.raiders.x[0]<position-10);assert.ok(ram.raiders.vx[0]<-140);
+assert.deepEqual([ram.raiders.chargeX[0],ram.raiders.chargeY[0]],direction);assert.ok(ram.raiders.x[0]<position-1);assert.ok(ram.raiders.vx[0]<-5&&ram.raiders.vx[0]>-120,'ram builds speed after its wind-up');
+for(let i=0;i<40;i++)ram.raiders.step(dt,ram);assert.deepEqual([ram.raiders.chargeX[0],ram.raiders.chargeY[0]],direction);assert.ok(ram.raiders.x[0]<position-30);assert.ok(ram.raiders.vx[0]<-140,'the committed dash reaches its full speed over time');
 ram.player.x=1000;const victim=ram.ships[19];ram.raiders.x[0]=victim.x;ram.raiders.y[0]=victim.y;const hp=victim.hp;ram.raiders.step(dt,ram);assert.equal(victim.hp,hp-360);assert.equal(ram.raiders.hp[0],-999);
 check('rams wind up, commit to one lane, accelerate, and hit one hull once');
 
