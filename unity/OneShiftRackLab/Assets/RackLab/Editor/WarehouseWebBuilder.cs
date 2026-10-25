@@ -16,6 +16,7 @@ namespace OneShift.RackLab
     {
         const string ScenePath = "Assets/RackLab/Scenes/RackFloor.unity";
         const string PipelinePath = "Assets/RackLab/Materials/RackLabPipeline.asset";
+        const string RendererPath = "Assets/RackLab/Materials/RackLabRenderer.asset";
         const string BuildName = "OneShiftWeb";
 
         [MenuItem("One Shift/Build browser player")]
@@ -29,6 +30,10 @@ namespace OneShift.RackLab
             var pipeline = AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>(PipelinePath);
             if (pipeline == null) throw new InvalidOperationException("Warehouse render pipeline is missing.");
             string pipelineSnapshot = EditorJsonUtility.ToJson(pipeline);
+            var renderer = AssetDatabase.LoadAssetAtPath<UniversalRendererData>(RendererPath);
+            if (renderer == null) throw new InvalidOperationException("Warehouse renderer is missing.");
+            var contactShading = renderer.rendererFeatures.OfType<ScreenSpaceAmbientOcclusion>()
+                .ToDictionary(feature => feature, feature => EditorJsonUtility.ToJson(feature));
             var settings = new WebSettingsSnapshot();
             string projectRoot = Path.GetFullPath(Path.Combine(Application.dataPath, ".."));
             string staging = Path.Combine(projectRoot, "Builds", "WebGL", BuildName);
@@ -39,15 +44,29 @@ namespace OneShift.RackLab
                 // Forward+ uses CPU jobs and uniform buffers in URP 17.3 and
                 // supports WebGL 2. Retain it so every fixture lights the floor.
                 pipeline.mainLightShadowmapResolution = 2048;
-                pipeline.additionalLightsShadowmapResolution = 2048;
+                pipeline.additionalLightsShadowmapResolution = 1024;
                 pipeline.shadowCascadeCount = 2;
                 pipeline.shadowDistance = 40;
                 pipeline.msaaSampleCount = 2;
                 var serialized = new SerializedObject(pipeline);
                 serialized.FindProperty("m_AdditionalLightsShadowResolutionTierHigh").intValue = 512;
+                serialized.FindProperty("m_AdditionalLightsShadowResolutionTierMedium").intValue = 256;
                 serialized.FindProperty("m_SoftShadowQuality").intValue = (int)SoftShadowQuality.Low;
                 serialized.ApplyModifiedPropertiesWithoutUndo();
                 EditorUtility.SetDirty(pipeline);
+                // Contact shading was still running at desktop resolution and
+                // sample counts. Keep it, with a quarter-size AO buffer and
+                // four samples. Restore these asset settings after the build.
+                foreach (var feature in contactShading.Keys)
+                {
+                    var ao = new SerializedObject(feature);
+                    ao.FindProperty("m_Settings.Downsample").boolValue = true;
+                    ao.FindProperty("m_Settings.NormalSamples").intValue = 1;
+                    ao.FindProperty("m_Settings.Samples").intValue = 2;
+                    ao.FindProperty("m_Settings.BlurQuality").intValue = 1;
+                    ao.ApplyModifiedPropertiesWithoutUndo();
+                    EditorUtility.SetDirty(feature);
+                }
                 PlayerSettings.WebGL.compressionFormat = WebGLCompressionFormat.Gzip;
                 PlayerSettings.WebGL.decompressionFallback = true;
                 PlayerSettings.WebGL.nameFilesAsHashes = false;
@@ -96,6 +115,11 @@ namespace OneShift.RackLab
             {
                 EditorJsonUtility.FromJsonOverwrite(pipelineSnapshot, pipeline);
                 EditorUtility.SetDirty(pipeline);
+                foreach (var feature in contactShading)
+                {
+                    EditorJsonUtility.FromJsonOverwrite(feature.Value, feature.Key);
+                    EditorUtility.SetDirty(feature.Key);
+                }
                 settings.Restore();
                 AssetDatabase.SaveAssets();
             }
@@ -163,6 +187,8 @@ namespace OneShift.RackLab
                 foreach (var camera in root.GetComponentsInChildren<UniversalAdditionalCameraData>(true))
                     camera.antialiasing = AntialiasingMode.None;
                 foreach (var probe in root.GetComponentsInChildren<ReflectionProbe>(true)) probe.resolution = 64;
+                foreach (var clock in root.GetComponentsInChildren<WarehouseDayNight>(true))
+                    clock.reflectionIntervalSeconds = 20;
             }
         }
     }

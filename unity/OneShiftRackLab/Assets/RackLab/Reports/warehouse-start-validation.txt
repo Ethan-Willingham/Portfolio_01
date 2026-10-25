@@ -1,0 +1,25 @@
+PASS Four opening stock pallets, 450 kg each
+PASS Three wall bays provide eighteen physical rack positions
+PASS Original eighteen-wheel model retains its actual wheel and door hierarchy
+PASS Original trailer has 2.693 metre roof-bow clearance without scaling
+PASS All stock starts as dynamic packages; transit restraints are temporary runtime state
+PASS Forklift-sized path through actual wall opening and open trailer doors
+PASS Continuous flush dock support at z 11.50
+PASS Continuous flush dock support at z 11.65
+PASS Continuous flush dock support at z 11.80
+PASS Continuous flush dock support at z 11.95
+PASS Continuous flush dock support at z 12.10
+PASS Continuous flush dock support at z 12.25
+PASS Continuous flush dock support at z 12.40
+PASS Continuous flush dock support at z 12.55
+PASS Continuous flush dock support at z 12.70
+PASS Continuous flush dock support at z 12.85
+PASS Continuous flush dock support at z 13.00
+PASS Continuous flush dock support at z 13.15
+PASS Continuous flush dock support at z 13.30
+PASS Continuous flush dock support at z 13.45
+PASS Continuous flush dock support at z 13.60
+PASS Continuous flush dock support at z 13.75
+PASS Trailer deck matches warehouse floor height
+PASS Standing player capsule walks through YARD doorway, across apron, down inclined ramp and onto lot
+PASS Asset-test displays removed from active start; source prefabs retained

@@ -1,5 +1,5 @@
 {
-    "generatedUtc": "2026-10-24T18:47:16.2096474Z",
+    "generatedUtc": "2026-10-25T22:54:23.5649693Z",
     "unityVersion": "6000.3.27f1",
     "prefab": "Assets/RackLab/Prefabs/WarehouseForklift.prefab",
     "method": "Isolated PhysX scene, fixed 0.005 second steps matching the project, actual prefab rigidbodies, wheel colliders and compound colliders.",
@@ -14,12 +14,12 @@
             "measurements": [
                 {
                     "name": "root height",
-                    "value": -0.005580544471740723,
+                    "value": -0.005578577518463135,
                     "units": "m"
                 },
                 {
                     "name": "remaining speed",
-                    "value": 0.000051442653784761205,
+                    "value": 0.0001984468981390819,
                     "units": "m/s"
                 },
                 {
@@ -39,17 +39,17 @@
                 },
                 {
                     "name": "main body center of mass height",
-                    "value": 0.6694086790084839,
+                    "value": 0.677019476890564,
                     "units": "m"
                 },
                 {
                     "name": "lowest solid collider above floor",
-                    "value": 0.03252142667770386,
+                    "value": 0.03251528739929199,
                     "units": "m"
                 },
                 {
                     "name": "lowest fork blade above floor",
-                    "value": 0.03252142667770386,
+                    "value": 0.03251528739929199,
                     "units": "m"
                 }
             ]
@@ -62,22 +62,22 @@
             "measurements": [
                 {
                     "name": "forward travel",
-                    "value": 22.87126922607422,
+                    "value": 22.873903274536134,
                     "units": "m"
                 },
                 {
                     "name": "peak speed",
-                    "value": 4.167255401611328,
+                    "value": 4.16729211807251,
                     "units": "m/s"
                 },
                 {
                     "name": "peak lean",
-                    "value": 0.17804114520549775,
+                    "value": 0.17245851457118989,
                     "units": "degrees"
                 },
                 {
                     "name": "sideways drift",
-                    "value": 0.004646779969334602,
+                    "value": 0.005950023420155048,
                     "units": "m"
                 }
             ]
@@ -90,12 +90,12 @@
             "measurements": [
                 {
                     "name": "speed before braking",
-                    "value": 4.1596221923828129,
+                    "value": 4.159568786621094,
                     "units": "m/s"
                 },
                 {
                     "name": "stopping distance",
-                    "value": 1.6837197542190552,
+                    "value": 1.6844931840896607,
                     "units": "m"
                 },
                 {
@@ -105,7 +105,7 @@
                 },
                 {
                     "name": "remaining speed",
-                    "value": 0.06554154306650162,
+                    "value": 0.08874043077230454,
                     "units": "m/s"
                 }
             ]
@@ -118,17 +118,17 @@
             "measurements": [
                 {
                     "name": "speed before inching",
-                    "value": 4.135543346405029,
+                    "value": 4.135534763336182,
                     "units": "m/s"
                 },
                 {
                     "name": "speed after first 60 milliseconds",
-                    "value": 4.024697303771973,
+                    "value": 4.026668548583984,
                     "units": "m/s"
                 },
                 {
                     "name": "speed after four seconds",
-                    "value": 0.8315369486808777,
+                    "value": 0.8316251635551453,
                     "units": "m/s"
                 }
             ]
@@ -141,12 +141,12 @@
             "measurements": [
                 {
                     "name": "backward travel",
-                    "value": 11.350516319274903,
+                    "value": 11.348264694213868,
                     "units": "m"
                 },
                 {
                     "name": "signed final speed",
-                    "value": -2.92265248298645,
+                    "value": -2.9226012229919435,
                     "units": "m/s"
                 }
             ]
@@ -159,17 +159,17 @@
             "measurements": [
                 {
                     "name": "nose turn toward requested side",
-                    "value": 45.77711868286133,
+                    "value": 45.96859359741211,
                     "units": "degrees"
                 },
                 {
                     "name": "front axle travel toward requested side",
-                    "value": 0.4493054747581482,
+                    "value": 0.45190519094467165,
                     "units": "m"
                 },
                 {
                     "name": "body center lateral travel",
-                    "value": -0.08695366978645325,
+                    "value": -0.08612680435180664,
                     "units": "m"
                 },
                 {
@@ -192,17 +192,17 @@
             "measurements": [
                 {
                     "name": "nose turn toward requested side",
-                    "value": 45.7769660949707,
+                    "value": 45.967586517333987,
                     "units": "degrees"
                 },
                 {
                     "name": "front axle travel toward requested side",
-                    "value": 0.4487055540084839,
+                    "value": 0.4510459303855896,
                     "units": "m"
                 },
                 {
                     "name": "body center lateral travel",
-                    "value": -0.08764168620109558,
+                    "value": -0.08710122108459473,
                     "units": "m"
                 },
                 {
@@ -225,22 +225,22 @@
             "measurements": [
                 {
                     "name": "maximum body rise",
-                    "value": 0.8078314065933228,
+                    "value": 0.8076884746551514,
                     "units": "m"
                 },
                 {
                     "name": "maximum pitch",
-                    "value": 36.041324615478519,
+                    "value": 33.09498596191406,
                     "units": "degrees"
                 },
                 {
                     "name": "maximum lean",
-                    "value": 36.04134750366211,
+                    "value": 33.09498596191406,
                     "units": "degrees"
                 },
                 {
                     "name": "final forward position",
-                    "value": 16.626102447509767,
+                    "value": 16.67746925354004,
                     "units": "m"
                 }
             ]
@@ -253,27 +253,27 @@
             "measurements": [
                 {
                     "name": "maximum body lean",
-                    "value": 94.96442413330078,
+                    "value": 94.30557250976563,
                     "units": "degrees"
                 },
                 {
                     "name": "maximum lateral roll before overturn",
-                    "value": 89.90109252929688,
+                    "value": 89.82086181640625,
                     "units": "degrees"
                 },
                 {
                     "name": "first overturn after throttle",
-                    "value": 3.625035524368286,
+                    "value": 3.5750343799591066,
                     "units": "s"
                 },
                 {
                     "name": "maximum body height",
-                    "value": 0.7480966448783875,
+                    "value": 0.721924901008606,
                     "units": "m"
                 },
                 {
                     "name": "final forward position",
-                    "value": 6.153916835784912,
+                    "value": 6.595791816711426,
                     "units": "m"
                 }
             ]
@@ -286,17 +286,17 @@
             "measurements": [
                 {
                     "name": "fall distance",
-                    "value": 1.5787668228149415,
+                    "value": 1.5391836166381837,
                     "units": "m"
                 },
                 {
                     "name": "vertical velocity",
-                    "value": -5.889481544494629,
+                    "value": -5.897614479064941,
                     "units": "m/s"
                 },
                 {
                     "name": "free rotation",
-                    "value": 27.76190757751465,
+                    "value": 32.29808807373047,
                     "units": "degrees"
                 }
             ]
@@ -309,17 +309,17 @@
             "measurements": [
                 {
                     "name": "maximum body forward position",
-                    "value": 5.41433572769165,
+                    "value": 5.407032012939453,
                     "units": "m"
                 },
                 {
                     "name": "final speed against wall",
-                    "value": 0.009497104212641716,
+                    "value": 0.000144279096275568,
                     "units": "m/s"
                 },
                 {
                     "name": "maximum final wall penetration",
-                    "value": 0.0002957582473754883,
+                    "value": 0.00031244754791259766,
                     "units": "m"
                 }
             ]
@@ -355,7 +355,7 @@
             "measurements": [
                 {
                     "name": "minimum requested-direction speed in sampling window",
-                    "value": 4.1596808433532719,
+                    "value": 4.159680366516113,
                     "units": "m/s"
                 },
                 {
@@ -370,57 +370,57 @@
                 },
                 {
                     "name": "FL minimum longitudinal contact speed",
-                    "value": 4.159724712371826,
+                    "value": 4.15964412689209,
                     "units": "m/s"
                 },
                 {
                     "name": "FL rolling error P95",
-                    "value": 0.007683402393013239,
+                    "value": 0.007732553407549858,
                     "units": "fraction"
                 },
                 {
                     "name": "FL integrated rolling distance error",
-                    "value": 0.007473918609321117,
+                    "value": 0.007525664754211903,
                     "units": "fraction"
                 },
                 {
                     "name": "FL contact travel",
-                    "value": 8.329875946044922,
+                    "value": 8.329878807067871,
                     "units": "m"
                 },
                 {
                     "name": "FL wheel circumference travel",
-                    "value": 8.392132759094239,
+                    "value": 8.392566680908204,
                     "units": "m"
                 },
                 {
                     "name": "FL lateral contact speed RMS",
-                    "value": 0.0000020807467535632897,
+                    "value": 0.0000023308612071559766,
                     "units": "m/s"
                 },
                 {
                     "name": "FL lateral contact speed P95",
-                    "value": 0.000004179414190730313,
+                    "value": 0.0000044966809582547287,
                     "units": "m/s"
                 },
                 {
                     "name": "FL lateral contact angle P95",
-                    "value": 0.000057486118748784065,
+                    "value": 0.00006183298683026806,
                     "units": "degrees"
                 },
                 {
                     "name": "FL tread speed P95",
-                    "value": 4.197809219360352,
+                    "value": 4.198033332824707,
                     "units": "m/s"
                 },
                 {
                     "name": "FL reported forward slip P95",
-                    "value": 0.00022408099903259426,
+                    "value": 0.0002573681704234332,
                     "units": "native slip"
                 },
                 {
                     "name": "FL reported sideways slip P95",
-                    "value": 5.996375307404378e-7,
+                    "value": 7.759584832456312e-7,
                     "units": "native slip"
                 },
                 {
@@ -435,57 +435,57 @@
                 },
                 {
                     "name": "FR minimum longitudinal contact speed",
-                    "value": 4.159722805023193,
+                    "value": 4.159646511077881,
                     "units": "m/s"
                 },
                 {
                     "name": "FR rolling error P95",
-                    "value": 0.0076835183426737789,
+                    "value": 0.007731863763183355,
                     "units": "fraction"
                 },
                 {
                     "name": "FR integrated rolling distance error",
-                    "value": 0.007473917677998543,
+                    "value": 0.0075258961878716949,
                     "units": "fraction"
                 },
                 {
                     "name": "FR contact travel",
-                    "value": 8.329876899719239,
+                    "value": 8.329875946044922,
                     "units": "m"
                 },
                 {
                     "name": "FR wheel circumference travel",
-                    "value": 8.392133712768555,
+                    "value": 8.392565727233887,
                     "units": "m"
                 },
                 {
                     "name": "FR lateral contact speed RMS",
-                    "value": 0.0000020807503915420967,
+                    "value": 0.0000023308612071559766,
                     "units": "m/s"
                 },
                 {
                     "name": "FR lateral contact speed P95",
-                    "value": 0.0000041793755372054877,
+                    "value": 0.000004496864221437136,
                     "units": "m/s"
                 },
                 {
                     "name": "FR lateral contact angle P95",
-                    "value": 0.000057485573051963,
+                    "value": 0.00006183545337989926,
                     "units": "degrees"
                 },
                 {
                     "name": "FR tread speed P95",
-                    "value": 4.19780969619751,
+                    "value": 4.198030948638916,
                     "units": "m/s"
                 },
                 {
                     "name": "FR reported forward slip P95",
-                    "value": 0.00022419451852329075,
+                    "value": 0.00025747937615960836,
                     "units": "native slip"
                 },
                 {
                     "name": "FR reported sideways slip P95",
-                    "value": 5.996257641527336e-7,
+                    "value": 7.75958994836401e-7,
                     "units": "native slip"
                 },
                 {
@@ -500,57 +500,57 @@
                 },
                 {
                     "name": "RL minimum longitudinal contact speed",
-                    "value": 4.159724235534668,
+                    "value": 4.15964412689209,
                     "units": "m/s"
                 },
                 {
                     "name": "RL rolling error P95",
-                    "value": 0.0029153653886169197,
+                    "value": 0.0029161330312490465,
                     "units": "fraction"
                 },
                 {
                     "name": "RL integrated rolling distance error",
-                    "value": 0.002899190178140998,
+                    "value": 0.00290079228579998,
                     "units": "fraction"
                 },
                 {
                     "name": "RL contact travel",
-                    "value": 8.329875946044922,
+                    "value": 8.329877853393555,
                     "units": "m"
                 },
                 {
                     "name": "RL wheel circumference travel",
-                    "value": 8.305726051330567,
+                    "value": 8.30571460723877,
                     "units": "m"
                 },
                 {
                     "name": "RL lateral contact speed RMS",
-                    "value": 0.000002341514800718869,
+                    "value": 0.0000025625224679970417,
                     "units": "m/s"
                 },
                 {
                     "name": "RL lateral contact speed P95",
-                    "value": 0.0000041895928006852048,
+                    "value": 0.00000469938458991237,
                     "units": "m/s"
                 },
                 {
                     "name": "RL lateral contact angle P95",
-                    "value": 0.00005760767817264423,
+                    "value": 0.00006469227810157463,
                     "units": "degrees"
                 },
                 {
                     "name": "RL tread speed P95",
-                    "value": 4.155050277709961,
+                    "value": 4.155049800872803,
                     "units": "m/s"
                 },
                 {
                     "name": "RL reported forward slip P95",
-                    "value": 0.0006007615593262017,
+                    "value": 0.0006003730813972652,
                     "units": "native slip"
                 },
                 {
                     "name": "RL reported sideways slip P95",
-                    "value": 3.2577599995420317e-7,
+                    "value": 3.635290397596691e-7,
                     "units": "native slip"
                 },
                 {
@@ -565,17 +565,17 @@
                 },
                 {
                     "name": "RR minimum longitudinal contact speed",
-                    "value": 4.159722805023193,
+                    "value": 4.159646511077881,
                     "units": "m/s"
                 },
                 {
                     "name": "RR rolling error P95",
-                    "value": 0.002915062941610813,
+                    "value": 0.002916474360972643,
                     "units": "fraction"
                 },
                 {
                     "name": "RR integrated rolling distance error",
-                    "value": 0.0028991899453103544,
+                    "value": 0.002900907304137945,
                     "units": "fraction"
                 },
                 {
@@ -585,37 +585,37 @@
                 },
                 {
                     "name": "RR wheel circumference travel",
-                    "value": 8.305727005004883,
+                    "value": 8.305712699890137,
                     "units": "m"
                 },
                 {
                     "name": "RR lateral contact speed RMS",
-                    "value": 0.0000023415159375872464,
+                    "value": 0.000002562520649007638,
                     "units": "m/s"
                 },
                 {
                     "name": "RR lateral contact speed P95",
-                    "value": 0.000004189591436443152,
+                    "value": 0.000004699493274529232,
                     "units": "m/s"
                 },
                 {
                     "name": "RR lateral contact angle P95",
-                    "value": 0.00005760770000051707,
+                    "value": 0.00006469378422480077,
                     "units": "degrees"
                 },
                 {
                     "name": "RR tread speed P95",
-                    "value": 4.155050754547119,
+                    "value": 4.155050277709961,
                     "units": "m/s"
                 },
                 {
                     "name": "RR reported forward slip P95",
-                    "value": 0.0006006775656715035,
+                    "value": 0.0006003646994940937,
                     "units": "native slip"
                 },
                 {
                     "name": "RR reported sideways slip P95",
-                    "value": 3.2577608521933146e-7,
+                    "value": 3.635292102899257e-7,
                     "units": "native slip"
                 }
             ]
@@ -628,7 +628,7 @@
             "measurements": [
                 {
                     "name": "minimum requested-direction speed in sampling window",
-                    "value": 2.9226016998291017,
+                    "value": 2.9226038455963136,
                     "units": "m/s"
                 },
                 {
@@ -643,57 +643,57 @@
                 },
                 {
                     "name": "FL minimum longitudinal contact speed",
-                    "value": 2.9226467609405519,
+                    "value": 2.9226572513580324,
                     "units": "m/s"
                 },
                 {
                     "name": "FL rolling error P95",
-                    "value": 0.005187368486076593,
+                    "value": 0.0052738976664841179,
                     "units": "fraction"
                 },
                 {
                     "name": "FL integrated rolling distance error",
-                    "value": 0.005173206329345703,
+                    "value": 0.005255987402051687,
                     "units": "fraction"
                 },
                 {
                     "name": "FL contact travel",
-                    "value": 5.846437454223633,
+                    "value": 5.846440315246582,
                     "units": "m"
                 },
                 {
                     "name": "FL wheel circumference travel",
-                    "value": 5.816192626953125,
+                    "value": 5.815711498260498,
                     "units": "m"
                 },
                 {
                     "name": "FL lateral contact speed RMS",
-                    "value": 0.000001725899892335292,
+                    "value": 0.0000023925688310555417,
                     "units": "m/s"
                 },
                 {
                     "name": "FL lateral contact speed P95",
-                    "value": 0.0000033771327707654565,
+                    "value": 0.000004434470611158758,
                     "units": "m/s"
                 },
                 {
                     "name": "FL lateral contact angle P95",
-                    "value": 0.00006618995394092053,
+                    "value": 0.00008691354014445096,
                     "units": "degrees"
                 },
                 {
                     "name": "FL tread speed P95",
-                    "value": 2.9082577228546144,
+                    "value": 2.9080092906951906,
                     "units": "m/s"
                 },
                 {
                     "name": "FL reported forward slip P95",
-                    "value": 0.005037123337388039,
+                    "value": 0.005071334075182676,
                     "units": "native slip"
                 },
                 {
                     "name": "FL reported sideways slip P95",
-                    "value": 7.454049750776903e-7,
+                    "value": 0.0000011584719459278859,
                     "units": "native slip"
                 },
                 {
@@ -708,57 +708,57 @@
                 },
                 {
                     "name": "FR minimum longitudinal contact speed",
-                    "value": 2.9226455688476564,
+                    "value": 2.9226603507995607,
                     "units": "m/s"
                 },
                 {
                     "name": "FR rolling error P95",
-                    "value": 0.005187051836401224,
+                    "value": 0.005273944698274136,
                     "units": "fraction"
                 },
                 {
                     "name": "FR integrated rolling distance error",
-                    "value": 0.0051727998070418839,
+                    "value": 0.00525680324062705,
                     "units": "fraction"
                 },
                 {
                     "name": "FR contact travel",
-                    "value": 5.846436023712158,
+                    "value": 5.846440315246582,
                     "units": "m"
                 },
                 {
                     "name": "FR wheel circumference travel",
-                    "value": 5.816193580627441,
+                    "value": 5.815706729888916,
                     "units": "m"
                 },
                 {
                     "name": "FR lateral contact speed RMS",
-                    "value": 0.0000017259010292036692,
+                    "value": 0.000002392569058429217,
                     "units": "m/s"
                 },
                 {
                     "name": "FR lateral contact speed P95",
-                    "value": 0.000003377138682481018,
+                    "value": 0.000004434454695001477,
                     "units": "m/s"
                 },
                 {
                     "name": "FR lateral contact angle P95",
-                    "value": 0.00006619001214858145,
+                    "value": 0.00008691311086295173,
                     "units": "degrees"
                 },
                 {
                     "name": "FR tread speed P95",
-                    "value": 2.9082579612731935,
+                    "value": 2.9080066680908205,
                     "units": "m/s"
                 },
                 {
                     "name": "FR reported forward slip P95",
-                    "value": 0.0050371368415653709,
+                    "value": 0.005071025807410479,
                     "units": "native slip"
                 },
                 {
                     "name": "FR reported sideways slip P95",
-                    "value": 7.454057140421355e-7,
+                    "value": 0.0000011584706953726709,
                     "units": "native slip"
                 },
                 {
@@ -773,57 +773,57 @@
                 },
                 {
                     "name": "RL minimum longitudinal contact speed",
-                    "value": 2.9226465225219728,
+                    "value": 2.9226574897766115,
                     "units": "m/s"
                 },
                 {
                     "name": "RL rolling error P95",
-                    "value": 0.0034019884187728168,
+                    "value": 0.0033997714053839447,
                     "units": "fraction"
                 },
                 {
                     "name": "RL integrated rolling distance error",
-                    "value": 0.003390869125723839,
+                    "value": 0.0033916831016540529,
                     "units": "fraction"
                 },
                 {
                     "name": "RL contact travel",
-                    "value": 5.846437454223633,
+                    "value": 5.846440315246582,
                     "units": "m"
                 },
                 {
                     "name": "RL wheel circumference travel",
-                    "value": 5.826612949371338,
+                    "value": 5.826611042022705,
                     "units": "m"
                 },
                 {
                     "name": "RL lateral contact speed RMS",
-                    "value": 0.0000019645749489427545,
+                    "value": 0.0000019152648746967317,
                     "units": "m/s"
                 },
                 {
                     "name": "RL lateral contact speed P95",
-                    "value": 0.000003911949079338228,
+                    "value": 0.0000035355528780200986,
                     "units": "m/s"
                 },
                 {
                     "name": "RL lateral contact angle P95",
-                    "value": 0.00007667089812457561,
+                    "value": 0.00006930570089025423,
                     "units": "degrees"
                 },
                 {
                     "name": "RL tread speed P95",
-                    "value": 2.9135000705718996,
+                    "value": 2.913499593734741,
                     "units": "m/s"
                 },
                 {
                     "name": "RL reported forward slip P95",
-                    "value": 0.00038407399551942945,
+                    "value": 0.00038397361640818417,
                     "units": "native slip"
                 },
                 {
                     "name": "RL reported sideways slip P95",
-                    "value": 1.3511979091163085e-7,
+                    "value": 4.422684014571132e-7,
                     "units": "native slip"
                 },
                 {
@@ -838,42 +838,42 @@
                 },
                 {
                     "name": "RR minimum longitudinal contact speed",
-                    "value": 2.9226455688476564,
+                    "value": 2.9226605892181398,
                     "units": "m/s"
                 },
                 {
                     "name": "RR rolling error P95",
-                    "value": 0.003401961410418153,
+                    "value": 0.0033995958510786297,
                     "units": "fraction"
                 },
                 {
                     "name": "RR integrated rolling distance error",
-                    "value": 0.003390706842765212,
+                    "value": 0.003391520120203495,
                     "units": "fraction"
                 },
                 {
                     "name": "RR contact travel",
-                    "value": 5.846436023712158,
+                    "value": 5.846440315246582,
                     "units": "m"
                 },
                 {
                     "name": "RR wheel circumference travel",
-                    "value": 5.82661247253418,
+                    "value": 5.8266119956970219,
                     "units": "m"
                 },
                 {
                     "name": "RR lateral contact speed RMS",
-                    "value": 0.0000019645744941954037,
+                    "value": 0.000001915265556817758,
                     "units": "m/s"
                 },
                 {
                     "name": "RR lateral contact speed P95",
-                    "value": 0.000003911882231477648,
+                    "value": 0.000003535605401339126,
                     "units": "m/s"
                 },
                 {
                     "name": "RR lateral contact angle P95",
-                    "value": 0.00007666967576369643,
+                    "value": 0.00006930665404070169,
                     "units": "degrees"
                 },
                 {
@@ -883,12 +883,12 @@
                 },
                 {
                     "name": "RR reported forward slip P95",
-                    "value": 0.0003840822319034487,
+                    "value": 0.0003839907585643232,
                     "units": "native slip"
                 },
                 {
                     "name": "RR reported sideways slip P95",
-                    "value": 1.3511973406821199e-7,
+                    "value": 4.422684583005321e-7,
                     "units": "native slip"
                 }
             ]
@@ -901,22 +901,22 @@
             "measurements": [
                 {
                     "name": "mean forward speed during turn",
-                    "value": 1.4498071670532227,
+                    "value": 1.4500880241394044,
                     "units": "m/s"
                 },
                 {
                     "name": "minimum forward speed during turn",
-                    "value": 1.4496668577194214,
+                    "value": 1.4499708414077759,
                     "units": "m/s"
                 },
                 {
                     "name": "accumulated nose turn toward requested side",
-                    "value": 126.50098419189453,
+                    "value": 126.63177490234375,
                     "units": "degrees"
                 },
                 {
                     "name": "front axle apparent turn radius",
-                    "value": 2.6272895336151125,
+                    "value": 2.6251540184020998,
                     "units": "m"
                 },
                 {
@@ -926,12 +926,12 @@
                 },
                 {
                     "name": "average rear wheel steer",
-                    "value": -30.65636444091797,
+                    "value": -30.655899047851564,
                     "units": "degrees"
                 },
                 {
                     "name": "inside rear wheel steer magnitude",
-                    "value": 34.8519401550293,
+                    "value": 34.851356506347659,
                     "units": "degrees"
                 },
                 {
@@ -946,57 +946,57 @@
                 },
                 {
                     "name": "FL minimum longitudinal contact speed",
-                    "value": 1.7355014085769654,
+                    "value": 1.7362172603607178,
                     "units": "m/s"
                 },
                 {
                     "name": "FL rolling error P95",
-                    "value": 0.018918689340353013,
+                    "value": 0.01901332661509514,
                     "units": "fraction"
                 },
                 {
                     "name": "FL integrated rolling distance error",
-                    "value": 0.01890331692993641,
+                    "value": 0.018999289721250535,
                     "units": "fraction"
                 },
                 {
                     "name": "FL contact travel",
-                    "value": 6.942615509033203,
+                    "value": 6.94559383392334,
                     "units": "m"
                 },
                 {
                     "name": "FL wheel circumference travel",
-                    "value": 7.073853969573975,
+                    "value": 7.077555179595947,
                     "units": "m"
                 },
                 {
                     "name": "FL lateral contact speed RMS",
-                    "value": 0.027303365990519525,
+                    "value": 0.027362007647752763,
                     "units": "m/s"
                 },
                 {
                     "name": "FL lateral contact speed P95",
-                    "value": 0.027324650436639787,
+                    "value": 0.027383817359805108,
                     "units": "m/s"
                 },
                 {
                     "name": "FL lateral contact angle P95",
-                    "value": 0.9019445180892944,
+                    "value": 0.9035133123397827,
                     "units": "degrees"
                 },
                 {
                     "name": "FL tread speed P95",
-                    "value": 1.7684898376464844,
+                    "value": 1.769416093826294,
                     "units": "m/s"
                 },
                 {
                     "name": "FL reported forward slip P95",
-                    "value": 0.000375887262634933,
+                    "value": 0.000307790091028437,
                     "units": "native slip"
                 },
                 {
                     "name": "FL reported sideways slip P95",
-                    "value": 0.008304310031235218,
+                    "value": 0.008203098550438881,
                     "units": "native slip"
                 },
                 {
@@ -1011,57 +1011,57 @@
                 },
                 {
                     "name": "FR minimum longitudinal contact speed",
-                    "value": 1.1604201793670655,
+                    "value": 1.1603530645370484,
                     "units": "m/s"
                 },
                 {
                     "name": "FR rolling error P95",
-                    "value": 0.024762405082583429,
+                    "value": 0.02492580935359001,
                     "units": "fraction"
                 },
                 {
                     "name": "FR integrated rolling distance error",
-                    "value": 0.024741314351558687,
+                    "value": 0.024905497208237649,
                     "units": "fraction"
                 },
                 {
                     "name": "FR contact travel",
-                    "value": 4.641996383666992,
+                    "value": 4.641818046569824,
                     "units": "m"
                 },
                 {
                     "name": "FR wheel circumference travel",
-                    "value": 4.756845474243164,
+                    "value": 4.757424831390381,
                     "units": "m"
                 },
                 {
                     "name": "FR lateral contact speed RMS",
-                    "value": 0.02583453804254532,
+                    "value": 0.025889229029417039,
                     "units": "m/s"
                 },
                 {
                     "name": "FR lateral contact speed P95",
-                    "value": 0.02585589326918125,
+                    "value": 0.025911293923854829,
                     "units": "m/s"
                 },
                 {
                     "name": "FR lateral contact angle P95",
-                    "value": 1.27632474899292,
+                    "value": 1.279102087020874,
                     "units": "degrees"
                 },
                 {
                     "name": "FR tread speed P95",
-                    "value": 1.189232587814331,
+                    "value": 1.1893786191940308,
                     "units": "m/s"
                 },
                 {
                     "name": "FR reported forward slip P95",
-                    "value": 0.0012560446048155428,
+                    "value": 0.0011506500886753202,
                     "units": "native slip"
                 },
                 {
                     "name": "FR reported sideways slip P95",
-                    "value": 0.010506019927561283,
+                    "value": 0.010380610823631287,
                     "units": "native slip"
                 },
                 {
@@ -1076,57 +1076,57 @@
                 },
                 {
                     "name": "RL minimum longitudinal contact speed",
-                    "value": 1.9698905944824219,
+                    "value": 1.9710694551467896,
                     "units": "m/s"
                 },
                 {
                     "name": "RL rolling error P95",
-                    "value": 0.032300736755132678,
+                    "value": 0.032580841332674029,
                     "units": "fraction"
                 },
                 {
                     "name": "RL integrated rolling distance error",
-                    "value": 0.032286595553159717,
+                    "value": 0.032571736723184589,
                     "units": "fraction"
                 },
                 {
                     "name": "RL contact travel",
-                    "value": 7.880295753479004,
+                    "value": 7.8851518630981449,
                     "units": "m"
                 },
                 {
                     "name": "RL wheel circumference travel",
-                    "value": 8.134723663330079,
+                    "value": 8.141984939575196,
                     "units": "m"
                 },
                 {
                     "name": "RL lateral contact speed RMS",
-                    "value": 0.10594622790813446,
+                    "value": 0.10686538368463516,
                     "units": "m/s"
                 },
                 {
                     "name": "RL lateral contact speed P95",
-                    "value": 0.10596592724323273,
+                    "value": 0.10688047856092453,
                     "units": "m/s"
                 },
                 {
                     "name": "RL lateral contact angle P95",
-                    "value": 3.0788650512695314,
+                    "value": 3.1034586429595949,
                     "units": "degrees"
                 },
                 {
                     "name": "RL tread speed P95",
-                    "value": 2.033712148666382,
+                    "value": 2.035522222518921,
                     "units": "m/s"
                 },
                 {
                     "name": "RL reported forward slip P95",
-                    "value": 0.0021528606303036215,
+                    "value": 0.0021647275425493719,
                     "units": "native slip"
                 },
                 {
                     "name": "RL reported sideways slip P95",
-                    "value": 0.002385067055001855,
+                    "value": 0.0023977861274033787,
                     "units": "native slip"
                 },
                 {
@@ -1141,57 +1141,57 @@
                 },
                 {
                     "name": "RR minimum longitudinal contact speed",
-                    "value": 1.5188082456588746,
+                    "value": 1.519506573677063,
                     "units": "m/s"
                 },
                 {
                     "name": "RR rolling error P95",
-                    "value": 0.0460948720574379,
+                    "value": 0.04652218148112297,
                     "units": "fraction"
                 },
                 {
                     "name": "RR integrated rolling distance error",
-                    "value": 0.04607804864645004,
+                    "value": 0.04650268331170082,
                     "units": "fraction"
                 },
                 {
                     "name": "RR contact travel",
-                    "value": 6.075740337371826,
+                    "value": 6.078666687011719,
                     "units": "m"
                 },
                 {
                     "name": "RR wheel circumference travel",
-                    "value": 6.355698585510254,
+                    "value": 6.3613409996032719,
                     "units": "m"
                 },
                 {
                     "name": "RR lateral contact speed RMS",
-                    "value": 0.12595829367637635,
+                    "value": 0.12711596488952638,
                     "units": "m/s"
                 },
                 {
                     "name": "RR lateral contact speed P95",
-                    "value": 0.12598451972007752,
+                    "value": 0.1271367371082306,
                     "units": "m/s"
                 },
                 {
                     "name": "RR lateral contact angle P95",
-                    "value": 4.741440296173096,
+                    "value": 4.7822957038879398,
                     "units": "degrees"
                 },
                 {
                     "name": "RR tread speed P95",
-                    "value": 1.5889602899551392,
+                    "value": 1.5903691053390504,
                     "units": "m/s"
                 },
                 {
                     "name": "RR reported forward slip P95",
-                    "value": 0.0025945950765162708,
+                    "value": 0.0026146676391363146,
                     "units": "native slip"
                 },
                 {
                     "name": "RR reported sideways slip P95",
-                    "value": 0.002045308705419302,
+                    "value": 0.0020604946184903385,
                     "units": "native slip"
                 }
             ]
@@ -1204,22 +1204,22 @@
             "measurements": [
                 {
                     "name": "mean forward speed during turn",
-                    "value": 1.4498077630996705,
+                    "value": 1.4500888586044312,
                     "units": "m/s"
                 },
                 {
                     "name": "minimum forward speed during turn",
-                    "value": 1.4496618509292603,
+                    "value": 1.4499856233596802,
                     "units": "m/s"
                 },
                 {
                     "name": "accumulated nose turn toward requested side",
-                    "value": 126.4613037109375,
+                    "value": 126.61956787109375,
                     "units": "degrees"
                 },
                 {
                     "name": "front axle apparent turn radius",
-                    "value": 2.628117084503174,
+                    "value": 2.625380277633667,
                     "units": "m"
                 },
                 {
@@ -1229,12 +1229,12 @@
                 },
                 {
                     "name": "average rear wheel steer",
-                    "value": 30.6563777923584,
+                    "value": 30.655899047851564,
                     "units": "degrees"
                 },
                 {
                     "name": "inside rear wheel steer magnitude",
-                    "value": 34.851951599121097,
+                    "value": 34.851356506347659,
                     "units": "degrees"
                 },
                 {
@@ -1249,57 +1249,57 @@
                 },
                 {
                     "name": "FL minimum longitudinal contact speed",
-                    "value": 1.1604036092758179,
+                    "value": 1.1603904962539673,
                     "units": "m/s"
                 },
                 {
                     "name": "FL rolling error P95",
-                    "value": 0.024762412533164026,
+                    "value": 0.02492508664727211,
                     "units": "fraction"
                 },
                 {
                     "name": "FL integrated rolling distance error",
-                    "value": 0.024740342050790788,
+                    "value": 0.024904360994696618,
                     "units": "fraction"
                 },
                 {
                     "name": "FL contact travel",
-                    "value": 4.641985893249512,
+                    "value": 4.641780853271484,
                     "units": "m"
                 },
                 {
                     "name": "FL wheel circumference travel",
-                    "value": 4.756830215454102,
+                    "value": 4.757381439208984,
                     "units": "m"
                 },
                 {
                     "name": "FL lateral contact speed RMS",
-                    "value": 0.02583492547273636,
+                    "value": 0.02588866464793682,
                     "units": "m/s"
                 },
                 {
                     "name": "FL lateral contact speed P95",
-                    "value": 0.02585402876138687,
+                    "value": 0.02590956538915634,
                     "units": "m/s"
                 },
                 {
                     "name": "FL lateral contact angle P95",
-                    "value": 1.2762433290481568,
+                    "value": 1.2790334224700928,
                     "units": "degrees"
                 },
                 {
                     "name": "FL tread speed P95",
-                    "value": 1.1892285346984864,
+                    "value": 1.1893664598464966,
                     "units": "m/s"
                 },
                 {
                     "name": "FL reported forward slip P95",
-                    "value": 0.0012570631224662066,
+                    "value": 0.0011502716224640608,
                     "units": "native slip"
                 },
                 {
                     "name": "FL reported sideways slip P95",
-                    "value": 0.010506320744752884,
+                    "value": 0.010380870662629605,
                     "units": "native slip"
                 },
                 {
@@ -1314,57 +1314,57 @@
                 },
                 {
                     "name": "FR minimum longitudinal contact speed",
-                    "value": 1.735460638999939,
+                    "value": 1.7362377643585206,
                     "units": "m/s"
                 },
                 {
                     "name": "FR rolling error P95",
-                    "value": 0.01891772262752056,
+                    "value": 0.019012387841939927,
                     "units": "fraction"
                 },
                 {
                     "name": "FR integrated rolling distance error",
-                    "value": 0.01890220306813717,
+                    "value": 0.018998252227902414,
                     "units": "fraction"
                 },
                 {
                     "name": "FR contact travel",
-                    "value": 6.942595481872559,
+                    "value": 6.945496082305908,
                     "units": "m"
                 },
                 {
                     "name": "FR wheel circumference travel",
-                    "value": 7.073825836181641,
+                    "value": 7.07744836807251,
                     "units": "m"
                 },
                 {
                     "name": "FR lateral contact speed RMS",
-                    "value": 0.027303768321871759,
+                    "value": 0.02736138552427292,
                     "units": "m/s"
                 },
                 {
                     "name": "FR lateral contact speed P95",
-                    "value": 0.027323085814714433,
+                    "value": 0.027382221072912217,
                     "units": "m/s"
                 },
                 {
                     "name": "FR lateral contact angle P95",
-                    "value": 0.9018983244895935,
+                    "value": 0.9034672379493713,
                     "units": "degrees"
                 },
                 {
                     "name": "FR tread speed P95",
-                    "value": 1.7684828042984009,
+                    "value": 1.7693963050842286,
                     "units": "m/s"
                 },
                 {
                     "name": "FR reported forward slip P95",
-                    "value": 0.0003764060384128243,
+                    "value": 0.0003076002758461982,
                     "units": "native slip"
                 },
                 {
                     "name": "FR reported sideways slip P95",
-                    "value": 0.00830451212823391,
+                    "value": 0.008203273639082909,
                     "units": "native slip"
                 },
                 {
@@ -1379,57 +1379,57 @@
                 },
                 {
                     "name": "RL minimum longitudinal contact speed",
-                    "value": 1.5187768936157227,
+                    "value": 1.5195245742797852,
                     "units": "m/s"
                 },
                 {
                     "name": "RL rolling error P95",
-                    "value": 0.04609359800815582,
+                    "value": 0.04652002826333046,
                     "units": "fraction"
                 },
                 {
                     "name": "RL integrated rolling distance error",
-                    "value": 0.04607720300555229,
+                    "value": 0.04650689661502838,
                     "units": "fraction"
                 },
                 {
                     "name": "RL contact travel",
-                    "value": 6.075727462768555,
+                    "value": 6.07861852645874,
                     "units": "m"
                 },
                 {
                     "name": "RL wheel circumference travel",
-                    "value": 6.355679988861084,
+                    "value": 6.361316204071045,
                     "units": "m"
                 },
                 {
                     "name": "RL lateral contact speed RMS",
-                    "value": 0.12595710158348084,
+                    "value": 0.12710846960544587,
                     "units": "m/s"
                 },
                 {
                     "name": "RL lateral contact speed P95",
-                    "value": 0.1259806752204895,
+                    "value": 0.12712916731834413,
                     "units": "m/s"
                 },
                 {
                     "name": "RL lateral contact angle P95",
-                    "value": 4.741302490234375,
+                    "value": 4.782069206237793,
                     "units": "degrees"
                 },
                 {
                     "name": "RL tread speed P95",
-                    "value": 1.5889548063278199,
+                    "value": 1.590347409248352,
                     "units": "m/s"
                 },
                 {
                     "name": "RL reported forward slip P95",
-                    "value": 0.002594566438347101,
+                    "value": 0.002614553552120924,
                     "units": "native slip"
                 },
                 {
                     "name": "RL reported sideways slip P95",
-                    "value": 0.0020452963653951885,
+                    "value": 0.002060378435999155,
                     "units": "native slip"
                 },
                 {
@@ -1444,57 +1444,57 @@
                 },
                 {
                     "name": "RR minimum longitudinal contact speed",
-                    "value": 1.9698362350463868,
+                    "value": 1.9710795879364014,
                     "units": "m/s"
                 },
                 {
                     "name": "RR rolling error P95",
-                    "value": 0.03229925036430359,
+                    "value": 0.03257894143462181,
                     "units": "fraction"
                 },
                 {
                     "name": "RR integrated rolling distance error",
-                    "value": 0.032286636531353,
+                    "value": 0.03257666528224945,
                     "units": "fraction"
                 },
                 {
                     "name": "RR contact travel",
-                    "value": 7.880285263061523,
+                    "value": 7.885012626647949,
                     "units": "m"
                 },
                 {
                     "name": "RR wheel circumference travel",
-                    "value": 8.134713172912598,
+                    "value": 8.14188003540039,
                     "units": "m"
                 },
                 {
                     "name": "RR lateral contact speed RMS",
-                    "value": 0.10594530403614044,
+                    "value": 0.10685928165912628,
                     "units": "m/s"
                 },
                 {
                     "name": "RR lateral contact speed P95",
-                    "value": 0.1059638112783432,
+                    "value": 0.1068745031952858,
                     "units": "m/s"
                 },
                 {
                     "name": "RR lateral contact angle P95",
-                    "value": 3.0788145065307619,
+                    "value": 3.1033213138580324,
                     "units": "degrees"
                 },
                 {
                     "name": "RR tread speed P95",
-                    "value": 2.0337061882019045,
+                    "value": 2.0354936122894289,
                     "units": "m/s"
                 },
                 {
                     "name": "RR reported forward slip P95",
-                    "value": 0.0021528664510697128,
+                    "value": 0.0021646360401064159,
                     "units": "native slip"
                 },
                 {
                     "name": "RR reported sideways slip P95",
-                    "value": 0.0023850786965340378,
+                    "value": 0.0023977237287908794,
                     "units": "native slip"
                 }
             ]
@@ -1507,12 +1507,12 @@
             "measurements": [
                 {
                     "name": "speed before parking approach",
-                    "value": 2.949178457260132,
+                    "value": 2.9502804279327394,
                     "units": "m/s"
                 },
                 {
                     "name": "speed after service brake stop",
-                    "value": 0.0001847968524089083,
+                    "value": 0.00029613630613312125,
                     "units": "m/s"
                 },
                 {
@@ -1522,12 +1522,12 @@
                 },
                 {
                     "name": "maximum parked horizontal drift",
-                    "value": 0.0016648579621687532,
+                    "value": 0.0016818888252601028,
                     "units": "m"
                 },
                 {
                     "name": "parked body speed P95",
-                    "value": 0.00007986860146047547,
+                    "value": 0.00007095457112882286,
                     "units": "m/s"
                 },
                 {
@@ -1542,22 +1542,22 @@
                 },
                 {
                     "name": "FL minimum longitudinal contact speed",
-                    "value": 0.000011159751011291519,
+                    "value": 0.000014575161003449466,
                     "units": "m/s"
                 },
                 {
                     "name": "FL rolling error P95",
-                    "value": 0.00004678014011005871,
+                    "value": 0.00005035768117522821,
                     "units": "fraction"
                 },
                 {
                     "name": "FL integrated rolling distance error",
-                    "value": 0.6294078230857849,
+                    "value": 0.6701835989952087,
                     "units": "fraction"
                 },
                 {
                     "name": "FL contact travel",
-                    "value": 0.0006294078775681555,
+                    "value": 0.0006701836246065795,
                     "units": "m"
                 },
                 {
@@ -1567,17 +1567,17 @@
                 },
                 {
                     "name": "FL lateral contact speed RMS",
-                    "value": 0.00001537447860755492,
+                    "value": 0.000016922802387853153,
                     "units": "m/s"
                 },
                 {
                     "name": "FL lateral contact speed P95",
-                    "value": 0.000015864176020841114,
+                    "value": 0.00001729870018607471,
                     "units": "m/s"
                 },
                 {
                     "name": "FL lateral contact angle P95",
-                    "value": 0.001817900687456131,
+                    "value": 0.0019822849426418545,
                     "units": "degrees"
                 },
                 {
@@ -1607,22 +1607,22 @@
                 },
                 {
                     "name": "FR minimum longitudinal contact speed",
-                    "value": 1.0812512662994323e-8,
+                    "value": 2.0536376155178005e-7,
                     "units": "m/s"
                 },
                 {
                     "name": "FR rolling error P95",
-                    "value": 0.000018971371900988743,
+                    "value": 0.000021237359760561958,
                     "units": "fraction"
                 },
                 {
                     "name": "FR integrated rolling distance error",
-                    "value": 0.22254490852355958,
+                    "value": 0.24822810292243958,
                     "units": "fraction"
                 },
                 {
                     "name": "FR contact travel",
-                    "value": 0.0002225449134130031,
+                    "value": 0.00024822811246849597,
                     "units": "m"
                 },
                 {
@@ -1632,17 +1632,17 @@
                 },
                 {
                     "name": "FR lateral contact speed RMS",
-                    "value": 0.00001537447860755492,
+                    "value": 0.000016922802387853153,
                     "units": "m/s"
                 },
                 {
                     "name": "FR lateral contact speed P95",
-                    "value": 0.00001586417420185171,
+                    "value": 0.00001729868927213829,
                     "units": "m/s"
                 },
                 {
                     "name": "FR lateral contact angle P95",
-                    "value": 0.0018179004546254874,
+                    "value": 0.001982283778488636,
                     "units": "degrees"
                 },
                 {
@@ -1672,47 +1672,47 @@
                 },
                 {
                     "name": "RL minimum longitudinal contact speed",
-                    "value": 2.2430407753404326e-8,
+                    "value": 3.048962415874712e-9,
                     "units": "m/s"
                 },
                 {
                     "name": "RL rolling error P95",
-                    "value": 0.00261856522411108,
+                    "value": 0.0026189263444393875,
                     "units": "fraction"
                 },
                 {
                     "name": "RL integrated rolling distance error",
-                    "value": 37.001121520996097,
+                    "value": 36.72721862792969,
                     "units": "fraction"
                 },
                 {
                     "name": "RL contact travel",
-                    "value": 0.0005573451053351164,
+                    "value": 0.0006773539935238659,
                     "units": "m"
                 },
                 {
                     "name": "RL wheel circumference travel",
-                    "value": 0.03755846619606018,
+                    "value": 0.03740457445383072,
                     "units": "m"
                 },
                 {
                     "name": "RL lateral contact speed RMS",
-                    "value": 0.0000876316917128861,
+                    "value": 0.00009174355363938957,
                     "units": "m/s"
                 },
                 {
                     "name": "RL lateral contact speed P95",
-                    "value": 0.00008833581523504108,
+                    "value": 0.00009246863191947341,
                     "units": "m/s"
                 },
                 {
                     "name": "RL lateral contact angle P95",
-                    "value": 0.010122538544237614,
+                    "value": 0.010596124455332756,
                     "units": "degrees"
                 },
                 {
                     "name": "RL tread speed P95",
-                    "value": 0.0012966364156454802,
+                    "value": 0.00129034707788378,
                     "units": "m/s"
                 },
                 {
@@ -1737,47 +1737,47 @@
                 },
                 {
                     "name": "RR minimum longitudinal contact speed",
-                    "value": 6.271130281731985e-10,
+                    "value": 2.47807463438221e-9,
                     "units": "m/s"
                 },
                 {
                     "name": "RR rolling error P95",
-                    "value": 0.002604226116091013,
+                    "value": 0.0026038188952952625,
                     "units": "fraction"
                 },
                 {
                     "name": "RR integrated rolling distance error",
-                    "value": 37.605262756347659,
+                    "value": 37.45988464355469,
                     "units": "fraction"
                 },
                 {
                     "name": "RR contact travel",
-                    "value": 0.00038033266901038587,
+                    "value": 0.0004192232736386359,
                     "units": "m"
                 },
                 {
                     "name": "RR wheel circumference travel",
-                    "value": 0.03798559680581093,
+                    "value": 0.037879109382629397,
                     "units": "m"
                 },
                 {
                     "name": "RR lateral contact speed RMS",
-                    "value": 0.0000876316917128861,
+                    "value": 0.00009174355363938957,
                     "units": "m/s"
                 },
                 {
                     "name": "RR lateral contact speed P95",
-                    "value": 0.0000883358225109987,
+                    "value": 0.00009246863191947341,
                     "units": "m/s"
                 },
                 {
                     "name": "RR lateral contact angle P95",
-                    "value": 0.010122539475560189,
+                    "value": 0.010596124455332756,
                     "units": "degrees"
                 },
                 {
                     "name": "RR tread speed P95",
-                    "value": 0.0012995796278119088,
+                    "value": 0.0012982855550944806,
                     "units": "m/s"
                 },
                 {
@@ -1805,12 +1805,12 @@
                 },
                 {
                     "name": "maximum parked slope drift",
-                    "value": 0.01619137078523636,
+                    "value": 0.01628553308546543,
                     "units": "m"
                 },
                 {
                     "name": "parked slope speed P95",
-                    "value": 0.001720781670883298,
+                    "value": 0.0016984868561848999,
                     "units": "m/s"
                 },
                 {
@@ -1830,12 +1830,12 @@
                 },
                 {
                     "name": "parked FL minimum longitudinal contact speed",
-                    "value": 0.0016503026708960534,
+                    "value": 0.001668610842898488,
                     "units": "m/s"
                 },
                 {
                     "name": "parked FL rolling error P95",
-                    "value": 0.003340156050398946,
+                    "value": 0.0033647597301751377,
                     "units": "fraction"
                 },
                 {
@@ -1845,7 +1845,7 @@
                 },
                 {
                     "name": "parked FL contact travel",
-                    "value": 0.016652679070830346,
+                    "value": 0.016782397404313089,
                     "units": "m"
                 },
                 {
@@ -1855,17 +1855,17 @@
                 },
                 {
                     "name": "parked FL lateral contact speed RMS",
-                    "value": 0.00005761455759056844,
+                    "value": 0.00005705061994376592,
                     "units": "m/s"
                 },
                 {
                     "name": "parked FL lateral contact speed P95",
-                    "value": 0.00005980853529763408,
+                    "value": 0.00005943261567153968,
                     "units": "m/s"
                 },
                 {
                     "name": "parked FL lateral contact angle P95",
-                    "value": 0.006853553466498852,
+                    "value": 0.006810476072132587,
                     "units": "degrees"
                 },
                 {
@@ -1895,12 +1895,12 @@
                 },
                 {
                     "name": "parked FR minimum longitudinal contact speed",
-                    "value": 0.0016976242186501623,
+                    "value": 0.0017147681210190058,
                     "units": "m/s"
                 },
                 {
                     "name": "parked FR rolling error P95",
-                    "value": 0.0034290230832993986,
+                    "value": 0.003452205564826727,
                     "units": "fraction"
                 },
                 {
@@ -1910,7 +1910,7 @@
                 },
                 {
                     "name": "parked FR contact travel",
-                    "value": 0.01710331067442894,
+                    "value": 0.01722564734518528,
                     "units": "m"
                 },
                 {
@@ -1920,17 +1920,17 @@
                 },
                 {
                     "name": "parked FR lateral contact speed RMS",
-                    "value": 0.000057614561228547245,
+                    "value": 0.00005705062721972354,
                     "units": "m/s"
                 },
                 {
                     "name": "parked FR lateral contact speed P95",
-                    "value": 0.000059808517107740045,
+                    "value": 0.00005943261203356087,
                     "units": "m/s"
                 },
                 {
                     "name": "parked FR lateral contact angle P95",
-                    "value": 0.006853551138192415,
+                    "value": 0.0068104756064713,
                     "units": "degrees"
                 },
                 {
@@ -1960,47 +1960,47 @@
                 },
                 {
                     "name": "parked RL minimum longitudinal contact speed",
-                    "value": 0.0016051847487688065,
+                    "value": 0.0016267325263470412,
                     "units": "m/s"
                 },
                 {
                     "name": "parked RL rolling error P95",
-                    "value": 0.010817565023899079,
+                    "value": 0.010481114499270916,
                     "units": "fraction"
                 },
                 {
                     "name": "parked RL integrated rolling distance error",
-                    "value": 1.240240216255188,
+                    "value": 1.1039997339248658,
                     "units": "fraction"
                 },
                 {
                     "name": "parked RL contact travel",
-                    "value": 0.01660018414258957,
+                    "value": 0.016755500808358194,
                     "units": "m"
                 },
                 {
                     "name": "parked RL wheel circumference travel",
-                    "value": 0.03718839958310127,
+                    "value": 0.03525356948375702,
                     "units": "m"
                 },
                 {
                     "name": "parked RL lateral contact speed RMS",
-                    "value": 0.00016325805336236954,
+                    "value": 0.0001644401636440307,
                     "units": "m/s"
                 },
                 {
                     "name": "parked RL lateral contact speed P95",
-                    "value": 0.00017025813576765358,
+                    "value": 0.00017182310693897307,
                     "units": "m/s"
                 },
                 {
                     "name": "parked RL lateral contact angle P95",
-                    "value": 0.019510146230459214,
+                    "value": 0.01968947798013687,
                     "units": "degrees"
                 },
                 {
                     "name": "parked RL tread speed P95",
-                    "value": 0.0037436385173350574,
+                    "value": 0.0035518116783350708,
                     "units": "m/s"
                 },
                 {
@@ -2025,47 +2025,47 @@
                 },
                 {
                     "name": "parked RR minimum longitudinal contact speed",
-                    "value": 0.0016519267810508609,
+                    "value": 0.0016644150018692017,
                     "units": "m/s"
                 },
                 {
                     "name": "parked RR rolling error P95",
-                    "value": 0.01081622764468193,
+                    "value": 0.010460564866662026,
                     "units": "fraction"
                 },
                 {
                     "name": "parked RR integrated rolling distance error",
-                    "value": 1.1756718158721924,
+                    "value": 1.0474845170974732,
                     "units": "fraction"
                 },
                 {
                     "name": "parked RR contact travel",
-                    "value": 0.01693923957645893,
+                    "value": 0.01706784963607788,
                     "units": "m"
                 },
                 {
                     "name": "parked RR wheel circumference travel",
-                    "value": 0.036854226142168048,
+                    "value": 0.03494615852832794,
                     "units": "m"
                 },
                 {
                     "name": "parked RR lateral contact speed RMS",
-                    "value": 0.00016325805336236954,
+                    "value": 0.00016444014909211546,
                     "units": "m/s"
                 },
                 {
                     "name": "parked RR lateral contact speed P95",
-                    "value": 0.00017025812121573836,
+                    "value": 0.0001718231214908883,
                     "units": "m/s"
                 },
                 {
                     "name": "parked RR lateral contact angle P95",
-                    "value": 0.019510144367814065,
+                    "value": 0.01968947984278202,
                     "units": "degrees"
                 },
                 {
                     "name": "parked RR tread speed P95",
-                    "value": 0.00370683241635561,
+                    "value": 0.0035156565718352796,
                     "units": "m/s"
                 },
                 {
@@ -2080,12 +2080,12 @@
                 },
                 {
                     "name": "downhill travel three seconds after neutral release",
-                    "value": 5.5515947341918949,
+                    "value": 5.551149845123291,
                     "units": "m"
                 },
                 {
                     "name": "downhill speed after neutral release",
-                    "value": 3.6453516483306886,
+                    "value": 3.6452226638793947,
                     "units": "m/s"
                 },
                 {
@@ -2105,57 +2105,57 @@
                 },
                 {
                     "name": "released FL minimum longitudinal contact speed",
-                    "value": 0.016064206138253213,
+                    "value": 0.014651035889983178,
                     "units": "m/s"
                 },
                 {
                     "name": "released FL rolling error P95",
-                    "value": 0.07566589117050171,
+                    "value": 0.07498371601104737,
                     "units": "fraction"
                 },
                 {
                     "name": "released FL integrated rolling distance error",
-                    "value": 0.018999790772795678,
+                    "value": 0.019134532660245897,
                     "units": "fraction"
                 },
                 {
                     "name": "released FL contact travel",
-                    "value": 5.551675319671631,
+                    "value": 5.551232814788818,
                     "units": "m"
                 },
                 {
                     "name": "released FL wheel circumference travel",
-                    "value": 5.446194648742676,
+                    "value": 5.44501256942749,
                     "units": "m"
                 },
                 {
                     "name": "released FL lateral contact speed RMS",
-                    "value": 0.00016037412569858134,
+                    "value": 0.00018666106916498393,
                     "units": "m/s"
                 },
                 {
                     "name": "released FL lateral contact speed P95",
-                    "value": 0.00016649138706270605,
+                    "value": 0.00024982946342788637,
                     "units": "m/s"
                 },
                 {
                     "name": "released FL lateral contact angle P95",
-                    "value": 0.019078508019447328,
+                    "value": 0.02862834557890892,
                     "units": "degrees"
                 },
                 {
                     "name": "released FL tread speed P95",
-                    "value": 3.433018445968628,
+                    "value": 3.432652711868286,
                     "units": "m/s"
                 },
                 {
                     "name": "released FL reported forward slip P95",
-                    "value": 0.10148195177316666,
+                    "value": 0.10807035863399506,
                     "units": "native slip"
                 },
                 {
                     "name": "released FL reported sideways slip P95",
-                    "value": 0.00004999894736101851,
+                    "value": 0.00009249419235857204,
                     "units": "native slip"
                 },
                 {
@@ -2170,57 +2170,57 @@
                 },
                 {
                     "name": "released FR minimum longitudinal contact speed",
-                    "value": 0.015612131915986538,
+                    "value": 0.014879776164889336,
                     "units": "m/s"
                 },
                 {
                     "name": "released FR rolling error P95",
-                    "value": 0.07548320293426514,
+                    "value": 0.07621520757675171,
                     "units": "fraction"
                 },
                 {
                     "name": "released FR integrated rolling distance error",
-                    "value": 0.019476396963000299,
+                    "value": 0.019481126219034196,
                     "units": "fraction"
                 },
                 {
                     "name": "released FR contact travel",
-                    "value": 5.551504611968994,
+                    "value": 5.551062107086182,
                     "units": "m"
                 },
                 {
                     "name": "released FR wheel circumference travel",
-                    "value": 5.443381309509277,
+                    "value": 5.442921161651611,
                     "units": "m"
                 },
                 {
                     "name": "released FR lateral contact speed RMS",
-                    "value": 0.0001603740092832595,
+                    "value": 0.00018666096730157733,
                     "units": "m/s"
                 },
                 {
                     "name": "released FR lateral contact speed P95",
-                    "value": 0.00016649153258185834,
+                    "value": 0.00024982925970107317,
                     "units": "m/s"
                 },
                 {
                     "name": "released FR lateral contact angle P95",
-                    "value": 0.01907852478325367,
+                    "value": 0.02862832136452198,
                     "units": "degrees"
                 },
                 {
                     "name": "released FR tread speed P95",
-                    "value": 3.4329521656036379,
+                    "value": 3.432607412338257,
                     "units": "m/s"
                 },
                 {
                     "name": "released FR reported forward slip P95",
-                    "value": 0.05644625052809715,
+                    "value": 0.10717184096574784,
                     "units": "native slip"
                 },
                 {
                     "name": "released FR reported sideways slip P95",
-                    "value": 0.00005000682358513586,
+                    "value": 0.0000924902778933756,
                     "units": "native slip"
                 },
                 {
@@ -2235,57 +2235,57 @@
                 },
                 {
                     "name": "released RL minimum longitudinal contact speed",
-                    "value": 0.016052521765232087,
+                    "value": 0.014659461565315724,
                     "units": "m/s"
                 },
                 {
                     "name": "released RL rolling error P95",
-                    "value": 0.25496402382850649,
+                    "value": 0.1613902747631073,
                     "units": "fraction"
                 },
                 {
                     "name": "released RL integrated rolling distance error",
-                    "value": 0.013980348594486714,
+                    "value": 0.012312655337154866,
                     "units": "fraction"
                 },
                 {
                     "name": "released RL contact travel",
-                    "value": 5.551671981811523,
+                    "value": 5.551224708557129,
                     "units": "m"
                 },
                 {
                     "name": "released RL wheel circumference travel",
-                    "value": 5.474057674407959,
+                    "value": 5.482874393463135,
                     "units": "m"
                 },
                 {
                     "name": "released RL lateral contact speed RMS",
-                    "value": 0.000182420524652116,
+                    "value": 0.0001893722073873505,
                     "units": "m/s"
                 },
                 {
                     "name": "released RL lateral contact speed P95",
-                    "value": 0.0002099843550240621,
+                    "value": 0.00022685082512907684,
                     "units": "m/s"
                 },
                 {
                     "name": "released RL lateral contact angle P95",
-                    "value": 0.020603004842996599,
+                    "value": 0.025646688416600229,
                     "units": "degrees"
                 },
                 {
                     "name": "released RL tread speed P95",
-                    "value": 3.4437460899353029,
+                    "value": 3.44358229637146,
                     "units": "m/s"
                 },
                 {
                     "name": "released RL reported forward slip P95",
-                    "value": 0.4085802137851715,
+                    "value": 0.3644433915615082,
                     "units": "native slip"
                 },
                 {
                     "name": "released RL reported sideways slip P95",
-                    "value": 0.00002188756116083823,
+                    "value": 0.00002414768641756382,
                     "units": "native slip"
                 },
                 {
@@ -2300,57 +2300,57 @@
                 },
                 {
                     "name": "released RR minimum longitudinal contact speed",
-                    "value": 0.015624117106199265,
+                    "value": 0.014871546067297459,
                     "units": "m/s"
                 },
                 {
                     "name": "released RR rolling error P95",
-                    "value": 0.24750357866287232,
+                    "value": 0.1737309694290161,
                     "units": "fraction"
                 },
                 {
                     "name": "released RR integrated rolling distance error",
-                    "value": 0.013618462719023228,
+                    "value": 0.012862165458500386,
                     "units": "fraction"
                 },
                 {
                     "name": "released RR contact travel",
-                    "value": 5.55150842666626,
+                    "value": 5.5510663986206059,
                     "units": "m"
                 },
                 {
                     "name": "released RR wheel circumference travel",
-                    "value": 5.475905418395996,
+                    "value": 5.479667663574219,
                     "units": "m"
                 },
                 {
                     "name": "released RR lateral contact speed RMS",
-                    "value": 0.00018242295482195914,
+                    "value": 0.00018936798733193427,
                     "units": "m/s"
                 },
                 {
                     "name": "released RR lateral contact speed P95",
-                    "value": 0.000209984413231723,
+                    "value": 0.00022685062140226364,
                     "units": "m/s"
                 },
                 {
                     "name": "released RR lateral contact angle P95",
-                    "value": 0.02060599811375141,
+                    "value": 0.025646941736340524,
                     "units": "degrees"
                 },
                 {
                     "name": "released RR tread speed P95",
-                    "value": 3.4437007904052736,
+                    "value": 3.4435346126556398,
                     "units": "m/s"
                 },
                 {
                     "name": "released RR reported forward slip P95",
-                    "value": 0.37581562995910647,
+                    "value": 0.4337104856967926,
                     "units": "native slip"
                 },
                 {
                     "name": "released RR reported sideways slip P95",
-                    "value": 0.000021888010451220907,
+                    "value": 0.000025171741071972065,
                     "units": "native slip"
                 }
             ]
@@ -2368,12 +2368,12 @@
                 },
                 {
                     "name": "maximum parked slope drift",
-                    "value": 0.01734750345349312,
+                    "value": 0.017504455521702768,
                     "units": "m"
                 },
                 {
                     "name": "parked slope speed P95",
-                    "value": 0.0018299802904948593,
+                    "value": 0.0018471474759280682,
                     "units": "m/s"
                 },
                 {
@@ -2393,12 +2393,12 @@
                 },
                 {
                     "name": "parked FL minimum longitudinal contact speed",
-                    "value": 0.0016988340066745878,
+                    "value": 0.001718824845738709,
                     "units": "m/s"
                 },
                 {
                     "name": "parked FL rolling error P95",
-                    "value": 0.0034345206804573538,
+                    "value": 0.0034636654891073705,
                     "units": "fraction"
                 },
                 {
@@ -2408,7 +2408,7 @@
                 },
                 {
                     "name": "parked FL contact travel",
-                    "value": 0.017120948061347009,
+                    "value": 0.017274197190999986,
                     "units": "m"
                 },
                 {
@@ -2418,17 +2418,17 @@
                 },
                 {
                     "name": "parked FL lateral contact speed RMS",
-                    "value": 0.000023590428099851124,
+                    "value": 0.000019859142412315123,
                     "units": "m/s"
                 },
                 {
                     "name": "parked FL lateral contact speed P95",
-                    "value": 0.000025249473765143193,
+                    "value": 0.00002165206751669757,
                     "units": "m/s"
                 },
                 {
                     "name": "parked FL lateral contact angle P95",
-                    "value": 0.0028933766297996046,
+                    "value": 0.002481144154444337,
                     "units": "degrees"
                 },
                 {
@@ -2458,12 +2458,12 @@
                 },
                 {
                     "name": "parked FR minimum longitudinal contact speed",
-                    "value": 0.001721726031973958,
+                    "value": 0.001738376566208899,
                     "units": "m/s"
                 },
                 {
                     "name": "parked FR rolling error P95",
-                    "value": 0.0034751601051539184,
+                    "value": 0.0035014450550079347,
                     "units": "fraction"
                 },
                 {
@@ -2473,7 +2473,7 @@
                 },
                 {
                     "name": "parked FR contact travel",
-                    "value": 0.01733073778450489,
+                    "value": 0.017467530444264413,
                     "units": "m"
                 },
                 {
@@ -2483,17 +2483,17 @@
                 },
                 {
                     "name": "parked FR lateral contact speed RMS",
-                    "value": 0.00002359042628086172,
+                    "value": 0.00001985914059332572,
                     "units": "m/s"
                 },
                 {
                     "name": "parked FR lateral contact speed P95",
-                    "value": 0.000025249473765143193,
+                    "value": 0.00002165206205972936,
                     "units": "m/s"
                 },
                 {
                     "name": "parked FR lateral contact angle P95",
-                    "value": 0.0028933766297996046,
+                    "value": 0.0024811436887830497,
                     "units": "degrees"
                 },
                 {
@@ -2523,47 +2523,47 @@
                 },
                 {
                     "name": "parked RL minimum longitudinal contact speed",
-                    "value": 0.0016622559633105994,
+                    "value": 0.0016806107014417649,
                     "units": "m/s"
                 },
                 {
                     "name": "parked RL rolling error P95",
-                    "value": 0.004399340134114027,
+                    "value": 0.004157352726906538,
                     "units": "fraction"
                 },
                 {
                     "name": "parked RL integrated rolling distance error",
-                    "value": 0.7112060785293579,
+                    "value": 0.7914026975631714,
                     "units": "fraction"
                 },
                 {
                     "name": "parked RL contact travel",
-                    "value": 0.016906071454286577,
+                    "value": 0.017041414976119996,
                     "units": "m"
                 },
                 {
                     "name": "parked RL wheel circumference travel",
-                    "value": 0.004882371053099632,
+                    "value": 0.0035547935403883459,
                     "units": "m"
                 },
                 {
                     "name": "parked RL lateral contact speed RMS",
-                    "value": 0.000004356190856924513,
+                    "value": 0.000009766544280864764,
                     "units": "m/s"
                 },
                 {
                     "name": "parked RL lateral contact speed P95",
-                    "value": 0.000008551991413696669,
+                    "value": 0.000015368637832580134,
                     "units": "m/s"
                 },
                 {
                     "name": "parked RL lateral contact angle P95",
-                    "value": 0.0009799860417842866,
+                    "value": 0.0017611162038519979,
                     "units": "degrees"
                 },
                 {
                     "name": "parked RL tread speed P95",
-                    "value": 0.0005030139000155032,
+                    "value": 0.00036929966881871223,
                     "units": "m/s"
                 },
                 {
@@ -2588,47 +2588,47 @@
                 },
                 {
                     "name": "parked RR minimum longitudinal contact speed",
-                    "value": 0.0017142201540991665,
+                    "value": 0.0017235586419701577,
                     "units": "m/s"
                 },
                 {
                     "name": "parked RR rolling error P95",
-                    "value": 0.004400745965540409,
+                    "value": 0.004170434549450874,
                     "units": "fraction"
                 },
                 {
                     "name": "parked RR integrated rolling distance error",
-                    "value": 0.7502691149711609,
+                    "value": 0.826704740524292,
                     "units": "fraction"
                 },
                 {
                     "name": "parked RR contact travel",
-                    "value": 0.017434941604733468,
+                    "value": 0.017554577440023423,
                     "units": "m"
                 },
                 {
                     "name": "parked RR wheel circumference travel",
-                    "value": 0.004354042932391167,
+                    "value": 0.0030421253759413959,
                     "units": "m"
                 },
                 {
                     "name": "parked RR lateral contact speed RMS",
-                    "value": 0.000004356187673693057,
+                    "value": 0.000009766534276423045,
                     "units": "m/s"
                 },
                 {
                     "name": "parked RR lateral contact speed P95",
-                    "value": 0.000008551988685212564,
+                    "value": 0.000015368608728749678,
                     "units": "m/s"
                 },
                 {
                     "name": "parked RR lateral contact angle P95",
-                    "value": 0.000979985692538321,
+                    "value": 0.0017611128278076649,
                     "units": "degrees"
                 },
                 {
                     "name": "parked RR tread speed P95",
-                    "value": 0.0004511078295763582,
+                    "value": 0.00032048061257228255,
                     "units": "m/s"
                 },
                 {
@@ -2643,12 +2643,12 @@
                 },
                 {
                     "name": "downhill travel three seconds after neutral release",
-                    "value": 5.538627624511719,
+                    "value": 5.539083480834961,
                     "units": "m"
                 },
                 {
                     "name": "downhill speed after neutral release",
-                    "value": 3.6410253047943117,
+                    "value": 3.6413745880126955,
                     "units": "m/s"
                 },
                 {
@@ -2668,57 +2668,57 @@
                 },
                 {
                     "name": "released FL minimum longitudinal contact speed",
-                    "value": 0.008828186430037022,
+                    "value": 0.011103159748017788,
                     "units": "m/s"
                 },
                 {
                     "name": "released FL rolling error P95",
-                    "value": 0.04323935508728027,
+                    "value": 0.04436218738555908,
                     "units": "fraction"
                 },
                 {
                     "name": "released FL integrated rolling distance error",
-                    "value": 0.007178846281021833,
+                    "value": 0.006973330397158861,
                     "units": "fraction"
                 },
                 {
                     "name": "released FL contact travel",
-                    "value": 5.538576602935791,
+                    "value": 5.539062976837158,
                     "units": "m"
                 },
                 {
                     "name": "released FL wheel circumference travel",
-                    "value": 5.5783371925354,
+                    "value": 5.577688694000244,
                     "units": "m"
                 },
                 {
                     "name": "released FL lateral contact speed RMS",
-                    "value": 0.00013854120334144682,
+                    "value": 0.00012538650480564684,
                     "units": "m/s"
                 },
                 {
                     "name": "released FL lateral contact speed P95",
-                    "value": 0.00004396973963594064,
+                    "value": 0.00014770169218536466,
                     "units": "m/s"
                 },
                 {
                     "name": "released FL lateral contact angle P95",
-                    "value": 0.0035095650237053634,
+                    "value": 0.01692536659538746,
                     "units": "degrees"
                 },
                 {
                     "name": "released FL tread speed P95",
-                    "value": 3.4676709175109865,
+                    "value": 3.4679811000823976,
                     "units": "m/s"
                 },
                 {
                     "name": "released FL reported forward slip P95",
-                    "value": 0.006305778864771128,
+                    "value": 0.011416363529860974,
                     "units": "native slip"
                 },
                 {
                     "name": "released FL reported sideways slip P95",
-                    "value": 0.000018619175534695387,
+                    "value": 0.00005386818156694062,
                     "units": "native slip"
                 },
                 {
@@ -2733,57 +2733,57 @@
                 },
                 {
                     "name": "released FR minimum longitudinal contact speed",
-                    "value": 0.00872234720736742,
+                    "value": 0.011556065641343594,
                     "units": "m/s"
                 },
                 {
                     "name": "released FR rolling error P95",
-                    "value": 0.04320836067199707,
+                    "value": 0.045747727155685428,
                     "units": "fraction"
                 },
                 {
                     "name": "released FR integrated rolling distance error",
-                    "value": 0.006950845010578632,
+                    "value": 0.0071712094359099869,
                     "units": "fraction"
                 },
                 {
                     "name": "released FR contact travel",
-                    "value": 5.538664817810059,
+                    "value": 5.539088726043701,
                     "units": "m"
                 },
                 {
                     "name": "released FR wheel circumference travel",
-                    "value": 5.577163219451904,
+                    "value": 5.578810691833496,
                     "units": "m"
                 },
                 {
                     "name": "released FR lateral contact speed RMS",
-                    "value": 0.00013854123244527727,
+                    "value": 0.00012538641749415547,
                     "units": "m/s"
                 },
                 {
                     "name": "released FR lateral contact speed P95",
-                    "value": 0.000043969761463813484,
+                    "value": 0.00014770172128919512,
                     "units": "m/s"
                 },
                 {
                     "name": "released FR lateral contact angle P95",
-                    "value": 0.0035095696803182365,
+                    "value": 0.016925370320677758,
                     "units": "degrees"
                 },
                 {
                     "name": "released FR tread speed P95",
-                    "value": 3.467674493789673,
+                    "value": 3.4679818153381349,
                     "units": "m/s"
                 },
                 {
                     "name": "released FR reported forward slip P95",
-                    "value": 0.006291632540524006,
+                    "value": 0.02578534372150898,
                     "units": "native slip"
                 },
                 {
                     "name": "released FR reported sideways slip P95",
-                    "value": 0.000018618449757923372,
+                    "value": 0.00005388373028836213,
                     "units": "native slip"
                 },
                 {
@@ -2798,57 +2798,57 @@
                 },
                 {
                     "name": "released RL minimum longitudinal contact speed",
-                    "value": 0.008825330063700676,
+                    "value": 0.0111162681132555,
                     "units": "m/s"
                 },
                 {
                     "name": "released RL rolling error P95",
-                    "value": 0.29799503087997439,
+                    "value": 0.18357297778129579,
                     "units": "fraction"
                 },
                 {
                     "name": "released RL integrated rolling distance error",
-                    "value": 0.011737767606973648,
+                    "value": 0.0119051244109869,
                     "units": "fraction"
                 },
                 {
                     "name": "released RL contact travel",
-                    "value": 5.538578510284424,
+                    "value": 5.539063453674316,
                     "units": "m"
                 },
                 {
                     "name": "released RL wheel circumference travel",
-                    "value": 5.473567962646484,
+                    "value": 5.473120212554932,
                     "units": "m"
                 },
                 {
                     "name": "released RL lateral contact speed RMS",
-                    "value": 0.0000774351938161999,
+                    "value": 0.00007393238774966449,
                     "units": "m/s"
                 },
                 {
                     "name": "released RL lateral contact speed P95",
-                    "value": 0.00008971812349045649,
+                    "value": 0.00008729384717298672,
                     "units": "m/s"
                 },
                 {
                     "name": "released RL lateral contact angle P95",
-                    "value": 0.007776513230055571,
+                    "value": 0.010003138333559037,
                     "units": "degrees"
                 },
                 {
                     "name": "released RL tread speed P95",
-                    "value": 3.441249370574951,
+                    "value": 3.4414494037628176,
                     "units": "m/s"
                 },
                 {
                     "name": "released RL reported forward slip P95",
-                    "value": 0.37897247076034548,
+                    "value": 0.3235967457294464,
                     "units": "native slip"
                 },
                 {
                     "name": "released RL reported sideways slip P95",
-                    "value": 0.000012945914932060987,
+                    "value": 0.00001530156259832438,
                     "units": "native slip"
                 },
                 {
@@ -2863,57 +2863,57 @@
                 },
                 {
                     "name": "released RR minimum longitudinal contact speed",
-                    "value": 0.008725140243768692,
+                    "value": 0.011542861349880696,
                     "units": "m/s"
                 },
                 {
                     "name": "released RR rolling error P95",
-                    "value": 0.29890209436416628,
+                    "value": 0.17161977291107179,
                     "units": "fraction"
                 },
                 {
                     "name": "released RR integrated rolling distance error",
-                    "value": 0.012114246375858784,
+                    "value": 0.011508301831781865,
                     "units": "fraction"
                 },
                 {
                     "name": "released RR contact travel",
-                    "value": 5.538661479949951,
+                    "value": 5.539088249206543,
                     "units": "m"
                 },
                 {
                     "name": "released RR wheel circumference travel",
-                    "value": 5.471564769744873,
+                    "value": 5.475342750549316,
                     "units": "m"
                 },
                 {
                     "name": "released RR lateral contact speed RMS",
-                    "value": 0.0000774356594774872,
+                    "value": 0.00007393422856694087,
                     "units": "m/s"
                 },
                 {
                     "name": "released RR lateral contact speed P95",
-                    "value": 0.00008971804345492274,
+                    "value": 0.00008738593169255182,
                     "units": "m/s"
                 },
                 {
                     "name": "released RR lateral contact angle P95",
-                    "value": 0.007776362355798483,
+                    "value": 0.01001369021832943,
                     "units": "degrees"
                 },
                 {
                     "name": "released RR tread speed P95",
-                    "value": 3.4412622451782228,
+                    "value": 3.4414637088775636,
                     "units": "m/s"
                 },
                 {
                     "name": "released RR reported forward slip P95",
-                    "value": 0.38132381439208987,
+                    "value": 0.35968196392059328,
                     "units": "native slip"
                 },
                 {
                     "name": "released RR reported sideways slip P95",
-                    "value": 0.000013127564670867287,
+                    "value": 0.000015016848919913173,
                     "units": "native slip"
                 }
             ]

@@ -148,10 +148,10 @@ namespace OneShift.RackLab
             innerVisual.SetParent(innerMastBody.transform, true);
             carriageVisual.SetParent(carriageBody.transform, true);
             carriageVisual.position -= truckRoot.up * .04f;
-            ExtendGeometry(mastVisual, mastBody.transform, -.265f, 1.45f);
-            ExtendGeometry(innerVisual, innerMastBody.transform, -.18f, 1.45f);
-            AttachCollision(truckRoot, "Outer mast compound collision", mastBody, -.265f, 1.45f, false);
-            AttachCollision(truckRoot, "Inner mast compound collision", innerMastBody, -.18f, 1.45f, false);
+            ExtendGeometry(mastVisual, mastBody.transform, -.265f, 1.20f);
+            ExtendGeometry(innerVisual, innerMastBody.transform, -.18f, 1.16f);
+            AttachCollision(truckRoot, "Outer mast compound collision", mastBody, -.265f, 1.20f, false);
+            AttachCollision(truckRoot, "Inner mast compound collision", innerMastBody, -.18f, 1.16f, false);
             AttachCollision(truckRoot, "Carriage compound collision", carriageBody, 0, 1, true);
             AttachCollision(truckRoot, "Fork_Left collision", carriageBody, 0, 1, true);
             AttachCollision(truckRoot, "Fork_Right collision", carriageBody, 0, 1, true);
@@ -167,7 +167,7 @@ namespace OneShift.RackLab
                 chainSheaves[i] = Find(innerVisual, "ChainSheave_" + side + "_Pivot");
                 // Rail extension moves the wheel centre, but the sheave stays round.
                 var sheaveScale = chainSheaves[i].localScale;
-                chainSheaves[i].localScale = new Vector3(sheaveScale.x, sheaveScale.y, sheaveScale.z / 1.45f);
+                chainSheaves[i].localScale = new Vector3(sheaveScale.x, sheaveScale.y, sheaveScale.z / 1.16f);
                 var oldChain = Find(mastVisual, "LeafChain_" + side);
                 if (oldChain != null) foreach (var r in oldChain.GetComponentsInChildren<Renderer>()) r.enabled = false;
                 tiltBarrels[i] = Find(truckRoot, "TiltCylinder_" + side + "_BarrelPivot");
@@ -403,9 +403,9 @@ namespace OneShift.RackLab
             var collision = rod.GetComponent<Collider>();
             if (Application.isPlaying) Destroy(collision); else DestroyImmediate(collision);
             rod.transform.SetParent(support, false);
-            rod.transform.position = end.position - support.up * 1.25f;
+            rod.transform.position = end.position - support.up * 1.14f;
             rod.transform.rotation = support.rotation;
-            rod.transform.localScale = new Vector3(.048f, 1.25f, .048f);
+            rod.transform.localScale = new Vector3(.048f, 1.14f, .048f);
             var candidates = support.GetComponentsInChildren<Renderer>();
             foreach (var candidate in candidates)
                 if (candidate.sharedMaterial != null && candidate.sharedMaterial.name.Contains("polished"))

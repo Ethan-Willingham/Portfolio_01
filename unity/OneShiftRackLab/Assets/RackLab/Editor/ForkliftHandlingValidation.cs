@@ -44,6 +44,314 @@ namespace OneShift.RackLab
             return json;
         }
 
+        [MenuItem("One Shift/Validate simple forklift assist")]
+        public static void MenuValidateAssist() { Debug.Log(ValidateAssistAndSave()); }
+
+        public static string ValidateAssistAndSave()
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode || Mathf.Abs(Time.fixedDeltaTime - Dt) > .000001f)
+                throw new InvalidOperationException("Stop Play and use the production physics step before assist validation.");
+            var report = new Report { generatedUtc = DateTime.UtcNow.ToString("O"), unityVersion = Application.unityVersion };
+            RunCheck(report, "held assist pickup transport setdown", "Holding the guide enters real pockets, lifts independent working cargo and sets it on the floor before full withdrawal.", AssistCycle);
+            RunCheck(report, "guide corrects a modest approach offset", "A slightly offset forklift lines up through wheel steering before its fork blades enter the pockets.", AssistOffset);
+            foreach (int rate in new[] { 30, 60 })
+            {
+                int frames = rate;
+                RunCheck(report, "guide pickup at " + frames + " rendered frames per second", "Guide decisions arrive at browser frame cadence while the jointed truck and independent cargo retain the production physics step.", (rig, check) => AssistFrameCadence(rig, check, frames));
+            }
+            RunCheck(report, "guide retrieves from middle rack", "The guide finds the actual elevated pocket and lifts independently supported cargo clear of a rack deck.", AssistRack);
+            RunCheck(report, "guide rejects distant and side approaches", "No guide starts on remote stock or through a pallet's shallow side notches.", AssistBounds);
+            RunCheck(report, "guide stops at obstruction", "An obstacle between forks and pocket stops wheel intent without moving the target through the obstacle.", AssistObstacle);
+            RunCheck(report, "guide respects overhead clearance", "An upward sweep of the actual load and carriage refuses a lift beneath a low obstruction.", AssistHeadroom);
+            RunCheck(report, "guide release clears intent", "Releasing the held guide brakes the truck and clears hydraulic commands; no future frame continues the approach.", AssistRelease);
+            RunCheck(report, "guide preserves overload limit", "Assisted pickup retains the hydraulic force limit of the independent 3500 kg package.", AssistOverload);
+            RunCheck(report, "guide sets down a manually lifted load", "A working load picked up with direct steering and hydraulic controls is recognized through contact on both forks and can be set down by the guide.", AssistManualLoad);
+            RunCheck(report, "guide recognizes an interrupted pickup", "Releasing the guide after a load lifts clear preserves independent cargo and the next hold offers physical setdown.", AssistInterruptedLoad);
+            RunCheck(report, "guide can repick after manual setdown", "A cached carried package manually lowered onto its support is offered as a pickup on the next guide press.", AssistRepick);
+            report.passed = report.checks.All(check => check.passed);
+            string json = JsonUtility.ToJson(report, true);
+            const string path = Root + "Reports/forklift-assist-validation.json";
+            Directory.CreateDirectory(Path.GetDirectoryName(path));
+            File.WriteAllText(path, json + "\n");
+            AssetDatabase.ImportAsset(path);
+            return json;
+        }
+
+        public static string ValidateReceivingAssistAndSave(bool flushPlateInPreview = false)
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode || Mathf.Abs(Time.fixedDeltaTime - Dt) > .000001f)
+                throw new InvalidOperationException("Stop Play and use the production physics step before receiving validation.");
+            var report = new Report { generatedUtc = DateTime.UtcNow.ToString("O"), unityVersion = Application.unityVersion };
+            report.method += " Actual installed warehouse static colliders and receiving-start clone, opened doors, independent delivery cargo, 30 Hz guide input.";
+            if (flushPlateInPreview) report.method += " Preview-only plate correction: top at warehouse floor y=0.";
+            RunCheck(report, "actual receiving dock pickup transport setdown", "The guide drives over the actual dock plate into the first delivery pallet, lifts through contact, reverses into the warehouse and releases it on the floor.",
+                (rig, check) => ReceivingAssist(rig, check, flushPlateInPreview));
+            RunCheck(report, "deepest original trailer pallet pickup", "After the first three pallets are unloaded, the compact forklift enters the original full-scale trailer and retrieves the deepest package beneath its roof.",
+                (rig, check) => ReceivingAssist(rig, check, flushPlateInPreview, 3));
+            report.passed = report.checks.All(check => check.passed);
+            string json = JsonUtility.ToJson(report, true);
+            const string path = Root + "Reports/forklift-receiving-assist-validation.json";
+            File.WriteAllText(path, json + "\n"); AssetDatabase.ImportAsset(path);
+            return json;
+        }
+
+        static void ReceivingAssist(Rig rig, ForkliftDrivingValidation.Check check, bool flushPlate, int index = 0)
+        {
+            var receiving = rig.ReceivingStart(flushPlate);
+            var load = receiving.cargo[index].GetComponent<Rigidbody>();
+            if (index > 0)
+                for (int i = 0; i < index; i++)
+                {
+                    // These remain independent stock, already unloaded before
+                    // the deep-trailer cycle begins; no cargo is deleted.
+                    receiving.cargo[i].Body.position = new Vector3(-8, .02f, i * 2);
+                }
+            rig.InitialTruck(new Vector3(0, .15f, 9.6f));
+            rig.Step(3);
+            if (index > 0) rig.DriveToZ(load.position.z - 4.75f);
+            float initialBottom = BoardBounds(load).min.y;
+            float initialZ = load.position.z;
+            var guide = Guide(rig, load);
+            float accumulator = 0;
+            for (int frame = 0; frame < 30 * 28 && guide.IsRunning; frame++)
+            {
+                guide.Tick(1f / 30);
+                accumulator += 1f / 30;
+                while (accumulator >= Dt) { rig.Step(Dt); accumulator -= Dt; }
+            }
+            check.Measure("bridge collision top", receiving.dockPlate.GetComponent<BoxCollider>().bounds.max.y, "m");
+            check.Measure("pallet movement before pickup completes", load.position.z - initialZ, "m");
+            float rise = check.Measure("actual delivery pallet lift", BoardBounds(load).min.y - initialBottom, "m");
+            check.Measure("forklift pitch after dock entry", rig.Body.transform.eulerAngles.x, "degrees");
+            check.Measure("inner mast collision top after pickup", rig.Lift.innerMastBody.GetComponentsInChildren<Collider>().Max(c => c.bounds.max.y), "m");
+            if (guide.CurrentStage != ForkliftLoadAssist.Stage.Complete || !guide.Carrying)
+                throw new InvalidOperationException(guide.Status + " " + guide.DebugState);
+            guide.Cancel();
+            rig.DriveDistance(-1, index == 0 ? 5f : load.position.z - 9.35f);
+            float unloadingZ = check.Measure("cargo position after reversing into warehouse", load.position.z, "m");
+            if (!guide.Begin(load.GetComponent<PalletCargo>())) throw new InvalidOperationException(guide.Status);
+            RunGuide(rig, guide);
+            bool setDown = guide.CurrentStage == ForkliftLoadAssist.Stage.Complete;
+            guide.Cancel();
+            Vector3 resting = load.position;
+            rig.DriveDistance(-1, 1.3f); rig.Step(1);
+            float drift = check.Measure("delivery pallet setdown drift after withdrawal", Vector3.Distance(resting, load.position), "m");
+            check.passed = rise > .08f && unloadingZ < 11.5f && setDown && drift < .08f && BoardBounds(load).min.y < .03f;
+            if (!check.passed) check.error = guide.Status;
+        }
+
+        static ForkliftLoadAssist Guide(Rig rig, Rigidbody load)
+        {
+            var guide = new ForkliftLoadAssist(rig.Drive, rig.Lift);
+            if (!guide.Begin(load.GetComponent<PalletCargo>())) throw new InvalidOperationException(guide.Status);
+            return guide;
+        }
+
+        static void RunGuide(Rig rig, ForkliftLoadAssist guide, float limit = 28)
+        {
+            for (int step = 0; step < limit / Dt && guide.IsRunning; step++)
+            { guide.Tick(Dt); rig.Step(Dt); }
+        }
+
+        static void AssistCycle(Rig rig, ForkliftDrivingValidation.Check check)
+        {
+            rig.Step(3);
+            var load = rig.LoadAhead(Cargo[1]);
+            rig.Step(2);
+            float initial = BoardBounds(load).min.y;
+            var guide = Guide(rig, load);
+            RunGuide(rig, guide);
+            float rise = check.Measure("physical guided load rise", BoardBounds(load).min.y - initial, "m");
+            bool picked = guide.CurrentStage == ForkliftLoadAssist.Stage.Complete && guide.Carrying;
+            guide.Cancel();
+            Vector3 start = load.position;
+            rig.DriveDistance(-1, 1);
+            float travel = check.Measure("independent guided load transport", Vector3.Distance(start, load.position), "m");
+            bool lowering = guide.Begin();
+            RunGuide(rig, guide);
+            bool setdown = guide.CurrentStage == ForkliftLoadAssist.Stage.Complete;
+            guide.Cancel();
+            Vector3 placed = load.position;
+            rig.DriveDistance(-1, 1.3f);
+            rig.Step(1);
+            float drift = check.Measure("setdown movement during withdrawal", Vector3.Distance(placed, load.position), "m");
+            check.Measure("setdown bottom", BoardBounds(load).min.y, "m");
+            check.passed = picked && rise > .14f && travel > .8f && lowering && setdown && drift < .08f && BoardBounds(load).min.y < .03f;
+            if (!check.passed) check.error = guide.Status;
+        }
+
+        static void AssistOffset(Rig rig, ForkliftDrivingValidation.Check check)
+        {
+            rig.Step(3);
+            var load = rig.Load(Cargo[1], new Vector3(.12f, .04f, rig.ForkBounds.max.z + 1.55f));
+            rig.Step(2);
+            var guide = Guide(rig, load);
+            RunGuide(rig, guide);
+            check.Measure("pallet bottom after offset guide", BoardBounds(load).min.y, "m");
+            check.Measure("wheel steering correction distance", rig.Body.position.x, "m");
+            check.passed = guide.CurrentStage == ForkliftLoadAssist.Stage.Complete && guide.Carrying && BoardBounds(load).min.y > .14f;
+            if (!check.passed) check.error = guide.Status;
+        }
+
+        static void AssistRack(Rig rig, ForkliftDrivingValidation.Check check)
+        {
+            var rack = rig.EmptyRack(new Vector3(0, 0, 8));
+            var slot = rack.GetComponentsInChildren<PalletRackBay>().OrderBy(bay => bay.transform.position.x).First().palletPositions[2];
+            rig.InitialTruck(new Vector3(slot.position.x, .15f, 4));
+            var load = rig.Load(Cargo[1], slot.position + Vector3.up * .025f);
+            rig.Step(3);
+            var guide = Guide(rig, load);
+            RunGuide(rig, guide);
+            float rise = check.Measure("guide rack clearance", BoardBounds(load).min.y - slot.position.y, "m");
+            bool picked = guide.CurrentStage == ForkliftLoadAssist.Stage.Complete;
+            if (!picked) throw new InvalidOperationException("Rack pickup stopped in " + guide.CurrentStage + ": " + guide.Status + " Obstruction: " + guide.ObstructionName + " " + guide.DebugState);
+            guide.Cancel();
+            rig.DriveDistance(-1, 1.4f);
+            bool lowering = guide.Begin();
+            RunGuide(rig, guide);
+            check.Measure("retrieved load bottom after lowering", BoardBounds(load).min.y, "m");
+            check.passed = picked && rise > .08f && lowering && guide.CurrentStage == ForkliftLoadAssist.Stage.Complete && BoardBounds(load).min.y < .035f;
+            if (!check.passed) check.error = guide.Status;
+        }
+
+        static void AssistFrameCadence(Rig rig, ForkliftDrivingValidation.Check check, int rate)
+        {
+            rig.Step(2);
+            var load = rig.LoadAhead(Cargo[1]); rig.Step(1);
+            var guide = Guide(rig, load);
+            float accumulator = 0;
+            for (int frame = 0; frame < rate * 28 && guide.IsRunning; frame++)
+            {
+                guide.Tick(1f / rate);
+                accumulator += 1f / rate;
+                while (accumulator >= Dt) { rig.Step(Dt); accumulator -= Dt; }
+            }
+            check.Measure("rendered control rate", rate, "Hz");
+            check.Measure("physical load bottom", BoardBounds(load).min.y, "m");
+            check.passed = guide.CurrentStage == ForkliftLoadAssist.Stage.Complete && guide.Carrying && BoardBounds(load).min.y > .14f;
+            if (!check.passed) check.error = guide.Status;
+        }
+
+        static void AssistBounds(Rig rig, ForkliftDrivingValidation.Check check)
+        {
+            rig.Step(2);
+            var far = rig.Load(Cargo[1], new Vector3(0, .04f, 10));
+            var side = rig.Load(Cargo[0], new Vector3(0, .04f, rig.ForkBounds.max.z + 1));
+            side.rotation = Quaternion.Euler(0, 90, 0);
+            Physics.SyncTransforms(); rig.Step(1);
+            var guide = new ForkliftLoadAssist(rig.Drive, rig.Lift);
+            bool farRejected = !guide.Begin(far.GetComponent<PalletCargo>());
+            bool sideRejected = !guide.Begin(side.GetComponent<PalletCargo>());
+            check.Measure("far target rejected", farRejected ? 1 : 0, "boolean");
+            check.Measure("side target rejected", sideRejected ? 1 : 0, "boolean");
+            check.passed = farRejected && sideRejected && !guide.IsRunning;
+        }
+
+        static void AssistObstacle(Rig rig, ForkliftDrivingValidation.Check check)
+        {
+            rig.Step(2);
+            var load = rig.LoadAhead(Cargo[1]);
+            var wall = new GameObject("Guide path obstruction");
+            SceneManager.MoveGameObjectToScene(wall, rig.Vehicle.scene);
+            wall.transform.position = new Vector3(0, .6f, rig.ForkBounds.max.z + .2f);
+            wall.AddComponent<BoxCollider>().size = new Vector3(2, 1.2f, .08f);
+            Physics.SyncTransforms(); rig.Step(1);
+            Vector3 start = load.position, truck = rig.Body.position;
+            var guide = Guide(rig, load);
+            RunGuide(rig, guide);
+            float shift = check.Measure("blocked pallet displacement", Vector3.Distance(start, load.position), "m");
+            float truckShift = check.Measure("blocked truck displacement", Vector3.Distance(truck, rig.Body.position), "m");
+            check.passed = !guide.IsRunning && guide.CurrentStage != ForkliftLoadAssist.Stage.Complete && shift < .015f && truckShift < .04f && Mathf.Abs(rig.Drive.ThrottleInput) < .001f;
+        }
+
+        static void AssistRelease(Rig rig, ForkliftDrivingValidation.Check check)
+        {
+            rig.Step(2);
+            var load = rig.LoadAhead(Cargo[1]); rig.Step(1);
+            var guide = Guide(rig, load);
+            RunGuide(rig, guide, .9f);
+            guide.Cancel();
+            rig.Step(.5f);
+            Vector3 stopped = rig.Body.position;
+            float height = rig.Lift.LiftTravelMeters;
+            RunGuide(rig, guide, 1);
+            rig.Step(1);
+            float travel = check.Measure("released guide travel", Vector3.Distance(stopped, rig.Body.position), "m");
+            float liftTravel = check.Measure("released guide hydraulic travel", Mathf.Abs(rig.Lift.LiftTravelMeters - height), "m");
+            check.passed = !guide.IsRunning && travel < .035f && liftTravel < .025f && rig.Drive.ThrottleInput == 0 && rig.Lift.LiftInput == 0 && rig.Lift.TiltInput == 0;
+        }
+
+        static void AssistHeadroom(Rig rig, ForkliftDrivingValidation.Check check)
+        {
+            rig.Step(2);
+            var load = rig.LoadAhead(Cargo[1]); rig.Step(1);
+            var beam = new GameObject("Low overhead obstruction");
+            SceneManager.MoveGameObjectToScene(beam, rig.Vehicle.scene);
+            beam.transform.position = load.position + new Vector3(0, 1.62f, 0);
+            beam.AddComponent<BoxCollider>().size = new Vector3(1.2f, .1f, 1.3f);
+            Physics.SyncTransforms();
+            float bottom = BoardBounds(load).min.y;
+            var guide = Guide(rig, load);
+            RunGuide(rig, guide);
+            float rise = check.Measure("load rise beneath low beam", BoardBounds(load).min.y - bottom, "m");
+            check.passed = !guide.IsRunning && guide.CurrentStage != ForkliftLoadAssist.Stage.Complete && guide.Status.Contains("room above") && rise < .025f;
+            if (!check.passed) check.error = guide.Status;
+        }
+
+        static void AssistOverload(Rig rig, ForkliftDrivingValidation.Check check)
+        {
+            rig.Step(2);
+            var load = rig.LoadAhead(Cargo[2]); rig.Step(1);
+            float bottom = BoardBounds(load).min.y;
+            var guide = Guide(rig, load);
+            RunGuide(rig, guide);
+            float rise = check.Measure("overload rise with guide", BoardBounds(load).min.y - bottom, "m");
+            check.passed = !guide.IsRunning && guide.CurrentStage != ForkliftLoadAssist.Stage.Complete && rise < .05f && load.mass > 3000;
+        }
+
+        static void AssistManualLoad(Rig rig, ForkliftDrivingValidation.Check check)
+        {
+            rig.Step(2);
+            var load = rig.LoadAhead(Cargo[1]); rig.Step(1);
+            EnterFromOutside(rig, load, check);
+            rig.RaiseLoadBottom(load, .25f);
+            var guide = new ForkliftLoadAssist(rig.Drive, rig.Lift);
+            bool recognized = guide.Begin(load.GetComponent<PalletCargo>()) && guide.CurrentStage == ForkliftLoadAssist.Stage.Lower;
+            RunGuide(rig, guide);
+            check.Measure("manual load setdown bottom", BoardBounds(load).min.y, "m");
+            check.passed = recognized && guide.CurrentStage == ForkliftLoadAssist.Stage.Complete && BoardBounds(load).min.y < .03f;
+            if (!check.passed) check.error = guide.Status;
+        }
+
+        static void AssistInterruptedLoad(Rig rig, ForkliftDrivingValidation.Check check)
+        {
+            rig.Step(2);
+            var load = rig.LoadAhead(Cargo[1]); rig.Step(1);
+            var guide = Guide(rig, load);
+            for (int step = 0; step < 28 / Dt && guide.IsRunning && BoardBounds(load).min.y < .11f; step++)
+            { guide.Tick(Dt); rig.Step(Dt); }
+            guide.Cancel(); rig.Step(.5f);
+            bool recognized = guide.Begin(load.GetComponent<PalletCargo>()) && guide.CurrentStage == ForkliftLoadAssist.Stage.Lower;
+            RunGuide(rig, guide);
+            check.Measure("interrupted load setdown bottom", BoardBounds(load).min.y, "m");
+            check.passed = recognized && guide.CurrentStage == ForkliftLoadAssist.Stage.Complete && BoardBounds(load).min.y < .03f;
+            if (!check.passed) check.error = guide.Status;
+        }
+
+        static void AssistRepick(Rig rig, ForkliftDrivingValidation.Check check)
+        {
+            rig.Step(2);
+            var load = rig.LoadAhead(Cargo[1]); rig.Step(1);
+            var guide = Guide(rig, load); RunGuide(rig, guide); guide.Cancel();
+            rig.SetForkTop(rig.PocketForkTopOffset(load)); rig.Step(1);
+            float bottom = BoardBounds(load).min.y;
+            bool pickup = guide.Begin(load.GetComponent<PalletCargo>()) && guide.CurrentStage == ForkliftLoadAssist.Stage.Level;
+            RunGuide(rig, guide);
+            float rise = check.Measure("repick rise after manual setdown", BoardBounds(load).min.y-bottom, "m");
+            check.passed = pickup && guide.CurrentStage == ForkliftLoadAssist.Stage.Complete && rise > .15f;
+            if (!check.passed) check.error = guide.Status;
+        }
+
         [MenuItem("One Shift/Validate loaded forklift tilt")]
         public static void MenuValidateLoadedTilt() { Debug.Log(ValidateLoadedTiltAndSave()); }
 
@@ -72,6 +380,7 @@ namespace OneShift.RackLab
             var report = new Report { generatedUtc = DateTime.UtcNow.ToString("O"), unityVersion = Application.unityVersion };
             RunCheck(report, "measured pallet and rack geometry", "Every pallet has independent dynamic collision, open front fork pockets and actual placement anchors at floor and both raised rack levels.", Geometry);
             RunCheck(report, "physical full lift travel", "Finite hydraulic actuation raises the actual forks above the highest measured rack pocket, retaining clearance for a 100 mm pickup.", FullTravel);
+            RunCheck(report, "compact mast retains guide and cylinder engagement", "The lowered visual and physical mast fit the original trailer; at full hydraulic travel both guide stages remain engaged, chain anchors stay below the sheaves and the polished rods retain barrel overlap.", CompactGeometry);
             for (int i = 0; i < Pallets.Length; ++i)
             {
                 int variant = i;
@@ -112,7 +421,7 @@ namespace OneShift.RackLab
             bool passed = slots.Length == 18 && slots.Max(slot => slot.position.y) > 3.65f;
             var warehouse = SceneManager.GetActiveScene();
             var installedEntries = warehouse.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<Transform>(true))
-                .Where(node => node.name == "Left fork entry").ToArray();
+                .Where(node => node.gameObject.activeInHierarchy && node.name == "Left fork entry").ToArray();
             int dynamicEntries = installedEntries.Count(entry =>
             {
                 var body = entry.GetComponentInParent<Rigidbody>();
@@ -120,7 +429,9 @@ namespace OneShift.RackLab
             });
             check.Measure("installed warehouse pallets", installedEntries.Length, "count");
             check.Measure("installed pallets with independent dynamic bodies", dynamicEntries, "count");
-            passed &= installedEntries.Length >= 22 && dynamicEntries == installedEntries.Length;
+            var receiving = Object.FindFirstObjectByType<WarehouseReceiving>();
+            int expectedPallets = receiving != null ? receiving.cargo.Length : 22;
+            passed &= installedEntries.Length >= expectedPallets && dynamicEntries == installedEntries.Length;
             for (int i = 0; i < Pallets.Length; ++i)
             {
                 var load = rig.Load(Pallets[i], new Vector3(-8 + i * 2, .04f, 0));
@@ -156,6 +467,32 @@ namespace OneShift.RackLab
             check.Measure("measured lift travel", rig.Lift.LiftTravelMeters, "m");
             check.Measure("maximum hydraulic force", rig.Lift.maximumLiftForce, "N");
             check.passed = actual >= required && actual - before > 3.6f && rig.Lift.maximumLiftForce > 0 && !rig.Drive.IsOverturned;
+        }
+
+        static void CompactGeometry(Rig rig, ForkliftDrivingValidation.Check check)
+        {
+            rig.Step(3);
+            var nodes = rig.Vehicle.GetComponentsInChildren<Transform>();
+            var outer = rig.Lift.mastBody.GetComponentsInChildren<Collider>().Where(c => c.name == "Outer mast rail").ToArray();
+            var inner = rig.Lift.innerMastBody.GetComponentsInChildren<Collider>().Where(c => c.name == "Inner mast rail").ToArray();
+            var rollers = nodes.Where(n => n.name.StartsWith("CarriageRoller_", StringComparison.Ordinal) && n.GetComponent<MeshFilter>() == null).ToArray();
+            var rods = rig.Lift.innerMastBody.GetComponentsInChildren<Renderer>().Where(r => r.name == "Full stroke polished lift piston").ToArray();
+            float restCollision = check.Measure("collapsed mast collision top", rig.Lift.innerMastBody.GetComponentsInChildren<Collider>().Max(c => c.bounds.max.y), "m");
+            float restVisual = check.Measure("collapsed mast visual top", rig.Lift.innerMastBody.GetComponentsInChildren<Renderer>().Where(r => r.enabled).Max(r => r.bounds.max.y), "m");
+            float restRodBottom = check.Measure("collapsed piston bottom above ground", rods.Min(r => r.bounds.min.y), "m");
+            float restGuide = check.Measure("lowered carriage guide edge above inner rail foot", rollers.Min(n => n.position.y) - .056f - inner.Max(c => c.bounds.min.y), "m");
+            rig.Lift.SetInput(1, 0); rig.Step(20); rig.Lift.SetInput(0, 0); rig.Step(1);
+            float railOverlap = check.Measure("fully extended mast rail overlap", outer.Min(c => c.bounds.max.y) - inner.Max(c => c.bounds.min.y), "m");
+            float upperGuide = check.Measure("fully extended carriage guide edge below rail top", inner.Min(c => c.bounds.max.y) - rollers.Max(n => n.position.y) - .056f, "m");
+            float lowerStageGuide = check.Measure("inner lower guide edge below outer rail top", outer.Min(c => c.bounds.max.y) - nodes.Where(n => n.name.StartsWith("InnerGuide_", StringComparison.Ordinal) && n.name.EndsWith("_Lower", StringComparison.Ordinal)).Max(n => n.position.y) - .121f, "m");
+            float fixedGuide = check.Measure("fixed upper guide edge above inner rail foot", nodes.Where(n => n.name.StartsWith("OuterGuide_", StringComparison.Ordinal) && n.name.EndsWith("_Upper", StringComparison.Ordinal)).Min(n => n.position.y) - .056f - inner.Max(c => c.bounds.min.y), "m");
+            float chainReturn = check.Measure("fully extended sheave above carriage chain anchor", Enumerable.Range(0, 2).Min(i => rig.Lift.chainSheaves[i].position.y - rig.Lift.carriageChainAnchors[i].position.y), "m");
+            // Measure from the retained barrel pivot, including its original
+            // offset below the mast hinge and the derived vertical scale.
+            float glandTop = nodes.Where(n => n.name.StartsWith("LiftCylinder_", StringComparison.Ordinal) && n.name.EndsWith("_Barrel", StringComparison.Ordinal)).Min(n => n.position.y) + 1.74f * 1.20f;
+            float rodOverlap = check.Measure("fully extended polished piston barrel overlap", glandTop - rods.Max(r => r.bounds.min.y), "m");
+            check.passed = restCollision < 2.54f && restVisual < 2.54f && restRodBottom > .03f && restGuide > .015f &&
+                railOverlap > .4f && upperGuide > .012f && lowerStageGuide > .01f && fixedGuide > .01f && chainReturn > .08f && rodOverlap > .20f;
         }
 
         static void FloorCycle(Rig rig, ForkliftDrivingValidation.Check check, string prefab)
@@ -498,6 +835,51 @@ namespace OneShift.RackLab
                 }
                 Physics.SyncTransforms();
                 return rack;
+            }
+
+            public WarehouseReceiving ReceivingStart(bool flushPlate)
+            {
+                var source = Object.FindFirstObjectByType<WarehouseReceiving>();
+                if (source == null) throw new InvalidOperationException("Install the receiving start before testing its actual dock geometry.");
+                foreach (var node in scene.GetRootGameObjects())
+                    if (node.name == "Handling validation floor") Object.DestroyImmediate(node);
+                // Copy real static collision only, not a flattened substitute
+                // floor. This retains gaps, apron, thresholds and the real walls.
+                foreach (var collider in Object.FindObjectsByType<Collider>(FindObjectsSortMode.None))
+                {
+                    if (collider.gameObject.scene != source.gameObject.scene || collider.attachedRigidbody != null || collider.isTrigger ||
+                        !collider.enabled || collider.transform.IsChildOf(source.transform) || !(collider is BoxCollider || collider is MeshCollider)) continue;
+                    var node = new GameObject("Receiving check / " + collider.name);
+                    SceneManager.MoveGameObjectToScene(node, scene);
+                    node.transform.SetPositionAndRotation(collider.transform.position, collider.transform.rotation);
+                    node.transform.localScale = collider.transform.lossyScale;
+                    var copy = node.AddComponent(collider.GetType()) as Collider;
+                    EditorUtility.CopySerialized(collider, copy);
+                }
+                var clone = Object.Instantiate(source.gameObject);
+                SceneManager.MoveGameObjectToScene(clone, scene);
+                foreach (var script in clone.GetComponentsInChildren<MonoBehaviour>()) script.enabled = false;
+                foreach (var renderer in clone.GetComponentsInChildren<Renderer>()) renderer.enabled = false;
+                var receiving = clone.GetComponent<WarehouseReceiving>();
+                receiving.truck.isKinematic = true;
+                receiving.truck.position = receiving.dockedPosition;
+                receiving.leftDoor.localRotation = receiving.DoorPose(true, 1);
+                receiving.rightDoor.localRotation = receiving.DoorPose(false, 1);
+                receiving.dockBarrier.gameObject.SetActive(false);
+                receiving.dockPlate.SetActive(true);
+                if (flushPlate)
+                {
+                    var local = receiving.dockPlate.transform.localPosition;
+                    local.y = -.05f; receiving.dockPlate.transform.localPosition = local;
+                }
+                foreach (var cargo in receiving.cargo)
+                {
+                    cargo.ApplyMassProperties();
+                    var body = cargo.GetComponent<Rigidbody>();
+                    loads.Add(body); loadParents.Add(body, body.transform.parent);
+                }
+                Physics.SyncTransforms();
+                return receiving;
             }
 
             public void Step(float seconds, Action sample = null)

@@ -39,6 +39,10 @@
 .warehouse-controls h2 { margin:0 0 14px; color:var(--text-bright); font:1.5rem var(--font-heading); }
 .warehouse-controls p { font-size:.875rem; line-height:1.6; margin:12px 0; color:var(--text-dim); }
 .warehouse-controls p span { margin:0 6px; color:var(--rule-strong); }
+.warehouse-quality { display:flex; align-items:center; justify-content:space-between; gap:16px; color:var(--text); font-size:.875rem; }
+.warehouse-quality select { min-height:44px; padding:8px 12px; font:inherit; color:var(--text); background:var(--bg); border:1px solid var(--rule-strong); }
+.warehouse-quality select:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
+.warehouse-controls p.warehouse-quality-note { margin:8px 0 22px; font-size:.75rem; }
 .warehouse-gate { position:absolute; z-index:3; inset:0; display:grid; place-items:center; text-align:center; padding:30px; background:color-mix(in srgb,var(--bg-raised) 92%,transparent); }
 .warehouse-gate > div { max-width:410px; }
 .warehouse-gate h2 { margin:0 0 14px; font:2.25rem/1.15 var(--font-heading); color:var(--text-bright); }
@@ -47,4 +51,5 @@
 @media(max-width:700px) { .warehouse-cover { background-image:linear-gradient(90deg,color-mix(in srgb,var(--bg-raised) 97%,transparent),color-mix(in srgb,var(--bg-raised) 80%,transparent)),url('assets/one-shift-unity/preview.png?v=1'); }.warehouse-intro{padding:24px;}.warehouse-back{margin-bottom:20px;} }
 @media(max-height:650px) and (min-width:701px) { .warehouse-intro{width:650px;padding:18px 42px;}.warehouse-back{margin:0 0 12px;}.warehouse-intro h1{font-size:3.4rem;margin-bottom:14px;}.warehouse-dek{font-size:1rem;max-width:500px;}.warehouse-start{margin-top:18px;}.warehouse-keys{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 18px;margin-top:20px;padding-top:16px;}.warehouse-classic{margin-top:18px;} }
 @media(max-height:450px) { .warehouse-intro{justify-content:flex-start;}.warehouse-tools{top:6px;right:6px;}.warehouse-tools button{padding:9px 12px;}.warehouse-controls{top:56px;max-height:calc(100% - 66px);} }
+@media(max-width:700px) { .warehouse-tools{top:auto;bottom:max(90px,calc(env(safe-area-inset-bottom) + 82px));} }
 @media(prefers-reduced-motion:reduce) { .warehouse-page * { scroll-behavior:auto!important; } }

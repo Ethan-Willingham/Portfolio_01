@@ -1,0 +1,94 @@
+{
+    "generatedUtc": "2026-10-25T22:54:19.3008798Z",
+    "unityVersion": "6000.3.27f1",
+    "method": "Isolated PhysX at the production 0.005 second timestep. Saved forklift, pallet, cargo and rack prefabs. Pickup, carrying and release use actual contacts; no load parenting, attached carrying joints or pose writes after initial placement. Actual installed warehouse static colliders and receiving-start clone, opened doors, independent delivery cargo, 30 Hz guide input.",
+    "passed": true,
+    "checks": [
+        {
+            "name": "actual receiving dock pickup transport setdown",
+            "passed": true,
+            "expectation": "The guide drives over the actual dock plate into the first delivery pallet, lifts through contact, reverses into the warehouse and releases it on the floor.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "bridge collision top",
+                    "value": 0.0,
+                    "units": "m"
+                },
+                {
+                    "name": "pallet movement before pickup completes",
+                    "value": 0.0002689361572265625,
+                    "units": "m"
+                },
+                {
+                    "name": "actual delivery pallet lift",
+                    "value": 0.19671422243118287,
+                    "units": "m"
+                },
+                {
+                    "name": "forklift pitch after dock entry",
+                    "value": 0.2280738651752472,
+                    "units": "degrees"
+                },
+                {
+                    "name": "inner mast collision top after pickup",
+                    "value": 2.614447832107544,
+                    "units": "m"
+                },
+                {
+                    "name": "cargo position after reversing into warehouse",
+                    "value": 9.359308242797852,
+                    "units": "m"
+                },
+                {
+                    "name": "delivery pallet setdown drift after withdrawal",
+                    "value": 0.0,
+                    "units": "m"
+                }
+            ]
+        },
+        {
+            "name": "deepest original trailer pallet pickup",
+            "passed": true,
+            "expectation": "After the first three pallets are unloaded, the compact forklift enters the original full-scale trailer and retrieves the deepest package beneath its roof.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "bridge collision top",
+                    "value": 0.0,
+                    "units": "m"
+                },
+                {
+                    "name": "pallet movement before pickup completes",
+                    "value": 0.00025177001953125,
+                    "units": "m"
+                },
+                {
+                    "name": "actual delivery pallet lift",
+                    "value": 0.19647449254989625,
+                    "units": "m"
+                },
+                {
+                    "name": "forklift pitch after dock entry",
+                    "value": 0.22992223501205445,
+                    "units": "degrees"
+                },
+                {
+                    "name": "inner mast collision top after pickup",
+                    "value": 2.6145126819610597,
+                    "units": "m"
+                },
+                {
+                    "name": "cargo position after reversing into warehouse",
+                    "value": 9.359148979187012,
+                    "units": "m"
+                },
+                {
+                    "name": "delivery pallet setdown drift after withdrawal",
+                    "value": 0.0,
+                    "units": "m"
+                }
+            ]
+        }
+    ]
+}

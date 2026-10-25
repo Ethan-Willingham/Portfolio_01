@@ -15,6 +15,9 @@ namespace OneShift.RackLab
         public bool TrainingOpen => trainingOpen;
         public bool CabView => cabView;
         public bool ParkingBrake => parkingBrake;
+        public bool AssistActive => assist != null && assist.IsRunning;
+        public string AssistStage => assist != null ? assist.CurrentStage.ToString() : "Idle";
+        public string AssistStatus => assist != null ? assist.Status : "";
         public bool ControlsCaptured => captured && browserActive && focused && !awaitNeutral;
         Camera view;
         float originalNearClip;
@@ -23,10 +26,13 @@ namespace OneShift.RackLab
         Quaternion originalCameraRotation, spawnRotation;
         Transform operatorEye;
         ForkliftLiftController lift;
+        ForkliftLoadAssist assist;
         bool driving, trainingOpen, trained, captured, parkingBrake;
         bool browserActive = true, focused = true, awaitNeutral, applicationPaused;
         bool cabView;
+        bool helpOpen, exitRequested, guideStopping;
         float orbitYaw, orbitPitch = 18, recoverHeld, noticeUntil;
+        float guideViewBlend;
         string notice;
         readonly ForkliftCameraRigState cameraRig = new ForkliftCameraRigState();
         readonly RaycastHit[] cameraHits = new RaycastHit[96];
@@ -42,6 +48,7 @@ namespace OneShift.RackLab
             if (walking == null || walking.eyes == null || vehicle == null) { enabled = false; return; }
             view = walking.eyes;
             lift = vehicle.GetComponent<ForkliftLiftController>();
+            if (lift != null) assist = new ForkliftLoadAssist(vehicle, lift);
             originalNearClip = view.nearClipPlane;
             originalCameraParent = view.transform.parent;
             originalCameraPosition = view.transform.localPosition;
@@ -106,6 +113,7 @@ namespace OneShift.RackLab
             Cursor.visible = !active;
             if (vehicle != null && !active) vehicle.SetDriverInput(0, 0, true, parkingBrake, false);
             if (lift != null && !active) lift.ClearInput();
+            if (!active) { assist?.Cancel(); exitRequested = guideStopping = false; }
         }
 
         bool NearTruck()
@@ -127,27 +135,36 @@ namespace OneShift.RackLab
                 if (Input.GetKeyDown(KeyCode.Escape))
                 {
                     trainingOpen = false;
-                    walking.SetVehicleMode(false);
+                    TryExit();
+                    if (driving) trainingOpen = true;
                 }
-                else if (Input.GetKeyDown(KeyCode.Return)) { trained = true; EnterTruck(); }
+                else if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.E)) { trained = true; EnterTruck(); }
                 return;
             }
             if (!driving)
             {
                 if (walking.CanControl && NearTruck() && Input.GetKeyDown(KeyCode.E))
                 {
-                    if (trained) EnterTruck();
-                    else { trainingOpen = true; walking.SetVehicleMode(true); Capture(false); }
+                    EnterTruck();
+                    if (!trained)
+                    {
+                        trainingOpen = true;
+                        vehicle.SetOccupied(false);
+                        if (lift != null) lift.SetOccupied(false);
+                        Capture(false);
+                        engine.Stop();
+                    }
                 }
                 return;
             }
-            if (Input.GetKeyDown(KeyCode.Escape)) Capture(false);
+            if (Input.GetKeyDown(KeyCode.Escape)) { exitRequested = false; Capture(false); }
             if (!captured && Input.GetMouseButtonDown(0)) Capture(true);
             if (!captured) { vehicle.SetDriverInput(0, 0, true, parkingBrake, false); if (lift != null) lift.ClearInput(); return; }
             if (Input.GetKeyDown(KeyCode.C)) { cabView = !cabView; cameraRig.Reset(); }
+            if (Input.GetKeyDown(KeyCode.Tab)) helpOpen = !helpOpen;
             if (Input.GetKeyDown(KeyCode.F)) parkingBrake = !parkingBrake;
             if (Input.GetKeyDown(KeyCode.H)) effects.PlayOneShot(hornClip, .32f);
-            if (Input.GetKeyDown(KeyCode.E)) { TryExit(); if (!driving) return; }
+            if (Input.GetKeyDown(KeyCode.E)) { exitRequested = true; assist?.Cancel(); }
 
             float throttle = Input.GetAxisRaw("Vertical");
             float steer = Input.GetAxisRaw("Horizontal");
@@ -157,12 +174,52 @@ namespace OneShift.RackLab
             if (awaitNeutral)
             {
                 if (Mathf.Abs(throttle) < .01f && Mathf.Abs(steer) < .01f && !brake &&
-                    !Input.GetKey(KeyCode.Q) && !Input.GetKey(KeyCode.Z) && !Input.GetKey(KeyCode.T) && !Input.GetKey(KeyCode.G)) awaitNeutral = false;
+                    !Input.GetKey(KeyCode.Q) && !Input.GetKey(KeyCode.Z) && !Input.GetKey(KeyCode.T) && !Input.GetKey(KeyCode.G) && !Input.GetKey(KeyCode.X)) awaitNeutral = false;
                 throttle = steer = liftInput = tiltInput = 0;
                 brake = true;
             }
-            vehicle.SetDriverInput(throttle, steer, brake, parkingBrake, Input.GetKey(KeyCode.LeftShift));
-            if (lift != null) lift.SetInput(liftInput, tiltInput);
+            if (exitRequested)
+            {
+                throttle = steer = liftInput = tiltInput = 0;
+                brake = true;
+                if (vehicle.SpeedMps < .3f) { TryExit(); exitRequested = false; if (!driving) return; }
+            }
+            // A fresh accelerator command releases the parking brake. Leaving
+            // the seat and losing control still apply it automatically.
+            if (!awaitNeutral && !exitRequested && Mathf.Abs(throttle) > .05f) parkingBrake = false;
+            bool guideHeld = Input.GetKey(KeyCode.X) && !awaitNeutral && !exitRequested;
+            bool manual = Mathf.Abs(throttle) > .01f || Mathf.Abs(steer) > .01f || brake || Mathf.Abs(liftInput) > .01f || Mathf.Abs(tiltInput) > .01f || Input.GetKeyDown(KeyCode.F);
+            if (assist != null && guideHeld && !manual)
+            {
+                if (Input.GetKeyDown(KeyCode.X)) assist.Begin();
+                if (assist.IsRunning)
+                {
+                    guideStopping = false;
+                    parkingBrake = false;
+                    assist.Tick(Time.deltaTime);
+                }
+                // A manual F cancels the guide and parks. Continuing to hold X
+                // cannot undo that command; only a fresh successful guide or
+                // accelerator input may release the parking brake again.
+                else { vehicle.SetDriverInput(0, 0, true, parkingBrake, true); lift.ClearInput(); }
+            }
+            else
+            {
+                if (assist != null && assist.IsRunning)
+                {
+                    assist.Cancel(manual ? "Manual control. Hold X again when ready." : "Guide stopped. Hold X again to continue.");
+                    guideStopping = !manual;
+                }
+                if (Input.GetKeyUp(KeyCode.X) && !manual) guideStopping = true;
+                if (manual) guideStopping = false;
+                if (guideStopping)
+                {
+                    brake = true;
+                    if (vehicle.SpeedMps < .03f) guideStopping = false;
+                }
+                vehicle.SetDriverInput(throttle, steer, brake, parkingBrake, Input.GetKey(KeyCode.LeftShift));
+                if (lift != null) lift.SetInput(liftInput, tiltInput);
+            }
             orbitYaw += Input.GetAxisRaw("Mouse X") * 1.7f;
             orbitPitch = Mathf.Clamp(orbitPitch - Input.GetAxisRaw("Mouse Y") * 1.3f, cabView ? -55 : 6, cabView ? 65 : 55);
             if (Input.GetKeyDown(KeyCode.V)) { orbitYaw = 0; orbitPitch = 18; }
@@ -181,6 +238,7 @@ namespace OneShift.RackLab
         {
             trainingOpen = false;
             driving = true;
+            exitRequested = false;
             parkingBrake = false;
             orbitYaw = 0; orbitPitch = 18; cabView = false;
             walking.SetVehicleMode(true);
@@ -272,7 +330,8 @@ namespace OneShift.RackLab
             parkingBrake = true;
             awaitNeutral = true;
             UpdateCamera(true);
-            Tell("Returned to the parking bay. F releases the parking brake.");
+            assist?.Cancel();
+            Tell("Returned to the parking bay. W or S releases the parking brake.");
         }
 
         void Tell(string value) { notice = value; noticeUntil = Time.unscaledTime + 3; }
@@ -290,7 +349,12 @@ namespace OneShift.RackLab
                 return;
             }
             Vector3 focus = vehicle.transform.position - Quaternion.Euler(0, vehicle.transform.eulerAngles.y, 0) * Vector3.forward * .4f + Vector3.up * .95f;
-            cameraRig.Aim(yaw, orbitPitch, Time.deltaTime, snap);
+            guideViewBlend = Mathf.MoveTowards(guideViewBlend, AssistActive ? 1 : 0, Time.deltaTime * 2.5f);
+            if (lift != null && lift.forkTips != null)
+                focus = Vector3.Lerp(focus, lift.forkTips.position - vehicle.transform.forward * .45f + Vector3.up * .55f, guideViewBlend * .55f);
+            // A higher shoulder view exposes both pockets while the held guide
+            // works. The same obstructed-camera solver still keeps it in the room.
+            cameraRig.Aim(yaw + guideViewBlend * 22, Mathf.Lerp(orbitPitch, 31, guideViewBlend), Time.deltaTime, snap);
             float distance = ForkliftCameraRigState.MaximumDistance;
             int hitCount = Physics.SphereCastNonAlloc(focus, .18f, cameraRig.Direction, cameraHits,
                 distance, ~0, QueryTriggerInteraction.Ignore);
@@ -351,12 +415,12 @@ namespace OneShift.RackLab
             float w = Screen.width / scale, h = Screen.height / scale;
             if (trainingOpen)
             {
-                Rect panel = new Rect((w-620)/2, (h-410)/2, 620, 410);
+                Rect panel = new Rect((w-620)/2, (h-276)/2, 620, 276);
                 Panel(panel);
-                GUI.Label(new Rect(panel.x+24,panel.y+20,572,32), "FORKLIFT FAMILIARISATION", heading);
-                GUI.Label(new Rect(panel.x+24,panel.y+68,572,275),
-                    "W / S drive forward and reverse. Space brakes.\n\nThe rear wheels steer, and the tail swings wide. Slow for corners and ramps. One wheel riding high can roll the truck.\n\nQ / Z raise and lower the forks. T / G tilt forward and back. Slide both forks fully into the pallet, lift clear, then carry low. Heavy or off-centre loads affect balance; the hydraulic lift can stall.\n\nShift gives a slow approach. F parks. C changes the rear and cab views.", copy);
-                GUI.Label(new Rect(panel.x+24,panel.y+355,572,48), "Enter: begin driving     Escape: return to walking", copy);
+                GUI.Label(new Rect(panel.x+24,panel.y+20,572,32), "YOUR FIRST DRIVE", heading);
+                GUI.Label(new Rect(panel.x+24,panel.y+65,572,155),
+                    "W / S drive. A / D steer. Space stops. E stops and steps out.\n\nFace a pallet end and hold X to line up and lift. Release X to stop. Hold it again to set the load down, then reverse out.\n\nCarry low and take corners slowly. The rear swings wide; a high or heavy load can tip the truck.", copy);
+                GUI.Label(new Rect(panel.x+24,panel.y+230,572,32), "E or Enter: understood, start driving     Esc: step out", copy);
             }
             else if (driving)
             {
@@ -366,16 +430,42 @@ namespace OneShift.RackLab
                 GUI.Label(new Rect(32,60,284,25), parkingBrake ? "PARKING BRAKE" : "04 / YELLOW LPG", fine);
                 if (lift != null) GUI.Label(new Rect(32,86,284,25), "FORKS " + (lift.LiftHeightMeters * 3.28084f).ToString("0.0") + " ft" +
                     (lift.IsStalled ? "   LIFT LIMIT" : "   TILT " + lift.TiltDegrees.ToString("0") + " deg"), fine);
-                Panel(new Rect(18,h-116,w-36,98));
-                GUI.Label(new Rect(32,h-110,w-64,24), "W/S drive   A/D steer   Space brake   Shift slow   F park   E step out", fine);
-                GUI.Label(new Rect(32,h-86,w-64,24), "Q/Z raise/lower   T/G tilt forward/back   C camera   V centre view", fine);
-                GUI.Label(new Rect(32,h-62,w-64,24), "Mouse look   H horn   Hold R recover   Esc cursor", fine);
+                if (WarehouseReceiving.Active != null)
+                {
+                    Panel(new Rect(342,84,w-360,64));
+                    GUI.Label(new Rect(356,90,w-388,52), WarehouseReceiving.Active.StatusText, copy);
+                }
+                Panel(new Rect(18,h-88,w-36,70));
+                GUI.Label(new Rect(32,h-82,w-64,24), "W/S drive   A/D steer   Space brake   E step out   C camera   Tab controls", fine);
+                GUI.Label(new Rect(32,h-57,w-64,24), assist != null ? assist.Status : "Q/Z raise and lower the forks", fine);
+                if (helpOpen)
+                {
+                    Panel(new Rect(18,h-190,640,92));
+                    GUI.Label(new Rect(32,h-184,610,24), "Hold X: guide pickup / lower load   Release X: stop guide", fine);
+                    GUI.Label(new Rect(32,h-160,610,24), "Q/Z raise/lower   T/G tilt   Shift slow   F park   V centre view", fine);
+                    GUI.Label(new Rect(32,h-136,610,24), "Mouse look   H horn   Hold R recover   Esc cursor   Tab close", fine);
+                }
                 string status = !captured ? "Click inside the game to drive." :
                     Time.unscaledTime < noticeUntil ? notice :
+                    exitRequested ? "Stopping to step out..." :
                     vehicle.IsOverturned ? "Forklift overturned. Hold R while stopped to recover." :
                     recoverHeld > 0 ? "Hold R to return to the parking bay..." :
                     "";
-                if (status.Length > 0) { Panel(new Rect((w-620)/2,h-169,620,38)); GUI.Label(new Rect((w-590)/2,h-163,590,28),status,fine); }
+                if (status.Length > 0) { Panel(new Rect((w-620)/2,h-240,620,38)); GUI.Label(new Rect((w-590)/2,h-234,590,28),status,fine); }
+                if (assist != null && assist.IsRunning && assist.Target != null)
+                {
+                    Vector3 pocket = view.WorldToScreenPoint(assist.PocketPoint);
+                    if (pocket.z > 0)
+                    {
+                        float px = pocket.x / scale, py = (Screen.height - pocket.y) / scale;
+                        GUI.color = new Color(.83f, .77f, .63f, .9f);
+                        GUI.DrawTexture(new Rect(px-18,py-8,36,2), Texture2D.whiteTexture);
+                        GUI.DrawTexture(new Rect(px-18,py+6,36,2), Texture2D.whiteTexture);
+                        GUI.DrawTexture(new Rect(px-18,py-8,2,16), Texture2D.whiteTexture);
+                        GUI.DrawTexture(new Rect(px+16,py-8,2,16), Texture2D.whiteTexture);
+                        GUI.color = Color.white;
+                    }
+                }
             }
             else if (walking.CanControl && NearTruck())
             {

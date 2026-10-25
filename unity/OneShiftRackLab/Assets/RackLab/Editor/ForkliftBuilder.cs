@@ -104,7 +104,9 @@ namespace OneShift.RackLab
                 var frontLeft = Find(visual.transform, "FrontWheel_L_Pivot");
                 Require(Vector3.Distance(frontLeft.position, new Vector3(-.52f, .355f, .75f)) < .003f, "Imported forklift scale or wheelbase changed.");
                 ReplaceMaterials(visual);
+                var compactMeshes = CompactMastSource(visual.transform, vehicle.transform);
                 BatchRenderers(visual.transform);
+                foreach (var mesh in compactMeshes) Object.DestroyImmediate(mesh);
 
                 var body = vehicle.AddComponent<Rigidbody>();
                 ConfigureBody(body, 3500);
@@ -254,11 +256,12 @@ namespace OneShift.RackLab
             foreach (float x in new[] { -.40f, .40f }) Box(mast, "Outer mast rail", new Vector3(x, .74f, .04f), new Vector3(.16f, 2.01f, .30f));
             foreach (float y in new[] { -.15f, 1.72f }) Box(mast, "Outer mast cross tie", new Vector3(0, y, -.075f), new Vector3(.92f, .10f, .075f));
             var inner = AtAnchor("Inner mast compound collision", body, Find(visual, "InnerMast_Lift"));
-            foreach (float x in new[] { -.29f, .29f }) Box(inner, "Inner mast rail", new Vector3(x, .79f, .04f), new Vector3(.105f, 1.94f, .17f));
+            foreach (float x in new[] { -.29f, .29f }) Box(inner, "Inner mast rail", new Vector3(x, .74f, .04f), new Vector3(.105f, 2.04f, .17f));
             Box(inner, "Inner mast header", new Vector3(0, 1.79f, .04f), new Vector3(.70f, .09f, .19f));
             var carriage = AtAnchor("Carriage compound collision", body, Find(visual, "ForkCarriage_Lift"));
             foreach (float y in new[] { .05f, .49f }) Box(carriage, "Carriage cross member", new Vector3(0, y, 0), new Vector3(1.05f, .10f, .10f));
-            foreach (float x in new[] { -.46f, .46f }) Box(carriage, "Carriage end plate", new Vector3(x, .27f, 0), new Vector3(.08f, .52f, .10f));
+            Box(carriage, "Lower carriage guide support", new Vector3(0, -.16f, 0), new Vector3(1.05f, .10f, .10f));
+            foreach (float x in new[] { -.46f, .46f }) Box(carriage, "Carriage end plate", new Vector3(x, .15f, 0), new Vector3(.08f, .76f, .10f));
             foreach (float y in new[] { .53f, 1.20f }) Box(carriage, "Load backrest rail", new Vector3(0, y, .015f), new Vector3(1.12f, .055f, .055f));
             for (int i = -3; i <= 3; i++) Box(carriage, "Load backrest slat", new Vector3(i * .1765f, .865f, .015f), new Vector3(.029f, .67f, .04f));
             foreach (string name in new[] { "Fork_Left", "Fork_Right" })
@@ -324,6 +327,133 @@ namespace OneShift.RackLab
                 renderer.receiveShadows = true;
             }
         }
+
+        static List<Mesh> CompactMastSource(Transform visual, Transform truck)
+        {
+            // Adapt only the derived Unity geometry. The owner's Blender source
+            // remains intact. Lower guides and longer rail tails retain support
+            // while the shorter collapsed mast fits a real dry-van doorway.
+            var temporary = new List<Mesh>();
+            var carriage = Find(visual, "ForkCarriage_Lift");
+            var changedParts = new Dictionary<string, int>();
+            foreach (var filter in visual.GetComponentsInChildren<MeshFilter>())
+            {
+                string name = filter.name;
+                if (name.StartsWith("LiftCylinder_", StringComparison.Ordinal) && name.Contains("_Piston | polished steel"))
+                    Object.DestroyImmediate(filter.GetComponent<MeshRenderer>());
+                else if (name.StartsWith("InnerMast_Lift |", StringComparison.Ordinal) || name.StartsWith("ForkCarriage_Lift |", StringComparison.Ordinal) ||
+                    name.StartsWith("MastTilt_Pivot |", StringComparison.Ordinal) || (name.StartsWith("LiftCylinder_", StringComparison.Ordinal) && name.Contains("_Barrel |")))
+                    CompactSourcePieces(filter, truck, temporary, changedParts);
+            }
+            Require(changedParts.GetValueOrDefault("inner rail") == 6 && changedParts.GetValueOrDefault("carriage plate") == 2 &&
+                changedParts.GetValueOrDefault("carriage guide") == 8 && changedParts.GetValueOrDefault("chain mounting") == 4 &&
+                changedParts.GetValueOrDefault("upper guide axle") == 2 && changedParts.GetValueOrDefault("barrel") == 2 && changedParts.GetValueOrDefault("gland") == 2,
+                "Compact mast source pieces changed: " + string.Join(", ", changedParts.Select(pair => pair.Key + "=" + pair.Value)));
+            foreach (var node in visual.GetComponentsInChildren<Transform>())
+            {
+                if (node.GetComponent<MeshFilter>() != null) continue;
+                if (node.name.StartsWith("CarriageRoller_", StringComparison.Ordinal))
+                {
+                    float height = Vector3.Dot(node.position - carriage.position, truck.up);
+                    node.position += truck.up * (height > .25f ? -.41f : -.21f);
+                }
+                else if (node.name.StartsWith("OuterGuide_", StringComparison.Ordinal) && node.name.EndsWith("_Upper", StringComparison.Ordinal))
+                { node.position += truck.up * .16f; var scale = node.localScale; scale.z /= 1.20f; node.localScale = scale; }
+                else if (node.name.StartsWith("InnerGuide_", StringComparison.Ordinal) && node.name.EndsWith("_Lower", StringComparison.Ordinal))
+                { var scale = node.localScale; scale.z /= 1.16f; node.localScale = scale; }
+                else if (node.name.StartsWith("Chain_", StringComparison.Ordinal) && node.name.EndsWith("_CarriageAnchor", StringComparison.Ordinal)) node.position -= truck.up * .24f;
+                else if (node.name.StartsWith("LiftCylinder_", StringComparison.Ordinal) && node.name.EndsWith("_Piston", StringComparison.Ordinal)) node.position += truck.up * .12f;
+            }
+            // The lowered guide brackets need a cross-member at their new
+            // height, joined to the extended end plates at each side.
+            var support = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            support.name = "Lower carriage guide support";
+            Object.DestroyImmediate(support.GetComponent<Collider>());
+            support.transform.position = carriage.position - truck.up * .16f;
+            support.transform.rotation = truck.rotation;
+            support.transform.localScale = new Vector3(1.05f, .10f, .10f);
+            support.transform.SetParent(carriage, true);
+            support.GetComponent<MeshRenderer>().sharedMaterial = AssetDatabase.LoadAssetAtPath<Material>(MaterialRoot + "Forklift___forged_steel.mat");
+            return temporary;
+        }
+
+        static void CompactSourcePieces(MeshFilter filter, Transform truck, List<Mesh> temporary, Dictionary<string, int> changedParts)
+        {
+            // The FBX joins primitives by material. Recover their connected
+            // pieces by coincident vertices so a rail edit cannot stretch its
+            // guide axle, brackets or hose that share the same material mesh.
+            var source = filter.sharedMesh;
+            var vertices = source.vertices;
+            var parents = new int[vertices.Length];
+            var same = new Dictionary<Vector3Int, int>();
+            var local = new Vector3[vertices.Length];
+            Transform frame = filter.transform.parent;
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                parents[i] = i;
+                Vector3 relative = filter.transform.TransformPoint(vertices[i]) - frame.position;
+                local[i] = new Vector3(Vector3.Dot(relative, truck.right), Vector3.Dot(relative, truck.up), Vector3.Dot(relative, truck.forward));
+                var key = Vector3Int.RoundToInt(local[i] * 100000);
+                if (same.TryGetValue(key, out int previous)) Union(parents, i, previous); else same.Add(key, i);
+            }
+            var triangles = source.triangles;
+            for (int i = 0; i < triangles.Length; i += 3)
+            { Union(parents, triangles[i], triangles[i+1]); Union(parents, triangles[i], triangles[i+2]); }
+            var bounds = new Dictionary<int, Bounds>();
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                int id = FindRoot(parents, i);
+                if (bounds.TryGetValue(id, out var box)) { box.Encapsulate(local[i]); bounds[id] = box; }
+                else bounds.Add(id, new Bounds(local[i], Vector3.zero));
+            }
+            var edits = new Dictionary<int, Vector2>();
+            foreach (var pair in bounds)
+            {
+                var box = pair.Value;
+                float x = Mathf.Abs(box.center.x), y = box.center.y, z = box.center.z;
+                Vector2 delta = Vector2.zero;
+                string part = null;
+                if (filter.name.StartsWith("InnerMast_Lift |", StringComparison.Ordinal) && box.size.y > 1.9f && x > .22f && x < .36f && Mathf.Abs(z) < .15f)
+                { part = "inner rail"; delta = new Vector2(-.10f, 0); }
+                else if (filter.name.StartsWith("ForkCarriage_Lift |", StringComparison.Ordinal))
+                {
+                    if (Mathf.Abs(x-.46f) < .01f && box.size.y > .50f && box.size.y < .55f)
+                    { part = "carriage plate"; delta = new Vector2(-.24f, 0); }
+                    else if (x > .21f && x < .27f && (Mathf.Abs(y-.05f) < .01f || Mathf.Abs(y-.49f) < .01f) && z < -.05f && box.size.y < .09f)
+                    { part = "carriage guide"; delta = Vector2.one * (y > .25f ? -.41f : -.21f); }
+                    else if (Mathf.Abs(x-.185f) < .01f && y < .06f && y > -.04f && box.size.x > .08f && box.size.x < .09f)
+                    { part = "chain mounting"; delta = Vector2.one * -.24f; }
+                }
+                else if (filter.name.StartsWith("MastTilt_Pivot |", StringComparison.Ordinal) && Mathf.Abs(x-.345f) < .01f && Mathf.Abs(y-1.5f) < .01f && z < -.08f)
+                { part = "upper guide axle"; delta = Vector2.one * .16f; }
+                else if (filter.name.Contains("_Barrel |"))
+                {
+                    if (box.size.y > 1.4f && box.size.y < 1.43f)
+                    { part = "barrel"; delta = new Vector2(0, .33f); }
+                    else if (Mathf.Abs(y-1.41f) < .01f && box.size.y < .06f)
+                    { part = "gland"; delta = Vector2.one * .33f; }
+                }
+                if (part == null) continue;
+                edits.Add(pair.Key, delta);
+                changedParts[part] = changedParts.GetValueOrDefault(part) + 1;
+            }
+            if (edits.Count == 0) return;
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                int id = FindRoot(parents, i);
+                if (!edits.TryGetValue(id, out var delta)) continue;
+                var box = bounds[id];
+                float t = Mathf.InverseLerp(box.min.y, box.max.y, local[i].y);
+                vertices[i] = filter.transform.InverseTransformPoint(filter.transform.TransformPoint(vertices[i]) + truck.up * Mathf.Lerp(delta.x, delta.y, t));
+            }
+            var mesh = Object.Instantiate(source); temporary.Add(mesh);
+            mesh.vertices = vertices; mesh.RecalculateBounds();
+            filter.sharedMesh = mesh;
+        }
+
+        static int FindRoot(int[] parents, int index)
+        { while (parents[index] != index) { parents[index] = parents[parents[index]]; index = parents[index]; } return index; }
+        static void Union(int[] parents, int a, int b) { parents[FindRoot(parents, b)] = FindRoot(parents, a); }
 
         static void BatchRenderers(Transform visual)
         {

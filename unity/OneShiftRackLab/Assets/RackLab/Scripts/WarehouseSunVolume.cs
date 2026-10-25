@@ -119,7 +119,9 @@ namespace OneShift.RackLab
             properties.SetMatrix("_WorldToVolume", volume.inverse);
             properties.SetColor("_Tint", new Color(color.r, color.g, color.b, brightness));
             beamRenderer.SetPropertyBlock(properties);
-            if (particles != null) UpdateDust(clock);
+            // WarehouseDayNight runs before Update. The dust receives the new
+            // matrix there once per frame, instead of uploading it twice.
+            if (!Application.isPlaying && particles != null) UpdateDust(clock);
         }
 
         void OnDisable() { ReleaseMesh(); }

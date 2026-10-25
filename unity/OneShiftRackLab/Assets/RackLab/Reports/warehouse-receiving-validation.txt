@@ -1,0 +1,15 @@
+Isolated PhysX scene. Actual starting assets and production receiving methods. No warehouse scene mutation.
+PASS Public arrival uses sixteen seconds backing and four seconds opening
+PASS Transit starts with barrier, no bridge and restrained freight
+PASS Obstacle prevents backing before truck motion
+PASS Moving truck keeps freight restrained, doors closed and bridge unavailable
+PASS Doors only begin opening after truck reaches docked position
+PASS Docking releases every independent physical pallet and chocks wheels before bridge access
+PASS Obstructed door sweep holds doors and bridge
+PASS Partially open trailer never unlocks loading access
+PASS Fully open doors unlock bridge and remove the barrier
+PASS Opening does not unload freight and actual trailer deck supports all four pallets
+PASS Off-rack floor stock counts unloaded without counting as stored
+PASS A pallet held six centimetres above its slot does not count as supported stock
+PASS All four independently supported rack pallets complete the first delivery
+PASS receiving sequence

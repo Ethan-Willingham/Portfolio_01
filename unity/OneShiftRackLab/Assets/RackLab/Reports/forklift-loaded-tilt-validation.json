@@ -1,5 +1,5 @@
 {
-    "generatedUtc": "2026-10-24T18:47:00.4042514Z",
+    "generatedUtc": "2026-10-25T22:54:22.6862944Z",
     "unityVersion": "6000.3.27f1",
     "method": "Isolated PhysX at the production 0.005 second timestep. Saved forklift, pallet, cargo and rack prefabs. Pickup, carrying and release use actual contacts; no load parenting, attached carrying joints or pose writes after initial placement.",
     "passed": true,
@@ -12,12 +12,12 @@
             "measurements": [
                 {
                     "name": "initial gap from fork tips to pallet",
-                    "value": 0.4498562812805176,
+                    "value": 0.44985079765319826,
                     "units": "m"
                 },
                 {
                     "name": "actual fork top at entry",
-                    "value": 0.0785364955663681,
+                    "value": 0.07853683829307556,
                     "units": "m"
                 },
                 {
@@ -32,12 +32,12 @@
                 },
                 {
                     "name": "pallet displacement before lift",
-                    "value": 2.4106114437927319e-7,
+                    "value": 4.944315605825977e-7,
                     "units": "m"
                 },
                 {
                     "name": "actual tine penetration beyond pallet front",
-                    "value": 1.02616548538208,
+                    "value": 1.0260963439941407,
                     "units": "m"
                 },
                 {
@@ -47,32 +47,32 @@
                 },
                 {
                     "name": "initial lifted load bottom",
-                    "value": 0.29568541049957278,
+                    "value": 0.2997444272041321,
                     "units": "m"
                 },
                 {
                     "name": "backward mast angle relative to chassis",
-                    "value": -7.993231296539307,
+                    "value": -7.990628242492676,
                     "units": "degrees"
                 },
                 {
                     "name": "backward tilt nearest fork-board separation",
-                    "value": 0.000003106775920969085,
+                    "value": 0.0,
                     "units": "m"
                 },
                 {
                     "name": "backward tilt load bottom",
-                    "value": 0.35125648975372317,
+                    "value": 0.35644400119781496,
                     "units": "m"
                 },
                 {
                     "name": "backward tilt load world angle",
-                    "value": 7.5771965980529789,
+                    "value": 7.566959857940674,
                     "units": "degrees"
                 },
                 {
                     "name": "forward mast angle relative to chassis",
-                    "value": 6.004854679107666,
+                    "value": 6.007955074310303,
                     "units": "degrees"
                 },
                 {
@@ -82,12 +82,12 @@
                 },
                 {
                     "name": "forward tilt load bottom",
-                    "value": 0.1305714249610901,
+                    "value": 0.13610035181045533,
                     "units": "m"
                 },
                 {
                     "name": "forward tilt load world angle",
-                    "value": 6.522365570068359,
+                    "value": 6.529457092285156,
                     "units": "degrees"
                 },
                 {
@@ -97,7 +97,7 @@
                 },
                 {
                     "name": "minimum floor clearance throughout both tilts",
-                    "value": 0.12101852893829346,
+                    "value": 0.12702327966690064,
                     "units": "m"
                 }
             ]

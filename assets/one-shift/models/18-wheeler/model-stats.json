@@ -1,0 +1,52 @@
+{
+  "wheel_count": 18,
+  "rear_door_count": 2,
+  "mesh_objects": 27,
+  "vertices": 41146,
+  "triangles": 66356,
+  "trailer_box_length_m": 16.1544,
+  "trailer_box_width_m": 2.5908,
+  "trailer_box_height_from_ground_m": 4.1148,
+  "tire_radius_m": 0.505,
+  "front_axle_y_m": -5.63,
+  "drive_axles_y_m": [
+    0.3,
+    1.65
+  ],
+  "trailer_axles_y_m": [
+    12.6,
+    13.8446
+  ],
+  "wheel_names": [
+    "Wheel_Tractor_Steer_L",
+    "Wheel_Tractor_Drive1_L_Inner",
+    "Wheel_Tractor_Drive1_L_Outer",
+    "Wheel_Tractor_Drive2_L_Inner",
+    "Wheel_Tractor_Drive2_L_Outer",
+    "Wheel_Tractor_Steer_R",
+    "Wheel_Tractor_Drive1_R_Inner",
+    "Wheel_Tractor_Drive1_R_Outer",
+    "Wheel_Tractor_Drive2_R_Inner",
+    "Wheel_Tractor_Drive2_R_Outer",
+    "Wheel_Trailer_Axle1_L_Inner",
+    "Wheel_Trailer_Axle1_L_Outer",
+    "Wheel_Trailer_Axle2_L_Inner",
+    "Wheel_Trailer_Axle2_L_Outer",
+    "Wheel_Trailer_Axle1_R_Inner",
+    "Wheel_Trailer_Axle1_R_Outer",
+    "Wheel_Trailer_Axle2_R_Inner",
+    "Wheel_Trailer_Axle2_R_Outer"
+  ],
+  "door_origins": {
+    "Rear_Door_L": [
+      -1.3854000568389893,
+      16.0093994140625,
+      2.681999921798706
+    ],
+    "Rear_Door_R": [
+      1.3854000568389893,
+      16.0093994140625,
+      2.681999921798706
+    ]
+  }
+}

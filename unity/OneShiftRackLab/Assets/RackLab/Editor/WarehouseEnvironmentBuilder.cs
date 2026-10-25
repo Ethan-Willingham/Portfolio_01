@@ -117,12 +117,22 @@ namespace OneShift.RackLab
         static void Wall(string name, Vector3 origin, Vector3 along, Vector3 inward, float length, float[] openings, float windowWidth)
         {
             var wall = new GameObject(name + " wall with clerestory openings"); wall.transform.SetParent(root.transform);
+            bool receiving = name == "North" && GameObject.Find("Warehouse receiving start") != null;
             Action<string, float, float, float, float, Material, bool> section = (label, x, y, w, h, mat, solid) =>
             {
-                var size = new Vector3(Mathf.Abs(along.x) * w + Mathf.Abs(inward.x) * .24f, h, Mathf.Abs(along.z) * w + Mathf.Abs(inward.z) * .24f);
-                var center = origin + along * x + Vector3.up * y;
-                Box(center, size, mat);
-                if (solid) Collider(wall.transform, label, center, size);
+                // The receiving door is a real 4.2 m opening, not a shutter
+                // painted over the original solid wall and collision.
+                float start = x - w * .5f, end = x + w * .5f;
+                var pieces = WallPieces(receiving, start, end, y - h * .5f);
+                foreach (var piece in pieces)
+                {
+                    float width = piece.y - piece.x;
+                    if (width <= .001f) continue;
+                    var size = new Vector3(Mathf.Abs(along.x) * width + Mathf.Abs(inward.x) * .24f, h, Mathf.Abs(along.z) * width + Mathf.Abs(inward.z) * .24f);
+                    var center = origin + along * ((piece.x + piece.y) * .5f) + Vector3.up * y;
+                    Box(center, size, mat);
+                    if (solid) Collider(wall.transform, label, center, size);
+                }
             };
             // The plinth occupies the bottom course. Do not draw masonry over it.
             section("Block wall collision", 0, 1.75f, length, 2.9f, masonry, true);
@@ -141,13 +151,20 @@ namespace OneShift.RackLab
             // Ribbed upper cladding, with the window band deliberately left open.
             for (float x = -length * .5f + .1f; x < length * .5f; x += .27f)
                 foreach (var band in new[] { new Vector2(4.25f, 2.08f), new Vector2(7.7f, 1.18f) })
+                {
+                    if (receiving && Mathf.Abs(x) < 2.1f && band.x < 5) continue;
                     Box(origin + along * x + Vector3.up * band.x + inward * .135f,
                         new Vector3(Mathf.Abs(along.x) * .032f + Mathf.Abs(inward.x) * .04f, band.y, Mathf.Abs(along.z) * .032f + Mathf.Abs(inward.z) * .04f), panel);
+                }
             foreach (float y in new[] { .30f, 3.2f, 5.28f, 7.12f })
-                Beam(origin + inward * .16f + Vector3.up * y - along * length * .5f,
-                    origin + inward * .16f + Vector3.up * y + along * length * .5f, .06f, .08f, zinc);
+            {
+                foreach (var piece in WallPieces(receiving, -length * .5f, length * .5f, y))
+                    Beam(origin + inward * .16f + Vector3.up * y + along * piece.x,
+                        origin + inward * .16f + Vector3.up * y + along * piece.y, .06f, .08f, zinc);
+            }
             for (float x = -length * .5f + .3f; x < length * .5f; x += 5.2f)
             {
+                if (receiving && (Mathf.Abs(x) < 2.4f || (x > 7.4f && x < 9.9f))) continue;
                 var p = origin + along * x + inward * .28f;
                 // Visible flanges and web instead of a single rectangular post.
                 Box(p + Vector3.up * 4, new Vector3(.13f, 8, .13f), steel);
@@ -159,6 +176,30 @@ namespace OneShift.RackLab
                 Collider(wall.transform, "Column collision", p + Vector3.up * 4, new Vector3(.3f, 8, .3f));
                 Collider(wall.transform, "Column guard collision", p + inward * .08f + Vector3.up * .46f, new Vector3(.34f, .85f, .34f));
             }
+        }
+
+        static List<Vector2> WallPieces(bool receiving, float start, float end, float bottom)
+        {
+            var pieces = new List<Vector2> { new Vector2(start, end) };
+            if (!receiving) return pieces;
+            var openings = new List<Vector2>();
+            if (bottom < 4.6f) openings.Add(new Vector2(-2.1f, 2.1f));
+            if (bottom < 2.4f) openings.Add(new Vector2(7.6f, 9.6f));
+            foreach (var opening in openings)
+            {
+                var next = new List<Vector2>();
+                foreach (var piece in pieces)
+                {
+                    if (piece.y <= opening.x || piece.x >= opening.y) next.Add(piece);
+                    else
+                    {
+                        if (piece.x < opening.x) next.Add(new Vector2(piece.x, opening.x));
+                        if (piece.y > opening.y) next.Add(new Vector2(opening.y, piece.y));
+                    }
+                }
+                pieces = next;
+            }
+            return pieces;
         }
 
         static void Window(Transform parent, Vector3 center, Vector3 along, Vector3 inward, float width, float height)
@@ -232,6 +273,8 @@ namespace OneShift.RackLab
         static void Details()
         {
             // Closed loading shutter, inset frame, slats, pull bar and rubber bumpers.
+            if (GameObject.Find("Warehouse receiving start") == null)
+            {
             Box(new Vector3(6.3f, 2.05f, 11.82f), new Vector3(3.7f, 4.1f, .09f), steel);
             Box(new Vector3(6.3f, 2, 11.75f), new Vector3(3.45f, 3.94f, .08f), zinc);
             for (float y = .15f; y < 4; y += .145f) Box(new Vector3(6.3f, y, 11.69f), new Vector3(3.45f, .024f, .026f), steel);
@@ -243,6 +286,7 @@ namespace OneShift.RackLab
             }
             Box(new Vector3(6.3f, 4.22f, 11.65f), new Vector3(4.05f, .35f, .35f), zinc);
             Box(new Vector3(6.3f, 1, 11.6f), new Vector3(.68f, .045f, .06f), steel);
+            }
             // Service door, an electrical cabinet and surface-mounted conduit.
             Box(new Vector3(-8.5f, 1.1f, -9.8f), new Vector3(1.13f, 2.2f, .14f), steel);
             Box(new Vector3(-8.5f, 1.07f, -9.7f), new Vector3(.99f, 2.1f, .07f), trim);

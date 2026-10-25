@@ -1,0 +1,257 @@
+{
+    "generatedUtc": "2026-10-25T22:54:12.5147926Z",
+    "unityVersion": "6000.3.27f1",
+    "method": "Isolated PhysX at the production 0.005 second timestep. Saved forklift, pallet, cargo and rack prefabs. Pickup, carrying and release use actual contacts; no load parenting, attached carrying joints or pose writes after initial placement.",
+    "passed": true,
+    "checks": [
+        {
+            "name": "held assist pickup transport setdown",
+            "passed": true,
+            "expectation": "Holding the guide enters real pockets, lifts independent working cargo and sets it on the floor before full withdrawal.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "physical guided load rise",
+                    "value": 0.18980932235717774,
+                    "units": "m"
+                },
+                {
+                    "name": "independent guided load transport",
+                    "value": 0.9910482168197632,
+                    "units": "m"
+                },
+                {
+                    "name": "setdown movement during withdrawal",
+                    "value": 1.8649734556674958e-7,
+                    "units": "m"
+                },
+                {
+                    "name": "setdown bottom",
+                    "value": -3.3527612686157229e-8,
+                    "units": "m"
+                }
+            ]
+        },
+        {
+            "name": "guide corrects a modest approach offset",
+            "passed": true,
+            "expectation": "A slightly offset forklift lines up through wheel steering before its fork blades enter the pockets.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "pallet bottom after offset guide",
+                    "value": 0.1888098120689392,
+                    "units": "m"
+                },
+                {
+                    "name": "wheel steering correction distance",
+                    "value": 0.02493804134428501,
+                    "units": "m"
+                }
+            ]
+        },
+        {
+            "name": "guide pickup at 30 rendered frames per second",
+            "passed": true,
+            "expectation": "Guide decisions arrive at browser frame cadence while the jointed truck and independent cargo retain the production physics step.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "rendered control rate",
+                    "value": 30.0,
+                    "units": "Hz"
+                },
+                {
+                    "name": "physical load bottom",
+                    "value": 0.19800478219985963,
+                    "units": "m"
+                }
+            ]
+        },
+        {
+            "name": "guide pickup at 60 rendered frames per second",
+            "passed": true,
+            "expectation": "Guide decisions arrive at browser frame cadence while the jointed truck and independent cargo retain the production physics step.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "rendered control rate",
+                    "value": 60.0,
+                    "units": "Hz"
+                },
+                {
+                    "name": "physical load bottom",
+                    "value": 0.19320529699325562,
+                    "units": "m"
+                }
+            ]
+        },
+        {
+            "name": "guide retrieves from middle rack",
+            "passed": true,
+            "expectation": "The guide finds the actual elevated pocket and lifts independently supported cargo clear of a rack deck.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "guide rack clearance",
+                    "value": 0.13801133632659913,
+                    "units": "m"
+                },
+                {
+                    "name": "retrieved load bottom after lowering",
+                    "value": -8.568167686462403e-8,
+                    "units": "m"
+                }
+            ]
+        },
+        {
+            "name": "guide rejects distant and side approaches",
+            "passed": true,
+            "expectation": "No guide starts on remote stock or through a pallet's shallow side notches.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "far target rejected",
+                    "value": 1.0,
+                    "units": "boolean"
+                },
+                {
+                    "name": "side target rejected",
+                    "value": 1.0,
+                    "units": "boolean"
+                }
+            ]
+        },
+        {
+            "name": "guide stops at obstruction",
+            "passed": true,
+            "expectation": "An obstacle between forks and pocket stops wheel intent without moving the target through the obstacle.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "blocked pallet displacement",
+                    "value": 0.0,
+                    "units": "m"
+                },
+                {
+                    "name": "blocked truck displacement",
+                    "value": 0.000030268462069216184,
+                    "units": "m"
+                }
+            ]
+        },
+        {
+            "name": "guide respects overhead clearance",
+            "passed": true,
+            "expectation": "An upward sweep of the actual load and carriage refuses a lift beneath a low obstruction.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "load rise beneath low beam",
+                    "value": 0.0,
+                    "units": "m"
+                }
+            ]
+        },
+        {
+            "name": "guide release clears intent",
+            "passed": true,
+            "expectation": "Releasing the held guide brakes the truck and clears hydraulic commands; no future frame continues the approach.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "released guide travel",
+                    "value": 0.0000438339811807964,
+                    "units": "m"
+                },
+                {
+                    "name": "released guide hydraulic travel",
+                    "value": 0.00007361196912825108,
+                    "units": "m"
+                }
+            ]
+        },
+        {
+            "name": "guide preserves overload limit",
+            "passed": true,
+            "expectation": "Assisted pickup retains the hydraulic force limit of the independent 3500 kg package.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "overload rise with guide",
+                    "value": 2.086162567138672e-7,
+                    "units": "m"
+                }
+            ]
+        },
+        {
+            "name": "guide sets down a manually lifted load",
+            "passed": true,
+            "expectation": "A working load picked up with direct steering and hydraulic controls is recognized through contact on both forks and can be set down by the guide.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "initial gap from fork tips to pallet",
+                    "value": 0.44994020462036135,
+                    "units": "m"
+                },
+                {
+                    "name": "actual fork top at entry",
+                    "value": 0.07870510220527649,
+                    "units": "m"
+                },
+                {
+                    "name": "actual pocket lower surface",
+                    "value": 0.01587502844631672,
+                    "units": "m"
+                },
+                {
+                    "name": "actual pocket upper surface",
+                    "value": 0.10477497428655625,
+                    "units": "m"
+                },
+                {
+                    "name": "pallet displacement before lift",
+                    "value": 2.524733133668633e-7,
+                    "units": "m"
+                },
+                {
+                    "name": "actual tine penetration beyond pallet front",
+                    "value": 1.0261759757995606,
+                    "units": "m"
+                },
+                {
+                    "name": "manual load setdown bottom",
+                    "value": -2.2351741790771486e-8,
+                    "units": "m"
+                }
+            ]
+        },
+        {
+            "name": "guide recognizes an interrupted pickup",
+            "passed": true,
+            "expectation": "Releasing the guide after a load lifts clear preserves independent cargo and the next hold offers physical setdown.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "interrupted load setdown bottom",
+                    "value": -7.078051567077637e-8,
+                    "units": "m"
+                }
+            ]
+        },
+        {
+            "name": "guide can repick after manual setdown",
+            "passed": true,
+            "expectation": "A cached carried package manually lowered onto its support is offered as a pickup on the next guide press.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "repick rise after manual setdown",
+                    "value": 0.19025202095508576,
+                    "units": "m"
+                }
+            ]
+        }
+    ]
+}

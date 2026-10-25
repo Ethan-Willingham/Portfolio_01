@@ -9,31 +9,61 @@ to `assets/one-shift-unity/Build/OneShiftWeb.*`. Gzip decompression fallback use
 keeps its `.loader.js` extension. Bump the launcher CSS/script query versions and
 the build version in `js/one-shift-unity.js` whenever the published build changes.
 
-The Unity scene is a walkable warehouse with a moving sun, window shadows,
-twelve fixtures and three industrial wall switches. It uses a keyboard and
-mouse and requires WebGL 2. WASD walks, the mouse looks, Shift runs, Space jumps,
-E or a click operates a nearby switch, and R returns to the entrance. E also
-cycles a targeted rack's finish. Escape releases the mouse, P pauses, and the
-page controls offer fullscreen. Mobile portrait shows a rotation gate; a
-keyboard and mouse are still needed in landscape. Touch players can follow the
-link to the illustrated game.
+The Unity start has three empty rack bays against the west wall, a clear working
+floor, a receiving door in the north wall and a parking lot outside. A separate
+yard doorway leads onto the access ramp, so parked trailer doors cannot block
+the walking route. The first
+delivery reverses into the dock, parks, then opens its trailer doors. The raised
+warehouse shutter lets the player watch; a dock barrier remains closed until
+the trailer doors are fully open and the dock plate is available. Four pallets,
+992 lb (450 kg) each, start inside the trailer. The player unloads and stores them;
+the status line counts pallets brought inside and resting in the eighteen rack
+positions. There is no automatic unloading or putaway. The old rack finishes,
+test-load displays and rollover ramp remain as source assets and validation
+fixtures, outside the active start.
 
-The yellow LPG forklift is parked near the entrance. E opens its first-session
-familiarisation, then Enter begins driving. W/S drives and reverses, A/D steers
-the rear wheels, Space brakes, Shift gives a slow approach, F sets the parking
-brake, and E steps out once stopped. Q raises the forks, Z lowers them, T tilts
-the mast forward and G tilts it back. C changes the rear/cab camera, V centres
-the view, H sounds the horn, and holding R while stopped recovers the truck.
-The one-wheel ramp east of the bay can physically overturn it. The truck uses
-rigidbodies, front drive, an oscillating rear axle and compound collision.
-The mast, inner stage and carriage are jointed physical bodies. Force-limited
-hydraulics lift pallets through ordinary fork contacts, transmitting the load's
-weight and moment into the truck. All eighteen existing pallets are dynamic,
-including the upper rack. Four marked floor examples provide 80 kg, balanced
-800 kg, 3,500 kg and off-centre 800 kg packages; visible labels use pounds first
-and kilograms second. Approach the pallets through their 40-inch front or rear
-face. The original side notches are too shallow for these fork heels. See
-`unity/OneShiftRackLab/FORKLIFT.md` for the runtime architecture and checks.
+`WarehouseStartBuilder.Install()` installs this layout after the physical
+forklift and handling installers. `WarehouseStartBuilder.Validate()` checks
+the real opening and continuous support into the trailer;
+`WarehouseReceivingValidation.ValidateAndSave()` checks arrival, obstruction,
+restraints, doors, dock access and physically supported storage in isolated
+PhysX. All thirteen sequence checks passed on 25 October 2026.
+The delivery uses the owner's original 18-wheeler and 53-foot trailer from
+23 October, with eighteen spinning wheels and its original hinged rear doors.
+The doors fold against the trailer sides. Its floor, roof clearance and scale
+remain those of the original model. Source provenance and Unity import details
+are in `unity/OneShiftRackLab/RECEIVING_TRUCK.md`.
+The scene retains the moving sun, window shadows, twelve fixtures and three wall
+switches. It uses a keyboard and mouse and requires WebGL 2. WASD walks at 2.8 m/s,
+Shift runs at 5.4 m/s, the mouse looks, Space jumps, and R returns to the entrance.
+E or a click operates a nearby switch. Escape releases the mouse; P pauses.
+Mobile portrait shows a rotation gate; landscape still requires a keyboard and
+mouse. Touch players can follow the link to the illustrated game.
+
+E gets into the yellow forklift. On the first entry, a short seated briefing
+requires E or Enter before driving. Later entries take one E. W/S drives and
+reverses, A/D steers, Space brakes, and Shift gives a slow approach. Driving
+releases the parking brake. E brakes to a stop, checks for clear floor, and
+steps out. Hold X near a pallet's 40-inch end to level the forks, align, insert
+and lift through physical contact. Releasing X or using manual controls stops
+the assist. Hold X again with its carried load to lower onto a supported floor
+or rack surface, then reverse out. Q/Z raises and lowers the forks; T/G tilts
+the mast. C changes the rear/cab view, and Tab shows the extra controls.
+
+The forklift retains rigidbodies, rear steering, an oscillating rear axle and
+force-limited jointed hydraulics. Pallet weight and leverage still affect lifting
+and tipping. Cargo is temporarily restrained during road-truck arrival, then
+becomes dynamic before the doors open. The forklift never parents, welds or
+teleports a load. See `unity/OneShiftRackLab/FORKLIFT.md` for the mechanism and
+checks.
+
+The browser's default Smooth picture setting limits the drawing buffer to
+1,440,000 pixels and a pixel ratio of one. Controls offers Sharper, capped at
+3,686,400 pixels and a pixel ratio of 1.5. Both fill the available view and resize
+without restarting the game. The Web build uses smaller shadow maps, downsampled
+contact shading, 2x MSAA and less frequent reflection captures. Physics retains
+its 0.005-second step. These bounds reduce work on Retina displays; they are not
+a measured Mac frame-rate guarantee.
 
 `DemoActivity` gates the Unity player on tab visibility, window focus and stage
 visibility. It calls `BrowserLifecycle.SetBrowserActive` to suspend simulation,
@@ -51,19 +81,31 @@ checks with a simulated loader. After exporting the actual Unity player, run
 WebGL player. That pass reads the browser bridge's `ReportState` diagnostics,
 checks the opening dawn, frame and clock suspension, zero paused animation
 callbacks in a browser trace, walking, reset, forklift entry and driving,
-braking, rear steering, camera switching, driving pause recovery, fullscreen,
+braking, rear steering, camera switching, the first guided unload and setdown,
+guide release, parking while the guide key stays held, driving pause recovery,
+walking through the yard door and around the original truck, fullscreen,
 and shader/runtime errors, and saves screenshots and console logs. Set
 `SHIFT_TEST_URL=https://ethanwillingham.com/one-shift.html` to run the same real
 checks against the deployed page. `SHIFT_DUMP` selects the report directory.
 Both checks use Playwright; the real pass also uses Sharp to inspect rendered pixels.
 The real pass uses full Chromium with GPU rendering enabled and reports its actual
-renderer. Set `SHIFT_BROWSER_CHANNEL=chrome` to use installed Chrome, including
+renderer. Its default device scale factor of two exercises Retina pixel sizing;
+`SHIFT_TEST_DPR=1` selects an ordinary-density browser. Set
+`SHIFT_BROWSER_CHANNEL=chrome` to use installed Chrome, including
 on this Windows workstation. The console report retains Unity's known startup
 internal-format probe warnings; shader failures and render-time GL errors fail
 the check. It also identifies startup messages for three bundled shaders unused
 by this compatibility-mode scene: CoreCopy, StencilDitherMaskSeed and HDRDebugView.
 RenderGraph and runtime debug display remain disabled; revisit that classification
 if those settings change.
+
+The 25 October 2026 receiving release passed 62 checks against the compiled
+browser player, including the original truck's arrival, assisted unloading,
+parking with X held, and walking around the yard and back through its doorway.
+It also passed 57 forklift physics and geometry checks and thirteen delivery
+sequence checks in Unity. The four compressed browser files total 42,196,653
+bytes, down from 55,069,002 bytes in the prior build. Browser verification used
+Windows Chrome at device scale factor two; Mac hardware was not available.
 
 The earlier hands-on inventory business, version 3.4, is preserved at
 `one-shift-classic.html`. Its scripts, local save keys and assets remain intact;

@@ -11,8 +11,8 @@ namespace OneShift.RackLab
         public const float HorizontalFieldOfView = 90f;
         public Camera eyes;
         public Vector3 spawnPosition;
-        public float walkSpeed = 1.5f;
-        public float runSpeed = 4.2f;
+        public float walkSpeed = 2.8f;
+        public float runSpeed = 5.4f;
         public float sensitivity = 1.8f;
         CharacterController motor;
         float pitch, verticalSpeed;
@@ -28,12 +28,14 @@ namespace OneShift.RackLab
         GUIStyle title, instructions, small;
         RackWearVariant target;
         WarehouseLightSwitch lightSwitch;
+        WarehouseReceiving receiving;
 
         void Awake()
         {
             motor = GetComponent<CharacterController>();
             spawnPosition = transform.position;
             spawnRotation = transform.rotation;
+            receiving = Object.FindFirstObjectByType<WarehouseReceiving>();
             Application.targetFrameRate = 120;
             RefreshPerspective();
         }
@@ -127,7 +129,7 @@ namespace OneShift.RackLab
                 bool use = Time.frameCount != suppressUseFrame &&
                     (Input.GetKeyDown(KeyCode.E) || (alreadyCaptured && Input.GetMouseButtonDown(0)));
                 if (use && lightSwitch != null) lightSwitch.Toggle();
-                else if (use && Input.GetKeyDown(KeyCode.E) && target != null) target.Cycle();
+                else if (use && Input.GetKeyDown(KeyCode.E) && target != null && receiving == null) target.Cycle();
             }
             else if (!motor.isGrounded)
             {
@@ -159,16 +161,17 @@ namespace OneShift.RackLab
                 title.normal.textColor = instructions.normal.textColor = small.normal.textColor = new Color(.94f, .91f, .83f);
             }
             GUI.color = new Color(.08f, .10f, .09f, .88f);
-            GUI.DrawTexture(new Rect(18, 18, 362, 71), Texture2D.whiteTexture);
-            GUI.DrawTexture(new Rect(18, Screen.height - 72, 690, 52), Texture2D.whiteTexture);
+            float panelWidth = Mathf.Min(Screen.width - 36, 690);
+            GUI.DrawTexture(new Rect(18, 18, panelWidth, 71), Texture2D.whiteTexture);
+            GUI.DrawTexture(new Rect(18, Screen.height - 72, panelWidth, 52), Texture2D.whiteTexture);
             GUI.color = Color.white;
-            GUI.Label(new Rect(32, 26, 340, 28), "ONE SHIFT / RACK FLOOR", title);
-            GUI.Label(new Rect(32, 55, 340, 25), "Pallet storage   /   Floor + two beam levels", small);
+            GUI.Label(new Rect(32, 26, panelWidth - 28, 28), receiving != null ? "ONE SHIFT / FIRST DELIVERY" : "ONE SHIFT / RACK FLOOR", title);
+            GUI.Label(new Rect(32, 55, panelWidth - 28, 25), receiving != null ? receiving.StatusText : "Pallet storage   /   Floor + two beam levels", small);
             GUI.Label(new Rect(32, Screen.height - 67, 670, 25), "WASD move   |   Mouse look   |   Shift run   |   Space jump   |   Esc cursor", small);
             GUI.Label(new Rect(32, Screen.height - 44, 660, 24), captured ?
                 (lightSwitch != null ? "E / click: " + lightSwitch.Prompt :
-                target != null ? "E: change this rack's wear   |   R: return to entrance" :
-                "Three light switches by the entrance.   R: return to entrance") : "Click inside the game to walk around.", small);
+                target != null && receiving == null ? "E: change this rack's wear   |   R: return to entrance" :
+                "E: use nearby forklift   |   R: return to entrance") : "Click inside the game to start your shift.", small);
             if (captured)
             {
                 GUI.color = new Color(.94f,.91f,.83f,.75f);

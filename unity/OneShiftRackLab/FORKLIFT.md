@@ -88,11 +88,14 @@ at their moving mast anchors and their rods remain separate. Hose ports are
 named for later flexible hose routing.
 
 This short duplex lift remains the native animation study. Its 1.8 m carriage
-travel does not reach the 3.6576 m rack level. The handling installer extends the
-derived Unity mast rails to approximately 2.9 m, with 3.9 m of total carriage
-travel. It keeps the original Blender source intact. Export preserves authoring
-transforms without animation clips or Blender constraints; a separate Unity
-controller drives the physical runtime mechanism.
+travel does not reach the 3.6576 m rack level. The derived Unity duplex retains
+3.9 m of physical carriage travel with a 2.493 m collapsed mast. Longer rail
+tails, lower carriage guides and longer cylinder barrels preserve engagement
+while fitting the original truck's 2.693 m trailer interior. At full extension,
+the rails overlap by 493 mm and the carriage guides remain inside their channels.
+The builder adapts connected mesh pieces from the exported FBX and keeps the
+original Blender source intact. A separate Unity controller drives the physical
+runtime mechanism; the imported model has no animation clips or constraints.
 
 Run Blender with `--background --python-exit-code 1 --python` followed by the
 generator path. Add `-- --no-render` for geometry and export only, or `-- --quick`
@@ -121,6 +124,9 @@ exported. Unity uses URP materials when integrated.
 `Assets/RackLab/Prefabs/WarehouseForklift.prefab` and practice area in the existing
 warehouse without rebuilding its racks or lighting. It backs up the scene under
 ignored `Temp/ForkliftBackup`. Re-run this installer after regenerating the room.
+For the playable receiving start, run `WarehouseStartBuilder.Install()` after
+the driving and physical-handling installers. It puts the practice displays
+aside, retains the forklift, and installs the wall racks and receiving yard.
 The prefab has URP materials and batches rigid geometry by moving assembly and
 material. Its initial lowered leaf chains become two render groups. Installing
 physical pallet handling then replaces those render groups with moving chain
@@ -177,18 +183,44 @@ Shift reduces power and applies progressive braking towards a slow approach.
 The wheels, rear axle and steering wheel follow their physical state.
 
 `ForkliftPlayerInteraction` reuses the walking camera, disables the walking
-capsule while seated, and requires a brief familiarisation before first entry.
-Controls are E to enter/exit, W/S to drive/reverse, A/D to steer, Space to brake,
-Shift to inch, F to park, C for rear/cab camera, V to centre, H for the horn,
-Q/Z to raise/lower, T/G to tilt forward/back, and hold R while stopped to recover.
-Leaving requires clear floor beside the
-truck. Recovery checks that the parking bay is clear. Focus loss and browser
-pause clear driving inputs; resuming requires a fresh click and neutral controls.
+capsule while seated, and requires a brief familiarisation before first driving.
+E enters the seat. The first entry opens the briefing, with E or Enter to
+acknowledge and begin; later entries take one E. W/S drives and reverses, A/D
+steers, Space brakes, and Shift inches. Throttle releases the parking brake.
+E requests a stop and exit, applying the service brake until the truck is slow
+enough, then checking for clear floor at either side or behind the truck.
+Escape cancels an exit request and releases capture. C changes rear/cab view,
+and Tab shows the full control list. F parks, V centres, H sounds the horn,
+Q/Z raises and lowers, T/G tilts forward and back, and holding R while stopped
+recovers to a clear parking bay. Focus loss and browser pause clear driving and
+assist input; resuming requires a fresh click and neutral controls.
+
+## Held pallet assist
+
+Hold X near the short end of an upright, stationary pallet. `ForkliftLoadAssist`
+finds a nearby aligned package, measures its actual board and fork geometry,
+levels the mast and sets the fork height inside the pockets. It then steers the
+real wheels at a slow approach, inserts the forks and lifts through contact.
+The help stops when X is released or manual driving or hydraulic input takes
+over. It rejects distant stock, side approaches, steeply tilted pallets and
+blocked paths. Excessive misalignment or a stalled approach asks the player to
+reposition. It does not move rigidbody poses, change cargo mass, add carrying
+joints, or bypass the finite hydraulic force.
+
+After an assisted pickup, hold X again over a floor or rack deck to set the load
+down. Downward probes check support beneath both pallet runners. The guide lowers
+the real forks, then the player reverses out. Manual Q/Z and T/G remain available
+for shelf height and tilt. The load remains free to shift, fall or tip the truck;
+the assist is a held set of steering and lever commands, not an inventory pickup.
+
+## Retained driving trial
 
 The practice ramp is a narrow tyre track, outside the fork spacing. A normal
 wide ramp can catch the lowered forks, which have physical tapered collision.
 Reverse onto the practice ramp so the low mast foot follows the tyres. Driving
 straight at its steep entrance with the mast first correctly stops against it.
+This ramp is kept in the trial builder and isolated checks, not in the public
+receiving start.
 Body, mast, guard, carriage and fork colliders are compound shapes. The fork
 blades retain tapered convex collision, including their heels and thin tips.
 
@@ -226,10 +258,14 @@ inertia, with full translational and rotational freedom. The original board
 colliders leave the front pockets open. The 43 mm fork heels cannot pass through
 the original 38.1 mm side notch, so approach either 40-inch end. Strapped cartons
 share a rigidbody with their own pallet; individual carton unloading is not
-simulated. The fourteen rack packages comprise twelve 450 kg carton loads and
-two 25 kg empty pallets. The four existing floor pallets also weigh 25 kg.
+simulated. The public opening has four 450 kg carton packages in the receiving
+trailer and empty wall racks. Road-transit restraints release at the dock,
+before the doors open. From that point the player handles each dynamic package.
 
-Four additional floor packages show different mass distributions. A timber
+The retained asset trial has fourteen rack packages: twelve 450 kg carton loads
+and two 25 kg empty pallets. Its four floor pallets also weigh 25 kg.
+
+Four additional trial packages show different mass distributions. A timber
 crate totals 80 kg, a centred carton package totals 800 kg, steel billets total
 3,500 kg, and a second 800 kg carton package sits 180 mm off centre on its pallet.
 The two 800 kg examples separate load balance from total weight. Their visible
@@ -247,6 +283,24 @@ lagging the camera's world position. The former distance check could mistake
 that lag for an obstruction during a sharp turn and repeatedly snap the view.
 
 ## Validation
+
+`ForkliftHandlingValidation.ValidateAssistAndSave()` exercises held pickup,
+transport and setdown, a modest approach offset, elevated-rack retrieval,
+distant and side rejection, obstruction, release and overload. All thirteen checks
+passed on 25 October 2026, including 30/60 Hz control updates, low headroom,
+manual pickups, interrupted pickups and repick after manual setdown. The guide uses a brief upward command
+until the load clears its support, then closes the valve and checks its held
+height. Continuous corrections around the requested height had made a loaded
+mast oscillate. The result is saved in `Reports/forklift-assist-validation.json`.
+All twenty-two handling checks passed in the receiving scene, including full
+stroke guide, chain and cylinder engagement for the compact mast.
+
+`ValidateReceivingAssistAndSave()` also passed against the installed warehouse's
+actual colliders at 30 Hz control updates. Both the first and deepest delivery
+pallets rose 194 to 197 mm, reversed into the warehouse, and stayed still after
+setdown and fork withdrawal. The deepest pickup drives the entire forklift into
+the original full-scale trailer. The inner mast reaches about 2.615 m beneath
+the physical 2.693 m roof. The test also catches dock-plate height differences.
 
 `ForkliftDrivingValidation.ValidateAndSave()` advances the actual prefab in
 isolated PhysX scenes and saves measured results to
@@ -290,7 +344,7 @@ On the eight-degree slope, facing either direction, parked drift stayed below
 5.54 to 5.55 m in three seconds. The one-sided ramp still overturned the truck
 after 3.63 seconds, reaching 95.0 degrees of body lean.
 
-The browser release `v=4` passed all 51 compiled-player checks in Chrome with
+The earlier browser release `v=4` passed all 51 compiled-player checks in Chrome with
 WebGL 2, including lift, neutral hold, mast tilt, camera switching, driving,
 recovery and hydraulic input clearing on pause. The launcher passed its 22
 lifecycle checks. Browser and Windows exports completed with zero build errors.

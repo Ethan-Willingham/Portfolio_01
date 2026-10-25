@@ -33,7 +33,7 @@ async function clearCalls(page) { await page.evaluate(() => { window.unityCalls.
 async function finish(page) { await page.evaluate(() => window.finishUnityLoad()); await page.waitForSelector('#warehouse-tools', {state:'visible'}); }
 async function realSmoke(browser, url) {
   const sharp = require('sharp');
-  const context = await browser.newContext({viewport:{width:1280,height:720}});
+  const context = await browser.newContext({viewport:{width:1280,height:720}, deviceScaleFactor:Number(process.env.SHIFT_TEST_DPR || 2)});
   const page = await context.newPage();
   const messages = [], failures = [], requests = [];
   const prefix = 'ONE_SHIFT_STATE ';
@@ -69,7 +69,7 @@ async function realSmoke(browser, url) {
   async function capture(name) {
     const file = path.join(dump, name + '.png');
     const box = await page.locator('#warehouse-canvas').boundingBox();
-    await page.screenshot({path:file, clip:box, timeout:60000});
+    await page.screenshot({path:file, clip:box, scale:'css', timeout:60000});
     return file;
   }
   async function holdKey(key, milliseconds) {
@@ -103,6 +103,11 @@ async function realSmoke(browser, url) {
   async function pressForFrames(key, label, predicate = () => true) {
     const before = await state();
     return keyUntil(key, label, current => current.frameCount >= before.frameCount + 3 && predicate(current));
+  }
+  function guideComplete(current) {
+    if (!current.forkliftAssistActive && /pallet moved|blocked|too heavy|not enough room|guide stopped/i.test(current.forkliftAssistStatus || ''))
+      throw new Error('Fork guide stopped: ' + current.forkliftAssistStatus + ' ' + JSON.stringify(current));
+    return current.forkliftAssistStage === 'Complete';
   }
   async function animationCallbacks() {
     const cdp = await context.newCDPSession(page);
@@ -138,6 +143,8 @@ async function realSmoke(browser, url) {
     await page.bringToFront();
     await page.locator('#warehouse-canvas').focus();
     const initial = await state();
+    check('REAL: Warehouse begins with a four-pallet delivery and closed receiving doors', initial.receivingTotal === 4 && initial.receivingPhase === 'Arriving' && !initial.receivingDoorsOpen);
+    check('REAL: Walking and running use the faster starting speeds', Math.abs(initial.playerWalkSpeed - 2.8) < .01 && Math.abs(initial.playerRunSpeed - 5.4) < .01);
     check('REAL: Initial clock starts before sunrise', initial.hour >= 4.5 && initial.hour < 6);
     check('REAL: All three lighting rows start on', initial.rowOn.length === 3 && initial.rowOn.every(Boolean));
     // The loader resolves during Unity's grayscale splash. Wait for colored
@@ -172,6 +179,23 @@ async function realSmoke(browser, url) {
     while (morning.hour < 7 && Date.now() < dawnDeadline) { await delay(750); morning = await state(); }
     check('REAL: Sunrise advances into the working day', morning.hour >= 7 && morning.hour < 9 && morning.frameCount > initial.frameCount);
     await capture('unity-real-morning');
+    const renderStart = await state();
+    const renderClock = performance.now();
+    await delay(5000);
+    const renderEnd = await state();
+    const renderSeconds = (performance.now() - renderClock) / 1000;
+    const performanceReport = {seconds:renderSeconds, frames:renderEnd.frameCount - renderStart.frameCount,
+      framesPerSecond:(renderEnd.frameCount - renderStart.frameCount) / renderSeconds,
+      viewport:await page.evaluate(() => { const c = document.getElementById('warehouse-canvas'); return {width:c.width,height:c.height,devicePixelRatio}; })};
+    fs.writeFileSync(path.join(dump, 'unity-real-performance.json'), JSON.stringify(performanceReport, null, 2));
+    console.log('PERFORMANCE ' + JSON.stringify(performanceReport));
+    check('REAL: Smooth mode bounds the actual Retina drawing buffer', performanceReport.viewport.width * performanceReport.viewport.height <= 1600 * 900);
+    const deliveryReady = await pollState('Truck parks and opens its receiving doors', current => current.receivingDoorsOpen, 30000);
+    // The loader can resolve before MonoBehaviour.Start moves the parked
+    // authoring pose into its arrival lane. Compare two running physics states.
+    check('REAL: Delivery truck actually backs into the dock', physicsState.receivingTruckPosition[2] - deliveryReady.receivingTruckPosition[2] > 8);
+    check('REAL: Opening the doors leaves all four pallets for the player to unload', deliveryReady.receivingUnloaded === 0 && deliveryReady.receivingStored === 0);
+    await capture('unity-real-delivery-ready');
     const activeCallbacks = await animationCallbacks();
     check('REAL: Trace sees active engine animation callbacks', activeCallbacks > 0);
 
@@ -227,16 +251,49 @@ async function realSmoke(browser, url) {
     forkliftStates.approach = await keyUntil('w', 'Walk within forklift reach', current =>
       groundDistance(current.playerPosition, current.forkliftPosition) < 2.25);
     forkliftStates.training = await pressForFrames('e', 'Open forklift familiarisation', current => current.forkliftTraining);
-    check('REAL: Forklift entry requires familiarisation before driving', forkliftStates.training.forkliftTraining && !forkliftStates.training.forkliftDriving);
+    check('REAL: First E seats the player with controls gated by familiarisation', forkliftStates.training.forkliftTraining && forkliftStates.training.forkliftDriving && !forkliftStates.training.forkliftCaptured && forkliftStates.training.forkliftThrottle === 0);
     await capture('unity-real-forklift-training');
-    forkliftStates.entered = await pressForFrames('Enter', 'Begin forklift driving', current => current.forkliftDriving && current.forkliftCaptured);
-    check('REAL: Enter completes familiarisation and captures vehicle controls', forkliftStates.entered.forkliftDriving && !forkliftStates.entered.forkliftTraining);
+    forkliftStates.entered = await pressForFrames('e', 'Acknowledge forklift familiarisation', current => current.forkliftDriving && current.forkliftCaptured && !current.forkliftTraining);
+    check('REAL: E acknowledges the first briefing and captures vehicle controls', forkliftStates.entered.forkliftDriving && !forkliftStates.entered.forkliftTraining);
     check('REAL: Driver starts in the rear chase view', forkliftStates.entered.forkliftCabView === false);
     await capture('unity-real-forklift-chase');
     forkliftStates.cab = await pressForFrames('c', 'Switch to forklift cab', current => current.forkliftCabView);
     await capture('unity-real-forklift-cab');
     forkliftStates.chase = await pressForFrames('c', 'Restore forklift chase camera', current => !current.forkliftCabView);
     check('REAL: C switches between the cab and chase cameras', forkliftStates.cab.forkliftCabView && !forkliftStates.chase.forkliftCabView);
+
+    await page.keyboard.down('Shift');
+    try {
+      forkliftStates.approachDock = await keyUntil('w', 'Creep along the receiving aisle', current => current.forkliftPosition[2] > 9.6, 45000);
+    } finally { await page.keyboard.up('Shift'); }
+    await keyUntil('Space', 'Stop before the first pallet', current => Math.abs(current.forkliftSignedSpeed) < .04);
+    await pollState('Release brake before fork guide', current => current.forkliftThrottle === 0);
+    const palletBeforeGuide = (await state()).receivingFirstPallet;
+    const assistBeforeRelease = await keyUntil('x', 'Start a held fork approach', current => current.forkliftAssistStage === 'Approach' && current.forkliftThrottle > 0, 20000);
+    const assistReleased = await pollState('Release X to brake and clear the guide', current => current.frameCount >= assistBeforeRelease.frameCount + 6 && !current.forkliftAssistActive && Math.abs(current.forkliftSignedSpeed) < .05 && current.forkliftLiftInput === 0);
+    check('REAL: Releasing X stops guided approach without moving the pallet', distance(assistBeforeRelease.forkliftPosition, assistReleased.forkliftPosition) < .2 && distance(palletBeforeGuide, assistReleased.receivingFirstPallet) < .03);
+    await page.keyboard.down('x');
+    try {
+      await pollState('Restart the held guide before parking', current => current.forkliftAssistActive);
+      const parkedGuide = await pressForFrames('f', 'Parking brake cancels the held guide', current => current.forkliftParked && !current.forkliftAssistActive);
+      const stillParkedGuide = await pollState('Holding X cannot undo the parking brake', current => current.frameCount >= parkedGuide.frameCount + 8);
+      check('REAL: F cancels the guide and stays parked while X remains held', stillParkedGuide.forkliftParked && !stillParkedGuide.forkliftAssistActive && stillParkedGuide.forkliftThrottle === 0);
+    } finally { await page.keyboard.up('x'); }
+    const guideKeyReleased = await state();
+    await pollState('Observe a fresh guide-key release', current => current.frameCount >= guideKeyReleased.frameCount + 3);
+    forkliftStates.guidedPickup = await keyUntil('x', 'Guide forks into the delivery pallet and lift through contact', guideComplete, 45000);
+    check('REAL: Held X lifts the actual delivery pallet clear within the trailer roof', forkliftStates.guidedPickup.receivingFirstPallet[1] > palletBeforeGuide[1] + .08 && !forkliftStates.guidedPickup.forkliftAssistActive);
+    await capture('unity-real-first-pallet-lifted');
+    forkliftStates.unloaded = await keyUntil('s', 'Reverse the pallet into the warehouse', current => current.receivingUnloaded > 0 && current.forkliftPosition[2] < 7, 30000);
+    await keyUntil('Space', 'Stop with the pallet on the forks', current => Math.abs(current.forkliftSignedSpeed) < .04);
+    forkliftStates.guidedSetdown = await keyUntil('x', 'Lower the pallet to the receiving floor', current => guideComplete(current) && current.receivingFirstPallet[1] < .08, 30000);
+    const floorPallet = forkliftStates.guidedSetdown.receivingFirstPallet;
+    forkliftStates.withdraw = await keyUntil('s', 'Withdraw from the grounded pallet', current => current.forkliftPosition[2] < 4.5, 15000);
+    await keyUntil('Space', 'Stop after unloading', current => Math.abs(current.forkliftSignedSpeed) < .04);
+    check('REAL: Set-down cargo stays on the warehouse floor after fork withdrawal', distance((await state()).receivingFirstPallet, floorPallet) < .12);
+    await capture('unity-real-first-pallet-unloaded');
+    await keyUntil('r', 'Return forklift to its bay for control checks', current => current.forkliftParked && groundDistance(current.forkliftPosition, parkingPosition) < .1, 25000);
+    await pressForFrames('f', 'Release parking after recovery', current => !current.forkliftParked);
 
     forkliftStates.handlingPark = await pressForFrames('f', 'Park for hydraulic controls', current => current.forkliftParked);
     const loweredHeight = forkliftStates.handlingPark.forkliftLiftHeight;
@@ -312,11 +369,31 @@ async function realSmoke(browser, url) {
     forkliftStates.neutral = await pollState('Release held throttle to enable driving', current => current.forkliftCaptured && current.forkliftThrottle === 0);
     forkliftStates.freshThrottle = await keyUntil('w', 'Drive after a fresh throttle press', current => current.forkliftThrottle > .5 && current.forkliftSignedSpeed > .6);
     check('REAL: Releasing and pressing throttle restores normal driving', forkliftStates.neutral.forkliftCaptured && forkliftStates.freshThrottle.forkliftSignedSpeed > .6);
-    forkliftStates.exitStop = await keyUntil('Space', 'Stop before stepping out', current => Math.abs(current.forkliftSignedSpeed) < .04);
-    forkliftStates.exited = await pressForFrames('e', 'Step out of the stopped forklift', current => !current.forkliftDriving);
-    check('REAL: E restores walking and leaves the forklift parked', !forkliftStates.exited.forkliftDriving && forkliftStates.exited.forkliftParked && groundDistance(forkliftStates.exited.playerPosition, forkliftStates.exited.forkliftPosition) < 3);
+    forkliftStates.exitStop = await state();
+    forkliftStates.exited = await pressForFrames('e', 'E brakes and steps out of the moving forklift', current => !current.forkliftDriving);
+    check('REAL: E brakes, restores walking and leaves the forklift parked', !forkliftStates.exited.forkliftDriving && forkliftStates.exited.forkliftParked && Math.abs(forkliftStates.exited.forkliftSignedSpeed) < .3 && groundDistance(forkliftStates.exited.playerPosition, forkliftStates.exited.forkliftPosition) < 3);
     forkliftStates.walkingAgain = await keyUntil('w', 'Walk after leaving the forklift', current => distance(current.playerPosition, forkliftStates.exited.playerPosition) > .3);
     check('REAL: Walking controls work after leaving the truck', distance(forkliftStates.walkingAgain.playerPosition, forkliftStates.exited.playerPosition) > .3);
+    await pressForFrames('r', 'Return to entrance for yard access', current => distance(current.playerPosition, initial.playerPosition) < .3);
+    // The entrance view faces east. Strafe north to a clear cross-aisle,
+    // then walk east to the separate yard doorway, avoiding the parked truck.
+    await keyUntil('a', 'Walk north along the warehouse floor', current => current.playerPosition[2] > 6, 15000);
+    const yardDoorApproach = await keyUntil('w', 'Reach the yard doorway aisle', current => current.playerPosition[0] > 8.45, 15000);
+    forkliftStates.yard = await keyUntil('a', 'Walk through the yard door and down the ramp', current => current.playerPosition[2] > 39, 25000);
+    check('REAL: The separate yard door and ramp reach the parking lot', forkliftStates.yard.playerPosition[1] < -1.1);
+    // The authored entrance view is slightly angled toward the forklift.
+    // Measure the actual walking direction so the return follows the ramp's
+    // centre line instead of assuming an exactly cardinal camera heading.
+    const northSlope = (forkliftStates.yard.playerPosition[0] - yardDoorApproach.playerPosition[0]) /
+      (forkliftStates.yard.playerPosition[2] - yardDoorApproach.playerPosition[2]);
+    await keyUntil('s', 'Walk around the front of the parked road truck', current => current.playerPosition[0] < -15, 20000);
+    await keyUntil('d', 'Walk alongside the original eighteen-wheeler', current => current.playerPosition[2] < 25, 15000);
+    await capture('unity-real-parking-lot');
+    await keyUntil('a', 'Return around the front of the parked road truck', current => current.playerPosition[2] > 39, 15000);
+    await keyUntil('w', 'Align the return path with the yard doorway', current =>
+      current.playerPosition[0] + northSlope * (11 - current.playerPosition[2]) > 8.6, 20000);
+    forkliftStates.fromYard = await keyUntil('d', 'Walk back up the ramp into the warehouse', current => current.playerPosition[2] < 10.6, 25000);
+    check('REAL: The yard route returns to the warehouse without reset or jumping', Math.abs(forkliftStates.fromYard.playerPosition[1] - initial.playerPosition[1]) < .1);
     fs.writeFileSync(path.join(dump, 'unity-real-forklift-states.json'), JSON.stringify(forkliftStates, null, 2));
     await page.keyboard.press('Escape');
     await page.locator('#warehouse-fullscreen').click();
@@ -342,6 +419,9 @@ async function realSmoke(browser, url) {
     if (shaderFailures.length || failures.length) console.error(JSON.stringify({shaderFailures:shaderFailures.slice(0,5),failures}, null, 2));
     check('REAL: No shader/runtime/request failures', shaderFailures.length === 0 && failures.length === 0);
     console.log(checks.length + ' REAL build checks passed. Captures: ' + dump);
+  } catch (error) {
+    await page.screenshot({path:path.join(dump,'unity-real-failure.png'), scale:'css', timeout:5000}).catch(() => {});
+    throw error;
   } finally {
     fs.writeFileSync(path.join(dump,'unity-real-console.json'), JSON.stringify({messages,failures,requests}, null, 2));
   }
@@ -353,7 +433,7 @@ let browser;
   const real = process.argv.includes('--real');
   browser = await chromium.launch({headless:true, ...(real ? {channel:process.env.SHIFT_BROWSER_CHANNEL || 'chromium'} : {}), args:[...(real ? ['--enable-gpu', ...(process.platform === 'win32' ? ['--use-angle=d3d11'] : [])] : []),'--enable-unsafe-swiftshader']});
   if (process.argv.includes('--real')) { await realSmoke(browser, url); return; }
-  const context = await browser.newContext({viewport:{width:1440,height:900}});
+  const context = await browser.newContext({viewport:{width:1440,height:900}, deviceScaleFactor:2});
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
@@ -370,6 +450,11 @@ let browser;
   check('Compressed fallback URLs share the release version', await page.evaluate(() => {
     const urls = ['dataUrl','frameworkUrl','codeUrl'].map(key => new URL(unityConfig[key], location.href));
     return urls.every(url => url.pathname.endsWith('.unityweb') && url.searchParams.get('v')) && new Set(urls.map(url => url.searchParams.get('v'))).size === 1;
+  }));
+  check('Retina rendering starts within the Smooth pixel budget', await page.evaluate(() => {
+    const canvas = document.getElementById('warehouse-canvas');
+    return devicePixelRatio === 2 && unityConfig.matchWebGLToCanvasSize === false &&
+      canvas.width === 1440 && canvas.height === 900 && canvas.width * canvas.height <= 1600 * 900;
   }));
   await finish(page);
   await clearCalls(page);
@@ -398,6 +483,26 @@ let browser;
   await page.keyboard.press('p');
   await page.locator('#warehouse-help').click();
   check('Controls include switch and rack interaction', (await page.locator('#warehouse-controls').innerText()).includes('rack'));
+  await page.locator('#warehouse-quality').selectOption('sharp');
+  check('Sharper adds detail without unrestricted Retina rendering', await page.evaluate(() => {
+    const canvas = document.getElementById('warehouse-canvas');
+    return canvas.width === 2160 && canvas.height === 1350 && canvas.width * canvas.height <= 2560 * 1440;
+  }));
+  await page.locator('#warehouse-pause').click();
+  await clearCalls(page);
+  await page.locator('#warehouse-quality').selectOption('smooth');
+  await page.setViewportSize({width:3024,height:1964});
+  await page.waitForFunction(() => document.getElementById('warehouse-canvas').width !== 1440);
+  check('Large windows retain the pixel budget and aspect ratio', await page.evaluate(() => {
+    const canvas = document.getElementById('warehouse-canvas');
+    return canvas.width * canvas.height <= 1600 * 900 &&
+      Math.abs(canvas.width / canvas.height - innerWidth / innerHeight) < .002;
+  }));
+  check('Changing picture quality and size cannot undo manual pause',
+    await page.locator('#warehouse-paused').isVisible() && (await calls(page)).length === 0);
+  await page.setViewportSize({width:1440,height:900});
+  await page.waitForFunction(() => document.getElementById('warehouse-canvas').width === 1440);
+  await page.locator('#warehouse-pause').click();
   await page.locator('#warehouse-close-help').click();
   await page.locator('#warehouse-fullscreen').click();
   await page.waitForFunction(() => document.fullscreenElement?.id === 'warehouse-stage');
@@ -445,7 +550,7 @@ let browser;
   const card = page.locator('a.article-item[href="one-shift.html"]');
   await card.scrollIntoViewIfNeeded();
   await card.locator('img').evaluate(image => image.decode());
-  check('In Progress keeps the warehouse at its original URL', (await card.locator('.article-item-description').innerText()).includes('three wall switches'));
+  check('In Progress keeps the warehouse at its original URL', (await card.locator('.article-item-description').innerText()).includes('receiving dock'));
   check('The card loads the new Unity warehouse thumbnail', await card.locator('img').evaluate(image => image.naturalWidth === 1200 && image.currentSrc.includes('one-shift-unity')));
   await card.screenshot({path:path.join(dump,'archive-card.png')});
   console.log(checks.length + ' checks passed. Captures: ' + dump);

@@ -49,6 +49,7 @@ namespace OneShift.RackLab
             var forklift = Object.FindFirstObjectByType<ForkliftDriveController>();
             var driver = Object.FindFirstObjectByType<ForkliftPlayerInteraction>();
             var lift = Object.FindFirstObjectByType<ForkliftLiftController>();
+            var receiving = Object.FindFirstObjectByType<WarehouseReceiving>();
             var rowOn = new bool[3];
             foreach (var row in Object.FindObjectsByType<WarehouseLightRow>(FindObjectsSortMode.None))
                 if (row.RowNumber >= 1 && row.RowNumber <= rowOn.Length) rowOn[row.RowNumber - 1] = row.IsOn;
@@ -65,6 +66,17 @@ namespace OneShift.RackLab
                 fixedDeltaTime = Time.fixedDeltaTime,
                 rowOn = rowOn,
                 playerPosition = new[] { position.x, position.y, position.z },
+                playerWalkSpeed = player != null ? player.walkSpeed : 0,
+                playerRunSpeed = player != null ? player.runSpeed : 0,
+                receivingPhase = receiving != null ? receiving.Phase.ToString() : null,
+                receivingDoorsOpen = receiving != null && receiving.DoorsOpen,
+                receivingUnloaded = receiving != null ? receiving.DeliveredCount : 0,
+                receivingStored = receiving != null ? receiving.StoredCount : 0,
+                receivingTotal = receiving != null && receiving.cargo != null ? receiving.cargo.Length : 0,
+                receivingProgress = receiving != null ? receiving.ArrivalProgress : 0,
+                receivingWaiting = receiving != null && receiving.WaitingForClearance,
+                receivingTruckPosition = receiving != null && receiving.truck != null ? new[] {receiving.truck.position.x, receiving.truck.position.y, receiving.truck.position.z} : null,
+                receivingFirstPallet = receiving != null && receiving.cargo.Length > 0 ? new[] {receiving.cargo[0].transform.position.x, receiving.cargo[0].transform.position.y, receiving.cargo[0].transform.position.z} : null,
                 browserSuspended = suspended,
                 forkliftPosition = forklift != null ? new[] {forklift.transform.position.x, forklift.transform.position.y, forklift.transform.position.z} : null,
                 forkliftUp = forklift != null ? new[] {forklift.transform.up.x, forklift.transform.up.y, forklift.transform.up.z} : null,
@@ -81,6 +93,9 @@ namespace OneShift.RackLab
                 forkliftLiftStalled = lift != null && lift.IsStalled,
                 forkliftDriving = driver != null && driver.IsDriving,
                 forkliftTraining = driver != null && driver.TrainingOpen,
+                forkliftAssistActive = driver != null && driver.AssistActive,
+                forkliftAssistStage = driver != null ? driver.AssistStage : "Idle",
+                forkliftAssistStatus = driver != null ? driver.AssistStatus : "",
                 forkliftCabView = driver != null && driver.CabView,
                 forkliftCaptured = driver != null && driver.ControlsCaptured,
                 forkliftParked = forklift != null && forklift.ParkingBrake
@@ -95,6 +110,12 @@ namespace OneShift.RackLab
             public float timeScale, fixedDeltaTime;
             public bool[] rowOn;
             public float[] playerPosition;
+            public float playerWalkSpeed, playerRunSpeed;
+            public string receivingPhase;
+            public bool receivingDoorsOpen, receivingWaiting;
+            public int receivingUnloaded, receivingStored, receivingTotal;
+            public float receivingProgress;
+            public float[] receivingTruckPosition, receivingFirstPallet;
             public bool browserSuspended;
             public float[] forkliftPosition, forkliftUp, forkliftSprungMasses;
             public float forkliftSignedSpeed, forkliftThrottle, forkliftSteer;
@@ -102,6 +123,8 @@ namespace OneShift.RackLab
             public bool forkliftLiftStalled;
             public int forkliftGrounded;
             public bool forkliftDriving, forkliftTraining, forkliftCaptured, forkliftParked, forkliftCabView;
+            public bool forkliftAssistActive;
+            public string forkliftAssistStage, forkliftAssistStatus;
         }
 
         void OnApplicationFocus(bool focused)

@@ -28,6 +28,37 @@ namespace OneShift.RackLab
         static PhysicsMaterial palletContact;
         static Material wood, steel, dark;
 
+        [MenuItem("One Shift/Install compact warehouse forklift")]
+        public static string InstallCompactForklift()
+        {
+            if (EditorApplication.isPlaying) throw new InvalidOperationException("Stop Play before replacing the forklift.");
+            var scene = SceneManager.GetActiveScene();
+            if (scene.path != Root + "Scenes/RackFloor.unity") throw new InvalidOperationException("Open RackFloor.unity first.");
+            var previous = Object.FindObjectsByType<ForkliftDriveController>(FindObjectsSortMode.None)
+                .Where(drive => drive.gameObject.scene == scene).ToArray();
+            if (previous.Length != 1) throw new InvalidOperationException("Expected one active warehouse forklift.");
+            var old = previous[0];
+            var previousObject = old.gameObject;
+            var interactions = Object.FindObjectsByType<ForkliftPlayerInteraction>(FindObjectsSortMode.None).Where(value => value.vehicle == old).ToArray();
+            var parent = old.transform.parent;
+            Vector3 position = old.transform.position;
+            Quaternion rotation = old.transform.rotation;
+            Directory.CreateDirectory("Temp/ForkliftHandlingBackup");
+            EditorSceneManager.SaveScene(scene, "Temp/ForkliftHandlingBackup/BeforeCompact-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".unity", true);
+            ForkliftBuilder.BuildPrefab();
+            UpgradeForkliftPrefab();
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(ForkliftBuilder.PrefabPath);
+            var replacement = (GameObject)PrefabUtility.InstantiatePrefab(prefab, scene);
+            replacement.transform.SetParent(parent, true);
+            replacement.transform.SetPositionAndRotation(position, rotation);
+            foreach (var interaction in interactions)
+            { interaction.vehicle = replacement.GetComponent<ForkliftDriveController>(); EditorUtility.SetDirty(interaction); }
+            Object.DestroyImmediate(previousObject);
+            Physics.SyncTransforms();
+            EditorSceneManager.MarkSceneDirty(scene); EditorSceneManager.SaveScene(scene); AssetDatabase.SaveAssets();
+            return "Installed compact derived mast with unchanged 3.9 m physical fork travel; warehouse, cargo and original Blender model retained.";
+        }
+
         [MenuItem("One Shift/Install physical pallet handling")]
         public static string InstallHandling()
         {

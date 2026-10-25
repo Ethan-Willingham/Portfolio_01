@@ -24,15 +24,31 @@ Fixture intensity is 26, peak sunlight is 2.35, and window shafts use 75 percent
 of their former energy. Daytime ambient and luminous lenses are softer, while
 the low night ambient remains unchanged.
 Forward+ lighting allows all twelve fixtures to illuminate the combined room
-meshes, without the eight-light-per-object limit. Additional shadows have a
+meshes, without the eight-light-per-object limit. Desktop additional shadows have a
 4096-pixel atlas with 1024-pixel high-resolution slices. The rack shader supports
 clustered additional lights and punctual shadow bias. The floor and pallet
 materials use URP/Lit. There is no baked light remaining when a row switches off.
 
-The room reflection probe captures the actual lighting in time-sliced 128-pixel
+The desktop room reflection probe captures the actual lighting in time-sliced 128-pixel
 faces, every eight seconds and after a switch changes. Reflections can take several
 frames to settle. The low night ambient keeps silhouettes readable with every
 row off; it does not light the room as if the fixtures were still on.
+
+The browser export retains all twelve shadowed fixtures and the moving sun.
+Its main shadow map is 2048 pixels with two cascades; the fixture atlas is 1024
+pixels with 256-pixel slices. It uses 2x MSAA, no SMAA, and downsampled contact
+shading with four samples, medium normal reconstruction and medium blur.
+The time-sliced reflection faces are 64 pixels and periodic captures occur
+every twenty seconds. Switch changes and explicit clock changes still request
+a fresh capture. Normal clock advancement does not request extra cubemaps on
+slow frames. The builder restores the desktop pipeline and contact-shading
+assets after export.
+
+The browser launcher defaults to Smooth, capping the drawing buffer at
+1,440,000 pixels and a pixel ratio of one. Sharper in Controls raises those
+limits to 3,686,400 pixels and 1.5. This prevents a Retina display from silently
+quadrupling the render workload. It does not change the layout, camera view or
+physics timestep. The actual gain still needs measurement on target Macs.
 
 ## Sun and windows
 
@@ -43,7 +59,8 @@ the roof blocks direct sun except through the high windows. Low morning and
 evening rays reach farther into the room.
 
 Each sun-facing window updates both its sheared mesh bounds and shader inverse
-matrix. Sparse dust follows those coordinates. Back-facing windows and all windows
+matrix. Sparse dust follows those coordinates, with one particle upload per
+frame rather than a second upload from the clock update. Back-facing windows and all windows
 at night render neither shafts nor illuminated motes. Near-grazing rays fade out
 before the volume becomes singular. Camera depth and the main-light shadow atlas
 clip the scattering against the room and its contents. This is a bounded dust
@@ -56,6 +73,9 @@ Choose **One Shift > Install warehouse day and night** outside Play mode in
 retaining the floor, rack and player objects, then installs the rows and cycle.
 The full rack-floor build and the walls-and-daylight installer also retain this
 lighting setup. **Build Windows player** produces the local standalone game.
+The receiving-start marker preserves the north dock opening when rebuilding
+the shell. A full rack-floor rebuild restores the asset trial; run
+**Install receiving warehouse start** last to restore the public layout.
 
 `WarehouseDayNightBuilder.Validate()` checks nine times across the cycle,
 sun-facing volume selection and alignment, moving mesh bounds, twelve unique

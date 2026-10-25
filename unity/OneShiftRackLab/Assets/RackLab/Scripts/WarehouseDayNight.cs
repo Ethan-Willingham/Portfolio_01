@@ -22,6 +22,7 @@ namespace OneShift.RackLab
         public Material sky;
         public WarehouseSunVolume[] windows;
         public ReflectionProbe roomReflection;
+        [Min(1)] public float reflectionIntervalSeconds = 8;
         public float Hour { get; private set; }
         public float Daylight { get; private set; }
         public Vector3 TowardSun { get; private set; }
@@ -45,7 +46,7 @@ namespace OneShift.RackLab
             if (!paused) Advance(Time.deltaTime);
             reflectionTimer += Time.deltaTime;
             // Time-sliced cubemaps capture the actual room, including switched rows.
-            if (reflectionRequested || reflectionTimer >= 8) RefreshReflection();
+            if (reflectionRequested || reflectionTimer >= reflectionIntervalSeconds) RefreshReflection();
         }
 
         public void Advance(float seconds)
@@ -63,9 +64,9 @@ namespace OneShift.RackLab
                 ? fromMorning * daySeconds / daylightHours
                 : daySeconds + (fromMorning - daylightHours) * nightSeconds / nightHours;
             elapsed = Mathf.Repeat(elapsed + seconds, daySeconds + nightSeconds);
-            SetHour(elapsed < daySeconds
+            ApplyHour(elapsed < daySeconds
                 ? MorningHour + elapsed * daylightHours / daySeconds
-                : SunsetHour + (elapsed - daySeconds) * nightHours / nightSeconds);
+                : SunsetHour + (elapsed - daySeconds) * nightHours / nightSeconds, false);
         }
 
         public static Vector3 SunPosition(float hour, float latitudeDegrees)
@@ -78,7 +79,14 @@ namespace OneShift.RackLab
 
         public void SetHour(float hour)
         {
-            if (Mathf.Abs(Mathf.DeltaAngle(Hour * 15, hour * 15)) > .75f) RequestReflection();
+            ApplyHour(hour, true);
+        }
+
+        void ApplyHour(float hour, bool changedManually)
+        {
+            // Slow browser frames must not turn the accelerated opening dawn
+            // into a request for another six-face room capture every frame.
+            if (changedManually && Mathf.Abs(Mathf.DeltaAngle(Hour * 15, hour * 15)) > .75f) RequestReflection();
             Hour = Mathf.Repeat(hour, 24);
             TowardSun = SunPosition(Hour, latitude);
             Daylight = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(-.08f, .38f, TowardSun.y));

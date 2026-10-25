@@ -20,12 +20,28 @@
   var help = document.getElementById('warehouse-help');
   var controls = document.getElementById('warehouse-controls');
   var fullscreen = document.getElementById('warehouse-fullscreen');
+  var quality = document.getElementById('warehouse-quality');
   var activity = window.DemoActivity.create(stage);
   var coarsePointer = window.matchMedia('(pointer: coarse)');
   var instance = null, starting = false, failed = false, manuallyPaused = false;
   var portrait = false, lastActive = null, loopPaused = false;
   var build = 'assets/one-shift-unity/Build/OneShiftWeb';
-  var version = '?v=4';
+  var version = '?v=5';
+
+  function sizeCanvas() {
+    // Retina screens can otherwise turn a normal browser window into an
+    // eight-million-pixel render target. Keep the CSS view full size while
+    // giving the player a bounded choice of drawing-buffer resolution.
+    var sharper = quality.value === 'sharp';
+    var width = Math.max(1, stage.clientWidth), height = Math.max(1, stage.clientHeight);
+    var pixelBudget = sharper ? 2560 * 1440 : 1600 * 900;
+    var ratio = Math.min(window.devicePixelRatio || 1, sharper ? 1.5 : 1,
+      Math.sqrt(pixelBudget / (width * height)));
+    var renderWidth = Math.max(1, Math.floor(width * ratio));
+    var renderHeight = Math.max(1, Math.floor(height * ratio));
+    if (canvas.width !== renderWidth) canvas.width = renderWidth;
+    if (canvas.height !== renderHeight) canvas.height = renderHeight;
+  }
 
   function syncActivity() {
     paused.hidden = !instance || !manuallyPaused;
@@ -56,6 +72,7 @@
   }
 
   function syncOrientation() {
+    sizeCanvas();
     portrait = coarsePointer.matches && window.innerHeight > window.innerWidth;
     rotate.hidden = !portrait;
     syncActivity();
@@ -122,8 +139,10 @@
         companyName: 'Ethan Willingham',
         productName: 'One Shift',
         productVersion: '1',
-        matchWebGLToCanvasSize: true,
-        devicePixelRatio: Math.min(window.devicePixelRatio || 1, 2),
+        // The page sizes the drawing buffer on resize and quality changes.
+        // Unity still owns rendering and all of its scheduling.
+        matchWebGLToCanvasSize: false,
+        devicePixelRatio: 1,
         showBanner: function (message, type) {
           if (type === 'error') {
             console.error(message);
@@ -158,6 +177,7 @@
   }
 
   play.addEventListener('click', start);
+  quality.addEventListener('change', sizeCanvas);
   pause.addEventListener('click', function () { setPause(!manuallyPaused); });
   document.getElementById('warehouse-resume').addEventListener('click', function () { setPause(false); });
   help.addEventListener('click', function () {
