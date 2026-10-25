@@ -36,5 +36,71 @@
   function cargo(name){return '<svg class="cargo-art" viewBox="0 0 48 48" aria-hidden="true" focusable="false">'+(goods[name]||goods.relic)+'</svg>';}
   function hydrate(scope=document){for(const el of scope.querySelectorAll('[data-icon]'))el.innerHTML=icon(el.dataset.icon);}
   function vessels(scope,view){view.spriteCache=view.spriteCache||new Map();for(const canvas of scope.querySelectorAll('canvas[data-vessel]')){const sprite=view.sprite(canvas.dataset.vessel,-Math.PI/10),c=canvas.getContext('2d');const scale=Math.min((canvas.width-12)/sprite.width,(canvas.height-10)/sprite.height);c.clearRect(0,0,canvas.width,canvas.height);c.imageSmoothingEnabled=true;c.drawImage(sprite,(canvas.width-sprite.width*scale)/2,(canvas.height-sprite.height*scale)/2,sprite.width*scale,sprite.height*scale);}}
-  root.WidewakeReachUI={icon,cargo,hydrate,vessels};
+  const text=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const roleNames={launch:'Launch',flagship:'Frigate',gunboat:'Escort',trawler:'Trawler',oilrig:'Oil tender',repair:'Tender',screen:'Flak boat',battery:'Mortar boat'};
+  const goodsNames={salt:'Salt',tools:'Tools',grain:'Grain',timber:'Timber',fish:'Fish',oil:'Oil',relic:'Salvage'};
+  const cargoUsed=s=>s.manifest?Object.values(s.manifest).reduce((a,b)=>a+b,0):s.cargo||0;
+  const working=(g,s)=>s.hp>0&&s.id!==0&&(g.endgame?g.work&&s.working:g.operation&&(g.operation.id==='oil'?s.type==='oilrig':s.type==='trawler'));
+  const needsAttention=s=>s.hp<=0||s.hp/s.maxHp<.8||s.hold>0&&cargoUsed(s)>=s.hold;
+  function shipStatus(g,s){
+    if(s.hp<=0)return'Lost';
+    if(s.hp/s.maxHp<.35)return'Critical hull';
+    if(s.hold>0&&cargoUsed(s)>=s.hold)return'Hold full';
+    if(s.hp/s.maxHp<.8)return'Needs repair';
+    if(g.port)return'Berthed';
+    if(s.id===0)return g.route?'On course':'At your helm';
+    if(working(g,s))return g.workActive?'Working':'Taking station';
+    if(s.orderKey?.startsWith('berth:'))return'Approaching berth';
+    if(s.needsJoin)return'Joining convoy';
+    return g.endgame&&g.work?'Holding station':'Following';
+  }
+  function fleetSummary(g){const alive=g.ships.filter(s=>s.hp>0),damaged=alive.filter(s=>s.hp<s.maxHp-.01).length,workingCount=alive.filter(s=>working(g,s)).length;return{alive:alive.length,total:g.ships.length,damaged,working:workingCount,label:alive.length+' '+(alive.length===1?'boat':'boats')+(damaged?' / '+damaged+' damaged':'')};}
+  function fleetRows(g,{filter='all',selected=0}={}){
+    const groups=[['Command',s=>s.id===0],['Workboats',s=>s.id!==0&&['trawler','oilrig'].includes(s.type)],['Escorts',s=>s.id!==0&&['gunboat','screen','battery'].includes(s.type)],['Support',s=>s.id!==0&&!['trawler','oilrig','gunboat','screen','battery'].includes(s.type)]];
+    const accepts=s=>filter==='attention'?needsAttention(s):filter==='workers'?s.id!==0&&['trawler','oilrig'].includes(s.type):filter==='escorts'?s.id!==0&&['gunboat','screen','battery'].includes(s.type):true;
+    return groups.map(([name,match])=>{const list=g.ships.filter(s=>match(s)&&accepts(s));return list.length?'<section class="fleet-group"><h3>'+name+' <span>'+list.length+'</span></h3>'+list.map(s=>{const hull=Math.max(0,Math.ceil(s.hp/s.maxHp*100));return'<button type="button" class="fleet-row'+(needsAttention(s)?' needs-attention':'')+'" data-fleet-ship="'+s.id+'" aria-pressed="'+(s.id===Number(selected))+'"><canvas width="100" height="54" data-vessel="'+text(s.type)+'" aria-hidden="true"></canvas><span class="fleet-row-name"><strong>'+text(s.name)+'</strong><small>'+text(roleNames[s.type]||s.type)+' / '+shipStatus(g,s)+'</small></span><span class="fleet-row-values"><strong>'+hull+'%<span class="ww-sr-only"> hull</span></strong><small>'+cargoUsed(s)+'/'+(s.hold||0)+' hold</small></span></button>';}).join('')+'</section>':'';}).join('')||'<p class="fleet-empty">'+(filter==='attention'?'All boats have sound hulls and room aboard.':'No boats in this group.')+'</p>';
+  }
+  function transferOptions(g,shipId){const s=g.ships.find(s=>s.id===Number(shipId));return s?{goods:Object.entries(s.manifest||{}).filter(([,n])=>n>0),targets:g.ships.filter(other=>other.id!==s.id&&other.hp>0&&other.hold>cargoUsed(other))}:{goods:[],targets:[]};}
+  function fleetDetail(g,shipId=0){
+    const s=g.ships.find(s=>s.id===Number(shipId))||g.ships[0],alive=s.hp>0,role=s.id===0?'Your flagship':roleNames[s.type]||s.type,hold=s.hold||0,used=cargoUsed(s),range=s.id===0?0:Math.round(Math.hypot(s.x-g.player.x,s.y-g.player.y)),manifest=Object.entries(s.manifest||{}).filter(([,n])=>n>0);
+    const actions='<div class="fleet-detail-actions"><button type="button" class="reach-primary" data-fleet-action="locate"'+(alive?'':' disabled')+'>'+icon('zoom')+'Find on water</button>'+(g.port?'<button type="button" data-fleet-action="repair"'+(!g.repairCost?.()||g.repairCost()>g.coins?' disabled':'')+'>Repair fleet / '+Math.ceil(g.repairCost?.()||0)+' c</button>':'')+'</div>';
+    let html='<div class="fleet-detail-heading"><div><small>'+text(role)+'</small><h3>'+text(s.name)+'</h3></div><span class="fleet-state'+(needsAttention(s)?' attention':'')+'">'+shipStatus(g,s)+'</span></div>'+actions+'<canvas class="fleet-detail-art" width="280" height="110" data-vessel="'+text(s.type)+'" aria-hidden="true"></canvas><dl class="fleet-vitals"><div><dt>Hull</dt><dd>'+Math.max(0,Math.ceil(s.hp))+' / '+Math.ceil(s.maxHp)+'</dd></div><div><dt>Cargo</dt><dd>'+used+' / '+hold+'</dd></div><div><dt>From flagship</dt><dd>'+(s.id===0?'At the helm':range>=1000?(range/1000).toFixed(1)+' km':range+' m')+'</dd></div></dl>';
+    html+='<div class="fleet-cargo"><h4>Aboard</h4>'+(manifest.length?manifest.map(([good,n])=>'<span>'+cargo(good)+'<span>'+text(goodsNames[good]||good)+'</span><strong>'+n+'</strong></span>').join(''):used?'<p>'+used+' units of '+(s.type==='oilrig'?'oil':'fish')+'</p>':'<p>Empty hold</p>')+'</div>';
+    if(g.port&&alive&&typeof g.transferCargo==='function'){
+      const options=transferOptions(g,s.id);
+      if(options.goods.length&&options.targets.length)html+='<fieldset class="fleet-transfer"><legend>Move cargo at this harbor</legend><label>Good<select id="fleet-transfer-good">'+options.goods.map(([good,n])=>'<option value="'+text(good)+'">'+text(goodsNames[good]||good)+' / '+n+' aboard</option>').join('')+'</select></label><label>To boat<select id="fleet-transfer-target">'+options.targets.map(other=>'<option value="'+other.id+'">'+text(other.name)+' / '+(other.hold-cargoUsed(other))+' free</option>').join('')+'</select></label><div><label>Units<input id="fleet-transfer-quantity" type="number" min="1" step="1" value="1" inputmode="numeric"></label><button type="button" data-fleet-action="transfer-max">Max</button><button type="button" data-fleet-action="transfer">Move cargo</button></div></fieldset>';
+      else if(options.goods.length)html+='<p class="fleet-transfer-note">Other boats need free hold space to receive cargo.</p>';
+    }
+    return html;
+  }
+  function harborIntent(g){
+    const o=g.objective?.()||{},port=o.port||o.site;
+    if(!g.earned?.includes('salt')){
+      const aboard=g.amount('salt'),remaining=Math.max(1,8-(g.stats?.soldSalt||0));
+      if(['lantern','reeds'].includes(g.port)&&aboard>0)return{title:'Delivery ready',label:'Sell your salt',detail:'Complete the delivery here',action:'trade',good:'salt',side:'sell',quantity:Math.min(remaining,aboard),port};
+      if(aboard<remaining)return{title:'Prepare the delivery',label:g.port==='yard'?'Load salt for Lantern Quay':'Find salt at Tern Yard',detail:'Carry '+remaining+' salt to earn 350 c and open Fleet',action:g.port==='yard'?'trade':'chart',good:'salt',side:'buy',quantity:remaining-aboard,port:g.port==='yard'?'lantern':'yard'};
+      return{title:'Your first delivery',label:'Plot course to Lantern Quay',detail:aboard+' salt aboard / 350 c delivery reward',action:'chart',port:'lantern'};
+    }
+    if(!g.earned?.includes('fish')&&!g.ships.some(s=>s.hp>0&&s.type==='trawler'))return{title:'Start a working fleet',label:g.port==='reeds'?'Find a deeper harbor':'Buy a trawler',detail:g.port==='reeds'?'Tern Yard can berth workboats':'A trawler opens fishing watches',action:g.port==='reeds'?'chart':'recruit',port:'yard',role:'trawler'};
+    if(port==='oil'&&!g.ships.some(s=>s.hp>0&&s.type==='oilrig'))return{title:'Work the outer sound',label:g.port==='reeds'?'Find a deeper harbor':'Buy an oil tender',detail:g.port==='reeds'?'Tern Yard can berth workboats':'An oil tender opens offshore watches',action:g.port==='reeds'?'chart':'recruit',port:'yard',role:'oilrig'};
+    const deliveries={canopy:{good:'tools',count:12,stat:'soldTools',source:'kilns'},yard:{good:'timber',count:12,stat:'soldTimber',source:'canopy'},bells:{good:'grain',count:24,stat:'soldGrain',source:'canopy'},crown:{good:'oil',count:24,stat:'soldOil',source:'glass'}};
+    // The timber objective points at its source until enough timber is aboard.
+    const delivery=o.title==='Timber home'?deliveries.yard:deliveries[port];
+    if(delivery){
+      const target=o.title==='Timber home'?'yard':port,good=delivery.good,remaining=Math.max(1,delivery.count-(g.stats?.[delivery.stat]||0)),aboard=g.amount(good),ports=root.WidewakeEstuary?.ports||[],portName=id=>ports.find(p=>p.id===id)?.name||({yard:'Tern Yard',kilns:'Ochre Kilns',canopy:'Canopy Landing',bells:'Bellwether',crown:'Crown Anchorage',glass:'Cinder Quay'}[id]||id);
+      if(g.port===target&&aboard>0)return{title:'Delivery ready',label:'Sell your '+good,detail:'Deliver '+Math.min(remaining,aboard)+' '+good+' at '+portName(target),action:'trade',good,side:'sell',quantity:Math.min(remaining,aboard),port:target};
+      if(aboard<remaining){
+        const local=g.port&&g.port!==target&&g.price?.(good,true,g.port)<g.price?.(good,false,target),source=local?g.port:delivery.source;
+        return{title:'Prepare the delivery',label:g.port===source?'Load '+good+' for '+portName(target):'Find '+good+' at '+portName(source),detail:'Need '+(remaining-aboard)+' more / '+aboard+' aboard',action:g.port===source?'trade':'chart',good,side:'buy',quantity:remaining-aboard,port:source};
+      }
+      return{title:o.title,label:'Plot course to '+portName(target),detail:remaining+' '+good+' ready to deliver',action:'chart',port:target};
+    }
+    return{title:o.title||'Your next voyage',label:port?'Plot next voyage':'Explore the waterways',detail:o.detail||'Trade, work and explore',action:'chart',port};
+  }
+  function destinationRows(g,destinations){
+    const o=g.objective?.()||{},intent=harborIntent(g),next=intent.action==='chart'&&intent.port?intent.port:o.port||o.site;
+    return [...destinations].sort((a,b)=>(b.id===next)-(a.id===next)).map(p=>{const suggested=p.id===next,here=p.id===g.port,kind=p.type==='fish'?'Fishing':p.type==='oil'?'Oil grounds':['Sheltered','Light patrols','Fast raiders','Gunboats','Heavy patrols'][g.field.sample(p.x,p.y).region.tier],purpose=p.type==='fish'?'Fishing watch':p.type==='oil'?'Oil watch':next!==(o.port||o.site)?'Cargo source':'Delivery destination';return'<button type="button" data-port="'+text(p.id)+'" class="'+(suggested?'suggested-destination':'')+'" aria-pressed="false">'+icon(p.type==='fish'?'fish':p.type==='oil'?'engine':'sail')+'<span>'+text(p.name)+'<small>'+(here?'Docked here':suggested?purpose+' / '+kind:kind)+'</small></span>'+(suggested?'<span class="destination-tag">Next voyage</span>':'')+'</button>';}).join('');
+  }
+  root.WidewakeReachUI={icon,cargo,hydrate,vessels,fleetSummary,fleetRows,fleetDetail,shipStatus,transferOptions,harborIntent,destinationRows};
+  if(typeof module!=='undefined'&&module.exports)module.exports=root.WidewakeReachUI;
 })(globalThis);

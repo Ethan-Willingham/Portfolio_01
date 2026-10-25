@@ -202,6 +202,7 @@
           box(t,0,.7,.3,w,.35,'#8c866b','#5e6e60');
         }
       }
+      if(l<12)return;
       // Iron mooring cleats, access ladder and a coiled line at the outer berth.
       for(const side of [-1,1])for(const t of [-l/2+3,l/2-3]){
         const s=side*(w/2-.85);box(t,s,1.69,.55,.5,.12,'#85958c','#455f61');beam(point(t,s,1.8),point(t,s,2.05),.1,'#7d928b');beam(point(t-.4,s,2.04),point(t+.4,s,2.04),.095,'#a6b2a0');
@@ -211,32 +212,88 @@
       for(let z=-.5;z<2;z+=.38)beam(point(end-.45,edge,z),point(end+.45,edge,z),.055,'#acb8a4');
       for(let coil=0;coil<3;coil++)for(let i=0;i<20;i++){const r=.38+coil*.12,a=i/20*TAU,b=(i+1)/20*TAU;beam(point(end+2+Math.cos(a)*r,Math.sin(a)*r,1.72),point(end+2+Math.cos(b)*r,Math.sin(b)*r,1.72),.035,'#c3ad80',4);}
     }
-    for(const port of root.WidewakeEstuary.ports.filter(p=>!p.theme)){
-      const add=(suffix,x,y,build,shadow)=>{
-        g=G();build();const type='landing_'+port.id+suffix,mesh=new Float32Array(g.out);let radius=1;
+    const harborField=new root.WidewakeEstuary.Field();
+    for(const port of root.WidewakeEstuary.ports){const site=harborField.harbors.find(h=>h.id===port.id);
+      const add=(suffix,x,y,build,shadow,rotation=0,ppu=port.theme?5:8,shared)=>{
+        const type=shared||'landing_'+port.id+suffix;if(meshes[type]){parts.push({type,port:port.id,x:port.x+x,y:port.y+y,radius:specs[type].radius,shadow,shadowZ:.08});return;}
+        g=G();build();const mesh=new Float32Array(g.out);let radius=1;
+        if(rotation)for(let i=0;i<mesh.length;i+=6){const x=mesh[i],y=mesh[i+1];mesh[i]=x*Math.cos(rotation)-y*Math.sin(rotation);mesh[i+1]=x*Math.sin(rotation)+y*Math.cos(rotation);}
         for(let i=0;i<mesh.length;i+=6)radius=Math.max(radius,Math.hypot(mesh[i],mesh[i+1])+mesh[i+2]);
-        meshes[type]=mesh;specs[type]={length:radius*2,height:35,frames:1,ppu:10};parts.push({type,x:port.x+x,y:port.y+y,radius,shadow,shadowZ:suffix.startsWith('_pier')?.08:1.23});
+        meshes[type]=mesh;specs[type]={length:radius*2,height:35,frames:1,ppu,radius};parts.push({type,port:port.id,x:port.x+x,y:port.y+y,radius,shadow,shadowZ:suffix.startsWith('_pier')?.08:1.23});
       };
+      const at=(suffix,u,v,build,shadow,ppu)=>{const p=site.point(u,v);add(suffix,p.x-port.x,p.y-port.y,build,shadow,site.angle+Math.PI,ppu);};
+      // A surveyed, slightly irregular seawall meets the soil and pier decks.
+      // It follows the real waterline rather than drawing a rectangle on top.
+      add('_quay',site.origin.x-port.x,site.origin.y-port.y,()=>{
+        const n=[site.nx,site.ny],p=(a,u,z)=>[a.x-site.origin.x+n[0]*u,a.y-site.origin.y+n[1]*u,z];
+        for(let i=1;i<site.shore.length;i++){const a=site.shore[i-1],b=site.shore[i],span=Math.hypot(b.x-a.x,b.y-a.y),steps=Math.ceil(span/2.2);
+          face([p(a,-.2,-.55),p(b,-.2,-.55),p(b,-.2,1.55),p(a,-.2,1.55)],'#66766c');
+          face([p(a,-.28,1.55),p(b,-.28,1.55),p(b,1.2,1.66),p(a,1.2,1.66)],'#b1ac8b');
+          face([p(a,1.2,1.66),p(b,1.2,1.66),p(b,7.5,1.23),p(a,7.5,1.23)],'#a59e7e');
+          face([p(a,-.23,-.15),p(b,-.23,-.15),p(b,-.23,.27),p(a,-.23,.27)],'#4e6b5c');
+          for(let row=0;row<3;row++)for(let j=0;j<steps;j++){const t0=(j+.045)/steps,t1=Math.min(1,(j+.96)/steps),q0={x:a.x+(b.x-a.x)*t0,y:a.y+(b.y-a.y)*t0},q1={x:a.x+(b.x-a.x)*t1,y:a.y+(b.y-a.y)*t1};face([p(q0,-.25,.3+row*.4),p(q1,-.25,.3+row*.4),p(q1,-.25,.65+row*.4),p(q0,-.25,.65+row*.4)],tint('#89917b',Math.floor(rand()*22)-11));}
+          if(i%3===0){const q=p(a,2.8,1.38);g.box(q[0],q[1],q[2],.5,.5,.8,'#afae8d','#5a716c');}
+        }
+      },null,0,2.5);
       if(port.id==='yard'){
-        add('',-10,-139,()=>shed(35,24,9,'#587c88','#98977b'),[37,26,9]);
-        add('_workshop',-64,-123,()=>shed(17,15,7,'#8a7869','#9e9374'),[19,17,7]);
-        add('_cargo',-35,-122,()=>{for(let i=0;i<10;i++)crate(-4+(i%4)*3,-3+Math.floor(i/4)*3,1.65,i%3===0?2.5:1.8);},[15,10,1.5]);
-        add('_hoist',-17,-116,()=>{
+        at('',34,-21,()=>shed(35,24,9,'#587c88','#98977b'),[37,26,9]);
+        at('_workshop',30,27,()=>shed(17,15,7,'#8a7869','#9e9374'),[19,17,7]);
+        at('_cargo',13,8,()=>{for(let i=0;i<10;i++)crate(-4+(i%4)*3,-3+Math.floor(i/4)*3,1.65,i%3===0?2.5:1.8);},[15,10,1.5]);
+        at('_hoist',5,-4,()=>{
           g.box(0,0,1.2,1.7,1.7,1.1,'#a1a38a','#6b7d70');beam([0,0,2],[0,0,14],.3,'#7d968c');beam([-.7,0,13.5],[10,0,13.5],.25,'#b0ba9f');beam([0,0,8],[5,0,13.5],.15,'#8c9f8e');
           beam([9,0,13.3],[9,0,5],.035,'#c9c4a0');beam([9,0,5],[9,0,4.6],.14,'#536e70');beam([9,0,4.6],[9.35,0,4.6],.12,'#536e70');g.box(.6,0,3.2,.5,1.4,1.1,'#b5a581','#526b68');
         },[4,3,8]);
-        add('_timber',-61,-112,()=>{for(const y of [-4,4])g.box(-.6,y,1.23,6,.45,.57,'#9a8b6b','#6e7057');for(let row=0;row<2;row++)for(let i=0;i<7;i++)g.box(-3+i*.8,0,1.8+row*.48,.65,11,.42,'#b8a47d','#8a8666');},[7,12,1.5]);
+        at('_timber',15,32,()=>{for(const y of [-4,4])g.box(-.6,y,1.23,6,.45,.57,'#9a8b6b','#6e7057');for(let row=0;row<2;row++)for(let i=0;i<7;i++)g.box(-3+i*.8,0,1.8+row*.48,.65,11,.42,'#b8a47d','#8a8666');},[7,12,1.5]);
       }else if(port.id==='mill'){
-        add('',-86,-146,()=>{shed(42,25,15,'#897968','#a39272');g.box(-9,-2,17,3.5,3.5,14,'#a08e73','#807461');for(let z=20;z<31;z+=.6)g.box(-9,-.23,z,3.55,.06,.055,'#b3a084','#a29176');g.box(-9,-2,31,4.2,4.2,.45,'#c0ad8b','#847a65');g.box(-9,-2,31.46,2.6,2.6,.04,'#344b4a');},[44,27,15]);
-        add('_store',-135,-125,()=>shed(24,18,10,'#68857f','#b0a17e'),[26,20,10]);
-        add('_cargo',-73,-118,()=>{for(let i=0;i<15;i++)crate(-6+(i%5)*2.8,-3+Math.floor(i/5)*2.7,1.7);},[15,10,1.5]);
-        add('_timber',-116,-102,()=>{for(const y of [-6,6])g.box(.15,y,1.23,7.5,.45,.47,'#9a8b6b','#6e7057');for(let row=0;row<3;row++)for(let i=0;i<8;i++)g.box(-3+i*.9,0,1.7+row*.42,.76,18,.37,'#ac956b','#817757');},[9,19,1.5]);
+        at('',36,-21,()=>{shed(42,25,15,'#897968','#a39272');g.box(-9,-2,17,3.5,3.5,14,'#a08e73','#807461');for(let z=20;z<31;z+=.6)g.box(-9,-.23,z,3.55,.06,.055,'#b3a084','#a29176');g.box(-9,-2,31,4.2,4.2,.45,'#c0ad8b','#847a65');g.box(-9,-2,31.46,2.6,2.6,.04,'#344b4a');},[44,27,15]);
+        at('_store',34,28,()=>shed(24,18,10,'#68857f','#b0a17e'),[26,20,10]);
+        at('_cargo',12,4,()=>{for(let i=0;i<15;i++)crate(-6+(i%5)*2.8,-3+Math.floor(i/5)*2.7,1.7);},[15,10,1.5]);
+        at('_timber',14,31,()=>{for(const y of [-6,6])g.box(.15,y,1.23,7.5,.45,.47,'#9a8b6b','#6e7057');for(let row=0;row<3;row++)for(let i=0;i<8;i++)g.box(-3+i*.9,0,1.7+row*.42,.76,18,.37,'#ac956b','#817757');},[9,19,1.5]);
+      }else if(port.id==='reeds'){
+        at('',12,0,()=>shed(11,9,5,'#aaa17c','#9c9475'),[13,11,5]);
+        at('_cargo',5,7,()=>{crate(-1,-1,1.7,1.8);crate(0,1,1.7,1.5);},[4,4,1]);
+        at('_nets',5,-6,()=>{for(let i=0;i<9;i++)g.box(-1+i*.15,0,1.7,.08,4,.18,'#819281','#667e72');});
       }else{
-        add('',-41,0,()=>shed(11,9,5,'#aaa17c','#9c9475'),[13,11,5]);
-        add('_cargo',-33,7,()=>{crate(-1,-1,1.7,1.8);crate(0,1,1.7,1.5);},[4,4,1]);
-        add('_nets',-28,-6,()=>{for(let i=0;i<9;i++)g.box(-1+i*.15,0,1.7,.08,4,.18,'#819281','#667e72');});
+        const theme={lantern:['#9a6f59','#b2a17e'],kilns:['#b87851','#b89973'],canopy:['#527d72','#a9a67c'],bells:['#728f90','#b4ad91'],wheel:['#71847d','#aa9976'],glass:['#a17561','#92968a'],crown:['#6e7d89','#aaa995']}[port.theme];
+        at('',30,-23,()=>shed(25,16,9,theme[0],theme[1]),[27,18,9]);
+        at('_store',34,23,()=>shed(19,14,7,tint(theme[0],12),tint(theme[1],-8)),[21,16,7]);
+        at('_cargo',13,-13,()=>{for(let i=0;i<8;i++)crate((i%3)*2.3-2,Math.floor(i/3)*2.1-2,1.65,i%4===0?2:1.65);},[8,7,1.5],6);
+        at('_street',43,0,()=>{
+          // Cart ruts and broken paving continue into the inland road, so the
+          // settlement has a landward entrance as well as a waterfront.
+          for(let x=-26;x<28;x+=2.4)for(const side of [-1,1])g.box(x,side*1.1,1.22,1.8,.18,.035,'#847f61','#847f61');
+          for(let i=0;i<20;i++){const x=(i%5)*3-5,y=Math.floor(i/5)*2.1-3;g.box(x,y,1.225,2.1,1.6,.045,tint('#99977b',Math.floor(rand()*12)-6),'#777c65');}
+        },null,3);
+        at('_shorework',9,29,()=>{
+          if(port.theme==='lantern'){for(const y of [-5,5]){beam([0,y,1.2],[0,y,8],.13,'#727f6d');g.box(0,y,6.5,.8,.8,1.1,'#d3a66b','#a16f4e');}beam([0,-5,8],[0,5,8],.07,'#c1b38e');}
+          else if(port.theme==='kilns'){for(let i=0;i<3;i++){g.box(i*3,0,1.2,2.5,3,4.4,'#c18e64','#9d6e50');g.box(i*3,1.52,1.6,1.3,.1,1.8,'#3f4440','#3f4440');g.box(i*3,0,5.6,1.1,1.4,2.2,'#b68058','#835f49');}}
+          else if(port.theme==='canopy'){for(const y of [-4,4])beam([0,y,1.2],[0,y,6],.14,'#8d8c66');face([[0,-5,6],[7,-5,5],[7,5,5],[0,5,6]],'#9caa7e');for(let i=0;i<4;i++)crate(2,i*2-3,1.65,1.4);}
+          else if(port.theme==='bells'){g.box(0,0,1.2,3.5,3.5,10,'#aaa68a','#778b83');g.box(0,0,11.2,4.2,4.2,.5,'#bdb799','#66847d');beam([0,0,11.7],[0,0,15],.1,'#b5b898');}
+          else if(port.theme==='glass'){for(let i=0;i<4;i++)g.box(i*1.4,0,1.2,1.1,5,1.2+i*.3,'#78837f','#4d6467');}
+          else{for(let row=0;row<3;row++)for(let i=0;i<6;i++)g.box(i*.7-2,0,1.23+row*.38,.6,9,.33,'#b4a17a','#857e60');}
+        },[10,11,4],5);
+        at('_district',55,0,()=>{
+          // A working landmark gives each settlement its own shore silhouette.
+          // The street stays open through it and continues into the landscape.
+          if(port.theme==='lantern'){
+            for(const y of [-9,9])beam([0,y,.12],[0,y,13],.18,'#8c8a6d');beam([0,-9,13],[0,9,13],.055,'#c6b68d');
+            for(let y=-7;y<=7;y+=3.5){g.box(0,y,10.5,1.1,1.1,1.7,'#d6aa71','#b27a55');face([[0,y-1,10],[0,y+2,9.5],[1,y+2,5.5],[1,y-1,6]],y<0?'#c6b78c':'#8fa9a0');}
+          }else if(port.theme==='kilns'){
+            for(const y of [-9,9]){beam([0,y,.12],[0,y,6],3.2,'#b2825c',10);beam([0,y,6],[0,y,8],2.2,'#c3966d',10);beam([0,y,8],[0,y,13],.9,'#9c7357',8);g.box(2.9,y,1.4,.3,2,2.3,'#d2a171','#443f38');}
+          }else if(port.theme==='canopy'){
+            for(const y of [-10,10]){beam([0,y,.12],[0,y,16],.55,'#8a8862');for(let i=0;i<6;i++){const a=i/6*TAU;face([[0,y,16],[Math.cos(a)*4-Math.sin(a)*1.3,y+Math.sin(a)*4+Math.cos(a)*1.3,17],[Math.cos(a)*9,y+Math.sin(a)*9,12],[Math.cos(a)*4+Math.sin(a)*1.3,y+Math.sin(a)*4-Math.cos(a)*1.3,17]],i%2?'#6b946e':'#88a274');}}
+          }else if(port.theme==='bells'){
+            g.box(0,9,.12,6,6,12,'#b2ac8d','#859386');for(const x of [-2.5,2.5])for(const y of [6.5,11.5])g.box(x,y,12,.55,.55,7,'#c0b798','#86998d');beam([0,9,14],[0,9,16],1.1,'#b5a371',8);face([[-4,5,19],[4,5,19],[4,13,19],[-4,13,19]],'#709289');
+          }else if(port.theme==='wheel'){
+            for(const y of [-9,9]){for(const x of [-7,7])beam([x,y,.12],[x,y,12],.35,'#8f9072');for(let z=2;z<11;z+=2.2)for(let i=0;i<6;i++)g.box(-6+i*2.3,y,z,2,5,1.5,'#b6a57d','#7c8063');}
+          }else if(port.theme==='glass'){
+            for(const y of [-10,10])for(let i=0;i<3;i++){const x=i*3-3;beam([x,y,.12],[x,y,8+i*3],1.7,'#68777a',6);g.box(x,y,8+i*3,2.7,2.7,.18,'#a3a697','#68777a');}
+          }else{
+            for(let i=0;i<4;i++){const x=i*4-6;for(const side of [-1,1]){beam([x,side*8,.12],[x,side*6,9+i*.7],.35,'#a9a387');beam([x,side*6,9+i*.7],[x,side*2,13+i*.7],.28,'#c0b896');}}beam([-9,0,1.3],[10,0,1.3],.4,'#918e71');
+          }
+        },null,3);
       }
-      port.piers.forEach((p,i)=>add('_pier'+i,p.x,p.y,()=>pier(p.length,p.width,p.alongY),[p.alongY?p.width:p.length,p.alongY?p.length:p.width,1]));
+      [...port.piers,...site.connections].forEach((p,i)=>add('_pier'+i,p.x,p.y,()=>pier(p.length,p.width,p.alongY),[p.alongY?p.width:p.length,p.alongY?p.length:p.width,1],0,port.theme?6:8,port.theme&&p.length===85?'landing_shared_pier_'+(p.alongY?'y':'x'):null));
     }
     return{meshes,specs,parts};
   }

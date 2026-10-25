@@ -1,0 +1,20 @@
+/* Hints must describe an available next action, including partial deliveries. */
+const assert=require('node:assert/strict');
+require('../../js/widewake-battle-core.js');require('../../js/widewake-estuary-core.js');
+const R=require('../../js/widewake-reach-game.js'),U=require('../../js/widewake-reach-ui.js'),E=global.WidewakeEstuary;
+const g=new R.Game();
+assert.deepEqual([U.harborIntent(g).action,U.harborIntent(g).port],['chart','lantern']);
+g.port='lantern';assert.deepEqual([U.harborIntent(g).action,U.harborIntent(g).side,U.harborIntent(g).quantity],['trade','sell',8]);
+assert.ok(g.trade('salt',3,false));assert.equal(U.harborIntent(g).quantity,5);
+assert.ok(g.trade('salt',5,false));assert.equal(U.harborIntent(g).action,'recruit');
+g.coins=100000;assert.ok(g.hire('trawler'));assert.equal(U.harborIntent(g).port,'shoal');
+g.earned.push('fish');g.rank=3;g.port='mill';
+assert.equal(g.objective().port,'canopy');
+const intent=U.harborIntent(g);assert.equal(intent.action,'chart');assert.equal(intent.port,'kilns');
+assert.match(U.destinationRows(g,E.ports),/^<button[^>]*data-port="kilns"/);assert.match(U.destinationRows(g,E.ports),/Cargo source/);
+g.port='kilns';assert.deepEqual([U.harborIntent(g).action,U.harborIntent(g).quantity],['trade',12]);
+g.load('tools',5);assert.equal(U.harborIntent(g).quantity,7);g.load('tools',7);
+assert.equal(U.harborIntent(g).port,'canopy');g.port='canopy';assert.equal(U.harborIntent(g).side,'sell');assert.equal(U.harborIntent(g).quantity,12);
+assert.ok(g.trade('tools',4,false));assert.equal(U.harborIntent(g).quantity,8);
+g.earned.push('jungle','timber');g.port='yard';assert.equal(g.objective().site,'oil');assert.equal(U.harborIntent(g).role,'oilrig');
+console.log('PASS delivery readiness, exact partial quantities, workboat requirements and consistent cargo-source chart guidance');

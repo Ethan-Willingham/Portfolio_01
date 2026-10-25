@@ -1,5 +1,48 @@
 # Bracken Reach, the playable world
 
+## Harbors, fleet desk and voyage cues, 2026-10-25 (v0.41.0)
+
+All ten ports now use surveyed banks shared by terrain, structures and pier
+collision. Workshops and cargo sit on graded dry ground. Shore-following quay
+walls join the working yard to the water, pier roots overlap the bank, and worn
+access roads continue inland. Newer ports use the same detailed, separate
+building, deck and cargo sprites as the original three. Harbor cameras fit the
+viewport and leave room for the service menu.
+
+Fleet is available at sea with F or its labelled button, and from Your boats in
+every harbor, including before recruitment unlocks. The paused desk groups boats
+by role, filters workboats, escorts and boats needing attention, and shows the
+selected boat's hull, cargo and distance. Find on water closes the desk and any
+parent service before revealing the actual vessel. Steering returns the camera
+to the flagship. Close convoy and Spread out change spacing along the existing
+checked wake without moving boats instantly or adding a shortcut across banks.
+Workboat recall and the endgame's existing hold/follow order remain real orders.
+
+Dockside cargo transfers move a chosen whole quantity between two actual living
+holds. Max respects both the source stock and the destination's free space.
+Transfers cannot run at sea or create cargo, change coins or exceed capacity.
+Fleet repairs retain their existing price and progression rules.
+
+The harbor voyage action follows delivery readiness: find or load missing goods,
+plot the passage, then sell at the receiving port. Partial deliveries show the
+remaining quantity. Fishing and oil work first check for the required vessel.
+The chart labels the next voyage while retaining all other available choices.
+Launch sailing estimates now use the crew's actual 20 m/s cruise setting.
+
+The flagship has original layered combustion, exhaust, mechanical and propeller
+sound, including the starter launch. Revs respond to actual throttle before the
+hull gathers speed; cargo and hull type affect the motor. Coasting settles into
+idle. Three fixed motor sources add no per-boat voices or firing timers. Harbor,
+pause, mute, inactivity and context disposal retain the audio lifecycle.
+
+Focused checks: `test-harbor-terrain.cjs`, `test-harbor-terrain-browser.cjs`,
+`test-fleet-commands.cjs`, `test-fleet-ux-browser.cjs` and
+`test-main-boat-audio.cjs`, plus `test-voyage-guidance.cjs` in
+`tools/widewake/`. These supplement the connected
+voyage, waterways, interface and session-control suites. Generated WAV listening
+samples and browser review frames are test artifacts, not runtime downloads.
+Physical phone performance and subjective listening still need owner review.
+
 Owner instruction, 2026-10-19: make the new ocean part of the game, retire the old
 world, and bring the graphics into one consistent visual system. This explicitly
 supersedes the earlier instruction to keep the new ocean in separate trials.

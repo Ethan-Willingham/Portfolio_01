@@ -49,22 +49,7 @@
       save('landmark_'+kind,g,kind==='volcano'?1.5:3);
     }
     {const g=G();g.box(0,0,0,3,10,1,'#c0aa79','#73877c');save('water_paddle',g,4);}
-    for(const port of root.WidewakeWaterways.ports){const g=G(),x=-port.shore-20,theme=port.theme;
-      for(const pier of port.piers){g.box(pier.x,pier.y,.8,pier.alongY?pier.width:pier.length,pier.alongY?pier.length:pier.width,.8,'#b6a17b','#596e6b');for(let dx=-pier.length/2+1;dx<pier.length/2;dx+=1.5)g.box(pier.x+(pier.alongY?0:dx),pier.y+(pier.alongY?dx:0),1.61,pier.alongY?pier.width:.07,pier.alongY?.07:pier.width,.04,'#6f7765');for(let dx=-pier.length/2+2;dx<pier.length/2;dx+=8)for(const side of [-1,1])g.box(pier.x+(pier.alongY?side*(pier.width/2-.4):dx),pier.y+(pier.alongY?dx:side*(pier.width/2-.4)),-1,.7,.7,4,'#d0bd92','#687769');}
-      const pierFloats=g.out.length;
-      const wall=theme==='glass'?'#8a8279':theme==='canopy'?'#8c9c73':'#aba384',top=theme==='kilns'?'#c59570':theme==='lantern'?'#bd8e72':'#739494';
-      for(let i=0;i<3;i++){const y=(i-1)*20;g.box(x,y,1,18,15,9+(i===1?3:0),'#cabd97',wall);roof(g,x,y,10+(i===1?3:0),21,18,top);for(let k=0;k<3;k++)g.box(x+9.1,y-5+k*5,4,.15,2,2.5,'#eccb8f','#486e78');}
-      for(let i=0;i<9;i++){g.box(x+15,i*4-16,1,3,3,2,'#baaa78','#7d8767');g.box(x+15,i*4-16,3.03,.16,3.1,.1,'#d7bd8e');}
-      if(theme==='lantern')for(let i=0;i<12;i++){const y=i*4-22;column(g,x+13,y,12,.8,1.6,'#d39865','#f0ce8e');beam(g,[x+13,y,14],[x+13,y+4,14],.07,'#aeb99b');}
-      if(theme==='kilns')for(let i=0;i<4;i++)column(g,x-15,i*10-15,1,4,12,'#b67e58','#cc9c71');
-      if(theme==='canopy')for(let i=0;i<4;i++)palm(g,x-12,i*16-24,24+i*2);
-      if(theme==='bells')tower(g,x-22,0);
-      if(theme==='glass')for(let i=0;i<6;i++)column(g,x-16,i*8-22,0,3,22+i%3*9,'#58676f','#9aa19a',6);
-      if(theme==='wheel')for(let i=0;i<8;i++)g.box(x-15,i*4-12,1,8,3,3,'#b4a27d','#717e6a');
-      if(theme==='crown')for(let i=0;i<6;i++)beam(g,[x-20,i*7-18,0],[x-26,i*7-18,32-i*2],.8,'#b4ad91');
-      for(let i=pierFloats;i<g.out.length;i+=6){const x=g.out[i],y=g.out[i+1],a=port.shoreAngle;g.out[i]=x*Math.cos(a)-y*Math.sin(a);g.out[i+1]=x*Math.sin(a)+y*Math.cos(a);}
-      save('landing_'+port.id,g,2);
-    }
+    // Harbor models share surveyed foundations and detailed materials in landings().
     return{meshes,specs};
   }
   root.WidewakeWaterwayArt={models};

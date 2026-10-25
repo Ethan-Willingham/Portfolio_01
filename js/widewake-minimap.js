@@ -54,7 +54,8 @@
       for(let x=Math.ceil((p.x-span/2)/spacing)*spacing;x<p.x+span/2;x+=spacing){const q=point(x,p.y);c.beginPath();c.moveTo(q.x,0);c.lineTo(q.x,size);c.stroke();}
       for(let y=Math.ceil((p.y-span/2)/spacing)*spacing;y<p.y+span/2;y+=spacing){const q=point(p.x,y);c.beginPath();c.moveTo(0,q.y);c.lineTo(size,q.y);c.stroke();}
       const destinations=game.endgame?[]:[...E.ports,...R.sites.filter(s=>game.rank>=s.rank)],objective=game.endgame?null:game.objective();
-      const target=game.route?.destination||destinations.find(d=>d.id===(objective.port||objective.site));this.target=target||null;
+      const intent=game.endgame?null:root.WidewakeReachUI?.harborIntent(game),next=intent?.action==='chart'&&intent.port?intent.port:objective?.port||objective?.site;
+      const target=game.route?.destination||destinations.find(d=>d.id===next);this.target=target||null;
       c.save();c.beginPath();c.rect(2,2,size-4,size-4);c.clip();
       if(game.route){
         c.strokeStyle=color.brass;c.lineWidth=1.5;c.setLineDash([3,3]);c.beginPath();c.moveTo(half,half);

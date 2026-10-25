@@ -26,8 +26,48 @@
     makeBed(){
       const a=this.ctx;this.water=a.createBufferSource();this.water.buffer=this.noise;this.water.loop=true;
       this.waterFilter=a.createBiquadFilter();this.waterFilter.type='lowpass';this.waterFilter.frequency.value=900;this.waterGain=a.createGain();this.waterGain.gain.value=0;this.water.connect(this.waterFilter);this.waterFilter.connect(this.waterGain);this.waterGain.connect(this.buses.ambience);this.water.start();
-      this.engine=a.createOscillator();this.engine.type='triangle';this.engine.frequency.value=49;this.engineFilter=a.createBiquadFilter();this.engineFilter.type='lowpass';this.engineFilter.frequency.value=140;this.engineGain=a.createGain();this.engineGain.gain.value=0;this.engine.connect(this.engineFilter);this.engineFilter.connect(this.engineGain);this.engineGain.connect(this.buses.ambience);this.engine.start();
+      this.makeMotor();
       this.pump=a.createOscillator();this.pump.type='sine';this.pump.frequency.value=64;this.pumpGain=a.createGain();this.pumpGain.gain.value=0;this.pump.connect(this.pumpGain);this.pumpGain.connect(this.buses.ambience);this.pump.start();
+    }
+    makeMotor(){
+      const a=this.ctx,rate=a.sampleRate,cycles=32,fireRate=24,length=Math.round(rate*cycles/fireRate),data=new Float32Array(length);let seed=41731;
+      const random=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};
+      // A complete, uneven firing cycle is baked once. Wrapping each exhaust tail
+      // makes the loop seamless, including at idle. No voice is created per firing.
+      for(let cylinder=0;cylinder<cycles;cylinder++){
+        const at=(cylinder+(random()-.5)*.028)/fireRate,strength=(cylinder%2?.82:1)*(.91+random()*.14),ring=78+random()*8;
+        for(let j=0;j<Math.ceil(rate*.16);j++){
+          const t=j/rate,attack=1-Math.exp(-t/ .0012),exhaust=Math.exp(-t/ .034),pressure=Math.exp(-t/ .018),clatter=(random()*2-1)*Math.exp(-t/ .005);
+          const pulse=attack*(Math.sin(t*ring*Math.PI*2)*exhaust*.72+Math.sin(t*(ring*1.83)*Math.PI*2)*pressure*.22+clatter*.14);
+          const index=((Math.floor(at*rate)+j)%length+length)%length;data[index]+=pulse*strength;
+        }
+      }
+      let mean=0,peak=0;for(const value of data)mean+=value;mean/=length;for(let i=0;i<length;i++){data[i]-=mean;peak=Math.max(peak,Math.abs(data[i]));}
+      this.motorBuffer=a.createBuffer(1,length,rate);const samples=this.motorBuffer.getChannelData(0);for(let i=0;i<length;i++)samples[i]=data[i]/Math.max(1,peak);
+      this.engine=a.createBufferSource();this.engine.buffer=this.motorBuffer;this.engine.loop=true;this.engine.playbackRate.value=.53;
+      this.engineFilter=a.createBiquadFilter();this.engineFilter.type='lowpass';this.engineFilter.frequency.value=420;this.engineFilter.Q.value=.55;
+      this.engineHighpass=a.createBiquadFilter();this.engineHighpass.type='highpass';this.engineHighpass.frequency.value=35;this.engineHighpass.Q.value=.5;
+      this.engineGain=a.createGain();this.engineGain.gain.value=0;this.engine.connect(this.engineHighpass);this.engineHighpass.connect(this.engineFilter);this.engineFilter.connect(this.engineGain);this.engineGain.connect(this.buses.effects);this.engine.start();
+      this.mechanical=a.createBufferSource();this.mechanical.buffer=this.noise;this.mechanical.loop=true;this.mechanical.playbackRate.value=.85;
+      this.mechanicalFilter=a.createBiquadFilter();this.mechanicalFilter.type='bandpass';this.mechanicalFilter.frequency.value=820;this.mechanicalFilter.Q.value=.7;
+      this.mechanicalGain=a.createGain();this.mechanicalGain.gain.value=0;this.mechanical.connect(this.mechanicalFilter);this.mechanicalFilter.connect(this.mechanicalGain);this.mechanicalGain.connect(this.buses.effects);this.mechanical.start();
+      this.propeller=a.createBufferSource();this.propeller.buffer=this.noise;this.propeller.loop=true;this.propeller.playbackRate.value=1.19;
+      this.propellerFilter=a.createBiquadFilter();this.propellerFilter.type='bandpass';this.propellerFilter.frequency.value=1150;this.propellerFilter.Q.value=.45;
+      this.propellerGain=a.createGain();this.propellerGain.gain.value=0;this.propellerPan=a.createStereoPanner();this.propellerPan.pan.value=-.12;
+      this.propeller.connect(this.propellerFilter);this.propellerFilter.connect(this.propellerGain);this.propellerGain.connect(this.propellerPan);this.propellerPan.connect(this.buses.effects);this.propeller.start();
+      this.motorState={rpm:382,throttle:0,load:0,speed:0};
+    }
+    updateMotor(scene,now,dt){
+      const sailing=scene.mode==='sea'&&!scene.paused,speed=clamp(Number(scene.speed)||0,0,1.5),throttle=clamp(Number.isFinite(scene.throttle)?scene.throttle:speed,0,1.35),load=clamp(Number(scene.load)||0,0,1),heavy=scene.hull==='flagship'?1:(scene.hull==='gunboat'||scene.steam)?.5:0;
+      const state=this.motorState,blend=1-Math.exp(-dt/(throttle>state.throttle?.32:.55));state.throttle+=(throttle-state.throttle)*blend;state.speed+=(speed-state.speed)*(1-Math.exp(-dt/ .28));state.load=load;
+      // Throttle raises the revs before the hull gathers speed. A loaded hull
+      // labours lower and fuller; coasting keeps its water sound as revs fall.
+      const drive=Math.min(1.25,state.throttle),rev=clamp(.53+drive*.83+state.speed*.26-load*drive*.10-heavy*.08,.43,1.8),power=.24+drive*.64+load*drive*.25;
+      this.target(this.engine.playbackRate,rev,now);this.target(this.engineFilter.frequency,310+drive*360+state.speed*95-heavy*95,now);
+      this.target(this.engineGain.gain,sailing?(.065+power*.14)*(1+heavy*.18):0,now);
+      this.target(this.mechanical.playbackRate,.72+rev*.24,now);this.target(this.mechanicalFilter.frequency,640+drive*600-heavy*140,now);this.target(this.mechanicalGain.gain,sailing?.004+drive*.010:0,now);
+      this.target(this.propellerFilter.frequency,600+state.speed*1050,now);this.target(this.propellerGain.gain,sailing?Math.min(.075,Math.pow(state.speed,.8)*.044+drive*state.speed*.016):0,now);
+      state.rpm=rev*720;
     }
     target(param,value,time,fast=false){param.setTargetAtTime(value,time,fast?.015:.12);}
     applyMix(fast=false){if(!this.ctx)return;const s=this.settings(),now=this.ctx.currentTime;this.target(this.master.gain,s.sound===false?0:clamp(Number(s.volume)||0,0,.5)*2,now,fast);
@@ -39,11 +79,11 @@
     clearEffects(){for(const voice of this.voices)if(voice.bus==='effects'){voice.gain.gain.cancelScheduledValues(this.ctx.currentTime);voice.gain.gain.setTargetAtTime(0,this.ctx.currentTime,.025);}}
     update(scene){
       this.scene=scene;if(!this.ctx||!this.active()||this.ctx.state!=='running'&&!this.offline||this.ctx.state==='closed')return;
-      const now=this.ctx.currentTime;if(now-this.lastUpdate<.07)return;this.lastUpdate=now;this.applyMix();
+      const now=this.ctx.currentTime;if(now-this.lastUpdate<.07)return;const dt=this.lastUpdate<0?.1:clamp(now-this.lastUpdate,0,.2);this.lastUpdate=now;this.applyMix();
       const sailing=scene.mode==='sea'&&!scene.paused,speed=clamp(scene.speed||0,0,1.5),swell=.78+Math.sin(now*.53)*.13+Math.sin(now*.17)*.09;
       this.target(this.waterGain.gain,(scene.mode==='title'?.018:scene.mode==='port'?.025:sailing?.036+speed*.017:.015)*swell,now);
       this.target(this.waterFilter.frequency,sailing?650+speed*600:420,now);
-      this.target(this.engineGain.gain,sailing&&scene.steam?.011+speed*.012:0,now);this.target(this.engine.frequency,46+speed*29,now);
+      this.updateMotor(scene,now,dt);
       this.target(this.pumpGain.gain,sailing&&scene.work==='oil'?.018*(.65+.35*Math.sin(now*9)):0,now);
       if(this.settings().sound===false||this.settings().volume<=0)return;
       // Sparse 6/8 phrases leave room for the sea and useful warnings.
@@ -114,7 +154,7 @@
       else return false;
       return true;
     }
-    async dispose(){if(!this.ctx)return;for(const v of this.voices)try{v.source.stop();}catch{}for(const n of [this.water,this.engine,this.pump])try{n.stop();n.disconnect();}catch{}if(this.ctx.close)await this.ctx.close().catch(()=>{});}
+    async dispose(){if(!this.ctx)return;for(const v of this.voices)try{v.source.stop();}catch{}for(const n of [this.water,this.engine,this.mechanical,this.propeller,this.pump])try{n.stop();n.disconnect();}catch{}if(this.ctx.close)await this.ctx.close().catch(()=>{});}
   }
   root.WidewakeAudio=Audio;if(typeof module!=='undefined'&&module.exports)module.exports=Audio;
 })(typeof window!=='undefined'?window:globalThis);

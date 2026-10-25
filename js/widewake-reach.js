@@ -9,7 +9,7 @@
   try{const p=JSON.parse(localStorage.getItem('widewake-reach-settings')||'{}');for(const k of ['sound','reduceMotion'])if(typeof p[k]==='boolean')settings[k]=p[k];if(Number.isFinite(p.volume))settings.volume=E.clamp(p.volume,0,.5);}catch{}
   // Voyages live only in memory until saving is deliberately reintroduced.
   let game=null,view=null,sound=null,mode='title',modalReturn='title',dirty=true,last=0,accumulator=0,uiTime=0,noticeUntil=0,usingPad=false,service='trade',serviceTab='recruit',tradeSide='buy',good='salt',quantity=8,request=0,selected=null,plan=null,stickId=null,pan=null,pinch=null,controller;
-  let voyage=null,routePolicy="sheltered";
+  let voyage=null,routePolicy="sheltered",dialogOrigin=null,fleetFilter='all',fleetSelected=0;
   const dialogStack=[];
   const keys=new Set(),stick={x:0,y:0},pointers=new Map(),frameTimes=new Float32Array(600),stepTimes=new Float32Array(600);let samples=0;
   const money=n=>Math.round(n).toLocaleString()+' c',allDestinations=()=>[...E.ports,...R.sites.filter(s=>game.rank>=s.rank)];
@@ -17,10 +17,16 @@
   function wake(){if(!settings.sound||!activity.active())return;try{sound=sound||new WidewakeAudio({active:()=>activity.active(),settings:()=>settings});sound.wake();}catch{}}
   function notify(text){$('reach-notice').textContent=text;noticeUntil=activity.now()+4500;if(mode==='service')$('service-feedback').textContent=text;}
   function refreshTitle(){if(mode!=='title')return;$('resume-voyage').hidden=!voyage;$('start-voyage').classList.toggle('ww-primary',!voyage);}
-  function setPortCamera(){const p=E.ports.find(p=>p.id===game.port);if(!p)return;view.follow=false;view.anchor=null;view.offset={x:0,y:0};view.camera={x:p.x-26,y:p.y-88};view.zoom=view.targetZoom=p.id==='reeds'?5:2.8;if(p.theme){const scale=3.8,shift=O.unproject(view.width*.16/scale,0);view.camera={x:p.x-Math.cos(p.shoreAngle)*(p.shore+5)-shift.x,y:p.y-Math.sin(p.shoreAngle)*(p.shore+5)-shift.y};view.zoom=view.targetZoom=scale/view.baseScale;}dirty=true;}
+  function setPortCamera(){
+    const p=E.ports.find(p=>p.id===game.port);if(!p)return;
+    const site=game.field.harbors?.find(h=>h.id===p.id);view.follow=false;view.anchor=null;view.offset={x:0,y:0};
+    if(site){const scale=p.id==='reeds'?Math.min(7,view.width/140,view.height/68):Math.min(3.6,view.width/320,view.height/190),shift=O.unproject(view.width*.15/scale,0);view.camera={x:site.focus.x-shift.x,y:site.focus.y-shift.y};view.zoom=view.targetZoom=scale/view.baseScale;}
+    else{view.camera={x:p.x-26,y:p.y-88};view.zoom=view.targetZoom=p.id==='reeds'?5:2.8;}
+    dirty=true;
+  }
   function sailCamera(){view.follow=true;view.anchor=null;view.offset={x:0,y:0};view.configureCamera();view.targetZoom=view.stops.helm;view.camera={x:game.player.x,y:game.player.y};}
   function bindView(){view.reduced=settings.reduceMotion;view.onContextLost=()=>{openDialog('reach-menu','menu');$('menu-status').textContent='Graphics paused. Restoring the scene...';};view.onContextRestored=()=>{dirty=true;$('menu-status').textContent='Graphics restored. Resume when ready.';};if(view.terrain){view.terrain.onReady=()=>{dirty=true;updateUI();};view.terrain.onError=message=>{$('boot-error').hidden=false;$('boot-error').textContent=message;openDialog('reach-menu','menu');};}}
-  function enter(value){dialogStack.length=0;for(const d of document.querySelectorAll('dialog[open]'))d.close();clear();game=value;voyage=null;$('reach-notice').textContent='';$('reach-water').setAttribute('aria-label','W or Up drives forward. A/D or Left/Right turn. S or Down brakes. E interacts, M opens the chart, Escape pauses.');$('reach').classList.remove('in-combat');view?.dispose();$('title-screen').hidden=true;$('reach').hidden=false;document.body.classList.remove('at-title');view=new WidewakeEstuaryView.View($('reach-water'),game);bindView();mode=game.port?'port':'sailing';if(game.port)setPortCamera();else sailCamera();last=accumulator=0;dirty=true;updateUI();wake();}
+  function enter(value){dialogStack.length=0;for(const d of document.querySelectorAll('dialog[open]'))d.close();clear();game=value;voyage=null;$('reach-notice').textContent='';$('reach-water').setAttribute('aria-label','W or Up drives forward. A/D or Left/Right turn. S or Down brakes. E interacts, M opens the chart, F opens the fleet, Escape pauses.');$('reach').classList.remove('in-combat');view?.dispose();$('title-screen').hidden=true;$('reach').hidden=false;document.body.classList.remove('at-title');view=new WidewakeEstuaryView.View($('reach-water'),game);bindView();mode=game.port?'port':'sailing';if(game.port)setPortCamera();else sailCamera();last=accumulator=0;dirty=true;updateUI();wake();}
   function start(fresh){const value=fresh?new R.Game():voyage;if(value)enter(value);}
   $('start-voyage').onclick=()=>{if(voyage)openDialog('new-dialog','menu');else start(true);};$('confirm-new').onclick=()=>start(true);$('resume-voyage').onclick=()=>start(false);
   function title(){if(game&&!game.endgame)voyage=game;dialogStack.length=0;clear();request++;view?.dispose();view=null;game=null;$('menu-status').textContent='';$('reach').classList.remove('in-combat');for(const d of document.querySelectorAll('dialog[open]'))d.close();mode='title';$('reach').hidden=true;$('title-screen').hidden=false;document.body.classList.add('at-title');sound?.suspend();refreshTitle();$(voyage?'resume-voyage':'start-voyage').focus({preventScroll:true});}
@@ -29,7 +35,7 @@
     dialogStack.length=0;for(const d of document.querySelectorAll('dialog[open]'))d.close();clear();request++;
     view?.dispose();$('title-screen').hidden=true;$('reach').hidden=false;$('reach').classList.add('in-combat');document.body.classList.remove('at-title');
     game=new WidewakeCombat.Endgame();view=new WidewakeCombat.View($('reach-water'),game);bindView();mode='sailing';
-    $('reach-water').setAttribute('aria-label','W or Up drives forward. A/D or Left/Right turn. S or Down brakes. Weapons fire automatically. E orders the fleet to hold or follow. Escape pauses.');
+    $('reach-water').setAttribute('aria-label','W or Up drives forward. A/D or Left/Right turn. S or Down brakes. Weapons fire automatically. E orders the fleet to hold or follow. F opens the fleet. Escape pauses.');
     last=accumulator=0;samples=0;dirty=true;updateUI();wake();$('reach-water').focus({preventScroll:true});
   }
   function leaveCombat(){const previous=voyage;voyage=null;if(previous)enter(previous);else title();}
@@ -51,7 +57,7 @@
   }
   function openDialog(id,kind){
     const active=document.querySelector('dialog[open]');
-    if(!active)modalReturn=mode;
+    if(!active){modalReturn=mode;dialogOrigin=document.activeElement;}
     else if(active.id!==id){dialogStack.push({id:active.id,kind:mode,focus:document.activeElement});active.close();}
     clear();request++;mode=kind;last=accumulator=0;sound?.suspend();
     if(id==='reach-menu'){
@@ -61,7 +67,7 @@
       $('return-title').hidden=modalReturn==='title';
       if(!active)$('settings-fold').open=modalReturn==='title';
     }
-    if(id==='help-dialog'){$('help-actions').textContent=game?.endgame?'E orders the fleet to follow or hold. Guns and broadsides fire automatically.':'E docks or deploys workboats. M opens the chart. All weapons choose their own targets.';$('help-voyage').hidden=!!game?.endgame;$('help-combat').hidden=!game?.endgame;}
+    if(id==='help-dialog'){$('help-actions').textContent=game?.endgame?'E orders the fleet to follow or hold. F opens your fleet. Guns and broadsides fire automatically.':'E docks or deploys workboats. M opens the chart. F opens your fleet. All weapons choose their own targets.';$('help-voyage').hidden=!!game?.endgame;$('help-combat').hidden=!game?.endgame;}
     if(!$(id).open)$(id).showModal();dirty=true;
   }
   function closeDialog(id){
@@ -70,7 +76,7 @@
     const previous=dialogStack.pop();
     if(previous){mode=previous.kind;$(previous.id).showModal();previous.focus?.focus({preventScroll:true});return;}
     mode=modalReturn;if(!game&&mode!=='title'){title();return;}
-    if(mode==='sailing'){$('reach-water').focus({preventScroll:true});wake();}else if(mode==='port')wake();
+    if(mode==='sailing'){$('reach-water').focus({preventScroll:true});wake();}else if(mode==='port'){dialogOrigin?.focus({preventScroll:true});wake();}
   }
   for(const d of document.querySelectorAll('dialog'))d.addEventListener('cancel',e=>{e.preventDefault();if(d.id==='combat-result')leaveCombat();else closeDialog(d.id);});
   for(const b of document.querySelectorAll('[data-close]'))b.onclick=()=>closeDialog(b.dataset.close);
@@ -79,14 +85,14 @@
   $('sound-enabled').checked=settings.sound;$('reduce-motion').checked=settings.reduceMotion;$('volume').value=settings.volume;
   function preferences(){settings.sound=$('sound-enabled').checked;settings.reduceMotion=$('reduce-motion').checked;settings.volume=Number($('volume').value);if(view)view.reduced=settings.reduceMotion;if(!settings.sound)sound?.suspend();else wake();try{localStorage.setItem('widewake-reach-settings',JSON.stringify(settings));}catch{}dirty=true;}
   for(const id of ['sound-enabled','reduce-motion'])$(id).onchange=preferences;$('volume').oninput=preferences;
-  function updateUI(){if(!game||!view)return;minimap.show(game);if(game.endgame){combatUI();return;}$('combat-status').hidden=true;$('chart-open').hidden=false;$('context-action').title='';const p=game.player,w=game.water,docked=!!game.port,port=E.ports.find(p=>p.id===game.port),ready=view.terrain.ready&&!view.lost&&!view.terrain.failed;
+  function updateUI(){if(!game||!view)return;minimap.show(game);const fleet=U.fleetSummary(game);$('fleet-count').textContent=fleet.alive;$('fleet-alert').textContent=fleet.damaged?fleet.damaged+' damaged':'';$('fleet-alert').hidden=!fleet.damaged;$('fleet-open').setAttribute('aria-label','Fleet, '+fleet.label);if(game.endgame){combatUI();return;}$('combat-status').hidden=true;$('chart-open').hidden=false;$('context-action').title='';const p=game.player,w=game.water,docked=!!game.port,port=E.ports.find(p=>p.id===game.port),ready=view.terrain.ready&&!view.lost&&!view.terrain.failed;
     $('port-scene').hidden=!docked;$('vessel-status').hidden=docked;$('helm-controls').hidden=docked;$('sailing-actions').hidden=docked;$('place').textContent=p.name.toUpperCase();$('sounder').textContent=Math.max(0,w.depth).toFixed(1)+' m';$('water-kind').textContent=(w.salinity<.12?'Fresh':w.salinity>.85?'Salt':'Brackish')+' water';$('hull-meter').value=p.hp/p.maxHp;$('hull-meter').title=Math.ceil(p.hp)+' / '+Math.ceil(p.maxHp)+' hull';$('hull-meter').setAttribute('aria-valuetext',Math.ceil(p.hp/p.maxHp*100)+' percent hull');$('hull-value').textContent=Math.ceil(p.hp/p.maxHp*100)+'% hull';$('vessel-status').classList.toggle('damaged',p.hp/p.maxHp<.35);$('vessel-status').classList.toggle('shallow',w.depth-p.draft<1);
     $('cast-off').disabled=!ready;$('cast-off-label').textContent=ready?'Cast off':'Preparing...';$('reach-resume').disabled=!!game&&!ready;
     $('reach-course').hidden=docked||!game.route;$('course-name').textContent=game.route?.destination.name||'';
     const op=game.operation,site=op&&R.sites.find(s=>s.id===op.id);$('work-status').hidden=!op;$('work-name').textContent=site?(game.workActive?'Protect ':'Deploying at ')+site.name:'';$('work-progress').value=op?op.elapsed/site.duration:0;
     const near=game.nearPort(),work=game.nearSite();$('context-action').hidden=!!op||!near&&!work;$('context-label').textContent=near?(Math.hypot(p.vx,p.vy)>3?'Slow to dock':game.nearThreats()?'Clear the approach':game.ships.some(s=>s.hp>0&&Math.hypot(s.x-near.x,s.y-near.y)>360)?'Fleet approaching':'Dock'):op?'Recall':work?.type==='fish'?'Deploy trawlers':'Deploy oil tenders';$('context-action').disabled=!!near&&(Math.hypot(p.vx,p.vy)>3||game.nearThreats()>0||game.ships.some(s=>s.hp>0&&Math.hypot(s.x-near.x,s.y-near.y)>360));
     $('camera-toggle').title='Camera distance';for(const b of document.querySelectorAll('[data-zoom]'))b.setAttribute('aria-pressed',String(Math.abs(view.targetZoom-view.stops[b.dataset.zoom])<.01));
-    if(port){$('port-name').textContent=port.name;$('port-water').textContent=port.description;$('port-coins').textContent=Math.round(game.coins).toLocaleString();$('port-hold').textContent=game.cargo+'/'+game.capacity;const objective=game.objective();$('charter-title').textContent=objective.title;$('charter-detail').textContent=objective.detail;for(const b of document.querySelectorAll('[data-service]')){const rank=b.dataset.service==='fleet'?2:b.dataset.service==='yard'?3:1;b.classList.toggle('locked',game.rank<rank);const small=b.querySelector('small');if(small){const locked=game.rank<rank;if(Boolean(small.firstChild)!==locked)small.innerHTML=locked?U.icon('lock'):'';b.setAttribute('aria-label',(b.dataset.service==='fleet'?'Fleet':'Shipyard')+(locked?', locked. '+(rank===2?'Complete the salt delivery.':'Finish a fishing watch.') :''));}}}
+    if(port){$('port-name').textContent=port.name;$('port-water').textContent=port.description;$('port-coins').textContent=Math.round(game.coins).toLocaleString();$('port-hold').textContent=game.cargo+'/'+game.capacity;const intent=U.harborIntent(game);$('charter-title').textContent=intent.title;$('charter-detail').textContent=intent.detail;$('charter-action').textContent=intent.label;for(const b of document.querySelectorAll('[data-service]')){const rank=b.dataset.service==='fleet'?2:b.dataset.service==='yard'?3:1;b.classList.toggle('locked',game.rank<rank);const small=b.querySelector('small');if(small){const locked=game.rank<rank;if(Boolean(small.firstChild)!==locked)small.innerHTML=locked?U.icon('lock'):'';b.setAttribute('aria-label',(b.dataset.service==='fleet'?'Fleet':'Shipyard')+(locked?', locked. '+(rank===2?'Complete the salt delivery.':'Finish a fishing watch.') :''));}}}
     if(game.events.length){notify(game.events.splice(0).join(' · '));}else if(game.contactTime&&mode==='sailing')notify(game.contact);
     if(game.port&&mode==='sailing'){mode='port';clear();setPortCamera();}
   }
@@ -97,6 +103,44 @@
   const boatArt=type=>'<canvas data-vessel="'+type+'" width="200" height="128" aria-hidden="true"></canvas>';
   const boatUse={gunboat:'Guards the convoy',trawler:'Catches fish',repair:'Repairs nearby boats',oilrig:'Extracts oil',screen:'Blasts nearby groups',battery:'Bombards groups of raiders'};
   const fittingUse={engine:'+10% speed',hold:'+8 hold per boat',guns:'+20% gun damage',hull:'+18% hull strength'};
+  function renderFleet(){
+    const list=$('fleet-roster'),scroll=list.scrollTop,focus=document.activeElement?.dataset.fleetShip;
+    $('fleet-summary').textContent=U.fleetSummary(game).label;
+    list.innerHTML=U.fleetRows(game,{filter:fleetFilter,selected:fleetSelected});
+    if(!list.querySelector('[aria-pressed="true"]')){const first=list.querySelector('[data-fleet-ship]');if(first){fleetSelected=Number(first.dataset.fleetShip);first.setAttribute('aria-pressed','true');}}
+    $('fleet-detail').hidden=!list.querySelector('[data-fleet-ship]');$('fleet-detail').innerHTML=U.fleetDetail(game,fleetSelected);$('fleet-detail').scrollTop=0;
+    for(const b of document.querySelectorAll('[data-fleet-filter]'))b.setAttribute('aria-pressed',String(b.dataset.fleetFilter===fleetFilter));
+    for(const b of document.querySelectorAll('[data-convoy-order]'))b.setAttribute('aria-pressed',String(b.dataset.convoyOrder===(game.convoyOrder||'spaced')));
+    $('fleet-orders').hidden=!!game.endgame||game.ships.length<2;
+    $('fleet-order-detail').textContent=game.endgame?'Weapons fire automatically. Workboats need to hold station to load cargo.':game.convoyOrder==='close'?'A shorter convoy follows the same checked wake. Boats still need time to gather.':'More water between boats. Every captain follows the checked wake through bends.';
+    $('fleet-recall').hidden=!game.endgame&&!game.operation;
+    $('fleet-recall').textContent=game.endgame?(game.work?'Fleet follow':'Hold here'):'Recall workboats';
+    U.vessels($('reach-fleet'),view);list.scrollTop=scroll;
+    if(focus)list.querySelector('[data-fleet-ship="'+focus+'"]')?.focus({preventScroll:true});
+  }
+  function openFleet(id=0){if(!game||!['port','sailing','service'].includes(mode))return;fleetFilter='all';fleetSelected=Number(id);$('fleet-feedback').textContent='';renderFleet();openDialog('reach-fleet','fleet');$('fleet-roster').scrollTop=0;}
+  $('fleet-open').onclick=() =>openFleet();$('harbor-fleet').onclick=()=>openFleet();
+  $('reach-fleet').onclick=e=>{
+    const b=e.target.closest('button');if(!b||b.disabled)return;
+    if(b.dataset.fleetFilter){fleetFilter=b.dataset.fleetFilter;renderFleet();$('fleet-roster').scrollTop=0;return;}
+    if(b.dataset.fleetShip){fleetSelected=Number(b.dataset.fleetShip);renderFleet();return;}
+    if(b.dataset.convoyOrder){if(game.setConvoyOrder?.(b.dataset.convoyOrder)){renderFleet();$('fleet-feedback').textContent=b.dataset.convoyOrder==='close'?'Convoy closing up.':'Convoy spacing out.';}return;}
+    const action=b.dataset.fleetAction,s=game.ships.find(s=>s.id===fleetSelected);if(!action||!s)return;
+    if(action==='locate'){
+      closeDialog('reach-fleet');if($('port-service').open)closeDialog('port-service');view.anchor=null;view.offset={x:s.x-game.player.x,y:s.y-game.player.y};view.camera={x:s.x,y:s.y};
+      if(!game.port){view.follow=true;view.targetZoom=view.stops.fleet;notify('Viewing '+s.name+'. Steer to return to the flagship.');}dirty=true;return;
+    }
+    if(action==='recall'){if(game.endgame)game.toggleWork();else game.stopWork();renderFleet();updateUI();$('fleet-feedback').textContent=game.endgame?(game.work?'Fleet holding. Workboats taking station.':'Fleet following. Work paused.'):'Workboats returning to the convoy.';return;}
+    if(action==='repair'){const cost=game.repairCost();if(game.repair()){renderFleet();updateUI();$('fleet-feedback').textContent='Fleet repaired / '+money(cost);sound?.play('repair');}return;}
+    if(action==='transfer'||action==='transfer-max'){
+      const good=$('fleet-transfer-good')?.value,target=game.ships.find(s=>s.id===Number($('fleet-transfer-target')?.value));if(!target)return;
+      const max=Math.min(s.manifest[good]||0,target.hold-R.used(target));
+      if(action==='transfer-max'){$('fleet-transfer-quantity').value=max;return;}
+      const count=Number($('fleet-transfer-quantity').value);
+      if(game.transferCargo(s.id,target.id,good,count)){renderFleet();updateUI();$('fleet-feedback').textContent='Moved '+count+' '+R.goods[good].name.toLowerCase()+' from '+s.name+' to '+target.name+'.';}
+      else $('fleet-feedback').textContent='Choose a whole number from 1 to '+max+'.';
+    }
+  };
   function tradeLimit(){
     if(tradeSide==='sell')return Math.min(1000,game.amount(good));
     let total=0,count=0,limit=Math.min(1000,game.capacity-game.cargo);
@@ -109,7 +153,7 @@
     const locked=service==='fleet'&&game.rank<2||service==='yard'&&game.rank<3;
     if(locked){
       html+='<div class="locked-service">'+U.icon('lock')+'<div><h3>'+(service==='fleet'?'Fleet locked':'Shipyard locked')+'</h3><p>'+(service==='fleet'?'Sell 8 salt at Lantern Quay.':'Finish a fishing watch at Tern Shoal.')+'</p></div><button class="reach-primary" data-job="chart">Show on chart '+U.icon('arrow')+'</button></div>';
-      if(game.repairCost())html+='<button class="repair-fleet" data-job="repair" '+(game.repairCost()>game.coins?'disabled':'')+'>Repair fleet <strong>'+money(game.repairCost())+'</strong></button>';
+      html+='<button data-job="manage">'+U.icon('fleet')+'Manage your boats</button>';if(game.repairCost())html+='<button class="repair-fleet" data-job="repair" '+(game.repairCost()>game.coins?'disabled':'')+'>Repair fleet <strong>'+money(game.repairCost())+'</strong></button>';
     }else if(service==='trade'){
       const limit=tradeLimit(),buying=tradeSide==='buy',total=game.quote(good,quantity,buying),amount=game.amount(good),available=quantity<=limit;
       const others=E.ports.filter(p=>p.id!==game.port).map(p=>({name:p.name,price:game.price(good,false,p.id)})).sort((a,b)=>b.price-a.price);
@@ -122,7 +166,7 @@
     }else if(service==='fleet'){
       html+='<nav class="service-tabs" aria-label="Fleet view"><button data-service-tab="owned" data-focus="owned" aria-pressed="'+(serviceTab==='owned')+'">Your boats · '+game.ships.length+'</button><button data-service-tab="recruit" data-focus="recruit" aria-pressed="'+(serviceTab!=='owned')+'">Add a boat</button></nav>';
       if(game.repairCost())html+='<button class="repair-fleet" data-job="repair" '+(game.repairCost()>game.coins?'disabled':'')+'>Repair fleet <strong>'+money(game.repairCost())+'</strong></button>';
-      if(serviceTab==='owned')html+='<div class="fleet-manifest">'+game.ships.map(s=>'<article class="offer">'+boatArt(s.type)+'<div><h3>'+escapeText(s.name)+'</h3><small>'+Math.ceil(s.hp/s.maxHp*100)+'% hull · '+R.used(s)+'/'+s.hold+' hold</small></div></article>').join('')+'</div>';
+      if(serviceTab==='owned')html+='<button class="reach-primary" data-job="manage">Manage boats and cargo</button><p>'+U.fleetSummary(game).label+'</p>';
       else{
         for(const k of ['trawler','gunboat','repair','oilrig','screen','battery']){const boat=R.boats[k];if(game.rank<boat.rank)continue;html+='<article class="offer">'+boatArt(k)+'<div><h3>'+boat.name+'</h3><small>'+boatUse[k]+'<br>'+boat.hold+' hold · '+boat.draft+' m draft</small></div><button data-hire="'+k+'" data-focus="hire-'+k+'" '+(game.coins<boat.cost||game.ships.length>=24?'disabled':'')+'><span>Buy boat</span><strong>'+money(boat.cost)+'</strong></button></article>';}
         if(game.rank<4)html+='<p>'+(game.rank<3?'A fishing watch unlocks tenders.':'An oil watch unlocks heavy escorts.')+'</p>';
@@ -156,8 +200,9 @@
     else if(b.dataset.upgrade){result=game.upgrade(b.dataset.upgrade);message=result?'Upgrade fitted':'';}
     else if(b.dataset.hull){result=game.changeHull(b.dataset.hull);if(result){view.poses=[];setPortCamera();}message=result?'New flagship ready':'This berth or your cargo needs a different hull.';}
     else if(b.dataset.job==='repair'){result=game.repair();message='Fleet repaired';}
+    else if(b.dataset.job==='manage'){openFleet();return;}
     else if(b.dataset.job==='chart'){closeDialog('port-service');objectiveChart();return;}
-    if(result){sound?.play('buy');}renderService();updateUI();$('service-feedback').textContent=message||'That order is unavailable.';dirty=true;
+    if(result){sound?.play('coin');}renderService();updateUI();$('service-feedback').textContent=message||'That order is unavailable.';dirty=true;
   };
   function drawChart(){
     const canvas=$('chart-map'),r=canvas.getBoundingClientRect(),ratio=Math.min(2,devicePixelRatio);
@@ -195,10 +240,15 @@
   }
   function passageTime(seconds){const format=s=>Math.floor(s/60)+':'+String(Math.round(s%60)).padStart(2,'0');return format(Math.round(seconds*.8/5)*5)+' to '+format(Math.round(seconds*1.2/5)*5);}
   for(const b of document.querySelectorAll('[data-route-policy]'))b.onclick=()=>{routePolicy=b.dataset.routePolicy;for(const other of document.querySelectorAll('[data-route-policy]'))other.setAttribute('aria-pressed',String(other===b));if(selected)selectPort(selected);};
-  function openChart(){if(!game||game.endgame)return;openDialog('reach-chart','chart');plan=null;selected=null;$('route-name').textContent='Choose a destination';$('route-detail').textContent='';$('set-course').disabled=true;$('chart-destinations').innerHTML=allDestinations().map(p=>'<button data-port="'+p.id+'">'+U.icon(p.type==='fish'?'fish':p.type==='oil'?'engine':'sail')+'<span>'+p.name+'<small>'+(p.id===game.port?'Docked here':p.type==='fish'?'Fishing':p.type==='oil'?'Oil grounds':['Sheltered','Light patrols','Fast raiders','Gunboats','Heavy patrols'][game.field.sample(p.x,p.y).region.tier])+'</small></span></button>').join('');drawChart();}
+  function openChart(){if(!game||game.endgame)return;openDialog('reach-chart','chart');plan=null;selected=null;$('route-name').textContent='Choose a destination';$('route-detail').textContent='';$('set-course').disabled=true;$('chart-destinations').innerHTML=U.destinationRows(game,allDestinations());drawChart();}
   async function selectPort(id){const destination=allDestinations().find(p=>p.id===id);if(!destination)return;selected=id;plan=null;const token=++request;$('route-name').textContent='Checking passage...';$('route-detail').textContent='';$('set-course').disabled=true;for(const b of document.querySelectorAll('[data-port]'))b.setAttribute('aria-pressed',String(b.dataset.port===id));drawChart();try{const route=await view.terrain.route({...game.routeHull(),routePolicy},destination);if(token!==request||mode!=='chart')return;plan=route;$('route-name').textContent=route?destination.name:'Shallow access';$('route-detail').textContent=route?(route.distance/1000).toFixed(1)+' km · '+passageTime(route.seconds)+' sailing · '+['Sheltered','Light patrols','Fast raiders','Gunboats','Heavy patrols'][route.tier]+(route.hazards.length?' · '+route.hazards.map(id=>id==='furnace'?'Hot water damages hulls':WidewakeWaterways.hazards.find(h=>h.id===id).name).join(', '):''):'Your fleet needs a deeper approach.';$('set-course').disabled=!route;drawChart();}catch(error){if(token===request){$('route-name').textContent='Route unavailable';$('route-detail').textContent=error.message;}}}
   function objectiveChart(){openChart();const o=game.objective(),id=o.port||o.site;if(id)selectPort(id);}
-  $('charter-chart').onclick=objectiveChart;
+  $('charter-chart').onclick=()=>{
+    const intent=U.harborIntent(game);
+    if(intent.action==='chart'){openChart();if(intent.port)selectPort(intent.port);return;}
+    service=intent.action==='recruit'?'fleet':'trade';serviceTab='recruit';good=intent.good||'salt';tradeSide=intent.side||'buy';quantity=Math.min(intent.quantity||8,Math.max(1,tradeLimit()));
+    $('service-feedback').textContent='';renderService();openDialog('port-service','service');$('service-body').scrollTop=0;
+  };
   $('chart-open').onclick=openChart;$('harbor-chart').onclick=openChart;$('chart-destinations').onclick=e=>{const b=e.target.closest('[data-port]');if(b)selectPort(b.dataset.port);};$('chart-map').onclick=e=>{const r=e.currentTarget.getBoundingClientRect(),x=e.clientX-r.x,y=e.clientY-r.y;let best=null,d=30;for(const port of allDestinations()){const p=e.currentTarget.chartPoint(port.x,port.y),distance=Math.hypot(p.x-x,p.y-y);if(distance<d){best=port;d=distance;}}if(best)selectPort(best.id);};
   $('set-course').onclick=()=>{if(!plan)return;dialogStack.length=0;game.castOff();game.setCourse(plan);$('reach-chart').close();mode='sailing';clear();sailCamera();updateUI();wake();last=accumulator=0;$('reach-water').focus({preventScroll:true});};
   function cameraMenu(open){$('camera-controls').hidden=!open;$('camera-toggle').setAttribute('aria-expanded',String(open));}
@@ -263,18 +313,18 @@
   for(const name of ['pointercancel','lostpointercapture'])document.addEventListener(name,e=>buttonTouches.delete(e.pointerId),true);
   document.addEventListener('click',e=>{if(e.isTrusted&&e.detail>0&&handledButton?.contains(e.target)){handledButton=null;e.preventDefault();e.stopImmediatePropagation();}},true);
   function back(){if(!$('camera-controls').hidden){cameraMenu(false);$('camera-toggle').focus({preventScroll:true});return;}const dialog=document.querySelector('dialog[open]');if(dialog)closeDialog(dialog.id);else if(mode==='sailing'||mode==='port')openDialog('reach-menu','menu');}
-  controller=new WidewakeController.Controller({settings:()=>settings,using:()=>usingPad,use:()=>usingPad=true,status:()=>{},connected:()=>{},lost:used=>{if(used&&mode==='sailing')openDialog('reach-menu','menu');},context:()=>({sea:mode==='sailing',port:mode==='port',scope:document.querySelector('dialog[open]')||(mode==='title'?$('title-screen'):mode==='port'?$('port-scene'):$('reach'))}),action:action=>{if(action==='back'||action==='pause')back();else if(action==='chart')openChart();else if(action==='context')contextAction();else if(action==='helm')game?.cancel?.();else if(action==='zoom-in'||action==='zoom-out')view.setZoom(view.targetZoom*(action==='zoom-in'?1.3:1/1.3));else if(action==='help')openDialog('help-dialog','menu');else if(mode==='port'&&(action==='next-tab'||action==='previous-tab'))controller.tab($('port-scene'),action==='next-tab'?1:-1);}});
-  window.addEventListener('keydown',e=>{if(e.metaKey||e.ctrlKey||e.altKey||e.target.tagName==='INPUT')return;if(e.code==='Escape'){e.preventDefault();if(!e.repeat)back();return;}if(e.code==='KeyM'&&game&&!e.repeat){e.preventDefault();mode==='chart'?closeDialog('reach-chart'):openChart();return;}if(mode!=='sailing'||e.code==='Space'&&e.target.closest('button,summary'))return;if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();if(!e.repeat&&e.code==='KeyE')contextAction();if(!e.repeat&&e.code==='KeyH')game.cancel?.();if(['Digit1','Digit2','Digit3'].includes(e.code)){view.zoomStop(['helm','fleet','survey'][Number(e.code.at(-1))-1]);updateUI();}keys.add(e.code);});window.addEventListener('keyup',e=>keys.delete(e.code));$('game').addEventListener('pointerdown',()=>usingPad=false);
-  window.addEventListener('resize',()=>{if(stickId!==null||pointers.size)clear();view?.resize();dirty=true;if(mode==='chart')drawChart();});activity.onChange(active=>{last=accumulator=0;if(!active){clear();if(mode==='sailing')openDialog('reach-menu','menu');sound?.suspend();}});window.addEventListener('widewake-activity',e=>{window.dispatchEvent(new Event(e.detail?'focus':'blur'));if(!e.detail){clear();if(mode==='sailing')openDialog('reach-menu','menu');sound?.suspend();}});
+  controller=new WidewakeController.Controller({settings:()=>settings,using:()=>usingPad,use:()=>usingPad=true,status:()=>{},connected:()=>{},lost:used=>{if(used&&mode==='sailing')openDialog('reach-menu','menu');},context:()=>({sea:mode==='sailing',port:mode==='port',scope:document.querySelector('dialog[open]')||(mode==='title'?$('title-screen'):mode==='port'?$('port-scene'):$('reach'))}),action:action=>{if(action==='back'||action==='pause')back();else if(action==='chart')openChart();else if(action==='convoy')openFleet();else if(action==='context')contextAction();else if(action==='helm')game?.cancel?.();else if(action==='zoom-in'||action==='zoom-out')view.setZoom(view.targetZoom*(action==='zoom-in'?1.3:1/1.3));else if(action==='help')openDialog('help-dialog','menu');else if(mode==='port'&&(action==='next-tab'||action==='previous-tab'))controller.tab($('port-scene'),action==='next-tab'?1:-1);}});
+  window.addEventListener('keydown',e=>{if(e.metaKey||e.ctrlKey||e.altKey||e.target.closest('input,select,textarea,[contenteditable=true]'))return;if(e.code==='Escape'){e.preventDefault();if(!e.repeat)back();return;}if(e.code==='KeyF'&&game&&!e.repeat){e.preventDefault();if(mode==='fleet')closeDialog('reach-fleet');else openFleet();return;}if(e.code==='KeyM'&&game&&!e.repeat){e.preventDefault();mode==='chart'?closeDialog('reach-chart'):openChart();return;}if(mode!=='sailing'||e.code==='Space'&&e.target.closest('button,summary'))return;if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();if(!e.repeat&&e.code==='KeyE')contextAction();if(!e.repeat&&e.code==='KeyH')game.cancel?.();if(['Digit1','Digit2','Digit3'].includes(e.code)){view.zoomStop(['helm','fleet','survey'][Number(e.code.at(-1))-1]);updateUI();}keys.add(e.code);});window.addEventListener('keyup',e=>keys.delete(e.code));$('game').addEventListener('pointerdown',()=>usingPad=false);
+  window.addEventListener('resize',()=>{if(stickId!==null||pointers.size)clear();view?.resize();if(game?.port)setPortCamera();dirty=true;if(mode==='chart')drawChart();});activity.onChange(active=>{last=accumulator=0;if(!active){clear();if(mode==='sailing')openDialog('reach-menu','menu');sound?.suspend();}});window.addEventListener('widewake-activity',e=>{window.dispatchEvent(new Event(e.detail?'focus':'blur'));if(!e.detail){clear();if(mode==='sailing')openDialog('reach-menu','menu');sound?.suspend();}});
   function frame(ms){const raw=last?(ms-last)/1000:1/60,delta=Math.min(.1,raw);last=ms;const pad=controller.update(ms/1000);
     if(mode==='title')front.draw(ms/1000,settings.reduceMotion);
-    else if(game&&view){if(mode==='sailing'&&(!view.terrain||view.terrain.cache.has('overview'))&&!view.lost){const input={throttle:E.clamp((keys.has('KeyW')||keys.has('ArrowUp')?1:0)-(keys.has('KeyS')||keys.has('ArrowDown')?1:0)-stick.y-pad.y,-1,1),steer:E.clamp((keys.has('KeyD')||keys.has('ArrowRight')?1:0)-(keys.has('KeyA')||keys.has('ArrowLeft')?1:0)+stick.x+pad.x,-1,1),boost:keys.has('ShiftLeft')||pad.boost};view.prepareSpawns();accumulator+=delta;let count=0;const stepStart=performance.now();while(accumulator>=1/60&&count<5){game.step(1/60,input);if(game.player.sea?.landAt===game.time)sound?.play('splash',{volume:Math.min(.7,.25+game.player.sea.impact*.025)});for(const cue of game.sounds){if(!sound)break;const q=view.project(cue.x,cue.y);sound.play(cue.kind==='gun'||cue.kind==='guard'?'escort-shot':cue.kind==='broadside'?'burst':cue.kind==='mortar'?'mortar-shot':cue.kind==='flak'?'flak-shot':cue.kind==='mortar-hit'?'mortar-hit':cue.kind==='repair'?'repair':cue.kind==='hurt'?'hurt':cue.kind==='impact'?'impact':'sink',{pan:E.clamp((q.x/view.width-.5)*1.6,-.8,.8),volume:.3});}accumulator-=1/60;count++;}if(count===5)accumulator=0;stepTimes[samples%600]=performance.now()-stepStart;frameTimes[samples++%600]=raw*1000;sound?.update({mode:'sea',battle:game.raiders.count>0,speed:Math.hypot(game.player.vx,game.player.vy)/game.player.speed,steam:game.player.type!=='launch',work:game.endgame?(game.workActive?'oil':null):game.operation?R.sites.find(s=>s.id===game.operation.id).type:null,paused:false});}
+    else if(game&&view){if(mode==='sailing'&&(!view.terrain||view.terrain.cache.has('overview'))&&!view.lost){const input={throttle:E.clamp((keys.has('KeyW')||keys.has('ArrowUp')?1:0)-(keys.has('KeyS')||keys.has('ArrowDown')?1:0)-stick.y-pad.y,-1,1),steer:E.clamp((keys.has('KeyD')||keys.has('ArrowRight')?1:0)-(keys.has('KeyA')||keys.has('ArrowLeft')?1:0)+stick.x+pad.x,-1,1),boost:keys.has('ShiftLeft')||pad.boost};view.prepareSpawns();accumulator+=delta;let count=0;const stepStart=performance.now();while(accumulator>=1/60&&count<5){game.step(1/60,input);if(game.player.sea?.landAt===game.time)sound?.play('splash',{volume:Math.min(.7,.25+game.player.sea.impact*.025)});for(const cue of game.sounds){if(!sound)break;const q=view.project(cue.x,cue.y);sound.play(cue.kind==='gun'||cue.kind==='guard'?'escort-shot':cue.kind==='broadside'?'burst':cue.kind==='mortar'?'mortar-shot':cue.kind==='flak'?'flak-shot':cue.kind==='mortar-hit'?'mortar-hit':cue.kind==='repair'?'repair':cue.kind==='hurt'?'hurt':cue.kind==='impact'?'impact':'sink',{pan:E.clamp((q.x/view.width-.5)*1.6,-.8,.8),volume:.3});}accumulator-=1/60;count++;}if(count===5)accumulator=0;stepTimes[samples%600]=performance.now()-stepStart;frameTimes[samples++%600]=raw*1000;sound?.update({mode:'sea',battle:game.raiders.count>0,speed:Math.hypot(game.player.vx,game.player.vy)/game.player.speed,throttle:game.player.throttle||0,load:(game.player.cargo||0)/Math.max(1,game.player.hold||1),hull:game.player.type,steam:game.player.type!=='launch',work:game.endgame?(game.workActive?'oil':null):game.operation?R.sites.find(s=>s.id===game.operation.id).type:null,paused:false});}
       else if(mode==='port')sound?.update({mode:'port',battle:false,speed:0,paused:false});
       if(mode==='sailing'||dirty||view.terrain&&!view.terrain.ready){view.render(mode==='sailing'?delta:0,mode==='sailing'?accumulator*60:1);dirty=false;}
       minimap.draw(game,ms);
       if(ms-uiTime>150){updateUI();uiTime=ms;}if(noticeUntil&&ms>noticeUntil){$('reach-notice').textContent='';noticeUntil=0;}
     }activity.requestFrame(frame);
   }
-  if(new URLSearchParams(location.search).has('test'))window.__widewakeReach={activity,minimap,get game(){return game;},get view(){return view;},get mode(){return mode;},get voyage(){return voyage;},get input(){return{keys:[...keys],stick:{...stick}};},get controller(){return controller;},step:n=>{for(let i=0;i<n;i++)game.step(1/60);dirty=true;updateUI();},metrics:()=>({version:R.version,mode,endgame:!!game?.endgame,...(game?.endgame?game.report():{}),ships:game?.ships.filter(s=>s.hp>0).length,raiders:game?game.raiders.count-game.raiders.dead:0,audioPeak:sound?.stats.peakVoices||0,stepP95:Array.from(stepTimes.subarray(0,Math.min(samples,600))).sort((a,b)=>a-b)[Math.floor(Math.min(samples,600)*.95)]||0,frameP95:Array.from(frameTimes.subarray(0,Math.min(samples,600))).sort((a,b)=>a-b)[Math.floor(Math.min(samples,600)*.95)]||0,...view?.stats})};
+  if(new URLSearchParams(location.search).has('test'))window.__widewakeReach={activity,minimap,get game(){return game;},get view(){return view;},get mode(){return mode;},get voyage(){return voyage;},get input(){return{keys:[...keys],stick:{...stick}};},get controller(){return controller;},get sound(){return sound;},refresh:()=>{dirty=true;updateUI();},step:n=>{for(let i=0;i<n;i++)game.step(1/60);dirty=true;updateUI();},metrics:()=>({version:R.version,mode,endgame:!!game?.endgame,...(game?.endgame?game.report():{}),ships:game?.ships.filter(s=>s.hp>0).length,raiders:game?game.raiders.count-game.raiders.dead:0,audioPeak:sound?.stats.peakVoices||0,stepP95:Array.from(stepTimes.subarray(0,Math.min(samples,600))).sort((a,b)=>a-b)[Math.floor(Math.min(samples,600)*.95)]||0,frameP95:Array.from(frameTimes.subarray(0,Math.min(samples,600))).sort((a,b)=>a-b)[Math.floor(Math.min(samples,600)*.95)]||0,...view?.stats})};
   refreshTitle();activity.requestFrame(frame);
 })();

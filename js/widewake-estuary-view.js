@@ -22,14 +22,14 @@
       // All water effects use this same surface, rather than the old flat plane.
       color=vec4(c,1.);}`;
   class Terrain{
-    constructor(view){this.view=view;this.cache=new Map();this.queue=[{key:'overview',x:-4096,y:-8192,size:16384,step:128}];this.pending=null;this.serial=1;this.requests=new Map();this.bytes=0;this.clock=0;this.failed=null;this.needed=[];this.props={};this.worker=new Worker('js/widewake-estuary-worker.js?v=0.40.1');this.worker.onmessage=e=>this.receive(e.data);this.worker.onerror=e=>{this.failed=e.message||'Terrain unavailable';this.onError?.(this.failed);};if(view.gl)this.restore();this.pump();}
-    restore(){const gl=this.view.gl;this.program=O.program(gl,vertex,fragment);for(const tile of this.cache.values())this.upload(tile);if(this.props)for(const batch of Object.values(this.props))batch.dispose();this.props={};this.initProps();}
+    constructor(view){this.view=view;this.cache=new Map();this.queue=[{key:'overview',x:-4096,y:-8192,size:16384,step:128}];this.pending=null;this.serial=1;this.requests=new Map();this.bytes=0;this.clock=0;this.failed=null;this.needed=[];this.props={};this.worker=new Worker('js/widewake-estuary-worker.js?v=0.41.0');this.worker.onmessage=e=>this.receive(e.data);this.worker.onerror=e=>{this.failed=e.message||'Terrain unavailable';this.onError?.(this.failed);};if(view.gl)this.restore();this.pump();}
+    restore(){const gl=this.view.gl;this.program=O.program(gl,vertex,fragment);for(const tile of this.cache.values())this.upload(tile);if(!this.view.lost)for(const batch of Object.values(this.props))batch.dispose();this.props={};this.initProps();}
     initProps(){if(!this.view.gl)return;const gl=this.view.gl;
       for(const type of ['reed','tree0','tree1','tree2','rock'])this.props[type]=new O.Batch(gl,this.view.meshes[type],1600);
-      for(const {type} of this.view.landmarks)this.props[type]=new O.Batch(gl,this.view.meshes[type],1);
+      const counts=new Map();for(const {type} of this.view.landmarks)counts.set(type,(counts.get(type)||0)+1);
+      for(const [type,count]of counts)this.props[type]=new O.Batch(gl,this.view.meshes[type],count);
       this.props.water_paddle=new O.Batch(gl,this.view.meshes.water_paddle,96);
       for(const kind of new Set(W.landmarks.map(m=>m.kind)))this.props['landmark_'+kind]=new O.Batch(gl,this.view.meshes['landmark_'+kind],32);
-      for(const port of W.ports)this.props['landing_'+port.id]=new O.Batch(gl,this.view.meshes['landing_'+port.id],1);
     }
     upload(tile){const gl=this.view.gl;tile.vao=gl.createVertexArray();tile.buffer=gl.createBuffer();gl.bindVertexArray(tile.vao);gl.bindBuffer(gl.ARRAY_BUFFER,tile.buffer);gl.bufferData(gl.ARRAY_BUFFER,tile.vertices,gl.STATIC_DRAW);for(const [index,size,offset] of [[0,3,0],[1,3,12],[2,4,24]]){gl.enableVertexAttribArray(index);gl.vertexAttribPointer(index,size,gl.FLOAT,false,40,offset);}}
     receive(data){if(data.error){this.failed=data.error;const request=this.requests.get(data.id);request?.reject(Error(data.error));this.requests.delete(data.id);this.pending=null;this.onError?.(data.error);return;}if(data.kind==='route'){const request=this.requests.get(data.id);this.requests.delete(data.id);request?.resolve(data.result);return;}
@@ -53,7 +53,6 @@
       for(const entry of this.needed){const tile=this.cache.get(entry.key);if(!tile)continue;const props=tile.props;for(let i=0;i<props.length;i+=5){if(!v.visible(props[i],props[i+1],30))continue;const kind=props[i+3];if(v.zoom<.4&&kind===0)continue;const type=kind===1?'tree'+(Math.floor(Math.abs(props[i]+props[i+1]))%3):kind===0?'reed':'rock';this.props[type].add(props[i]-v.camera.x,props[i+1]-v.camera.y,props[i+2],1,0,props[i+4],0,props[i]*.1);if(kind===1)v.shadows.batch.add(props[i]-v.camera.x,props[i+1]-v.camera.y,props[i+2]+.05,1,0,10*props[i+4],8*props[i+4],7*props[i+4]);}}
       for(const mark of W.landmarks)if(v.visible(mark.x,mark.y,150*v.zoom*v.baseScale+30))this.props['landmark_'+mark.kind].add(mark.x-v.camera.x,mark.y-v.camera.y,ground(v.battle.field,mark.x,mark.y),1,0,mark.scale);
       for(const m of W.landmarks.filter(m=>m.kind==='wheel'))if(v.visible(m.x,m.y,100*v.zoom*v.baseScale)){const base=ground(v.battle.field,m.x,m.y);for(let i=0;i<16;i++){const a=i/16*Math.PI*2+(v.reduced?0:v.visualTime*.22);this.props.water_paddle.add(m.x+Math.cos(a)*16*m.scale-v.camera.x,m.y-v.camera.y,base+(20+Math.sin(a)*16)*m.scale,1,0,m.scale);}}
-      for(const port of W.ports)if(v.visible(port.x,port.y,400*v.zoom*v.baseScale+20))this.props['landing_'+port.id].add(port.x-v.camera.x,port.y-v.camera.y,0,1,0);
       for(const part of v.landmarks){if(!v.visible(part.x,part.y,part.radius*v.zoom*v.baseScale+20))continue;this.props[part.type].add(part.x-v.camera.x,part.y-v.camera.y,0,1,0);if(part.shadow)v.shadows.batch.add(part.x-v.camera.x,part.y-v.camera.y,part.shadowZ,1,0,...part.shadow);}
       v.stats.drawCalls+=v.shadows.draw();for(const [type,batch]of Object.entries(this.props)){if(v.atlas?.entries[type])v.stats.drawCalls+=v.atlas.draw(type,batch);else{v.uniforms(v.main);v.stats.drawCalls+=batch.draw();}}v.stats.terrainBytes=this.bytes;v.stats.terrainTiles=this.cache.size;v.stats.tilesPending=this.queue.length+(this.pending?1:0);
     }
@@ -65,7 +64,6 @@
       const items=[];for(const entry of this.needed){const tile=this.cache.get(entry.key);if(!tile)continue;for(let i=0;i<tile.props.length;i+=5){const p=tile.props,x=p[i],y=p[i+1],kind=p[i+3];if(!v.visible(x,y,30)||(v.zoom<.4&&kind===0))continue;items.push({type:kind===1?'tree'+(Math.floor(Math.abs(x+y))%3):kind===0?'reed':'rock',x,y,z:p[i+2],scale:p[i+4]});}}
       for(const mark of W.landmarks)if(v.visible(mark.x,mark.y,150*v.zoom*v.baseScale+30))items.push({type:'landmark_'+mark.kind,x:mark.x,y:mark.y,z:ground(v.battle.field,mark.x,mark.y),scale:mark.scale});
       for(const m of W.landmarks.filter(m=>m.kind==='wheel'))if(v.visible(m.x,m.y,100*v.zoom*v.baseScale)){const base=ground(v.battle.field,m.x,m.y);for(let i=0;i<16;i++){const a=i/16*Math.PI*2+(v.reduced?0:v.visualTime*.22);items.push({type:'water_paddle',x:m.x+Math.cos(a)*16*m.scale,y:m.y,z:base+(20+Math.sin(a)*16)*m.scale,scale:m.scale});}}
-      for(const port of W.ports)if(v.visible(port.x,port.y,400*v.zoom*v.baseScale+20))items.push({type:'landing_'+port.id,x:port.x,y:port.y,z:0,scale:1});
       for(const part of v.landmarks)if(v.visible(part.x,part.y,part.radius*v.zoom*v.baseScale+20))items.push({type:part.type,x:part.x,y:part.y,z:0,scale:1});items.sort((a,b)=>a.x+a.y-b.x-b.y);for(const item of items)v.paintSprite(item.type,0,item.x,item.y,item.scale,item.z);
       v.stats.terrainBytes=this.bytes;v.stats.terrainTiles=this.cache.size;v.stats.tilesPending=this.queue.length+(this.pending?1:0);
     }

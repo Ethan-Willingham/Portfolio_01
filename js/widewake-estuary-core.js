@@ -29,6 +29,30 @@
       for(let j=0;j<steps;j++){const t=j/steps;result.push({x:spline(a[0],b[0],c[0],d[0],t),y:spline(a[1],b[1],c[1],d[1],t),width:b[2]+(c[2]-b[2])*t,depth:b[3]+(c[3]-b[3])*t,channel:channel.id});}}
     const last=n.at(-1);result.push({x:last[0],y:last[1],width:last[2],depth:last[3],channel:channel.id});return result;
   }
+  // Harbor foundations use the actual bank, not a guessed radius around the
+  // destination marker. Navigation, terrain preparation and artwork share this
+  // small plan, including any shoreward extension of an existing pier.
+  let harborSurvey;
+  function harborSites(field){return ports.map(port=>{
+    const angle=port.theme?port.shoreAngle+Math.PI:port.id==='reeds'?Math.PI:-Math.PI/2,nx=Math.cos(angle),ny=Math.sin(angle),tx=-ny,ty=nx;
+    const local=(u,v)=>({x:port.x+nx*u+tx*v,y:port.y+ny*u+ty*v});
+    function bank(v){let previous=0;for(let u=8;u<=624;u+=8){const q=local(u,v);if(field.sample(q.x,q.y).edge<=-.3){let lo=previous,hi=u;for(let i=0;i<10;i++){const mid=(lo+hi)/2,p=local(mid,v);if(field.sample(p.x,p.y).edge<=-.3)hi=mid;else lo=mid;}return hi;}previous=u;}return 624;}
+    const distance=bank(0),origin=local(distance,0),banks=new Map([[0,distance]]),point=(u,v)=>{let d=banks.get(v);if(d===undefined){d=bank(v);banks.set(v,d);}return local(d+u,v);},shore=[];
+    const half=port.id==='reeds'?13:port.theme?46:port.id==='mill'?57:52;
+    for(let v=-half;v<=half+.1;v+=half/8){const u=bank(v),q=local(u,v);shore.push({...q,u:u-distance,v});}
+    const connections=[];
+    for(const p of port.piers){const ax=p.alongY?0:1,ay=p.alongY?1:0;if(Math.abs(ax*nx+ay*ny)<.9)continue;const sign=ax*nx+ay*ny<0?-1:1,ex=p.x+ax*sign*p.length/2,ey=p.y+ay*sign*p.length/2,u=ex*nx+ey*ny,v=ex*tx+ey*ty;
+      // The root overlaps dry soil. No new quay reaches into the sailing lane.
+      const length=Math.max(0,bank(v)+4-u);if(length>.1)connections.push({x:ex+nx*length/2,y:ey+ny*length/2,length,width:p.width,alongY:p.alongY});
+    }
+    const yards=(port.id==='reeds'?[[12,0,14,12]]:[[32,-23,25,16],[34,25,24,17],[12,0,16,42],...(port.theme?[[55,0,18,18]]:[])]).map(([u,v,hx,hy])=>({...point(u,v),hx,hy,nx,ny}));
+    const road={...point(port.id==='reeds'?22:66,0),hx:port.id==='reeds'?22:60,hy:port.id==='reeds'?2.3:3.7,nx,ny};
+    const focus=point(port.id==='reeds'?5:14,0);
+    return{id:port.id,port,nx,ny,tx,ty,angle,distance,origin,shore,connections,yards,road,focus,point};
+  });}
+  function harborDistance(h,x,y){const dx=x-h.x,dy=y-h.y;return Math.max(Math.abs(dx*h.nx+dy*h.ny)-h.hx,Math.abs(-dx*h.ny+dy*h.nx)-h.hy);}
+  function harborGrade(harbors,x,y){let distance=Infinity,road=Infinity;for(const h of harbors){for(const p of h.yards)distance=Math.min(distance,harborDistance(p,x,y));const d=harborDistance(h.road,x,y);distance=Math.min(distance,d);road=Math.min(road,d);}return{distance,road};}
+  function bankHeight(edge,x,y,harbors){const natural=Math.min(7,.8-edge*.055),blend=clamp(harborGrade(harbors,x,y).distance/13,0,1);return 1.2+(natural-1.2)*blend;}
   class Field{
     constructor(){this.time=0;this.segments=[];this.grid=new Map();this.paths=channels.map(c=>({...c,points:samples(c)}));this.nodes=[];this.obstacles=ports.flatMap(port=>port.piers.map(p=>({x:port.x+p.x,y:port.y+p.y,hx:(p.alongY?p.width:p.length)*.5,hy:(p.alongY?p.length:p.width)*.5})));
       const junctions=new Map();
@@ -42,6 +66,8 @@
         for(let i=1;i<path.points.length;i++){const a=path.points[i-1],b=path.points[i],dx=b.x-a.x,dy=b.y-a.y,d2=dx*dx+dy*dy,r=Math.max(a.width,b.width)+24,segment={a,b,dx,dy,d2,id:path.id},index=this.segments.length;this.segments.push(segment);
           for(let y=Math.floor((Math.min(a.y,b.y)-r)/256);y<=Math.floor((Math.max(a.y,b.y)+r)/256);y++)for(let x=Math.floor((Math.min(a.x,b.x)-r)/256);x<=Math.floor((Math.max(a.x,b.x)+r)/256);x++){const key=x+','+y;let bucket=this.grid.get(key);if(!bucket)this.grid.set(key,bucket=[]);bucket.push(index);}}
       }
+      this.harbors=harborSurvey||(harborSurvey=harborSites(this));
+      for(const h of this.harbors)for(const p of h.connections)this.obstacles.push({x:h.port.x+p.x,y:h.port.y+p.y,hx:(p.alongY?p.width:p.length)*.5,hy:(p.alongY?p.length:p.width)*.5});
     }
     sample(x,y,out={}){
       const shore=1280+Math.sin(x*.0017)*90+Math.sin(x*.0041)*32,sea=y-shore;
@@ -128,5 +154,5 @@
     }
     report(){const s=this.player;return{type:s.type,x:s.x,y:s.y,distance:this.distance,depth:this.water.depth,clearance:this.field.clearance(s),salinity:this.water.salinity,contact:this.contact,route:this.route?.destination.id||null,arrived:this.arrived?.id||null,visited:[...this.visited]};}
   }
-  const api={Field,Navigation,vessels,ports,channels,bounds,noise,clamp};root.WidewakeEstuary=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
+  const api={Field,Navigation,vessels,ports,channels,bounds,noise,clamp,harborSites,harborGrade,bankHeight};root.WidewakeEstuary=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

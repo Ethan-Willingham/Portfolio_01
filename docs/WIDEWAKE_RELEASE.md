@@ -1,5 +1,42 @@
 # Widewake production goal
 
+## Integrated harbors and fleet decisions, 2026-10-25 (v0.41.0)
+
+The owner's next pass requests ports that belong to the terrain, a satisfying
+main-boat sound, manageable large fleets and clearer actions without directional
+arrows. This pass surveys each port's actual bank, relocates floating structures
+onto dry ground, and connects decks, quays, graded yards and roads. Detailed split
+sprites replace the seven later ports' coarse combined models. Pier roots share
+their physical footprint with navigation. Waterway depths remain unchanged.
+
+An on-demand Fleet desk now works from every harbor and while sailing. Grouped
+roles, attention/workboat/escort filters and selected details scale to 24 boats.
+It provides actual camera location, convoy spacing, workboat recall, dockside
+whole-unit cargo transfers and the existing paid fleet repair. Endgame exposes
+its existing hold/follow behavior. Decisions pause the voyage and clear held
+helm input. Keyboard focus returns to the opener or the sailing canvas.
+
+Harbor actions now adapt to missing cargo, partial deliveries, receiving ports
+and missing workboats. The selected action opens the appropriate trade order,
+recruitment or route, leaving purchases and departure under player control.
+The chart retains optional destinations and identifies the next voyage. A
+pre-existing launch ETA used manual top speed instead of crew cruise speed;
+its estimate now reflects the actual journey.
+
+The main boat has a fixed layered motor and propeller graph. Its firing loop is
+generated once, rather than scheduling a voice per cylinder or per boat.
+Throttle, hull weight, cargo and coasting change the sound smoothly. Audio
+checks render launch and heavy-hull listening samples, measure finite unclipped
+output, and cover mute, scene changes, suspension, combat mixing and disposal.
+The tests do not establish subjective listening quality.
+
+The focused browser flow completes the first salt delivery through real buttons,
+transfers real cargo, changes orders, finds boats and filters all 24 endgame
+boats at desktop and landscape-phone sizes. Regression checks cover connected
+trade/fishing/oil voyages, all adjacent waterways in both directions, physical
+convoy arrivals, interface targets, session boundaries and harbor rendering.
+Physical-device performance and unassisted human play remain release work.
+
 ## Regional water X-shape correction, 2026-10-23 (v0.40.1)
 
 Reproduced the sharp crosses in the main channel and isolated them to the
