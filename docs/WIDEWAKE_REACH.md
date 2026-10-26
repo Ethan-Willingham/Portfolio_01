@@ -1,5 +1,13 @@
 # Bracken Reach, the playable world
 
+## Persistent build and FPS display, 2026-10-25 (v0.43.1)
+
+A small bottom-left readout shows the current build and measured animation-frame
+rate across the title, harbor, sailing, combat and dialogs. It samples the existing
+activity-controlled frame loop, updates about every 750 ms and resets after
+inactivity. Dialogs carry the same readout above their backdrops. It has no input
+target or additional frame or timer scheduling.
+
 ## Hull collisions, sinking and attack pressure, 2026-10-25 (v0.43.0)
 
 The owner's latest combat direction supersedes the previous standoff orbit and

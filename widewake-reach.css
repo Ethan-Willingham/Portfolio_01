@@ -1,6 +1,8 @@
 /* Widewake's working interface: ink, sailcloth and quiet instruments.
    All rules stay outside the owner-approved title screen. */
 .ww-game button{min-height:44px}
+.ww-performance{position:fixed;left:max(12px,env(safe-area-inset-left));bottom:calc(1px + env(safe-area-inset-bottom));z-index:100;pointer-events:none;user-select:none;white-space:nowrap;padding:0 4px;background:#102934c9;color:#c4d2c7;font:9px/12px var(--font-mono);font-variant-numeric:tabular-nums;letter-spacing:0}
+body:has(dialog[open]) #game-performance{visibility:hidden}
 #reach,.reach-dialog{--paper:#dedbc3;--paper-light:#ece7d2;--ink:#203a45;--ink-soft:#52656a;--salt:#f0e9cf;--brass:#d7b876;--sea-ink:#102934;--seam:#8e9b9270;--warning:#ecaa7c}
 #reach{position:absolute;inset:0;isolation:isolate;overflow:hidden;color:var(--salt)}
 #reach-water,.ww-ocean-overlay{position:absolute;inset:0;width:100%;height:100%;display:block;image-rendering:auto;touch-action:none;outline:none}.ww-ocean-overlay{pointer-events:none}
