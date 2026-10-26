@@ -1,0 +1,216 @@
+{
+    "generatedUtc": "2026-10-26T00:08:13.9344220Z",
+    "unityVersion": "6000.3.27f1",
+    "method": "Isolated PhysX at the production 0.005 second timestep. Saved forklift, pallet, cargo and rack prefabs. Pickup, carrying and release use actual contacts; no load parenting, attached carrying joints or pose writes after initial placement.",
+    "passed": true,
+    "checks": [
+        {
+            "name": "held stationary mouse cannot drive or lift",
+            "passed": true,
+            "expectation": "Holding X without mouse movement leaves the truck and forks stationary; release and a long interrupted frame send no valve command.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "stationary held-X fork movement",
+                    "value": 0.00015686452388763428,
+                    "units": "m"
+                },
+                {
+                    "name": "stationary held-X truck movement",
+                    "value": 0.00012492081441450864,
+                    "units": "m"
+                },
+                {
+                    "name": "released X with moving mouse valve",
+                    "value": 0.0,
+                    "units": "input"
+                },
+                {
+                    "name": "long interrupted frame valve",
+                    "value": 0.0,
+                    "units": "input"
+                }
+            ]
+        },
+        {
+            "name": "direct mouse lift at 30 frames per second",
+            "passed": true,
+            "expectation": "The same mouse speed raises and lowers through the existing hydraulics at this render cadence. A stationary mouse closes the valve and no driving intent is generated.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "height drift with held stationary mouse",
+                    "value": 0.009313583374023438,
+                    "units": "m"
+                },
+                {
+                    "name": "physical rise from upward mouse movement",
+                    "value": 0.6066981554031372,
+                    "units": "m"
+                },
+                {
+                    "name": "physical lowering from downward mouse movement",
+                    "value": 0.2676878571510315,
+                    "units": "m"
+                },
+                {
+                    "name": "truck movement without WASD",
+                    "value": 0.00017801683861762285,
+                    "units": "m"
+                }
+            ]
+        },
+        {
+            "name": "direct mouse lift at 60 frames per second",
+            "passed": true,
+            "expectation": "The same mouse speed raises and lowers through the existing hydraulics at this render cadence. A stationary mouse closes the valve and no driving intent is generated.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "height drift with held stationary mouse",
+                    "value": 0.009313583374023438,
+                    "units": "m"
+                },
+                {
+                    "name": "physical rise from upward mouse movement",
+                    "value": 0.6066981554031372,
+                    "units": "m"
+                },
+                {
+                    "name": "physical lowering from downward mouse movement",
+                    "value": 0.2676878571510315,
+                    "units": "m"
+                },
+                {
+                    "name": "truck movement without WASD",
+                    "value": 0.00017801683861762285,
+                    "units": "m"
+                }
+            ]
+        },
+        {
+            "name": "direct mouse lift at 120 frames per second",
+            "passed": true,
+            "expectation": "The same mouse speed raises and lowers through the existing hydraulics at this render cadence. A stationary mouse closes the valve and no driving intent is generated.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "height drift with held stationary mouse",
+                    "value": 0.009313583374023438,
+                    "units": "m"
+                },
+                {
+                    "name": "physical rise from upward mouse movement",
+                    "value": 0.6066981554031372,
+                    "units": "m"
+                },
+                {
+                    "name": "physical lowering from downward mouse movement",
+                    "value": 0.2676878571510315,
+                    "units": "m"
+                },
+                {
+                    "name": "truck movement without WASD",
+                    "value": 0.00017801683861762285,
+                    "units": "m"
+                }
+            ]
+        },
+        {
+            "name": "mouse-controlled working-load pickup and setdown",
+            "passed": true,
+            "expectation": "After direct physical pocket insertion, mouse movement lifts and lowers an independent working load. Stopping the mouse holds it; normal driving carries it through contact.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "initial gap from fork tips to pallet",
+                    "value": 0.44985079765319826,
+                    "units": "m"
+                },
+                {
+                    "name": "actual fork top at entry",
+                    "value": 0.07853691279888153,
+                    "units": "m"
+                },
+                {
+                    "name": "actual pocket lower surface",
+                    "value": 0.015875007957220079,
+                    "units": "m"
+                },
+                {
+                    "name": "actual pocket upper surface",
+                    "value": 0.10477499663829804,
+                    "units": "m"
+                },
+                {
+                    "name": "pallet displacement before lift",
+                    "value": 2.4131611553457335e-7,
+                    "units": "m"
+                },
+                {
+                    "name": "actual tine penetration beyond pallet front",
+                    "value": 1.0260162353515626,
+                    "units": "m"
+                },
+                {
+                    "name": "working load mouse lift",
+                    "value": 0.5179921388626099,
+                    "units": "m"
+                },
+                {
+                    "name": "setdown drift after fork withdrawal",
+                    "value": 5.010580821362964e-7,
+                    "units": "m"
+                }
+            ]
+        },
+        {
+            "name": "mouse control retains overload force limit",
+            "passed": true,
+            "expectation": "Upward mouse movement cannot bypass the finite hydraulic force when lifting a 3500 kg independent package.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "initial gap from fork tips to pallet",
+                    "value": 0.44985079765319826,
+                    "units": "m"
+                },
+                {
+                    "name": "actual fork top at entry",
+                    "value": 0.07853704690933228,
+                    "units": "m"
+                },
+                {
+                    "name": "actual pocket lower surface",
+                    "value": 0.015875156968832017,
+                    "units": "m"
+                },
+                {
+                    "name": "actual pocket upper surface",
+                    "value": 0.10477490723133087,
+                    "units": "m"
+                },
+                {
+                    "name": "pallet displacement before lift",
+                    "value": 0.0000029033674309175696,
+                    "units": "m"
+                },
+                {
+                    "name": "actual tine penetration beyond pallet front",
+                    "value": 1.0260205268859864,
+                    "units": "m"
+                },
+                {
+                    "name": "heavy load rise under mouse command",
+                    "value": -0.000001601874828338623,
+                    "units": "m"
+                },
+                {
+                    "name": "bounded hydraulic pressure",
+                    "value": 1.0,
+                    "units": "fraction"
+                }
+            ]
+        }
+    ]
+}

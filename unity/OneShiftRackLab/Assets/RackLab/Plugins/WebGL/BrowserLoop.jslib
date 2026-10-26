@@ -5,5 +5,13 @@ mergeInto(LibraryManager.library, {
     // These do not replace window.requestAnimationFrame or browser timers.
     Module['pauseMainLoop'] = _emscripten_pause_main_loop;
     Module['resumeMainLoop'] = _emscripten_resume_main_loop;
+  },
+  OneShiftReportPlayerStats: function (version, framesPerSecond, longestFrameMs, frameCount) {
+    if (typeof Module['onOneShiftStats'] === 'function')
+      Module['onOneShiftStats'](version, framesPerSecond, longestFrameMs, frameCount);
+  },
+  OneShiftReportGraphicsPreparation: function (completed, total, ready) {
+    if (typeof Module['onOneShiftPreparation'] === 'function')
+      Module['onOneShiftPreparation'](completed, total, ready);
   }
 });

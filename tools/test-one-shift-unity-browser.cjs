@@ -18,6 +18,7 @@ const server = http.createServer((req, res) => {
 const loader = `window.createUnityInstance = function(canvas, config, progress) {
   window.unityConfig = config;
   window.unityCalls = [];
+  window.reportUnityProgress = progress;
   progress(.42);
   return new Promise(function(resolve) {
     window.finishUnityLoad = function() {
@@ -30,7 +31,10 @@ const checks = [];
 function check(name, value) { assert.ok(value, name); checks.push(name); console.log('PASS ' + name); }
 const calls = page => page.evaluate(() => window.unityCalls.slice());
 async function clearCalls(page) { await page.evaluate(() => { window.unityCalls.length = 0; }); }
-async function finish(page) { await page.evaluate(() => window.finishUnityLoad()); await page.waitForSelector('#warehouse-tools', {state:'visible'}); }
+async function finish(page) {
+  await page.evaluate(() => { unityConfig.onOneShiftPreparation(7, 7, 1); finishUnityLoad(); });
+  await page.waitForSelector('#warehouse-tools', {state:'visible'});
+}
 async function realSmoke(browser, url) {
   const sharp = require('sharp');
   const context = await browser.newContext({viewport:{width:1280,height:720}, deviceScaleFactor:Number(process.env.SHIFT_TEST_DPR || 2)});
@@ -104,10 +108,25 @@ async function realSmoke(browser, url) {
     const before = await state();
     return keyUntil(key, label, current => current.frameCount >= before.frameCount + 3 && predicate(current));
   }
-  function guideComplete(current) {
-    if (!current.forkliftAssistActive && /pallet moved|blocked|too heavy|not enough room|guide stopped/i.test(current.forkliftAssistStatus || ''))
-      throw new Error('Fork guide stopped: ' + current.forkliftAssistStatus + ' ' + JSON.stringify(current));
-    return current.forkliftAssistStage === 'Complete';
+  let mouseX = 600, mouseY = 400;
+  async function mouseLiftUntil(direction, label, predicate, timeout = 15000) {
+    const deadline = Date.now() + timeout;
+    await page.keyboard.down('x');
+    try {
+      let current;
+      do {
+        // Native relative pointer events, paced across rendered frames. No
+        // controller calls or keyboard hydraulic fallback satisfy this test.
+        for (let i = 0; i < 8; i++) {
+          mouseY -= direction * 12;
+          await page.mouse.move(mouseX, mouseY);
+          await delay(20);
+        }
+        current = await state();
+        if (predicate(current)) return current;
+      } while (Date.now() < deadline);
+      throw new Error(label + ' timed out: ' + JSON.stringify(current));
+    } finally { await page.keyboard.up('x'); }
   }
   async function animationCallbacks() {
     const cdp = await context.newCDPSession(page);
@@ -143,6 +162,9 @@ async function realSmoke(browser, url) {
     await page.bringToFront();
     await page.locator('#warehouse-canvas').focus();
     const initial = await state();
+    check('REAL: Compiled player reports version 6 and SMAA', initial.buildVersion === 6 && initial.cameraAntialiasing === 'SubpixelMorphologicalAntiAliasing' && initial.pipelineMsaaSamples === 2);
+    await page.waitForFunction(() => document.getElementById('warehouse-stats').dataset.buildVersion === '6' && Number(document.getElementById('warehouse-stats').dataset.fps) > 0);
+    check('REAL: Small FPS counter receives completed player frames', await page.locator('#warehouse-stats').isVisible());
     check('REAL: Warehouse begins with a four-pallet delivery and closed receiving doors', initial.receivingTotal === 4 && initial.receivingPhase === 'Arriving' && !initial.receivingDoorsOpen);
     check('REAL: Walking and running use the faster starting speeds', Math.abs(initial.playerWalkSpeed - 2.8) < .01 && Math.abs(initial.playerRunSpeed - 5.4) < .01);
     check('REAL: Initial clock starts before sunrise', initial.hour >= 4.5 && initial.hour < 6);
@@ -189,7 +211,7 @@ async function realSmoke(browser, url) {
       viewport:await page.evaluate(() => { const c = document.getElementById('warehouse-canvas'); return {width:c.width,height:c.height,devicePixelRatio}; })};
     fs.writeFileSync(path.join(dump, 'unity-real-performance.json'), JSON.stringify(performanceReport, null, 2));
     console.log('PERFORMANCE ' + JSON.stringify(performanceReport));
-    check('REAL: Smooth mode bounds the actual Retina drawing buffer', performanceReport.viewport.width * performanceReport.viewport.height <= 1600 * 900);
+    check('REAL: Smooth mode bounds the actual Retina drawing buffer', performanceReport.viewport.width * performanceReport.viewport.height <= 1920 * 1080);
     const deliveryReady = await pollState('Truck parks and opens its receiving doors', current => current.receivingDoorsOpen, 30000);
     // The loader can resolve before MonoBehaviour.Start moves the parked
     // authoring pose into its arrival lane. Compare two running physics states.
@@ -267,27 +289,31 @@ async function realSmoke(browser, url) {
       forkliftStates.approachDock = await keyUntil('w', 'Creep along the receiving aisle', current => current.forkliftPosition[2] > 9.6, 45000);
     } finally { await page.keyboard.up('Shift'); }
     await keyUntil('Space', 'Stop before the first pallet', current => Math.abs(current.forkliftSignedSpeed) < .04);
-    await pollState('Release brake before fork guide', current => current.forkliftThrottle === 0);
-    const palletBeforeGuide = (await state()).receivingFirstPallet;
-    const assistBeforeRelease = await keyUntil('x', 'Start a held fork approach', current => current.forkliftAssistStage === 'Approach' && current.forkliftThrottle > 0, 20000);
-    const assistReleased = await pollState('Release X to brake and clear the guide', current => current.frameCount >= assistBeforeRelease.frameCount + 6 && !current.forkliftAssistActive && Math.abs(current.forkliftSignedSpeed) < .05 && current.forkliftLiftInput === 0);
-    check('REAL: Releasing X stops guided approach without moving the pallet', distance(assistBeforeRelease.forkliftPosition, assistReleased.forkliftPosition) < .2 && distance(palletBeforeGuide, assistReleased.receivingFirstPallet) < .03);
+    await pollState('Release brake before mouse control', current => current.forkliftThrottle === 0);
+    const beforeMouse = await state();
+    const palletBeforeGuide = beforeMouse.receivingFirstPallet;
     await page.keyboard.down('x');
     try {
-      await pollState('Restart the held guide before parking', current => current.forkliftAssistActive);
-      const parkedGuide = await pressForFrames('f', 'Parking brake cancels the held guide', current => current.forkliftParked && !current.forkliftAssistActive);
-      const stillParkedGuide = await pollState('Holding X cannot undo the parking brake', current => current.frameCount >= parkedGuide.frameCount + 8);
-      check('REAL: F cancels the guide and stays parked while X remains held', stillParkedGuide.forkliftParked && !stillParkedGuide.forkliftAssistActive && stillParkedGuide.forkliftThrottle === 0);
+      const heldStill = await pollState('Hold X with the mouse still', current => current.forkliftForkViewActive && current.frameCount > beforeMouse.frameCount + 30);
+      check('REAL: Held X alone neither drives nor raises the forklift', heldStill.forkliftThrottle === 0 && heldStill.forkliftMouseLiftInput === 0 && Math.abs(heldStill.forkliftLiftHeight - beforeMouse.forkliftLiftHeight) < .02 && distance(heldStill.forkliftPosition, beforeMouse.forkliftPosition) < .06);
+      await capture('unity-real-fork-placement-through-mast');
+      await page.keyboard.down('Shift');
+      try { forkliftStates.inserted = await keyUntil('w', 'Position forks manually inside the first pallet', current => current.forkliftPosition[2] > 12.31, 30000); }
+      finally { await page.keyboard.up('Shift'); }
+      await keyUntil('Space', 'Stop with forks inserted', current => Math.abs(current.forkliftSignedSpeed) < .04);
+      const inserted = await state();
+      check('REAL: WASD remains manual while X reveals the actual pallet and forks', inserted.forkliftForkViewActive && inserted.forkliftForkViewTarget.length > 0 && inserted.forkliftMouseLiftInput === 0);
+      await capture('unity-real-forks-in-pallet');
     } finally { await page.keyboard.up('x'); }
-    const guideKeyReleased = await state();
-    await pollState('Observe a fresh guide-key release', current => current.frameCount >= guideKeyReleased.frameCount + 3);
-    forkliftStates.guidedPickup = await keyUntil('x', 'Guide forks into the delivery pallet and lift through contact', guideComplete, 45000);
-    check('REAL: Held X lifts the actual delivery pallet clear within the trailer roof', forkliftStates.guidedPickup.receivingFirstPallet[1] > palletBeforeGuide[1] + .08 && !forkliftStates.guidedPickup.forkliftAssistActive);
+    forkliftStates.mousePickup = await mouseLiftUntil(1, 'Mouse up raises the pallet through contact', current => current.receivingFirstPallet[1] > palletBeforeGuide[1] + .10 && current.forkliftLiftHeight > .28);
+    const releasedMouse = await pollState('Releasing X clears the hydraulic input', current => !current.forkliftAssistActive && current.forkliftLiftInput === 0);
+    const restingMouse = await pollState('Forks hold after releasing X', current => current.frameCount > releasedMouse.frameCount + 30);
+    check('REAL: Mouse up physically lifts the delivery pallet and release holds it', Math.abs(restingMouse.forkliftLiftHeight - releasedMouse.forkliftLiftHeight) < .03 && restingMouse.receivingFirstPallet[1] > palletBeforeGuide[1] + .08);
     await capture('unity-real-first-pallet-lifted');
     forkliftStates.unloaded = await keyUntil('s', 'Reverse the pallet into the warehouse', current => current.receivingUnloaded > 0 && current.forkliftPosition[2] < 7, 30000);
     await keyUntil('Space', 'Stop with the pallet on the forks', current => Math.abs(current.forkliftSignedSpeed) < .04);
-    forkliftStates.guidedSetdown = await keyUntil('x', 'Lower the pallet to the receiving floor', current => guideComplete(current) && current.receivingFirstPallet[1] < .08, 30000);
-    const floorPallet = forkliftStates.guidedSetdown.receivingFirstPallet;
+    forkliftStates.mouseSetdown = await mouseLiftUntil(-1, 'Mouse down lowers the pallet to the receiving floor', current => current.forkliftLiftHeight < .09 && current.receivingFirstPallet[1] < .08);
+    const floorPallet = forkliftStates.mouseSetdown.receivingFirstPallet;
     forkliftStates.withdraw = await keyUntil('s', 'Withdraw from the grounded pallet', current => current.forkliftPosition[2] < 4.5, 15000);
     await keyUntil('Space', 'Stop after unloading', current => Math.abs(current.forkliftSignedSpeed) < .04);
     check('REAL: Set-down cargo stays on the warehouse floor after fork withdrawal', distance((await state()).receivingFirstPallet, floorPallet) < .12);
@@ -449,17 +475,45 @@ let browser;
   check('Progress reports the actual loader callback', await page.locator('#warehouse-progress').getAttribute('value') === '42');
   check('Compressed fallback URLs share the release version', await page.evaluate(() => {
     const urls = ['dataUrl','frameworkUrl','codeUrl'].map(key => new URL(unityConfig[key], location.href));
-    return urls.every(url => url.pathname.endsWith('.unityweb') && url.searchParams.get('v')) && new Set(urls.map(url => url.searchParams.get('v'))).size === 1;
+    return urls.every(url => url.pathname.endsWith('.unityweb') && url.searchParams.get('v') === '6');
   }));
   check('Retina rendering starts within the Smooth pixel budget', await page.evaluate(() => {
     const canvas = document.getElementById('warehouse-canvas');
     return devicePixelRatio === 2 && unityConfig.matchWebGLToCanvasSize === false &&
-      canvas.width === 1440 && canvas.height === 900 && canvas.width * canvas.height <= 1600 * 900;
+      canvas.width === 1800 && canvas.height === 1125 && canvas.width * canvas.height <= 1920 * 1080;
   }));
-  await finish(page);
+  await page.evaluate(() => finishUnityLoad());
+  await page.waitForFunction(() => unityCalls.includes('BrowserLifecycle:SetBrowserActive:1'));
+  check('Loader promise alone cannot reveal an unprepared game',
+    await page.locator('#warehouse-launcher').isVisible() && await page.locator('#warehouse-tools').isHidden());
+  await page.evaluate(() => { unityConfig.onOneShiftPreparation(2, 7, 0); reportUnityProgress(1); });
+  check('Preparation progress stays truthful after late download callbacks',
+    await page.locator('#warehouse-progress').getAttribute('value') === '29' &&
+    (await page.locator('#warehouse-load-status').innerText()) === 'Preparing graphics... 2 of 7' &&
+    await page.locator('#warehouse-launcher').isVisible());
+  await clearCalls(page);
+  await page.evaluate(() => dispatchEvent(new Event('blur')));
+  check('Blur suspends both schedulers while graphics are preparing',
+    JSON.stringify(await calls(page)) === JSON.stringify(['BrowserLifecycle:SetBrowserActive:0','monitor:false','loop:pause']));
+  await clearCalls(page);
+  await page.evaluate(() => unityConfig.onOneShiftPreparation(7, 7, 1));
+  check('Preparation completion while blurred cannot resume gameplay',
+    await page.locator('#warehouse-launcher').isHidden() && (await calls(page)).length === 0);
+  await page.evaluate(() => dispatchEvent(new Event('focus')));
+  check('Prepared game resumes only when browser activity returns',
+    JSON.stringify(await calls(page)) === JSON.stringify(['monitor:true','loop:resume','BrowserLifecycle:SetBrowserActive:1']));
+  await page.evaluate(() => unityConfig.onOneShiftStats(17, 59.8, 22.4, 120));
+  check('Version and FPS come from the compiled-player callback', await page.evaluate(() => {
+    const stats = document.getElementById('warehouse-stats');
+    return stats.textContent === 'v17 | 60 FPS' && stats.dataset.buildVersion === '17' &&
+      stats.dataset.fps === '59.8' && stats.dataset.frameCount === '120' &&
+      stats.dataset.longestFrameMs === '22.4' && stats.title === 'Longest frame: 22 ms';
+  }));
+  await page.evaluate(() => unityConfig.onOneShiftStats(6, 59.8, 22.4, 120));
   await clearCalls(page);
   await page.locator('#warehouse-pause').click();
   check('Pause suspends Unity before its schedulers', JSON.stringify(await calls(page)) === JSON.stringify(['BrowserLifecycle:SetBrowserActive:0','monitor:false','loop:pause']));
+  check('Paused stats do not display the old running frame rate', await page.locator('#warehouse-stats').innerText() === 'v6 | Paused');
   await clearCalls(page);
   await page.evaluate(() => { dispatchEvent(new Event('blur')); dispatchEvent(new Event('focus')); });
   check('Focus changes preserve manual pause', (await calls(page)).length === 0 && await page.locator('#warehouse-paused').isVisible());
@@ -492,16 +546,16 @@ let browser;
   await clearCalls(page);
   await page.locator('#warehouse-quality').selectOption('smooth');
   await page.setViewportSize({width:3024,height:1964});
-  await page.waitForFunction(() => document.getElementById('warehouse-canvas').width !== 1440);
+  await page.waitForFunction(() => document.getElementById('warehouse-canvas').width !== 1800);
   check('Large windows retain the pixel budget and aspect ratio', await page.evaluate(() => {
     const canvas = document.getElementById('warehouse-canvas');
-    return canvas.width * canvas.height <= 1600 * 900 &&
+    return canvas.width * canvas.height <= 1920 * 1080 &&
       Math.abs(canvas.width / canvas.height - innerWidth / innerHeight) < .002;
   }));
   check('Changing picture quality and size cannot undo manual pause',
     await page.locator('#warehouse-paused').isVisible() && (await calls(page)).length === 0);
   await page.setViewportSize({width:1440,height:900});
-  await page.waitForFunction(() => document.getElementById('warehouse-canvas').width === 1440);
+  await page.waitForFunction(() => document.getElementById('warehouse-canvas').width === 1800);
   await page.locator('#warehouse-pause').click();
   await page.locator('#warehouse-close-help').click();
   await page.locator('#warehouse-fullscreen').click();
@@ -509,8 +563,23 @@ let browser;
   check('Fullscreen keeps the complete game wrapper', await page.evaluate(() => document.fullscreenElement?.id === 'warehouse-stage'));
   await page.evaluate(() => document.exitFullscreen());
 
+  const preparedFirst = await context.newPage();
+  preparedFirst.on('pageerror', error => errors.push(error.message));
+  await preparedFirst.route('**/OneShiftWeb.loader.js*', route => route.fulfill({contentType:'text/javascript', body:loader}));
+  await preparedFirst.goto(url + '/one-shift.html');
+  await preparedFirst.locator('#warehouse-play').click();
+  await preparedFirst.waitForFunction(() => typeof finishUnityLoad === 'function');
+  await preparedFirst.evaluate(() => unityConfig.onOneShiftPreparation(7, 7, 1));
+  check('Preparation callback before loader promise keeps the launcher visible',
+    await preparedFirst.locator('#warehouse-launcher').isVisible() && await preparedFirst.locator('#warehouse-tools').isHidden());
+  await finish(preparedFirst);
+  check('Preparation-first order reveals only after the loader resolves',
+    await preparedFirst.locator('#warehouse-launcher').isHidden() && (await calls(preparedFirst)).includes('BrowserLifecycle:SetBrowserActive:1'));
+  await preparedFirst.close();
+
   const mobile = await browser.newContext({viewport:{width:390,height:844}, isMobile:true, hasTouch:true});
   const phone = await mobile.newPage();
+  phone.on('pageerror', error => errors.push(error.message));
   let mobileRequests = 0;
   await phone.route('**/OneShiftWeb.loader.js*', route => { mobileRequests++; return route.fulfill({contentType:'text/javascript', body:loader}); });
   await phone.goto(url + '/one-shift.html');
@@ -522,7 +591,20 @@ let browser;
   await phone.screenshot({path:path.join(dump,'launcher-landscape.png')});
   await phone.locator('#warehouse-play').click();
   await phone.waitForFunction(() => typeof finishUnityLoad === 'function');
-  await finish(phone);
+  await phone.evaluate(() => finishUnityLoad());
+  await phone.waitForFunction(() => unityCalls.includes('BrowserLifecycle:SetBrowserActive:1'));
+  await clearCalls(phone);
+  await phone.setViewportSize({width:390,height:844});
+  await phone.waitForSelector('#warehouse-rotate', {state:'visible'});
+  check('Rotating to portrait suspends preparation before readiness',
+    await phone.locator('#warehouse-launcher').isVisible() && (await calls(phone)).includes('loop:pause'));
+  await clearCalls(phone);
+  await phone.evaluate(() => unityConfig.onOneShiftPreparation(7, 7, 1));
+  check('Preparation finishing in portrait cannot bypass the orientation gate',
+    await phone.locator('#warehouse-rotate').isVisible() && (await calls(phone)).length === 0);
+  await phone.setViewportSize({width:844,height:390});
+  await phone.waitForSelector('#warehouse-rotate', {state:'hidden'});
+  check('Returning to landscape resumes the prepared game', (await calls(phone)).includes('loop:resume'));
   await phone.locator('#warehouse-pause').click();
   await clearCalls(phone);
   await phone.setViewportSize({width:390,height:844});
@@ -530,6 +612,37 @@ let browser;
   await phone.setViewportSize({width:844,height:390});
   await phone.waitForSelector('#warehouse-rotate', {state:'hidden'});
   check('Rotating cannot undo manual pause', await phone.locator('#warehouse-paused').isVisible() && !(await calls(phone)).includes('loop:resume'));
+
+  const preparationFailure = await context.newPage();
+  preparationFailure.on('pageerror', error => errors.push(error.message));
+  await preparationFailure.route('**/OneShiftWeb.loader.js*', route => route.fulfill({contentType:'text/javascript', body:loader}));
+  await preparationFailure.goto(url + '/one-shift.html');
+  await preparationFailure.locator('#warehouse-play').click();
+  await preparationFailure.waitForFunction(() => typeof finishUnityLoad === 'function');
+  await preparationFailure.evaluate(() => finishUnityLoad());
+  await preparationFailure.waitForFunction(() => unityCalls.includes('BrowserLifecycle:SetBrowserActive:1'));
+  await preparationFailure.keyboard.press('p');
+  await clearCalls(preparationFailure);
+  await preparationFailure.evaluate(() => unityConfig.onOneShiftPreparation(7, 7, 1));
+  check('Preparation completion cannot undo a manual pause taken while loading',
+    await preparationFailure.locator('#warehouse-paused').isVisible() && (await calls(preparationFailure)).length === 0);
+  await preparationFailure.goto(url + '/one-shift.html');
+  await preparationFailure.locator('#warehouse-play').click();
+  await preparationFailure.waitForFunction(() => typeof finishUnityLoad === 'function');
+  await preparationFailure.evaluate(() => finishUnityLoad());
+  await preparationFailure.waitForFunction(() => unityCalls.includes('BrowserLifecycle:SetBrowserActive:1'));
+  await clearCalls(preparationFailure);
+  await preparationFailure.evaluate(() => {
+    unityConfig.onOneShiftPreparation(3, 7, -1);
+    unityConfig.onOneShiftPreparation(7, 7, 1);
+  });
+  check('Preparation failure offers retry and ignores a late readiness callback',
+    await preparationFailure.locator('#warehouse-error').isVisible() &&
+    (await preparationFailure.locator('#warehouse-error').innerText()).includes('prepare its graphics') &&
+    await preparationFailure.locator('#warehouse-play').isEnabled() &&
+    await preparationFailure.locator('#warehouse-tools').isHidden() &&
+    !(await calls(preparationFailure)).includes('loop:resume'));
+  await preparationFailure.close();
 
   const failure = await context.newPage();
   await failure.route('**/OneShiftWeb.loader.js*', route => route.abort());

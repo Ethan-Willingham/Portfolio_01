@@ -26,6 +26,8 @@ namespace OneShift.RackLab
         public float Hour { get; private set; }
         public float Daylight { get; private set; }
         public Vector3 TowardSun { get; private set; }
+        public bool ReflectionPending => roomReflection != null && roomReflection.enabled &&
+            (reflectionRequested || (reflectionRender >= 0 && !roomReflection.IsFinishedRendering(reflectionRender)));
         Material runtimeSky;
         float reflectionTimer;
         int reflectionRender = -1;

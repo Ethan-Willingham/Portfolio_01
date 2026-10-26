@@ -193,25 +193,32 @@ Escape cancels an exit request and releases capture. C changes rear/cab view,
 and Tab shows the full control list. F parks, V centres, H sounds the horn,
 Q/Z raises and lowers, T/G tilts forward and back, and holding R while stopped
 recovers to a clear parking bay. Focus loss and browser pause clear driving and
-assist input; resuming requires a fresh click and neutral controls.
+fork input; resuming requires a fresh click and neutral controls.
 
-## Held pallet assist
+## Mouse fork control and placement view
 
-Hold X near the short end of an upright, stationary pallet. `ForkliftLoadAssist`
-finds a nearby aligned package, measures its actual board and fork geometry,
-levels the mast and sets the fork height inside the pockets. It then steers the
-real wheels at a slow approach, inserts the forks and lifts through contact.
-The help stops when X is released or manual driving or hydraulic input takes
-over. It rejects distant stock, side approaches, steeply tilted pallets and
-blocked paths. Excessive misalignment or a stalled approach asks the player to
-reposition. It does not move rigidbody poses, change cargo mass, add carrying
-joints, or bypass the finite hydraulic force.
+Hold X and move the mouse up to raise the forks or down to lower them. The same
+finite-force hydraulic valve serves mouse control and Q/Z. Mouse movement is
+normalized by frame duration, so hand speed has the same effect at different
+render rates. A stationary mouse sends zero, closing the valve at the attained
+height. Release, capture loss, pause and exit clear the mouse command. The
+neutral-input gate prevents a held X from resuming when capture returns.
 
-After an assisted pickup, hold X again over a floor or rack deck to set the load
-down. Downward probes check support beneath both pallet runners. The guide lowers
-the real forks, then the player reverses out. Manual Q/Z and T/G remain available
-for shelf height and tilt. The load remains free to shift, fall or tip the truck;
-the assist is a held set of steering and lever commands, not an inventory pickup.
+Mouse look stays still while X is held. WASD continues to position the truck,
+Space brakes, and T/G tilts the mast. Manual Q/Z takes precedence over mouse
+movement. No automatic steering, pallet approach or lift starts from holding X.
+Loads remain independent dynamic bodies, lifted only through fork contact.
+
+`ForkliftPlacementView` draws the two actual fork collision meshes and the board
+edges of one nearby pallet only where ordinary opaque geometry hides them.
+The nearest pallet must be ahead, within 1.5 m laterally and 3 m of the fork tips.
+Its edge mesh comes from the actual board colliders, leaving the fork pockets
+open. The warm, translucent overlay uses at most three draw calls and ordinary
+triangles supported by WebGL. It changes no existing materials or collisions,
+and disappears when X is released. The shader is included through Resources.
+
+`ForkliftLoadAssist` remains an isolated validation fixture for historical
+handling tests. The player interaction no longer constructs or runs it.
 
 ## Retained driving trial
 
@@ -284,7 +291,17 @@ that lag for an obstruction during a sharp turn and repeatedly snap the view.
 
 ## Validation
 
-`ForkliftHandlingValidation.ValidateAssistAndSave()` exercises held pickup,
+`ForkliftHandlingValidation.ValidateMouseLiftAndSave()` checks stationary and
+released mouse input, physical raising/lowering at 30/60/120 Hz, a working-load
+pickup and setdown, and the unchanged overload limit. Its report is
+`Reports/forklift-mouse-lift-validation.json`. The browser checks the live input
+path, frozen look while X is held, and the occluded placement overlay.
+All six physical checks passed on 25 October 2026. The same input raised the
+empty forks 0.61 m at each tested render rate; the 800 kg package lifted 0.52 m
+and stayed in place after setdown and withdrawal. The 3,500 kg load stayed down
+at the hydraulic pressure limit.
+
+The retained `ForkliftHandlingValidation.ValidateAssistAndSave()` exercises held pickup,
 transport and setdown, a modest approach offset, elevated-rack retrieval,
 distant and side rejection, obstruction, release and overload. All thirteen checks
 passed on 25 October 2026, including 30/60 Hz control updates, low headroom,

@@ -16,9 +16,9 @@
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="one-shift-unity.css?v=5">
+  <link rel="stylesheet" href="one-shift-unity.css?v=6">
   <script src="js/demo-activity.js?v=1" defer></script>
-  <script src="js/one-shift-unity.js?v=5" defer></script>
+  <script src="js/one-shift-unity.js?v=6" defer></script>
 </head>
 <body class="warehouse-page">
 <main id="warehouse-stage" aria-label="One Shift warehouse game">
@@ -44,13 +44,14 @@
         <div><dt>Mouse</dt><dd>Look</dd></div>
         <div><dt>E</dt><dd>Use / enter forklift</dd></div>
         <div><dt>Shift / Space</dt><dd>Run / jump</dd></div>
-        <div><dt>Hold X</dt><dd>Pick up / set down</dd></div>
+        <div><dt>Hold X + mouse</dt><dd>Raise / lower forks</dd></div>
         <div><dt>Esc / P</dt><dd>Release mouse / pause</dd></div>
       </dl>
       <p class="warehouse-classic">The earlier illustrated game and your saved warehouse are <a href="one-shift-classic.html">still here</a>.</p>
     </div>
   </section>
   <nav id="warehouse-tools" class="warehouse-tools" aria-label="Game controls" hidden>
+    <output id="warehouse-stats" class="warehouse-stats" aria-label="Game version and frame rate" aria-live="off">Starting...</output>
     <button id="warehouse-pause" type="button" aria-pressed="false">Pause</button>
     <button id="warehouse-help" type="button" aria-expanded="false" aria-controls="warehouse-controls">Controls</button>
     <button id="warehouse-fullscreen" type="button">Fullscreen</button>
@@ -65,7 +66,8 @@
     <p>Aim at a wall switch and press E or click. Escape releases the mouse; P pauses the game.</p>
     <h2>In the forklift</h2>
     <p>Press E near the yellow forklift to get in. On your first drive, read the short briefing and press E again. W/S drives forward and reverse; A/D steers. Space brakes, and Shift gives a slow approach. The parking brake releases when you drive.</p>
-    <p>Face the short end of a pallet and hold X to line up, slide the forks in and lift. Release X to stop the help at any point. Hold X again while carrying to lower the pallet onto the surface below, then reverse out. Its weight and balance still act on the forklift.</p>
+    <p>Hold X and move the mouse up or down to raise or lower the forks. Keeping the mouse still holds their height. Release X to look around again. WASD still moves the truck while X is held.</p>
+    <p>Holding X also reveals the forks and nearby pallet edges through the mast and load. Line the forks up with the pallet pockets, drive them in, then lift clear. Lower onto the floor or rack and reverse out. The pallet's weight and balance still act on the forklift.</p>
     <p>Q/Z raises and lowers the forks; T/G tilts the mast. Use these to reach the higher racks. C switches the rear and cab views. E brings the forklift to a stop and steps out when there is room. Tab shows the extra controls.</p>
     <p><a href="one-shift-classic.html">Earlier illustrated game</a> <span aria-hidden="true">/</span> <a href="archive.html">In Progress</a></p>
     <button id="warehouse-close-help" type="button">Close controls</button>

@@ -150,6 +150,7 @@ namespace OneShift.RackLab
 
         void OnGUI()
         {
+            if (Event.current.type != EventType.Repaint) return;
             if (vehicleMode) return;
             if (title == null)
             {

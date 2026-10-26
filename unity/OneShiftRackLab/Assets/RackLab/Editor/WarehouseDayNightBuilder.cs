@@ -36,8 +36,7 @@ namespace OneShift.RackLab
             cycle.daytimeAmbientIntensity = .8f;
             sun.lightmapBakeType = LightmapBakeType.Realtime;
             sun.shadows = LightShadows.Soft;
-            sun.shadowBias = .018f;
-            sun.shadowNormalBias = .018f;
+            WarehouseLightingRepair.ConfigureSun(sun);
             string skyPath = Root + "Materials/Environment/DayNightSky.mat";
             var sky = AssetDatabase.LoadAssetAtPath<Material>(skyPath);
             if (sky == null)

@@ -21,8 +21,9 @@ The switch has a physical lever, an indicator and a mechanical click.
 The twelve spotlights use distance falloff, a broad downward distribution and
 soft real-time shadows. The roof fixture housings remain the existing geometry.
 Fixture intensity is 26, peak sunlight is 2.35, and window shafts use 75 percent
-of their former energy. Daytime ambient and luminous lenses are softer, while
-the low night ambient remains unchanged.
+of their former energy. Lens emission is a warm (.84, .80, .70), avoiding white
+clipping in the browser while the fixture's actual light output stays at 26.
+Daytime ambient is softer, while the low night ambient remains unchanged.
 Forward+ lighting allows all twelve fixtures to illuminate the combined room
 meshes, without the eight-light-per-object limit. Desktop additional shadows have a
 4096-pixel atlas with 1024-pixel high-resolution slices. The rack shader supports
@@ -35,8 +36,8 @@ frames to settle. The low night ambient keeps silhouettes readable with every
 row off; it does not light the room as if the fixtures were still on.
 
 The browser export retains all twelve shadowed fixtures and the moving sun.
-Its main shadow map is 2048 pixels with two cascades; the fixture atlas is 1024
-pixels with 256-pixel slices. It uses 2x MSAA, no SMAA, and downsampled contact
+Its main shadow map is 2048 pixels with two cascades and a 60-metre range; the fixture atlas is 1024
+pixels with 256-pixel slices. It uses 2x MSAA plus medium SMAA and downsampled contact
 shading with four samples, medium normal reconstruction and medium blur.
 The time-sliced reflection faces are 64 pixels and periodic captures occur
 every twenty seconds. Switch changes and explicit clock changes still request
@@ -45,10 +46,29 @@ slow frames. The builder restores the desktop pipeline and contact-shading
 assets after export.
 
 The browser launcher defaults to Smooth, capping the drawing buffer at
-1,440,000 pixels and a pixel ratio of one. Sharper in Controls raises those
+2,073,600 pixels and a pixel ratio of 1.25. Sharper in Controls raises those
 limits to 3,686,400 pixels and 1.5. This prevents a Retina display from silently
 quadrupling the render workload. It does not change the layout, camera view or
 physics timestep. The actual gain still needs measurement on target Macs.
+
+The browser prepares actual rendered night, dawn, morning, afternoon and
+all-rows-off variants behind the loading screen, including completed room
+captures. It restores the opening reflection and 4:30 clock before allowing
+physics to advance. This addresses the first-use shader-link stalls measured
+in Chrome on the Windows workstation. Periodic live reflections remain enabled;
+the long trace did not show continuing stalls after the opening variants had
+linked. The v6 Chrome trace confirmed 2x multisampling and SMAA, with no long
+tasks or frame intervals over 50 ms in 90 seconds after preparation, including
+the first held-X mouse operation. The largest interval was 20.8 ms on the
+Windows RTX 3080 workstation. Recheck the exported player after rendering edits.
+
+The sun has explicit URP additional light data with pipeline bias inheritance
+disabled, so its .018 depth and normal biases take effect. The 60-metre shadow
+range keeps the thin corrugated roof and walls inside the shadow volume. Editor
+A/B captures at morning, noon and afternoon, from opposite room views, removed
+the bright strips seen at the previous 40-metre cascade boundary. The shell
+geometry and material brightness remain unchanged. Apply the focused repair
+with `WarehouseLightingRepair.Install()` without rebuilding the receiving scene.
 
 ## Sun and windows
 

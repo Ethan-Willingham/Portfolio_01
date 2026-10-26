@@ -21,12 +21,53 @@
   var controls = document.getElementById('warehouse-controls');
   var fullscreen = document.getElementById('warehouse-fullscreen');
   var quality = document.getElementById('warehouse-quality');
+  var stats = document.getElementById('warehouse-stats');
   var activity = window.DemoActivity.create(stage);
   var coarsePointer = window.matchMedia('(pointer: coarse)');
   var instance = null, starting = false, failed = false, manuallyPaused = false;
+  var preparationStarted = false, graphicsReady = false, playerBuildVersion = null;
   var portrait = false, lastActive = null, loopPaused = false;
   var build = 'assets/one-shift-unity/Build/OneShiftWeb';
-  var version = '?v=5';
+  var version = '?v=6';
+
+  function reportPlayerStats(buildVersion, framesPerSecond, longestFrameMs, frameCount) {
+    if (!stats) return;
+    playerBuildVersion = buildVersion;
+    // These values come from completed Unity render frames, so an idle page's
+    // animation callbacks cannot make a stalled game report a healthy rate.
+    stats.textContent = 'v' + buildVersion + ' | ' +
+      (lastActive === false ? 'Paused' : Math.round(framesPerSecond) + ' FPS');
+    stats.title = 'Longest frame: ' + Math.round(longestFrameMs) + ' ms';
+    stats.dataset.buildVersion = String(buildVersion);
+    stats.dataset.fps = framesPerSecond.toFixed(1);
+    stats.dataset.longestFrameMs = longestFrameMs.toFixed(1);
+    stats.dataset.frameCount = String(frameCount);
+  }
+
+  function reportPreparation(completed, total, ready) {
+    if (failed) return;
+    preparationStarted = true;
+    if (ready < 0) {
+      showError('The warehouse could not prepare its graphics. Reload the page to try again.');
+      return;
+    }
+    progress.value = Math.round(100 * completed / Math.max(1, total));
+    progress.textContent = completed + ' of ' + total;
+    loadStatus.textContent = 'Preparing graphics... ' + completed + ' of ' + total;
+    graphicsReady = ready === 1;
+    revealPreparedGame();
+  }
+
+  function revealPreparedGame() {
+    // The native callback can precede the loader Promise. Both must finish.
+    if (!instance || !graphicsReady || failed) return;
+    progress.value = 100;
+    launcher.hidden = true;
+    tools.hidden = false;
+    fullscreen.hidden = !stage.requestFullscreen && !stage.webkitRequestFullscreen;
+    syncOrientation();
+    if (activity.active() && !portrait && !manuallyPaused) canvas.focus({ preventScroll: true });
+  }
 
   function sizeCanvas() {
     // Retina screens can otherwise turn a normal browser window into an
@@ -34,8 +75,8 @@
     // giving the player a bounded choice of drawing-buffer resolution.
     var sharper = quality.value === 'sharp';
     var width = Math.max(1, stage.clientWidth), height = Math.max(1, stage.clientHeight);
-    var pixelBudget = sharper ? 2560 * 1440 : 1600 * 900;
-    var ratio = Math.min(window.devicePixelRatio || 1, sharper ? 1.5 : 1,
+    var pixelBudget = sharper ? 2560 * 1440 : 1920 * 1080;
+    var ratio = Math.min(window.devicePixelRatio || 1, sharper ? 1.5 : 1.25,
       Math.sqrt(pixelBudget / (width * height)));
     var renderWidth = Math.max(1, Math.floor(width * ratio));
     var renderHeight = Math.max(1, Math.floor(height * ratio));
@@ -50,6 +91,8 @@
     if (!instance) return;
     var active = activity.active() && !manuallyPaused && !portrait && !failed;
     if (active === lastActive) return;
+    if (stats && playerBuildVersion !== null)
+      stats.textContent = 'v' + playerBuildVersion + (active ? ' | Measuring...' : ' | Paused');
     // The engine stops its own scheduler. Never replace browser scheduling APIs.
     var module = instance.Module;
     if (active) {
@@ -143,6 +186,8 @@
         // Unity still owns rendering and all of its scheduling.
         matchWebGLToCanvasSize: false,
         devicePixelRatio: 1,
+        onOneShiftStats: reportPlayerStats,
+        onOneShiftPreparation: reportPreparation,
         showBanner: function (message, type) {
           if (type === 'error') {
             console.error(message);
@@ -150,6 +195,7 @@
           }
         }
       }, function (fraction) {
+        if (preparationStarted) return;
         var percent = Math.min(100, Math.round(fraction * 100));
         progress.value = percent;
         progress.textContent = percent + '%';
@@ -162,12 +208,10 @@
           return;
         }
         if (failed) { syncActivity(); return; }
-        progress.value = 100;
-        launcher.hidden = true;
-        tools.hidden = false;
-        fullscreen.hidden = !stage.requestFullscreen && !stage.webkitRequestFullscreen;
+        // Activity gates also apply during preparation; a hidden page must not
+        // keep warming or begin the delivery when the final callback arrives.
         syncOrientation();
-        if (activity.active() && !portrait) canvas.focus({ preventScroll: true });
+        revealPreparedGame();
       }).catch(function (reason) {
         console.error(reason);
         showError('The warehouse could not start. Reload to try again, or open the illustrated game below.');

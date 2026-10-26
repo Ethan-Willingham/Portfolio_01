@@ -14,8 +14,8 @@ namespace OneShift.RackLab
         public Light[] FixtureLights = Array.Empty<Light>();
         public Renderer[] Diffusers = Array.Empty<Renderer>();
         [Min(0)] public float FixtureIntensity = 26f;
-        [ColorUsage(false, true)] public Color EmissionColor = new Color(2.85f, 2.5125f, 2.1f);
-        public Color LitDiffuserColor = new Color(.92f, .91f, .84f);
+        [ColorUsage(false, true)] public Color EmissionColor = new Color(.84f, .80f, .70f);
+        public Color LitDiffuserColor = new Color(.72f, .71f, .66f);
         public Color UnlitDiffuserColor = new Color(.43f, .45f, .43f);
         [SerializeField] bool isOn = true;
         MaterialPropertyBlock properties;

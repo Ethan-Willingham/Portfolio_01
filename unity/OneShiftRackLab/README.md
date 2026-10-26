@@ -15,8 +15,8 @@ fully open, the dock barrier clears and the plate opens the physical route.
 Four 992 lb (450 kg) pallets wait inside, for the player to unload and put away.
 The status line counts unloaded stock and pallets supported in rack positions.
 The dock plate is flush with both floors. Clearance checks cover the complete
-walk to the lot, and the guide checks the moving inner mast against the trailer
-roof before lifting.
+walk to the lot. The compact mast fits beneath the trailer roof with the forks
+at carrying height; the roof remains a physical obstacle to raising too far.
 
 The existing yellow forklift and owner's pallet and rack assets are reused.
 The delivery truck is the owner's original American 18-wheeler and 53-foot
@@ -46,14 +46,15 @@ driving. Later entries take one E. W/S drives and reverses; A/D steers the rear
 wheels. Space brakes, Shift inches slowly, and driving releases the parking
 brake. E brakes to a stop and steps out where there is clear floor.
 
-Hold X near the short end of a pallet to level the forks, line up, insert and
-lift. Release X or use manual controls to interrupt. Hold X again while carrying
-its load to lower onto the floor or rack, then reverse out. Q/Z raises and lowers
-the forks, and T/G tilts the mast. C changes rear/cab view, and Tab shows extra
+Hold X and move the mouse up or down to raise or lower the forks. A still mouse
+holds their height, and release returns the mouse to looking around. While X is
+held, hidden forks and nearby pallet board edges show through the mast or load.
+Use WASD to put the forks into the pockets, lift, reverse, then lower onto the
+floor or rack. Q/Z also raises and lowers; T/G tilts the mast. C changes rear/cab view, and Tab shows extra
 controls. V centres the view, H sounds the horn, F sets the parking brake, and
 holding R while stopped recovers the forklift to a clear parking bay.
 See [forklift driving and handling](FORKLIFT.md) for the physical mechanism,
-the bounded assist, retained load examples and checks.
+the direct fork control, retained load examples and checks.
 
 The warehouse starts at 4:30 a.m. Three industrial switches on the south wall,
 beside the entrance electrical cabinet, control the west, centre and east rows
@@ -233,13 +234,27 @@ stages the build under `Builds/WebGL/OneShiftWeb` and copies its four compressed
 player files to `assets/one-shift-unity/Build` in the site repository. Gzip
 decompression fallback supports static hosting without custom encoding headers.
 The Web profile keeps Forward+ lighting with a 2048-pixel sun shadow map,
-1024-pixel fixture atlas and 256-pixel fixture slices, 2x MSAA, downsampled
+1024-pixel fixture atlas and 256-pixel fixture slices, 2x MSAA plus medium SMAA, downsampled
 four-sample contact shading and 64-pixel reflection faces. Periodic reflection
 captures run every twenty seconds; light switches still request a refresh.
 Desktop asset settings are restored after the build. The browser defaults to
-Smooth, with at most 1,440,000 drawing-buffer pixels and a pixel ratio of one.
+Smooth, with at most 2,073,600 drawing-buffer pixels and a pixel ratio of 1.25.
 Controls offers Sharper, with at most 3,686,400 pixels and a ratio of 1.5. Both
 retain the same full-screen composition and 0.005-second physics step.
+
+The loading gate remains visible through seven bounded graphics preparation
+stages in `BrowserLifecycle`: night, dawn, morning, afternoon, rows off,
+the fork placement overlay, and the restored opening scene. They use actual
+rendered frames and wait for each room probe to finish, without advancing
+physics. A probe that fails to finish within ninety active rendered frames
+leaves a retry message. This moves first-use shader linking out of gameplay.
+The launcher's version and FPS readout uses the compiled build version and
+completed game-camera frames, sampled at most twice per second, with no extra
+animation loop. The v6 Chrome trace confirmed actual 2x multisampling and SMAA.
+After 23.23 seconds of graphics loading, a 90-second run including first X/mouse
+use had no long tasks or frame intervals above 50 ms (largest 20.8 ms) on the
+Windows RTX 3080 workstation. Repeat the actual browser trace after changing
+rendering; requested quality settings alone are not verification.
 
 The browser page controls focus, visibility, manual pause and portrait gating.
 `BrowserLifecycle` clears held input and freezes the clock and audio before the

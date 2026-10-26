@@ -47,6 +47,80 @@ namespace OneShift.RackLab
         [MenuItem("One Shift/Validate simple forklift assist")]
         public static void MenuValidateAssist() { Debug.Log(ValidateAssistAndSave()); }
 
+        public static string ValidateMouseLiftAndSave()
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode || Mathf.Abs(Time.fixedDeltaTime - Dt) > .000001f)
+                throw new InvalidOperationException("Stop Play and use the production physics step before mouse-control validation.");
+            var report = new Report { generatedUtc = DateTime.UtcNow.ToString("O"), unityVersion = Application.unityVersion };
+            RunCheck(report, "held stationary mouse cannot drive or lift", "Holding X without mouse movement leaves the truck and forks stationary; release and a long interrupted frame send no valve command.", (rig, check) =>
+            {
+                rig.Step(3); float height = rig.ForkTop; Vector3 position = rig.Body.position;
+                MouseFrames(rig, true, 0, 60, 2);
+                float rise = check.Measure("stationary held-X fork movement", Mathf.Abs(rig.ForkTop-height), "m");
+                float travel = check.Measure("stationary held-X truck movement", Vector3.Distance(position, rig.Body.position), "m");
+                float released = check.Measure("released X with moving mouse valve", ForkliftMouseLift.Valve(false, 4, 1f/60), "input");
+                float interrupted = check.Measure("long interrupted frame valve", ForkliftMouseLift.Valve(true, 4, .5f), "input");
+                check.passed = rise < .015f && travel < .02f && released == 0 && interrupted == 0;
+            });
+            foreach (int rate in new[] { 30, 60, 120 })
+            {
+                int frames = rate;
+                RunCheck(report, "direct mouse lift at " + frames + " frames per second", "The same mouse speed raises and lowers through the existing hydraulics at this render cadence. A stationary mouse closes the valve and no driving intent is generated.", (rig, check) =>
+                {
+                    rig.Step(3); float initial = rig.ForkTop; Vector3 start = rig.Body.position;
+                    MouseFrames(rig, true, 24, frames, 2);
+                    MouseFrames(rig, true, 0, frames, 1);
+                    float raised = rig.ForkTop;
+                    MouseFrames(rig, true, 0, frames, 1);
+                    float heldDrift = check.Measure("height drift with held stationary mouse", Mathf.Abs(rig.ForkTop-raised), "m");
+                    MouseFrames(rig, true, -24, frames, 1);
+                    MouseFrames(rig, false, 24, frames, 1);
+                    float rise = check.Measure("physical rise from upward mouse movement", raised-initial, "m");
+                    float lower = check.Measure("physical lowering from downward mouse movement", raised-rig.ForkTop, "m");
+                    float travel = check.Measure("truck movement without WASD", Vector3.Distance(start, rig.Body.position), "m");
+                    check.passed = rise > .45f && rise < .7f && lower > .20f && lower < .4f && heldDrift < .025f && travel < .04f && rig.Lift.LiftInput == 0;
+                });
+            }
+            RunCheck(report, "mouse-controlled working-load pickup and setdown", "After direct physical pocket insertion, mouse movement lifts and lowers an independent working load. Stopping the mouse holds it; normal driving carries it through contact.", (rig, check) =>
+            {
+                rig.Step(3); var load = rig.LoadAhead(Cargo[1]); rig.Step(2);
+                EnterFromOutside(rig, load, check); float bottom = BoardBounds(load).min.y;
+                MouseFrames(rig, true, 24, 60, 2); MouseFrames(rig, true, 0, 60, 1);
+                float rise = check.Measure("working load mouse lift", BoardBounds(load).min.y-bottom, "m");
+                rig.DriveDistance(-1, 1);
+                MouseFrames(rig, true, -40, 60, 3); MouseFrames(rig, false, 0, 60, 1);
+                Vector3 resting = load.position; rig.DriveDistance(-1, 1.3f); rig.Step(1);
+                float drift = check.Measure("setdown drift after fork withdrawal", Vector3.Distance(resting, load.position), "m");
+                check.passed = rise > .4f && BoardBounds(load).min.y < .03f && drift < .08f;
+            });
+            RunCheck(report, "mouse control retains overload force limit", "Upward mouse movement cannot bypass the finite hydraulic force when lifting a 3500 kg independent package.", (rig, check) =>
+            {
+                rig.Step(3); var load = rig.LoadAhead(Cargo[2]); rig.Step(2);
+                EnterFromOutside(rig, load, check); float bottom = BoardBounds(load).min.y;
+                MouseFrames(rig, true, 40, 60, 5);
+                float rise = check.Measure("heavy load rise under mouse command", BoardBounds(load).min.y-bottom, "m");
+                float pressure = check.Measure("bounded hydraulic pressure", rig.Lift.HydraulicPressure, "fraction");
+                check.passed = rise < .06f && pressure > .9f && rig.Lift.maximumLiftForce < load.mass * Physics.gravity.magnitude;
+                rig.Lift.ClearInput();
+            });
+            report.passed = report.checks.All(check => check.passed);
+            string json = JsonUtility.ToJson(report, true);
+            const string path = Root + "Reports/forklift-mouse-lift-validation.json";
+            File.WriteAllText(path, json + "\n"); AssetDatabase.ImportAsset(path);
+            return json;
+        }
+
+        static void MouseFrames(Rig rig, bool held, float axisUnitsPerSecond, int rate, float duration)
+        {
+            float frame = 1f / rate, accumulator = 0;
+            for (int i = 0; i < Mathf.RoundToInt(duration*rate); i++)
+            {
+                rig.Lift.SetInput(ForkliftMouseLift.Valve(held, axisUnitsPerSecond*frame, frame), 0);
+                accumulator += frame;
+                while (accumulator >= Dt) { rig.Step(Dt); accumulator -= Dt; }
+            }
+        }
+
         public static string ValidateAssistAndSave()
         {
             if (EditorApplication.isPlayingOrWillChangePlaymode || Mathf.Abs(Time.fixedDeltaTime - Dt) > .000001f)

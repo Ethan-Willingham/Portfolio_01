@@ -8980,7 +8980,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
   m_UsePipelineSettings: 0
   m_AdditionalLightsShadowResolutionTier: 2
@@ -15638,8 +15638,8 @@ MonoBehaviour:
   - {fileID: 1477241427}
   - {fileID: 871389066}
   FixtureIntensity: 26
-  EmissionColor: {r: 2.85, g: 2.5125, b: 2.1, a: 1}
-  LitDiffuserColor: {r: 0.92, g: 0.91, b: 0.84, a: 1}
+  EmissionColor: {r: 0.84, g: 0.8, b: 0.7, a: 1}
+  LitDiffuserColor: {r: 0.72, g: 0.71, b: 0.66, a: 1}
   UnlitDiffuserColor: {r: 0.43, g: 0.45, b: 0.43, a: 1}
   isOn: 1
 --- !u!4 &354765498
@@ -15901,6 +15901,7 @@ GameObject:
   - component: {fileID: 373065059}
   - component: {fileID: 373065058}
   - component: {fileID: 373065060}
+  - component: {fileID: 373065061}
   m_Layer: 0
   m_Name: High warehouse daylight
   m_TagString: Untagged
@@ -16029,6 +16030,35 @@ MonoBehaviour:
   - {fileID: 1425794211}
   roomReflection: {fileID: 146176282}
   reflectionIntervalSeconds: 8
+--- !u!114 &373065061
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 373065057}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
+  m_UsePipelineSettings: 0
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_CustomShadowLayers: 0
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
+  m_RenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_ShadowRenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_Version: 4
+  m_LightLayerMask: 1
+  m_ShadowLayerMask: 1
+  m_RenderingLayers: 1
+  m_ShadowRenderingLayers: 1
 --- !u!1 &378041953
 GameObject:
   m_ObjectHideFlags: 0
@@ -96910,8 +96940,8 @@ MonoBehaviour:
   - {fileID: 532455202}
   - {fileID: 1552051756}
   FixtureIntensity: 26
-  EmissionColor: {r: 2.85, g: 2.5125, b: 2.1, a: 1}
-  LitDiffuserColor: {r: 0.92, g: 0.91, b: 0.84, a: 1}
+  EmissionColor: {r: 0.84, g: 0.8, b: 0.7, a: 1}
+  LitDiffuserColor: {r: 0.72, g: 0.71, b: 0.66, a: 1}
   UnlitDiffuserColor: {r: 0.43, g: 0.45, b: 0.43, a: 1}
   isOn: 1
 --- !u!4 &1864204716
@@ -97391,8 +97421,8 @@ MonoBehaviour:
   - {fileID: 289844723}
   - {fileID: 950336855}
   FixtureIntensity: 26
-  EmissionColor: {r: 2.85, g: 2.5125, b: 2.1, a: 1}
-  LitDiffuserColor: {r: 0.92, g: 0.91, b: 0.84, a: 1}
+  EmissionColor: {r: 0.84, g: 0.8, b: 0.7, a: 1}
+  LitDiffuserColor: {r: 0.72, g: 0.71, b: 0.66, a: 1}
   UnlitDiffuserColor: {r: 0.43, g: 0.45, b: 0.43, a: 1}
   isOn: 1
 --- !u!4 &1875187244

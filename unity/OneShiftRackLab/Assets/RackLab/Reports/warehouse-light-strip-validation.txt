@@ -1,0 +1,1 @@
+Light-strip repair passed: explicit sun bias, 60 m shadow coverage, three preserved electrical circuits, twelve warm unsaturated diffusers; spotlight intensity and scene geometry unchanged.

@@ -35,6 +35,7 @@
 .warehouse-error { font-size:.875rem; line-height:1.5; color:var(--warn); margin:16px 0 0; }
 .warehouse-tools { position:absolute; z-index:4; top:max(12px,env(safe-area-inset-top)); right:max(12px,env(safe-area-inset-right)); display:flex; gap:5px; }
 .warehouse-tools button { font-size:.8125rem; background:color-mix(in srgb,var(--bg-raised) 93%,transparent); }
+.warehouse-stats { display:flex; align-items:center; padding:0 9px; font:.6875rem var(--font-mono); font-variant-numeric:tabular-nums; white-space:nowrap; color:var(--text-dim); background:color-mix(in srgb,var(--bg-raised) 93%,transparent); pointer-events:none; }
 .warehouse-controls { position:absolute; z-index:5; top:max(66px,calc(env(safe-area-inset-top) + 54px)); right:max(12px,env(safe-area-inset-right)); width:min(370px,calc(100% - 24px)); max-height:calc(100% - 90px); overflow:auto; padding:22px; background:var(--bg-raised); border:1px solid var(--rule-strong); }
 .warehouse-controls h2 { margin:0 0 14px; color:var(--text-bright); font:1.5rem var(--font-heading); }
 .warehouse-controls p { font-size:.875rem; line-height:1.6; margin:12px 0; color:var(--text-dim); }
@@ -52,4 +53,5 @@
 @media(max-height:650px) and (min-width:701px) { .warehouse-intro{width:650px;padding:18px 42px;}.warehouse-back{margin:0 0 12px;}.warehouse-intro h1{font-size:3.4rem;margin-bottom:14px;}.warehouse-dek{font-size:1rem;max-width:500px;}.warehouse-start{margin-top:18px;}.warehouse-keys{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 18px;margin-top:20px;padding-top:16px;}.warehouse-classic{margin-top:18px;} }
 @media(max-height:450px) { .warehouse-intro{justify-content:flex-start;}.warehouse-tools{top:6px;right:6px;}.warehouse-tools button{padding:9px 12px;}.warehouse-controls{top:56px;max-height:calc(100% - 66px);} }
 @media(max-width:700px) { .warehouse-tools{top:auto;bottom:max(90px,calc(env(safe-area-inset-bottom) + 82px));} }
+@media(max-width:700px) { .warehouse-stats{position:absolute;right:0;top:-26px;min-height:22px;padding:3px 6px;} }
 @media(prefers-reduced-motion:reduce) { .warehouse-page * { scroll-behavior:auto!important; } }

@@ -7,7 +7,8 @@ It stages the browser player locally, then copies the four verified build files
 to `assets/one-shift-unity/Build/OneShiftWeb.*`. Gzip decompression fallback uses
 `.unityweb` data, framework and WebAssembly files on GitHub Pages. The loader
 keeps its `.loader.js` extension. Bump the launcher CSS/script query versions and
-the build version in `js/one-shift-unity.js` whenever the published build changes.
+the build version in `js/one-shift-unity.js` and `BrowserLifecycle.BuildVersion`
+whenever the published build changes.
 
 The Unity start has three empty rack bays against the west wall, a clear working
 floor, a receiving door in the north wall and a parking lot outside. A separate
@@ -44,11 +45,14 @@ E gets into the yellow forklift. On the first entry, a short seated briefing
 requires E or Enter before driving. Later entries take one E. W/S drives and
 reverses, A/D steers, Space brakes, and Shift gives a slow approach. Driving
 releases the parking brake. E brakes to a stop, checks for clear floor, and
-steps out. Hold X near a pallet's 40-inch end to level the forks, align, insert
-and lift through physical contact. Releasing X or using manual controls stops
-the assist. Hold X again with its carried load to lower onto a supported floor
-or rack surface, then reverse out. Q/Z raises and lowers the forks; T/G tilts
-the mast. C changes the rear/cab view, and Tab shows the extra controls.
+steps out. Hold X and move the mouse up or down to raise or lower the forks.
+A still mouse holds their height; releasing X returns to looking around.
+While X is held, the actual forks and nearby pallet-board edges show through
+the mast and load. WASD positions the truck: line up with a pallet's 40-inch
+end, drive the forks into its pockets, then lift through physical contact.
+Lower onto a supported floor or rack surface and reverse out. Q/Z also raises
+and lowers the forks; T/G tilts the mast. C changes the rear/cab view, and Tab
+shows the extra controls.
 
 The forklift retains rigidbodies, rear steering, an oscillating rear axle and
 force-limited jointed hydraulics. Pallet weight and leverage still affect lifting
@@ -58,12 +62,34 @@ teleports a load. See `unity/OneShiftRackLab/FORKLIFT.md` for the mechanism and
 checks.
 
 The browser's default Smooth picture setting limits the drawing buffer to
-1,440,000 pixels and a pixel ratio of one. Controls offers Sharper, capped at
+2,073,600 pixels and a pixel ratio of 1.25. Controls offers Sharper, capped at
 3,686,400 pixels and a pixel ratio of 1.5. Both fill the available view and resize
 without restarting the game. The Web build uses smaller shadow maps, downsampled
-contact shading, 2x MSAA and less frequent reflection captures. Physics retains
-its 0.005-second step. These bounds reduce work on Retina displays; they are not
-a measured Mac frame-rate guarantee.
+contact shading, 2x MSAA plus medium SMAA, and less frequent reflection captures.
+Physics retains its 0.005-second step. These bounds reduce work on Retina
+displays; they are not a measured Mac frame-rate guarantee.
+
+After downloading, the loading screen reports seven graphics preparation
+stages. They render the actual night, dawn and daylight scene, both light-row
+states, the fork placement overlay and the room reflections. Gameplay, cargo
+physics and audio remain suspended. The opening clock and view are restored
+before the launcher reveals the game. Preparation shares the page's inactivity
+and portrait gates, with a separate suspension flag so completing it cannot
+undo a pause. The small version and FPS display comes from the compiled player
+and completed game-camera render frames, updated at most twice per second;
+inactive play reads Paused. Its tooltip shows the longest frame in the sample.
+
+A 90-second Chrome trace of release v5 on this Windows workstation reproduced
+stalls lasting up to 4.6 seconds during the opening. A second trace found the
+matching stalls in WebGL shader-link status calls. The same trace confirmed
+actual 2x multisampled buffers and no SMAA or FXAA shader. The v6 Chrome run
+prepared its graphics in 23.23 seconds, then recorded 90.03 seconds of play,
+including first forklift entry and X/mouse use. It had no long tasks, no frame
+intervals over 50 ms and no blocking WebGL calls over 20 ms during play. The
+largest interval was 20.8 ms; the 99th percentile was 14 ms. The trace confirmed
+actual 2x multisampling and a compiled SMAA shader at 1800 by 1125 pixels on
+this Windows workstation's RTX 3080. These are local measurements, not a
+frame-rate guarantee for other computers.
 
 `DemoActivity` gates the Unity player on tab visibility, window focus and stage
 visibility. It calls `BrowserLifecycle.SetBrowserActive` to suspend simulation,
@@ -81,13 +107,19 @@ checks with a simulated loader. After exporting the actual Unity player, run
 WebGL player. That pass reads the browser bridge's `ReportState` diagnostics,
 checks the opening dawn, frame and clock suspension, zero paused animation
 callbacks in a browser trace, walking, reset, forklift entry and driving,
-braking, rear steering, camera switching, the first guided unload and setdown,
-guide release, parking while the guide key stays held, driving pause recovery,
+braking, rear steering, camera switching, the first mouse-controlled unload and
+setdown, stationary and released mouse input, see-through placement, driving pause recovery,
 walking through the yard door and around the original truck, fullscreen,
 and shader/runtime errors, and saves screenshots and console logs. Set
 `SHIFT_TEST_URL=https://ethanwillingham.com/one-shift.html` to run the same real
 checks against the deployed page. `SHIFT_DUMP` selects the report directory.
 Both checks use Playwright; the real pass also uses Sharp to inspect rendered pixels.
+`node tools/profile-one-shift-unity-browser.cjs` measures a separate 90-second
+Chrome run without taking screenshots during the sample. Set `SHIFT_PROFILE_FORKS=1`
+to include first entry and native X/mouse use, and `SHIFT_PROFILE_PLACEMENT_CAPTURE=1`
+to capture fork placement after the timing sample. It records preparation time,
+completed preparation stages, frame intervals, long tasks and blocking WebGL
+calls. `SHIFT_PROFILE_DUMP` selects its output directory.
 The real pass uses full Chromium with GPU rendering enabled and reports its actual
 renderer. Its default device scale factor of two exercises Retina pixel sizing;
 `SHIFT_TEST_DPR=1` selects an ordinary-density browser. Set
@@ -99,13 +131,15 @@ by this compatibility-mode scene: CoreCopy, StencilDitherMaskSeed and HDRDebugVi
 RenderGraph and runtime debug display remain disabled; revisit that classification
 if those settings change.
 
-The 25 October 2026 receiving release passed 62 checks against the compiled
-browser player, including the original truck's arrival, assisted unloading,
-parking with X held, and walking around the yard and back through its doorway.
-It also passed 57 forklift physics and geometry checks and thirteen delivery
-sequence checks in Unity. The four compressed browser files total 42,196,653
-bytes, down from 55,069,002 bytes in the prior build. Browser verification used
-Windows Chrome at device scale factor two; Mac hardware was not available.
+The 25 October 2026 v6 release passed 64 checks against the compiled browser
+player, including native mouse lifting, setdown, fork withdrawal, see-through
+placement, the original truck's arrival and the walking route through the yard.
+The launcher passed 40 checks, and six new PhysX checks cover stationary and
+released mouse input, 30/60/120 Hz control, physical carrying and overload.
+The earlier receiving release also passed 57 forklift physics and geometry
+checks and thirteen delivery sequence checks. The four compressed v6 browser
+files total 42,213,674 bytes. Browser verification used Windows Chrome at device
+scale factor two; Mac hardware was not available.
 
 The earlier hands-on inventory business, version 3.4, is preserved at
 `one-shift-classic.html`. Its scripts, local save keys and assets remain intact;

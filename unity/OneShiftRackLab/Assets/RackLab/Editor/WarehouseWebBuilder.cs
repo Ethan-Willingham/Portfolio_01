@@ -46,7 +46,9 @@ namespace OneShift.RackLab
                 pipeline.mainLightShadowmapResolution = 2048;
                 pipeline.additionalLightsShadowmapResolution = 1024;
                 pipeline.shadowCascadeCount = 2;
-                pipeline.shadowDistance = 40;
+                // Keep the far roof and walls inside the directional shadow
+                // volume; 40 m clipped thin panels and leaked bright sun strips.
+                pipeline.shadowDistance = 60;
                 pipeline.msaaSampleCount = 2;
                 var serialized = new SerializedObject(pipeline);
                 serialized.FindProperty("m_AdditionalLightsShadowResolutionTierHigh").intValue = 512;
@@ -185,7 +187,13 @@ namespace OneShift.RackLab
                     serialized.ApplyModifiedPropertiesWithoutUndo();
                 }
                 foreach (var camera in root.GetComponentsInChildren<UniversalAdditionalCameraData>(true))
-                    camera.antialiasing = AntialiasingMode.None;
+                {
+                    // The thin beams and bright lenses still staircase at 2x
+                    // MSAA. Smooth their final displayed edges after tone mapping,
+                    // also covering devices whose intermediate MSAA falls back.
+                    camera.antialiasing = AntialiasingMode.SubpixelMorphologicalAntiAliasing;
+                    camera.antialiasingQuality = AntialiasingQuality.Medium;
+                }
                 foreach (var probe in root.GetComponentsInChildren<ReflectionProbe>(true)) probe.resolution = 64;
                 foreach (var clock in root.GetComponentsInChildren<WarehouseDayNight>(true))
                     clock.reflectionIntervalSeconds = 20;
