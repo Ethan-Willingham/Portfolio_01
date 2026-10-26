@@ -1,5 +1,57 @@
 # Widewake production goal
 
+## Hull contacts and sustained combat, 2026-10-25 (v0.43.0)
+
+The owner asked for physical, attractive boat collisions, better enemy sinking
+and attackers that keep pressing at close range. This overrides the previous
+gunner standoff and proximity throttle reduction. BELTFED's
+[official media](https://www.hoodedhorse.com/games/beltfed) was reviewed for its
+pressure, impact contrast and persistent aftermath. Those observations informed
+original nautical effects rather than imported art or assumptions about its code.
+
+The new bounded contact solver uses the shared hull outlines, swept contact,
+mass, momentum, yaw and sliding friction. A scrape turns and rocks the boats;
+a bow impact transfers stronger momentum. Ally bumps preserve friendly hulls.
+Enemy contact damage follows closing energy and affects both boats; contact no
+longer deletes an attacker. Terrain checks constrain correction and crew detours
+around friendly hulls. Moored and vertically separated hulls do not generate
+false impacts. Foam, spray and a distinct hull sound mark actual contact.
+
+Four enemy hulls now break into three sections, open, list and sink through the
+sea plane. Plunge water, broken foam, bubbles and planks continue after the hull
+submerges. WebGL uses four shared wreck meshes and one debris buffer. Canvas
+clips actual triangles at the waterline, with a smaller visible-hull cap. The
+effect pool remains fixed and presentation limits do not suppress damage.
+Context recovery and reduced motion are covered by the focused browser checks.
+
+Raiders use full-drive attack passes and turn back to re-engage. The actual 6 m
+starter hull exposed a minimum-radius pursuit loop in the first revision. The
+light-boat pass and intercept logic corrects that behavior without slowing the
+engine just because the target is near. Actual obstruction and collision can
+still reduce speed. Snapshot helpers preserve the new pass state while normal
+browser saving remains disabled.
+
+On this host, a native 16,384-enemy, 24-boat sample averaged 11.73 ms per full
+simulation step. An adversarial stacked-hull case reached 768 narrow contacts
+in one tick: the contact solver and required spatial reindex averaged 4.17 ms,
+with a 4.46 ms p95. The entire dense tick averaged 30.67 ms, with a 45.82 ms p95;
+that artificial pileup remains more expensive because of crowd steering. These
+are native simulation measurements, not hardware frame rates or phone results.
+Contact buffers occupy 59,602 bytes and total simulation buffers are fixed at
+5,860,068 bytes. The new original wreck geometry adds about 347 KB with no new
+atlas textures.
+
+The final three-minute watch passes with 16,384 enemies, all 24 friendly boats
+firing, 64,567 kills, 805 hull contacts and 20 friendly boats afloat. No shots are
+rejected. Focused tests also cover the actual 6 m launch at rest and at full
+speed, repeated re-engagement, collision escape and exact continuation through
+contact. The connected trade, fishing, oil and convoy voyage passes. Browser
+checks cover desktop and landscape WebGL, landscape Canvas, actual helm input,
+fleet pause, focus recovery, unclipped audio, graphics restoration and a
+1,600-record wreck pool. Live fight samples use 25 to 27 draws and fixed buffers.
+The headless host uses SwiftShader; mobile hardware performance and final
+difficulty balance remain unverified.
+
 ## Physical gunfire and enemy handling, 2026-10-25 (v0.42.0)
 
 The owner asked for a major improvement to bullets, the way they hit enemies

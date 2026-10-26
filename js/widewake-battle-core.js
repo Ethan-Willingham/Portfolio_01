@@ -2,6 +2,7 @@
 (function(root){
   'use strict';
   const Waves=root.WidewakeWaves||(typeof require==='function'?require('./widewake-waves.js'):null);
+  const Contacts=root.WidewakeContacts||(typeof require==='function'?require('./widewake-contacts.js'):null);
   const TAU=Math.PI*2,clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
   const LIMITS=Object.freeze({raiders:32768,shots:8192,hostileReserve:1024,effects:2048,cells:32768,cellSize:48});
   const BLAST=Object.freeze({reach:1.4,drag:2.8,maxSpeed:140,hullResponse:Object.freeze([1,.86,.5,.32])});
@@ -173,22 +174,22 @@
   function rayReach(x,y,angle,ship,range){const dx=x-ship.x,dy=y-ship.y,dot=dx*Math.cos(angle)+dy*Math.sin(angle);return Math.max(0,-dot+Math.sqrt(Math.max(0,dot*dot+range*range-dx*dx-dy*dy)));}
   class Effects{
     constructor(){this.count=0;for(const k of ['x','y','size','life','total','kind','angle','height','vx','vy','variant'])this[k]=new Float32Array(LIMITS.effects);this.cursor=0;}
-    add(x,y,size,kind=0,height=kind===2||kind===3?.2:5,angle=NaN,vx=0,vy=0,variant=0){let i=this.count<LIMITS.effects?this.count++:this.cursor++%LIMITS.effects;this.x[i]=x;this.y[i]=y;this.height[i]=height;this.size[i]=size;this.life[i]=this.total[i]=kind===6?2.4:kind===5?.85:kind===4?.38:kind===3?1.35:kind===0?.7:kind===1?.12:1.6;this.kind[i]=kind;this.angle[i]=Number.isFinite(angle)?angle:(i*2.39996)%TAU;this.vx[i]=vx;this.vy[i]=vy;this.variant[i]=variant;return i;}
+    add(x,y,size,kind=0,height=kind===2||kind===3?.2:5,angle=NaN,vx=0,vy=0,variant=0){let i=this.count<LIMITS.effects?this.count++:this.cursor++%LIMITS.effects;this.x[i]=x;this.y[i]=y;this.height[i]=height;this.size[i]=size;this.life[i]=this.total[i]=kind===7?.65:kind===6?4.8:kind===5?.85:kind===4?.38:kind===3?1.35:kind===0?.7:kind===1?.12:1.6;this.kind[i]=kind;this.angle[i]=Number.isFinite(angle)?angle:(i*2.39996)%TAU;this.vx[i]=vx;this.vy[i]=vy;this.variant[i]=variant;return i;}
     step(dt){for(let i=this.count-1;i>=0;i--)if((this.life[i]-=dt)<=0){const last=--this.count;for(const k of ['x','y','size','life','total','kind','angle','height','vx','vy','variant'])this[k][i]=this[k][last];}}
   }
   class Raiders{
     constructor(capacity=LIMITS.raiders){
       this.capacity=Math.min(LIMITS.raiders,capacity);this.count=0;this.dead=0;this.sequence=1;
-      for(const key of ['x','y','px','py','vx','vy','pushX','pushY','waveX','waveY','hp','cooldown','hitUntil','charge','chargeX','chargeY','reserved','angle','previousAngle','turn','desiredAngle','desiredSpeed','drive','fireAt','gunAngle','surface','forwardX','forwardY'])this[key]=new Float32Array(this.capacity);
-      this.id=new Uint32Array(this.capacity);this.kind=new Uint8Array(this.capacity);this.target=new Uint8Array(this.capacity);this.steeringReady=new Uint8Array(this.capacity);this.surfaceReady=new Uint8Array(this.capacity);
+      for(const key of ['x','y','px','py','vx','vy','pushX','pushY','waveX','waveY','hp','cooldown','hitUntil','charge','chargeX','chargeY','reserved','angle','previousAngle','turn','desiredAngle','desiredSpeed','drive','fireAt','gunAngle','surface','forwardX','forwardY','passX','passY'])this[key]=new Float32Array(this.capacity);
+      this.id=new Uint32Array(this.capacity);this.kind=new Uint8Array(this.capacity);this.target=new Uint8Array(this.capacity);this.steeringReady=new Uint8Array(this.capacity);this.surfaceReady=new Uint8Array(this.capacity);this.attackPhase=new Uint8Array(this.capacity);
       this.next=new Int32Array(this.capacity);this.head=new Int32Array(LIMITS.cells);this.population=new Uint16Array(LIMITS.cells);
       this.cellX=new Int16Array(LIMITS.cells);this.cellY=new Int16Array(LIMITS.cells);this.targetCell=new Uint8Array(LIMITS.cells);this.stamp=new Int32Array(LIMITS.cells);this.stamp.fill(-1);
       this.head.fill(-1);this.peak=0;this.hits=new Int32Array(64);this.hitDistances=new Float32Array(64);
       this.blastUntil=new Float32Array(LIMITS.cells);
       this.neighborOffsets=new Int8Array([0,0,1,0,-1,0,0,1,0,-1,1,1,1,-1,-1,1,-1,-1]);this.avoidance={x:0,y:0,speed:0};this.avoidChecks=0;this.contactChecks=0;
     }
-    add(x,y,kind,rand){if(this.count>=this.capacity)return false;const i=this.count++;this.x[i]=this.px[i]=x;this.y[i]=this.py[i]=y;this.vx[i]=this.vy[i]=this.pushX[i]=this.pushY[i]=this.waveX[i]=this.waveY[i]=0;this.kind[i]=kind;this.hp[i]=enemies[kind].hp;this.id[i]=this.sequence++;this.cooldown[i]=.4+rand()*4;this.target[i]=0;this.hitUntil[i]=this.charge[i]=this.chargeX[i]=this.chargeY[i]=this.reserved[i]=0;this.angle[i]=this.previousAngle[i]=this.desiredAngle[i]=this.gunAngle[i]=Math.atan2(-y,-x);this.forwardX[i]=Math.cos(this.angle[i]);this.forwardY[i]=Math.sin(this.angle[i]);this.turn[i]=this.drive[i]=this.desiredSpeed[i]=this.steeringReady[i]=this.surface[i]=this.surfaceReady[i]=0;this.fireAt[i]=-1000;this.peak=Math.max(this.peak,this.count);return true;}
-    compact(){for(let i=this.count-1;i>=0;i--)if(this.hp[i]<=0){const last=--this.count;for(const k of ['x','y','px','py','vx','vy','pushX','pushY','waveX','waveY','hp','cooldown','id','kind','target','hitUntil','charge','chargeX','chargeY','reserved','angle','previousAngle','turn','desiredAngle','desiredSpeed','drive','steeringReady','fireAt','gunAngle','surface','surfaceReady','forwardX','forwardY'])this[k][i]=this[k][last];}this.dead=0;}
+    add(x,y,kind,rand){if(this.count>=this.capacity)return false;const i=this.count++;this.x[i]=this.px[i]=x;this.y[i]=this.py[i]=y;this.vx[i]=this.vy[i]=this.pushX[i]=this.pushY[i]=this.waveX[i]=this.waveY[i]=0;this.kind[i]=kind;this.hp[i]=enemies[kind].hp;this.id[i]=this.sequence++;this.cooldown[i]=.4+rand()*4;this.target[i]=0;this.hitUntil[i]=this.charge[i]=this.chargeX[i]=this.chargeY[i]=this.reserved[i]=0;this.angle[i]=this.previousAngle[i]=this.desiredAngle[i]=this.gunAngle[i]=Math.atan2(-y,-x);this.forwardX[i]=Math.cos(this.angle[i]);this.forwardY[i]=Math.sin(this.angle[i]);this.turn[i]=this.drive[i]=this.desiredSpeed[i]=this.steeringReady[i]=this.surface[i]=this.surfaceReady[i]=this.passX[i]=this.passY[i]=this.attackPhase[i]=0;this.fireAt[i]=-1000;this.peak=Math.max(this.peak,this.count);return true;}
+    compact(){for(let i=this.count-1;i>=0;i--)if(this.hp[i]<=0){const last=--this.count;for(const k of ['x','y','px','py','vx','vy','pushX','pushY','waveX','waveY','hp','cooldown','id','kind','target','hitUntil','charge','chargeX','chargeY','reserved','angle','previousAngle','turn','desiredAngle','desiredSpeed','drive','steeringReady','fireAt','gunAngle','surface','surfaceReady','forwardX','forwardY','passX','passY','attackPhase'])this[k][i]=this[k][last];}this.dead=0;}
     index(){this.head.fill(-1);this.population.fill(0);this.motion=0;const inv=1/LIMITS.cellSize;for(let i=0;i<this.count;i++){if(this.hp[i]<=0)continue;const cx=Math.floor(this.x[i]*inv),cy=Math.floor(this.y[i]*inv),key=hash(cx,cy);this.next[i]=this.head[key];this.head[key]=i;this.population[key]++;this.motion=Math.max(this.motion,Math.abs(this.x[i]-this.px[i]),Math.abs(this.y[i]-this.py[i]));}}
     nearest(x,y,r,available=false){let best=-1,distance=r*r;const cell=LIMITS.cellSize;for(let cy=Math.floor((y-r)/cell);cy<=Math.floor((y+r)/cell);cy++)for(let cx=Math.floor((x-r)/cell);cx<=Math.floor((x+r)/cell);cx++)for(let i=this.head[hash(cx,cy)];i!==-1;i=this.next[i]){if(this.hp[i]<=0||available&&this.reserved[i]>=this.hp[i]||Math.floor(this.x[i]/cell)!==cx||Math.floor(this.y[i]/cell)!==cy)continue;const dx=this.x[i]-x,dy=this.y[i]-y,d=dx*dx+dy*dy;if(d<distance){distance=d;best=i;}}return best;}
     denseTarget(x,y,r,time=-1){
@@ -215,17 +216,46 @@
         if(this.hp[i]<=0)continue;this.px[i]=this.x[i];this.py[i]=this.y[i];this.previousAngle[i]=this.angle[i];const target=this.acquire(this.x[i],this.y[i],ships,battle.tick),s=ships[target];this.target[i]=target;if(!s||s.hp<=0)continue;
         const dx=s.x-this.x[i],dy=s.y-this.y[i],d2=dx*dx+dy*dy,d=Math.sqrt(d2)||1;this.cooldown[i]-=dt;
         if(this.kind[i]===3){this.ram(i,s,d,dt,battle);continue;}
-        if(d<(s.length+enemies[this.kind[i]].length)*.56&&this.contact(i,s)){if(this.cooldown[i]<=0){battle.hurt(s,this.kind[i]===1?16:8);this.cooldown[i]=1.2;battle.kill(i,false);}continue;}
+        if(!battle.contacts&&d<(s.length+enemies[this.kind[i]].length)*.56&&this.contact(i,s)){if(this.cooldown[i]<=0){battle.hurt(s,this.kind[i]===1?16:8);this.cooldown[i]=1.2;battle.kill(i,false);}continue;}
         // Decide a course at 15 Hz. Hull yaw and water momentum keep moving at
         // 60 Hz; changing a target cannot snap a bow or reverse the propeller.
         if(!this.steeringReady[i]||(battle.tick+this.id[i])%4===0){
           const waypoint=battle.enemyWaypoint?.(this.x[i],this.y[i],s)||s,dx=waypoint.x-this.x[i],dy=waypoint.y-this.y[i],distance=Math.hypot(dx,dy)||1;
           const cx=Math.floor(this.x[i]/cell),cy=Math.floor(this.y[i]/cell);
           const gx=clamp((this.population[hash(cx-1,cy)]-this.population[hash(cx+1,cy)])*.022,-.45,.45),gy=clamp((this.population[hash(cx,cy-1)]-this.population[hash(cx,cy+1)])*.022,-.45,.45);
-          const kind=this.kind[i],hand=this.id[i]%2?1:-1,run=kind===2&&waypoint===s,radial=run?clamp((d-330)/115,-.9,1):1,tangent=run?.8*(1-Math.min(1,Math.abs(d-330)/240)):((this.id[i]%13)-6)*.018;
-          let ux=dx/distance*radial+gx-dy/distance*tangent*hand,uy=dy/distance*radial+gy+dx/distance*tangent*hand;
+          const kind=this.kind[i],hand=this.id[i]%2?1:-1,direct=waypoint===s,tangent=((this.id[i]%13)-6)*.012;
+          let ux=dx/distance+gx-dy/distance*tangent,uy=dy/distance+gy+dx/distance*tangent;
+          if(direct){
+            const pace=kind===1?66:kind===2?39:49,svx=s.vx||0,svy=s.vy||0;
+            let lead=Math.min(.8,d/pace*.18);
+            if(kind<2){const quadratic=svx*svx+svy*svy-pace*pace,closing=dx*svx+dy*svy,discriminant=closing*closing-quadratic*d2;if(quadratic<-.01&&discriminant>=0)lead=clamp((-closing-Math.sqrt(discriminant))/quadratic,0,6);}
+            const tx=s.x+svx*lead,ty=s.y+svy*lead;
+            let aimX=tx-this.x[i],aimY=ty-this.y[i],length=Math.hypot(aimX,aimY)||1,nx=aimX/length,ny=aimY/length;
+            if(kind===2){
+              // A gunner commits to a drive-by, carrying speed through the
+              // engagement and turning back only after clearing the target.
+              if(this.attackPhase[i]&&((this.x[i]-s.x)*this.passX[i]+(this.y[i]-s.y)*this.passY[i]>320||d>800))this.attackPhase[i]=0;
+              if(!this.attackPhase[i]&&d<165){this.attackPhase[i]=1;this.passX[i]=nx;this.passY[i]=ny;}
+              if(this.attackPhase[i]){nx=this.passX[i];ny=this.passY[i];aimX=tx+nx*460-ny*hand*52-this.x[i];aimY=ty+ny*460+nx*hand*52-this.y[i];}
+              else{const offset=hand*52*Math.min(1,d/220);aimX-=ny*offset;aimY+=nx*offset;}
+            }else{
+              // Light boats need a run through the target. Point pursuit alone
+              // traps a fast hull in a harmless circle around a small launch.
+              const clear=kind===1?260:220;
+              if(this.attackPhase[i]&&((this.x[i]-s.x)*this.passX[i]+(this.y[i]-s.y)*this.passY[i]>clear||d>800))this.attackPhase[i]=0;
+              if(!this.attackPhase[i]&&d<170){this.attackPhase[i]=1;this.passX[i]=nx;this.passY[i]=ny;}
+              if(this.attackPhase[i]&&dx*this.passX[i]+dy*this.passY[i]>0&&d<(s.length+enemies[kind].length)*.6&&this.pushX[i]*this.pushX[i]+this.pushY[i]*this.pushY[i]>36&&this.contact(i,s)){
+                // A solid hull can deflect a run. Clear its side under power
+                // before reacquiring, rather than pushing its stern forever.
+                const side=dx*this.forwardY[i]-dy*this.forwardX[i]>=0?1:-1,ex=-dx/d-this.forwardY[i]*side*1.3,ey=-dy/d+this.forwardX[i]*side*1.3,n=Math.hypot(ex,ey)||1;this.passX[i]=ex/n;this.passY[i]=ey/n;
+              }
+              if(this.attackPhase[i]){nx=this.passX[i];ny=this.passY[i];const arrival=clamp((dx*nx+dy*ny)/Math.max(8,pace-svx*nx-svy*ny),0,6),ax=dx+svx*arrival,ay=dy+svy*arrival,extend=Math.max(0,80-ax*nx-ay*ny);aimX=ax+nx*extend;aimY=ay+ny*extend;}
+              else if(kind===1){const offset=hand*Math.min(82,Math.max(0,d-170)*.3);aimX-=ny*offset;aimY+=nx*offset;}
+            }
+            length=Math.hypot(aimX,aimY)||1;ux=aimX/length+gx;uy=aimY/length+gy;
+          }else this.attackPhase[i]=0;
           const speed=kind===1?66:kind===2?39:49;
-          let desiredSpeed=speed*(run?.78:1);
+          let desiredSpeed=speed;
           if(this.count<256||d<1000){const avoid=this.avoid(i,ux,uy,desiredSpeed);ux=avoid.x;uy=avoid.y;desiredSpeed=avoid.speed;}
           this.desiredAngle[i]=Math.atan2(uy,ux);this.desiredSpeed[i]=desiredSpeed;
           // Campaign banks are checked only for this staggered decision, using
@@ -286,7 +316,7 @@
       if(this.helmDt!==dt){this.helmDt=dt;this.lightGrip=Math.exp(-dt*3.7);this.heavyGrip=Math.exp(-dt*2.7);this.lightDrive=1-Math.exp(-dt/.4);this.heavyDrive=1-Math.exp(-dt/.56);this.chargeDrive=1-Math.exp(-dt/.12);}
       let error=this.desiredAngle[i]-this.angle[i];if(error>Math.PI)error-=TAU;else if(error<-Math.PI)error+=TAU;const targetTurn=clamp(error*2.8,-rate,rate);
       this.turn[i]+=clamp(targetTurn-this.turn[i],-acceleration*dt,acceleration*dt);let angle=this.angle[i]+this.turn[i]*dt;if(angle>Math.PI)angle-=TAU;else if(angle<-Math.PI)angle+=TAU;this.angle[i]=angle;
-      const nx=Math.cos(this.angle[i]),ny=Math.sin(this.angle[i]),alignment=Math.max(.18,1-Math.abs(error)/Math.PI),target=this.desiredSpeed[i]*(charging?1:.3+.7*alignment),accel=charging?380:kind===1?48:kind===2?25:kind===3?29:36;this.forwardX[i]=nx;this.forwardY[i]=ny;
+      const nx=Math.cos(this.angle[i]),ny=Math.sin(this.angle[i]),target=this.desiredSpeed[i],accel=charging?380:kind===1?48:kind===2?25:kind===3?29:36;this.forwardX[i]=nx;this.forwardY[i]=ny;
       this.drive[i]+=clamp(target-this.drive[i],-accel*1.5*dt,accel*dt);
       let forward=this.vx[i]*nx+this.vy[i]*ny,side=-this.vx[i]*ny+this.vy[i]*nx;
       forward+=(this.drive[i]-forward)*(charging?this.chargeDrive:kind===2?this.heavyDrive:this.lightDrive);side*=kind===2?this.heavyGrip:this.lightGrip;
@@ -314,9 +344,9 @@
     ram(i,s,d,dt,battle){
       // A ram commits to one visible heading. It cannot bend toward the player
       // during the dash. Only this sparse enemy class has an attack state.
-      if(battle.endgame){
+      if(!battle.contacts&&battle.endgame){
         let nearest=Infinity;for(const boat of battle.ships){if(boat.hp<=0)continue;const distance=Math.hypot(boat.x-this.x[i],boat.y-this.y[i]);if(distance<(boat.length+enemies[3].length)*.56&&this.contact(i,boat)){battle.hurt(boat,360);battle.kill(i,false);return;}if(boat.working&&distance<nearest){s=boat;d=nearest=distance;}}
-      }else if(d<(s.length+enemies[3].length)*.56&&this.contact(i,s)){battle.hurt(s,180);battle.kill(i,false);return;}
+      }else if(!battle.contacts&&d<(s.length+enemies[3].length)*.56&&this.contact(i,s)){battle.hurt(s,180);battle.kill(i,false);return;}
       if(!this.steeringReady[i]){this.angle[i]=this.previousAngle[i]=this.desiredAngle[i]=Math.atan2(s.y-this.y[i],s.x-this.x[i]);this.steeringReady[i]=1;}
       if(this.charge[i]<=0&&this.cooldown[i]<=0&&d<620&&Math.abs(angleDelta(Math.atan2(s.y-this.y[i],s.x-this.x[i]),this.angle[i]))<.4){
         const dx=s.x+s.vx*.6-this.x[i],dy=s.y+s.vy*.6-this.y[i],length=Math.hypot(dx,dy)||1;
@@ -495,6 +525,7 @@
   const shipNames=['Flagship','Wren','Kestrel','Pipit','Gannet','Tern','Moth','Nettle','Plover','Curlew','Heron','Finch','Snipe','Thunder','Cinder','Ash','Rook','Ward','Sparrow','Minnow','Lark','Petrel','Cormorant','Mender'];
   class Battle{
     constructor({population=16384,seed=48476,duration=180}={}){
+      this.contacts=Contacts?new Contacts.World():null;
       this.sea=new Waves.Sea();this.random=random(seed);this.population=clamp(Math.floor(population),0,LIMITS.raiders);this.duration=duration;this.time=0;this.tick=0;this.kills=0;this.spawned=0;this.lost=0;this.burstCooldown=0;this.burstCursor=BROADSIDE.rounds;this.burstTimer=0;this.lastHit={x:0,y:0,time:-10};this.impactBudget=0;this.work=true;this.workTime=0;this.produced={fish:0,oil:0};this.result=null;this.sounds=[];this.soundBudget=0;this.deathBudget=0;this.shots=new Shots();this.effects=new Effects();this.raiders=new Raiders();this.ships=[];this.mounts=[];this.center={x:0,y:0};this.control={x:0,y:0,boost:false,fire:false,aim:null};
       const types=['flagship',...Array(12).fill('gunboat'),...Array(4).fill('battery'),...Array(2).fill('screen'),'trawler','trawler','oilrig','oilrig','repair'];
       for(let i=0;i<types.length;i++){
@@ -513,7 +544,7 @@
       const x=this.center.x+Math.cos(a)*radius,y=this.center.y+Math.sin(a)*radius,kind=r()<.035?2:r()<.2?1:0;
       if(this.raiders.add(x,y,kind,r))this.spawned++;
     }
-    sound(kind,x,y){const priority=kind==='hurt'||kind==='loss'?3:kind==='metal-hit'||kind==='water-hit'?2:1;if(this.soundBudget>=8){const replace=priority>1?this.sounds.findIndex(c=>(c.priority||1)<priority):-1;if(replace>=0)this.sounds[replace]={kind,x,y,priority};return;}this.soundBudget++;this.sounds.push({kind,x,y,priority});}
+    sound(kind,x,y){const priority=kind==='hurt'||kind==='loss'?3:kind==='metal-hit'||kind==='water-hit'||kind==='hull-contact'?2:1;if(this.soundBudget>=8){const replace=priority>1?this.sounds.findIndex(c=>(c.priority||1)<priority):-1;if(replace>=0)this.sounds[replace]={kind,x,y,priority};return;}this.soundBudget++;this.sounds.push({kind,x,y,priority});}
     impact(x,y,player=false,height=5,angle=0,weapon=0){if(this.impactBudget++<16){this.effects.add(x,y,weapon===1?5.5:3.8,4,height,angle,Math.cos(angle)*2,Math.sin(angle)*2,weapon);this.sound('metal-hit',x,y);}if(player){this.lastHit.x=x;this.lastHit.y=y;this.lastHit.time=this.time;}}
     damage(i,n){if(this.raiders.hp[i]<=0)return;this.raiders.hitUntil[i]=this.time+.09;if(n>=this.raiders.hp[i])this.kill(i,true);else this.raiders.hp[i]-=n;}
     kill(i,reward=true){const a=this.raiders;if(a.hp[i]===-999)return;a.hp[i]=-999;a.dead++;if(reward)this.kills++;
@@ -542,14 +573,14 @@
         // inside the production radius; a new order can pull them off station.
         s.onStation=s.onStation?d<slack*1.8:d<slack;
         const amount=s.onStation?0:Math.min(1,Math.max(0,d-slack*.5)/(s.speed*(1.35+(s.id%4)*.12)));
-        crewStep(s,{x:d?dx/d*amount:0,y:d?dy/d*amount:0},dt,this.tick);this.sea.stepShip(s,dt);
+        crewStep(s,this.contacts?this.contacts.steer(s,dx,dy,amount,this):{x:d?dx/d*amount:0,y:d?dy/d*amount:0},dt,this.tick);this.sea.stepShip(s,dt);
         if(s.type==='repair')for(const other of this.ships)if(other.hp>0&&(other.x-s.x)**2+(other.y-s.y)**2<550**2)other.hp=Math.min(other.maxHp,other.hp+dt*5);
       }
       this.raiders.compact();
       // Replacements are actual new vessels, not healed targets. Limit admission
       // per tick so clearing a large pocket cannot create one expensive spike.
       if(this.reinforce)this.reinforce(dt);else for(let n=0,missing=this.population-this.raiders.count;n<Math.min(48,missing);n++)this.spawn();
-      this.raiders.index();this.raiders.step(dt,this);this.raiders.index();
+      this.raiders.index();this.raiders.step(dt,this);this.raiders.index();this.contacts?.solve(this,dt);
       const a=this.raiders;
       if(this.automatic){autoBroadside(this);fireFleet(this,dt);}else for(const mount of this.mounts){const s=this.ships[mount.ship];mount.flash=Math.max(0,mount.flash-dt);mount.recoil*=Math.exp(-dt*15);if(s.hp<=0)continue;const spec=weapons[mount.weapon];mount.cooldown-=dt;if(mount.cooldown>0)continue;
         const manual=s===p&&input.fire&&input.aim;let target=-1;
@@ -568,8 +599,8 @@
       if(ready.length){const old=Math.floor(this.workTime);this.workTime+=dt;if(Math.floor(this.workTime)>old)for(const s of ready){const qty=Math.min(s.hold-s.cargo,s.type==='trawler'?3:2);s.cargo+=qty;this.produced[s.type==='trawler'?'fish':'oil']+=qty;}}
       if(p.hp<=0)this.result='Flagship lost';else if(!workers.length)this.result='Workboats lost';else if(this.workTime>=this.duration)this.result='Holds secured';
     }
-    memoryBytes(){let n=0;for(const part of [this.raiders,this.shots,this.effects])for(const value of Object.values(part))if(ArrayBuffer.isView(value))n+=value.byteLength;return n;}
-    report(){return{seconds:this.time,workSeconds:this.workTime,raiders:this.raiders.count-this.raiders.dead,targetRaiders:this.population,peakRaiders:this.raiders.peak,kills:this.kills,spawned:this.spawned,ships:this.ships.filter(s=>s.hp>0).length,lost:this.lost,shots:this.shots.count,peakShots:this.shots.peak,projectileContacts:this.shots.contacts,blastHits:this.shots.blastHits,detonations:this.shots.detonations,rejectedShots:this.shots.rejected,effects:this.effects.count,bufferBytes:this.memoryBytes(),produced:{...this.produced},result:this.result};}
+    memoryBytes(){let n=this.contacts?.bytes||0;for(const part of [this.raiders,this.shots,this.effects])for(const value of Object.values(part))if(ArrayBuffer.isView(value))n+=value.byteLength;return n;}
+    report(){return{seconds:this.time,workSeconds:this.workTime,raiders:this.raiders.count-this.raiders.dead,targetRaiders:this.population,peakRaiders:this.raiders.peak,kills:this.kills,spawned:this.spawned,ships:this.ships.filter(s=>s.hp>0).length,lost:this.lost,shots:this.shots.count,peakShots:this.shots.peak,projectileContacts:this.shots.contacts,blastHits:this.shots.blastHits,detonations:this.shots.detonations,rejectedShots:this.shots.rejected,effects:this.effects.count,hullContacts:this.contacts?.total||0,hullContactChecks:this.contacts?.enemyChecks||0,bufferBytes:this.memoryBytes(),produced:{...this.produced},result:this.result};}
   }
   const api={Battle,Raiders,Shots,Effects,roles,enemies,weapons,LIMITS,BLAST,BROADSIDE,HULL_OUTLINE,helmStep,crewStep,crewPace,broadsideRound,broadsideFootprint,rayReach,angleDelta,random,intercept,muzzlePoint,fireFleet,autoBroadside,spawnVisible,spawnRadius};root.WidewakeBattle=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

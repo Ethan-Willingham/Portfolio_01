@@ -126,7 +126,7 @@
     }
     play(kind,detail={}){
       if(!this.ctx||!this.active()||this.settings().sound===false||this.settings().volume<=0||this.settings().effects===0||this.ctx.state!=='running'&&!this.offline||this.ctx.state==='closed')return false;
-      const at=detail.at??this.ctx.currentTime,interval=({shot:.085,'enemy-shot':.24,'escort-shot':.14,'metal-hit':.08,'water-hit':.14,impact:.075,sink:.18,hurt:.14,burst:.5,'flak-shot':.23,'mortar-shot':.38,'mortar-hit':.22,pickup:.13,splash:.3,warn:1.5,repair:.4,complete:.8,rare:.8})[kind]??.07;
+      const at=detail.at??this.ctx.currentTime,interval=({shot:.085,'enemy-shot':.24,'escort-shot':.14,'metal-hit':.08,'water-hit':.14,'hull-contact':.24,impact:.075,sink:.18,hurt:.14,burst:.5,'flak-shot':.23,'mortar-shot':.38,'mortar-hit':.22,pickup:.13,splash:.3,warn:1.5,repair:.4,complete:.8,rare:.8})[kind]??.07;
       if(at-(this.lastPlayed[kind]??-100)<interval||this.voices.size>52){this.stats.skipped++;return false;}this.lastPlayed[kind]=at;this.stats.played++;
       const pan=clamp(detail.pan||0,-.85,.85),v=clamp(detail.volume??1,0,1);
       if(['shot','escort-shot','enemy-shot','burst'].includes(kind)){
@@ -141,6 +141,11 @@
       }else if(kind==='water-hit'){
         this.noiseVoice({at,duration:.13,volume:v*.17,frequency:1850,highpass:260,pan});
         this.noiseVoice({at:at+.035,duration:.24,volume:v*.10,frequency:630,highpass:90,pan});
+      }else if(kind==='hull-contact'){
+        this.noiseVoice({at,duration:.095,volume:v*.26,frequency:1700,highpass:190,pan});
+        this.tone({at,frequency:126,slide:51,duration:.22,volume:v*.13,type:'triangle',filter:430,pan});
+        this.noiseVoice({at:at+.035,duration:.33,volume:v*.11,frequency:730,highpass:90,pan});
+        this.tone({at:at+.014,frequency:870,slide:610,duration:.14,volume:v*.025,type:'triangle',filter:1600,pan});
       }else if(kind==='flak-shot'||kind==='mortar-shot'||kind==='mortar-hit'){
         const mortar=kind!=='flak-shot',hit=kind==='mortar-hit';
         this.noiseVoice({at,duration:hit?.38:mortar?.25:.12,volume:v*(hit?.4:.27),frequency:hit?380:mortar?620:1900,pan});

@@ -1,5 +1,42 @@
 # Bracken Reach, the playable world
 
+## Hull collisions, sinking and attack pressure, 2026-10-25 (v0.43.0)
+
+The owner's latest combat direction supersedes the previous standoff orbit and
+proximity braking. Attackers keep propulsion through their approach and attack
+passes. Skiffs and flankers commit through an intercept, clear the target and
+turn back with room for another run. Gunners make firing passes. Rams retain
+their warning and committed charge. Crowds and actual banks can still obstruct
+a boat, and a real collision can take speed away.
+
+`js/widewake-contacts.js` owns physical hull contacts. It uses the shared hull
+outlines, swept movement, mass, angular momentum and sliding friction. Bow
+impacts, glancing scrapes and moored hulls therefore have different responses.
+Friendly contacts do not damage allied hulls; high-energy enemy contacts damage
+both participants. Touching an enemy no longer removes it. Crews detour around
+occupied friendly hulls using terrain-checked steering rather than driving into
+the flagship while trying to hold a formation slot.
+
+Contact foam and spray follow the actual collision normal and energy. Hulls yaw,
+pitch and roll from the impulse, with a separate wood, metal and water sound.
+Destroyed enemies split into bow, middle and stern sections, list and plunge
+below the sea plane, then leave broken white water, bubbles and floating planks.
+The 4.8-second sequence shares fixed effect storage. Visible wrecks are capped
+at 128 in WebGL and 32 in Canvas, with 128 aftermath records and 384 floating
+planks; damage never depends on these visual limits.
+WebGL and Canvas follow the same stages, including waterline clipping. Reduced
+motion and graphics-context restoration remain supported.
+
+The owner requested a BELTFED reference review. Its
+[official screenshots and motion](https://www.hoodedhorse.com/games/beltfed)
+informed the emphasis on sustained pressure, a distinct impact onset and readable
+aftermath. This is an interpretation of the published media, not a claim about
+that game's implementation. Widewake uses its own nautical models and effects.
+
+Focused checks add `test-boat-contacts.cjs`, `test-enemy-pressure.cjs` and
+`test-combat-overhaul-browser.cjs`. The parked snapshot helpers preserve attack
+passes and contact totals; this does not enable saving in the game.
+
 ## Gunfire, contact and raider handling, 2026-10-25 (v0.42.0)
 
 The owner asked for a substantial improvement to rounds leaving guns, enemy hits

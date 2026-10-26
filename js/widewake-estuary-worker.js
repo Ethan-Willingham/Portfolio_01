@@ -1,5 +1,5 @@
 /* Terrain preparation and route searches stay off the input/render thread. */
-importScripts('widewake-waterways.js?v=0.42.0','widewake-estuary-core.js?v=0.42.0');
+importScripts('widewake-waterways.js?v=0.43.0','widewake-estuary-core.js?v=0.43.0');
 const E=WidewakeEstuary,field=new E.Field();
 // The same surveyed bank and working footprints seat every harbor. Grade only
 // dry ground, leaving the physical waterway and its depths untouched.

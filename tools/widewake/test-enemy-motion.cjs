@@ -3,7 +3,7 @@ const assert=require('node:assert/strict');
 const B=require('../../js/widewake-battle-core.js');require('../../js/widewake-estuary-core.js');
 const R=require('../../js/widewake-reach-game.js');
 const dt=1/60,rand=B.random(937),delta=B.angleDelta,check=s=>console.log('PASS '+s);
-function fixture(){const b=new B.Battle({population:0});b.mounts=[];b.ships.slice(1).forEach(s=>s.hp=0);b.player.x=b.player.px=700;b.player.y=b.player.py=0;b.player.vx=b.player.vy=0;b.sea=null;return b;}
+function fixture(){const b=new B.Battle({population:0});b.mounts=[];b.ships.slice(1).forEach(s=>s.hp=0);b.player.x=b.player.px=700;b.player.y=b.player.py=0;b.player.vx=b.player.vy=0;b.sea=null;b.contacts={active:true};return b;}
 function step(b,n){for(let k=0;k<n;k++){b.tick++;b.time+=dt;b.raiders.index();b.raiders.step(dt,b);}}
 const turning=fixture(),a=turning.raiders;a.add(0,0,0,rand);step(turning,180);
 const velocity=a.vx[0],angle=a.angle[0];turning.player.x=-700;step(turning,1);
@@ -15,8 +15,8 @@ check('retargeting preserves momentum and uses bounded hull yaw and angular acce
 const gunner=fixture();gunner.player.x=350;gunner.raiders.add(0,0,2,rand);gunner.raiders.cooldown[0]=100;
 let minRange=Infinity,maxRange=0,minForward=Infinity;
 for(let k=0;k<1800;k++){step(gunner,1);const q=gunner.raiders,range=Math.hypot(q.x[0]-gunner.player.x,q.y[0]);if(k>240){minRange=Math.min(minRange,range);maxRange=Math.max(maxRange,range);minForward=Math.min(minForward,q.vx[0]*Math.cos(q.angle[0])+q.vy[0]*Math.sin(q.angle[0]));}}
-assert.ok(minRange>250&&maxRange<430,JSON.stringify({minRange,maxRange}));assert.ok(minForward>0,'gunner circles without reverse thrust');assert.ok(Math.abs(gunner.raiders.y[0])>50);
-check('gunners hold a smooth firing arc instead of abruptly reversing at a range threshold');
+assert.ok(minRange<140&&maxRange>320,JSON.stringify({minRange,maxRange}));assert.ok(minForward>0,'gunner keeps forward propulsion through its attack pass');assert.ok(Math.abs(gunner.raiders.y[0])>20);
+check('gunners press through close attack passes and re-engage without reverse thrust');
 
 // A test-only full pair check measures the gaps in the bounded runtime solver.
 function hull(a,i){const spec=B.enemies[a.kind[i]],c=Math.cos(a.angle[i]),s=Math.sin(a.angle[i]);return B.HULL_OUTLINE.map(([x,y])=>({x:a.x[i]+x*spec.length*c-y*spec.width*s,y:a.y[i]+x*spec.length*s+y*spec.width*c}));}
@@ -46,10 +46,16 @@ for(let i=0;i<8;i++)saved.raiders.add(-400-i*25,2100+i*7,i%3,rand);
 for(let k=0;k<180;k++)saved.step(dt);
 const text=saved.save(),restored=R.Game.restore(text);restored.mounts=[];
 for(let k=0;k<180;k++){saved.step(dt);restored.step(dt);}
-for(const key of ['x','y','vx','vy','angle','turn','desiredAngle','desiredSpeed','drive','steeringReady','gunAngle','fireAt','surface','surfaceReady'])assert.deepEqual(Array.from(saved.raiders[key].subarray(0,saved.raiders.count)),Array.from(restored.raiders[key].subarray(0,restored.raiders.count)),key+' survives continuation');
+for(const key of ['x','y','vx','vy','angle','turn','desiredAngle','desiredSpeed','drive','steeringReady','gunAngle','fireAt','surface','surfaceReady','attackPhase','passX','passY'])assert.deepEqual(Array.from(saved.raiders[key].subarray(0,saved.raiders.count)),Array.from(restored.raiders[key].subarray(0,restored.raiders.count)),key+' survives continuation');
 const old=JSON.parse(text);for(const key of ['angle','turn','desiredAngle','desiredSpeed','drive','steeringReady','gunAngle','fireAt','surface','surfaceReady'])delete old.raiders[key];assert.ok(R.Game.restore(JSON.stringify(old)));
 const invalid=JSON.parse(text);invalid.raiders.angle[0]='invalid';assert.throws(()=>R.Game.restore(JSON.stringify(invalid)));
 check('enemy decisions, body headings and surface caches continue deterministically and validate old records');
+
+const active=new R.Game();active.castOff();active.player.x=active.player.px=0;active.player.y=active.player.py=2000;active.nextEncounter=1e9;active.mounts=[];
+active.raiders.add(-120,2020,0,rand);for(let k=0;k<30;k++)active.step(dt);assert.equal(active.raiders.attackPhase[0],1,'save during a real committed light-boat pass');
+const resumed=R.Game.restore(active.save());resumed.mounts=[];for(let k=0;k<240;k++){active.step(dt);resumed.step(dt);}
+assert.equal(active.raiders.count,resumed.raiders.count);for(const key of ['x','y','vx','vy','pushX','pushY','angle','turn','drive','attackPhase','passX','passY'])assert.deepEqual(Array.from(active.raiders[key].subarray(0,active.raiders.count)),Array.from(resumed.raiders[key].subarray(0,resumed.raiders.count)),key+' continues an active light-boat pass');
+assert.equal(active.player.hp,resumed.player.hp);check('a saved light-boat attack continues through hull contact with identical motion and damage');
 
 const stress=fixture();stress.player.x=stress.player.px=0;stress.player.y=stress.player.py=0;
 for(let i=0;i<16384;i++){const angle=i*.61803398875*2*Math.PI,radius=350+(i%2400);stress.raiders.add(Math.cos(angle)*radius,Math.sin(angle)*radius,i%3,rand);}

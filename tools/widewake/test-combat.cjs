@@ -13,8 +13,10 @@ ram.raiders.step(dt,ram);const direction=[ram.raiders.chargeX[0],ram.raiders.cha
 ram.player.y=300;ram.ships[19].y=300;for(let i=0;i<55;i++)ram.raiders.step(dt,ram);
 assert.deepEqual([ram.raiders.chargeX[0],ram.raiders.chargeY[0]],direction);assert.ok(ram.raiders.x[0]<position-1);assert.ok(ram.raiders.vx[0]<-5&&ram.raiders.vx[0]>-120,'ram builds speed after its wind-up');
 for(let i=0;i<40;i++)ram.raiders.step(dt,ram);assert.deepEqual([ram.raiders.chargeX[0],ram.raiders.chargeY[0]],direction);assert.ok(ram.raiders.x[0]<position-30);assert.ok(ram.raiders.vx[0]<-140,'the committed dash reaches its full speed over time');
-ram.player.x=1000;const victim=ram.ships[19];ram.raiders.x[0]=victim.x;ram.raiders.y[0]=victim.y;const hp=victim.hp;ram.raiders.step(dt,ram);assert.equal(victim.hp,hp-360);assert.equal(ram.raiders.hp[0],-999);
-check('rams wind up, commit to one lane, accelerate, and hit one hull once');
+ram.player.x=1000;const victim=ram.ships[19],hp=victim.hp;victim.angle=victim.previousAngle=0;victim.vx=victim.vy=victim.turn=0;
+for(const s of ram.ships){s.px=s.x;s.py=s.y;s.previousAngle=s.angle;}ram.raiders.x[0]=ram.raiders.px[0]=victim.x+50;ram.raiders.y[0]=ram.raiders.py[0]=victim.y;ram.raiders.angle[0]=ram.raiders.previousAngle[0]=Math.PI;ram.raiders.vx[0]=-150;ram.raiders.vy[0]=ram.raiders.pushX[0]=ram.raiders.pushY[0]=0;
+for(let i=0;i<12;i++){ram.raiders.step(dt,ram);ram.raiders.index();ram.contacts.solve(ram,dt);}assert.ok(victim.hp<hp&&victim.hp>hp-720,'a real bow contact damages the struck hull');assert.ok(ram.raiders.hp[0]>0&&ram.raiders.hp[0]<1800,'the ram takes physical damage and survives the contact');assert.ok(ram.raiders.pushX[0]>0,'opposing momentum deflects the ram');
+check('rams wind up, commit to one lane, accelerate, and transfer real collision momentum');
 
 const a=new C.Endgame({population:1024}),b=new C.Endgame({population:1024});step(a,300,{x:.7,y:.3,fire:true,aim:{x:1e6,y:1e6}});step(b,300,{x:.7,y:.3});assert.deepEqual(a.report(),b.report());assert.deepEqual(Array.from(a.shots.x),Array.from(b.shots.x));
 const watch=a.workTime;a.toggleWork();step(a,120,{x:1,y:0});assert.equal(a.workTime,watch);assert.ok(a.center.x!==0);a.toggleWork();step(a,1800);assert.ok(a.workTime>watch+10);

@@ -94,6 +94,31 @@
     }
     return new Float32Array(g.out);
   }
+  function wreckModels(G){
+    const models=[];
+    // Clip the original nautical model into stern, engine room and bow. It
+    // remains the boat that was struck; dark broken bulkheads appear as it opens.
+    function clip(polygon,x,greater){const out=[];for(let i=0;i<polygon.length;i++){const a=polygon[i],b=polygon[(i+1)%polygon.length],inside=greater?a[0]>=x:a[0]<=x,next=greater?b[0]>=x:b[0]<=x;if(inside)out.push(a);if(inside!==next){const t=(x-a[0])/(b[0]-a[0]);out.push(a.map((n,k)=>n+(b[k]-n)*t));}}return out;}
+    for(let kind=0;kind<4;kind++){
+      const spec=root.WidewakeBattle.enemies[kind],source=mesh('raider'+kind,spec,G),ranges=[[-spec.length,-spec.length*.11],[-spec.length*.11,spec.length*.17],[spec.length*.17,spec.length]],combined=[];
+      for(let part=0;part<3;part++){
+        const out=[],[lo,hi]=ranges[part];
+        for(let i=0;i<source.length;i+=18){let polygon=[];for(let v=0;v<3;v++)polygon.push(Array.from(source.subarray(i+v*6,i+v*6+6)));polygon=clip(clip(polygon,lo,true),hi,false);
+          for(let j=1;j<polygon.length-1;j++)for(const p of [polygon[0],polygon[j],polygon[j+1]])out.push(...p.slice(0,3),p[3]*.80,p[4]*.81,p[5]*.79);
+        }
+        const g=G(),h=spec.height*.28;
+        for(const cut of [lo,hi])if(cut>-spec.length*.48&&cut<spec.length*.48){
+          g.face([[cut,-spec.width*.35,h*.22],[cut,spec.width*.35,h*.22],[cut,spec.width*.33,h*.93],[cut,spec.width*.08,h*.72],[cut,-spec.width*.32,h*.95]],'#302d28');
+          for(let n=0;n<4;n++){const y=(n-1.5)*spec.width*.16;g.box(cut,y,h*.88,.26,spec.width*.075,h*.18,'#a18558','#514b39');}
+        }
+        out.push(...g.out);const raw=new Float32Array(out);
+        for(let i=0;i<raw.length;i+=6)combined.push(...raw.subarray(i,i+6),part,0,0);
+      }
+      models.push(new Float32Array(combined));
+    }
+    const g=G();g.box(0,0,0,1,.24,.12,'#a58a5b','#4b4737');g.box(.12,.02,.12,.2,.29,.06,'#536967','#354b4e');
+    return{models,debris:new Float32Array(g.out)};
+  }
   function normals(vertices){const out=new Float32Array(vertices.length/6*9);for(let i=0,j=0;i<vertices.length;i+=18){const ax=vertices[i+6]-vertices[i],ay=vertices[i+7]-vertices[i+1],az=vertices[i+8]-vertices[i+2],bx=vertices[i+12]-vertices[i],by=vertices[i+13]-vertices[i+1],bz=vertices[i+14]-vertices[i+2],nx=ay*bz-az*by,ny=az*bx-ax*bz,nz=ax*by-ay*bx,n=Math.hypot(nx,ny,nz)||1;for(let v=0;v<3;v++){for(let k=0;k<6;k++)out[j++]=vertices[i+v*6+k];out[j++]=nx/n;out[j++]=ny/n;out[j++]=nz/n;}}return out;}
   function scenery(G){const meshes={},specs={};let seed=3918;const rand=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
     const leaf=(g,x,y,z,r,color)=>{const n=7,rings=4,points=[];for(let a=0;a<=rings;a++){const lat=a/rings*Math.PI,row=[];for(let b=0;b<n;b++){const angle=b/n*TAU,jitter=.86+rand()*.27;row.push([x+Math.sin(lat)*Math.cos(angle)*r*jitter,y+Math.sin(lat)*Math.sin(angle)*r*jitter,z+Math.cos(lat)*r*.7*jitter]);}points.push(row);}for(let a=0;a<rings;a++)for(let b=0;b<n;b++){const next=(b+1)%n;g.face([points[a][b],points[a][next],points[a+1][next],points[a+1][b]],color);}};
@@ -579,5 +604,5 @@
     }
     dispose(){for(const batch of Object.values(this.batches))batch.dispose();}
   }
-  root.WidewakeOceanArt={mesh,normals,scenery,landings,Atlas,noiseTexture,waterGLSL,WakeTrail,WaterMotion,Shadows,Mechanisms};
+  root.WidewakeOceanArt={mesh,wreckModels,normals,scenery,landings,Atlas,noiseTexture,waterGLSL,WakeTrail,WaterMotion,Shadows,Mechanisms};
 })(globalThis);
