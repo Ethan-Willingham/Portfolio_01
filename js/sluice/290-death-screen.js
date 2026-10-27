@@ -332,6 +332,7 @@
       cause: deathInfo && deathInfo.type || 'hull',
       depth: Math.max(0, Math.floor(player.y / TILE - SKY_ROWS + 1)),
       count: cargo.length,
+      bulk: paydirtUsed(),
       total: total,
       fee: fee,
       remitted: balance - fee
@@ -436,7 +437,9 @@
     var opening = deathOverlay.hidden;
     if (opening) {
       document.getElementById('gm-death-cause').textContent = deathCauseText(m.cause) + ' at ' + m.depth + ' m.';
-      document.getElementById('gm-death-cargo').textContent = m.count ? '$' + m.total.toLocaleString() : 'Empty hold';
+      document.getElementById('gm-death-cargo').textContent = m.count || m.bulk ?
+        (m.count ? '$' + m.total.toLocaleString() + ' ore' : '') +
+        (m.count && m.bulk ? ' + ' : '') + (m.bulk ? m.bulk.toLocaleString() + ' bulk' : '') : 'Empty hold';
       document.getElementById('gm-death-fee').textContent = '$' + m.fee.toLocaleString();
       document.getElementById('gm-death-balance').textContent = '$' + m.remitted.toLocaleString();
       deathOverlay.hidden = false;

@@ -75,7 +75,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.213';
+  var GAME_VERSION = 'v28.214';
   // Water-removal comparison for performance recording. Require a fresh
   // no-save run so the diagnostic cannot alter a stored world. Snow keeps
   // its ordinary emission, contacts, slime boundaries and rendering.
@@ -4870,6 +4870,7 @@
     money = 0;
     rigExhaustReset();
     cargo = [];
+    paydirtReset();
     teleporters = 0;
     teleportFx = null;
     balloons = 0;
@@ -6812,6 +6813,8 @@
       cargoManifestOpen = false;
       ledgerOpen = true;
       drawLedger();
+      paydirtDrawMachine(ctx, {x:0,y:0,w:700,h:250}, {phase:'washing',progress:0.55,elapsed:4,color:BLD.woodBase,quantity:100,discoveries:0});
+      paydirtDrawMachine(ctx, {x:0,y:0,w:700,h:250}, {phase:'ready',progress:1,elapsed:10,color:BLD.woodBase,quantity:100,discoveries:3});
     } finally {
       ukModal = modal; ukState = modalState; ukOpenT = openT; ukCloseT = closeT;
       storeLastTab = lastTab;
@@ -6868,6 +6871,7 @@
   var saveLastUpgradeSum = -1;
   var saveLastGardenKey = '';
   var saveLastExhaustKey = '';
+  var saveLastPaydirtRevision = -1;
   var saveCooldownT = 0;         // min seconds between docked autosaves
   var savePeriodicT = 0;         // background safety-save clock
   var saveCounter = 0;           // monotonic slot counter
@@ -7049,6 +7053,7 @@
         tradeGoods: player.tradeGoods || {},
       },
       cargo: cargo,
+      paydirt: paydirtSave(),
       ponds: surfacePonds.map(function (p) { return { cL: p.cL, cR: p.cR, d: p.d || 1, rainFed: p.rainFed === true, filled: false }; }),   // v24.148 — d = lake depth
       rain: rainSave(),
       pondStyle: worldPondStyle,   // v27.4: the Options pond style this world was built with (old saves: regular)
@@ -7079,6 +7084,7 @@
       saveLastUpgradeSum = saveUpgradeSum();
       saveLastGardenKey = saveGardenKey();
       saveLastExhaustKey = JSON.stringify(rigExhaustSave());
+      saveLastPaydirtRevision = paydirt.revision;
       saveCooldownT = 10;
       savePeriodicT = 0;
       saveLampT = 3.0;          // console SAVE lamp: one steady info pulse
@@ -7156,6 +7162,7 @@
     maxCargo = getMaxCargo();
     maxFuel = getMaxFuel();
     cargo = env.cargo || [];
+    paydirtRestore(env.paydirt);
     // Player: position + vitals + persistent sub-objects; movement transients
     // stay at init() defaults.
     var sp = env.player || {};
@@ -7192,6 +7199,7 @@
     saveLastUpgradeSum = saveUpgradeSum();
     saveLastGardenKey = saveGardenKey();
     saveLastExhaustKey = JSON.stringify(rigExhaustSave());
+    saveLastPaydirtRevision = paydirt.revision;
   }
 
   function saveWipe() {
@@ -7211,6 +7219,8 @@
     seamCreditsOn = false;
     ledgerOpen = false;
     rigExhaustReset();
+    paydirtReset();
+    saveLastPaydirtRevision = -1;
   }
 
   // ---- Death -> respawn (replaces the old init() wipe) ----
@@ -7218,6 +7228,7 @@
     if (applyDeathPenalty._done) return;   // once per death
     applyDeathPenalty._done = true;
     cargo = [];
+    paydirtLoseHeld();
     var fee = Math.floor(money * 0.10);
     money -= fee;
     applyDeathPenalty._fee = fee;
@@ -7237,6 +7248,7 @@
   // it cannot be used as a free teleporter, but it un-sticks a trapped rig.
   function bailoutToTown() {
     cargo = [];
+    paydirtLoseHeld();
     var fee = Math.floor(money * 0.10);
     money -= fee;
     respawnAtTown(lastDockTown);
@@ -7298,7 +7310,8 @@
                 (cargo.length !== saveLastCargoN) ||
                 (depthRecord !== saveLastDepth) ||
                 (saveUpgradeSum() !== saveLastUpgradeSum) || (saveGardenKey() !== saveLastGardenKey) ||
-                (JSON.stringify(rigExhaustSave()) !== saveLastExhaustKey);
+                (JSON.stringify(rigExhaustSave()) !== saveLastExhaustKey) ||
+                (paydirt.revision !== saveLastPaydirtRevision);
     if (!dirty) return;
     // Docked save: on solid ground inside a town, shortly after anything
     // meaningful changed (a sale, a purchase, a new record).
@@ -7318,10 +7331,10 @@
   // here, and saveNow applies the death penalty first if the rig is dead.
   try {
     window.addEventListener('beforeunload', function () {
-      if (saveLastMoney !== -1 || money > 0 || cargo.length > 0) saveNow('unload');
+      if (saveLastMoney !== -1 || money > 0 || cargo.length > 0 || paydirtUsed() > 0) saveNow('unload');
     });
     document.addEventListener('visibilitychange', function () {
-      if (document.hidden && (saveLastMoney !== -1 || money > 0)) saveNow('hide');
+      if (document.hidden && (saveLastMoney !== -1 || money > 0 || paydirtUsed() > 0)) saveNow('hide');
     });
   } catch (e) {}
 
@@ -7369,6 +7382,18 @@
       if (deathKeyDown(e)) return;
       // Native menu buttons and sliders own their keyboard input while paused.
       if (gamePaused && e.key !== 'Escape') return;
+      if (!gamePaused && sluiceStationOpen) {
+        if (e.key === 'Tab') { e.preventDefault(); document.getElementById('gm-sluice-close').focus(); }
+        if (e.key === 'Escape' || e.key === 'p' || e.key === 'P') {
+          e.preventDefault(); if (!e.repeat) sluiceStationToggle();
+        }
+        return;
+      }
+      if (!gamePaused && (e.key === 'p' || e.key === 'P')) {
+        e.preventDefault();
+        if (!e.repeat && !sluiceStationToggle() && !sluiceStationNear()) showMsg('The sluice is at the surface station. Dock to unload your bulk bin.');
+        return;
+      }
       if (hearthRoomKey(e)) { e.preventDefault(); return; }
       if (siphonKey(e)) { e.preventDefault(); return; }
       if (!gamePaused && cargoManifestOpen) {
@@ -7448,13 +7473,13 @@
     // Mobile play requires landscape, including iPadOS desktop-style agents.
     // Loading still warms the GPU behind the cover; ordinary simulation stops.
     var rotateScreen = document.getElementById('gm-rotate-screen');
-    var orientationControls = ['game-canvas', 'game-death', 'game-pause', 'game-intro', 'gm-pause-btn', 'gm-perf-recorder', 'gm-perf-panel'];
+    var orientationControls = ['game-canvas', 'game-death', 'game-pause', 'game-intro', 'gm-pause-btn', 'gm-perf-recorder', 'gm-perf-panel', 'gm-sluice-panel', 'gm-sluice-btn'];
     function syncMobileOrientation() {
       var blocked = isMobile && window.innerWidth <= window.innerHeight;
       if (rotateScreen) rotateScreen.hidden = !blocked;
       for (var i = 0; i < orientationControls.length; i++) {
         var control = document.getElementById(orientationControls[i]);
-        if (control) control.inert = blocked;
+        if (control) control.inert = blocked || (control === canvas && sluiceStationOpen);
       }
       if (blocked === mobileLandscapeBlocked) return;
       mobileLandscapeBlocked = blocked;
@@ -7543,6 +7568,7 @@
       // Death and the R bailout still use the ordinary town respawn.
       if (!gamePaused || pauseMenuPage !== 'restart') return;
       queueSceneLoading('Preparing a new mine', function () {
+        if (sluiceStationOpen) sluiceStationToggle();
         if (cargoManifestOpen) cargoManifestToggle();
         saveWipe();
         init();
@@ -7637,6 +7663,7 @@
     processPointerDown(p.x, p.y, 'mouse', e.button === 2);
   }
   function handleMouseMove(e) {
+    if (sluiceStationOpen) return;
     var p = canvasPos(e.clientX, e.clientY);
     mouseCursor.x = p.x; mouseCursor.y = p.y;
     siphonPointerMove(p.x, p.y, 'mouse');
@@ -7654,6 +7681,7 @@
   function handleMouseUp() { processPointerUp('mouse'); }
 
   function processPointerDown(x, y, id, right) {
+    if (sluiceStationOpen) return;
     if (gamePaused || mobileLandscapeBlocked) return;
     if (UI_NEW && gameOver) return;
     if (bathMode) return; // The room owns pointer input, including right clicks.
@@ -7751,6 +7779,7 @@
       var wx = x / worldScale + cam.x;
       var wy = y / worldScale + cam.y;
       if (isPointOnShop(wx, wy)) { enterShopFloor(); return; }
+      if (isPointOnSluice(wx, wy) && sluiceStationCanOpen()) { sluiceStationToggle(); return; }
       // v26.31 — the banya tower enters the same way (072-bath.js owns the
       // hit test + fade; inert unless ENABLE_BATH).
       if (typeof isPointOnBathSilos === 'function' && isPointOnBathSilos(wx, wy)) {
@@ -8502,7 +8531,8 @@
     'button 5 (RB)': 'c (mineral ledger)',
     'button 6 (LT)': 'z (zoom)',
     'button 9 (Start)': 'pause toggle',
-    'button 8 (Back/View)': 't (teleporter)'
+    'button 8 (Back/View)': 't (teleporter)',
+    'button 10 (left stick press)': 'surface sluice; A selects, Y washes or collects, B returns'
   };
 
   // ----- Bridge state -----
@@ -8669,6 +8699,23 @@
       return;
     }
 
+    if (sluiceStationOpen) {
+      gpReleaseAll();
+      if ((now[1] && !prev[1]) || (now[9] && !prev[9]) || (now[10] && !prev[10])) { sluiceStationToggle(); gpRecoveryRelease = now[0]; return; }
+      var stationControls = Array.prototype.filter.call(sluiceStationDOM.panel.querySelectorAll('button, summary'), function (el) {
+        return !el.disabled && el.getClientRects().length > 0;
+      });
+      var stationAt = stationControls.indexOf(document.activeElement);
+      var stationStep = (now[13] && !prev[13]) || (now[15] && !prev[15]) ? 1 :
+        (now[12] && !prev[12]) || (now[14] && !prev[14]) ? -1 : 0;
+      if (stationStep && stationControls.length) stationControls[(stationAt + stationStep + stationControls.length) % stationControls.length].focus();
+      if (now[0] && !prev[0] && stationAt >= 0) stationControls[stationAt].click();
+      if (!sluiceStationOpen) { gpRecoveryRelease = now[0]; return; }
+      if (now[3] && !prev[3]) document.getElementById('gm-sluice-action').click();
+      return;
+    }
+    if (now[10] && !prev[10] && sluiceStationCanOpen()) { sluiceStationToggle(); return; }
+
     // ----- Directions: left stick (radial deadzone + hysteresis) OR dpad -----
     var mag = Math.sqrt(lx * lx + ly * ly);
     var sx = mag >= GAMEPAD_DEADZONE ? lx : 0;
@@ -8764,9 +8811,9 @@
     }
   }
   /* ================================================================
-     ONBOARDING RADIO (057): three short, contextual tips
+     ONBOARDING RADIO (057): short, contextual tips
      ================================================================
-     Controls, the first haul, then upgrades after the first sale.
+     Controls, the first haul, upgrades, and washing stored material.
      Each tip expires after four seconds, whether or not the player
      follows it. Conditions only decide when an unseen tip is useful.
      General radio messages own the same slot and take priority.
@@ -8793,6 +8840,7 @@
     lastLine: '',
     earnedCash: false,
     visitedShop: false,
+    visitedSluice: false,
     runPlayer: null
   };
 
@@ -8801,7 +8849,7 @@
     st.step = 0; st.done = false; st.started = false;
     st.bootT = 0; st.gapT = 0; st.lineT = 0; st.lineStartedAt = 0;
     st.panelA = 0; st.lastLine = '';
-    st.earnedCash = false; st.visitedShop = false;
+    st.earnedCash = false; st.visitedShop = false; st.visitedSluice = false;
     st.runPlayer = player;
   }
 
@@ -8812,12 +8860,15 @@
       if (isMobile) return 'D-pad moves. Hold into dirt to drill; hold Up to fly.';
       return 'WASD / arrows move. Hold into dirt to drill; hold Up to fly.';
     }
-    if (step === 1) return 'Land on the surface fuel pad to sell ore and refuel automatically.';
+    if (step === 1) return 'Land on the fuel pad to sell ore, store dirt and stone, and refuel.';
     if (step === 2) {
       if (pad) return 'At the shop door, press Y for rig upgrades.';
       if (isMobile) return 'Tap the shop building for rig upgrades.';
       return 'At the shop door, press E for rig upgrades.';
     }
+    if (step === 3 && pad) return 'At the surface, click the left stick for the sluice. Y washes or collects; B returns.';
+    if (step === 3) return isMobile ? 'Tap the surface sluice to wash stored dirt and stone for minerals and rare finds.' :
+      'Press P at the surface sluice to wash stored dirt and stone for minerals and rare finds.';
     return '';
   }
 
@@ -8832,6 +8883,8 @@
   function onboardingObscured() {
     return gameOver || gameWon || gamePaused || onboardingShopUp() ||
       (typeof ledgerOpen !== 'undefined' && ledgerOpen) ||
+      (typeof cargoManifestOpen !== 'undefined' && cargoManifestOpen) ||
+      (typeof sluiceStationOpen !== 'undefined' && sluiceStationOpen) ||
       (typeof seamCreditsActive === 'function' && seamCreditsActive()) ||
       (typeof bathMode !== 'undefined' && bathMode) ||
       (typeof introPhase !== 'undefined' && introPhase !== 'done');
@@ -8854,7 +8907,7 @@
     st.step++;
     st.lastLine = ''; st.lineT = 0; st.panelA = 0;
     st.gapT = 1.5;
-    if (st.step >= 3) onboardingFinish();
+    if (st.step >= 4) onboardingFinish();
   }
 
   function onboardingTick(dt) {
@@ -8869,12 +8922,14 @@
 
     if (money > 0) st.earnedCash = true;
     if (st.earnedCash && onboardingShopUp()) st.visitedShop = true;
+    if (typeof sluiceStationOpen !== 'undefined' && sluiceStationOpen) st.visitedSluice = true;
 
     // Once a line starts, its clock keeps running behind other panels.
     // Wall time also expires it across pause, which stops the RAF loop.
     if (st.lastLine) {
       st.lineT = Math.max(st.lineT + dt, (performance.now() - st.lineStartedAt) / 1000);
-      var answered = (st.step === 1 && st.earnedCash) || (st.step === 2 && st.visitedShop);
+      var answered = (st.step === 1 && st.earnedCash) || (st.step === 2 && st.visitedShop) ||
+        (st.step === 3 && st.visitedSluice);
       if (st.lineT >= ONBOARD_TIP_S || answered) {
         onboardingAdvance();
       } else {
@@ -8885,7 +8940,8 @@
 
     // Skip a lesson the player has already used. Waiting never pins a
     // plate to the screen and never delays a more useful radio message.
-    if ((st.step < 2 && st.earnedCash) || (st.step === 2 && st.visitedShop)) {
+    if ((st.step < 2 && st.earnedCash) || (st.step === 2 && st.visitedShop) ||
+        (st.step === 3 && st.visitedSluice)) {
       onboardingAdvance();
       return;
     }
@@ -8896,8 +8952,9 @@
       if (st.bootT < 1) return;
       st.started = true;
     }
-    if (st.step === 1 && cargo.length === 0) return;
+    if (st.step === 1 && cargo.length === 0 && paydirtUsed() === 0) return;
     if (st.step === 2 && !st.earnedCash) return;
+    if (st.step === 3 && paydirtStored() === 0) return;
 
     st.lastLine = onboardingLineFor(st.step);
     st.lineT = 0;
@@ -9201,7 +9258,7 @@
       { key: 'drill',  title: 'Drill',         desc: drillDesc,                              level: dl, costs: shop.drill },
       { key: 'fuel',   title: 'Fuel Tank',     desc: fuelDesc,                               level: fl, costs: shop.fuel },
       { key: 'hull',   title: 'Hull Plating',  desc: deltaDesc(hl, 'Hull',     hullAt),      level: hl, costs: shop.hull },
-      { key: 'cargo',  title: 'Cargo Bay',     desc: deltaDesc(cl, 'Slots',    cargoAt),     level: cl, costs: shop.cargo },
+      { key: 'cargo',  title: 'Cargo Bay',     desc: deltaDesc(cl, 'Ore slots', cargoAt) + ' / Bulk: ' + paydirtCapacity() + (cl >= shop.cargo.length ? '' : ' to ' + (paydirtCapacity() + 200)), level: cl, costs: shop.cargo },
       { key: 'booster',title: 'Booster',       desc: boosterDesc,                            level: bl, costs: shop.booster },
       { key: 'heat',   title: 'Heated Drill',  desc: 'Required to break permafrost (200m+)', level: upgrades.heatLevel,   costs: shop.heat,   special: true },
       { key: 'shield', title: 'Heat Shield',   desc: upgrades.shieldLevel === 0
@@ -10088,6 +10145,7 @@
       }
       arr[idx][cell.c] = null;
       markTerrainCleared(cell.r, cell.c, tile);
+      paydirtCollect(oreType, cell.r, cell.c);
       forgeStoneDrop(oreType);
       // Physical debris: reuse the mine-break chips/grit/dust per cleared
       // cell, so the blast throws colored rubble that bounces and settles.
@@ -21893,6 +21951,7 @@
 
     // Pump pad: free refuel + auto-sell while standing on it
     if (playerOnPumpPad()) {
+      paydirtDeposit();
       if (!sellReveal && (cargo.length > 0 || oilGallons > 0)) sellCargo(true);
       var maxF = getMaxFuel();
       var maxH = getMaxHull();
@@ -22023,9 +22082,10 @@
             }
             tile.hp -= 1;
             if (tile.hp <= 0) {
-              // Collect — but not dirt or stone (they're worthless rubble)
+              // Bulk earth uses its own bin and never consumes ore slots.
               var oreType = tile.type;
               var oreDef = ORES[oreType];
+              paydirtCollect(oreType, drilling.r, drilling.c);
               if (oreType !== 'dirt' && oreType !== 'stone') {
                 // Slot-based fit: a rare ore may need several slots. An empty
                 // hold always accepts one unit, so nothing is ever un-minable.
@@ -35468,7 +35528,7 @@
     if (devMode) gpuProbe('smoke.fire', _gpuFireT, smokeProbeGL());
 
     // ---- The Sluice (refinement station; own render so it survives station cull) ----
-    if (ENABLE_REFINEMENT) drawSluice();   // refinement disabled: do not draw the sluice station prop
+    drawSluice(); // The bulk wash station is independent of retired ore refinement.
 
     // ---- Pump pad ----
     drawPumpPad();
@@ -45465,6 +45525,287 @@
   }
 
   // Reusable UI font (defined near constants at top)
+  /* ---- Bulk earth and the level-one sluice economy ---- */
+  // A scoop is one cleared dirt/stone tile. The rig bin is separate from ore
+  // cargo; a full bin discards new rubble without ever blocking the drill.
+  // A material's rolls advance only when its stored scoops enter the hopper.
+  // The saved seed, counters and pending pan make closing or reloading neutral.
+  var PAYDIRT_ROLL_SCALE = 10000;
+  var PAYDIRT_DEPTHS = [0, 60, 130, 200, 270, 340, 400];
+  var PAYDIRT_TYPES = [];
+  var paydirt = null;
+  var paydirtFullNotified = false;
+
+  function paydirtDefine(id, name, kind, band, ore, better, rareName, rareValue, exceptionalName, exceptionalValue, description) {
+    var min = PAYDIRT_DEPTHS[band], max = PAYDIRT_DEPTHS[band + 1];
+    var oreWeight = Math.round(600 / ((band + 1) * (band + 1)));
+    var baseValue = [1, 2, 4, 6, 10, 14][band];
+    var type = { id: id, name: name, label: name, kind: kind, minDepth: min, maxDepth: max,
+      depth: min + '-' + (max - 1) + ' m', color: ORES[ore].color,
+      description: description, loot: [
+        { id: id + '-fines', name: 'Fine concentrate', rarity: 'common', value: baseValue, weight: 7000 },
+        { id: id + '-' + ore, name: ORES[ore].label, ore: ore, rarity: 'uncommon', value: ORES[ore].value, weight: oreWeight },
+        { id: id + '-' + better, name: ORES[better].label, ore: better, rarity: 'uncommon', value: ORES[better].value, weight: 40 },
+        { id: id + '-rare', name: rareName, rarity: 'rare', value: rareValue, weight: 10 },
+        { id: id + '-exceptional', name: exceptionalName, rarity: 'exceptional', value: exceptionalValue, weight: 2 }
+      ] };
+    for (var i = 0; i < type.loot.length; i++) {
+      type.loot[i].label = type.loot[i].name;
+      type.loot[i].chance = type.loot[i].weight / PAYDIRT_ROLL_SCALE;
+      type.loot[i].ore = type.loot[i].ore || null;
+    }
+    PAYDIRT_TYPES.push(type);
+  }
+
+  paydirtDefine('topsoil', 'Topsoil', 'dirt', 0, 'coal', 'malachite', 'Amber bee', 450, 'Sunwheel nugget', 1250,
+    'Loose surface earth. Small dark grains wash away to reveal copper minerals and ancient amber.');
+  paydirtDefine('river-gravel', 'River gravel', 'stone', 0, 'copper', 'gold', 'River pearl', 500, 'Kingfisher sapphire', 1600,
+    'Rounded shallow stone. The screen breaks it into gravel before the water reaches the riffles.');
+  paydirtDefine('red-clay', 'Red clay', 'dirt', 1, 'bauxite', 'amethyst', 'Red geode', 700, 'Copper rose', 2100,
+    'Iron-stained clay from below the roots, with occasional crystals caught in its seams.');
+  paydirtDefine('shale', 'Shale', 'stone', 1, 'iron', 'magnetite', 'Fern impression', 800, 'Silver feather', 2400,
+    'Thin stone layers break apart under the screen. Fossil impressions sometimes survive the wash.');
+  paydirtDefine('ochre-silt', 'Ochre silt', 'dirt', 2, 'silver', 'amber', 'Amber dragonfly', 1300, 'Honeycomb gold', 3600,
+    'Dense golden silt from the old buried riverbeds. Silver and amber settle beneath the lighter earth.');
+  paydirtDefine('quartz-gravel', 'Quartz gravel', 'stone', 2, 'cinnabar', 'jade', 'Twin quartz heart', 1500, 'Velvet amethyst', 4200,
+    'Crushed quartz carries red and green mineral grains, with rare intact crystal clusters.');
+  paydirtDefine('glacial-silt', 'Glacial silt', 'dirt', 3, 'cobalt', 'fossil', 'Icebound seed', 1800, 'Blue star sapphire', 5000,
+    'Fine earth held in the frozen layer. The wash releases blue minerals and traces of an older world.');
+  paydirtDefine('froststone', 'Froststone grit', 'stone', 3, 'lapis', 'turquoise', 'Frost rose', 2000, 'Sleeping trilobite', 5600,
+    'Pale fractured stone from the permafrost, carrying blue mineral grains and frozen fossil pockets.');
+  paydirtDefine('volcanic-ash', 'Volcanic ash', 'dirt', 4, 'obsidian', 'emerald', 'Glass tear', 2400, 'Fire opal sun', 7000,
+    'Dark earth beneath the hot crust. Most is ash; bright stones hide among its heavy grains.');
+  paydirtDefine('basalt', 'Basalt grit', 'stone', 4, 'sulfur', 'peridot', 'Olivine cluster', 2600, 'Ember ruby', 7600,
+    'Dense volcanic stone is screened into dark grit. Green crystals and sulfur remain in the riffles.');
+  paydirtDefine('mantle-dust', 'Mantle dust', 'dirt', 5, 'opal', 'painite', 'Prismatic seed', 3000, 'Heartfire opal', 9000,
+    'The deepest pockets of loose earth hold opal grains and the occasional impossible-looking crystal.');
+  paydirtDefine('crystal-grit', 'Crystal grit', 'stone', 5, 'platinum', 'diamond', 'Star diamond', 3600, 'Crown of the deep', 12000,
+    'Hard glittering stone near the bottom of the mine. Platinum, diamonds and rare crystal crowns settle here.');
+
+  function paydirtType(id) {
+    for (var i = 0; i < PAYDIRT_TYPES.length; i++) if (PAYDIRT_TYPES[i].id === id) return PAYDIRT_TYPES[i];
+    return null;
+  }
+  function paydirtLoot(id) {
+    for (var i = 0; i < PAYDIRT_TYPES.length; i++) {
+      var pool = PAYDIRT_TYPES[i].loot;
+      for (var j = 0; j < pool.length; j++) if (pool[j].id === id) return pool[j];
+    }
+    return null;
+  }
+  function paydirtReset() {
+    paydirt = { held: {}, stored: {}, discovered: {}, washed: {}, finds: {},
+      seed: (Math.floor(Math.random() * 4294967296) >>> 0) || 1729,
+      rollCounts: {}, pending: null, revision: 0 };
+    paydirtFullNotified = false;
+  }
+  function paydirtCount(map) {
+    var total = 0;
+    for (var i = 0; i < PAYDIRT_TYPES.length; i++) total += map[PAYDIRT_TYPES[i].id] || 0;
+    return total;
+  }
+  function paydirtUsed() { return paydirt ? paydirtCount(paydirt.held) : 0; }
+  function paydirtStored() { return paydirt ? paydirtCount(paydirt.stored) : 0; }
+  function paydirtCapacity() {
+    var level = typeof upgrades !== 'undefined' ? Number(upgrades.cargoLevel) || 1 : 1;
+    return 600 + Math.max(0, Math.min(20, Math.floor(level) - 1)) * 200;
+  }
+  function paydirtForTile(kind, r, c) {
+    if (kind !== 'dirt' && kind !== 'stone') return null;
+    var depth = Math.max(0, Math.floor(r) - SKY_ROWS), band = 0;
+    for (var i = 1; i < PAYDIRT_DEPTHS.length - 1; i++) if (depth >= PAYDIRT_DEPTHS[i]) band = i;
+    return PAYDIRT_TYPES[band * 2 + (kind === 'stone' ? 1 : 0)];
+  }
+  function paydirtCollect(kind, r, c) {
+    var type = paydirtForTile(kind, r, c);
+    if (!type || !paydirt) return 0;
+    if (paydirtUsed() >= paydirtCapacity()) {
+      if (!paydirtFullNotified) {
+        paydirtFullNotified = true;
+        showMsg('Earth bin full. Digging continues; new dirt and stone are left behind.', true);
+      }
+      return 0;
+    }
+    paydirtFullNotified = false;
+    paydirt.held[type.id] = (paydirt.held[type.id] || 0) + 1;
+    paydirt.revision++;
+    if (!paydirt.discovered[type.id]) {
+      paydirt.discovered[type.id] = true;
+      showMsg(type.name + ' collected. Wash it at the surface sluice.');
+    }
+    if (paydirtUsed() >= paydirtCapacity()) {
+      paydirtFullNotified = true;
+      showMsg('Earth bin full. Digging continues; new dirt and stone are left behind.', true);
+    }
+    return 1;
+  }
+  function paydirtDeposit() {
+    if (!paydirt) return 0;
+    var moved = paydirtUsed();
+    if (!moved) return 0;
+    for (var i = 0; i < PAYDIRT_TYPES.length; i++) {
+      var id = PAYDIRT_TYPES[i].id;
+      paydirt.stored[id] = (paydirt.stored[id] || 0) + (paydirt.held[id] || 0);
+    }
+    paydirt.held = {};
+    paydirtFullNotified = false;
+    paydirt.revision++;
+    showMsg(moved.toLocaleString() + ' scoops stored at the sluice.');
+    saveNow('sluice-deposit');
+    return moved;
+  }
+  function paydirtLoseHeld() {
+    if (!paydirt || !paydirtUsed()) return;
+    paydirt.held = {};
+    paydirtFullNotified = false;
+    paydirt.revision++;
+  }
+  // Stateless integer mixing gives each material its own permanent sequence.
+  // Splitting a haul into different batch sizes consumes the same sequence.
+  function paydirtRoll(type, index) {
+    var h = paydirt.seed >>> 0;
+    for (var i = 0; i < type.id.length; i++) h = Math.imul(h ^ type.id.charCodeAt(i), 16777619) >>> 0;
+    h = (h + Math.imul((index + 1) >>> 0, 0x9e3779b9)) >>> 0;
+    h = Math.imul(h ^ (h >>> 16), 0x85ebca6b) >>> 0;
+    h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35) >>> 0;
+    h = (h ^ (h >>> 16)) >>> 0;
+    var roll = h / 4294967296 * PAYDIRT_ROLL_SCALE, total = 0;
+    for (var j = 0; j < type.loot.length; j++) {
+      total += type.loot[j].weight;
+      if (roll < total) return type.loot[j];
+    }
+    return null;
+  }
+  function paydirtStart(id, count) {
+    var type = paydirtType(id);
+    if (!type || !paydirt || paydirt.pending) return null;
+    var available = paydirt.stored[id] || 0;
+    count = count == null ? available : Math.floor(Number(count));
+    if (!Number.isFinite(count) || count <= 0 || !available) return null;
+    count = Math.min(count, available);
+    var results = [], byId = {}, value = 0, rare = false;
+    var firstRoll = paydirt.rollCounts[id] || 0;
+    for (var i = 0; i < count; i++) {
+      var loot = paydirtRoll(type, firstRoll + i);
+      if (!loot) continue;
+      var row = byId[loot.id];
+      if (!row) {
+        row = { id: loot.id, name: loot.name, label: loot.name, ore: loot.ore,
+          rarity: loot.rarity, value: loot.value, count: 0 };
+        byId[loot.id] = row;
+        results.push(row);
+      }
+      row.count++;
+      value += loot.value;
+      if (loot.rarity === 'rare' || loot.rarity === 'exceptional') rare = true;
+    }
+    results.sort(function (a, b) {
+      var rank = { common: 0, uncommon: 1, rare: 2, exceptional: 3 };
+      return rank[b.rarity] - rank[a.rarity] || b.value - a.value;
+    });
+    paydirt.stored[id] -= count;
+    paydirt.rollCounts[id] = firstRoll + count;
+    paydirt.pending = { typeId: id, count: count, results: results, value: value, rare: rare,
+      status: 'washing', elapsed: 0, duration: 6 + Math.min(12, count / 50), progress: 0 };
+    paydirt.revision++;
+    saveNow('sluice-start');
+    return paydirt.pending;
+  }
+  function paydirtAdvance(dt) {
+    var pending = paydirt && paydirt.pending;
+    if (!pending || pending.status !== 'washing' || !Number.isFinite(dt) || dt <= 0) return false;
+    pending.elapsed = Math.min(pending.duration, pending.elapsed + Math.min(dt, 0.1));
+    pending.progress = pending.elapsed / pending.duration;
+    if (pending.elapsed < pending.duration) return false;
+    pending.status = 'ready';
+    paydirt.revision++;
+    showMsg('Sluice wash finished. Your concentrate is safe in the pan.');
+    saveNow('sluice-ready');
+    return true;
+  }
+  function paydirtClaim() {
+    var pending = paydirt && paydirt.pending;
+    if (!pending || pending.status !== 'ready') return null;
+    // Clear ownership before invoking other systems, so repeated input cannot
+    // credit a second payout while the first claim is being presented.
+    paydirt.pending = null;
+    money += pending.value;
+    paydirt.washed[pending.typeId] = (paydirt.washed[pending.typeId] || 0) + pending.count;
+    for (var i = 0; i < pending.results.length; i++) {
+      var result = pending.results[i];
+      if (result.ore) {
+        for (var j = 0; j < result.count; j++) ledgerRecordOre(result.ore, false);
+      }
+      if (result.rarity === 'rare' || result.rarity === 'exceptional') {
+        var record = paydirt.finds[result.id];
+        if (!record) record = paydirt.finds[result.id] = { count: 0, firstMaterial: pending.typeId };
+        record.count += result.count;
+      }
+    }
+    paydirt.revision++;
+    saveNow('sluice-claim');
+    return pending;
+  }
+  function paydirtSave() {
+    return paydirt ? JSON.parse(JSON.stringify(paydirt)) : null;
+  }
+  function paydirtSafeCount(value, max) {
+    return Number.isFinite(value) ? Math.max(0, Math.min(max, Math.floor(value))) : 0;
+  }
+  function paydirtRestore(saved) {
+    paydirtReset();
+    if (!saved || typeof saved !== 'object') return;
+    if (Number.isFinite(saved.seed)) paydirt.seed = saved.seed >>> 0;
+    var maps = ['held', 'stored', 'washed', 'rollCounts'];
+    for (var i = 0; i < PAYDIRT_TYPES.length; i++) {
+      var id = PAYDIRT_TYPES[i].id;
+      for (var j = 0; j < maps.length; j++) {
+        var key = maps[j];
+        paydirt[key][id] = paydirtSafeCount(saved[key] && saved[key][id], 100000000);
+      }
+      if ((saved.discovered && saved.discovered[id]) || paydirt.held[id] || paydirt.stored[id] || paydirt.washed[id]) {
+        paydirt.discovered[id] = true;
+      }
+      var pool = PAYDIRT_TYPES[i].loot;
+      for (var k = 0; k < pool.length; k++) {
+        var item = pool[k], found = saved.finds && saved.finds[item.id];
+        if (item.rarity !== 'rare' && item.rarity !== 'exceptional') continue;
+        var n = paydirtSafeCount(found && found.count, 100000000);
+        if (n) paydirt.finds[item.id] = { count: n, firstMaterial: id };
+      }
+    }
+    // Existing bin contents are never deleted by a later capacity adjustment.
+    // An overfull migrated bin simply cannot collect until it is deposited.
+    var p = saved.pending, type = p && paydirtType(p.typeId);
+    if (type && paydirtSafeCount(p.count, 100000000) > 0 && Array.isArray(p.results)) {
+      var count = paydirtSafeCount(p.count, 100000000), results = [], value = 0, rare = false, remaining = count;
+      for (var a = 0; a < type.loot.length; a++) {
+        var def = type.loot[a], quantity = 0;
+        for (var b = 0; b < p.results.length; b++) {
+          if (p.results[b] && p.results[b].id === def.id) quantity += paydirtSafeCount(p.results[b].count, count);
+        }
+        quantity = Math.min(remaining, quantity);
+        if (!quantity) continue;
+        remaining -= quantity;
+        results.push({ id: def.id, name: def.name, label: def.name, ore: def.ore,
+          rarity: def.rarity, value: def.value, count: quantity });
+        value += quantity * def.value;
+        if (def.rarity === 'rare' || def.rarity === 'exceptional') rare = true;
+      }
+      results.sort(function (a, b) {
+        var rank = { common: 0, uncommon: 1, rare: 2, exceptional: 3 };
+        return rank[b.rarity] - rank[a.rarity] || b.value - a.value;
+      });
+      var duration = 6 + Math.min(12, count / 50);
+      var elapsed = Number.isFinite(p.elapsed) ? Math.max(0, Math.min(duration, p.elapsed)) : 0;
+      if (p.status === 'ready') elapsed = duration;
+      paydirt.pending = { typeId: type.id, count: count, results: results, value: value, rare: rare,
+        status: elapsed >= duration ? 'ready' : 'washing', duration: duration, elapsed: elapsed, progress: elapsed / duration };
+      paydirt.discovered[type.id] = true;
+    }
+    paydirt.revision = 0;
+  }
+
   // ===== Surface cut bank =====
   // Sparse roots and a soft soil shadow over a recessed earth face. The
   // face loses light and definition with depth until the existing cave wall
@@ -45745,7 +46086,7 @@
     ctx.restore();
   }
   /* ============================================================
-     THE SLUICE (refinement station) - economy Phase 1
+     THE SLUICE - surface exterior for the bulk wash station
      ------------------------------------------------------------
      A surface refinement station LEFT of the home KOMENDATURA: a tall
      riveted headworks TOWER carrying a BIG landing platform you fly up
@@ -45764,10 +46105,8 @@
      contrast is reserved for the focal star + sign. EVERY helper used here
      is grep-verified to exist.
 
-     STATUS: STRUCTURE only. Owner vision: when the rig is CLOSE, refinable
-     cargo ore arcs out of you onto the channel, washes down, refines 4:1,
-     and drops into the base-camp HOARD. Those increments (proximity ore-arc,
-     refine, hoard, hoard UI) build on this.
+     The working level-one station lives in 171, 173 and 174. It washes
+     collected dirt and stone, independent of the retired ore-refinement flag.
 
      Steel ramp (dark->light), all from BLD's already-cool metal family:
        core/AO = BLD.outline | shadow = metalDark | base = metalBase
@@ -45783,7 +46122,7 @@
   function drawSluice() {
     var hx = sluiceAnchorX();
     var groundY = DECK_ROW * TILE;
-    drawCachedStructure('sluice', 0, hx - 58, groundY - 198, 352, 202, '', drawSluiceContent);
+    drawCachedStructure('sluice', 0, hx - 58, groundY - 198, 352, 202, paydirt && paydirt.pending ? paydirt.pending.status : 'idle', drawSluiceContent);
   }
 
   // ----- Tall riveted tower, shaded as a CYLINDER (round, not a flat slab) -----
@@ -45883,7 +46222,7 @@
   function drawSluiceContent() {
     var hx = sluiceAnchorX();
     var groundY = DECK_ROW * TILE;
-    var t = performance.now() / 1000;
+    var t = paydirt && paydirt.pending ? paydirt.pending.elapsed : 0;
 
     var towerW = 36;
     var platW = 96, platH = 20;
@@ -45997,6 +46336,473 @@
       ctx.fillStyle = BLD.metalDark;   ctx.fillRect(x, wy + 2 + faceH, 1, 2);     // wall underside shadow
       ctx.fillStyle = BLD.outline;     ctx.fillRect(x, wy + 4 + faceH, 1, 1);     // wall bottom (silhouette)
     }
+  }
+  /* Level-one wash plant, drawn from the gold-sluice demo's arrangement.
+     This is the batch's visual presentation, not a recovery simulation.
+     Counts, time and rewards belong to paydirt state. No frame scheduling,
+     randomness or inventory mutation happens here. The caller supplies active
+     elapsed time, so closing the view or suspending play cannot skip a batch.
+
+     paydirtDrawMachine(context, {x,y,w,h}, {
+       phase:'idle'|'washing'|'ready', progress:0..1, elapsed:seconds,
+       color:materialColor, quantity:batchSize, discoveries:actualFindCount,
+       reducedMotion:boolean
+     });
+     The same 960 by 340 apparatus is fitted to every viewport. */
+
+  function paydirtDrawMachine(c, box, state) {
+    if (!c || !box || !(box.w > 0) || !(box.h > 0)) return;
+    state = state || {};
+    var scale = Math.min(box.w / 960, box.h / 340);
+    var phase = state.phase || 'idle';
+    var running = phase === 'washing';
+    var ready = phase === 'ready';
+    var progress = Math.max(0, Math.min(1, Number(state.progress) || 0));
+    if (ready) progress = 1;
+    var time = state.reducedMotion ? 0 : Math.max(0, Number(state.elapsed) || 0);
+    var feed = running && progress > 0.08 && progress < 0.72;
+    var cleanout = (running && progress >= 0.86) || ready;
+    var fed = Math.max(0, Math.min(1, (progress - 0.08) / 0.64));
+    var washed = Math.max(0, Math.min(1, (progress - 0.86) / 0.14));
+    var material = state.color || BLD.woodLight;
+    var hasCharge = (Number(state.quantity) || 0) > 0 && phase !== 'idle';
+    var finds = Math.max(0, Math.min(10, Math.floor(Number(state.discoveries) || 0)));
+    var font = typeof UI_FONT === 'string' ? UI_FONT : '"Commit Mono", monospace';
+    var x0 = 100, x1 = 754, y0 = 151, y1 = 234;
+
+    function bed(x) { return y0 + (x - x0) * (y1 - y0) / (x1 - x0); }
+    function path(points) {
+      c.beginPath(); c.moveTo(points[0][0], points[0][1]);
+      for (var n = 1; n < points.length; n++) c.lineTo(points[n][0], points[n][1]);
+      c.closePath();
+    }
+    function polygon(points, fill, edge, width) {
+      path(points); c.fillStyle = fill; c.fill();
+      if (edge) { c.strokeStyle = edge; c.lineWidth = width || 1.5; c.stroke(); }
+    }
+    function rect(x, y, w, h, fill, edge) {
+      c.fillStyle = fill; c.fillRect(x, y, w, h);
+      if (edge) { c.strokeStyle = edge; c.lineWidth = 1.5; c.strokeRect(x, y, w, h); }
+    }
+    function line(points, color, width) {
+      c.beginPath(); c.moveTo(points[0][0], points[0][1]);
+      for (var n = 1; n < points.length; n++) c.lineTo(points[n][0], points[n][1]);
+      c.strokeStyle = color; c.lineWidth = width || 1.5; c.stroke();
+    }
+    function bolt(x, y) {
+      rect(x - 2, y - 2, 4, 4, BLD.metalDark);
+      rect(x - 2, y - 2, 3, 2, BLD.metalPale);
+    }
+    function label(text, x, y, color) {
+      if (scale < 0.56) return;
+      c.fillStyle = color || UIT_DIM;
+      c.font = Math.max(12, 11 / scale) + 'px ' + font;
+      c.textAlign = 'center'; c.fillText(text, x, y);
+    }
+    function grain(x, y, size, color) {
+      polygon([[x-size,y],[x-size*.25,y-size],[x+size,y-size*.3],
+        [x+size*.7,y+size*.75],[x-size*.45,y+size]],color);
+    }
+    function pipe(points, width) {
+      line(points, BLD.outline, width + 5);
+      line(points, BLD.metalBase, width);
+      line(points, BLD.metalLight, Math.max(2, width * 0.23));
+    }
+
+    c.save();
+    c.beginPath(); c.rect(box.x, box.y, box.w, box.h); c.clip();
+    c.translate(box.x + (box.w - 960 * scale) * 0.5, box.y + (box.h - 340 * scale) * 0.5);
+    c.scale(scale, scale);
+    c.lineJoin = 'round'; c.lineCap = 'round';
+
+    // The return pipe connects the settling tank to the pump and head valve.
+    // It stays behind the table and trough, which makes the loop easy to trace.
+    pipe([[862,292],[862,312],[267,312],[267,278],[64,278],[64,91],[111,91],[111,127]], 9);
+    if (running) {
+      c.strokeStyle = BLD.waterLight; c.lineWidth = 2.5;
+      c.setLineDash([9, 15]); c.lineDashOffset = time * 29;
+      c.beginPath(); c.moveTo(848,312); c.lineTo(267,312); c.lineTo(267,278);
+      c.lineTo(64,278); c.lineTo(64,91); c.lineTo(111,91); c.lineTo(111,127); c.stroke();
+      c.setLineDash([]);
+    }
+
+    // Salvaged wood trestles on stone feet, with bolted steel braces.
+    var legs = [170, 470, 712];
+    for (var l = 0; l < legs.length; l++) {
+      var lx = legs[l], ly = bed(lx) + 13;
+      polygon([[lx-5,ly],[lx+8,ly+2],[lx+25,301],[lx+11,301]], BLD.woodDark, BLD.outline);
+      line([[lx-2,ly+4],[lx+16,298]], BLD.woodMid, 3);
+      polygon([[lx-10,ly+6],[lx+1,ly+6],[lx-16,301],[lx-28,301]], BLD.woodBase, BLD.outline);
+      line([[lx-8,ly+8],[lx-24,297]], BLD.woodLight, 2);
+      line([[lx-17,277],[lx+13,289]], BLD.metalDark, 5);
+      rect(lx-34,301,65,8,BLD.stoneDark,BLD.outline);
+      rect(lx-32,302,60,2,BLD.stoneLight);
+      bolt(lx-4,ly+7); bolt(lx+13,289);
+    }
+
+    // Quiet recessed shadows under the wash bed and the two receivers.
+    c.globalAlpha = 0.35;
+    polygon([[104,165],[755,248],[785,266],[132,185]], UIT_INSET_DK);
+    c.globalAlpha = 1;
+
+    // The wet bed is open in section, with a thick iron front lip.
+    polygon([[x0-4,y0-17],[x1+5,y1-17],[x1+5,y1+12],[x0-4,y0+12]], BLD.metalDark, BLD.outline, 2);
+    polygon([[x0,y0-12],[x1,y1-12],[x1,y1],[x0,y0]], BLD.waterBase);
+    if (running || ready) {
+      c.save();
+      path([[x0,y0-19],[x1,y1-19],[x1,y1],[x0,y0]]); c.clip();
+      for (var w = 0; w < 32; w++) {
+        var wx = x0 + ((w * 31 + time * 83) % (x1 - x0));
+        var wy = bed(wx) - 10 + Math.sin(w * 4.3 + time * 3) * 2;
+        c.globalAlpha = 0.3 + (w % 3) * 0.15;
+        line([[wx,wy],[wx+12+(w%4)*2,wy+1.4]],BLD.waterLight,1.5);
+      }
+      c.restore();
+    }
+    line([[x0,y0-13],[x1,y1-13]], BLD.waterLight, 1.7);
+
+    // Most screened grains travel over the riffles. Heavy concentrate gathers
+    // in their sheltered pockets. These bounded marks illustrate the process;
+    // the model's actual findings alone decide whether a gold glint is drawn.
+    if (hasCharge && !ready) {
+      var visible = Math.floor(Math.min(1, fed * 4) * 54 * (1 - washed));
+      for (var g = 0; g < visible; g++) {
+        var journey = ((g * 0.61803398875 + time * 0.19) % 1);
+        var gx = 224 + journey * (x1 - 224), gy = bed(gx) - 4 - ((g*7)%9);
+        grain(gx,gy,1.3+(g%3)*0.4,g%5===0?BLD.stonePale:material);
+      }
+    }
+    for (var r = 0; r < 7; r++) {
+      var rx = 302 + r * 59, ry = bed(rx), rise = cleanout ? 11 * washed : 0;
+      if (hasCharge && !ready) {
+        var captured = Math.floor(6 * fed * (1-washed));
+        for (var k = 0; k < captured; k++) grain(rx+10+(k*13)%31,bed(rx+10+(k*13)%31)-2-(k%2)*2,1.8,
+          k === 0 && r < finds ? BLD.goldBright : BLD.stoneDark);
+      }
+      polygon([[rx,ry-9-rise],[rx+5,ry-9-rise],[rx+8,ry-rise],[rx,ry-rise]], BLD.metalBase, BLD.outline);
+      line([[rx,ry-9-rise],[rx+5,ry-9-rise]],BLD.metalPale,1.5);
+    }
+
+    // Bolted front rail, dull iron with a narrow lit edge.
+    polygon([[x0-4,y0],[x1+5,y1],[x1+5,y1+12],[x0-4,y0+12]], BLD.metalBase, BLD.outline, 2);
+    line([[x0-2,y0+1],[x1+3,y1+1]], BLD.metalPale,2);
+    line([[x0-2,y0+11],[x1+3,y1+11]], BLD.metalDark,2);
+    for (var b = 124; b < x1; b += 65) bolt(b,bed(b)+6);
+    polygon([[92,124],[103,124],[103,165],[92,165]],BLD.metalBase,BLD.outline);
+    line([[93,125],[102,125]],BLD.metalPale,2);
+
+    // A counted hopper. Stone has already been broken by the drill; the mesh
+    // above the bed screens it before it reaches the riffles.
+    var hopper = [[183,54],[270,54],[270,73],[240,119],[240,129],[214,129],[214,119],[183,73]];
+    polygon(hopper,BLD.metalDark,BLD.outline,2);
+    c.save(); path(hopper); c.clip();
+    if (hasCharge && fed < 1) {
+      var top = 64 + fed * 53;
+      polygon([[184,top+7],[208,top],[232,top+5],[270,top+2],[270,125],[184,125]],material);
+      for (var h = 0; h < 36; h++) {
+        var hx = 188+(h*23)%77, hy = top+10+(h*13)%48;
+        grain(hx,hy,1.2,h%4===0?BLD.stonePale:BLD.woodDark);
+      }
+    }
+    c.restore();
+    line([[183,54],[270,54]],BLD.metalPale,3);
+    line([[184,74],[214,120],[214,129]],BLD.metalLight,3);
+    line([[269,74],[240,120],[240,129]],BLD.metalBase,4);
+    rect(206,129,42,5,BLD.metalBase,BLD.outline);
+    line([[209,135],[feed?217:244,feed?139:135]],BLD.goldDark,3);
+    line([[196,143],[258,151]],BLD.metalLight,2);
+    for (var mesh=200;mesh<256;mesh+=7) line([[mesh,140],[mesh+5,151]],BLD.metalBase,1);
+    if (feed) for (var f=0;f<9;f++) {
+      var fy = 137 + ((f * 13 + time * 67) % 22);
+      grain(218 + (f * 7) % 18,fy,1.6,material);
+    }
+
+    // Valve, pump and the small water inlet. No water inventory is invented:
+    // this plant recirculates its own working supply and never takes bathwater.
+    rect(101,121,20,8,BLD.metalBase,BLD.outline); line([[103,122],[119,122]],BLD.metalPale,2);
+    line([[88,90],[88,77]],BLD.goldDark,4);
+    line(running?[[78,77],[98,77]]:[[81,70],[95,84]],BLD.goldBright,4);
+    if (running) {
+      polygon([[104,129],[118,129],[122,151],[102,150]],BLD.waterBase);
+      line([[108,130],[108,147]],BLD.waterLight,3);
+      for(var splash=0;splash<5;splash++) {
+        var sx=104+splash*5, sy=bed(sx)-8-Math.abs(Math.sin(time*4+splash))*4;
+        rect(sx,sy,2,1.5,BLD.waterFoam);
+      }
+    }
+    rect(245,260,45,36,BLD.metalDark,BLD.outline);
+    c.beginPath(); c.arc(267,278,13,0,Math.PI*2); c.fillStyle=BLD.metalBase;c.fill();
+    c.strokeStyle=BLD.outline;c.lineWidth=2;c.stroke();
+    c.save();c.translate(267,278);c.rotate(running?time*3:0);
+    line([[-8,0],[8,0]],BLD.metalLight,3);line([[0,-8],[0,8]],BLD.metalLight,3);c.restore();
+    bolt(267,278);
+
+    // Cleanout diverts the final concentrate into its own pan. The tailings
+    // settle in the larger tank and the working water returns through the pipe.
+    polygon([[526,269],[687,269],[674,304],[539,304]],BLD.metalDark,BLD.outline,2);
+    polygon([[534,273],[679,273],[669,298],[544,298]],BLD.waterBase);
+    line([[526,269],[687,269]],BLD.metalPale,3);
+    if (cleanout) {
+      polygon([[632,264],[767,241],[769,247],[635,270]],BLD.metalBase,BLD.outline);
+      line([[633,264],[766,241]],BLD.metalLight,2);
+      if(running) line([[635,263],[760,242]],BLD.waterLight,3);
+      line([[766,230],[770,246]],BLD.metalPale,4);
+    }
+    if(hasCharge && washed>0) {
+      for(var p=0;p<28*washed;p++)grain(547+(p*19)%117,291+(p*7)%6,1.8,p%4===0?material:BLD.stonePale);
+      for(var n=0;n<finds*washed;n++){
+        var nx=560+(n*37)%91,ny=286+(n*13)%9;
+        grain(nx,ny,3.1,BLD.goldBright);rect(nx-1,ny-2,2,1,BLD.goldPale);
+      }
+    }
+    polygon([[781,269],[923,269],[923,307],[781,307]],BLD.metalDark,BLD.outline,2);
+    rect(785,279,134,23,BLD.waterBase);
+    if(hasCharge)polygon([[785,300-fed*9],[813,300-fed*15],[848,300-fed*10],
+      [884,300-fed*17],[919,300-fed*9],[919,303],[785,303]],material);
+    line([[781,269],[923,269]],BLD.metalPale,3);
+    line([[786,279],[918,279]],BLD.waterLight,1.5);
+    rect(785,302,134,4,BLD.metalBase);bolt(787,273);bolt(917,273);
+    if(running && !cleanout) {
+      polygon([[752,222],[761,223],[804,277],[795,277]],BLD.waterBase);
+      line([[756,225],[799,274]],BLD.waterLight,2);
+      for(var t=0;t<9;t++) {
+        var q=((time*.6+t*.13)%1);
+        grain(759+q*39,230+q*q*47,1.3,material);
+      }
+    }
+
+    // Labels stay on the apparatus and retain one arrangement at every size.
+    label('WATER',90,53);
+    label('HOPPER',226,39);
+    label(cleanout?'RIFFLES LIFTED':'RIFFLE BED',487,143);
+    if(scale >= 0.56) line([[487,150],[487,bed(487)-17]],UIMAT_WELD,1);
+    label('CONCENTRATE',606,335,ready && finds?UIT_GOLD:UIT_DIM);
+    label('TAILINGS',851,335);
+    label('RETURN WATER',388,303);
+    c.restore();
+  }
+  // Level-one wash station. Native controls share the pause menu materials.
+  // The game loop owns its clock; this view never schedules a frame or timer.
+  var sluiceStationOpen = false;
+  var sluiceStationSelected = null;
+  var sluiceStationDOM = null;
+  var sluiceStationSignature = '';
+  var sluiceStationLast = null;
+
+  function sluiceStationNear() {
+    return player && Math.abs(player.x - stationCenterCol() * TILE) < TILE * 26 &&
+      player.y > (SKY_ROWS - 14) * TILE && player.y < (SKY_ROWS + 3) * TILE;
+  }
+  function sluiceStationCanOpen() {
+    return introPhase === 'done' && !gamePaused && !mobileLandscapeBlocked &&
+      !gameOver && !gameWon && !shopOpen && shopState === 'closed' &&
+      !bathMode && !ledgerOpen && !cargoManifestOpen && !itemWheel.open &&
+      !seamCreditsOn && !seamExtractTiles && sluiceStationNear();
+  }
+  function isPointOnSluice(x, y) {
+    var hx = sluiceAnchorX(), ground = DECK_ROW * TILE;
+    return x >= hx - 60 && x <= hx + 294 && y >= ground - 200 && y <= ground + 8;
+  }
+  function sluiceStationText(id, text) {
+    var el = document.getElementById(id);
+    if (el && el.textContent !== text) el.textContent = text;
+  }
+  function setupSluiceStation() {
+    if (sluiceStationDOM) return;
+    var area = canvas.parentNode;
+    var entry = document.createElement('button');
+    entry.id = 'gm-sluice-btn'; entry.type = 'button'; entry.hidden = true;
+    entry.textContent = 'Sluice [P]';
+    entry.addEventListener('click', function (e) { e.stopPropagation(); sluiceStationToggle(); });
+    area.appendChild(entry);
+    var panel = document.createElement('section');
+    panel.id = 'gm-sluice-panel'; panel.hidden = true;
+    panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-modal', 'true');
+    panel.setAttribute('aria-labelledby', 'gm-sluice-title');
+    panel.innerHTML = '<div class="sluice-card">' +
+      '<header class="sluice-heading"><div><span class="sluice-kicker">SURFACE WORKS / LEVEL 1</span>' +
+      '<h2 id="gm-sluice-title">The sluice</h2></div><button id="gm-sluice-close" type="button">Return to mine</button></header>' +
+      '<p class="sluice-store-line" id="gm-sluice-storage"></p>' +
+      '<div class="sluice-body"><nav class="sluice-materials" aria-label="Wash material" id="gm-sluice-materials"></nav>' +
+      '<div class="sluice-workbench"><div class="sluice-machine-stage"><canvas id="gm-sluice-machine" role="img" aria-label="Inclined sluice with a feed hopper, riffles, tailings and concentrate pan"></canvas></div>' +
+      '<div class="sluice-operation"><div><strong id="gm-sluice-status" aria-live="polite"></strong><p id="gm-sluice-instruction"></p></div>' +
+      '<button id="gm-sluice-action" class="sluice-primary" type="button"></button></div>' +
+      '<progress id="gm-sluice-progress" max="1" value="0" aria-label="Wash progress"></progress>' +
+      '<section id="gm-sluice-results" class="sluice-results" hidden aria-labelledby="gm-sluice-results-title"><h3 id="gm-sluice-results-title">In the pan</h3><div id="gm-sluice-result-list"></div></section>' +
+      '<section class="sluice-pool"><h3 id="gm-sluice-material-title"></h3><p id="gm-sluice-material-copy"></p>' +
+      '<div id="gm-sluice-loot"></div><p class="sluice-fine">Chances are per scoop. Each scoop has one result; the rest washes out as tailings. Ordinary finds are paid out when you collect. Rare specimens stay in your collection.</p></section>' +
+      '<details class="sluice-collection"><summary id="gm-sluice-collection-title">Specimen collection</summary><div id="gm-sluice-collection"></div></details>' +
+      '</div></div><footer class="sluice-footer">A full bulk bin never stops digging. Dock to unload. Stored material and the pan stay safe here.</footer></div>';
+    area.appendChild(panel);
+    panel.querySelector('.sluice-heading > div').appendChild(document.getElementById('gm-sluice-storage'));
+    // Actions stay first and remain reachable when a short viewport scrolls.
+    var stage = panel.querySelector('.sluice-machine-stage');
+    stage.parentNode.insertBefore(panel.querySelector('.sluice-operation'), stage);
+    stage.parentNode.insertBefore(document.getElementById('gm-sluice-progress'), stage);
+    sluiceStationDOM = { panel: panel, entry: entry, machine: document.getElementById('gm-sluice-machine') };
+    document.getElementById('gm-sluice-close').addEventListener('click', sluiceStationToggle);
+    document.getElementById('gm-sluice-action').addEventListener('click', function () {
+      if (gamePaused || mobileLandscapeBlocked || !sluiceStationOpen) return;
+      if (paydirt.pending) {
+        if (paydirt.pending.status === 'ready') sluiceStationLast = paydirtClaim();
+      } else {
+        sluiceStationLast = null;
+        paydirtStart(sluiceStationSelected);
+      }
+      sluiceStationSignature = ''; sluiceStationRefresh();
+    });
+    panel.addEventListener('keydown', function (e) {
+      if (gamePaused || mobileLandscapeBlocked) return;
+      if (e.key === 'Escape' || e.key === 'p' || e.key === 'P') {
+        e.preventDefault(); e.stopPropagation(); if (!e.repeat) sluiceStationToggle(); return;
+      }
+      e.stopPropagation();
+      if (e.key !== 'Tab') return;
+      var controls = Array.prototype.filter.call(panel.querySelectorAll('button, summary'), function (el) {
+        return !el.disabled && el.getClientRects().length;
+      });
+      var at = controls.indexOf(document.activeElement);
+      if ((e.shiftKey && at <= 0) || (!e.shiftKey && (at < 0 || at === controls.length - 1))) {
+        e.preventDefault(); controls[e.shiftKey ? controls.length - 1 : 0].focus();
+      }
+    });
+    ['pointerdown', 'mousedown', 'touchstart', 'wheel'].forEach(function (name) {
+      panel.addEventListener(name, function (e) { e.stopPropagation(); }, { passive: true });
+    });
+    var list = document.getElementById('gm-sluice-materials');
+    PAYDIRT_TYPES.forEach(function (type) {
+      var button = document.createElement('button'); button.type = 'button';
+      button.setAttribute('data-material', type.id);
+      var title = document.createElement('strong'); title.textContent = type.label;
+      var count = document.createElement('span'); count.className = 'sluice-material-count';
+      var depth = document.createElement('span'); depth.className = 'sluice-material-depth'; depth.textContent = type.depth;
+      button.appendChild(title); button.appendChild(count); button.appendChild(depth);
+      button.addEventListener('click', function () {
+        if (gamePaused || mobileLandscapeBlocked) return;
+        sluiceStationSelected = type.id; sluiceStationSignature = ''; sluiceStationRefresh();
+      });
+      list.appendChild(button);
+    });
+  }
+  function sluiceStationToggle() {
+    if (!sluiceStationOpen && !sluiceStationCanOpen()) return false;
+    setupSluiceStation();
+    sluiceStationOpen = !sluiceStationOpen;
+    sluiceStationDOM.panel.hidden = !sluiceStationOpen;
+    cargoManifestClearInput();
+    siphonStop(); siphon.equipped = false;
+    surfaceSlimeGrabEnd(undefined, true);
+    if (sluiceStationOpen) {
+      paydirtDeposit();
+      sluiceStationLast = null;
+      if (paydirt.pending) sluiceStationSelected = paydirt.pending.typeId;
+      else if (!sluiceStationSelected || !paydirt.stored[sluiceStationSelected]) {
+        var stocked = PAYDIRT_TYPES.filter(function (type) { return paydirt.stored[type.id] > 0; });
+        sluiceStationSelected = (stocked[0] || PAYDIRT_TYPES[0]).id;
+      }
+      canvas.inert = true;
+      canvas.parentNode.style.touchAction = 'auto';
+      render();
+      sluiceStationSignature = ''; sluiceStationRefresh(); sluiceStationPaint();
+      document.getElementById('gm-sluice-close').focus({ preventScroll: true });
+    } else {
+      canvas.inert = false;
+      canvas.parentNode.style.touchAction = gamePaused ? 'auto' : '';
+      if (paydirt.pending) saveNow('sluice-close');
+      canvas.focus({ preventScroll: true });
+    }
+    sluiceStationSyncButton();
+    syncViewportKeys();
+    return sluiceStationOpen;
+  }
+  function sluiceStationSyncButton() {
+    if (!sluiceStationDOM) return;
+    var show = !sluiceStationOpen && sluiceStationCanOpen();
+    sluiceStationDOM.entry.hidden = !show;
+    if (!show) return;
+    var pending = paydirt.pending;
+    var text = pending ? (pending.status === 'ready' ? 'Sluice: pan ready [P]' : 'Sluice: washing [P]') :
+      'Sluice [P]' + (paydirtStored() + paydirtUsed() ? ' / ' + (paydirtStored() + paydirtUsed()).toLocaleString() : '');
+    if (sluiceStationDOM.entry.textContent !== text) sluiceStationDOM.entry.textContent = text;
+  }
+  function sluiceStationResultRows(target, rows) {
+    target.replaceChildren();
+    rows.forEach(function (row) {
+      var line = document.createElement('div'); line.className = 'sluice-loot-row';
+      if (row.rarity === 'rare' || row.rarity === 'exceptional') line.classList.add('sluice-rare');
+      var name = document.createElement('span'); name.textContent = row.label || row.name;
+      var value = document.createElement('strong'); value.textContent = row.detail;
+      line.appendChild(name); line.appendChild(value); target.appendChild(line);
+    });
+  }
+  function sluiceStationRefresh() {
+    if (!sluiceStationOpen) return;
+    var type = paydirtType(sluiceStationSelected) || PAYDIRT_TYPES[0], pending = paydirt.pending;
+    var sig = paydirt.revision + ':' + type.id + ':' + (pending ? pending.status : '') + ':' + !!sluiceStationLast;
+    if (sig === sluiceStationSignature) return;
+    sluiceStationSignature = sig;
+    sluiceStationText('gm-sluice-storage', paydirtStored().toLocaleString() + ' scoops stored / Bulk bin ' + paydirtUsed() + '/' + paydirtCapacity() + ' / $' + money.toLocaleString());
+    var buttons = document.querySelectorAll('#gm-sluice-materials button');
+    for (var i = 0; i < buttons.length; i++) {
+      var id = buttons[i].getAttribute('data-material'), amount = paydirt.stored[id] || 0;
+      buttons[i].setAttribute('aria-pressed', id === type.id ? 'true' : 'false');
+      buttons[i].querySelector('.sluice-material-count').textContent = amount ? amount.toLocaleString() + ' scoops stored' : paydirt.discovered[id] ? 'None stored' : 'Not yet found';
+    }
+    sluiceStationText('gm-sluice-material-title', type.label + ' / ' + type.depth);
+    sluiceStationText('gm-sluice-material-copy', type.description);
+    sluiceStationResultRows(document.getElementById('gm-sluice-loot'), type.loot.map(function (loot) {
+      return {label:loot.label, rarity:loot.rarity, detail:(loot.weight / 100) + '% / ' + loot.rarity};
+    }));
+    var action = document.getElementById('gm-sluice-action');
+    action.disabled = !!pending && pending.status !== 'ready' || !pending && !(paydirt.stored[type.id] > 0);
+    action.textContent = pending ? pending.status === 'ready' ? 'Collect $' + pending.value.toLocaleString() : 'Washing...' :
+      'Wash ' + (paydirt.stored[type.id] || 0).toLocaleString() + ' scoops';
+    var activeType = pending ? paydirtType(pending.typeId) : type;
+    var special = pending && pending.status === 'ready' && pending.results.filter(function (row) { return row.rarity === 'rare' || row.rarity === 'exceptional'; })[0];
+    document.getElementById('gm-sluice-status').classList.toggle('sluice-rare', !!special);
+    sluiceStationText('gm-sluice-status', pending ? pending.status === 'ready' ? special ? special.label + ' found!' : 'Your pan is ready' : 'Washing ' + activeType.label.toLowerCase() :
+      sluiceStationLast ? 'Collected $' + sluiceStationLast.value.toLocaleString() : 'Ready to wash');
+    sluiceStationText('gm-sluice-instruction', pending ? pending.status === 'ready' ? 'Collect the payout and keep any rare specimens.' :
+      pending.count.toLocaleString() + ' scoops. You can return to mining while the sluice runs.' :
+      paydirt.stored[type.id] ? 'Wash this whole stack. Water recirculates; there is no running cost.' : 'Mine dirt or stone in this layer, then dock to unload.');
+    var result = pending && pending.status === 'ready' ? pending : sluiceStationLast;
+    document.getElementById('gm-sluice-results').hidden = !result;
+    if (result) {
+      sluiceStationText('gm-sluice-results-title', (sluiceStationLast ? 'Last pan' : 'In the pan') + ' / ' + result.count + ' scoops of ' + paydirtType(result.typeId).label.toLowerCase());
+      sluiceStationResultRows(document.getElementById('gm-sluice-result-list'), result.results.map(function (row) {
+        return {label:row.label,rarity:row.rarity,detail:'x' + row.count + ' / $' + (row.count * row.value).toLocaleString()};
+      }));
+      if (!result.results.length) document.getElementById('gm-sluice-result-list').textContent = 'Only tailings in this pan. The next scoop has the same chances.';
+    }
+    var collection = [];
+    Object.keys(paydirt.finds).forEach(function (id) {
+      var loot = paydirtLoot(id), find = paydirt.finds[id];
+      if (loot && find.count) collection.push({label:loot.label,rarity:loot.rarity,detail:'x' + find.count + ' / ' + loot.rarity});
+    });
+    sluiceStationText('gm-sluice-collection-title', 'Specimen collection / ' + collection.length + ' found');
+    sluiceStationResultRows(document.getElementById('gm-sluice-collection'), collection);
+    if (!collection.length) document.getElementById('gm-sluice-collection').textContent = 'Rare and exceptional finds are kept here after collecting a pan.';
+  }
+  function sluiceStationPaint() {
+    if (!sluiceStationOpen || !sluiceStationDOM) return;
+    var surface = sluiceStationDOM.machine, bounds = surface.getBoundingClientRect();
+    var scale = Math.min(2, window.devicePixelRatio || 1);
+    var w = Math.max(1, Math.round(bounds.width * scale)), h = Math.max(1, Math.round(bounds.height * scale));
+    if (surface.width !== w || surface.height !== h) { surface.width = w; surface.height = h; }
+    var draw = surface.getContext('2d'); draw.setTransform(scale, 0, 0, scale, 0, 0);
+    draw.clearRect(0, 0, bounds.width, bounds.height);
+    var pending = paydirt.pending, type = paydirtType(pending ? pending.typeId : sluiceStationSelected);
+    paydirtDrawMachine(draw, {x:0,y:0,w:bounds.width,h:bounds.height}, {
+      phase:pending ? pending.status : 'idle', progress:pending ? pending.progress : 0,
+      elapsed:pending ? pending.elapsed : 0, color:type ? type.color : BLD.woodBase,
+      quantity:pending ? pending.count : type ? paydirt.stored[type.id] || 0 : 0,
+      discoveries:pending && pending.status === 'ready' ? pending.results.filter(function (row) { return row.ore === 'gold' || row.rarity === 'rare' || row.rarity === 'exceptional'; }).length : 0,
+      reducedMotion:window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    });
+    document.getElementById('gm-sluice-progress').value = pending ? pending.progress : 0;
+  }
+  function sluiceStationFrame() {
+    sluiceStationRefresh(); sluiceStationPaint();
   }
   /* ====== NMZ CAUTION BANNERS ======
      Wind-blown caution blade flag (the car-wash / gas-station feather-flag
@@ -53704,9 +54510,9 @@
     consoleText(fraction <= 0.50 ? 'Repair' : max + ' HP', bx, by + bh - 3, 11, fraction <= 0.50 ? color : UIT_DIM);
   }
   function drawCargoBay(bx, by, bw, bh) {
-    var used = cargoUsed(), capacity = Math.max(1, maxCargo), value = 0;
+    var used = cargoUsed(), capacity = Math.max(1, maxCargo);
+    var bulk = paydirtUsed(), bulkCapacity = paydirtCapacity();
     var full = used >= capacity;
-    for (var i = 0; i < cargo.length; i++) value += cargoUnitValue(cargo[i]);
     var hover = consoleCargoHovered();
     var open = typeof cargoManifestOpen !== 'undefined' && cargoManifestOpen;
     // The cargo hatch is the operable part of the instrument bed. Its whole
@@ -53718,7 +54524,7 @@
     face.addColorStop(1, UIT_PANEL);
     ctx.fillStyle = face;
     ctx.fillRect(bx - 2, by - 1, bw + 4, bh + 1);
-    consoleText('CARGO', bx, by + 11, 11, UIT_GOLD);
+    consoleText(full ? 'ORE FULL' : 'ORE CARGO', bx, by + 11, 11, UIT_GOLD);
     consoleText('>', bx + bw - 1, by + 11, 12, UIT_GOLD, 'right');
     consoleValue('' + used, '/ ' + capacity, bx, by, bw, bh, full ? UIT_GOLD : UIT_TEXT);
     if (bw >= 130 && cargo.length) {
@@ -53739,9 +54545,17 @@
       }
     }
     consoleMeter(bx, by, bw, bh, used / capacity, full ? UIT_GOLD : UIT_BODY);
-    if (value > 0) consoleText(consoleMoney(value, bw - (full ? 33 : 0), 11), bx, by + bh - 3, 11, UIT_MONEY);
-    else consoleText('View hold', bx, by + bh - 3, 11, UIT_DIM);
-    if (full) consoleText('FULL', bx + bw, by + bh - 3, 11, UIT_GOLD, 'right');
+    // Bulk has its own capacity and cannot fill the mineral slots. The exact
+    // haul value and per-material quantities remain in the clickable hold.
+    var bulkText = 'BULK ' + bulk + '/' + bulkCapacity;
+    ctx.font = '11px ' + UI_FONT;
+    if (ctx.measureText(bulkText).width > bw) {
+      var compactBulk = bulk >= 1000 ? (Math.floor(bulk / 100) / 10) + 'k' : '' + bulk;
+      var compactCapacity = bulkCapacity >= 1000 ? (Math.floor(bulkCapacity / 100) / 10) + 'k' : '' + bulkCapacity;
+      bulkText = 'BULK ' + compactBulk + '/' + compactCapacity;
+    }
+    if (ctx.measureText(bulkText).width > bw) bulkText = bulk >= bulkCapacity ? 'BULK FULL' : 'BULK ' + Math.floor(bulk / bulkCapacity * 100) + '%';
+    consoleText(bulkText, bx, by + bh - 3, 11, bulk >= bulkCapacity ? UIT_GOLD : UIT_BODY);
   }
   function drawDepthDisplay(bx, by, bw, bh) {
     var depth = Math.max(0, ((player.y - SKY_ROWS * TILE) / TILE) | 0);
@@ -60428,7 +61242,11 @@
     }
     if (k === 'fuel') return 'A bigger tank. Longer dives before the gauge forces you home.';
     if (k === 'hull') return 'Thicker plating. Shrugs off harder landings and hotter rock.';
-    if (k === 'cargo') return 'More slots in the hold. Haul more ore per trip.';
+    if (k === 'cargo') {
+      var bulk = paydirtCapacity();
+      return info.maxed ? 'Ore slots and bulk storage fully upgraded. Holds ' + bulk.toLocaleString() + ' scoops of dirt and stone.' :
+        'Adds 4 ore slots and 200 bulk scoops. Dirt and stone capacity: ' + bulk.toLocaleString() + ' to ' + (bulk + 200).toLocaleString() + '.';
+    }
     if (k === 'booster') return 'Stronger climb thrust underground. Get back up faster.';
     if (k === 'heat') return 'A heating coil for the drill. Required to break permafrost below 200 m.';
     if (k === 'shield') return info.lvl === 0
@@ -61144,6 +61962,7 @@
       cause: deathInfo && deathInfo.type || 'hull',
       depth: Math.max(0, Math.floor(player.y / TILE - SKY_ROWS + 1)),
       count: cargo.length,
+      bulk: paydirtUsed(),
       total: total,
       fee: fee,
       remitted: balance - fee
@@ -61248,7 +62067,9 @@
     var opening = deathOverlay.hidden;
     if (opening) {
       document.getElementById('gm-death-cause').textContent = deathCauseText(m.cause) + ' at ' + m.depth + ' m.';
-      document.getElementById('gm-death-cargo').textContent = m.count ? '$' + m.total.toLocaleString() : 'Empty hold';
+      document.getElementById('gm-death-cargo').textContent = m.count || m.bulk ?
+        (m.count ? '$' + m.total.toLocaleString() + ' ore' : '') +
+        (m.count && m.bulk ? ' + ' : '') + (m.bulk ? m.bulk.toLocaleString() + ' bulk' : '') : 'Empty hold';
       document.getElementById('gm-death-fee').textContent = '$' + m.fee.toLocaleString();
       document.getElementById('gm-death-balance').textContent = '$' + m.remitted.toLocaleString();
       deathOverlay.hidden = false;
@@ -62225,6 +63046,7 @@
   function cargoManifestCanOpen() {
     return !gamePaused && !gameOver && !gameWon && !shopOpen &&
       shopState === 'closed' && !ledgerOpen && !itemWheel.open &&
+      !(typeof sluiceStationOpen !== 'undefined' && sluiceStationOpen) &&
       !(typeof bathMode !== 'undefined' && bathMode) &&
       !seamCreditsOn && !seamExtractTiles && introPhase === 'done';
   }
@@ -62305,6 +63127,16 @@
     rows.sort(function (a, b) {
       return a.specimenIndex - b.specimenIndex || Number(a.shiny) - Number(b.shiny);
     });
+    // Unwashed material uses the bulk bin. It never takes mineral slots or
+    // contributes a guessed sale price to the ore haul.
+    for (var p = 0; p < PAYDIRT_TYPES.length; p++) {
+      var material = PAYDIRT_TYPES[p], amount = paydirt.held[material.id] || 0;
+      if (!amount) continue;
+      rows.push({ key: 'bulk:' + material.id, type: material.id, bulk: true,
+        label: material.label, quantity: amount, unitSlots: 0, slots: 0,
+        unitValue: 0, total: 0, color: material.color, kind: material.kind,
+        depth: material.depth, specimenIndex: p });
+    }
     return rows;
   }
 
@@ -62312,7 +63144,8 @@
     rows = rows || cargoManifestRows();
     var total = 0;
     for (var i = 0; i < rows.length; i++) total += rows[i].total;
-    return { quantity: cargo.length, slots: cargoUsed(), capacity: maxCargo, total: total };
+    return { quantity: cargo.length, slots: cargoUsed(), capacity: maxCargo, total: total,
+      bulk: paydirtUsed(), bulkCapacity: paydirtCapacity(), stored: paydirtStored() };
   }
 
   function cargoManifestLayout(rows) {
@@ -62323,7 +63156,7 @@
     var w = Math.max(200, Math.min(880, viewW - margin * 2));
     var pad = w < 440 ? 14 : 18;
     var wide = w >= 600;
-    var headerH = wide ? (compact ? 82 : 100) : (compact ? 64 : 84);
+    var headerH = wide ? (compact ? 96 : 114) : (compact ? 78 : 98);
     var rowH = wide ? (compact ? 60 : 72) : (short ? 74 : 94);
     var gap = 6, footerH = 78;
     var perPage = Math.max(1, Math.min(Math.max(1, rows.length),
@@ -62407,11 +63240,16 @@
     ukPanelBox(L.x, L.y, L.w, L.h);
     nsText('CARGO HOLD', L.listX, L.y + (L.compact ? 14 : 23), L.w < 440 ? 18 : 24, UIT_TEXT);
     ukButton(L.close, 'X', 'ghost', cargoManifestHover === 'close', 0, 14);
-    var summaryText = summary.quantity.toLocaleString() + (summary.quantity === 1 ? ' item' : ' items') +
-      ' / ' + summary.slots.toLocaleString() + '/' + summary.capacity.toLocaleString() + ' slots';
+    var summaryText = 'Ore ' + summary.slots.toLocaleString() + '/' + summary.capacity.toLocaleString() +
+      ' slots';
+    if (L.wide) summaryText += ' / Bulk ' + summary.bulk.toLocaleString() + '/' + summary.bulkCapacity.toLocaleString();
     ukMono(summaryText, L.listX, L.y + (L.compact ? 50 : 65), 11, UIT_BODY);
+    var bulkLine = L.wide ? 'Dock to store dirt and stone. Stored at sluice: ' + summary.stored.toLocaleString() :
+      'Bulk ' + summary.bulk.toLocaleString() + '/' + summary.bulkCapacity.toLocaleString() + ' / stored ' + summary.stored.toLocaleString();
+    ukMono(ukFitText(bulkLine, L.listW, 11, true), L.listX, L.y + (L.compact ? 65 : 80), 11,
+      summary.bulk >= summary.bulkCapacity ? UIT_GOLD : UIT_DIM);
     if (L.wide) {
-      ukMono('MINERAL', L.listX + 56, L.listY - 10, 11, UIT_DIM);
+      ukMono('MATERIAL', L.listX + 56, L.listY - 10, 11, UIT_DIM);
       ukMono('QTY', L.listX + L.listW - 246, L.listY - 10, 11, UIT_DIM, 'right');
       ukMono('EACH', L.listX + L.listW - 128, L.listY - 10, 11, UIT_DIM, 'right');
       ukMono('TOTAL', L.listX + L.listW - 12, L.listY - 10, 11, UIT_DIM, 'right');
@@ -62424,7 +63262,14 @@
       var x = L.listX, y = L.listY + (i - first) * (L.rowH + L.gap);
       ukInset(x, y, L.listW, L.rowH);
       var sx = x + 12, sy = y + (L.wide ? Math.floor((L.rowH - TILE) / 2) : 8);
-      if (ORES[row.type]) {
+      if (row.bulk) {
+        ctx.fillStyle = UIT_INSET_DK; ctx.fillRect(sx, sy, TILE, TILE);
+        ctx.fillStyle = row.color;
+        for (var grain = 0; grain < 9; grain++) {
+          var grainSize = row.kind === 'stone' ? 5 : 3;
+          ctx.fillRect(sx + 4 + (grain * 7 % 23), sy + 6 + (grain * 11 % 19), grainSize, grainSize);
+        }
+      } else if (ORES[row.type]) {
         drawLedgerSpecimen(sx, sy, row.type, row.specimenIndex);
         if (row.shiny) drawShinyTile(sx, sy, 4001 + row.specimenIndex * 37, 4007 + row.specimenIndex * 53, 0);
       } else {
@@ -62434,29 +63279,40 @@
       ctx.lineWidth = 1;
       ctx.strokeRect(sx - 0.5, sy - 0.5, TILE + 1, TILE + 1);
       var ty = y + (L.wide ? 24 : L.short ? 18 : 23);
-      ukMono(row.label, x + 56, ty, 13, UIT_TEXT, 'left', true);
-      ukMono((row.shiny ? 'Shiny' : 'Regular') + ' / ' + row.unitSlots +
-        (row.unitSlots === 1 ? ' slot each' : ' slots each'), x + 56, ty + 17, 11, row.shiny ? UIT_MONEY : UIT_DIM);
+      var nameW = L.wide ? L.listW - 330 : L.listW - 68;
+      ukMono(ukFitText(row.label, nameW, 13, true), x + 56, ty, 13, UIT_TEXT, 'left', true);
+      var detail = row.bulk ? 'Unwashed / bulk bin' : (row.shiny ? 'Shiny' : 'Regular') + ' / ' + row.unitSlots +
+        (row.unitSlots === 1 ? ' slot each' : ' slots each');
+      ukMono(ukFitText(detail, nameW, 11, true), x + 56, ty + 17, 11, row.shiny ? UIT_MONEY : UIT_DIM);
       if (L.wide) {
         ukMono(row.quantity.toLocaleString(), x + L.listW - 246, y + 34, 13, UIT_BODY, 'right');
-        ukMono('$' + row.unitValue.toLocaleString(), x + L.listW - 128, y + 34, 13, UIT_BODY, 'right');
-        ukMono('$' + row.total.toLocaleString(), x + L.listW - 12, y + 34, 14, UIT_MONEY, 'right');
+        if (row.bulk) {
+          ukMono('Wash at sluice', x + L.listW - 12, y + 34, 11, UIT_DIM, 'right');
+        } else {
+          ukMono('$' + row.unitValue.toLocaleString(), x + L.listW - 128, y + 34, 13, UIT_BODY, 'right');
+          ukMono('$' + row.total.toLocaleString(), x + L.listW - 12, y + 34, 14, UIT_MONEY, 'right');
+        }
       } else {
         var metaY = y + (L.short ? 51 : 64);
         ukMono('Qty ' + row.quantity.toLocaleString(), x + 12, metaY, 11, UIT_BODY);
-        ukMono('Each $' + row.unitValue.toLocaleString(), x + L.listW - 12, metaY, 11, UIT_BODY, 'right');
-        ukMono(row.slots.toLocaleString() + ' slots', x + 12, metaY + 17, 11, UIT_DIM);
-        ukMono('Total $' + row.total.toLocaleString(), x + L.listW - 12, metaY + 17, 11, UIT_MONEY, 'right');
+        if (row.bulk) {
+          ukMono('No ore slots', x + L.listW - 12, metaY, 11, UIT_DIM, 'right');
+          ukMono('Wash at the surface sluice', x + 12, metaY + 17, 11, UIT_BODY);
+        } else {
+          ukMono('Each $' + row.unitValue.toLocaleString(), x + L.listW - 12, metaY, 11, UIT_BODY, 'right');
+          ukMono(row.slots.toLocaleString() + ' slots', x + 12, metaY + 17, 11, UIT_DIM);
+          ukMono('Total $' + row.total.toLocaleString(), x + L.listW - 12, metaY + 17, 11, UIT_MONEY, 'right');
+        }
       }
     }
     if (!rows.length) {
       ukInset(L.listX, L.listY, L.listW, L.listH);
       var ey = L.listY + Math.floor(L.listH / 2);
       ukMono('Your hold is empty.', L.x + L.w / 2, ey - 3, 13, UIT_TEXT, 'center');
-      ukMono('Mine a mineral to see its value here.', L.x + L.w / 2, ey + 18, 11, UIT_DIM, 'center');
+      ukMonoWrap('Mine ore, dirt or stone to fill the hold.', L.x + L.w / 2, ey + 18, L.listW - 24, 11, 15, UIT_DIM, 2);
     }
 
-    ukMono('HAUL VALUE', L.listX, L.footerY + 20, 11, UIT_DIM);
+    ukMono('ORE VALUE', L.listX, L.footerY + 20, 11, UIT_DIM);
     ukMono('$' + summary.total.toLocaleString(), L.listX + L.listW, L.footerY + 21, 16, UIT_MONEY, 'right', true);
     ukButton(L.prev, 'PREV', cargoManifestPage > 0 ? 'ghost' : 'locked', cargoManifestHover === 'prev', 0, 11);
     ukButton(L.next, 'NEXT', cargoManifestPage < L.pages - 1 ? 'ghost' : 'locked', cargoManifestHover === 'next', 0, 11);
@@ -63265,7 +64121,7 @@
       var contents = [];
       for (var i = 0; i < cargo.length; i++) contents.push(cargoType(cargo[i]) + ':' + cargoUnitSlots(cargo[i]) + ':' + cargoUnitValue(cargo[i]));
       return maxCargo + '/' + cargoUsed() + '/' + contents.join(',') + '/' + consoleCargoHovered() + '/' +
-        (typeof cargoManifestOpen !== 'undefined' && cargoManifestOpen);
+        (typeof cargoManifestOpen !== 'undefined' && cargoManifestOpen) + '/' + paydirtUsed() + '/' + paydirtCapacity();
     }
     if (id === 'cash') {
       var shown = typeof displayMoney === 'number' && isFinite(displayMoney) ? displayMoney : money;
@@ -63351,6 +64207,7 @@
   var viewportKeysHost = null, viewportPanelOpen = null;
   function syncViewportKeys() {
     var open = !!(gamePaused || gameOver || ledgerOpen || cargoManifestOpen ||
+      (typeof sluiceStationOpen !== 'undefined' && sluiceStationOpen) ||
       shopOpen || (shopState && shopState !== 'closed') || ukModal || seamCreditsOn);
     if (!viewportKeysHost) viewportKeysHost = document.getElementById('game-canvas').closest('.game-wrapper');
     if (viewportKeysHost && viewportPanelOpen !== open) {
@@ -77716,7 +78573,7 @@
      keeps [Esc]/[P]. Cached edge so we only touch the DOM on a real change. */
   var _pauseBtnHiddenForShop = null;
   function syncPauseBtnForShop() {
-    var up = shopOpen || shopState !== 'closed' || ledgerOpen || cargoManifestOpen;
+    var up = shopOpen || shopState !== 'closed' || ledgerOpen || cargoManifestOpen || sluiceStationOpen;
     if (up === _pauseBtnHiddenForShop) return;
     _pauseBtnHiddenForShop = up;
     var pb = document.getElementById('gm-pause-btn');
@@ -77799,6 +78656,15 @@
 
     // Keep the DOM pause button clear of the shop's BACK arrow (see above).
     syncPauseBtnForShop();
+    sluiceStationSyncButton();
+    if (!cargoManifestOpen && !ledgerOpen && !gamePaused) paydirtAdvance(dt);
+    if (sluiceStationOpen) {
+      if (typeof gamepadTick === 'function') gamepadTick(dt);
+      sluiceStationFrame();
+      if (_perfWatching) playPerfFrame(time, frameIntervalMs, _playPerfCPU ? performance.now() - _playPerfCPU : 0, 1);
+      gameRafId = gamePaused || mobileLandscapeBlocked ? 0 : demoActivity.requestFrame(loop);
+      return;
+    }
 
     // Stage 5a — advance the day/night cycle. Pure modulo wrap; pause /
     // restart logic can be layered later if we ever want it.
@@ -78331,6 +79197,7 @@
     resize();
     window.addEventListener('resize', resize);
     setupInput();
+    setupSluiceStation();
     // v14.30 — ?cpuwater=1 forces the CPU water even on HTTPS, so the
     // WebGPU-vs-CPU water A/B can be flipped on one device via the URL.
     var _wantWGPULiquid = USE_WEBGPU_LIQUID &&

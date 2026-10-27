@@ -10,6 +10,7 @@
   function cargoManifestCanOpen() {
     return !gamePaused && !gameOver && !gameWon && !shopOpen &&
       shopState === 'closed' && !ledgerOpen && !itemWheel.open &&
+      !(typeof sluiceStationOpen !== 'undefined' && sluiceStationOpen) &&
       !(typeof bathMode !== 'undefined' && bathMode) &&
       !seamCreditsOn && !seamExtractTiles && introPhase === 'done';
   }
@@ -90,6 +91,16 @@
     rows.sort(function (a, b) {
       return a.specimenIndex - b.specimenIndex || Number(a.shiny) - Number(b.shiny);
     });
+    // Unwashed material uses the bulk bin. It never takes mineral slots or
+    // contributes a guessed sale price to the ore haul.
+    for (var p = 0; p < PAYDIRT_TYPES.length; p++) {
+      var material = PAYDIRT_TYPES[p], amount = paydirt.held[material.id] || 0;
+      if (!amount) continue;
+      rows.push({ key: 'bulk:' + material.id, type: material.id, bulk: true,
+        label: material.label, quantity: amount, unitSlots: 0, slots: 0,
+        unitValue: 0, total: 0, color: material.color, kind: material.kind,
+        depth: material.depth, specimenIndex: p });
+    }
     return rows;
   }
 
@@ -97,7 +108,8 @@
     rows = rows || cargoManifestRows();
     var total = 0;
     for (var i = 0; i < rows.length; i++) total += rows[i].total;
-    return { quantity: cargo.length, slots: cargoUsed(), capacity: maxCargo, total: total };
+    return { quantity: cargo.length, slots: cargoUsed(), capacity: maxCargo, total: total,
+      bulk: paydirtUsed(), bulkCapacity: paydirtCapacity(), stored: paydirtStored() };
   }
 
   function cargoManifestLayout(rows) {
@@ -108,7 +120,7 @@
     var w = Math.max(200, Math.min(880, viewW - margin * 2));
     var pad = w < 440 ? 14 : 18;
     var wide = w >= 600;
-    var headerH = wide ? (compact ? 82 : 100) : (compact ? 64 : 84);
+    var headerH = wide ? (compact ? 96 : 114) : (compact ? 78 : 98);
     var rowH = wide ? (compact ? 60 : 72) : (short ? 74 : 94);
     var gap = 6, footerH = 78;
     var perPage = Math.max(1, Math.min(Math.max(1, rows.length),
@@ -192,11 +204,16 @@
     ukPanelBox(L.x, L.y, L.w, L.h);
     nsText('CARGO HOLD', L.listX, L.y + (L.compact ? 14 : 23), L.w < 440 ? 18 : 24, UIT_TEXT);
     ukButton(L.close, 'X', 'ghost', cargoManifestHover === 'close', 0, 14);
-    var summaryText = summary.quantity.toLocaleString() + (summary.quantity === 1 ? ' item' : ' items') +
-      ' / ' + summary.slots.toLocaleString() + '/' + summary.capacity.toLocaleString() + ' slots';
+    var summaryText = 'Ore ' + summary.slots.toLocaleString() + '/' + summary.capacity.toLocaleString() +
+      ' slots';
+    if (L.wide) summaryText += ' / Bulk ' + summary.bulk.toLocaleString() + '/' + summary.bulkCapacity.toLocaleString();
     ukMono(summaryText, L.listX, L.y + (L.compact ? 50 : 65), 11, UIT_BODY);
+    var bulkLine = L.wide ? 'Dock to store dirt and stone. Stored at sluice: ' + summary.stored.toLocaleString() :
+      'Bulk ' + summary.bulk.toLocaleString() + '/' + summary.bulkCapacity.toLocaleString() + ' / stored ' + summary.stored.toLocaleString();
+    ukMono(ukFitText(bulkLine, L.listW, 11, true), L.listX, L.y + (L.compact ? 65 : 80), 11,
+      summary.bulk >= summary.bulkCapacity ? UIT_GOLD : UIT_DIM);
     if (L.wide) {
-      ukMono('MINERAL', L.listX + 56, L.listY - 10, 11, UIT_DIM);
+      ukMono('MATERIAL', L.listX + 56, L.listY - 10, 11, UIT_DIM);
       ukMono('QTY', L.listX + L.listW - 246, L.listY - 10, 11, UIT_DIM, 'right');
       ukMono('EACH', L.listX + L.listW - 128, L.listY - 10, 11, UIT_DIM, 'right');
       ukMono('TOTAL', L.listX + L.listW - 12, L.listY - 10, 11, UIT_DIM, 'right');
@@ -209,7 +226,14 @@
       var x = L.listX, y = L.listY + (i - first) * (L.rowH + L.gap);
       ukInset(x, y, L.listW, L.rowH);
       var sx = x + 12, sy = y + (L.wide ? Math.floor((L.rowH - TILE) / 2) : 8);
-      if (ORES[row.type]) {
+      if (row.bulk) {
+        ctx.fillStyle = UIT_INSET_DK; ctx.fillRect(sx, sy, TILE, TILE);
+        ctx.fillStyle = row.color;
+        for (var grain = 0; grain < 9; grain++) {
+          var grainSize = row.kind === 'stone' ? 5 : 3;
+          ctx.fillRect(sx + 4 + (grain * 7 % 23), sy + 6 + (grain * 11 % 19), grainSize, grainSize);
+        }
+      } else if (ORES[row.type]) {
         drawLedgerSpecimen(sx, sy, row.type, row.specimenIndex);
         if (row.shiny) drawShinyTile(sx, sy, 4001 + row.specimenIndex * 37, 4007 + row.specimenIndex * 53, 0);
       } else {
@@ -219,29 +243,40 @@
       ctx.lineWidth = 1;
       ctx.strokeRect(sx - 0.5, sy - 0.5, TILE + 1, TILE + 1);
       var ty = y + (L.wide ? 24 : L.short ? 18 : 23);
-      ukMono(row.label, x + 56, ty, 13, UIT_TEXT, 'left', true);
-      ukMono((row.shiny ? 'Shiny' : 'Regular') + ' / ' + row.unitSlots +
-        (row.unitSlots === 1 ? ' slot each' : ' slots each'), x + 56, ty + 17, 11, row.shiny ? UIT_MONEY : UIT_DIM);
+      var nameW = L.wide ? L.listW - 330 : L.listW - 68;
+      ukMono(ukFitText(row.label, nameW, 13, true), x + 56, ty, 13, UIT_TEXT, 'left', true);
+      var detail = row.bulk ? 'Unwashed / bulk bin' : (row.shiny ? 'Shiny' : 'Regular') + ' / ' + row.unitSlots +
+        (row.unitSlots === 1 ? ' slot each' : ' slots each');
+      ukMono(ukFitText(detail, nameW, 11, true), x + 56, ty + 17, 11, row.shiny ? UIT_MONEY : UIT_DIM);
       if (L.wide) {
         ukMono(row.quantity.toLocaleString(), x + L.listW - 246, y + 34, 13, UIT_BODY, 'right');
-        ukMono('$' + row.unitValue.toLocaleString(), x + L.listW - 128, y + 34, 13, UIT_BODY, 'right');
-        ukMono('$' + row.total.toLocaleString(), x + L.listW - 12, y + 34, 14, UIT_MONEY, 'right');
+        if (row.bulk) {
+          ukMono('Wash at sluice', x + L.listW - 12, y + 34, 11, UIT_DIM, 'right');
+        } else {
+          ukMono('$' + row.unitValue.toLocaleString(), x + L.listW - 128, y + 34, 13, UIT_BODY, 'right');
+          ukMono('$' + row.total.toLocaleString(), x + L.listW - 12, y + 34, 14, UIT_MONEY, 'right');
+        }
       } else {
         var metaY = y + (L.short ? 51 : 64);
         ukMono('Qty ' + row.quantity.toLocaleString(), x + 12, metaY, 11, UIT_BODY);
-        ukMono('Each $' + row.unitValue.toLocaleString(), x + L.listW - 12, metaY, 11, UIT_BODY, 'right');
-        ukMono(row.slots.toLocaleString() + ' slots', x + 12, metaY + 17, 11, UIT_DIM);
-        ukMono('Total $' + row.total.toLocaleString(), x + L.listW - 12, metaY + 17, 11, UIT_MONEY, 'right');
+        if (row.bulk) {
+          ukMono('No ore slots', x + L.listW - 12, metaY, 11, UIT_DIM, 'right');
+          ukMono('Wash at the surface sluice', x + 12, metaY + 17, 11, UIT_BODY);
+        } else {
+          ukMono('Each $' + row.unitValue.toLocaleString(), x + L.listW - 12, metaY, 11, UIT_BODY, 'right');
+          ukMono(row.slots.toLocaleString() + ' slots', x + 12, metaY + 17, 11, UIT_DIM);
+          ukMono('Total $' + row.total.toLocaleString(), x + L.listW - 12, metaY + 17, 11, UIT_MONEY, 'right');
+        }
       }
     }
     if (!rows.length) {
       ukInset(L.listX, L.listY, L.listW, L.listH);
       var ey = L.listY + Math.floor(L.listH / 2);
       ukMono('Your hold is empty.', L.x + L.w / 2, ey - 3, 13, UIT_TEXT, 'center');
-      ukMono('Mine a mineral to see its value here.', L.x + L.w / 2, ey + 18, 11, UIT_DIM, 'center');
+      ukMonoWrap('Mine ore, dirt or stone to fill the hold.', L.x + L.w / 2, ey + 18, L.listW - 24, 11, 15, UIT_DIM, 2);
     }
 
-    ukMono('HAUL VALUE', L.listX, L.footerY + 20, 11, UIT_DIM);
+    ukMono('ORE VALUE', L.listX, L.footerY + 20, 11, UIT_DIM);
     ukMono('$' + summary.total.toLocaleString(), L.listX + L.listW, L.footerY + 21, 16, UIT_MONEY, 'right', true);
     ukButton(L.prev, 'PREV', cargoManifestPage > 0 ? 'ghost' : 'locked', cargoManifestHover === 'prev', 0, 11);
     ukButton(L.next, 'NEXT', cargoManifestPage < L.pages - 1 ? 'ghost' : 'locked', cargoManifestHover === 'next', 0, 11);

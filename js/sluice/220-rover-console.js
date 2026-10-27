@@ -490,9 +490,9 @@
     consoleText(fraction <= 0.50 ? 'Repair' : max + ' HP', bx, by + bh - 3, 11, fraction <= 0.50 ? color : UIT_DIM);
   }
   function drawCargoBay(bx, by, bw, bh) {
-    var used = cargoUsed(), capacity = Math.max(1, maxCargo), value = 0;
+    var used = cargoUsed(), capacity = Math.max(1, maxCargo);
+    var bulk = paydirtUsed(), bulkCapacity = paydirtCapacity();
     var full = used >= capacity;
-    for (var i = 0; i < cargo.length; i++) value += cargoUnitValue(cargo[i]);
     var hover = consoleCargoHovered();
     var open = typeof cargoManifestOpen !== 'undefined' && cargoManifestOpen;
     // The cargo hatch is the operable part of the instrument bed. Its whole
@@ -504,7 +504,7 @@
     face.addColorStop(1, UIT_PANEL);
     ctx.fillStyle = face;
     ctx.fillRect(bx - 2, by - 1, bw + 4, bh + 1);
-    consoleText('CARGO', bx, by + 11, 11, UIT_GOLD);
+    consoleText(full ? 'ORE FULL' : 'ORE CARGO', bx, by + 11, 11, UIT_GOLD);
     consoleText('>', bx + bw - 1, by + 11, 12, UIT_GOLD, 'right');
     consoleValue('' + used, '/ ' + capacity, bx, by, bw, bh, full ? UIT_GOLD : UIT_TEXT);
     if (bw >= 130 && cargo.length) {
@@ -525,9 +525,17 @@
       }
     }
     consoleMeter(bx, by, bw, bh, used / capacity, full ? UIT_GOLD : UIT_BODY);
-    if (value > 0) consoleText(consoleMoney(value, bw - (full ? 33 : 0), 11), bx, by + bh - 3, 11, UIT_MONEY);
-    else consoleText('View hold', bx, by + bh - 3, 11, UIT_DIM);
-    if (full) consoleText('FULL', bx + bw, by + bh - 3, 11, UIT_GOLD, 'right');
+    // Bulk has its own capacity and cannot fill the mineral slots. The exact
+    // haul value and per-material quantities remain in the clickable hold.
+    var bulkText = 'BULK ' + bulk + '/' + bulkCapacity;
+    ctx.font = '11px ' + UI_FONT;
+    if (ctx.measureText(bulkText).width > bw) {
+      var compactBulk = bulk >= 1000 ? (Math.floor(bulk / 100) / 10) + 'k' : '' + bulk;
+      var compactCapacity = bulkCapacity >= 1000 ? (Math.floor(bulkCapacity / 100) / 10) + 'k' : '' + bulkCapacity;
+      bulkText = 'BULK ' + compactBulk + '/' + compactCapacity;
+    }
+    if (ctx.measureText(bulkText).width > bw) bulkText = bulk >= bulkCapacity ? 'BULK FULL' : 'BULK ' + Math.floor(bulk / bulkCapacity * 100) + '%';
+    consoleText(bulkText, bx, by + bh - 3, 11, bulk >= bulkCapacity ? UIT_GOLD : UIT_BODY);
   }
   function drawDepthDisplay(bx, by, bw, bh) {
     var depth = Math.max(0, ((player.y - SKY_ROWS * TILE) / TILE) | 0);

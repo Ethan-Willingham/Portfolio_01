@@ -150,7 +150,7 @@
      keeps [Esc]/[P]. Cached edge so we only touch the DOM on a real change. */
   var _pauseBtnHiddenForShop = null;
   function syncPauseBtnForShop() {
-    var up = shopOpen || shopState !== 'closed' || ledgerOpen || cargoManifestOpen;
+    var up = shopOpen || shopState !== 'closed' || ledgerOpen || cargoManifestOpen || sluiceStationOpen;
     if (up === _pauseBtnHiddenForShop) return;
     _pauseBtnHiddenForShop = up;
     var pb = document.getElementById('gm-pause-btn');
@@ -233,6 +233,15 @@
 
     // Keep the DOM pause button clear of the shop's BACK arrow (see above).
     syncPauseBtnForShop();
+    sluiceStationSyncButton();
+    if (!cargoManifestOpen && !ledgerOpen && !gamePaused) paydirtAdvance(dt);
+    if (sluiceStationOpen) {
+      if (typeof gamepadTick === 'function') gamepadTick(dt);
+      sluiceStationFrame();
+      if (_perfWatching) playPerfFrame(time, frameIntervalMs, _playPerfCPU ? performance.now() - _playPerfCPU : 0, 1);
+      gameRafId = gamePaused || mobileLandscapeBlocked ? 0 : demoActivity.requestFrame(loop);
+      return;
+    }
 
     // Stage 5a — advance the day/night cycle. Pure modulo wrap; pause /
     // restart logic can be layered later if we ever want it.
@@ -765,6 +774,7 @@
     resize();
     window.addEventListener('resize', resize);
     setupInput();
+    setupSluiceStation();
     // v14.30 — ?cpuwater=1 forces the CPU water even on HTTPS, so the
     // WebGPU-vs-CPU water A/B can be flipped on one device via the URL.
     var _wantWGPULiquid = USE_WEBGPU_LIQUID &&

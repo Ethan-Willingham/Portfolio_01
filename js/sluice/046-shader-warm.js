@@ -780,6 +780,8 @@
       cargoManifestOpen = false;
       ledgerOpen = true;
       drawLedger();
+      paydirtDrawMachine(ctx, {x:0,y:0,w:700,h:250}, {phase:'washing',progress:0.55,elapsed:4,color:BLD.woodBase,quantity:100,discoveries:0});
+      paydirtDrawMachine(ctx, {x:0,y:0,w:700,h:250}, {phase:'ready',progress:1,elapsed:10,color:BLD.woodBase,quantity:100,discoveries:3});
     } finally {
       ukModal = modal; ukState = modalState; ukOpenT = openT; ukCloseT = closeT;
       storeLastTab = lastTab;

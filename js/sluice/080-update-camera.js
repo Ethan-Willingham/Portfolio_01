@@ -170,6 +170,7 @@
 
     // Pump pad: free refuel + auto-sell while standing on it
     if (playerOnPumpPad()) {
+      paydirtDeposit();
       if (!sellReveal && (cargo.length > 0 || oilGallons > 0)) sellCargo(true);
       var maxF = getMaxFuel();
       var maxH = getMaxHull();
@@ -300,9 +301,10 @@
             }
             tile.hp -= 1;
             if (tile.hp <= 0) {
-              // Collect — but not dirt or stone (they're worthless rubble)
+              // Bulk earth uses its own bin and never consumes ore slots.
               var oreType = tile.type;
               var oreDef = ORES[oreType];
+              paydirtCollect(oreType, drilling.r, drilling.c);
               if (oreType !== 'dirt' && oreType !== 'stone') {
                 // Slot-based fit: a rare ore may need several slots. An empty
                 // hold always accepts one unit, so nothing is ever un-minable.

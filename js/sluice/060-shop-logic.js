@@ -76,7 +76,7 @@
       { key: 'drill',  title: 'Drill',         desc: drillDesc,                              level: dl, costs: shop.drill },
       { key: 'fuel',   title: 'Fuel Tank',     desc: fuelDesc,                               level: fl, costs: shop.fuel },
       { key: 'hull',   title: 'Hull Plating',  desc: deltaDesc(hl, 'Hull',     hullAt),      level: hl, costs: shop.hull },
-      { key: 'cargo',  title: 'Cargo Bay',     desc: deltaDesc(cl, 'Slots',    cargoAt),     level: cl, costs: shop.cargo },
+      { key: 'cargo',  title: 'Cargo Bay',     desc: deltaDesc(cl, 'Ore slots', cargoAt) + ' / Bulk: ' + paydirtCapacity() + (cl >= shop.cargo.length ? '' : ' to ' + (paydirtCapacity() + 200)), level: cl, costs: shop.cargo },
       { key: 'booster',title: 'Booster',       desc: boosterDesc,                            level: bl, costs: shop.booster },
       { key: 'heat',   title: 'Heated Drill',  desc: 'Required to break permafrost (200m+)', level: upgrades.heatLevel,   costs: shop.heat,   special: true },
       { key: 'shield', title: 'Heat Shield',   desc: upgrades.shieldLevel === 0
@@ -963,6 +963,7 @@
       }
       arr[idx][cell.c] = null;
       markTerrainCleared(cell.r, cell.c, tile);
+      paydirtCollect(oreType, cell.r, cell.c);
       forgeStoneDrop(oreType);
       // Physical debris: reuse the mine-break chips/grit/dust per cleared
       // cell, so the blast throws colored rubble that bounces and settles.

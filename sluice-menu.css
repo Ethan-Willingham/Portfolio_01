@@ -1,4 +1,82 @@
 /* Sluice menus share the material colors from 020-state via 053-pause-menu. */
+#gm-sluice-btn {
+  position: absolute; top: 54px; left: 50%; transform: translateX(-50%);
+  z-index: 9; min-height: 44px; padding: 8px 16px;
+  border: 1px solid var(--menu-weld); background: var(--menu-panel);
+  color: var(--menu-text); font: 12px var(--font-mono); cursor: pointer;
+  touch-action: manipulation;
+}
+#gm-sluice-panel {
+  position: absolute; inset: 0; z-index: 11; display: grid; place-items: center;
+  padding: 14px; background: rgba(8, 10, 14, .82); color: var(--menu-body);
+  font: 13px/1.45 var(--font-body); touch-action: auto;
+}
+#gm-sluice-panel *, #gm-sluice-panel { box-sizing: border-box; }
+#gm-sluice-panel[hidden], #gm-sluice-btn[hidden], #gm-sluice-panel [hidden] { display: none !important; }
+#gm-sluice-panel .sluice-card {
+  width: min(1100px, 100%); height: min(760px, 100%); min-height: 0;
+  display: flex; flex-direction: column; border: 1px solid var(--menu-weld);
+  background: var(--menu-panel); overflow: hidden;
+}
+#gm-sluice-panel .sluice-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px 6px; }
+#gm-sluice-panel h2 { color: var(--menu-text); font: 700 27px/1.1 var(--font-body); margin: 3px 0 0; }
+#gm-sluice-panel h3 { color: var(--menu-text); font: 600 16px/1.3 var(--font-body); margin: 0 0 8px; }
+#gm-sluice-panel p { font: inherit; margin: 4px 0 10px; }
+#gm-sluice-panel .sluice-kicker { color: var(--menu-dim); font: 11px/1.3 var(--font-mono); letter-spacing: .06em; }
+#gm-sluice-panel .sluice-store-line { margin: 7px 0 4px; color: var(--menu-dim); font: 11px/1.4 var(--font-mono); }
+#gm-sluice-panel .sluice-body { display: grid; grid-template-columns: minmax(155px, 25%) minmax(0, 1fr); min-height: 0; flex: 1; border-top: 1px solid var(--menu-highlight); }
+#gm-sluice-panel .sluice-materials, #gm-sluice-panel .sluice-workbench { min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; touch-action: pan-y; }
+#gm-sluice-panel .sluice-materials { padding: 10px; border-right: 1px solid var(--menu-highlight); background: var(--menu-inset); }
+#gm-sluice-panel button { min-height: 44px; min-width: 44px; padding: 10px 12px; border: 1px solid var(--menu-weld); border-radius: 0; color: var(--menu-text); background: var(--menu-inset); font: 12px/1.3 var(--font-body); cursor: pointer; touch-action: manipulation; }
+#gm-sluice-panel button:hover { background: var(--menu-selected); }
+#gm-sluice-panel button:focus-visible, #gm-sluice-btn:focus-visible, #gm-sluice-panel summary:focus-visible { outline: 2px solid var(--menu-gold-hi); outline-offset: -2px; }
+#gm-sluice-panel button:disabled { opacity: .55; cursor: default; }
+#gm-sluice-panel .sluice-materials button { display: flex; flex-direction: column; width: 100%; gap: 4px; margin: 0 0 5px; text-align: left; }
+#gm-sluice-panel .sluice-materials button[aria-pressed="true"] { background: var(--menu-selected); border-color: var(--menu-gold); box-shadow: inset 3px 0 var(--menu-gold); }
+#gm-sluice-panel .sluice-material-count { color: var(--menu-body); font-size: 12px; }
+#gm-sluice-panel .sluice-material-depth { color: var(--menu-dim); font: 11px var(--font-mono); }
+#gm-sluice-panel .sluice-workbench { padding: 12px 18px 20px; }
+#gm-sluice-panel .sluice-machine-stage { width: 100%; aspect-ratio: 2.85; background: var(--menu-inset); }
+#gm-sluice-machine { display: block; width: 100%; height: 100%; }
+#gm-sluice-panel .sluice-operation { display: flex; justify-content: space-between; align-items: center; gap: 14px; padding: 10px 0; position: sticky; top: 0; z-index: 1; background: var(--menu-panel); }
+#gm-sluice-panel .sluice-operation strong { color: var(--menu-text); font-size: 16px; }
+#gm-sluice-panel .sluice-operation strong.sluice-rare { color: var(--menu-gold-hi); }
+#gm-sluice-panel .sluice-operation p { color: var(--menu-dim); font-size: 12px; margin-bottom: 4px; }
+#gm-sluice-panel .sluice-primary { flex-shrink: 0; color: var(--menu-gold-text); background: var(--menu-gold); border-color: var(--menu-gold); font-weight: 700; }
+#gm-sluice-panel .sluice-primary:hover { background: var(--menu-gold-hi); }
+#gm-sluice-progress { display: block; width: 100%; height: 5px; margin: 10px 0 16px; accent-color: var(--menu-gold); }
+#gm-sluice-panel .sluice-pool, #gm-sluice-panel .sluice-results, #gm-sluice-panel .sluice-collection { padding: 14px 0 0; border-top: 1px solid var(--menu-highlight); margin-top: 14px; }
+#gm-sluice-panel .sluice-loot-row { display: flex; justify-content: space-between; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--menu-highlight); }
+#gm-sluice-panel .sluice-loot-row strong { text-align: right; color: var(--menu-dim); font: 11px/1.5 var(--font-mono); }
+#gm-sluice-panel .sluice-rare, #gm-sluice-panel .sluice-rare strong { color: var(--menu-gold-hi); }
+#gm-sluice-panel .sluice-fine { color: var(--menu-dim); font-size: 12px; margin-top: 10px; }
+#gm-sluice-panel summary { min-height: 44px; padding: 10px 0; color: var(--menu-text); cursor: pointer; }
+#gm-sluice-panel .sluice-footer { padding: 10px 18px; border-top: 1px solid var(--menu-highlight); color: var(--menu-dim); font-size: 12px; }
+@media (max-height: 500px) {
+  #gm-sluice-panel { padding: 6px; }
+  #gm-sluice-panel .sluice-heading { padding: 5px 12px; }
+  #gm-sluice-panel .sluice-kicker { display: none; }
+  #gm-sluice-panel h2 { font-size: 21px; }
+  #gm-sluice-panel .sluice-store-line { margin: 3px 0 0; }
+  #gm-sluice-panel .sluice-footer { padding: 5px 12px; font-size: 11px; }
+  #gm-sluice-panel .sluice-workbench { padding: 8px 12px 16px; }
+  #gm-sluice-panel .sluice-materials { padding: 6px; }
+  #gm-sluice-panel .sluice-machine-stage { aspect-ratio: auto; height: clamp(78px, calc(100dvh - 235px), 220px); }
+  #gm-sluice-panel .sluice-operation { gap: 8px; padding: 0 0 4px; }
+  #gm-sluice-panel .sluice-operation strong { font-size: 14px; }
+  #gm-sluice-panel .sluice-operation p { font-size: 11px; line-height: 1.3; margin: 3px 0 0; }
+  #gm-sluice-progress { margin: 4px 0 8px; height: 4px; }
+}
+@media (max-width: 660px) {
+  #gm-sluice-panel .sluice-body { grid-template-columns: minmax(125px, 28%) minmax(0, 1fr); }
+  #gm-sluice-panel .sluice-materials button { padding: 8px; }
+  #gm-sluice-panel .sluice-operation { flex-wrap: wrap; gap: 6px; }
+  #gm-sluice-panel .sluice-primary { width: 100%; }
+}
+@media (max-width: 660px) and (max-height: 500px) {
+  #gm-sluice-panel .sluice-operation { flex-wrap: nowrap; }
+  #gm-sluice-panel .sluice-primary { width: 108px; padding: 7px; }
+}
 #gm-rotate-screen {
   position: absolute;
   inset: 0;

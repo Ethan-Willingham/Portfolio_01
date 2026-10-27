@@ -23,7 +23,7 @@
       var contents = [];
       for (var i = 0; i < cargo.length; i++) contents.push(cargoType(cargo[i]) + ':' + cargoUnitSlots(cargo[i]) + ':' + cargoUnitValue(cargo[i]));
       return maxCargo + '/' + cargoUsed() + '/' + contents.join(',') + '/' + consoleCargoHovered() + '/' +
-        (typeof cargoManifestOpen !== 'undefined' && cargoManifestOpen);
+        (typeof cargoManifestOpen !== 'undefined' && cargoManifestOpen) + '/' + paydirtUsed() + '/' + paydirtCapacity();
     }
     if (id === 'cash') {
       var shown = typeof displayMoney === 'number' && isFinite(displayMoney) ? displayMoney : money;
@@ -109,6 +109,7 @@
   var viewportKeysHost = null, viewportPanelOpen = null;
   function syncViewportKeys() {
     var open = !!(gamePaused || gameOver || ledgerOpen || cargoManifestOpen ||
+      (typeof sluiceStationOpen !== 'undefined' && sluiceStationOpen) ||
       shopOpen || (shopState && shopState !== 'closed') || ukModal || seamCreditsOn);
     if (!viewportKeysHost) viewportKeysHost = document.getElementById('game-canvas').closest('.game-wrapper');
     if (viewportKeysHost && viewportPanelOpen !== open) {

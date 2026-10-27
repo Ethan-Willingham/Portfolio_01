@@ -55,6 +55,7 @@
     money = 0;
     rigExhaustReset();
     cargo = [];
+    paydirtReset();
     teleporters = 0;
     teleportFx = null;
     balloons = 0;

@@ -21,11 +21,33 @@ windows retain their responsive layouts.
 Landscape mobile uses the desktop presentation. Viewport size controls scale and
 spacing, and touch controls keep 44px targets without changing the arrangement.
 
-Dig down through one town, collect ore, fly up to the surface station to sell + refuel
-+ upgrade, then go deeper. No win screen, just a deeper hole. The town is 400 m deep (was
+Dig down through one town, collect ore plus bulk dirt and stone, fly up to the surface
+station to sell, unload, refuel and upgrade, then go deeper. The free level-one sluice
+washes bulk material for concentrate, minerals and rare specimens. No win screen,
+just a deeper hole. The town is 400 m deep (was
 800; compressed 2026-07-03 so the ore art's native ~400 m arc lands and variety hits from
-the first few metres). Balanced for a ~20 min skilled speedrun to the bottom and a ~1.5 hr
-normal playthrough (see `BALANCE.md`).
+the first few metres). The earlier ore-only balance targeted a ~20 min skilled speedrun
+and a ~1.5 hr normal playthrough. The added wash income needs a longer pacing pass
+before those times can be treated as current (see `BALANCE.md` and `PAYDIRT.md`).
+
+**Bulk earth and the sluice (v28.214):** every drilled or blasted dirt/stone tile
+adds one scoop to a separate 600-scoop bin. Cargo upgrades add 200 bulk scoops each.
+A full bin leaves subsequent rubble behind without blocking digging or taking ore
+slots. Each of the six depth bands has a dirt and stone identity, twelve materials
+in all. The pump pad unloads bulk into safe station storage. Press P near the
+surface station, tap its Sluice button or exterior, or click the left controller
+stick to enter. Choose a material and wash its entire stored stack in 6 to 18
+seconds. Water recirculates and level one has no purchase or operating cost.
+The inclined riffle bed, hopper, tailings receiver and concentrate pan follow the
+gold-sluice demo's arrangement. Its game animation presents the saved batch;
+it does not run the laboratory's separate material-slip fluid simulation.
+Processing continues while mining, stops with pause/inactivity/portrait, and
+resumes from saved active time. Collect pays the assay value and keeps rare
+specimens in the station's collection. Every material has its own visible loot
+pool and two unique special finds. Carried bulk is lost with ore on recovery;
+stored bulk, the pending pan and claimed specimens remain. Old saves gain this
+system without changing their mine. See [PAYDIRT.md](PAYDIRT.md) for rules,
+probabilities, persistence and checks.
 
 **Bathhouse and fire room (v28.13):** sky slimes land, meander to the banya,
 wait, soak in warm water, pay, and become soft surface residents.

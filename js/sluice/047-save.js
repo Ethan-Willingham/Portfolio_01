@@ -47,6 +47,7 @@
   var saveLastUpgradeSum = -1;
   var saveLastGardenKey = '';
   var saveLastExhaustKey = '';
+  var saveLastPaydirtRevision = -1;
   var saveCooldownT = 0;         // min seconds between docked autosaves
   var savePeriodicT = 0;         // background safety-save clock
   var saveCounter = 0;           // monotonic slot counter
@@ -228,6 +229,7 @@
         tradeGoods: player.tradeGoods || {},
       },
       cargo: cargo,
+      paydirt: paydirtSave(),
       ponds: surfacePonds.map(function (p) { return { cL: p.cL, cR: p.cR, d: p.d || 1, rainFed: p.rainFed === true, filled: false }; }),   // v24.148 — d = lake depth
       rain: rainSave(),
       pondStyle: worldPondStyle,   // v27.4: the Options pond style this world was built with (old saves: regular)
@@ -258,6 +260,7 @@
       saveLastUpgradeSum = saveUpgradeSum();
       saveLastGardenKey = saveGardenKey();
       saveLastExhaustKey = JSON.stringify(rigExhaustSave());
+      saveLastPaydirtRevision = paydirt.revision;
       saveCooldownT = 10;
       savePeriodicT = 0;
       saveLampT = 3.0;          // console SAVE lamp: one steady info pulse
@@ -335,6 +338,7 @@
     maxCargo = getMaxCargo();
     maxFuel = getMaxFuel();
     cargo = env.cargo || [];
+    paydirtRestore(env.paydirt);
     // Player: position + vitals + persistent sub-objects; movement transients
     // stay at init() defaults.
     var sp = env.player || {};
@@ -371,6 +375,7 @@
     saveLastUpgradeSum = saveUpgradeSum();
     saveLastGardenKey = saveGardenKey();
     saveLastExhaustKey = JSON.stringify(rigExhaustSave());
+    saveLastPaydirtRevision = paydirt.revision;
   }
 
   function saveWipe() {
@@ -390,6 +395,8 @@
     seamCreditsOn = false;
     ledgerOpen = false;
     rigExhaustReset();
+    paydirtReset();
+    saveLastPaydirtRevision = -1;
   }
 
   // ---- Death -> respawn (replaces the old init() wipe) ----
@@ -397,6 +404,7 @@
     if (applyDeathPenalty._done) return;   // once per death
     applyDeathPenalty._done = true;
     cargo = [];
+    paydirtLoseHeld();
     var fee = Math.floor(money * 0.10);
     money -= fee;
     applyDeathPenalty._fee = fee;
@@ -416,6 +424,7 @@
   // it cannot be used as a free teleporter, but it un-sticks a trapped rig.
   function bailoutToTown() {
     cargo = [];
+    paydirtLoseHeld();
     var fee = Math.floor(money * 0.10);
     money -= fee;
     respawnAtTown(lastDockTown);
@@ -477,7 +486,8 @@
                 (cargo.length !== saveLastCargoN) ||
                 (depthRecord !== saveLastDepth) ||
                 (saveUpgradeSum() !== saveLastUpgradeSum) || (saveGardenKey() !== saveLastGardenKey) ||
-                (JSON.stringify(rigExhaustSave()) !== saveLastExhaustKey);
+                (JSON.stringify(rigExhaustSave()) !== saveLastExhaustKey) ||
+                (paydirt.revision !== saveLastPaydirtRevision);
     if (!dirty) return;
     // Docked save: on solid ground inside a town, shortly after anything
     // meaningful changed (a sale, a purchase, a new record).
@@ -497,10 +507,10 @@
   // here, and saveNow applies the death penalty first if the rig is dead.
   try {
     window.addEventListener('beforeunload', function () {
-      if (saveLastMoney !== -1 || money > 0 || cargo.length > 0) saveNow('unload');
+      if (saveLastMoney !== -1 || money > 0 || cargo.length > 0 || paydirtUsed() > 0) saveNow('unload');
     });
     document.addEventListener('visibilitychange', function () {
-      if (document.hidden && (saveLastMoney !== -1 || money > 0)) saveNow('hide');
+      if (document.hidden && (saveLastMoney !== -1 || money > 0 || paydirtUsed() > 0)) saveNow('hide');
     });
   } catch (e) {}
 

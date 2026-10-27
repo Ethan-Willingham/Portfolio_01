@@ -85,7 +85,11 @@
     }
     if (k === 'fuel') return 'A bigger tank. Longer dives before the gauge forces you home.';
     if (k === 'hull') return 'Thicker plating. Shrugs off harder landings and hotter rock.';
-    if (k === 'cargo') return 'More slots in the hold. Haul more ore per trip.';
+    if (k === 'cargo') {
+      var bulk = paydirtCapacity();
+      return info.maxed ? 'Ore slots and bulk storage fully upgraded. Holds ' + bulk.toLocaleString() + ' scoops of dirt and stone.' :
+        'Adds 4 ore slots and 200 bulk scoops. Dirt and stone capacity: ' + bulk.toLocaleString() + ' to ' + (bulk + 200).toLocaleString() + '.';
+    }
     if (k === 'booster') return 'Stronger climb thrust underground. Get back up faster.';
     if (k === 'heat') return 'A heating coil for the drill. Required to break permafrost below 200 m.';
     if (k === 'shield') return info.lvl === 0

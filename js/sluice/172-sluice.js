@@ -1,5 +1,5 @@
   /* ============================================================
-     THE SLUICE (refinement station) - economy Phase 1
+     THE SLUICE - surface exterior for the bulk wash station
      ------------------------------------------------------------
      A surface refinement station LEFT of the home KOMENDATURA: a tall
      riveted headworks TOWER carrying a BIG landing platform you fly up
@@ -18,10 +18,8 @@
      contrast is reserved for the focal star + sign. EVERY helper used here
      is grep-verified to exist.
 
-     STATUS: STRUCTURE only. Owner vision: when the rig is CLOSE, refinable
-     cargo ore arcs out of you onto the channel, washes down, refines 4:1,
-     and drops into the base-camp HOARD. Those increments (proximity ore-arc,
-     refine, hoard, hoard UI) build on this.
+     The working level-one station lives in 171, 173 and 174. It washes
+     collected dirt and stone, independent of the retired ore-refinement flag.
 
      Steel ramp (dark->light), all from BLD's already-cool metal family:
        core/AO = BLD.outline | shadow = metalDark | base = metalBase
@@ -37,7 +35,7 @@
   function drawSluice() {
     var hx = sluiceAnchorX();
     var groundY = DECK_ROW * TILE;
-    drawCachedStructure('sluice', 0, hx - 58, groundY - 198, 352, 202, '', drawSluiceContent);
+    drawCachedStructure('sluice', 0, hx - 58, groundY - 198, 352, 202, paydirt && paydirt.pending ? paydirt.pending.status : 'idle', drawSluiceContent);
   }
 
   // ----- Tall riveted tower, shaded as a CYLINDER (round, not a flat slab) -----
@@ -137,7 +135,7 @@
   function drawSluiceContent() {
     var hx = sluiceAnchorX();
     var groundY = DECK_ROW * TILE;
-    var t = performance.now() / 1000;
+    var t = paydirt && paydirt.pending ? paydirt.pending.elapsed : 0;
 
     var towerW = 36;
     var platW = 96, platH = 20;

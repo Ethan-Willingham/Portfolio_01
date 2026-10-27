@@ -1,7 +1,7 @@
   /* ================================================================
-     ONBOARDING RADIO (057): three short, contextual tips
+     ONBOARDING RADIO (057): short, contextual tips
      ================================================================
-     Controls, the first haul, then upgrades after the first sale.
+     Controls, the first haul, upgrades, and washing stored material.
      Each tip expires after four seconds, whether or not the player
      follows it. Conditions only decide when an unseen tip is useful.
      General radio messages own the same slot and take priority.
@@ -28,6 +28,7 @@
     lastLine: '',
     earnedCash: false,
     visitedShop: false,
+    visitedSluice: false,
     runPlayer: null
   };
 
@@ -36,7 +37,7 @@
     st.step = 0; st.done = false; st.started = false;
     st.bootT = 0; st.gapT = 0; st.lineT = 0; st.lineStartedAt = 0;
     st.panelA = 0; st.lastLine = '';
-    st.earnedCash = false; st.visitedShop = false;
+    st.earnedCash = false; st.visitedShop = false; st.visitedSluice = false;
     st.runPlayer = player;
   }
 
@@ -47,12 +48,15 @@
       if (isMobile) return 'D-pad moves. Hold into dirt to drill; hold Up to fly.';
       return 'WASD / arrows move. Hold into dirt to drill; hold Up to fly.';
     }
-    if (step === 1) return 'Land on the surface fuel pad to sell ore and refuel automatically.';
+    if (step === 1) return 'Land on the fuel pad to sell ore, store dirt and stone, and refuel.';
     if (step === 2) {
       if (pad) return 'At the shop door, press Y for rig upgrades.';
       if (isMobile) return 'Tap the shop building for rig upgrades.';
       return 'At the shop door, press E for rig upgrades.';
     }
+    if (step === 3 && pad) return 'At the surface, click the left stick for the sluice. Y washes or collects; B returns.';
+    if (step === 3) return isMobile ? 'Tap the surface sluice to wash stored dirt and stone for minerals and rare finds.' :
+      'Press P at the surface sluice to wash stored dirt and stone for minerals and rare finds.';
     return '';
   }
 
@@ -67,6 +71,8 @@
   function onboardingObscured() {
     return gameOver || gameWon || gamePaused || onboardingShopUp() ||
       (typeof ledgerOpen !== 'undefined' && ledgerOpen) ||
+      (typeof cargoManifestOpen !== 'undefined' && cargoManifestOpen) ||
+      (typeof sluiceStationOpen !== 'undefined' && sluiceStationOpen) ||
       (typeof seamCreditsActive === 'function' && seamCreditsActive()) ||
       (typeof bathMode !== 'undefined' && bathMode) ||
       (typeof introPhase !== 'undefined' && introPhase !== 'done');
@@ -89,7 +95,7 @@
     st.step++;
     st.lastLine = ''; st.lineT = 0; st.panelA = 0;
     st.gapT = 1.5;
-    if (st.step >= 3) onboardingFinish();
+    if (st.step >= 4) onboardingFinish();
   }
 
   function onboardingTick(dt) {
@@ -104,12 +110,14 @@
 
     if (money > 0) st.earnedCash = true;
     if (st.earnedCash && onboardingShopUp()) st.visitedShop = true;
+    if (typeof sluiceStationOpen !== 'undefined' && sluiceStationOpen) st.visitedSluice = true;
 
     // Once a line starts, its clock keeps running behind other panels.
     // Wall time also expires it across pause, which stops the RAF loop.
     if (st.lastLine) {
       st.lineT = Math.max(st.lineT + dt, (performance.now() - st.lineStartedAt) / 1000);
-      var answered = (st.step === 1 && st.earnedCash) || (st.step === 2 && st.visitedShop);
+      var answered = (st.step === 1 && st.earnedCash) || (st.step === 2 && st.visitedShop) ||
+        (st.step === 3 && st.visitedSluice);
       if (st.lineT >= ONBOARD_TIP_S || answered) {
         onboardingAdvance();
       } else {
@@ -120,7 +128,8 @@
 
     // Skip a lesson the player has already used. Waiting never pins a
     // plate to the screen and never delays a more useful radio message.
-    if ((st.step < 2 && st.earnedCash) || (st.step === 2 && st.visitedShop)) {
+    if ((st.step < 2 && st.earnedCash) || (st.step === 2 && st.visitedShop) ||
+        (st.step === 3 && st.visitedSluice)) {
       onboardingAdvance();
       return;
     }
@@ -131,8 +140,9 @@
       if (st.bootT < 1) return;
       st.started = true;
     }
-    if (st.step === 1 && cargo.length === 0) return;
+    if (st.step === 1 && cargo.length === 0 && paydirtUsed() === 0) return;
     if (st.step === 2 && !st.earnedCash) return;
+    if (st.step === 3 && paydirtStored() === 0) return;
 
     st.lastLine = onboardingLineFor(st.step);
     st.lineT = 0;

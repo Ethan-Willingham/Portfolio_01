@@ -58,7 +58,8 @@
     'button 5 (RB)': 'c (mineral ledger)',
     'button 6 (LT)': 'z (zoom)',
     'button 9 (Start)': 'pause toggle',
-    'button 8 (Back/View)': 't (teleporter)'
+    'button 8 (Back/View)': 't (teleporter)',
+    'button 10 (left stick press)': 'surface sluice; A selects, Y washes or collects, B returns'
   };
 
   // ----- Bridge state -----
@@ -224,6 +225,23 @@
       if (now[9] && !prev[9]) gpTogglePause();
       return;
     }
+
+    if (sluiceStationOpen) {
+      gpReleaseAll();
+      if ((now[1] && !prev[1]) || (now[9] && !prev[9]) || (now[10] && !prev[10])) { sluiceStationToggle(); gpRecoveryRelease = now[0]; return; }
+      var stationControls = Array.prototype.filter.call(sluiceStationDOM.panel.querySelectorAll('button, summary'), function (el) {
+        return !el.disabled && el.getClientRects().length > 0;
+      });
+      var stationAt = stationControls.indexOf(document.activeElement);
+      var stationStep = (now[13] && !prev[13]) || (now[15] && !prev[15]) ? 1 :
+        (now[12] && !prev[12]) || (now[14] && !prev[14]) ? -1 : 0;
+      if (stationStep && stationControls.length) stationControls[(stationAt + stationStep + stationControls.length) % stationControls.length].focus();
+      if (now[0] && !prev[0] && stationAt >= 0) stationControls[stationAt].click();
+      if (!sluiceStationOpen) { gpRecoveryRelease = now[0]; return; }
+      if (now[3] && !prev[3]) document.getElementById('gm-sluice-action').click();
+      return;
+    }
+    if (now[10] && !prev[10] && sluiceStationCanOpen()) { sluiceStationToggle(); return; }
 
     // ----- Directions: left stick (radial deadzone + hysteresis) OR dpad -----
     var mag = Math.sqrt(lx * lx + ly * ly);

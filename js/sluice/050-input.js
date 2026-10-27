@@ -6,6 +6,18 @@
       if (deathKeyDown(e)) return;
       // Native menu buttons and sliders own their keyboard input while paused.
       if (gamePaused && e.key !== 'Escape') return;
+      if (!gamePaused && sluiceStationOpen) {
+        if (e.key === 'Tab') { e.preventDefault(); document.getElementById('gm-sluice-close').focus(); }
+        if (e.key === 'Escape' || e.key === 'p' || e.key === 'P') {
+          e.preventDefault(); if (!e.repeat) sluiceStationToggle();
+        }
+        return;
+      }
+      if (!gamePaused && (e.key === 'p' || e.key === 'P')) {
+        e.preventDefault();
+        if (!e.repeat && !sluiceStationToggle() && !sluiceStationNear()) showMsg('The sluice is at the surface station. Dock to unload your bulk bin.');
+        return;
+      }
       if (hearthRoomKey(e)) { e.preventDefault(); return; }
       if (siphonKey(e)) { e.preventDefault(); return; }
       if (!gamePaused && cargoManifestOpen) {
@@ -85,13 +97,13 @@
     // Mobile play requires landscape, including iPadOS desktop-style agents.
     // Loading still warms the GPU behind the cover; ordinary simulation stops.
     var rotateScreen = document.getElementById('gm-rotate-screen');
-    var orientationControls = ['game-canvas', 'game-death', 'game-pause', 'game-intro', 'gm-pause-btn', 'gm-perf-recorder', 'gm-perf-panel'];
+    var orientationControls = ['game-canvas', 'game-death', 'game-pause', 'game-intro', 'gm-pause-btn', 'gm-perf-recorder', 'gm-perf-panel', 'gm-sluice-panel', 'gm-sluice-btn'];
     function syncMobileOrientation() {
       var blocked = isMobile && window.innerWidth <= window.innerHeight;
       if (rotateScreen) rotateScreen.hidden = !blocked;
       for (var i = 0; i < orientationControls.length; i++) {
         var control = document.getElementById(orientationControls[i]);
-        if (control) control.inert = blocked;
+        if (control) control.inert = blocked || (control === canvas && sluiceStationOpen);
       }
       if (blocked === mobileLandscapeBlocked) return;
       mobileLandscapeBlocked = blocked;
@@ -180,6 +192,7 @@
       // Death and the R bailout still use the ordinary town respawn.
       if (!gamePaused || pauseMenuPage !== 'restart') return;
       queueSceneLoading('Preparing a new mine', function () {
+        if (sluiceStationOpen) sluiceStationToggle();
         if (cargoManifestOpen) cargoManifestToggle();
         saveWipe();
         init();
@@ -274,6 +287,7 @@
     processPointerDown(p.x, p.y, 'mouse', e.button === 2);
   }
   function handleMouseMove(e) {
+    if (sluiceStationOpen) return;
     var p = canvasPos(e.clientX, e.clientY);
     mouseCursor.x = p.x; mouseCursor.y = p.y;
     siphonPointerMove(p.x, p.y, 'mouse');
@@ -291,6 +305,7 @@
   function handleMouseUp() { processPointerUp('mouse'); }
 
   function processPointerDown(x, y, id, right) {
+    if (sluiceStationOpen) return;
     if (gamePaused || mobileLandscapeBlocked) return;
     if (UI_NEW && gameOver) return;
     if (bathMode) return; // The room owns pointer input, including right clicks.
@@ -388,6 +403,7 @@
       var wx = x / worldScale + cam.x;
       var wy = y / worldScale + cam.y;
       if (isPointOnShop(wx, wy)) { enterShopFloor(); return; }
+      if (isPointOnSluice(wx, wy) && sluiceStationCanOpen()) { sluiceStationToggle(); return; }
       // v26.31 — the banya tower enters the same way (072-bath.js owns the
       // hit test + fade; inert unless ENABLE_BATH).
       if (typeof isPointOnBathSilos === 'function' && isPointOnBathSilos(wx, wy)) {
