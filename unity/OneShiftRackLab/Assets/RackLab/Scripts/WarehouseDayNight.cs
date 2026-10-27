@@ -33,6 +33,10 @@ namespace OneShift.RackLab
         int reflectionRender = -1;
         bool reflectionRequested;
         Material previousSky;
+        static readonly int SunDirectionId = Shader.PropertyToID("_SunDirection");
+        static readonly int SunColorId = Shader.PropertyToID("_SunColor");
+        static readonly int DaylightId = Shader.PropertyToID("_Daylight");
+        static readonly int CloudOffsetId = Shader.PropertyToID("_CloudOffset");
 
         void Awake()
         {
@@ -114,9 +118,15 @@ namespace OneShift.RackLab
             var material = runtimeSky != null ? runtimeSky : sky;
             if (material != null)
             {
-                material.SetVector("_SunDirection", TowardSun);
-                material.SetFloat("_Daylight", Daylight);
-                material.SetColor("_SunColor", sunColor);
+                material.SetVector(SunDirectionId, TowardSun);
+                material.SetFloat(DaylightId, Daylight);
+                material.SetColor(SunColorId, sunColor);
+                // Drift follows simulation time, so manual pause, inactivity and
+                // browser preparation all preserve the same sky. A circular path
+                // remains continuous across midnight without an extra clock.
+                float cloudPhase = Hour * Mathf.PI / 12;
+                material.SetVector(CloudOffsetId, new Vector4(Mathf.Cos(cloudPhase) * .65f,
+                    Mathf.Sin(cloudPhase) * .65f, 0, 0));
                 RenderSettings.skybox = material;
             }
             if (windows != null)

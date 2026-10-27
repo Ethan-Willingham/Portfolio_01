@@ -23,6 +23,27 @@ positions. There is no automatic unloading or putaway. The old rack finishes,
 test-load displays and rollover ramp remain as source assets and validation
 fixtures, outside the active start.
 
+The v7 scene adds a southeast dispatch office and a south front door for small
+parcel deliveries. The office has glazed partitions, blinds, filing cabinets,
+a computer desk and a coffee counter. E or click opens its front door onto a
+covered parcel shelf and pedestrian ramp. Six neighboring units, visitor
+parking, planted verges and a parcel van place the warehouse in a business park.
+Three boxes arrive on the shelf after 35 active seconds. E or click carries one
+box at a time; use the office parcel desk or its sign to receive it. Carrying
+blocks forklift entry. These parcels are session-only and independent of the
+pallet stock, business ledger and illustrated game's saves.
+
+The original worker has deliberately rough proportions and simple work clothes.
+Its 1,000 triangles use two skinned renderers, one palette material and thirteen
+rigid bones. Walking follows actual movement, with separate carrying and seated
+poses. First-person and cab views hide the upper torso and head with
+`ShadowsOnly`, preserving their shadows while leaving arms and legs visible.
+Chase view shows the full model. It adds no lights or physics
+bodies. A single analytic sky pass adds clouds, stars and a sun disc aligned
+with the existing moving sun. Six unshadowed exterior wall packs fade with
+daylight; two unshadowed office spots light the smaller room. The existing sun
+and twelve warehouse fixtures continue to provide real shadows.
+
 `WarehouseStartBuilder.Install()` installs this layout after the physical
 forklift and handling installers. `WarehouseStartBuilder.Validate()` checks
 the real opening and continuous support into the trailer;
@@ -34,6 +55,12 @@ The delivery uses the owner's original 18-wheeler and 53-foot trailer from
 The doors fold against the trailer sides. Its floor, roof clearance and scale
 remain those of the original model. Source provenance and Unity import details
 are in `unity/OneShiftRackLab/RECEIVING_TRUCK.md`.
+After installing the receiving start, run `WarehouseOfficeBuilder.Install()`,
+`WarehouseBusinessParkBuilder.Install()` and `WarehousePlayerBuilder.Install()`
+in that order. Each has a `Validate()` method. The separate
+`WarehouseFrontOfficeValidation.ValidateAndSave()` checks actual delivery,
+pause, carrying, receipt and doorway obstruction logic on a temporary copy.
+See the Unity README for menu names and scene backup locations.
 The scene retains the moving sun, window shadows, twelve fixtures and three wall
 switches. It uses a keyboard and mouse and requires WebGL 2. WASD walks at 2.8 m/s,
 Shift runs at 5.4 m/s, the mouse looks, Space jumps, and R returns to the entrance.
@@ -91,6 +118,17 @@ actual 2x multisampling and a compiled SMAA shader at 1800 by 1125 pixels on
 this Windows workstation's RTX 3080. These are local measurements, not a
 frame-rate guarantee for other computers.
 
+The final v7 player was profiled twice for 90 seconds at the same 1800 by 1125
+resolution on this RTX 3080 workstation, including first entry and native
+X/mouse use. Both runs confirmed 2x MSAA and SMAA. The first took 27.68 seconds
+to prepare graphics and recorded a 7 ms median and 14 ms 95th and 99th percentiles,
+but also ten frames over 50 ms and eight long tasks, with a 333.3 ms maximum.
+The stalls clustered around 4.9 to 6.3 seconds and 18 seconds; their cause was
+not established. An isolated repeat prepared in 34.60 seconds and recorded a
+7 ms median, 14 ms 95th percentile, 14.1 ms 99th percentile and 34.7 ms maximum,
+with no frames over 50 ms or long tasks. Neither run had a blocking WebGL call
+over 20 ms. These are machine-specific measurements.
+
 `DemoActivity` gates the Unity player on tab visibility, window focus and stage
 visibility. It calls `BrowserLifecycle.SetBrowserActive` to suspend simulation,
 clear input and suspend audio, then pauses the engine's main loop. Resume reverses
@@ -114,6 +152,11 @@ and shader/runtime errors, and saves screenshots and console logs. Set
 `SHIFT_TEST_URL=https://ethanwillingham.com/one-shift.html` to run the same real
 checks against the deployed page. `SHIFT_DUMP` selects the report directory.
 Both checks use Playwright; the real pass also uses Sharp to inspect rendered pixels.
+`node tools/test-one-shift-front-office-browser.cjs` checks the compiled WebGL
+player through native keyboard and mouse input. It covers the office doorway,
+front door, ramp, parcel arrival, carrying, desk receipt and pause, and saves
+screenshots. `SHIFT_OFFICE_DUMP` selects its output directory;
+`SHIFT_BROWSER_CHANNEL=chrome` selects installed Chrome.
 `node tools/profile-one-shift-unity-browser.cjs` measures a separate 90-second
 Chrome run without taking screenshots during the sample. Set `SHIFT_PROFILE_FORKS=1`
 to include first entry and native X/mouse use, and `SHIFT_PROFILE_PLACEMENT_CAPTURE=1`
@@ -140,6 +183,12 @@ The earlier receiving release also passed 57 forklift physics and geometry
 checks and thirteen delivery sequence checks. The four compressed v6 browser
 files total 42,213,674 bytes. Browser verification used Windows Chrome at device
 scale factor two; Mac hardware was not available.
+
+The final v7 export completed with zero build errors and totals 42,305,038
+compressed bytes. Its native-input front-office walkthrough passed 22 checks,
+and the launcher passed 40 simulated-loader checks. An earlier v7 export passed
+the 64-check full gameplay suite before the final small rendering and HUD fixes;
+that result does not cover the exact final export.
 
 The earlier hands-on inventory business, version 3.4, is preserved at
 `one-shift-classic.html`. Its scripts, local save keys and assets remain intact;

@@ -147,7 +147,7 @@ namespace OneShift.RackLab
             }
             if (!driving)
             {
-                if (walking.CanControl && NearTruck() && Input.GetKeyDown(KeyCode.E))
+                if (walking.CanControl && !walking.CarryingParcel && NearTruck() && Input.GetKeyDown(KeyCode.E))
                 {
                     EnterTruck();
                     if (!trained)
@@ -445,7 +445,7 @@ namespace OneShift.RackLab
                     "";
                 if (status.Length > 0) { Panel(new Rect((w-620)/2,h-240,620,38)); GUI.Label(new Rect((w-590)/2,h-234,590,28),status,fine); }
             }
-            else if (walking.CanControl && NearTruck())
+            else if (walking.CanControl && !walking.CarryingParcel && NearTruck())
             {
                 Panel(new Rect((w-330)/2,h-120,330,36));
                 GUI.Label(new Rect((w-300)/2,h-114,300,27), "E: drive the yellow forklift", copy);

@@ -1,1 +1,1 @@
-Browser build succeeded: 42213674 compressed bytes, 0 errors. Published files: C:\Users\56835\OneDrive\Desktop\website\assets\one-shift-unity\Build
+Browser build succeeded: 42305038 compressed bytes, 0 errors. Published files: C:\Users\56835\OneDrive\Desktop\website\assets\one-shift-unity\Build

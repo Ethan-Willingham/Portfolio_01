@@ -29,6 +29,10 @@ namespace OneShift.RackLab
         RackWearVariant target;
         WarehouseLightSwitch lightSwitch;
         WarehouseReceiving receiving;
+        WarehouseOfficeDoor officeDoor;
+        WarehouseParcel parcelTarget;
+        WarehouseParcelService parcelDesk, parcelService;
+        public bool CarryingParcel => parcelService != null && parcelService.Carried != null;
 
         void Awake()
         {
@@ -36,6 +40,7 @@ namespace OneShift.RackLab
             spawnPosition = transform.position;
             spawnRotation = transform.rotation;
             receiving = Object.FindFirstObjectByType<WarehouseReceiving>();
+            parcelService = Object.FindFirstObjectByType<WarehouseParcelService>();
             Application.targetFrameRate = 120;
             RefreshPerspective();
         }
@@ -105,9 +110,17 @@ namespace OneShift.RackLab
             // between a switch and a rack never operates the previous target.
             target = null;
             lightSwitch = null;
+            officeDoor = null; parcelTarget = null; parcelDesk = null;
             if (Physics.Raycast(eyes.transform.position, eyes.transform.forward, out var hit, 5f, ~0, QueryTriggerInteraction.Ignore))
             {
                 if (hit.distance <= 2.6f) lightSwitch = hit.collider.GetComponentInParent<WarehouseLightSwitch>();
+                if (hit.distance <= 2.6f)
+                {
+                    officeDoor = hit.collider.GetComponentInParent<WarehouseOfficeDoor>();
+                    parcelTarget = hit.collider.GetComponentInParent<WarehouseParcel>();
+                    parcelDesk = hit.collider.GetComponentInParent<WarehouseParcelService>();
+                    if (parcelTarget != null && parcelTarget.Received) parcelTarget = null;
+                }
                 target = hit.collider.GetComponentInParent<RackWearVariant>();
             }
             bool alreadyCaptured = captured;
@@ -129,6 +142,9 @@ namespace OneShift.RackLab
                 bool use = Time.frameCount != suppressUseFrame &&
                     (Input.GetKeyDown(KeyCode.E) || (alreadyCaptured && Input.GetMouseButtonDown(0)));
                 if (use && lightSwitch != null) lightSwitch.Toggle();
+                else if (use && officeDoor != null) officeDoor.Toggle();
+                else if (use && parcelDesk != null && CarryingParcel) parcelDesk.Receive();
+                else if (use && parcelTarget != null && !CarryingParcel) parcelTarget.service.PickUp(parcelTarget);
                 else if (use && Input.GetKeyDown(KeyCode.E) && target != null && receiving == null) target.Cycle();
             }
             else if (!motor.isGrounded)
@@ -171,6 +187,10 @@ namespace OneShift.RackLab
             GUI.Label(new Rect(32, Screen.height - 67, 670, 25), "WASD move   |   Mouse look   |   Shift run   |   Space jump   |   Esc cursor", small);
             GUI.Label(new Rect(32, Screen.height - 44, 660, 24), captured ?
                 (lightSwitch != null ? "E / click: " + lightSwitch.Prompt :
+                officeDoor != null ? "E / click: " + officeDoor.Prompt :
+                parcelDesk != null && CarryingParcel ? "E / click: receive parcel on office desk" :
+                parcelTarget != null && !CarryingParcel ? "E / click: carry this parcel to the office desk" :
+                CarryingParcel ? "Carry parcel to the receiving desk in the front office" :
                 target != null && receiving == null ? "E: change this rack's wear   |   R: return to entrance" :
                 "E: use nearby forklift   |   R: return to entrance") : "Click inside the game to start your shift.", small);
             if (captured)

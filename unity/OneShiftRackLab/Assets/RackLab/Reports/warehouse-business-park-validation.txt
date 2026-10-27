@@ -1,0 +1,4 @@
+PASS Six surrounding business units, visitor parking, roads, planted verges and a parcel van.
+PASS Office ramp reservation and existing north receiving yard preserved.
+PASS Six clock-linked exterior spotlights; no additional shadow maps or reflection probes.
+PASS 7528 static triangles in 64 material mesh chunks.

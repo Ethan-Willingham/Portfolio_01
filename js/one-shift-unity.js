@@ -28,7 +28,7 @@
   var preparationStarted = false, graphicsReady = false, playerBuildVersion = null;
   var portrait = false, lastActive = null, loopPaused = false;
   var build = 'assets/one-shift-unity/Build/OneShiftWeb';
-  var version = '?v=6';
+  var version = '?v=7';
 
   function reportPlayerStats(buildVersion, framesPerSecond, longestFrameMs, frameCount) {
     if (!stats) return;

@@ -162,8 +162,8 @@ async function realSmoke(browser, url) {
     await page.bringToFront();
     await page.locator('#warehouse-canvas').focus();
     const initial = await state();
-    check('REAL: Compiled player reports version 6 and SMAA', initial.buildVersion === 6 && initial.cameraAntialiasing === 'SubpixelMorphologicalAntiAliasing' && initial.pipelineMsaaSamples === 2);
-    await page.waitForFunction(() => document.getElementById('warehouse-stats').dataset.buildVersion === '6' && Number(document.getElementById('warehouse-stats').dataset.fps) > 0);
+    check('REAL: Compiled player reports version 7 and SMAA', initial.buildVersion === 7 && initial.cameraAntialiasing === 'SubpixelMorphologicalAntiAliasing' && initial.pipelineMsaaSamples === 2);
+    await page.waitForFunction(() => document.getElementById('warehouse-stats').dataset.buildVersion === '7' && Number(document.getElementById('warehouse-stats').dataset.fps) > 0);
     check('REAL: Small FPS counter receives completed player frames', await page.locator('#warehouse-stats').isVisible());
     check('REAL: Warehouse begins with a four-pallet delivery and closed receiving doors', initial.receivingTotal === 4 && initial.receivingPhase === 'Arriving' && !initial.receivingDoorsOpen);
     check('REAL: Walking and running use the faster starting speeds', Math.abs(initial.playerWalkSpeed - 2.8) < .01 && Math.abs(initial.playerRunSpeed - 5.4) < .01);
@@ -475,7 +475,7 @@ let browser;
   check('Progress reports the actual loader callback', await page.locator('#warehouse-progress').getAttribute('value') === '42');
   check('Compressed fallback URLs share the release version', await page.evaluate(() => {
     const urls = ['dataUrl','frameworkUrl','codeUrl'].map(key => new URL(unityConfig[key], location.href));
-    return urls.every(url => url.pathname.endsWith('.unityweb') && url.searchParams.get('v') === '6');
+    return urls.every(url => url.pathname.endsWith('.unityweb') && url.searchParams.get('v') === '7');
   }));
   check('Retina rendering starts within the Smooth pixel budget', await page.evaluate(() => {
     const canvas = document.getElementById('warehouse-canvas');

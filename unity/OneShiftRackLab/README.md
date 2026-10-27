@@ -34,6 +34,19 @@ roof, high multi-pane windows and warm sunlight with sparse drifting dust.
 See [warehouse walls and daylight](WAREHOUSE_ENVIRONMENT.md) for the targeted
 installer, source geometry, lighting setup and checks.
 
+The southeast corner contains a small dispatch office with glazed partitions,
+blinds, a desk, filing cabinets and a coffee counter. Its south front door opens
+onto a covered parcel shelf and a pedestrian ramp. Aim at the door and press E
+or click to open or close it. The surrounding business park has six neighboring
+units, visitor parking, planted verges and a parcel van; the north truck yard
+and its walking route remain in use.
+
+Three small parcels appear on the outside shelf after 35 active seconds. Aim
+at a box and press E or click to carry it, then use the parcel desk or its sign
+inside the office to receive it. Carry one at a time; forklift entry is blocked
+while holding a parcel. Delivery and receipt are session state, independent of
+the four pallet loads and the illustrated game's inventory and saves.
+
 Open `Assets/RackLab/Scenes/RackFloor.unity` and press Play. The browser player
 is the current release target; rebuild the Windows player before using
 `Builds/Windows/OneShiftRackLab.exe` to test this layout. Click the Game view
@@ -78,11 +91,21 @@ with eyes 1.65 m above the feet, beside 4.88 m (16-foot) upright frames. The vie
 90-degree horizontal field of view on wide windows, with vertical field of view
 capped at 65 degrees on taller windows. Walking is 2.8 m/s and running is 5.4 m/s.
 
+The original worker model uses deliberately blunt proportions, a work shirt,
+worn trousers and a cap. Its 1,000 triangles use two skinned renderers, one tiny
+palette material and thirteen rigid bones with one influence per vertex.
+Walking follows measured movement; carrying and forklift seating use simple
+poses. The first-person and cab views hide the upper torso and head with
+`ShadowsOnly`, preserving their shadows while the arms and legs remain visible.
+The chase camera shows the complete worker. It uses the
+existing sun and fixture shadows, with no extra lights, colliders or Animator.
+
 ## Asset trial reference
 
 The following describes the preserved rack-floor trial and its source assets,
 not the arrangement of the receiving start. Rebuilding the rack floor restores
-these displays; run the receiving-start installer last to restore public play.
+these displays. Restore the receiving start, then the office, business park and
+worker installers described below to return to the public layout.
 
 The original green racks in the trial occupy the right side, in clean,
 used and worn finishes. The new blue and orange rack is a connected three-bay
@@ -212,10 +235,28 @@ Then choose **One Shift > Install receiving warehouse start**, or call
 `WarehouseStartBuilder.Install()`. This backs up the scene under
 `Temp/ReceivingBackup`, removes trial displays, cuts the real dock opening,
 and installs the empty wall rack, yard, truck sequence and four delivery pallets.
-Run this last after regenerating the trial scene or its forklift examples.
+Run this after regenerating the trial scene or its forklift examples, before
+the front-office additions below.
 `WarehouseStartBuilder.Validate()` checks the starter stock, rack positions,
 door clearance and dock/trailer support. Its report is
 `Assets/RackLab/Reports/warehouse-start-validation.txt`.
+
+For the v7 office and exterior, run `WarehouseOfficeBuilder.Install()`, then
+`WarehouseBusinessParkBuilder.Install()`, then `WarehousePlayerBuilder.Install()`.
+The office installer rebuilds the shell to cut the real south door; the park
+installer then restores its longer view and fog distances. Each saves a scene
+backup under `Temp` before editing. The equivalent One Shift menu items are
+**Install front office and parcels**, **Install warehouse business park**, and
+**Install warehouse worker**.
+
+Their `Validate()` methods check door and ramp clearance, parcel bindings,
+park geometry and light budgets, and worker mesh, skinning and shadow setup.
+`WarehouseFrontOfficeValidation.ValidateAndSave()` exercises the actual parcel
+timer, inactivity and pause gates, carrying, one-time receipt, and door occupant
+protection on a temporary copy. Reports are in `Assets/RackLab/Reports`.
+Also inspect the front entrance, office, worker shadows, seated camera and
+day/night exterior in the exported browser player. The existing v6 performance
+measurements below remain a separate baseline for the added v7 scene.
 
 Choose **One Shift > Validate forklift handling** for physical pickup, transport,
 release, rack placement and retrieval with the saved prefabs. It also measures
@@ -253,8 +294,32 @@ completed game-camera frames, sampled at most twice per second, with no extra
 animation loop. The v6 Chrome trace confirmed actual 2x multisampling and SMAA.
 After 23.23 seconds of graphics loading, a 90-second run including first X/mouse
 use had no long tasks or frame intervals above 50 ms (largest 20.8 ms) on the
-Windows RTX 3080 workstation. Repeat the actual browser trace after changing
-rendering; requested quality settings alone are not verification.
+Windows RTX 3080 workstation.
+
+The final v7 export completed with zero build errors and totals 42,305,038
+compressed bytes. Its office walkthrough passed 22 checks and the launcher
+passed 40 simulated-loader checks. An earlier v7 export passed the 64-check
+full gameplay suite before the final small rendering and HUD fixes; that result
+does not cover the exact final export.
+
+Two 90-second Chrome profiles of the final v7 player included first forklift
+entry and native X/mouse use at 1800 by 1125 pixels on the RTX 3080 workstation.
+Both confirmed actual 2x MSAA and SMAA. The first took 27.68 seconds to prepare
+graphics, then recorded a 7 ms median and 14 ms 95th and 99th percentiles, but
+also ten frames over 50 ms and eight long tasks, with a 333.3 ms maximum.
+Those stalls clustered around 4.9 to 6.3 seconds and 18 seconds; their cause was
+not established. An isolated repeat took 34.60 seconds to prepare, then recorded
+a 7 ms median, 14 ms 95th percentile, 14.1 ms 99th percentile and 34.7 ms maximum,
+with no frames over 50 ms or long tasks. Neither run recorded a blocking WebGL
+call over 20 ms. These are machine-specific measurements, not a frame-rate
+guarantee. Repeat the browser trace after rendering changes.
+
+From the repository root, run `node tools/test-one-shift-unity-browser.cjs --real`
+against the exported WebGL player for the existing receiving and forklift checks.
+Run `node tools/test-one-shift-front-office-browser.cjs` for native keyboard and
+mouse checks of the office doorway, front door, ramp, parcel arrival, carrying,
+desk receipt and pause, with screenshots. `SHIFT_OFFICE_DUMP` selects its output
+directory; `SHIFT_BROWSER_CHANNEL=chrome` selects installed Chrome.
 
 The browser page controls focus, visibility, manual pause and portrait gating.
 `BrowserLifecycle` clears held input and freezes the clock and audio before the

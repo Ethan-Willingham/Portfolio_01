@@ -1,0 +1,32 @@
+Production office components on a temporary copy. Original office and stock unchanged.
+PASS Three independent small parcels and three receiving positions
+PASS Validation references point only to copied office objects
+PASS Production parcel lifecycle methods available
+PASS No parcel exists visibly before the delivery
+PASS Cannot collect a parcel before its arrival
+PASS Inactive delivery ignores a full arrival interval
+PASS Negative elapsed time cannot reverse the delivery clock
+PASS Half of the active interval does not deliver early
+PASS The real Update gate freezes the delivery while time is paused
+PASS Inactive time does not consume the remaining delivery interval
+PASS The real Update gate freezes delivery when the application is unfocused
+PASS Completing the active interval reveals exactly the three parcels
+PASS The bounded delivery fires once without automatically receiving stock
+PASS Parcel 1 has an interaction collider
+PASS Carried parcel 1 cannot collide with the player
+PASS Only one parcel can be carried at once
+PASS Parcel 1 rests on the desk and counts once
+PASS Repeated use cannot duplicate or recollect a received parcel
+PASS Parcel 2 has an interaction collider
+PASS Carried parcel 2 cannot collide with the player
+PASS Only one parcel can be carried at once
+PASS Parcel 2 rests on the desk and counts once
+PASS Repeated use cannot duplicate or recollect a received parcel
+PASS Parcel 3 has an interaction collider
+PASS Carried parcel 3 cannot collide with the player
+PASS Only one parcel can be carried at once
+PASS Parcel 3 rests on the desk and counts once
+PASS Repeated use cannot duplicate or recollect a received parcel
+PASS Opening clears the doorway blocker
+PASS Door refuses to close around a standing player
+PASS A clear doorway can close again

@@ -118,12 +118,13 @@ namespace OneShift.RackLab
         {
             var wall = new GameObject(name + " wall with clerestory openings"); wall.transform.SetParent(root.transform);
             bool receiving = name == "North" && GameObject.Find("Warehouse receiving start") != null;
+            bool frontOffice = name == "South" && GameObject.Find("Warehouse front office") != null;
             Action<string, float, float, float, float, Material, bool> section = (label, x, y, w, h, mat, solid) =>
             {
                 // The receiving door is a real 4.2 m opening, not a shutter
                 // painted over the original solid wall and collision.
                 float start = x - w * .5f, end = x + w * .5f;
-                var pieces = WallPieces(receiving, start, end, y - h * .5f);
+                var pieces = WallPieces(receiving, start, end, y - h * .5f, frontOffice);
                 foreach (var piece in pieces)
                 {
                     float width = piece.y - piece.x;
@@ -158,7 +159,7 @@ namespace OneShift.RackLab
                 }
             foreach (float y in new[] { .30f, 3.2f, 5.28f, 7.12f })
             {
-                foreach (var piece in WallPieces(receiving, -length * .5f, length * .5f, y))
+                foreach (var piece in WallPieces(receiving, -length * .5f, length * .5f, y, frontOffice))
                     Beam(origin + inward * .16f + Vector3.up * y + along * piece.x,
                         origin + inward * .16f + Vector3.up * y + along * piece.y, .06f, .08f, zinc);
             }
@@ -178,13 +179,14 @@ namespace OneShift.RackLab
             }
         }
 
-        static List<Vector2> WallPieces(bool receiving, float start, float end, float bottom)
+        static List<Vector2> WallPieces(bool receiving, float start, float end, float bottom, bool frontOffice = false)
         {
             var pieces = new List<Vector2> { new Vector2(start, end) };
-            if (!receiving) return pieces;
+            if (!receiving && !frontOffice) return pieces;
             var openings = new List<Vector2>();
-            if (bottom < 4.6f) openings.Add(new Vector2(-2.1f, 2.1f));
-            if (bottom < 2.4f) openings.Add(new Vector2(7.6f, 9.6f));
+            if (receiving && bottom < 4.6f) openings.Add(new Vector2(-2.1f, 2.1f));
+            if (receiving && bottom < 2.4f) openings.Add(new Vector2(7.6f, 9.6f));
+            if (frontOffice && bottom < 2.4f) openings.Add(new Vector2(5.7f, 7.3f));
             foreach (var opening in openings)
             {
                 var next = new List<Vector2>();
@@ -447,7 +449,17 @@ namespace OneShift.RackLab
         {
             var existing = AssetDatabase.LoadAssetAtPath<T>(path);
             if (existing == null) { AssetDatabase.CreateAsset(obj, path); return obj; }
-            EditorUtility.CopySerialized(obj, existing); Object.DestroyImmediate(obj); EditorUtility.SetDirty(existing); return existing;
+            // Serialized mesh copies can leave the old GPU vertex buffer alive.
+            // Invalidate it so a newly cut doorway renders like its collision.
+            if (existing is Mesh oldMesh && obj is Mesh source)
+            {
+                var vertices = source.vertices; var normals = source.normals; var triangles = source.triangles;
+                oldMesh.Clear(); oldMesh.indexFormat = source.indexFormat;
+                oldMesh.vertices = vertices; oldMesh.normals = normals; oldMesh.triangles = triangles;
+                oldMesh.RecalculateBounds(); oldMesh.UploadMeshData(false);
+            }
+            else EditorUtility.CopySerialized(obj, existing);
+            Object.DestroyImmediate(obj); EditorUtility.SetDirty(existing); return existing;
         }
 
         sealed class Geometry

@@ -10,7 +10,7 @@ namespace OneShift.RackLab
     [Preserve]
     public sealed class BrowserLifecycle : MonoBehaviour
     {
-        public const int BuildVersion = 6;
+        public const int BuildVersion = 7;
 #if UNITY_WEBGL && !UNITY_EDITOR
         [System.Runtime.InteropServices.DllImport("__Internal")]
         static extern void OneShiftRegisterBrowserLoop();
@@ -142,18 +142,26 @@ namespace OneShift.RackLab
                 {
                     dayNight.SetHour(hours[phase]);
                     dayNight.RequestReflection();
-                    for (int view = 0; view < 5; view++)
+                    for (int view = 0; view < 8; view++)
                     {
                         if (view < 4)
                             camera.transform.SetPositionAndRotation(originalPosition,
                                 Quaternion.Euler(0, view * 90, 0));
-                        else
+                        else if (view == 4)
                         {
                             Vector3 truckPosition = receiving != null && receiving.truck != null
                                 ? receiving.truck.position : new Vector3(0, 0, 24);
                             var eye = truckPosition + new Vector3(7, 4, 6);
                             camera.transform.SetPositionAndRotation(eye,
                                 Quaternion.LookRotation(truckPosition + new Vector3(0, 2, 7) - eye));
+                        }
+                        else
+                        {
+                            var eye = view == 5 ? new Vector3(5.3f, 1.68f, -4.7f) :
+                                view == 6 ? new Vector3(17, 2, -28) : originalPosition + new Vector3(2, .2f, 2);
+                            var target = view == 5 ? new Vector3(9.3f, 1.2f, -8.8f) :
+                                view == 6 ? new Vector3(2.5f, 3, -8) : originalPosition - Vector3.up * .5f;
+                            camera.transform.SetPositionAndRotation(eye, Quaternion.LookRotation(target - eye));
                         }
                         yield return WaitForRenderedFrames(2);
                     }
@@ -254,6 +262,8 @@ namespace OneShift.RackLab
             var lift = Object.FindFirstObjectByType<ForkliftLiftController>();
             var receiving = Object.FindFirstObjectByType<WarehouseReceiving>();
             var pipeline = GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;
+            var parcels = Object.FindFirstObjectByType<WarehouseParcelService>();
+            var door = Object.FindFirstObjectByType<WarehouseOfficeDoor>();
             var camera = player != null ? player.eyes : Camera.main;
             var cameraData = camera != null ? camera.GetComponent<UniversalAdditionalCameraData>() : null;
             var rowOn = new bool[3];
@@ -279,6 +289,11 @@ namespace OneShift.RackLab
                 playerPosition = new[] { position.x, position.y, position.z },
                 playerWalkSpeed = player != null ? player.walkSpeed : 0,
                 playerRunSpeed = player != null ? player.runSpeed : 0,
+                playerYaw = player != null ? player.transform.eulerAngles.y : 0,
+                frontDoorOpen = door != null && door.IsOpen,
+                parcelsArrived = parcels != null && parcels.Arrived,
+                parcelsReceived = parcels != null ? parcels.ReceivedCount : 0,
+                carryingParcel = player != null && player.CarryingParcel,
                 receivingPhase = receiving != null ? receiving.Phase.ToString() : null,
                 receivingDoorsOpen = receiving != null && receiving.DoorsOpen,
                 receivingUnloaded = receiving != null ? receiving.DeliveredCount : 0,
@@ -329,6 +344,9 @@ namespace OneShift.RackLab
             public bool[] rowOn;
             public float[] playerPosition;
             public float playerWalkSpeed, playerRunSpeed;
+            public float playerYaw;
+            public bool frontDoorOpen, parcelsArrived, carryingParcel;
+            public int parcelsReceived;
             public string receivingPhase;
             public bool receivingDoorsOpen, receivingWaiting;
             public int receivingUnloaded, receivingStored, receivingTotal;

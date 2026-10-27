@@ -27,6 +27,7 @@ Material:
     m_Floats:
     - _Daylight: 0
     m_Colors:
+    - _CloudOffset: {r: 0.24874422, g: 0.6005217, b: 0, a: 0}
     - _SunColor: {r: 1, g: 0.39, b: 0.12, a: 1}
     - _SunDirection: {r: 0.9238795, g: -0.28881487, b: 0.25106293, a: 0}
   m_BuildTextureStacks: []

@@ -30,6 +30,13 @@ meshes, without the eight-light-per-object limit. Desktop additional shadows hav
 clustered additional lights and punctual shadow bias. The floor and pallet
 materials use URP/Lit. There is no baked light remaining when a row switches off.
 
+The v7 exterior adds six warm wall-pack spotlights that fade with the same
+`WarehouseDayNight.Daylight` value as the sky. Two downward office spotlights
+light the dispatch room. These eight lights are unshadowed; the worker's real
+shadows come from the existing sun and twelve warehouse fixtures. They add no
+shadow maps or reflection probes, and do not request extra reflection captures.
+Inspect office light spill and exterior visibility at night when tuning them.
+
 The desktop room reflection probe captures the actual lighting in time-sliced 128-pixel
 faces, every eight seconds and after a switch changes. Reflections can take several
 frames to settle. The low night ambient keeps silhouettes readable with every
@@ -61,6 +68,15 @@ linked. The v6 Chrome trace confirmed 2x multisampling and SMAA, with no long
 tasks or frame intervals over 50 ms in 90 seconds after preparation, including
 the first held-X mouse operation. The largest interval was 20.8 ms on the
 Windows RTX 3080 workstation. Recheck the exported player after rendering edits.
+The final v7 player was also measured in two 90-second Chrome runs at 1800 by
+1125 pixels on that RTX 3080 workstation, including first entry and native
+X/mouse use. Both confirmed 2x MSAA and SMAA. The first prepared in 27.68 seconds
+and had a 7 ms median, 14 ms 95th and 99th percentiles, ten frames over 50 ms,
+eight long tasks and a 333.3 ms maximum. Stalls clustered around 4.9 to 6.3 seconds
+and 18 seconds, with no established cause. An isolated repeat prepared in 34.60
+seconds and had a 7 ms median, 14 ms 95th percentile, 14.1 ms 99th percentile and
+34.7 ms maximum, with no frames over 50 ms or long tasks. Neither recorded a
+blocking WebGL call over 20 ms. These measurements apply to this machine.
 
 The sun has explicit URP additional light data with pipeline bias inheritance
 disabled, so its .018 depth and normal biases take effect. The 60-metre shadow
@@ -78,6 +94,12 @@ walls, roof, racks and stock cast and receive the moving shadows. At midday
 the roof blocks direct sun except through the high windows. Low morning and
 evening rays reach farther into the room.
 
+The sky shader draws the sun disc from that exact light direction, with warm
+twilight, sparse stars and one layer of analytic clouds. Cloud drift follows
+the game hour continuously across midnight, so pause and inactivity freeze it
+with the sun. It uses one sky pass without cloud textures, cloud meshes or
+volumetric ray marching. Clouds do not cast an additional moving shadow layer.
+
 Each sun-facing window updates both its sheared mesh bounds and shader inverse
 matrix. Sparse dust follows those coordinates, with one particle upload per
 frame rather than a second upload from the clock update. Back-facing windows and all windows
@@ -94,8 +116,11 @@ retaining the floor, rack and player objects, then installs the rows and cycle.
 The full rack-floor build and the walls-and-daylight installer also retain this
 lighting setup. **Build Windows player** produces the local standalone game.
 The receiving-start marker preserves the north dock opening when rebuilding
-the shell. A full rack-floor rebuild restores the asset trial; run
-**Install receiving warehouse start** last to restore the public layout.
+the shell. A full rack-floor rebuild restores the asset trial; restore
+**Install receiving warehouse start**, followed in order by
+`WarehouseOfficeBuilder.Install()`, `WarehouseBusinessParkBuilder.Install()` and
+`WarehousePlayerBuilder.Install()` to rebuild the public layout. The office
+marker also preserves its south opening during later shell rebuilds.
 
 `WarehouseDayNightBuilder.Validate()` checks nine times across the cycle,
 sun-facing volume selection and alignment, moving mesh bounds, twelve unique
@@ -108,3 +133,11 @@ Also inspect night, morning, noon and afternoon captures; verify all-off and eac
 row independently in Play mode, check the console, and run the floor and rack
 movement checks. Source scripts live in `Assets/RackLab/Scripts`, with builders
 in `Editor` and the sky shader in `Shaders`.
+The office, business-park and worker builders each provide `Validate()` checks;
+`WarehouseFrontOfficeValidation.ValidateAndSave()` covers parcel lifecycle and
+door obstruction on a temporary copy. Capture the entrance and worker shadows
+at dawn, noon and night, then rerun the actual browser performance trace after
+rendering changes. The final v7 export had zero build errors and 42,305,038
+compressed bytes; its office walkthrough passed 22 checks and the launcher
+passed 40 simulated-loader checks. The earlier 64-check v7 gameplay pass
+preceded the final small rendering and HUD fixes.

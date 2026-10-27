@@ -1,0 +1,1 @@
+Warehouse worker passed: 1000 triangles; two skinned renderers; one 16 x 1 palette material; thirteen rigid bones; no added lights, colliders or Animator. Walking follows measured motion. Cab and walking views hide the upper torso and head while preserving their full shadows; chase view shows the full worker.
