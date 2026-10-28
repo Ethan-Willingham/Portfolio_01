@@ -10,7 +10,7 @@ namespace OneShift.RackLab
     [Preserve]
     public sealed partial class BrowserLifecycle : MonoBehaviour
     {
-        public const int BuildVersion = 8;
+        public const int BuildVersion = 9;
         public static bool GraphicsPreparing { get; private set; }
 #if UNITY_WEBGL && !UNITY_EDITOR
         [System.Runtime.InteropServices.DllImport("__Internal")]
@@ -21,6 +21,8 @@ namespace OneShift.RackLab
         static extern void OneShiftReportGraphicsPreparation(int completed, int total, int ready);
         [System.Runtime.InteropServices.DllImport("__Internal")]
         static extern void WarehouseReportPreparation(string json);
+        [System.Runtime.InteropServices.DllImport("__Internal")]
+        static extern int WarehouseInitialMode();
 #endif
         bool pageActive = true;
         bool windowFocused = true;
@@ -97,6 +99,7 @@ namespace OneShift.RackLab
             DontDestroyOnLoad(bridge);
             var lifecycle = bridge.AddComponent<BrowserLifecycle>();
 #if UNITY_WEBGL && !UNITY_EDITOR
+            if (WarehouseInitialMode() == 1) WarehouseCareer.Ensure();
             Application.targetFrameRate = 60;
             WebGLInput.captureAllKeyboardInput = false;
             WebGLInput.stickyCursorLock = false;
@@ -381,14 +384,14 @@ namespace OneShift.RackLab
                 forkliftCaptured = driver != null && driver.ControlsCaptured,
                 forkliftParked = forklift != null && forklift.ParkingBrake,
                 computerOpen = computerOpen,
-                businessCash = uiBusiness != null ? uiBusiness.Cash : 0,
-                businessConservesCases = uiBusiness == null || uiBusiness.ConservesCases,
-                businessReceivedCases = uiBusiness != null ? uiBusiness.ReceivedCases : 0,
-                businessShippedCases = uiBusiness != null ? uiBusiness.ShippedCases : 0,
-                businessPurchasedCases = uiBusiness != null ? uiBusiness.PurchasedCases : 0,
+                businessCash = uiCareer != null ? uiCareer.Cash : uiBusiness != null ? uiBusiness.Cash : 0,
+                businessConservesCases = uiCareer != null ? uiCareer.ConservesStock : uiBusiness == null || uiBusiness.ConservesCases,
+                businessReceivedCases = uiCareer != null ? uiCareer.ReceivedCartons : uiBusiness != null ? uiBusiness.ReceivedCases : 0,
+                businessShippedCases = uiCareer != null ? uiCareer.ShippedCartons : uiBusiness != null ? uiBusiness.ShippedCases : 0,
+                businessPurchasedCases = uiCareer != null ? uiCareer.PurchasedCartons : uiBusiness != null ? uiBusiness.PurchasedCases : 0,
                 businessOpeningCases = uiBusiness != null ? uiBusiness.OpeningCases : 0,
-                businessDeliveryBooked = uiBusiness != null && uiBusiness.PurchasePending,
-                businessActiveOrder = uiBusiness != null && uiBusiness.ActiveOrder != null ? uiBusiness.ActiveOrder.id : ""
+                businessDeliveryBooked = uiCareer != null ? uiCareer.PurchasePending : uiBusiness != null && uiBusiness.PurchasePending,
+                businessActiveOrder = uiCareer != null && uiCareer.ActiveOrder != null ? uiCareer.ActiveOrder.id : uiBusiness != null && uiBusiness.ActiveOrder != null ? uiBusiness.ActiveOrder.id : ""
             }));
         }
 
@@ -447,7 +450,8 @@ namespace OneShift.RackLab
 
         void ApplyState()
         {
-            bool shouldSuspend = preparing || computerOpen || !pageActive || !windowFocused || applicationPaused;
+            if (!PresentationActive) computerTransition?.ResetPresentationClock();
+            bool shouldSuspend = preparing || computerOpen || ComputerTransitioning || !pageActive || !windowFocused || applicationPaused;
             if (suspended == shouldSuspend) return;
             suspended = shouldSuspend;
             ResetFrameSample();

@@ -39,6 +39,17 @@ shadows come from the existing sun and twelve warehouse fixtures. They add no
 shadow maps or reflection probes, and do not request extra reflection captures.
 Inspect office light spill and exterior visibility at night when tuning them.
 
+V9 retains this lighting budget in both Career and Sandbox. The career courier
+adds no lights or reflection probes. Carton and floor-guide materials are retained
+in Resources for WebGL; their shaders do not add a lighting pass. The monitor's
+physical bezel and screen are included in the existing office material batches.
+Its close-up camera transition uses the existing game camera. The singing fish
+and flame decals add geometry only when bought; the decals sit 3 and 5 mm above
+the forklift's actual flat service panels, avoiding overlapping paint surfaces.
+Runtime-created bay labels, carton labels and the fish plaque bind to the same
+depth-tested font material as the authored signs. Each scene shares one material
+per font and refreshes its texture when Unity rebuilds the font atlas.
+
 The desktop room reflection probe captures the actual lighting in time-sliced 128-pixel
 faces, every eight seconds and after a switch changes. Reflections can take several
 frames to settle. The low night ambient keeps silhouettes readable with every

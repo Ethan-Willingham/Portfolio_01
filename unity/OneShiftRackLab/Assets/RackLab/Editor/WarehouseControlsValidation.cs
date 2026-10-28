@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
@@ -15,7 +16,7 @@ namespace OneShift.RackLab
         public sealed class Report
         {
             public string generatedUtc;
-            public string method = "Production hydraulic lever and walking response at 30, 60, 120 and 144 Hz. Input state and velocity integration only; native browser controls and physical ground contact require separate verification.";
+            public string method = "Production hydraulic lever and walking response at 30, 60, 120 and 144 Hz, plus cursor ownership on inactive-driver resume. Native browser pointer lock and physical ground contact require separate verification.";
             public bool passed;
             public List<ForkliftDrivingValidation.Check> checks = new List<ForkliftDrivingValidation.Check>();
         }
@@ -121,6 +122,41 @@ namespace OneShift.RackLab
                 check.Measure("grounded velocity after reversing", grounded.z, "m/s");
                 check.Measure("airborne forward momentum", airborne.z, "m/s");
                 check.passed = grounded.z < -.7f && airborne.z > 2 && Walk(grounded, Vector3.zero, true, 0) == grounded;
+            });
+            Check(report, "inactive driver preserves walking cursor ownership", "Browser resume clears the inactive driver's controls without changing the walker's cursor; pausing an actual captured driver still releases it.", check =>
+            {
+                var originalLock = Cursor.lockState;
+                bool originalVisible = Cursor.visible;
+                GameObject fixture = null;
+                try
+                {
+                    fixture = new GameObject("Disposable cursor ownership fixture") { hideFlags = HideFlags.HideAndDontSave };
+                    fixture.SetActive(false);
+                    var driver = fixture.AddComponent<ForkliftPlayerInteraction>();
+                    var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+                    var captured = typeof(ForkliftPlayerInteraction).GetField("captured", flags);
+                    var exitRequested = typeof(ForkliftPlayerInteraction).GetField("exitRequested", flags);
+                    var lever = (ForkliftMouseLift)typeof(ForkliftPlayerInteraction).GetField("mouseLift", flags).GetValue(driver);
+                    captured.SetValue(driver, false);
+                    exitRequested.SetValue(driver, true);
+                    lever.Tick(true, 12, 1f / 60);
+                    Cursor.visible = false;
+                    var walkingLock = Cursor.lockState;
+                    driver.SetBrowserActive(true);
+                    bool inactivePreserved = Cursor.lockState == walkingLock && !Cursor.visible &&
+                        lever.Position == 0 && !(bool)exitRequested.GetValue(driver);
+                    captured.SetValue(driver, true);
+                    Cursor.visible = false;
+                    driver.SetBrowserActive(false);
+                    check.passed = inactivePreserved && Cursor.lockState == CursorLockMode.None && Cursor.visible &&
+                        !(bool)captured.GetValue(driver) && lever.Position == 0;
+                }
+                finally
+                {
+                    if (fixture != null) UnityEngine.Object.DestroyImmediate(fixture);
+                    Cursor.lockState = originalLock;
+                    Cursor.visible = originalVisible;
+                }
             });
             report.passed = report.checks.All(check => check.passed);
             return report;

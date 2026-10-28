@@ -5,6 +5,7 @@ const os = require('node:os');
 const path = require('node:path');
 const http = require('node:http');
 const {chromium} = require('playwright');
+const {classifyUnityConsole} = require('./one-shift-unity-console.cjs');
 const root = path.resolve(__dirname, '..');
 const dump = process.env.SHIFT_DUMP || path.join(os.tmpdir(), 'one-shift-unity-browser');
 fs.mkdirSync(dump, {recursive: true});
@@ -17,6 +18,7 @@ const server = http.createServer((req, res) => {
 });
 const loader = `window.createUnityInstance = function(canvas, config, progress) {
   window.unityConfig = config;
+  window.unityRequestedMode = window.warehouseRequestedMode;
   window.unityCalls = [];
   window.reportUnityProgress = progress;
   progress(.42);
@@ -168,7 +170,7 @@ async function realSmoke(browser, url) {
   try {
     await page.goto(process.env.SHIFT_TEST_URL || process.env.SHIFT_REAL_URL || url + '/one-shift.html');
     check('REAL: Build is not fetched before Play', requests.length === 0);
-    await page.locator('#warehouse-play').click();
+    await page.locator('#warehouse-sandbox').click();
     await page.waitForFunction(() => window.actualUnity && document.getElementById('warehouse-launcher').hidden, null, {timeout:180000});
     check('REAL: Unity exposes native scheduler controls', await page.evaluate(() => typeof actualUnity.Module.pauseMainLoop === 'function' && typeof actualUnity.Module.resumeMainLoop === 'function'));
     check('REAL: Unity exposes its refresh-monitor scheduler control', await page.evaluate(() => typeof actualUnity.Module.SetRefreshMonitorActive === 'function'));
@@ -182,13 +184,13 @@ async function realSmoke(browser, url) {
     await page.bringToFront();
     await page.locator('#warehouse-canvas').focus();
     const initial = await state();
-    check('REAL: Compiled player reports version 8 and SMAA', initial.buildVersion === 8 && initial.cameraAntialiasing === 'SubpixelMorphologicalAntiAliasing' && initial.pipelineMsaaSamples === 2);
+    check('REAL: Compiled sandbox player reports version 9 and SMAA', initial.buildVersion === 9 && initial.cameraAntialiasing === 'SubpixelMorphologicalAntiAliasing' && initial.pipelineMsaaSamples === 2);
     check('REAL: Compiled player applies the bounded twelve-fixture shadow budget',
       initial.fixtureShadowAtlas === 1024 && initial.fixtureShadowLow === 128 && initial.fixtureShadowHigh === 512 &&
       Array.isArray(initial.fixtureShadowTiers) && initial.fixtureShadowTiers.length === 12 &&
       initial.fixtureShadowTiers.filter(tier => tier === 2).length === 3 &&
       initial.fixtureShadowTiers.filter(tier => tier === 0).length === 9);
-    await page.waitForFunction(() => document.getElementById('warehouse-stats').dataset.buildVersion === '8' && Number(document.getElementById('warehouse-stats').dataset.fps) > 0);
+    await page.waitForFunction(() => document.getElementById('warehouse-stats').dataset.buildVersion === '9' && Number(document.getElementById('warehouse-stats').dataset.fps) > 0);
     check('REAL: Player frame telemetry stays available without cluttering the default view', await page.locator('#warehouse-stats').isHidden());
     check('REAL: Warehouse begins with a four-pallet delivery and closed receiving doors', initial.receivingTotal === 4 && initial.receivingPhase === 'Arriving' && !initial.receivingDoorsOpen);
     check('REAL: Walking and running use the faster starting speeds', Math.abs(initial.playerWalkSpeed - 2.8) < .01 && Math.abs(initial.playerRunSpeed - 5.4) < .01);
@@ -556,18 +558,7 @@ async function realSmoke(browser, url) {
     await page.locator('#warehouse-resume').click();
     check('REAL: Optional performance readout can be enabled from Settings', await page.locator('#warehouse-stats').isVisible());
     await capture('unity-real-final');
-    // Unity's format-capability probes can emit this exact warning before the
-    // graphics device is created, even for an empty scene (Unity issue 16927).
-    // Keep it in the report; render-time GL warnings remain failures.
-    const deviceCreated = messages.findIndex(message => message.text.includes('Creating OpenGL ES 3.0 graphics device'));
-    const startupProbeWarnings = messages.filter((message, index) => index < deviceCreated && message.type === 'warning' && message.text === 'WebGL: INVALID_ENUM: getInternalformatParameter: invalid internalformat');
-    // The current URP asset disables RenderGraph and runtime debug display.
-    // These three bundled shaders serve those inactive paths, but the engine
-    // may still report their WebGL incompatibility during shader discovery.
-    const unusedShaders = ['Hidden/CoreSRP/CoreCopy', 'Hidden/Universal Render Pipeline/StencilDitherMaskSeed', 'Hidden/Universal/HDRDebugView'];
-    const firstState = messages.findIndex(message => message.text.includes(prefix));
-    const unusedShaderWarnings = messages.filter((message, index) => index < firstState && message.type === 'log' && unusedShaders.some(name => message.text.trim() === name + ' shader is not supported on this GPU (none of subshaders/fallbacks are suitable)'));
-    const shaderFailures = messages.filter(message => !startupProbeWarnings.includes(message) && !unusedShaderWarnings.includes(message) && (message.type === 'error' || /shader.*(?:error|failed|unsupported|not supported)|INVALID_(?:OPERATION|ENUM|VALUE)|GL_INVALID|RuntimeError|memory access out of bounds|WebGL context lost/i.test(message.text)));
+    const {startupProbeWarnings,unusedShaderWarnings,shaderFailures} = classifyUnityConsole(messages, prefix);
     fs.writeFileSync(path.join(dump,'unity-real-states.json'), JSON.stringify({initial,nightState,physicsState,morning,stopped,still,resumed,blurred,blurredLater,walkingStart,walked,reset,released,uncaptured,recaptured,activeCallbacks,pausedCallbacks}, null, 2));
     if (startupProbeWarnings.length) console.log('KNOWN STARTUP WARNINGS: ' + startupProbeWarnings.length + ' Unity internal-format probes (retained in console report)');
     if (unusedShaderWarnings.length) console.log('UNUSED ENGINE SHADERS: ' + unusedShaderWarnings.map(message => message.text.trim().split(' shader ')[0]).join(', ') + ' (retained in console report)');
@@ -628,8 +619,9 @@ let browser;
   check('Download progress reflects Unity measured file fraction', await page.locator('#warehouse-progress').getAttribute('value') === '47');
   await page.waitForFunction(() => document.getElementById('warehouse-load-elapsed').textContent !== '0s elapsed');
   check('Loading shows truthful elapsed active time between callbacks', /^\d+s elapsed$/.test(await page.locator('#warehouse-load-elapsed').innerText()));
-  check('Compressed fallback URLs share release v8', await page.evaluate(() => {
-    return ['dataUrl','frameworkUrl','codeUrl'].map(key => new URL(unityConfig[key], location.href)).every(url => url.pathname.endsWith('.unityweb') && url.searchParams.get('v') === '8');
+  check('Career mode is selected before creating the engine', await page.evaluate(() => unityRequestedMode === 'career'));
+  check('Compressed fallback URLs share release v9', await page.evaluate(() => {
+    return ['dataUrl','frameworkUrl','codeUrl'].map(key => new URL(unityConfig[key], location.href)).every(url => url.pathname.endsWith('.unityweb') && url.searchParams.get('v') === '9');
   }));
   check('Retina rendering starts within the Smooth pixel budget', await page.evaluate(() => {
     const c = document.getElementById('warehouse-canvas');
@@ -658,10 +650,10 @@ let browser;
   check('Preparation completion while blurred cannot resume gameplay', await page.locator('#warehouse-launcher').isHidden() && (await lifecycle(page)).length === 0);
   await page.evaluate(() => dispatchEvent(new Event('focus')));
   check('Prepared game resumes only when browser activity returns', JSON.stringify(await lifecycle(page)) === JSON.stringify(['monitor:true','loop:resume','BrowserLifecycle:SetBrowserActive:1']));
-  await page.evaluate(() => unityConfig.onOneShiftStats(8, 59.8, 22.4, 120));
+  await page.evaluate(() => unityConfig.onOneShiftStats(9, 59.8, 22.4, 120));
   check('Version and FPS come from compiled-player frames', await page.evaluate(() => {
     const s = document.getElementById('warehouse-stats');
-    return s.textContent === 'v8 | 60 FPS' && s.dataset.buildVersion === '8' && s.dataset.fps === '59.8' && s.dataset.frameCount === '120' && s.dataset.longestFrameMs === '22.4' && s.title === 'Longest frame: 22 ms';
+    return s.textContent === 'v9 | 60 FPS' && s.dataset.buildVersion === '9' && s.dataset.fps === '59.8' && s.dataset.frameCount === '120' && s.dataset.longestFrameMs === '22.4' && s.title === 'Longest frame: 22 ms';
   }));
   check('Performance readout stays out of the default play view', await page.locator('#warehouse-stats').isHidden());
   await clearCalls(page);
@@ -752,7 +744,7 @@ let browser;
   await page.keyboard.press('Escape');
   check('Escape opens the menu when the mouse is released', await page.locator('#warehouse-paused').isVisible());
   await page.locator('#warehouse-return-title').click();
-  check('Title screen retains the current loaded shift', await page.locator('#warehouse-launcher').isVisible() && (await page.locator('#warehouse-play').innerText()).includes('Resume shift') && requests === 1);
+  check('Title screen retains the current business session', await page.locator('#warehouse-launcher').isVisible() && (await page.locator('#warehouse-play').innerText()).includes('Resume business') && requests === 1);
   await clearCalls(page);
   await page.evaluate(() => { dispatchEvent(new Event('blur')); dispatchEvent(new Event('focus')); });
   check('Returning to the title keeps the simulation paused through focus changes', (await lifecycle(page)).length === 0);
@@ -814,7 +806,7 @@ let browser;
   check('Ledger tab displays actual transaction amounts', (await page.locator('#warehouse-ledger').innerText()).includes('$2,480'));
   await clearCalls(page);
   await page.keyboard.press('Escape');
-  check('Leaving the computer closes it before resuming the engine', (await calls(page))[0].endsWith('{"action":"computer-close"}') && (await lifecycle(page)).includes('loop:resume') && await page.locator('#warehouse-computer').isHidden());
+  check('Leaving the computer resumes scheduling before its camera-return command', (await calls(page)).findIndex(call => call.endsWith('{"action":"computer-close"}')) > (await calls(page)).indexOf('BrowserLifecycle:SetBrowserActive:1') && !await command(page, 'resume') && await page.locator('#warehouse-computer').isHidden());
   await page.locator('#warehouse-pause').click();
   await page.locator('#warehouse-paused [data-screen="settings"]').click();
   await page.locator('#warehouse-fullscreen').click();
@@ -822,6 +814,103 @@ let browser;
   check('Fullscreen keeps the complete game wrapper', await page.evaluate(() => document.fullscreenElement?.id === 'warehouse-stage'));
   await page.evaluate(() => document.exitFullscreen());
   await page.keyboard.press('p');
+
+  const modes = await mockPage();
+  check('Fresh title separates the empty business from the equipped sandbox', (await modes.locator('#warehouse-play').innerText()).includes('Start business') && (await modes.locator('#warehouse-sandbox').innerText()).includes('Fresh session'));
+  await startMock(modes); await finish(modes);
+  await modes.locator('#warehouse-pause').click();
+  await modes.locator('#warehouse-return-title').click();
+  await modes.locator('#warehouse-sandbox').click();
+  check('Changing an existing session requires a concrete reset choice', await modes.locator('#warehouse-new-session').isVisible() && (await modes.locator('#warehouse-new-session').innerText()).includes('ends it') && await modes.evaluate(() => unityRequestedMode === 'career'));
+  await modes.locator('#warehouse-cancel-new-session').click();
+  check('Keeping the session preserves its engine and mode', await modes.locator('#warehouse-launcher').isVisible() && await modes.evaluate(() => unityRequestedMode === 'career'));
+  await modes.locator('#warehouse-sandbox').click();
+  await modes.locator('#warehouse-confirm-new-session').click();
+  await modes.waitForURL('**/one-shift.html?mode=sandbox');
+  check('A deliberate new session reloads to the title without downloading automatically', await modes.locator('#warehouse-launcher').isVisible() && await modes.evaluate(() => typeof window.unityConfig === 'undefined'));
+  await modes.locator('#warehouse-sandbox').click();
+  await modes.waitForFunction(() => typeof finishUnityLoad === 'function');
+  check('Sandbox is selected before its fresh engine is created', await modes.evaluate(() => unityRequestedMode === 'sandbox'));
+  await finish(modes);
+  await modes.locator('#warehouse-pause').click(); await modes.locator('#warehouse-return-title').click();
+  check('Resume names the currently loaded mode', (await modes.locator('#warehouse-play').innerText()).includes('Resume sandbox'));
+  await modes.locator('#warehouse-play').click();
+  check('Resume cannot silently change Sandbox into Career', await modes.evaluate(() => unityRequestedMode === 'sandbox') && await modes.locator('#warehouse-launcher').isHidden());
+  await modes.close();
+
+  const career = {
+    open:true,mode:'career',company:'Latchford Distribution',title:'Latchford Distribution',summary:'Independent trade supplies / 0 orders delivered',
+    cash:600,completedOrders:0,stage:'Start your distribution business',stageDetail:'The office computer is through the glass doorway. Order three cartons of packing tape.',suggestedTab:'purchases',
+    inventory:[{id:'tape',name:'Packing tape',quantity:0,unit:'cartons'},{id:'towels',name:'Shop towels',quantity:0,unit:'cartons'},{id:'gloves',name:'Work gloves',quantity:0,unit:'cartons'}],
+    orders:[
+      {id:'tape',name:'Packing tape',detail:'3 cartons / 36 rolls per carton. Driver delivers to the front porch.',price:120,action:'Send purchase order',enabled:true},
+      {id:'towels',name:'Shop towels',detail:"Finish Miller Motor Works' first order to open this supplier.",price:160,action:'Send purchase order',enabled:false},
+      {id:'gloves',name:'Work gloves',detail:"Finish Miller Motor Works' first order to open this supplier.",price:180,action:'Send purchase order',enabled:false}
+    ],
+    contracts:[{id:'tape',name:'Miller Motor Works',detail:'Receive 3 cartons in the highlighted packing tape bay first.',price:210,action:'Accept and book collection',enabled:false,status:'Stock needed'}],
+    upgrades:[
+      {id:'racks',name:'Pallet racks',detail:'Complete three customer orders to expand into pallet handling.',price:300,action:'Buy and install',enabled:false,owned:false},
+      {id:'forklift',name:'Used forklift',detail:'Complete three customer orders to expand into pallet handling.',price:650,action:'Buy and install',enabled:false,owned:false},
+      {id:'fish',name:'Singing fish',detail:'A reward after your first completed customer order.',price:95,action:'Buy and install',enabled:false,owned:false},
+      {id:'flames',name:'Forklift flame kit',detail:'Buy the forklift before fitting its flame kit.',price:65,action:'Buy and install',enabled:false,owned:false}
+    ],
+    ledger:[{label:'Opening working capital',amount:600}],message:'The lease is paid. Start with a small packing-tape purchase order.'
+  };
+  const desk = await mockPage(); await startMock(desk); await finish(desk);
+  await clearCalls(desk);
+  await desk.evaluate(() => unityConfig.onWarehouseHUD({clock:'8:10 AM',holding:true,carryDistance:1.6,hintKey:'E / Click',hint:'Put down Packing tape / carton 003. Wheel: distance. Hold right mouse: rotate.',notice:'Stock checked in. The customer order is ready at the computer.',computer:{open:false,transitioning:false}}));
+  check('Held cartons show practical authoritative distance and rotation controls', await desk.locator('#warehouse-carry').isVisible() && await desk.locator('#warehouse-carry-distance').innerText() === '1.6 m' && (await desk.locator('#warehouse-carry').innerText()).includes('Right mouse'));
+  check('A stock notice stays clear of the held-carton action hint', await desk.evaluate(() => document.getElementById('warehouse-notice').getBoundingClientRect().bottom + 8 < document.getElementById('warehouse-context').getBoundingClientRect().top));
+  await desk.setViewportSize({width:420,height:780});
+  check('Carton controls wrap inside a narrow desktop window without covering its action', await desk.evaluate(() => {
+    const carry=document.getElementById('warehouse-carry').getBoundingClientRect(), hint=document.getElementById('warehouse-context').getBoundingClientRect();
+    return carry.left>=15 && carry.right<=innerWidth-15 && hint.bottom+5<carry.top;
+  }));
+  await desk.setViewportSize({width:1440,height:900});
+  await desk.evaluate(() => unityConfig.onWarehouseHUD({holding:false,computer:{open:false,transitioning:true,transitionDirection:'in',transitionProgress:.5}}));
+  check('The physical approach remains active without revealing the computer early', await desk.locator('#warehouse-computer').isHidden() && (await lifecycle(desk)).length === 0 && await desk.locator('#warehouse-stage').evaluate(el => el.classList.contains('is-computer-transitioning')));
+  await desk.evaluate(value => unityConfig.onWarehouseHUD({clock:'8:10 AM',computer:value}), career);
+  await desk.locator('.warehouse-monitor-screen').evaluate(async el => { await Promise.all(el.getAnimations().map(animation => animation.finished)); });
+  check('The completed camera approach opens the career application with real cash and zero stock', await desk.locator('#warehouse-computer').isVisible() && await desk.locator('#warehouse-computer-cash').innerText() === '$600' && await desk.locator('#warehouse-computer-title').innerText() === 'Latchford Distribution' && (await desk.locator('#warehouse-inventory').innerText()).includes('0 cartons'));
+  check('The opening application follows the authoritative suggested task', await desk.locator('[data-desk-tab="purchases"]').getAttribute('aria-selected') === 'true');
+  check('The first-day supplier list keeps later products visible with their actual unlock condition', await desk.locator('#warehouse-orders button:enabled').count() === 1 && await desk.locator('#warehouse-orders [data-id="tape"]').isEnabled() && (await desk.locator('#warehouse-orders').innerText()).includes("Finish Miller Motor Works' first order"));
+  await desk.screenshot({path:path.join(dump,'career-computer-suppliers.png'),scale:'css'});
+  await desk.locator('[data-desk-tab="overview"]').click();
+  check('Overview presents the first-day goal and completed-order count', await desk.locator('#warehouse-business-stage').innerText() === career.stage && await desk.locator('#warehouse-completed-orders').innerText() === '0');
+  await desk.screenshot({path:path.join(dump,'career-computer-overview.png'),scale:'css'});
+  await desk.evaluate(value => unityConfig.onWarehouseHUD({computer:{...value,revision:2}}), career);
+  check('Transaction snapshots do not pull the player away from the tab they chose', await desk.locator('[data-desk-tab="overview"]').getAttribute('aria-selected') === 'true');
+  await desk.locator('#warehouse-computer-minimize').click();
+  check('The desktop is usable while the warehouse remains paused', await desk.locator('#warehouse-desktop-home').isVisible() && await desk.locator('#warehouse-business').isHidden());
+  await desk.screenshot({path:path.join(dump,'career-computer-desktop.png'),scale:'css'});
+  await desk.locator('#warehouse-dispatch-task').click();
+  check('The taskbar restores the existing business window and selected page', await desk.locator('#warehouse-business').isVisible() && await desk.locator('[data-desk-tab="overview"]').getAttribute('aria-selected') === 'true');
+  await desk.locator('[data-desk-tab="upgrades"]').click();
+  check('Equipment and decoration use authoritative unlock rules', await desk.locator('#warehouse-upgrades button').count() === 4 && await desk.locator('#warehouse-upgrades button').evaluateAll(buttons => buttons.every(button => button.disabled)));
+  career.completedOrders = 1; career.cash = 690; career.upgrades[2].enabled = true; career.upgrades[2].detail = 'A singing fish for the dispatch office.';
+  await desk.evaluate(value => unityConfig.onWarehouseHUD({computer:value}), career);
+  await clearCalls(desk);
+  await desk.locator('#warehouse-upgrades [data-id="fish"]').click();
+  check('An unlocked upgrade sends one ID and waits for the authoritative reply', (await calls(desk)).filter(call => call.endsWith('{"action":"upgrade","id":"fish"}')).length === 1 && await desk.locator('#warehouse-upgrades [data-id="fish"]').isDisabled());
+  career.cash = 595; career.upgrades[2].owned = true; career.upgrades[2].enabled = false; career.upgrades[2].action = 'Installed';
+  await desk.evaluate(value => unityConfig.onWarehouseHUD({computer:value}), career);
+  check('Installed upgrades remain unavailable for duplicate purchase', await desk.locator('#warehouse-upgrades [data-id="fish"]').isDisabled() && await desk.locator('#warehouse-upgrades [data-id="fish"]').innerText() === 'Installed');
+  await desk.screenshot({path:path.join(dump,'career-computer-upgrades.png'),scale:'css'});
+  await desk.setViewportSize({width:1280,height:600});
+  check('Long office pages provide real content scrolling', await desk.locator('.warehouse-desk-body').evaluate(el => { el.scrollTop=el.scrollHeight; return el.scrollTop>0; }));
+  await desk.locator('[data-desk-tab="purchases"]').click();
+  check('Changing business pages starts at the new page heading', await desk.locator('.warehouse-desk-body').evaluate(el => el.scrollTop===0));
+  await clearCalls(desk);
+  await desk.locator('#warehouse-computer-close').click();
+  await desk.waitForFunction(() => document.pointerLockElement?.id === 'warehouse-canvas');
+  check('Close obtains native capture before the runtime-controlled return', await command(desk, 'computer-close') && !await command(desk, 'resume') && await desk.locator('#warehouse-computer').isHidden());
+  await desk.evaluate(() => unityConfig.onWarehouseHUD({computer:{open:false,transitioning:true,transitionDirection:'out',transitionProgress:.3}}));
+  await clearCalls(desk);
+  await desk.evaluate(() => { dispatchEvent(new Event('blur')); dispatchEvent(new Event('focus')); });
+  check('Camera return obeys browser activity without reopening the application', (await lifecycle(desk)).includes('loop:pause') && (await lifecycle(desk)).includes('loop:resume') && await desk.locator('#warehouse-computer').isHidden());
+  await desk.evaluate(() => unityConfig.onWarehouseHUD({computer:{open:false,transitioning:false}}));
+  check('Completed camera return restores the ordinary HUD', await desk.locator('#warehouse-stage').evaluate(el => !el.classList.contains('is-computer-transitioning')));
+  await desk.close();
 
   const preparedFirst = await mockPage();
   await startMock(preparedFirst);
@@ -865,8 +954,9 @@ let browser;
   check('Landscape controls scroll without horizontal overflow', await noOverflow(phone, '#warehouse-menu'));
   await phone.screenshot({path:path.join(dump,'launcher-controls-landscape.png'), scale:'css'});
   await phone.keyboard.press('p');
-  await phone.evaluate(value => unityConfig.onWarehouseHUD({computer:value}), office);
+  await phone.evaluate(value => unityConfig.onWarehouseHUD({clock:'8:10 AM',computer:value}), {...career,cash:600,completedOrders:0,suggestedTab:'purchases'});
   check('Landscape office fits the viewport', await noOverflow(phone, '#warehouse-computer'));
+  await phone.locator('.warehouse-monitor-screen').evaluate(async el => { await Promise.all(el.getAnimations().map(animation => animation.finished)); });
   await phone.screenshot({path:path.join(dump,'shell-office-landscape-fixture.png'), scale:'css'});
   await mobile.close();
 

@@ -1,0 +1,184 @@
+{
+    "generatedUtc": "2026-10-28T12:13:04.0417249Z",
+    "method": "Public career transactions and real courier delivery/collection ticks in isolated PhysX. Installed static collision geometry, receiving root, racks and forklift are copied. Carton positioning is explicit fixture setup; stock receipt, manifest checks and offsite payment use production methods.",
+    "scope": "Transaction and physical-stock integration. Native mouse handling, rendered delivery animation and full forklift pallet transport need their separate browser and receiving checks. Future equipment balances are seeded only for threshold tests.",
+    "passed": true,
+    "checks": [
+        {
+            "name": "empty opening and idempotent initialization",
+            "passed": true,
+            "expectation": "The career opens with $600, no cartons, no truck cargo and no free racks, forklift or optional decoration.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "courier simulation",
+                    "value": 0.0,
+                    "units": "s"
+                }
+            ]
+        },
+        {
+            "name": "invalid and premature transactions preserve balances",
+            "passed": true,
+            "expectation": "Unknown offers, locked suppliers, early equipment and missing stock cannot debit money or create promises.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "courier simulation",
+                    "value": 0.0,
+                    "units": "s"
+                }
+            ]
+        },
+        {
+            "name": "first purchase creates one identified batch",
+            "passed": true,
+            "expectation": "Three physical tape cartons cost exactly $120 once; duplicate purchase, early order and inactive courier ticks leave balances and identities unchanged.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "opening purchase debit",
+                    "value": 120.0,
+                    "units": "dollars"
+                },
+                {
+                    "name": "courier simulation",
+                    "value": 0.0,
+                    "units": "s"
+                }
+            ]
+        },
+        {
+            "name": "receipt requires physical supported putaway",
+            "passed": true,
+            "expectation": "Real courier delivery creates loose stock outside; suspended, kinematic and held cartons cannot count, and actual bay settling takes at least 0.45 seconds.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "courier simulation",
+                    "value": 136.6323699951172,
+                    "units": "s"
+                }
+            ]
+        },
+        {
+            "name": "exact physical manifest pays only offsite",
+            "passed": true,
+            "expectation": "Missing or extra cartons block departure; acceptance and loading pay nothing; the actual completed route pays $210 exactly once and conserves all cartons.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "cash after first completed order",
+                    "value": 690.0,
+                    "units": "dollars"
+                },
+                {
+                    "name": "courier simulation",
+                    "value": 198.90567016601563,
+                    "units": "s"
+                }
+            ]
+        },
+        {
+            "name": "the carton business can repeat",
+            "passed": true,
+            "expectation": "A second physical purchase, receipt and shipment completes without another unlock, reaching $780 after two tape orders.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "cash after two orders",
+                    "value": 780.0,
+                    "units": "dollars"
+                },
+                {
+                    "name": "courier simulation",
+                    "value": 394.1019592285156,
+                    "units": "s"
+                }
+            ]
+        },
+        {
+            "name": "oldest physical carton IDs are reserved first",
+            "passed": true,
+            "expectation": "Two purchased batches retain six unique sequence IDs and acceptance reserves the oldest three without paying.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "courier simulation",
+                    "value": 273.2883605957031,
+                    "units": "s"
+                }
+            ]
+        },
+        {
+            "name": "equipment unlock and working-cash reserve",
+            "passed": true,
+            "expectation": "Racks and forklift require three orders and retain $120. Actual installed equipment becomes active once, and a pallet needs both purchases.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "courier simulation",
+                    "value": 0.0,
+                    "units": "s"
+                }
+            ]
+        },
+        {
+            "name": "physical pallet progression and dock pickup",
+            "passed": true,
+            "expectation": "One paid pallet arrives on the real truck, must settle on the purchased rack before acceptance, reuses the docked delivery truck and pays only after physical reloading and offsite departure.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "cash after pallet shipment",
+                    "value": 1410.0,
+                    "units": "dollars"
+                },
+                {
+                    "name": "courier simulation",
+                    "value": 82.35437774658203,
+                    "units": "s"
+                }
+            ]
+        },
+        {
+            "name": "missing equipment cannot consume money",
+            "passed": true,
+            "expectation": "A missing rack or forklift root rejects the upgrade before debit.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "courier simulation",
+                    "value": 0.0,
+                    "units": "s"
+                }
+            ]
+        },
+        {
+            "name": "optional purchases charge once",
+            "passed": true,
+            "expectation": "Fish and flame purchases create their real scene decoration once; flames require the forklift, and repeat requests leave money and ledger unchanged.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "courier simulation",
+                    "value": 0.0,
+                    "units": "s"
+                }
+            ]
+        },
+        {
+            "name": "insufficient working cash rejects stock",
+            "passed": true,
+            "expectation": "A balance below the $120 tape purchase price cannot create cartons, queue a visit or debit money.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "courier simulation",
+                    "value": 0.0,
+                    "units": "s"
+                }
+            ]
+        }
+    ]
+}

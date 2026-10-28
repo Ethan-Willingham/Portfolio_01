@@ -9,6 +9,9 @@ const output=process.env.SHIFT_PROFILE_DUMP || path.join(os.tmpdir(),'one-shift-
 fs.mkdirSync(output,{recursive:true});
 const seconds=Number(process.env.SHIFT_PROFILE_SECONDS || 90);
 const profileForks=process.env.SHIFT_PROFILE_FORKS==='1';
+const profileMode=process.env.SHIFT_PROFILE_MODE || (profileForks?'sandbox':'career');
+if(!['career','sandbox'].includes(profileMode))throw new Error('SHIFT_PROFILE_MODE must be career or sandbox.');
+if(profileForks&&profileMode!=='sandbox')throw new Error('The forklift profile requires Sandbox. Set SHIFT_PROFILE_MODE=sandbox or omit it.');
 const placementCapture=process.env.SHIFT_PROFILE_PLACEMENT_CAPTURE==='1';
 const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css','.png':'image/png','.woff2':'font/woff2'};
 const server=http.createServer((req,res)=>{
@@ -53,9 +56,10 @@ const logs=[];
     };
   });
   await page.addInitScript(()=>{
-    const startup=window.startupProfile={clickedAt:null,readyAt:null,stages:[],views:[]};
+    const startup=window.startupProfile={clickedAt:null,readyAt:null,mode:null,stages:[],views:[]};
     document.addEventListener('click',event=>{
-      if(event.target.closest?.('#warehouse-play'))startup.clickedAt=performance.now();
+      const entry=event.target.closest?.('#warehouse-play,#warehouse-sandbox');
+      if(entry){startup.clickedAt=performance.now();startup.mode=entry.id==='warehouse-sandbox'?'sandbox':'career';}
     },true);
     document.addEventListener('load',event=>{
       if(event.target.tagName!=='SCRIPT'||!event.target.src.includes('OneShiftWeb.loader.js'))return;
@@ -83,7 +87,7 @@ const logs=[];
     },true);
   });
   await page.goto(process.env.SHIFT_PROFILE_URL || 'http://127.0.0.1:'+server.address().port+'/one-shift.html');
-  await page.locator('#warehouse-play').click();
+  await page.locator(profileMode==='sandbox'?'#warehouse-sandbox':'#warehouse-play').click();
   await page.waitForFunction(()=>window.actualUnity&&document.getElementById('warehouse-launcher').hidden,null,{timeout:180000});
   await page.bringToFront();
   await page.locator('#warehouse-canvas').click({position:{x:700,y:450}});
@@ -104,7 +108,7 @@ const logs=[];
     addEventListener('focus',()=>p.visibility.push({at:performance.now()-p.start,event:'focus'}));
     document.addEventListener('visibilitychange',()=>p.visibility.push({at:performance.now()-p.start,event:document.visibilityState}));
   });
-  console.log('Profiling '+seconds+' seconds without screenshot capture.');
+  console.log('Profiling '+profileMode+' for '+seconds+' seconds without screenshot capture.');
   const stop=Date.now()+seconds*1000;
   const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
   async function state(label){
@@ -257,7 +261,7 @@ const logs=[];
     const p=window.frameProfile;p.stopped=true;cancelAnimationFrame(p.raf);p.observer.disconnect();
     const canvas=document.getElementById('warehouse-canvas'),gl=canvas.getContext('webgl2'),debug=gl.getExtension('WEBGL_debug_renderer_info');
     const ms=p.deltas.slice(5).map(x=>x.ms).sort((a,b)=>a-b),percentile=q=>ms[Math.min(ms.length-1,Math.floor(ms.length*q))];
-    return {startupSeconds:(startupProfile.readyAt-startupProfile.clickedAt)/1000,preparationStages:startupProfile.stages,
+    return {mode:startupProfile.mode,startupSeconds:(startupProfile.readyAt-startupProfile.clickedAt)/1000,preparationStages:startupProfile.stages,
       preparationViews:startupProfile.views,
       longestPreparationUpdateGapMs:Math.max(0,...startupProfile.views.slice(1).map((view,i)=>view.at-startupProfile.views[i].at)),
       playStartedAt:p.start,seconds:(performance.now()-p.start)/1000,frames:ms.length,p50:percentile(.5),p95:percentile(.95),p99:percentile(.99),max:ms[ms.length-1],over50:p.deltas.filter(x=>x.ms>50),longTasks:p.longTasks,visibility:p.visibility,scenarioEvents:p.events,states:p.states,

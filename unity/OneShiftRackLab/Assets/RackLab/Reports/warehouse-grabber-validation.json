@@ -1,0 +1,297 @@
+{
+    "generatedUtc": "2026-10-28T16:46:29.9100646Z",
+    "unityVersion": "6000.3.27f1",
+    "method": "Production grabber and walking lifecycle in isolated PhysX at 0.005-second steps. Actual dynamic box, floor, wall and player capsule contacts. No changes to the open scene or assets.",
+    "scope": "Physics, eligibility and lifecycle checks. Native pointer capture, E/click priority, wheel and right-mouse feel still require the real browser player.",
+    "passed": true,
+    "checks": [
+        {
+            "name": "only marked loose cartons are eligible",
+            "passed": true,
+            "expectation": "Reject unmarked, heavy, oversized, kinematic, jointed and pallet bodies; allow one small marked dynamic carton.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "accepted mass",
+                    "value": 8.0,
+                    "units": "kg"
+                }
+            ]
+        },
+        {
+            "name": "aim volume respects the nearest surface",
+            "passed": true,
+            "expectation": "A slight edge aim picks the carton, but a solid wall blocks both aim and direct pickup.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "edge offset from crosshair",
+                    "value": 0.019999999552965165,
+                    "units": "m"
+                }
+            ]
+        },
+        {
+            "name": "a stacked delivery carton lifts off its support",
+            "passed": true,
+            "expectation": "A settled top carton follows toward the player and lifts clear of its supporting carton without a false blocked-sweep release.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "lifted carton height",
+                    "value": 1.6506859064102173,
+                    "units": "m"
+                }
+            ]
+        },
+        {
+            "name": "bounded physical hold",
+            "passed": true,
+            "expectation": "The actual body rises under force without parenting or an immediate pose write, settles within 4 cm, and never exceeds the force budget.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "settled target error",
+                    "value": 0.0,
+                    "units": "m"
+                },
+                {
+                    "name": "peak hold force",
+                    "value": 256.0,
+                    "units": "N"
+                },
+                {
+                    "name": "peak carton speed",
+                    "value": 2.236582040786743,
+                    "units": "m/s"
+                }
+            ]
+        },
+        {
+            "name": "maximum carry mass can be lifted",
+            "passed": true,
+            "expectation": "A 25 kg carton rises and settles under the same finite 650 N force limit while a heavier carton is refused.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "maximum-mass lift",
+                    "value": 0.30065739154815676,
+                    "units": "m"
+                },
+                {
+                    "name": "maximum-mass peak force",
+                    "value": 650.0,
+                    "units": "N"
+                }
+            ]
+        },
+        {
+            "name": "wheel distance has physical limits",
+            "passed": true,
+            "expectation": "Distance adjustment is bounded and moves the real carton to both ends of its permitted range.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "far physical centre",
+                    "value": 2.400247097015381,
+                    "units": "m"
+                },
+                {
+                    "name": "near physical centre",
+                    "value": 1.0001392364501954,
+                    "units": "m"
+                }
+            ]
+        },
+        {
+            "name": "whole carton stops before a wall",
+            "passed": true,
+            "expectation": "The actual carton stays on the near side of a thin wall with less than 1 cm penetration while the requested distance extends beyond it.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "farthest box face",
+                    "value": 1.9700007438659669,
+                    "units": "m"
+                },
+                {
+                    "name": "maximum wall penetration",
+                    "value": 7.152557373046875e-7,
+                    "units": "m"
+                }
+            ]
+        },
+        {
+            "name": "carrying fits low overhead clearance",
+            "passed": true,
+            "expectation": "A tilted carton stays held below a low roof even when the eye-centred box would overlap it; actual roof, side walls and a new near obstruction remain physical.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "eye volume above roof underside",
+                    "value": 0.07309925556182862,
+                    "units": "m"
+                },
+                {
+                    "name": "van surface penetration",
+                    "value": 0.0,
+                    "units": "m"
+                }
+            ]
+        },
+        {
+            "name": "turning through the front doorway keeps freight physical",
+            "passed": true,
+            "expectation": "The actual porch pickup can turn toward the front door and walk through it, waiting at a briefly obstructed target instead of releasing or penetrating masonry.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "maximum doorway penetration",
+                    "value": 0.0038366317749023439,
+                    "units": "m"
+                },
+                {
+                    "name": "player final doorway position",
+                    "value": -7.990000247955322,
+                    "units": "m"
+                }
+            ]
+        },
+        {
+            "name": "collection route handles the driver and real van",
+            "passed": true,
+            "expectation": "The recorded carry uses production walking past the driver and along the pavement, climbs the authored ramp, enters the cargo van, sets down upright stock and walks back out.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "driver penetration during complete carry",
+                    "value": 0.000012502074241638184,
+                    "units": "m"
+                },
+                {
+                    "name": "van penetration during complete carry",
+                    "value": 0.0,
+                    "units": "m"
+                },
+                {
+                    "name": "carton lower deck face",
+                    "value": -0.7925011515617371,
+                    "units": "m"
+                },
+                {
+                    "name": "settled carton upright dot",
+                    "value": 1.0,
+                    "units": "fraction"
+                }
+            ]
+        },
+        {
+            "name": "lowering respects the floor",
+            "passed": true,
+            "expectation": "Looking down lowers the carton physically, preserves the floor contact and permits a stable gravity-driven setdown.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "lowest held carton centre",
+                    "value": 0.3209954500198364,
+                    "units": "m"
+                },
+                {
+                    "name": "floor penetration while lowering",
+                    "value": 0.0029324889183044435,
+                    "units": "m"
+                }
+            ]
+        },
+        {
+            "name": "rotation uses physical torque",
+            "passed": true,
+            "expectation": "Right-mouse rotation keeps the view still, applies no immediate pose write and rotates the real box with bounded angular speed.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "physical rotation",
+                    "value": 99.98968505859375,
+                    "units": "degrees"
+                },
+                {
+                    "name": "peak angular speed",
+                    "value": 2.986276865005493,
+                    "units": "rad/s"
+                }
+            ]
+        },
+        {
+            "name": "rotation cannot sweep through a wall",
+            "passed": true,
+            "expectation": "An elongated held carton rotates against a wall while its actual collision body stays within 1.5 cm of the wall boundary.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "rotation wall penetration",
+                    "value": 0.000009894371032714844,
+                    "units": "m"
+                }
+            ]
+        },
+        {
+            "name": "release restores the free body",
+            "passed": true,
+            "expectation": "Setdown retains a dynamic collider and gravity, restores original solver settings and player collision, caps release energy and falls to the floor.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "release speed",
+                    "value": 0.6500000357627869,
+                    "units": "m/s"
+                }
+            ]
+        },
+        {
+            "name": "player collision is restored only after separation",
+            "passed": true,
+            "expectation": "A released carton overlapping the capsule cannot push the player; collision returns after separation and pre-existing ignore rules are preserved.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "player displacement from carton",
+                    "value": 0.0,
+                    "units": "m"
+                }
+            ]
+        },
+        {
+            "name": "pause and control transfers release immediately",
+            "passed": true,
+            "expectation": "Browser inactivity, external UI, vehicle entry, camera transition and reset each release the carton without moving it to a new location.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "validated control transfer paths",
+                    "value": 5.0,
+                    "units": "count"
+                }
+            ]
+        },
+        {
+            "name": "unreachable cartons are dropped",
+            "passed": true,
+            "expectation": "A large camera displacement releases immediately; real body occlusion brakes during its short grace period and then releases without pulling through the wall.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "occluded horizontal position change",
+                    "value": 0.0,
+                    "units": "m"
+                }
+            ]
+        },
+        {
+            "name": "legacy parcels remain distinct",
+            "passed": true,
+            "expectation": "A physical carton sets CarryingObject without CarryingParcel; a legacy parcel blocks carton pickup and retains both legacy carry properties.",
+            "error": "",
+            "measurements": []
+        }
+    ]
+}

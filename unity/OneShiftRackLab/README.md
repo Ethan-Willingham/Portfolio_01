@@ -1,11 +1,53 @@
 # The Warehouse Simulator
 
-A Unity 6.3 URP warehouse with a first receiving shift. It does not read or
-write the illustrated game's saves. Its deliveries, physical stock and new
-wholesale business are session state, with no checkpoint persistence yet.
+A Unity 6.3 URP warehouse with an empty distribution-business career and a separate
+equipped Sandbox. It does not read or write the illustrated game's saves.
+Deliveries, stock, cash and equipment are session state, with no checkpoint persistence yet.
 Internal OneShift paths, namespace and Editor menus remain stable.
 
-The active start has three empty rack bays along the west wall, eighteen pallet
+The browser's default Start business opens Latchford Distribution with $600,
+no stock, truck, racks or forklift. Purchase carton batches on the office computer,
+receive the courier's physical delivery on the front porch, carry it into the
+highlighted floor bay, then book a local customer's collection. Load the exact
+marked cartons into its van; payment arrives after it leaves. Buy racks and a
+forklift after three completed orders to begin physical pallet deliveries and
+north-dock dispatch. The singing fish and forklift flame kit are optional purchases.
+The full rules and prices are in `docs/ONE_SHIFT.md` at the repository root.
+
+Loose cartons use `WarehouseGrabber`: E/click picks up or puts down, wheel adjusts
+distance, right mouse rotates. Bodies stay dynamic and collide while held.
+`WarehouseCareer` owns the career ledger and exact manifests; the courier owns
+visible road motion, driver handling and the offsite completion boundary.
+The office camera zooms in before the HTML desktop opens and returns on close.
+Career installs at runtime before the authored receiving service starts.
+Editor Play retains the authored Sandbox unless a career fixture explicitly
+initializes it. Install `WarehouseCareerBuilder.Install()` before exporting so
+the runtime floor-guide and carton materials survive shader stripping.
+
+The career checks run against isolated physics scenes. Inspect the JSON reports'
+`passed` fields before exporting; a completed command can still contain failed checks.
+`WarehouseGrabberValidation.ValidateAndSave()`
+checks 18 handling and control-transfer cases; `WarehouseControlsValidation.ValidateAndSave()`
+checks 12 control cases; `WarehouseCourierValidation.ValidateRoute()` checks 1,002 van poses,
+and `ValidateAndSave()` checks 26 delivery, obstruction, collection, shelf placement and queue conditions.
+`WarehouseCareerValidation.ValidateAndSave()` checks 12 transaction and physical-stock cases,
+including repeat carton orders, supported putaway, exact manifests, equipment, optional purchases
+and paid pallet dispatch. Carton and pallet placement in these fixtures is explicit setup,
+so the separate native browser walkthrough remains necessary:
+`node tools/test-one-shift-career-browser.cjs`. It uses normal walking, aiming, pickup and
+computer controls, observing state without changing it.
+WarehouseComputerValidation.ValidateAndSave() checks monitor entry, paused focus,
+stale resumed frame time, bounded return, restored view and exactly-once callbacks
+at 30, 60, 120 and 144 Hz. The previous browser and office
+walkthroughs now explicitly select Sandbox. Forklift performance runs also select Sandbox.
+
+The final v9 browser export is 42,475,170 compressed bytes with zero build errors.
+Native career verification completed the first paid shipment and a repeat purchase
+through 156 gameplay assertions. The separate 90-second forklift profile had no
+frame intervals over 50 ms or long tasks on this RTX 3080 workstation. Full results
+and the bounded startup-console warning review are recorded in `docs/ONE_SHIFT.md`.
+
+The Sandbox start has three empty rack bays along the west wall, eighteen pallet
 positions, a clear floor, and a north receiving dock overlooking a parking lot.
 A separate YARD doorway connects the warehouse to the fenced lot's access ramp.
 A road truck drives along the north street, turns into the east entrance,
@@ -42,7 +84,7 @@ or click to open or close it. The surrounding business park has six neighboring
 units, visitor parking, planted verges and a parcel van; the north truck yard
 and its walking route remain in use.
 
-Three small parcels appear on the outside shelf after 35 active seconds. Aim
+In Sandbox, three small parcels appear on the outside shelf after 35 active seconds. Aim
 at a box and press E or click to carry it, then use the parcel desk or its sign
 inside the office to receive it. Carry one at a time; forklift entry is blocked
 while holding a parcel. Delivery and receipt are session state, independent of
@@ -85,7 +127,7 @@ first two neutral captured frames discard pending UI mouse motion. Keep these
 boundaries when changing input: Unity's deferred pointer-lock request cannot
 reliably capture from its ordinary frame loop after an intentional release.
 
-In the browser, aim at the office monitor or keyboard and press E. The warehouse
+In the browser, aim at the office monitor or keyboard and press E. The Sandbox
 desk buys supplier pallets, accepts or releases retailer requests, shows actual
 stock and inbound lots, and dispatches physically loaded orders. Accepting the
 next request summons a free empty pickup when the previous truck has left.

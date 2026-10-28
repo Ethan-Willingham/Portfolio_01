@@ -1,0 +1,4 @@
+PASS 30 Hz: entry, paused focus, stale resumed delta, bounded return, original pose/FOV and exactly-once callbacks.
+PASS 60 Hz: entry, paused focus, stale resumed delta, bounded return, original pose/FOV and exactly-once callbacks.
+PASS 120 Hz: entry, paused focus, stale resumed delta, bounded return, original pose/FOV and exactly-once callbacks.
+PASS 144 Hz: entry, paused focus, stale resumed delta, bounded return, original pose/FOV and exactly-once callbacks.

@@ -20,16 +20,19 @@
   var preparationStarted = false, graphicsReady = false, playerBuildVersion = null;
   var portrait = false, lastActive = null, loopPaused = false, mode = 'title';
   var menuScreen = '', computerOpen = false, escapeHandled = false, lastComputer = '', wrapperFullscreen = false;
+  var gameMode = new URLSearchParams(window.location.search).get('mode') === 'sandbox' ? 'sandbox' : 'career';
+  var pendingMode = '', computerTransitioning = false;
+  window.warehouseRequestedMode = gameMode;
   var hudState = {}, loadingPhase = 'download', loadStart = 0, loadingTimer = null, lastLoadChange = 0;
   var preparationFraction = 0, preparationCompleted = 0, preparationTotal = 7, hasFinePreparation = false;
-  var build = 'assets/one-shift-unity/Build/OneShiftWeb', version = '?v=8';
+  var build = 'assets/one-shift-unity/Build/OneShiftWeb', version = '?v=9';
   var preparationNames = ['Night lighting', 'First daylight', 'Morning light', 'Afternoon light', 'Ceiling light controls', 'Fork placement view', 'Opening the doors'];
   var tips = [
-    'The first delivery arrives at the north dock.',
-    'Carry a pallet low. Lift it to rack height only when you are lined up.',
-    'The rear of the forklift swings wide when you turn.',
-    'Small parcels arrive beside the front office door.',
-    'The dispatch computer keeps the stock and order ledger.'
+    'Your first three cartons arrive at the front door.',
+    'Press E to pick up a carton. Scroll to adjust its distance.',
+    'Hold the right mouse button to turn a carton before setting it down.',
+    'Your customers are the local garages, workshops and trade counters.',
+    'Use the office computer to buy supplies, take orders and add equipment.'
   ];
   try {
     var saved = JSON.parse(localStorage.getItem('warehouse-display-v1') || 'null');
@@ -151,8 +154,9 @@
     launcher.hidden = true;
     tools.hidden = false;
     hud.hidden = false;
-    setText(byId('session-note'), 'Your current shift is still open.');
-    play.innerHTML = '<span>Resume shift</span><span aria-hidden="true">&gt;</span>';
+    setText(byId('session-note'), (gameMode === 'sandbox' ? 'Sandbox' : 'Latchford Distribution') + ' / current session.');
+    play.innerHTML = '<span>Resume ' + (gameMode === 'sandbox' ? 'sandbox' : 'business') + '</span><span aria-hidden="true">&gt;</span>';
+    byId('new-career').hidden = false;
     play.disabled = false;
     byId('main-menu').hidden = false;
     syncOrientation();
@@ -176,6 +180,7 @@
     // Download callbacks can change the progress state while the page is hidden.
     // Keep a newly created indeterminate animation under the same activity gate.
     progress.style.animationPlayState = activity.active() ? 'running' : 'paused';
+    stage.dataset.browserActive = String(activity.active());
     pause.setAttribute('aria-pressed', String(manuallyPaused));
     byId('hydraulics').hidden = !hudState.hydraulics || !activity.active() || manuallyPaused || !!menuScreen || computerOpen || portrait;
     if (!instance) return;
@@ -232,10 +237,10 @@
       manuallyPaused = true;
       if (!wasMenu) sendCommand('menu');
     }
-    ['paused','settings','controls','about'].forEach(function (id) { byId(id).hidden = true; });
-    byId({pause:'paused',settings:'settings',help:'controls',about:'about'}[screen]).hidden = false;
-    setText(byId('menu-title'), {pause:'Paused',settings:'Settings',help:'How to play',about:'The warehouse'}[screen]);
-    byId('menu-back').hidden = screen === 'pause' || screen === 'help';
+    ['paused','settings','controls','about','new-session'].forEach(function (id) { byId(id).hidden = true; });
+    byId({pause:'paused',settings:'settings',help:'controls',about:'about',new:'new-session'}[screen]).hidden = false;
+    setText(byId('menu-title'), {pause:'Paused',settings:'Settings',help:'How to play',about:'The warehouse',new:'Start a new session?'}[screen]);
+    byId('menu-back').hidden = screen === 'pause' || screen === 'help' || screen === 'new';
     unlockPointer();
     syncActivity();
     syncDialogVisibility();
@@ -254,7 +259,7 @@
     // Resume the engine before asking Unity to capture the mouse again.
     if (resume && instance && mode !== 'title' && lastActive === true) resumeControls();
   }
-  function resumeControls() {
+  function requestMouseCapture() {
     // Unity defers requests made outside its own input handlers. Request the
     // browser lock from this trusted HTML click/key before restoring its input
     // state, so Resume and Close do not need a second click on the warehouse.
@@ -264,6 +269,9 @@
         if (request && typeof request.catch === 'function') request.catch(function () {});
       } catch (_) { /* The normal Click hint remains available if capture is denied. */ }
     }
+  }
+  function resumeControls() {
+    requestMouseCapture();
     sendCommand('resume');
   }
   function resume() {
@@ -309,10 +317,27 @@
     setText(play, 'Reload and try again');
     syncActivity();
   }
-  function start() {
+  function chooseSession(choice) {
+    if (starting && !instance) return;
+    if (!instance) { start(choice); return; }
+    pendingMode = choice;
+    setText(byId('new-session-copy'), choice === 'sandbox' ? 'Open a fresh, equipped warehouse in Sandbox.' : 'Start Latchford Distribution again with $600 and an empty warehouse.');
+    setText(byId('confirm-new-session'), choice === 'sandbox' ? 'Open fresh sandbox' : 'Start new business');
+    openMenu('new');
+  }
+  function start(requestedMode) {
     if (failed) { window.location.reload(); return; }
     if (instance && graphicsReady) { resume(); return; }
     if (starting || portrait) return;
+    gameMode = requestedMode === 'sandbox' ? 'sandbox' : 'career';
+    window.warehouseRequestedMode = gameMode;
+    stage.dataset.mode = gameMode;
+    if (gameMode === 'sandbox') tips = [
+      'Sandbox begins with racks, a forklift and a four-pallet delivery.',
+      'The road truck backs into the north dock and opens its doors.',
+      'Carry pallets low and turn slowly.',
+      'The office computer handles stock purchases and retailer orders.'
+    ];
     var probe = document.createElement('canvas'), gl = probe.getContext('webgl2');
     if (!gl || typeof WebAssembly !== 'object') {
       showError('This browser cannot run the warehouse. Use a browser with WebGL 2 enabled. The illustrated game is available in About.');
@@ -334,7 +359,7 @@
         frameworkUrl:build + '.framework.js.unityweb' + version,
         codeUrl:build + '.wasm.unityweb' + version,
         streamingAssetsUrl:'assets/one-shift-unity/StreamingAssets',
-        companyName:'Ethan Willingham', productName:'The Warehouse Simulator', productVersion:'8',
+        companyName:'Ethan Willingham', productName:'The Warehouse Simulator', productVersion:'9',
         matchWebGLToCanvasSize:false, devicePixelRatio:1,
         onOneShiftStats:reportPlayerStats, onOneShiftPreparation:reportPreparation,
         onWarehousePreparation:reportFinePreparation, onWarehouseHUD:reportHUD,
@@ -361,7 +386,9 @@
     if (typeof value === 'string') { try { value = JSON.parse(value); } catch (_) { return; } }
     if (!value || typeof value !== 'object') return;
     hudState = value;
+    if (value.mode === 'career' || value.mode === 'sandbox') stage.dataset.mode = value.mode;
     setText(byId('clock'), value.clock);
+    setText(byId('desktop-clock'), value.clock || 'Office');
     setText(byId('location'), value.location || 'Warehouse floor');
     setText(byId('objective'), value.objective);
     setText(byId('objective-detail'), typeof value.detail === 'string' ? value.detail.replace(/\s{2,}/g, ' / ') : value.detail);
@@ -369,6 +396,9 @@
     byId('hint-key').hidden = !value.hintKey;
     setText(byId('hint-key'), value.hintKey);
     setText(byId('hint'), value.hint);
+    stage.dataset.holding = String(!!value.holding);
+    byId('carry').hidden = !value.holding;
+    setText(byId('carry-distance'), Number.isFinite(value.carryDistance) ? value.carryDistance.toFixed(1) + ' m' : '');
     byId('notice').hidden = !value.notice;
     setText(byId('notice'), value.notice);
     byId('drive-status').hidden = !value.driving;
@@ -415,7 +445,7 @@
       var row = element('article', null, 'warehouse-desk-row'), copy = element('div'), action = element('div');
       copy.appendChild(element('h3', order.name)); copy.appendChild(element('p', order.detail));
       if (order.status) copy.appendChild(element('p', order.status, 'warehouse-desk-status'));
-      action.appendChild(element('output', money(order.price)));
+      action.appendChild(element('output', order.owned ? 'Installed' : money(order.price)));
       function appendAction(label, actionCommand, enabled, secondary) {
         var button = element('button', label, secondary ? 'warehouse-order-secondary' : '');
         button.type = 'button'; button.disabled = enabled === false;
@@ -430,13 +460,16 @@
         });
         action.appendChild(button);
       }
-      if (order.action) appendAction(order.action, command, order.enabled, false);
+      if (order.action) appendAction(order.action, command, order.enabled !== false && !order.owned, false);
       if (order.secondaryAction && order.secondaryCommand)
         appendAction(order.secondaryAction, order.secondaryCommand, order.secondaryEnabled, true);
       row.appendChild(copy); row.appendChild(action); target.appendChild(row);
     });
   }
   function renderComputer(value) {
+    computerTransitioning = value.transitioning === true;
+    stage.classList.toggle('is-computer-transitioning', computerTransitioning);
+    var opening = value.open && !computerOpen;
     if (value.open && !computerOpen) {
       computerOpen = true;
       menuScreen = '';
@@ -444,6 +477,9 @@
       unlockPointer();
       syncActivity();
       syncDialogVisibility();
+      showBusiness(true);
+      var suggested = ['overview','stock','purchases','customers','upgrades','ledger'].includes(value.suggestedTab) ? value.suggestedTab : 'overview';
+      openDeskTab(suggested, true);
     } else if (!value.open && computerOpen) {
       computerOpen = false;
       if (computer.open) computer.close();
@@ -455,15 +491,23 @@
     lastComputer = serialized;
     var focused = document.activeElement;
     var focusAction = focused && focused.dataset.action, focusId = focused && focused.dataset.id;
-    setText(byId('computer-title'), value.title || 'Warehouse desk');
+    var sandbox = value.mode === 'sandbox' || (!value.mode && gameMode === 'sandbox');
+    setText(byId('computer-title'), value.company || value.title || 'Latchford Distribution');
+    setText(byId('computer-mode'), sandbox ? 'Dispatch / Sandbox' : 'Trade supplies / Career');
     setText(byId('computer-summary'), value.summary);
     setText(byId('computer-cash'), money(value.cash));
-    setText(byId('computer-message'), value.message);
+    setText(byId('computer-message'), value.message || 'Ready. Choose a task from the left.');
+    setText(byId('business-stage'), value.stage || (sandbox ? 'Your warehouse is ready' : 'Open for business'));
+    setText(byId('business-stage-detail'), value.stageDetail || (sandbox ? 'Handle the incoming pallets and run the warehouse from here.' : 'Buy a starter delivery, bring the cartons inside, and fill your first local order.'));
+    setText(byId('completed-orders'), Math.max(0, Number(value.completedOrders) || 0));
+    setText(byId('stock-lines'), (value.inventory || []).filter(function (item) { return Number(item.quantity) > 0; }).length);
+    setText(byId('customer-note'), sandbox ? 'Accept a retailer order, load the oldest matching stock into the cleared trailer, and dispatch it here.' : 'Accept an order, load its goods into the pickup van, and collect payment after departure.');
     makeTable(byId('inventory'), ['Item','Available'], (value.inventory || []).map(function (item) { return [item.name, item.quantity + (item.unit ? ' ' + item.unit : '')]; }), 'Stock will appear here as deliveries are received.');
     makeOrders(byId('orders'), value.orders || [], 'order', 'No supplier stock is available.');
     makeOrders(byId('contracts'), value.contracts || [], 'contract', 'There are no open customer orders.');
+    makeOrders(byId('upgrades'), value.upgrades || [], 'upgrade', 'Equipment upgrades will appear here as the business grows.');
     makeTable(byId('ledger'), ['Transaction','Amount'], (value.ledger || []).map(function (entry) { return [entry.label, money(entry.amount)]; }), 'Transactions will appear here after your first order.');
-    if (focusAction) {
+    if (focusAction && !opening) {
       var replacement = Array.from(computer.querySelectorAll('button[data-action]')).find(function (button) { return button.dataset.action === focusAction && button.dataset.id === focusId && !button.disabled; });
       if (replacement) replacement.focus({preventScroll:true});
       else computer.querySelector('[role="tab"][aria-selected="true"]').focus({preventScroll:true});
@@ -474,10 +518,22 @@
     computerOpen = false;
     lastComputer = '';
     if (computer.open) computer.close();
-    sendCommand('computer-close');
     syncActivity();
     if (resumePlay && !manuallyPaused && mode === 'play' && !portrait) canvas.focus({preventScroll:true});
-    if (resumePlay && lastActive === true) resumeControls();
+    // The trusted click obtains native lock. Unity owns the return camera move
+    // and enables input only at its endpoint, with no extra click required.
+    if (resumePlay && lastActive === true) requestMouseCapture();
+    sendCommand('computer-close');
+  }
+  function showBusiness(open) {
+    byId('business').hidden = !open;
+    byId('desktop-home').hidden = open;
+    byId('dispatch-task').setAttribute('aria-pressed', String(open));
+  }
+  function openDeskTab(value, focus) {
+    showBusiness(true);
+    switchTabs(Array.from(document.querySelectorAll('[data-desk-tab]')), 'deskTab', 'desk-', value, focus);
+    byId('desk-' + value).parentElement.scrollTop = 0;
   }
   function switchTabs(buttons, attribute, prefix, value, focus) {
     buttons.forEach(function (button) {
@@ -489,12 +545,16 @@
   }
   function wireTabs(selector, attribute, prefix) {
     var buttons = Array.from(document.querySelectorAll(selector));
+    function select(value, focus) {
+      if (attribute === 'deskTab') openDeskTab(value, focus);
+      else switchTabs(buttons, attribute, prefix, value, focus);
+    }
     buttons.forEach(function (button, index) {
-      button.addEventListener('click', function () { switchTabs(buttons, attribute, prefix, button.dataset[attribute], false); });
+      button.addEventListener('click', function () { select(button.dataset[attribute], false); });
       button.addEventListener('keydown', function (event) {
-        var next = event.key === 'ArrowRight' ? (index + 1) % buttons.length : event.key === 'ArrowLeft' ? (index + buttons.length - 1) % buttons.length : event.key === 'Home' ? 0 : event.key === 'End' ? buttons.length - 1 : -1;
+        var next = event.key === 'ArrowRight' || (attribute === 'deskTab' && event.key === 'ArrowDown') ? (index + 1) % buttons.length : event.key === 'ArrowLeft' || (attribute === 'deskTab' && event.key === 'ArrowUp') ? (index + buttons.length - 1) % buttons.length : event.key === 'Home' ? 0 : event.key === 'End' ? buttons.length - 1 : -1;
         if (next < 0) return;
-        event.preventDefault(); switchTabs(buttons, attribute, prefix, buttons[next].dataset[attribute], true);
+        event.preventDefault(); select(buttons[next].dataset[attribute], true);
       });
     });
   }
@@ -520,7 +580,15 @@
     });
     syncOrientation();
   }
-  play.addEventListener('click', start);
+  play.addEventListener('click', function () { start('career'); });
+  byId('sandbox').addEventListener('click', function () { chooseSession('sandbox'); });
+  byId('new-career').addEventListener('click', function () { chooseSession('career'); });
+  byId('cancel-new-session').addEventListener('click', function () { closeMenu(false); });
+  byId('confirm-new-session').addEventListener('click', function () {
+    var destination = new URL(window.location.href);
+    destination.searchParams.set('mode', pendingMode === 'sandbox' ? 'sandbox' : 'career');
+    window.location.assign(destination.href);
+  });
   quality.addEventListener('change', function () { sizeCanvas(); saveDisplay(); });
   byId('show-stats').addEventListener('change', function () { syncStatsVisibility(); saveDisplay(); });
   pause.addEventListener('click', function () { openMenu('pause'); });
@@ -530,6 +598,10 @@
   byId('menu-back').addEventListener('click', menuBack);
   byId('close-help').addEventListener('click', menuBack);
   byId('computer-close').addEventListener('click', function () { closeComputer(true); });
+  byId('computer-minimize').addEventListener('click', function () { showBusiness(false); });
+  byId('desktop-toggle').addEventListener('click', function () { showBusiness(byId('business').hidden); });
+  document.querySelectorAll('[data-open-business]').forEach(function (button) { button.addEventListener('click', function () { showBusiness(true); }); });
+  document.querySelectorAll('[data-desk-open]').forEach(function (button) { button.addEventListener('click', function () { openDeskTab(button.dataset.deskOpen, true); }); });
   document.querySelectorAll('[data-screen]').forEach(function (button) { button.addEventListener('click', function () { openMenu(button.dataset.screen); }); });
   document.querySelectorAll('[data-fullscreen]').forEach(function (button) { button.addEventListener('click', toggleFullscreen); });
   wireTabs('[data-help-tab]', 'helpTab', 'help-');
@@ -577,5 +649,6 @@
   document.addEventListener('pointerlockerror', releaseMouseCapture);
   if (coarsePointer.addEventListener) coarsePointer.addEventListener('change', syncOrientation);
   activity.onChange(syncActivity);
+  if (gameMode === 'sandbox') setText(byId('session-note'), 'Sandbox selected. Choose Sandbox for a fresh equipped warehouse.');
   syncFullscreen();
 })();

@@ -21,7 +21,11 @@ namespace OneShift.RackLab
         WarehouseDayNight uiClock;
         WarehouseReceiving uiReceiving;
         WarehouseBusiness uiBusiness;
+        WarehouseCareer uiCareer;
+        WarehouseComputerTransition computerTransition;
         public bool ComputerOpen => computerOpen;
+        public bool ComputerTransitioning => computerTransition != null && computerTransition.Active;
+        public bool PresentationActive => pageActive && windowFocused && !applicationPaused;
 
         void Start()
         {
@@ -30,13 +34,20 @@ namespace OneShift.RackLab
             uiLift = UnityEngine.Object.FindFirstObjectByType<ForkliftLiftController>();
             uiClock = UnityEngine.Object.FindFirstObjectByType<WarehouseDayNight>();
             uiReceiving = UnityEngine.Object.FindFirstObjectByType<WarehouseReceiving>();
-            uiBusiness = WarehouseBusiness.Ensure();
-            uiBusiness.Changed += BusinessChanged;
+            uiCareer = UnityEngine.Object.FindFirstObjectByType<WarehouseCareer>();
+            if (uiCareer != null) uiCareer.Changed += CareerChanged;
+            else { uiBusiness = WarehouseBusiness.Ensure(); uiBusiness.Changed += BusinessChanged; }
+            computerTransition = gameObject.AddComponent<WarehouseComputerTransition>();
         }
 
         void Update()
         {
             if (preparing || Time.unscaledTime < nextHUD) return;
+            if (uiLift == null && uiCareer != null && uiCareer.ForkliftOwned)
+            {
+                uiDriver = UnityEngine.Object.FindFirstObjectByType<ForkliftPlayerInteraction>();
+                uiLift = UnityEngine.Object.FindFirstObjectByType<ForkliftLiftController>();
+            }
             bool lever = uiDriver != null && uiDriver.ForkControlHeld;
             nextHUD = Time.unscaledTime + (lever ? .05f : .2f);
             PublishHUD();
@@ -49,12 +60,21 @@ namespace OneShift.RackLab
             PublishHUD();
         }
 
+        void CareerChanged()
+        {
+            currentNotice = uiCareer.Message;
+            noticeUntil = Time.unscaledTime + 6;
+            PublishHUD();
+        }
+
         public void OpenComputer()
         {
 #if UNITY_WEBGL && !UNITY_EDITOR
-            if (preparing || computerOpen || uiWalking == null || !uiWalking.CanControl || uiWalking.VehicleMode) return;
-            computerOpen = true;
+            if (preparing || computerOpen || ComputerTransitioning || uiWalking == null || !uiWalking.CanControl || uiWalking.VehicleMode) return;
+            if (uiWalking.CarryingObject)
+            { currentNotice = "Put the carton down before using the computer."; noticeUntil = Time.unscaledTime + 4; PublishHUD(); return; }
             uiWalking.SetExternalControl(false);
+            computerTransition.Enter(uiWalking, this, () => { computerOpen = true; ApplyState(); PublishHUD(); });
             ApplyState();
             PublishHUD();
 #else
@@ -79,21 +99,25 @@ namespace OneShift.RackLab
             switch (request.action)
             {
                 case "computer-close":
+                    if (!computerOpen || ComputerTransitioning) break;
                     computerOpen = false;
-                    uiWalking?.SetExternalControl(true);
+                    computerTransition.Exit(() => { ApplyState(); uiWalking?.ResumeAfterComputerTransition(); PublishHUD(); });
                     ApplyState();
                     break;
                 case "order":
-                    if (computerOpen) uiBusiness?.Purchase(request.id);
+                    if (computerOpen) { if (uiCareer != null) uiCareer.Purchase(request.id); else uiBusiness?.Purchase(request.id); }
                     break;
                 case "contract":
-                    if (computerOpen) uiBusiness?.ContractAction(request.id);
+                    if (computerOpen) { if (uiCareer != null) uiCareer.Accept(request.id); else uiBusiness?.ContractAction(request.id); }
                     break;
                 case "cancel-contract":
                     if (computerOpen) uiBusiness?.ReleaseContract(request.id);
                     break;
+                case "upgrade":
+                    if (computerOpen) uiCareer?.Upgrade(request.id);
+                    break;
                 case "resume":
-                    if (!suspended && !preparing && !computerOpen)
+                    if (!suspended && !preparing && !computerOpen && !ComputerTransitioning)
                     {
                         if (uiDriver != null && uiDriver.IsDriving) uiDriver.ResumeControlsFromUI();
                         else uiWalking?.ResumeControlsFromUI();
@@ -108,6 +132,10 @@ namespace OneShift.RackLab
         public string HUDSnapshot()
         {
             var state = new HUDState();
+            state.mode = uiCareer != null ? "career" : "sandbox";
+            var grabber = uiWalking != null ? uiWalking.GetComponent<WarehouseGrabber>() : null;
+            state.holding = grabber != null && grabber.IsHolding;
+            state.carryDistance = grabber != null ? grabber.HoldDistance : 0;
             int minutes = uiClock != null ? Mathf.FloorToInt(uiClock.Hour * 60) % 1440 : 270;
             int hour = minutes / 60;
             state.clock = ((hour + 11) % 12 + 1).ToString() + ":" + (minutes % 60).ToString("00") + (hour < 12 ? " AM" : " PM");
@@ -136,7 +164,13 @@ namespace OneShift.RackLab
                 if (p.y < -.3f) state.location = "Business park";
                 else if (p.x > 3.8f && p.z < -4 && p.z > -10) state.location = "Office";
             }
-            if (uiBusiness != null)
+            if (uiCareer != null)
+            {
+                state.objective = uiCareer.Objective;
+                state.detail = uiCareer.ObjectiveDetail;
+                state.computer = CareerComputerSnapshot();
+            }
+            else if (uiBusiness != null)
             {
                 var order = uiBusiness.ActiveOrder;
                 if (order != null)
@@ -168,7 +202,10 @@ namespace OneShift.RackLab
         ComputerState ComputerSnapshot()
         {
             var result = new ComputerState { open = computerOpen, cash = uiBusiness.Cash, revision = uiRevision,
-                title = "Warehouse desk", summary = "Day " + uiBusiness.Day + " / wholesale stock and retailer orders", message = uiBusiness.Message };
+                title = "Warehouse desk", company = "Sandbox operations", mode = "sandbox", suggestedTab = "stock",
+                transitioning = ComputerTransitioning, transitionProgress = computerTransition != null ? computerTransition.Progress : 0,
+                transitionDirection = computerTransition != null && computerTransition.Returning ? "out" : "in",
+                summary = "Day " + uiBusiness.Day + " / wholesale stock and retailer orders", message = uiBusiness.Message };
             if (!computerOpen) return result;
             result.inventory = WarehouseBusiness.Products.Select(product => new InventoryRow
             {
@@ -210,24 +247,27 @@ namespace OneShift.RackLab
         void ReleaseHUD()
         {
             if (uiBusiness != null) uiBusiness.Changed -= BusinessChanged;
+            if (uiCareer != null) uiCareer.Changed -= CareerChanged;
             if (computerOpen && uiWalking != null) uiWalking.SetExternalControl(true);
         }
 
         [Serializable, Preserve] sealed class HUDState
         {
-            public string clock, location, objective, detail, hintKey = "", hint = "", notice = "", training = "";
-            public bool driving, hydraulics;
-            public float forkHeight, forkSpeed, hydraulicInput;
+            public string clock, location, objective, detail, mode, hintKey = "", hint = "", notice = "", training = "";
+            public bool driving, hydraulics, holding;
+            public float forkHeight, forkSpeed, hydraulicInput, carryDistance;
             public ComputerState computer;
         }
         [Serializable, Preserve] sealed class ComputerState
         {
-            public bool open;
-            public string title, summary, message;
-            public int cash;
+            public bool open, transitioning;
+            public float transitionProgress;
+            public string title, summary, message, mode, company, stage, stageDetail, suggestedTab, transitionDirection;
+            public int cash, completedOrders;
             public int revision;
             public InventoryRow[] inventory = Array.Empty<InventoryRow>();
             public OfferRow[] orders = Array.Empty<OfferRow>(), contracts = Array.Empty<OfferRow>();
+            public OfferRow[] upgrades = Array.Empty<OfferRow>();
             public LedgerRow[] ledger = Array.Empty<LedgerRow>();
         }
         [Serializable, Preserve] sealed class InventoryRow { public string id, name, unit; public int quantity; }
@@ -235,7 +275,7 @@ namespace OneShift.RackLab
         {
             public string id, name, detail, action, status, secondaryAction, secondaryCommand;
             public int price;
-            public bool enabled, secondaryEnabled;
+            public bool enabled, secondaryEnabled, owned;
         }
         [Serializable, Preserve] sealed class LedgerRow { public string label; public int amount; }
     }

@@ -41,6 +41,9 @@ namespace OneShift.RackLab
         public bool HasQueuedPickup => pickupRequested;
         public string DispatchReason { get; private set; } = "";
         public event Action<WarehouseReceiving> DeliveryReady;
+        // The career keeps the existing dock machinery, but starts with no
+        // truck or cargo. Sandbox retains the authored first delivery.
+        public bool StartEmpty { get; set; }
         Vector3[] cargoOffsets;
         Quaternion[] cargoRotations;
         Quaternion[] wheelRotations;
@@ -65,7 +68,7 @@ namespace OneShift.RackLab
         void Start()
         {
             physicsScene = gameObject.scene.GetPhysicsScene();
-            Phase = ReceivingPhase.Arriving;
+            Phase = StartEmpty ? ReceivingPhase.Away : ReceivingPhase.Arriving;
             truck.isKinematic = true;
             truck.interpolation = RigidbodyInterpolation.Interpolate;
             leftClosed = leftDoor.localRotation; rightClosed = rightDoor.localRotation;
@@ -86,6 +89,7 @@ namespace OneShift.RackLab
             dockBarrier.gameObject.SetActive(true);
             if (dockPlate != null) dockPlate.SetActive(false);
             if (wheelChocks != null) wheelChocks.SetActive(false);
+            if (StartEmpty) truck.gameObject.SetActive(false);
             UpdateStatus();
         }
 

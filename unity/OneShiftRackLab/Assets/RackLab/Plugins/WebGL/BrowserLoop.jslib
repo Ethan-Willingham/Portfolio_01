@@ -1,4 +1,7 @@
 mergeInto(LibraryManager.library, {
+  WarehouseInitialMode: function () {
+    return window.warehouseRequestedMode === 'sandbox' ? 0 : 1;
+  },
   OneShiftRegisterBrowserLoop__deps: ['emscripten_pause_main_loop', 'emscripten_resume_main_loop'],
   OneShiftRegisterBrowserLoop: function () {
     // Export the engine's own scheduling controls for the host page.

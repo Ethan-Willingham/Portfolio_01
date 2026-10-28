@@ -1,8 +1,8 @@
 # The Warehouse Simulator
 
 The Warehouse Simulator, formerly One Shift, keeps its stable `one-shift.html`
-address and click-to-load Unity browser launcher. The v8 home screen uses an
-actual scene image, a clear Start shift action, settings and a separate control
+address and click-to-load Unity browser launcher. The v9 home screen uses an
+actual scene image, a clear Start business action, Sandbox, settings and a separate control
 guide. The HTML interface supplies the clock, contextual interactions, pause
 menu, hydraulic slider and office computer. The old grey debug panels and
 floating black pallet labels are absent from the playable scene.
@@ -15,7 +15,62 @@ keeps its `.loader.js` extension. Bump the launcher CSS/script query versions an
 the build version in `js/one-shift-unity.js` and `BrowserLifecycle.BuildVersion`
 whenever the published build changes.
 
-The Unity start has three empty rack bays against the west wall, a clear working
+## Career: Latchford Distribution
+
+The default starts with an empty warehouse, $600 of working capital and a paid
+lease. There is no opening truck, stock, forklift or rack row. The old decorative
+parcel van and timed free parcels are also absent. The first purchase order buys
+three cartons of packing tape for $120. A courier drives in, opens the van,
+carries each real carton to the front porch and leaves. The player carries them
+through the office and places them in the highlighted tape bay. A settled carton
+must have real support in its bay; a held or airborne carton does not check in.
+
+Miller Motor Works buys that batch for $210. The customer order is available only
+after the stock has been received. Accepting books a collection van and marks
+the exact oldest cartons. Load those cartons onto the van floor, withdraw and
+let the driver leave. Payment posts once the shipment is offsite. Repeated button
+presses cannot duplicate a booking, charge or payout. Shop towels and work gloves
+open after the first customer order, serving Parkside Service and Northline Trade
+Counter. No invisible staff unload, store or load the player's freight.
+
+The HUD presents one next step. There are no timed first-day failures or running
+rent charges. Purchases and customer batches match, each product retains a buyer,
+and a collection costs no extra cash, so bought stock can fund the next cycle.
+Equipment and novelty purchases preserve $120 for a small restock. After three
+completed orders, racks cost $300 and the forklift costs $650. Both are required
+to order a 450 kg pallet of workshop fasteners at $480. The player must put it away in a purchased rack
+before accepting its $840 trade-counter order, then load and dispatch it through
+the existing north dock. Forklift training remains required on first entry.
+
+A $95 singing fish becomes available after the first completed order. It mounts
+in the office and plays an original synthesized tune with moving jaw and tail.
+The $65 flame kit requires an owned forklift and adds painted side decals without
+changing handling. These are optional uses of earned cash.
+
+E or a click picks up and puts down an eligible loose carton. The mouse wheel
+adjusts hold distance; hold right mouse to rotate it while the view stays still.
+The body remains dynamic and collides with the warehouse. Bounded forces and
+torques follow a swept target, with a gentle release and clear separation from
+player collision. Heavy loads and pallets still need the forklift. Pause, focus
+loss, camera transitions and vehicle entry clear the held control state.
+
+Using the computer moves the real camera toward its screen over 0.75 seconds,
+then reveals a cream monitor surround, desktop and dispatch application. Closing
+returns to the saved camera pose over 0.55 seconds. Movement is locked and freight
+physics paused during both transitions. Focus and portrait gates suspend them
+independently. The computer exposes the next task, stock, suppliers, customer
+orders, upgrades and ledger; it never grants inventory merely by displaying it.
+
+Career and Sandbox are separate fresh sessions. The title retains a Resume action
+for the currently loaded session; switching modes explicitly confirms starting
+over. Neither mode persists inventory across page loads or changes classic saves.
+`WarehouseCareer`, `WarehouseCareerBox`, `WarehouseCourierService`,
+`WarehouseGrabber` and `WarehouseComputerTransition` implement the career.
+`WarehouseCareerBuilder.Install()` retains runtime material and shader resources.
+
+## Sandbox and shared warehouse
+
+The Sandbox start has three empty rack bays against the west wall, a clear working
 floor, a receiving door in the north wall and a parking lot outside. A separate
 yard doorway leads onto the access ramp, so parked trailer doors cannot block
 the walking route. The first
@@ -235,6 +290,42 @@ The earlier receiving release also passed 57 forklift physics and geometry
 checks and thirteen delivery sequence checks. The four compressed v6 browser
 files total 42,213,674 bytes. Browser verification used Windows Chrome at device
 scale factor two; Mac hardware was not available.
+
+The v9 career fixtures pass 12 stock and transaction cases, 18 pickup cases,
+26 courier cases and camera transitions at 30, 60, 120 and 144 Hz. The pickup
+fixtures include lifting from another carton and the complete collection route
+with the production walking controller at 144 Hz and physics at 200 Hz. The
+cargo van has 2.16 m of interior headroom so the player can step from its ramp
+onto the deck without the roof blocking the controller's step clearance.
+Courier regressions reproduce a shifted, tilted porch carton at both
+5 ms and 20 ms physics steps. Placement raises freight clear of the stack before
+lowering it, with measured overlap below 2 mm. These fixtures use explicit
+setup for stock positions and equipment balances; they do not replace a native
+first-order browser walkthrough.
+
+The final v9 export completed with zero errors and totals 42,475,170 compressed
+bytes. Its native career walkthrough completed 156 gameplay assertions: empty
+start, camera entry and return, purchase, courier delivery, physical storage,
+customer acceptance, three carried cartons loaded into the van, departure and
+the $210 payment, then a second $160 purchase. The first shipment leaves $690;
+the next four cartons reduce cash to $530 without duplicating stock or payment.
+The final console scan was rechecked with the same bounded startup-warning
+classification as the existing Sandbox harness. The original console remains
+available in the local verification artifacts.
+The career run recorded 60,921 active frames, a 27.9 ms maximum frame interval,
+no intervals over 50 ms and no long tasks during approximately seven minutes
+of play. The v9 Sandbox and office runs completed 74 and 43 checks, the
+simulated-loader suite completed 112, and the final player passed 18 fullscreen
+and display checks. These are local Windows Chrome checks.
+
+A separate 90.04-second v9 Sandbox profile on the RTX 3080, including first
+forklift entry, training and native hydraulic use, recorded a 7 ms median,
+13.9 ms 95th percentile, 14 ms 99th percentile and 20.9 ms maximum. There were
+no intervals over 50 ms, long tasks or blocking WebGL calls over 20 ms during
+play. The drawing buffer was 1800 by 1125 with actual 2x MSAA and SMAA.
+Startup took 31.71 seconds, with a 10.27-second longest interval between
+preparation-view updates. This is a measurement of this workstation,
+not a guarantee for other hardware.
 
 The final v8 export completed with zero build errors and totals 42,367,999
 compressed bytes. Its compiled Chrome gameplay pass completed all 73 functional

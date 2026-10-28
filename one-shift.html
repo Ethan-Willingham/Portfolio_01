@@ -5,20 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#252620">
   <title>The Warehouse Simulator</title>
-  <meta name="description" content="Your warehouse, your first delivery. Unload the truck, find a place for every pallet, and run the business from the dispatch office.">
+  <meta name="description" content="An empty warehouse and $600. Start Latchford Distribution, handle every carton, and build a small trade-supply business.">
   <link rel="canonical" href="https://ethanwillingham.com/one-shift.html">
   <meta property="og:title" content="The Warehouse Simulator">
-  <meta property="og:description" content="Your warehouse, your first delivery. Unload the truck, find a place for every pallet, and run the business from the dispatch office.">
+  <meta property="og:description" content="An empty warehouse and $600. Start Latchford Distribution, handle every carton, and build a small trade-supply business.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://ethanwillingham.com/one-shift.html">
-  <meta property="og:image" content="https://ethanwillingham.com/assets/one-shift-unity/preview.png?v=8">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/one-shift-unity/preview.png?v=9">
   <meta property="og:image:alt" content="A worker and yellow forklift in the sunlit warehouse, beside the dispatch office.">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="one-shift-unity.css?v=8">
+  <link rel="stylesheet" href="one-shift-unity.css?v=9">
   <script src="js/demo-activity.js?v=1" defer></script>
-  <script src="js/one-shift-unity.js?v=8" defer></script>
+  <script src="js/one-shift-unity.js?v=9" defer></script>
 </head>
 <body class="warehouse-page">
 <main id="warehouse-stage" aria-label="The Warehouse Simulator">
@@ -28,13 +28,15 @@
     <div class="warehouse-title-layout">
       <header class="warehouse-wordmark">
         <h1 id="warehouse-title"><span class="warehouse-wordmark-the">The</span><span>Warehouse</span><span class="warehouse-wordmark-last">Simulator</span></h1>
-        <p>A place for everything.</p>
+        <p>Start small. Make room for more.</p>
       </header>
       <nav id="warehouse-main-menu" class="warehouse-main-menu" aria-label="Main menu">
-        <button id="warehouse-play" class="warehouse-primary" type="button"><span>Start shift</span><span aria-hidden="true">&gt;</span></button>
+        <button id="warehouse-play" class="warehouse-primary" type="button"><span>Start business</span><span aria-hidden="true">&gt;</span></button>
+        <button id="warehouse-sandbox" class="warehouse-mode-choice" type="button"><span>Sandbox</span><small>Equipped warehouse. Fresh session.</small></button>
+        <button id="warehouse-new-career" type="button" hidden>New business</button>
         <button type="button" data-screen="settings">Settings</button>
         <button type="button" data-screen="help">How to play</button>
-        <p id="warehouse-session-note" class="warehouse-session-note">Keyboard and mouse</p>
+        <p id="warehouse-session-note" class="warehouse-session-note">$600. An empty warehouse. Your first customer.<br>Keyboard and mouse / progress lasts this session.</p>
       </nav>
       <section id="warehouse-loading" class="warehouse-loading" aria-labelledby="warehouse-load-status" hidden>
         <div class="warehouse-loading-kicker"><p class="warehouse-kicker">Opening the warehouse</p><output id="warehouse-load-elapsed" aria-live="off">0s elapsed</output></div>
@@ -46,12 +48,12 @@
           <li data-load-step="prepare"><span>03</span> Prepare</li>
         </ol>
         <p id="warehouse-load-detail" class="warehouse-load-detail">Getting the game files.</p>
-        <p id="warehouse-load-tip" class="warehouse-load-tip">The first delivery arrives at the north dock.</p>
+        <p id="warehouse-load-tip" class="warehouse-load-tip">Your first three cartons arrive at the front door.</p>
       </section>
       <div id="warehouse-error" class="warehouse-error" role="alert" hidden></div>
     </div>
     <footer class="warehouse-title-footer">
-      <span>v8 <span aria-hidden="true">/</span> Web edition</span>
+      <span>v9 <span aria-hidden="true">/</span> Web edition</span>
       <nav aria-label="Game information"><button type="button" data-fullscreen>Full screen</button><button type="button" data-screen="about">About</button><a href="archive.html">More games</a></nav>
     </footer>
   </section>
@@ -64,6 +66,7 @@
     <div id="warehouse-drive-status" class="warehouse-drive-status" hidden><span>Fork height</span><output id="warehouse-fork-height">0.0 ft</output></div>
     <div id="warehouse-training" class="warehouse-training" hidden><span id="warehouse-training-step"></span><p id="warehouse-training-copy"></p></div>
     <div id="warehouse-context" class="warehouse-context" hidden><kbd id="warehouse-hint-key"></kbd><span id="warehouse-hint"></span></div>
+    <div id="warehouse-carry" class="warehouse-carry" hidden><span><kbd>E</kbd> Set down</span><span><kbd>Wheel</kbd> Distance <output id="warehouse-carry-distance"></output></span><span><kbd>Right mouse</kbd> Rotate</span></div>
     <p id="warehouse-notice" class="warehouse-notice" role="status" hidden></p>
     <aside id="warehouse-hydraulics" class="warehouse-hydraulics" aria-label="Fork hydraulic control" hidden>
       <div class="warehouse-hydraulic-caption"><kbd>Left Shift</kbd><span>Hydraulics</span></div>
@@ -72,7 +75,7 @@
     </aside>
   </section>
   <nav id="warehouse-tools" class="warehouse-tools" aria-label="Game controls" hidden><button id="warehouse-pause" type="button" aria-pressed="false">Menu <kbd>Esc</kbd></button></nav>
-  <output id="warehouse-stats" class="warehouse-stats" aria-label="Game version and frame rate" aria-live="off" hidden>v8</output>
+  <output id="warehouse-stats" class="warehouse-stats" aria-label="Game version and frame rate" aria-live="off" hidden>v9</output>
   <dialog id="warehouse-menu" class="warehouse-dialog" aria-labelledby="warehouse-menu-title">
     <div class="warehouse-menu-shell">
       <header class="warehouse-dialog-header"><div><p class="warehouse-kicker">The Warehouse Simulator</p><h2 id="warehouse-menu-title">Paused</h2></div><button id="warehouse-close-menu" class="warehouse-close" type="button" aria-label="Close menu">Close</button></header>
@@ -86,11 +89,12 @@
         <div class="warehouse-setting"><span><strong>Display</strong><small>Use the whole screen.</small></span><button id="warehouse-fullscreen" type="button" data-fullscreen>Full screen</button></div>
         <p class="warehouse-setting-note">Settings apply immediately. Your shift stays where you left it.</p>
       </section>
+      <section id="warehouse-new-session" hidden><p id="warehouse-new-session-copy" class="warehouse-menu-intro"></p><p>Your current progress is kept only in this open page. A new session ends it.</p><div class="warehouse-session-actions"><button id="warehouse-confirm-new-session" class="warehouse-primary" type="button">Start new session</button><button id="warehouse-cancel-new-session" type="button">Keep current session</button></div></section>
       <section id="warehouse-controls" class="warehouse-controls" hidden>
         <div class="warehouse-help-tabs" role="tablist" aria-label="Controls"><button type="button" role="tab" id="warehouse-tab-floor" aria-selected="true" aria-controls="warehouse-help-floor" data-help-tab="floor">On foot</button><button type="button" role="tab" id="warehouse-tab-forklift" aria-selected="false" aria-controls="warehouse-help-forklift" data-help-tab="forklift" tabindex="-1">Forklift</button><button type="button" role="tab" id="warehouse-tab-work" aria-selected="false" aria-controls="warehouse-help-work" data-help-tab="work" tabindex="-1">The work</button></div>
         <div id="warehouse-help-floor" role="tabpanel" aria-labelledby="warehouse-tab-floor">
           <dl class="warehouse-key-list"><div><dt><kbd>W A S D</kbd></dt><dd>Walk</dd></div><div><dt><kbd>Mouse</kbd></dt><dd>Look around</dd></div><div><dt><kbd>E</kbd> or <kbd>Click</kbd></dt><dd>Use what you are looking at</dd></div><div><dt><kbd>Left Shift</kbd> / <kbd>Space</kbd></dt><dd>Run / jump</dd></div><div><dt><kbd>R</kbd></dt><dd>Return to the entrance</dd></div><div><dt><kbd>Esc</kbd> / <kbd>P</kbd></dt><dd>Open the pause menu</dd></div></dl>
-          <p>Use the wall switches to control the ceiling lights. Enter the yellow forklift with E. The computer in the dispatch office handles stock purchases and customer orders.</p>
+          <p>Look at a carton and press E to pick it up or put it down. Scroll the mouse wheel to bring it closer or move it farther away. Hold the right mouse button and move the mouse to rotate it.</p><p>The office computer handles supplies, customer orders and upgrades. Later, enter your forklift with E. Wall switches control the ceiling lights.</p>
         </div>
         <div id="warehouse-help-forklift" role="tabpanel" aria-labelledby="warehouse-tab-forklift" hidden>
           <dl class="warehouse-key-list"><div><dt><kbd>W S</kbd> / <kbd>A D</kbd></dt><dd>Drive / steer</dd></div><div><dt><kbd>Space</kbd> / <kbd>B</kbd></dt><dd>Brake / slow approach</dd></div><div><dt><kbd>Left Shift</kbd> + <kbd>Mouse</kbd></dt><dd>Hold to use the hydraulic lever</dd></div><div><dt><kbd>Q Z</kbd> / <kbd>T G</kbd></dt><dd>Raise or lower / tilt mast</dd></div><div><dt><kbd>C</kbd> / <kbd>V</kbd></dt><dd>Change view / centre view</dd></div><div><dt><kbd>E</kbd> / <kbd>F</kbd></dt><dd>Stop and step out / parking brake</dd></div></dl>
@@ -98,20 +102,38 @@
           <p>Drive the forks into a pallet's pockets, then lift. Carry low and turn slowly. Lower onto a rack or the floor, then reverse out. H sounds the horn. Hold R while stopped to recover the forklift.</p>
         </div>
         <div id="warehouse-help-work" role="tabpanel" aria-labelledby="warehouse-tab-work" hidden>
-          <ol class="warehouse-work-steps"><li><strong>Receive the delivery</strong><p>Wait for the truck to park and open its doors at the north dock. Take each pallet out with the forklift.</p></li><li><strong>Put the stock away</strong><p>The wall racks have floor positions and two raised levels. Set pallets down on their supports, then withdraw the forks.</p></li><li><strong>Use the dispatch office</strong><p>Small parcels arrive at the front door. Carry them to the parcel desk. Use the computer to inspect the stock ledger and buy stock.</p></li><li><strong>Fill a customer order</strong><p>Accept a retailer order at the computer. Use the forklift to load the requested pallets from the oldest matching lot into the cleared trailer. Return to the computer to dispatch it. Payment arrives after the truck leaves.</p></li></ol>
+          <ol class="warehouse-work-steps"><li><strong>Open for business</strong><p>Latchford Distribution supplies tape, shop towels and work gloves to local garages, workshops and trade counters. Start with $600 and an empty warehouse.</p></li><li><strong>Buy a small delivery</strong><p>Use the office computer to buy the starter supply: three cartons of packing tape for $120. Carry each carton inside and set it down in the stock area.</p></li><li><strong>Fill your first order</strong><p>Accept the local three-carton order at the computer. Load those cartons into the pickup van. The $210 payment arrives when the van leaves.</p></li><li><strong>Make room for more</strong><p>Complete deliveries and buy upgrades at the computer. Racks and a forklift open up pallet work. In Sandbox, the equipped warehouse is ready for you from the start.</p></li></ol>
         </div>
         <button id="warehouse-close-help" class="warehouse-subtle" type="button">Back</button>
       </section>
-      <section id="warehouse-about" hidden><p class="warehouse-about-copy">A warehouse game by Ethan Willingham.</p><p>Receive deliveries, operate the forklift, and keep the business moving from the dispatch office.</p><p class="warehouse-classic">The earlier illustrated game and its saved warehouses are <a href="one-shift-classic.html">still here</a>.</p><a href="archive.html">More games</a></section>
-      <footer class="warehouse-menu-footer"><button id="warehouse-menu-back" class="warehouse-subtle" type="button" hidden>Back to menu</button><span>v8 / Web edition</span></footer>
+      <section id="warehouse-about" hidden><p class="warehouse-about-copy">A warehouse game by Ethan Willingham.</p><p>Build Latchford Distribution from its first cartons, or open an equipped warehouse in Sandbox. Progress lasts for the current page session.</p><p class="warehouse-classic">The earlier illustrated game and its saved warehouses are <a href="one-shift-classic.html">still here</a>.</p><a href="archive.html">More games</a></section>
+      <footer class="warehouse-menu-footer"><button id="warehouse-menu-back" class="warehouse-subtle" type="button" hidden>Back to menu</button><span>v9 / Web edition</span></footer>
     </div>
   </dialog>
   <dialog id="warehouse-computer" class="warehouse-computer" aria-labelledby="warehouse-computer-title">
-    <header><div><p class="warehouse-kicker">Dispatch office</p><h2 id="warehouse-computer-title">Warehouse desk</h2></div><button id="warehouse-computer-close" type="button">Back to floor <kbd>Esc</kbd></button></header>
-    <div class="warehouse-computer-summary"><p id="warehouse-computer-summary"></p><div><span>Available cash</span><output id="warehouse-computer-cash"></output></div></div>
-    <nav class="warehouse-computer-tabs" role="tablist" aria-label="Office computer"><button role="tab" type="button" aria-selected="true" aria-controls="warehouse-desk-stock" id="warehouse-desk-tab-stock" data-desk-tab="stock">Stock</button><button role="tab" type="button" aria-selected="false" aria-controls="warehouse-desk-purchases" id="warehouse-desk-tab-purchases" data-desk-tab="purchases" tabindex="-1">Suppliers</button><button role="tab" type="button" aria-selected="false" aria-controls="warehouse-desk-customers" id="warehouse-desk-tab-customers" data-desk-tab="customers" tabindex="-1">Customer orders</button><button role="tab" type="button" aria-selected="false" aria-controls="warehouse-desk-ledger" id="warehouse-desk-tab-ledger" data-desk-tab="ledger" tabindex="-1">Ledger</button></nav>
-    <div class="warehouse-desk-body"><section id="warehouse-desk-stock" role="tabpanel" aria-labelledby="warehouse-desk-tab-stock"><div id="warehouse-inventory"></div></section><section id="warehouse-desk-purchases" role="tabpanel" aria-labelledby="warehouse-desk-tab-purchases" hidden><div id="warehouse-orders"></div></section><section id="warehouse-desk-customers" role="tabpanel" aria-labelledby="warehouse-desk-tab-customers" hidden><div id="warehouse-contracts"></div></section><section id="warehouse-desk-ledger" role="tabpanel" aria-labelledby="warehouse-desk-tab-ledger" hidden><div id="warehouse-ledger"></div></section></div>
-    <footer><p id="warehouse-computer-message" role="status"></p><span>Dispatch / Operations</span></footer>
+    <div class="warehouse-monitor-screen">
+      <div class="warehouse-desktop">
+        <div id="warehouse-desktop-home" class="warehouse-desktop-home" hidden><p class="warehouse-desktop-mark" aria-hidden="true">LD</p><h2>Latchford Distribution</h2><p>Trade supplies / dispatch office</p><button type="button" data-open-business>Open Dispatch</button></div>
+        <section id="warehouse-business" class="warehouse-business" aria-label="Dispatch business application">
+          <header class="warehouse-app-titlebar"><span><b aria-hidden="true">LD</b> Dispatch / Business manager</span><button id="warehouse-computer-minimize" type="button" aria-label="Minimize Dispatch to desktop">Desktop</button></header>
+          <div class="warehouse-computer-summary"><div><p class="warehouse-kicker" id="warehouse-computer-mode">Latchford / Career</p><h2 id="warehouse-computer-title">Latchford Distribution</h2><p id="warehouse-computer-summary"></p></div><div class="warehouse-cash"><span>Available cash</span><output id="warehouse-computer-cash"></output></div></div>
+          <div class="warehouse-app-workspace">
+            <nav class="warehouse-computer-tabs" role="tablist" aria-label="Office computer" aria-orientation="vertical"><button role="tab" type="button" aria-selected="true" aria-controls="warehouse-desk-overview" id="warehouse-desk-tab-overview" data-desk-tab="overview">Overview</button><button role="tab" type="button" aria-selected="false" aria-controls="warehouse-desk-stock" id="warehouse-desk-tab-stock" data-desk-tab="stock" tabindex="-1">Stock</button><button role="tab" type="button" aria-selected="false" aria-controls="warehouse-desk-purchases" id="warehouse-desk-tab-purchases" data-desk-tab="purchases" tabindex="-1">Suppliers</button><button role="tab" type="button" aria-selected="false" aria-controls="warehouse-desk-customers" id="warehouse-desk-tab-customers" data-desk-tab="customers" tabindex="-1">Customer orders</button><button role="tab" type="button" aria-selected="false" aria-controls="warehouse-desk-upgrades" id="warehouse-desk-tab-upgrades" data-desk-tab="upgrades" tabindex="-1">Upgrades</button><button role="tab" type="button" aria-selected="false" aria-controls="warehouse-desk-ledger" id="warehouse-desk-tab-ledger" data-desk-tab="ledger" tabindex="-1">Ledger</button></nav>
+            <div class="warehouse-desk-body">
+              <section id="warehouse-desk-overview" role="tabpanel" aria-labelledby="warehouse-desk-tab-overview"><p class="warehouse-section-label">Your next step</p><h3 id="warehouse-business-stage">Open for business</h3><p id="warehouse-business-stage-detail"></p><div class="warehouse-overview-actions"><button type="button" data-desk-open="purchases">Browse supplies</button><button type="button" data-desk-open="customers">View customer orders</button></div><dl class="warehouse-business-metrics"><div><dt>Completed orders</dt><dd id="warehouse-completed-orders">0</dd></div><div><dt>Products in stock</dt><dd id="warehouse-stock-lines">0</dd></div></dl><p class="warehouse-business-note">Tape, shop towels and work gloves for the garages, workshops and trade counters around you. Handle the cartons yourself. Build the business one delivery at a time.</p></section>
+              <section id="warehouse-desk-stock" role="tabpanel" aria-labelledby="warehouse-desk-tab-stock" hidden><h3 class="warehouse-page-heading">Stock on hand</h3><p class="warehouse-page-note">Available stock comes from the goods you have received.</p><div id="warehouse-inventory"></div></section>
+              <section id="warehouse-desk-purchases" role="tabpanel" aria-labelledby="warehouse-desk-tab-purchases" hidden><h3 class="warehouse-page-heading">Suppliers</h3><p class="warehouse-page-note">Buy supplies, then bring the delivery into the warehouse.</p><div id="warehouse-orders"></div></section>
+              <section id="warehouse-desk-customers" role="tabpanel" aria-labelledby="warehouse-desk-tab-customers" hidden><h3 class="warehouse-page-heading">Customer orders</h3><p id="warehouse-customer-note" class="warehouse-page-note">Accept an order, load its goods into the pickup van, and collect payment after departure.</p><div id="warehouse-contracts"></div></section>
+              <section id="warehouse-desk-upgrades" role="tabpanel" aria-labelledby="warehouse-desk-tab-upgrades" hidden><h3 class="warehouse-page-heading">Make this place yours</h3><p class="warehouse-page-note">Add equipment as the business grows. Leave enough cash for the next delivery.</p><div id="warehouse-upgrades"></div></section>
+              <section id="warehouse-desk-ledger" role="tabpanel" aria-labelledby="warehouse-desk-tab-ledger" hidden><h3 class="warehouse-page-heading">Cash ledger</h3><div id="warehouse-ledger"></div></section>
+            </div>
+          </div>
+          <footer class="warehouse-app-status"><p id="warehouse-computer-message" role="status"></p><span>Dispatch / Operations</span></footer>
+        </section>
+      </div>
+      <nav class="warehouse-taskbar" aria-label="Computer desktop"><button id="warehouse-desktop-toggle" type="button">Desktop</button><button id="warehouse-dispatch-task" type="button" data-open-business aria-pressed="true">Dispatch</button><span>Latchford office</span><time id="warehouse-desktop-clock"></time></nav>
+    </div>
+    <div class="warehouse-monitor-bezel"><span class="warehouse-monitor-brand">LATCHFORD <small>OFFICE TERMINAL</small></span><span class="warehouse-power" aria-label="Power on"></span><button id="warehouse-computer-close" type="button">Back to floor <kbd>Esc</kbd></button></div>
   </dialog>
   <div id="warehouse-rotate" class="warehouse-gate warehouse-rotate" hidden><div><p class="warehouse-kicker">The Warehouse Simulator</p><div class="warehouse-rotate-drawing" aria-hidden="true"></div><h2>Turn your screen sideways.</h2><p>The warehouse uses a keyboard and mouse.</p><a href="one-shift-classic.html">Play the illustrated game with touch</a></div></div>
   <noscript><div class="warehouse-gate"><div><h2>JavaScript is needed to play.</h2><p>Enable JavaScript, then reload this page.</p><a href="archive.html">Back to In Progress</a></div></div></noscript>

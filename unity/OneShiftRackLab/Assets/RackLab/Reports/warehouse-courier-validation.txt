@@ -1,0 +1,27 @@
+Actual cloned warehouse scene and production courier in isolated PhysX. Source scene and stock untouched.
+PASS Accept four original physical cartons at the street origin
+PASS Reject duplicate active stock references
+PASS Inactive simulation does not advance the van
+PASS A physical road obstruction stops the van before motion
+PASS Parking and driver exit precede opening and cargo release
+PASS Real rear doors and folding ramp open before the courier enters
+PASS Driver waits behind a solid obstruction on the ramp. State WalkingToCarton / Courier waiting for Courier validation obstruction to clear the walking path, movement 0.000 m from (3.03, -1.28, -23.45) to (3.03, -1.28, -23.45)
+PASS Courier carries and individually drops all four cartons at the actual porch shelf; dropped 4, state ReturningToVan / Courier returning to the van at (8.20, 0.01, -12.10), cartons (7.990, 0.760, -11.050), (8.570, 0.760, -11.050), (7.990, 1.120, -11.049), (8.570, 1.121, -11.050)
+PASS No inbound carton teleports onsite; largest 20 ms motion 0.074 m, carton 1, WalkingToPorch to WalkingToPorch, (2.570, 0.293, -26.645) to (2.571, 0.293, -26.571)
+PASS Dropped cartons are independent dynamic bodies while the visit remains busy
+PASS Delivery callback fires once and four cartons remain on the porch after the van exits
+PASS Accept an exact four-carton collection manifest
+PASS An empty van cannot dispatch stock left in the warehouse
+PASS Held-item callback prevents departure even with every manifest carton on the deck
+PASS An occupied loading ramp prevents departure
+PASS A visible three-second warning precedes physical load restraint
+PASS A new hold cancels the departure warning
+PASS Only the selected stable manifest is restrained before closed-door departure
+PASS Collection callback fires once after the actual van reaches the street exit; caller owns stock removal
+PASS Idle updates cannot duplicate delivery or payment callbacks
+PASS A new physical delivery can start after collection
+PASS Only one van visit is active; queued cartons remain offsite and inactive
+PASS Queued deliveries complete once in order without destroying their physical stock
+PASS Courier adds no shadow-casting or other lights
+PASS Moved and tilted porch support at 5 ms physics: four cartons delivered once, placement penetration 0.0016 m, largest motion 0.022 m.
+PASS Moved and tilted porch support at 20 ms physics: four cartons delivered once, placement penetration 0.0006 m, largest motion 0.074 m.

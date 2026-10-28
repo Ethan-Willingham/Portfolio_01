@@ -1,0 +1,2 @@
+PASS 1002 actual van poses clear the installed scene, including four tyre contacts, folded ramp and closed articulated doors.
+PASS Street arrival 18.4 s and street departure 14.3 s. Parked datum (3.00, -1.33, -28.20).

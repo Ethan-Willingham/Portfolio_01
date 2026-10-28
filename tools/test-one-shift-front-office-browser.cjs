@@ -85,7 +85,7 @@ function check(label, condition) { assert.ok(condition, label); checks.push(labe
   const stockQuantities = desk => JSON.stringify(desk.inventory.map(item => [item.id,item.quantity]));
 
   await page.goto(process.env.SHIFT_TEST_URL || 'http://127.0.0.1:' + server.address().port + '/one-shift.html');
-  await page.locator('#warehouse-play').click();
+  await page.locator('#warehouse-sandbox').click();
   await page.waitForFunction(() => window.actualUnity && document.getElementById('warehouse-launcher').hidden, null, {timeout:240000});
   await page.bringToFront();
   await page.locator('#warehouse-canvas').click({position:{x:600,y:400}});
@@ -96,7 +96,7 @@ function check(label, condition) { assert.ok(condition, label); checks.push(labe
   await delay(200);
   console.log('POINTER_LOCK ' + await page.evaluate(() => document.pointerLockElement?.id || 'none'));
   const initial = await state('INITIAL');
-  check('Actual version 8 player exposes office and business observations', initial.buildVersion === 8 && typeof initial.frontDoorOpen === 'boolean' && Number.isFinite(initial.playerYaw) && Number.isFinite(initial.businessCash));
+  check('Actual version 9 sandbox exposes office and business observations', initial.buildVersion === 9 && typeof initial.frontDoorOpen === 'boolean' && Number.isFinite(initial.playerYaw) && Number.isFinite(initial.businessCash));
   check('The front door starts closed and the desk starts empty', !initial.frontDoorOpen && initial.parcelsReceived === 0 && !initial.carryingParcel);
   check('Walkthrough starts at the authored warehouse entrance', groundDistance(initial.playerPosition, [-4.6,0,-5.4]) < .2);
 

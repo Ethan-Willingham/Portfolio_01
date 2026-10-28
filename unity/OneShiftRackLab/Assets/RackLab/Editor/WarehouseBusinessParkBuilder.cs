@@ -199,7 +199,9 @@ namespace OneShift.RackLab
 
         static void BuildVehicles()
         {
-            var c = new Chunk("Parked vehicles", root);
+            var van = new GameObject("Decorative parcel van").transform;
+            van.SetParent(root, false);
+            var c = new Chunk("Parked parcel van", van);
             Vector3 p = new Vector3(12, Ground, -28.5f);
             c.Box("Parcel van lower body", p + new Vector3(0, .75f, 0), new Vector3(2.05f, 1.05f, 5.35f), brown, true);
             c.Box("Parcel van cargo box", p + new Vector3(0, 1.64f, -.55f), new Vector3(2.02f, 1.0f, 3.95f), brown, true);
@@ -214,7 +216,9 @@ namespace OneShift.RackLab
                 foreach (float z in new[] { -1.85f, 1.8f })
                     c.Wheel(p + new Vector3(side * 1.025f, .36f, z), .36f, .22f, dark);
             }
-            Label("PARCEL SERVICE", root, p + new Vector3(-1.044f, 1.75f, -.55f), .12f, Quaternion.Euler(0, 90, 0));
+            Label("PARCEL SERVICE", van, p + new Vector3(-1.044f, 1.75f, -.55f), .12f, Quaternion.Euler(0, 90, 0));
+            c.Finish();
+            c = new Chunk("Parked hatchbacks", root);
             foreach (var car in new[] { new Vector3(-10.5f, Ground, -28.2f), new Vector3(-4.5f, Ground, -28.5f) })
             {
                 c.Box("Parked hatchback", car + Vector3.up * .62f, new Vector3(1.8f, .64f, 4.05f), blue, true);

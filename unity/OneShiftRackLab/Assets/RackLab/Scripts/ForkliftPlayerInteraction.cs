@@ -41,8 +41,8 @@ namespace OneShift.RackLab
             !hasDriven ? "Drive towards the first pallet" :
             lift != null && lift.LiftHeightMeters > .65f && vehicle.SpeedMps > .8f ? "Carry low and turn slowly" :
             vehicle.SpeedMps < .2f ? "Adjust the forks" : "";
-        bool CanOfferEntry => walking != null && vehicle != null && walking.CanControl &&
-            !walking.CarryingParcel && !walking.HasInteractionTarget && NearTruck();
+        bool CanOfferEntry => walking != null && vehicle != null && vehicle.isActiveAndEnabled && walking.CanControl &&
+            !walking.CarryingObject && !walking.HasInteractionTarget && NearTruck();
         string TrainingHint => trainingStep == 0 ? "Press the brake before moving" :
             trainingStep == 1 ? "Hold and move the mouse up to raise the forks" :
             trainingCentered ? "Release to begin driving" : "Move the lever to the centre to stop";
@@ -146,11 +146,18 @@ namespace OneShift.RackLab
 
         void Capture(bool active)
         {
+            bool ownedCapture = captured;
             captured = active;
             awaitNeutral = active;
             if (active) { captureRequestedAt = Time.unscaledTime; captureQuietFrames = 2; }
-            Cursor.lockState = active ? CursorLockMode.Locked : CursorLockMode.None;
-            Cursor.visible = !active;
+            // An inactive driver shares the walker's camera. Browser resume
+            // may already hold native lock for walking or a returning computer
+            // transition, so only the previous owner may release that lock.
+            if (active || ownedCapture)
+            {
+                Cursor.lockState = active ? CursorLockMode.Locked : CursorLockMode.None;
+                Cursor.visible = !active;
+            }
             if (vehicle != null && !active) vehicle.SetDriverInput(0, 0, true, parkingBrake, false);
             if (lift != null && !active) lift.ClearInput();
             if (!active) { ClearForkControl(); exitRequested = false; }

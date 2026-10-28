@@ -1,6 +1,6 @@
 {
-    "generatedUtc": "2026-10-28T02:46:34.9383459Z",
-    "method": "Production hydraulic lever and walking response at 30, 60, 120 and 144 Hz. Input state and velocity integration only; native browser controls and physical ground contact require separate verification.",
+    "generatedUtc": "2026-10-28T16:46:29.8135179Z",
+    "method": "Production hydraulic lever and walking response at 30, 60, 120 and 144 Hz, plus cursor ownership on inactive-driver resume. Native browser pointer lock and physical ground contact require separate verification.",
     "passed": true,
     "checks": [
         {
@@ -274,6 +274,13 @@
                     "units": "m/s"
                 }
             ]
+        },
+        {
+            "name": "inactive driver preserves walking cursor ownership",
+            "passed": true,
+            "expectation": "Browser resume clears the inactive driver's controls without changing the walker's cursor; pausing an actual captured driver still releases it.",
+            "error": "",
+            "measurements": []
         }
     ]
 }

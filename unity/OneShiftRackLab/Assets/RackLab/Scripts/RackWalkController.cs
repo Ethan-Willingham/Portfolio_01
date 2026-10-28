@@ -31,8 +31,9 @@ namespace OneShift.RackLab
         float lastGroundedAt = -10, jumpPressedAt = -10, walkedDistance, captureRequestedAt;
         public bool IsCaptured => captured;
         public bool CanControl => captured && !awaitNeutral && hadFocus && browserActive && externalControl &&
-            !applicationPaused && !vehicleMode && Time.timeScale > 0;
+            !applicationPaused && !vehicleMode && !CameraTransitionActive && Time.timeScale > 0;
         public bool VehicleMode => vehicleMode;
+        public bool CameraTransitionActive { get; set; }
         public float HorizontalSpeedMps { get; private set; }
         public bool Grounded => motor != null && motor.enabled && motor.isGrounded;
         RackWearVariant target;
@@ -42,21 +43,27 @@ namespace OneShift.RackLab
         WarehouseParcel parcelTarget;
         WarehouseParcelService parcelDesk, parcelService;
         IWarehouseInteraction worldInteraction;
+        WarehouseGrabber grabber;
+        public WarehouseGrabber Grabber => grabber;
         public bool CarryingParcel => parcelService != null && parcelService.Carried != null;
-        public bool HasInteractionTarget => lightSwitch != null || officeDoor != null ||
+        public bool CarryingObject => CarryingParcel || (grabber != null && grabber.IsHolding);
+        bool HasGrabAction => grabber != null && !CarryingParcel && (grabber.IsHolding || grabber.AimBody != null);
+        public bool HasInteractionTarget => HasGrabAction || lightSwitch != null || officeDoor != null ||
             (parcelDesk != null && CarryingParcel) || (parcelTarget != null && !CarryingParcel) ||
             (worldInteraction != null && !string.IsNullOrEmpty(worldInteraction.ActionKey)) || (target != null && receiving == null);
-        public string InteractionTarget => lightSwitch != null ? "Light switch" :
+        public string InteractionTarget => HasGrabAction ? grabber.IsHolding ? grabber.HeldLabel : grabber.AimLabel : lightSwitch != null ? "Light switch" :
             officeDoor != null ? "Office door" : parcelDesk != null && CarryingParcel ? "Parcel desk" :
             parcelTarget != null && !CarryingParcel ? "Parcel" : worldInteraction != null ? worldInteraction.Prompt :
             target != null && receiving == null ? "Rack finish" : "";
-        public string ContextHintKey => !externalControl || vehicleMode ? "" :
+        public string ContextHintKey => !externalControl || vehicleMode || CameraTransitionActive ? "" :
             !captured ? "Click" : awaitNeutral ? "" :
+            HasGrabAction ? grabber.HintKey :
             lightSwitch != null || officeDoor != null || (parcelDesk != null && CarryingParcel) ||
             (parcelTarget != null && !CarryingParcel) ? "E" : worldInteraction != null ? worldInteraction.ActionKey :
             target != null && receiving == null ? "E" : walkedDistance < 1.5f && !CarryingParcel ? "WASD" : "";
-        public string ContextHint => !externalControl || vehicleMode ? "" :
+        public string ContextHint => !externalControl || vehicleMode || CameraTransitionActive ? "" :
             !captured ? "Look around the warehouse" : awaitNeutral ? "Release held controls" :
+            HasGrabAction ? grabber.Hint :
             lightSwitch != null ? lightSwitch.Prompt : officeDoor != null ? officeDoor.Prompt :
             parcelDesk != null && CarryingParcel ? "Receive parcel" :
             parcelTarget != null && !CarryingParcel ? "Carry parcel" :
@@ -72,12 +79,16 @@ namespace OneShift.RackLab
             spawnRotation = transform.rotation;
             receiving = Object.FindFirstObjectByType<WarehouseReceiving>();
             parcelService = Object.FindFirstObjectByType<WarehouseParcelService>();
+            grabber = GetComponent<WarehouseGrabber>();
+            if (grabber == null) grabber = gameObject.AddComponent<WarehouseGrabber>();
+            grabber.Bind(this);
             Application.targetFrameRate = 120;
             RefreshPerspective();
         }
 
         public void RefreshPerspective()
         {
+            if (CameraTransitionActive) return;
             // Keep a stable horizon, eye height and field of view. Acceleration
             // belongs to the feet, without camera bob, roll or a sprint zoom.
             if (eyes != null)
@@ -115,12 +126,24 @@ namespace OneShift.RackLab
 
         public void ResumeControlsFromUI()
         {
-            if (!browserActive || !hadFocus || !externalControl || applicationPaused || vehicleMode || Time.timeScale <= 0) return;
+            if (!browserActive || !hadFocus || !externalControl || applicationPaused || vehicleMode || CameraTransitionActive || Time.timeScale <= 0) return;
             Capture(true);
+        }
+
+        public void ResumeAfterComputerTransition()
+        {
+            // The trusted HTML close click already owns native pointer lock.
+            // Do not unlock it at the end of the camera return animation.
+            externalControl = true;
+            ClearMovement();
+            ClearTargets();
+            Input.ResetInputAxes();
+            ResumeControlsFromUI();
         }
 
         public void ResumeFromVehicle(Vector3 position, Quaternion rotation)
         {
+            if (grabber != null) grabber.Suspend();
             if (motor == null) motor = GetComponent<CharacterController>();
             motor.enabled = false;
             transform.SetPositionAndRotation(position, rotation);
@@ -159,6 +182,7 @@ namespace OneShift.RackLab
 
         void ClearMovement()
         {
+            if (grabber != null) grabber.Suspend();
             horizontalVelocity = Vector3.zero;
             verticalSpeed = HorizontalSpeedMps = 0;
             groundNormal = Vector3.up;
@@ -167,6 +191,7 @@ namespace OneShift.RackLab
 
         void ClearTargets()
         {
+            if (grabber != null) grabber.ClearAim();
             target = null; lightSwitch = null; officeDoor = null;
             parcelTarget = null; parcelDesk = null; worldInteraction = null;
         }
@@ -183,6 +208,11 @@ namespace OneShift.RackLab
         {
             ClearTargets();
             if (eyes == null || !CanControl) return;
+            if (grabber != null && !CarryingParcel)
+            {
+                grabber.RefreshAim();
+                if (HasGrabAction) return;
+            }
             if (!Physics.Raycast(eyes.transform.position, eyes.transform.forward, out var hit,
                 5f, ~0, QueryTriggerInteraction.Ignore)) return;
             if (hit.distance <= 2.6f)
@@ -199,8 +229,9 @@ namespace OneShift.RackLab
 
         void Update()
         {
-            if (!browserActive || vehicleMode || !externalControl || applicationPaused || !hadFocus || Time.timeScale <= 0)
+            if (!browserActive || vehicleMode || !externalControl || applicationPaused || !hadFocus || CameraTransitionActive || Time.timeScale <= 0)
             {
+                if (grabber != null) grabber.Suspend();
                 if (captured && !vehicleMode) Capture(false);
                 return;
             }
@@ -228,9 +259,14 @@ namespace OneShift.RackLab
                     ClearTargets();
                     return;
                 }
-                transform.Rotate(0, Input.GetAxisRaw("Mouse X") * sensitivity, 0);
-                pitch = Mathf.Clamp(pitch - Input.GetAxisRaw("Mouse Y") * sensitivity, -85, 85);
-                eyes.transform.localRotation = Quaternion.Euler(pitch, 0, 0);
+                var mouse = new Vector2(Input.GetAxisRaw("Mouse X"), Input.GetAxisRaw("Mouse Y"));
+                if (grabber != null) grabber.HandlePointerInput(Input.GetMouseButton(1), mouse, Input.mouseScrollDelta.y);
+                if (grabber == null || !grabber.IsRotating)
+                {
+                    transform.Rotate(0, mouse.x * sensitivity, 0);
+                    pitch = Mathf.Clamp(pitch - mouse.y * sensitivity, -85, 85);
+                    eyes.transform.localRotation = Quaternion.Euler(pitch, 0, 0);
+                }
                 var input = Vector2.ClampMagnitude(new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical")), 1);
                 var speed = Input.GetKey(KeyCode.LeftShift) ? runSpeed : walkSpeed;
                 var desired = (transform.right * input.x + transform.forward * input.y) * speed;
@@ -239,7 +275,9 @@ namespace OneShift.RackLab
                 ResolveTarget();
                 bool use = CanControl && Time.frameCount != suppressUseFrame &&
                     (Input.GetKeyDown(KeyCode.E) || (alreadyCaptured && Input.GetMouseButtonDown(0)));
-                if (use && lightSwitch != null) lightSwitch.Toggle();
+                bool grabUsed = use && grabber != null && !CarryingParcel && grabber.ConsumeUse();
+                if (grabUsed) ClearTargets();
+                else if (use && lightSwitch != null) lightSwitch.Toggle();
                 else if (use && officeDoor != null) officeDoor.Toggle();
                 else if (use && parcelDesk != null && CarryingParcel) parcelDesk.Receive();
                 else if (use && parcelTarget != null && !CarryingParcel) parcelTarget.service.PickUp(parcelTarget);
@@ -320,9 +358,17 @@ namespace OneShift.RackLab
             if (hit.normal.y > .55f) groundNormal = hit.normal;
         }
 
+        public void SetSpawnPose(Vector3 position, Quaternion rotation)
+        {
+            spawnPosition = position;
+            spawnRotation = rotation;
+            ResetPosition();
+        }
+
         public void ResetPosition()
         {
-            if (vehicleMode || motor == null) return;
+            if (vehicleMode || CameraTransitionActive || motor == null) return;
+            if (grabber != null) grabber.Suspend();
             motor.enabled = false;
             transform.SetPositionAndRotation(spawnPosition, spawnRotation);
             motor.enabled = true;
