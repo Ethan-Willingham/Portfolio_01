@@ -24074,10 +24074,10 @@ MonoBehaviour:
   driveTorquePerWheel: 1100
   maximumForwardSpeed: 4.3
   maximumReverseSpeed: 3
-  throttleResponse: 2.4
+  throttleResponse: 4.8
   serviceBrakeTorque: 3300
   parkingBrakeTorque: 6000
-  coastingBrakeTorque: 45
+  coastingBrakeTorque: 1200
   reverseEngagementSpeed: 0.14
   inchingTorqueFraction: 0.24
   inchingSpeed: 0.8
@@ -24085,8 +24085,8 @@ MonoBehaviour:
   rearTrack: 0.98
   maximumRearSteerAngle: 60
   highSpeedRearSteerAngle: 12
-  steeringRate: 65
-  steeringReturnRate: 85
+  steeringRate: 210
+  steeringReturnRate: 260
 --- !u!114 &6807473315593968629
 MonoBehaviour:
   m_ObjectHideFlags: 0

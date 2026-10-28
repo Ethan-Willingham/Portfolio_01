@@ -1,6 +1,11 @@
-# One Shift
+# The Warehouse Simulator
 
-The warehouse at `one-shift.html` has a click-to-load Unity browser launcher.
+The Warehouse Simulator, formerly One Shift, keeps its stable `one-shift.html`
+address and click-to-load Unity browser launcher. The v8 home screen uses an
+actual scene image, a clear Start shift action, settings and a separate control
+guide. The HTML interface supplies the clock, contextual interactions, pause
+menu, hydraulic slider and office computer. The old grey debug panels and
+floating black pallet labels are absent from the playable scene.
 The build is produced by **One Shift > Build browser player** in
 `unity/OneShiftRackLab`, or `OneShift.RackLab.WarehouseWebBuilder.BuildWeb()`.
 It stages the browser player locally, then copies the four verified build files
@@ -14,7 +19,10 @@ The Unity start has three empty rack bays against the west wall, a clear working
 floor, a receiving door in the north wall and a parking lot outside. A separate
 yard doorway leads onto the access ramp, so parked trailer doors cannot block
 the walking route. The first
-delivery reverses into the dock, parks, then opens its trailer doors. The raised
+delivery drives west along the north street, turns into the east driveway,
+aligns in the yard, then reverses into the dock. The route takes about 45 active
+seconds (44.10 in the route audit); the original trailer doors then open over
+four seconds. The raised
 warehouse shutter lets the player watch; a dock barrier remains closed until
 the trailer doors are fully open and the dock plate is available. Four pallets,
 992 lb (450 kg) each, start inside the trailer. The player unloads and stores them;
@@ -23,15 +31,34 @@ positions. There is no automatic unloading or putaway. The old rack finishes,
 test-load displays and rollover ramp remain as source assets and validation
 fixtures, outside the active start.
 
-The v7 scene adds a southeast dispatch office and a south front door for small
-parcel deliveries. The office has glazed partitions, blinds, filing cabinets,
-a computer desk and a coffee counter. E or click opens its front door onto a
+The southeast office has glazed partitions, blinds and one computer workstation
+with a parcel receiving area. E or click opens its south front door onto a
 covered parcel shelf and pedestrian ramp. Six neighboring units, visitor
 parking, planted verges and a parcel van place the warehouse in a business park.
 Three boxes arrive on the shelf after 35 active seconds. E or click carries one
 box at a time; use the office parcel desk or its sign to receive it. Carrying
 blocks forklift entry. These parcels are session-only and independent of the
-pallet stock, business ledger and illustrated game's saves.
+pallet stock and business ledger.
+
+Aim at the computer or keyboard and press E to open the warehouse desk. Buy one
+supplier pallet at a time, accept a fictional retailer's order, unload the
+matching stock, then physically put the oldest matching pallet back onto the
+trailer and dispatch it from the desk. Buying debits cash once; accepting an
+order does not pay. Payment posts only after the loaded truck has left the
+park. An accepted order can be released before dispatch without changing cash
+or stock. Accepting another order calls back an empty truck for free if the
+previous truck has left, so existing stock never requires a new purchase to
+be shipped. The computer shows inventory, inbound cases, lot IDs, offers and the
+transaction ledger. Its modal pauses the simulation; close it to let a booked
+truck move. The browser bridge confirms each command even while paused.
+
+This is a simplified wholesale business with supplier purchases and retailer
+requests, not an Amazon warehouse bidding exchange. The initial four pallets
+contain 172 cases across paper, cleaning supplies and pantry goods. Inventory
+uses real pallet objects, arrival days and first-in-first-out lots. The case
+identity is opening cases plus purchased cases equals shipped cases plus
+remaining physical cases. Unity business state is currently session-only and
+does not read or write the illustrated game's saves or ledger.
 
 The original worker has deliberately rough proportions and simple work clothes.
 Its 1,000 triangles use two skinned renderers, one palette material and thirteen
@@ -41,7 +68,8 @@ poses. First-person and cab views hide the upper torso and head with
 Chase view shows the full model. It adds no lights or physics
 bodies. A single analytic sky pass adds clouds, stars and a sun disc aligned
 with the existing moving sun. Six unshadowed exterior wall packs fade with
-daylight; two unshadowed office spots light the smaller room. The existing sun
+daylight; two broad unshadowed office fills light the ceiling and walls as well
+as the worktop. The existing sun
 and twelve warehouse fixtures continue to provide real shadows.
 
 `WarehouseStartBuilder.Install()` installs this layout after the physical
@@ -49,15 +77,17 @@ forklift and handling installers. `WarehouseStartBuilder.Validate()` checks
 the real opening and continuous support into the trailer;
 `WarehouseReceivingValidation.ValidateAndSave()` checks arrival, obstruction,
 restraints, doors, dock access and physically supported storage in isolated
-PhysX. All thirteen sequence checks passed on 25 October 2026.
+PhysX. The v8 suite also verifies queued purchases, exact physical manifests,
+blocked dispatch and payment only after departure. A separate route audit
+samples 1,202 tractor/trailer poses against the actual scene collision.
 The delivery uses the owner's original 18-wheeler and 53-foot trailer from
 23 October, with eighteen spinning wheels and its original hinged rear doors.
 The doors fold against the trailer sides. Its floor, roof clearance and scale
 remain those of the original model. Source provenance and Unity import details
 are in `unity/OneShiftRackLab/RECEIVING_TRUCK.md`.
 After installing the receiving start, run `WarehouseOfficeBuilder.Install()`,
-`WarehouseBusinessParkBuilder.Install()` and `WarehousePlayerBuilder.Install()`
-in that order. Each has a `Validate()` method. The separate
+`WarehouseBusinessParkBuilder.Install()`, `WarehousePlayerBuilder.Install()` and
+`WarehouseControlsBuilder.Install()` in that order. Each has a validation method. The separate
 `WarehouseFrontOfficeValidation.ValidateAndSave()` checks actual delivery,
 pause, carrying, receipt and doorway obstruction logic on a temporary copy.
 See the Unity README for menu names and scene backup locations.
@@ -68,18 +98,25 @@ E or a click operates a nearby switch. Escape releases the mouse; P pauses.
 Mobile portrait shows a rotation gate; landscape still requires a keyboard and
 mouse. Touch players can follow the link to the illustrated game.
 
-E gets into the yellow forklift. On the first entry, a short seated briefing
-requires E or Enter before driving. Later entries take one E. W/S drives and
-reverses, A/D steers, Space brakes, and Shift gives a slow approach. Driving
+E gets into the yellow forklift. The first entry teaches three small actions
+while parked: hold Space, raise the forks with Left Shift and the mouse, then
+centre the lever and release it. Driving unlocks after these actual actions;
+there is no briefing to dismiss. Later entries take one E. W/S drives and
+reverses, A/D steers, Space brakes, and B gives a slow approach. Driving
 releases the parking brake. E brakes to a stop, checks for clear floor, and
-steps out. Hold X and move the mouse up or down to raise or lower the forks.
-A still mouse holds their height; releasing X returns to looking around.
-While X is held, the actual forks and nearby pallet-board edges show through
+steps out. Hold Left Shift to show a vertical hydraulic slider. Moving the
+mouse sets its signed position: farther from centre moves the forks faster;
+a stationary pointer retains the selected speed. Centre the lever or release
+Left Shift to stop. Releasing also returns to looking around. While Left Shift
+is held, the actual forks and nearby pallet-board edges show through
 the mast and load. WASD positions the truck: line up with a pallet's 40-inch
 end, drive the forks into its pockets, then lift through physical contact.
 Lower onto a supported floor or rack surface and reverse out. Q/Z also raises
 and lowers the forks; T/G tilts the mast. C changes the rear/cab view, and Tab
-shows the extra controls.
+opens the control guide. Steering responds more quickly, returns to centre
+promptly, and finite driveline drag arrests neutral coasting. Walking uses
+separate ground acceleration and braking, limited air control and a modest
+jump, without camera bob or speed-dependent field of view.
 
 The forklift retains rigidbodies, rear steering, an oscillating rear axle and
 force-limited jointed hydraulics. Pallet weight and leverage still affect lifting
@@ -89,22 +126,36 @@ teleports a load. See `unity/OneShiftRackLab/FORKLIFT.md` for the mechanism and
 checks.
 
 The browser's default Smooth picture setting limits the drawing buffer to
-2,073,600 pixels and a pixel ratio of 1.25. Controls offers Sharper, capped at
+2,073,600 pixels and a pixel ratio of 1.25. Settings offers Sharper, capped at
 3,686,400 pixels and a pixel ratio of 1.5. Both fill the available view and resize
 without restarting the game. The Web build uses smaller shadow maps, downsampled
 contact shading, 2x MSAA plus medium SMAA, and less frequent reflection captures.
 Physics retains its 0.005-second step. These bounds reduce work on Retina
 displays; they are not a measured Mac frame-rate guarantee.
 
-After downloading, the loading screen reports seven graphics preparation
-stages. They render the actual night, dawn and daylight scene, both light-row
-states, the fork placement overlay and the room reflections. Gameplay, cargo
+The loading screen reports download percentage, elapsed time and
+individual views within seven graphics preparation stages. Labels update before
+the heavy operation and progress reflects completed work. They render the actual
+night, dawn and daylight scene, both light-row states, the fork placement overlay
+and room reflections, including the visible worker in chase view. Gameplay, cargo
 physics and audio remain suspended. The opening clock and view are restored
 before the launcher reveals the game. Preparation shares the page's inactivity
 and portrait gates, with a separate suspension flag so completing it cannot
 undo a pause. The small version and FPS display comes from the compiled player
 and completed game-camera render frames, updated at most twice per second;
 inactive play reads Paused. Its tooltip shows the longest frame in the sample.
+
+The page owns Escape and consumes both keyboard edges before Unity can queue
+them. Trusted Resume and Back to floor actions request native pointer lock
+directly, then resume the appropriate controller. Entering the forklift transfers
+the existing lock without releasing it. Both controllers discard the initial
+neutral captured frames, so moving the menu cursor cannot turn the game camera
+on resume. Arbitrary pointer-lock changes do not open the pause menu.
+
+The HTML wrapper owns fullscreen events and drawing-buffer sizing. Its
+fullscreen notifications must not reach Unity's canvas-only fullscreen handler,
+which otherwise corrupts render targets. Changes while paused apply when the
+renderer resumes; CSS continues to fit the paused image to the window.
 
 A 90-second Chrome trace of release v5 on this Windows workstation reproduced
 stalls lasting up to 4.6 seconds during the opening. A second trace found the
@@ -154,12 +205,13 @@ checks against the deployed page. `SHIFT_DUMP` selects the report directory.
 Both checks use Playwright; the real pass also uses Sharp to inspect rendered pixels.
 `node tools/test-one-shift-front-office-browser.cjs` checks the compiled WebGL
 player through native keyboard and mouse input. It covers the office doorway,
-front door, ramp, parcel arrival, carrying, desk receipt and pause, and saves
+front door, ramp, parcel arrival, carrying, desk receipt, purchases, duplicate
+protection, order acceptance/release, transaction conservation and pause, and saves
 screenshots. `SHIFT_OFFICE_DUMP` selects its output directory;
 `SHIFT_BROWSER_CHANNEL=chrome` selects installed Chrome.
 `node tools/profile-one-shift-unity-browser.cjs` measures a separate 90-second
 Chrome run without taking screenshots during the sample. Set `SHIFT_PROFILE_FORKS=1`
-to include first entry and native X/mouse use, and `SHIFT_PROFILE_PLACEMENT_CAPTURE=1`
+to include first entry and native Left Shift lever use, and `SHIFT_PROFILE_PLACEMENT_CAPTURE=1`
 to capture fork placement after the timing sample. It records preparation time,
 completed preparation stages, frame intervals, long tasks and blocking WebGL
 calls. `SHIFT_PROFILE_DUMP` selects its output directory.
@@ -183,6 +235,29 @@ The earlier receiving release also passed 57 forklift physics and geometry
 checks and thirteen delivery sequence checks. The four compressed v6 browser
 files total 42,213,674 bytes. Browser verification used Windows Chrome at device
 scale factor two; Mac hardware was not available.
+
+The final v8 export completed with zero build errors and totals 42,367,999
+compressed bytes. Its compiled Chrome gameplay pass completed all 73 functional
+assertions, including physical pallet pickup, unloading, setdown and withdrawal.
+That run exposed a final fullscreen render-target error. The shell fix then
+passed a focused 18-check real-player fullscreen regression with no graphics or
+page failures. The native office walkthrough passed 43 checks, including
+purchases, order release, duplicate protection, parcel receipt and preservation
+of camera yaw when closing menus. Editor checks include 14 business cases,
+11 control cases, 21 driving cases, six mouse-lift cases, 1,202 collision-clear
+truck route poses and 88 same-height surface comparisons across 19 slabs.
+The actual player confirms three nearby 512-pixel fixture shadow slices and
+nine distant 128-pixel slices in the unchanged 1024-pixel atlas.
+
+The final shell passed 85 simulated-loader checks. A separate 90.04-second
+Chrome profile of v8 at 1800 by 1125 pixels on the RTX 3080 included native first
+entry, practical training and stationary-pointer hydraulic use. It measured a
+7 ms median, 13.9 ms 95th percentile, 14 ms 99th percentile and 20.8 ms maximum,
+with zero frames over 50 ms, long tasks or WebGL calls over 20 ms during play.
+The trace confirmed actual 2x MSAA and SMAA. Startup took 29.98 seconds, with a
+9.71-second longest gap between fine preparation callbacks; this remains real
+graphics work, not simulated progress. Full lever travel lifted about 0.50 m/s
+versus 0.052 m/s near 40 percent travel. These timings describe this workstation.
 
 The final v7 export completed with zero build errors and totals 42,305,038
 compressed bytes. Its native-input front-office walkthrough passed 22 checks,

@@ -2,16 +2,46 @@ using UnityEngine;
 
 namespace OneShift.RackLab
 {
-    // Mouse deltas describe movement during this rendered frame. Normalize by
-    // its duration so the same hand speed requests the same valve opening at
-    // 30, 60 or 120 Hz. No accumulated target or residual command survives.
-    public static class ForkliftMouseLift
+    // A held Left Shift exposes a centred hydraulic lever. Mouse displacement
+    // moves that lever, so its position requests a signed speed, not a height.
+    // Deltas already describe distance and must not be divided by frame time.
+    public sealed class ForkliftMouseLift
     {
-        public static float Valve(bool held, float verticalDelta, float frameSeconds)
+        public const float AxisUnitsToFullTravel = 20f;
+        public const float CentreDeadZone = .075f;
+        public float Position { get; private set; }
+        public float Input => Valve(Position);
+        public bool Held { get; private set; }
+        public bool NeedsRelease => interrupted;
+        bool interrupted;
+
+        public float Tick(bool held, float verticalDelta, float frameSeconds)
         {
-            if (!held || frameSeconds <= 0 || frameSeconds > .12f ||
-                float.IsNaN(verticalDelta) || float.IsInfinity(verticalDelta)) return 0;
-            return Mathf.Clamp(verticalDelta * .025f / frameSeconds, -1, 1);
+            if (!held) { Clear(); return 0; }
+            // An interrupted frame must not replay a large pointer delta or
+            // retain a moving lever. Require release before starting again.
+            if (frameSeconds <= 0 || frameSeconds > .12f || float.IsNaN(frameSeconds) ||
+                float.IsNaN(verticalDelta) || float.IsInfinity(verticalDelta))
+            {
+                Position = 0; Held = false; interrupted = true;
+                return 0;
+            }
+            if (interrupted) return 0;
+            if (!Held) Position = 0;
+            Held = true;
+            Position = Mathf.Clamp(Position + verticalDelta / AxisUnitsToFullTravel, -1, 1);
+            return Input;
+        }
+
+        public void Clear() { Position = 0; Held = false; interrupted = false; }
+
+        public static float Valve(float position)
+        {
+            if (float.IsNaN(position) || float.IsInfinity(position)) return 0;
+            float magnitude = Mathf.InverseLerp(CentreDeadZone, 1, Mathf.Abs(position));
+            // Fine control near centre, full existing hydraulic flow at either
+            // end. The lift controller still enforces travel and pressure.
+            return Mathf.Sign(position) * magnitude * magnitude;
         }
     }
 }

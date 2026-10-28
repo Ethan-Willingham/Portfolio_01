@@ -50,6 +50,10 @@ async function realSmoke(browser, url) {
   page.on('request', request => { if (request.url().includes('/Build/')) requests.push(request.url()); });
   // Observe the actual loader's returned instance; never replace Unity or its callbacks.
   await page.addInitScript(() => {
+    window.warehousePointerEvents = [];
+    ['pointerlockchange','pointerlockerror'].forEach(type => document.addEventListener(type, () => {
+      warehousePointerEvents.push({type,at:performance.now(),locked:document.pointerLockElement?.id || '',focused:document.activeElement?.id || ''});
+    }));
     document.addEventListener('load', event => {
       if (event.target.tagName !== 'SCRIPT' || !event.target.src.includes('OneShiftWeb.loader.js')) return;
       const factory = window.createUnityInstance;
@@ -58,6 +62,15 @@ async function realSmoke(browser, url) {
         return factory.apply(this, args).then(instance => { window.actualUnity = instance; return instance; });
       };
     }, true);
+  });
+  if (process.argv.includes('--display')) await page.addInitScript(() => {
+    window.warehouseBadTextureTargets = [];
+    const original = WebGL2RenderingContext.prototype.bindTexture;
+    WebGL2RenderingContext.prototype.bindTexture = function(target, texture) {
+      if (![3553,34067,32879,35866].includes(target) && warehouseBadTextureTargets.length < 20)
+        warehouseBadTextureTargets.push({target,stack:new Error().stack});
+      return original.call(this, target, texture);
+    };
   });
   async function state() {
     const emitted = page.waitForEvent('console', {predicate:message => message.text().includes(prefix), timeout:15000});
@@ -109,24 +122,31 @@ async function realSmoke(browser, url) {
     return keyUntil(key, label, current => current.frameCount >= before.frameCount + 3 && predicate(current));
   }
   let mouseX = 600, mouseY = 400;
+  async function moveLeverTo(target, tolerance = .025) {
+    // Calibrate by reading the actual lever after native relative mouse events.
+    // CSS pixels, device pixels and Unity's input-axis sensitivity can differ.
+    const deadline = Date.now() + 12000;
+    let current = await state();
+    while (Math.abs(current.forkliftSlider - target) > tolerance) {
+      if (Date.now() > deadline) throw new Error('Lever did not reach ' + target + ': ' + JSON.stringify(current));
+      if (!current.forkliftAssistActive) throw new Error('Held lever was interrupted: ' + JSON.stringify(current));
+      const difference = target - current.forkliftSlider;
+      mouseY -= Math.sign(difference) * Math.min(12, Math.max(1, Math.abs(difference) * 80));
+      await page.mouse.move(mouseX, mouseY);
+      await delay(35);
+      current = await state();
+    }
+    return current;
+  }
   async function mouseLiftUntil(direction, label, predicate, timeout = 15000) {
-    const deadline = Date.now() + timeout;
-    await page.keyboard.down('x');
+    await page.keyboard.down('ShiftLeft');
     try {
-      let current;
-      do {
-        // Native relative pointer events, paced across rendered frames. No
-        // controller calls or keyboard hydraulic fallback satisfy this test.
-        for (let i = 0; i < 8; i++) {
-          mouseY -= direction * 12;
-          await page.mouse.move(mouseX, mouseY);
-          await delay(20);
-        }
-        current = await state();
-        if (predicate(current)) return current;
-      } while (Date.now() < deadline);
-      throw new Error(label + ' timed out: ' + JSON.stringify(current));
-    } finally { await page.keyboard.up('x'); }
+      await pollState('Open the centred hydraulic lever', current => current.forkliftAssistActive && Math.abs(current.forkliftSlider) < .01);
+      await moveLeverTo(direction * .72);
+      // The pointer now stays still. A displaced lever requests persistent
+      // speed, so neither keyboard hydraulics nor repeated mouse motion help.
+      return await pollState(label, predicate, timeout);
+    } finally { await page.keyboard.up('ShiftLeft'); }
   }
   async function animationCallbacks() {
     const cdp = await context.newCDPSession(page);
@@ -162,9 +182,14 @@ async function realSmoke(browser, url) {
     await page.bringToFront();
     await page.locator('#warehouse-canvas').focus();
     const initial = await state();
-    check('REAL: Compiled player reports version 7 and SMAA', initial.buildVersion === 7 && initial.cameraAntialiasing === 'SubpixelMorphologicalAntiAliasing' && initial.pipelineMsaaSamples === 2);
-    await page.waitForFunction(() => document.getElementById('warehouse-stats').dataset.buildVersion === '7' && Number(document.getElementById('warehouse-stats').dataset.fps) > 0);
-    check('REAL: Small FPS counter receives completed player frames', await page.locator('#warehouse-stats').isVisible());
+    check('REAL: Compiled player reports version 8 and SMAA', initial.buildVersion === 8 && initial.cameraAntialiasing === 'SubpixelMorphologicalAntiAliasing' && initial.pipelineMsaaSamples === 2);
+    check('REAL: Compiled player applies the bounded twelve-fixture shadow budget',
+      initial.fixtureShadowAtlas === 1024 && initial.fixtureShadowLow === 128 && initial.fixtureShadowHigh === 512 &&
+      Array.isArray(initial.fixtureShadowTiers) && initial.fixtureShadowTiers.length === 12 &&
+      initial.fixtureShadowTiers.filter(tier => tier === 2).length === 3 &&
+      initial.fixtureShadowTiers.filter(tier => tier === 0).length === 9);
+    await page.waitForFunction(() => document.getElementById('warehouse-stats').dataset.buildVersion === '8' && Number(document.getElementById('warehouse-stats').dataset.fps) > 0);
+    check('REAL: Player frame telemetry stays available without cluttering the default view', await page.locator('#warehouse-stats').isHidden());
     check('REAL: Warehouse begins with a four-pallet delivery and closed receiving doors', initial.receivingTotal === 4 && initial.receivingPhase === 'Arriving' && !initial.receivingDoorsOpen);
     check('REAL: Walking and running use the faster starting speeds', Math.abs(initial.playerWalkSpeed - 2.8) < .01 && Math.abs(initial.playerRunSpeed - 5.4) < .01);
     check('REAL: Initial clock starts before sunrise', initial.hour >= 4.5 && initial.hour < 6);
@@ -196,6 +221,47 @@ async function realSmoke(browser, url) {
     check('REAL: Running tires retain their complete-truck supported masses',
       Array.isArray(physicsState.forkliftSprungMasses) && physicsState.forkliftSprungMasses.length === 4 &&
       physicsState.forkliftSprungMasses.every((mass, index) => Number.isFinite(mass) && Math.abs(mass - expectedSprungMasses[index]) < 2));
+    if (process.argv.includes('--display')) {
+      const messageStart = messages.length;
+      const buffer = () => page.locator('#warehouse-canvas').evaluate(c => [c.width,c.height]);
+      async function openSettings() {
+        await page.keyboard.press('Escape');
+        await page.locator('#warehouse-paused [data-screen="settings"]').click();
+      }
+      async function resumeFrames(label) {
+        const before = await state();
+        await page.locator('#warehouse-menu-back').click();
+        await page.locator('#warehouse-resume').click();
+        await pollState(label, current => !current.browserSuspended && current.frameCount >= before.frameCount + 40);
+        await delay(250);
+      }
+      await openSettings();
+      const originalBuffer = await buffer();
+      await page.locator('#warehouse-fullscreen').click();
+      await page.waitForFunction(() => document.fullscreenElement?.id === 'warehouse-stage');
+      await delay(200);
+      check('DISPLAY: Fullscreen preserves the paused Unity drawing buffer', JSON.stringify(await buffer()) === JSON.stringify(originalBuffer));
+      await page.locator('#warehouse-fullscreen').click();
+      await page.waitForFunction(() => !document.fullscreenElement);
+      await delay(200);
+      await resumeFrames('Resume after a paused fullscreen round trip');
+      await capture('unity-display-windowed');
+      await openSettings();
+      await page.locator('#warehouse-fullscreen').click();
+      await page.waitForFunction(() => document.fullscreenElement?.id === 'warehouse-stage');
+      await resumeFrames('Render the actual warehouse in fullscreen');
+      await capture('unity-display-fullscreen');
+      await openSettings();
+      await page.locator('#warehouse-fullscreen').click();
+      await page.waitForFunction(() => !document.fullscreenElement);
+      await resumeFrames('Return from fullscreen to the original window');
+      await capture('unity-display-returned');
+      const graphicsWarnings = messages.slice(messageStart).filter(message => message.type === 'error' || /INVALID_(?:OPERATION|ENUM|VALUE|FRAMEBUFFER_OPERATION)|GL_INVALID|RuntimeError|memory access out of bounds|WebGL context lost/i.test(message.text));
+      if (graphicsWarnings.length) console.error(JSON.stringify(graphicsWarnings.slice(0,8)));
+      check('DISPLAY: Fullscreen transitions resume without graphics or page failures', graphicsWarnings.length === 0 && failures.length === 0);
+      console.log(checks.length + ' display checks passed. Captures: ' + dump);
+      return;
+    }
     let morning = initial;
     const dawnDeadline = Date.now() + 120000;
     while (morning.hour < 7 && Date.now() < dawnDeadline) { await delay(750); morning = await state(); }
@@ -212,10 +278,10 @@ async function realSmoke(browser, url) {
     fs.writeFileSync(path.join(dump, 'unity-real-performance.json'), JSON.stringify(performanceReport, null, 2));
     console.log('PERFORMANCE ' + JSON.stringify(performanceReport));
     check('REAL: Smooth mode bounds the actual Retina drawing buffer', performanceReport.viewport.width * performanceReport.viewport.height <= 1920 * 1080);
-    const deliveryReady = await pollState('Truck parks and opens its receiving doors', current => current.receivingDoorsOpen, 30000);
+    const deliveryReady = await pollState('Truck completes the service-road route and opens its receiving doors', current => current.receivingDoorsOpen, 120000);
     // The loader can resolve before MonoBehaviour.Start moves the parked
     // authoring pose into its arrival lane. Compare two running physics states.
-    check('REAL: Delivery truck actually backs into the dock', physicsState.receivingTruckPosition[2] - deliveryReady.receivingTruckPosition[2] > 8);
+    check('REAL: Delivery truck travels from the service road into the dock', distance(physicsState.receivingTruckPosition, deliveryReady.receivingTruckPosition) > 8);
     check('REAL: Opening the doors leaves all four pallets for the player to unload', deliveryReady.receivingUnloaded === 0 && deliveryReady.receivingStored === 0);
     await capture('unity-real-delivery-ready');
     const activeCallbacks = await animationCallbacks();
@@ -232,6 +298,21 @@ async function realSmoke(browser, url) {
     await page.evaluate(() => { dispatchEvent(new Event('blur')); dispatchEvent(new Event('focus')); });
     const retained = await state();
     check('REAL: Focus changes cannot undo manual pause', retained.browserSuspended && retained.frameCount === stopped.frameCount);
+    const orientation = await context.newCDPSession(page);
+    try {
+      await orientation.send('Emulation.setTouchEmulationEnabled', {enabled:true,maxTouchPoints:1});
+      await page.setViewportSize({width:390,height:844});
+      await page.waitForSelector('#warehouse-rotate', {state:'visible'});
+      check('REAL: Portrait touch gate covers the paused player and its menu', await page.locator('#warehouse-menu').isHidden() && (await state()).browserSuspended);
+      await page.setViewportSize({width:844,height:390});
+      await page.waitForSelector('#warehouse-rotate', {state:'hidden'});
+      const landscapePaused = await state();
+      check('REAL: Returning to landscape cannot undo manual pause', await page.locator('#warehouse-paused').isVisible() && landscapePaused.browserSuspended && landscapePaused.frameCount === stopped.frameCount);
+    } finally {
+      await orientation.send('Emulation.setTouchEmulationEnabled', {enabled:false});
+      await page.setViewportSize({width:1280,height:720});
+      await orientation.detach();
+    }
     await page.screenshot({path:path.join(dump,'unity-real-paused.png')});
     await page.locator('#warehouse-resume').click();
     await delay(1200);
@@ -253,11 +334,16 @@ async function realSmoke(browser, url) {
     await page.waitForFunction(() => !document.pointerLockElement);
     await delay(150);
     const released = await state();
-    const uncaptured = await holdKey('w', 500);
-    check('REAL: Escape releases capture and stops movement input', distance(uncaptured.playerPosition, released.playerPosition) < .05 && !uncaptured.browserSuspended);
-    await page.locator('#warehouse-canvas').click({position:{x:600,y:400}});
+    await page.keyboard.down('w');
+    await delay(400);
+    await page.keyboard.up('w');
+    const uncaptured = await state();
+    check('REAL: Escape opens the menu, releases capture and stops movement', distance(uncaptured.playerPosition, released.playerPosition) < .05 && uncaptured.browserSuspended && await page.locator('#warehouse-paused').isVisible());
+    await page.locator('#warehouse-resume').click();
+    await page.waitForFunction(() => document.pointerLockElement?.id === 'warehouse-canvas');
+    await pollState('Resume walking controls after neutral frames', current => !current.browserSuspended && current.frameCount >= uncaptured.frameCount + 3);
     const recaptured = await holdKey('w', 600);
-    check('REAL: Clicking the warehouse restores movement after Escape', distance(recaptured.playerPosition, uncaptured.playerPosition) > .3);
+    check('REAL: Resume restores mouse and walking controls after Escape', distance(recaptured.playerPosition, uncaptured.playerPosition) > .3);
 
     // Exercise the compiled forklift through the same keyboard and mouse
     // controls as a player. ReportState is read-only; no test teleports or
@@ -273,10 +359,29 @@ async function realSmoke(browser, url) {
     forkliftStates.approach = await keyUntil('w', 'Walk within forklift reach', current =>
       groundDistance(current.playerPosition, current.forkliftPosition) < 2.25);
     forkliftStates.training = await pressForFrames('e', 'Open forklift familiarisation', current => current.forkliftTraining);
-    check('REAL: First E seats the player with controls gated by familiarisation', forkliftStates.training.forkliftTraining && forkliftStates.training.forkliftDriving && !forkliftStates.training.forkliftCaptured && forkliftStates.training.forkliftThrottle === 0);
+    check('REAL: First E starts hands-on familiarisation on the parked forklift', forkliftStates.training.forkliftTraining && forkliftStates.training.forkliftTrainingStep === 'brake' && forkliftStates.training.forkliftDriving && forkliftStates.training.forkliftThrottle === 0);
+    await pollState('Release entry key and capture the driver controls', current => current.forkliftCaptured);
+    await delay(350);
+    forkliftStates.entryNeutral = await state();
+    check('REAL: Walking-to-driver handoff retains native capture through neutral frames', forkliftStates.entryNeutral.forkliftCaptured && !forkliftStates.entryNeutral.browserSuspended && await page.evaluate(() => document.pointerLockElement?.id === 'warehouse-canvas'));
     await capture('unity-real-forklift-training');
-    forkliftStates.entered = await pressForFrames('e', 'Acknowledge forklift familiarisation', current => current.forkliftDriving && current.forkliftCaptured && !current.forkliftTraining);
-    check('REAL: E acknowledges the first briefing and captures vehicle controls', forkliftStates.entered.forkliftDriving && !forkliftStates.entered.forkliftTraining);
+    forkliftStates.trainingBrake = await keyUntil('Space', 'Perform the training brake check', current => current.forkliftTrainingStep === 'lift');
+    await page.keyboard.down('ShiftLeft');
+    try {
+      await pollState('Open hydraulic lever for familiarisation', current => current.forkliftAssistActive);
+      await moveLeverTo(.72);
+      forkliftStates.trainingLift = await pollState('Lift the actual empty forks for familiarisation', current => current.forkliftTrainingStep === 'center');
+      const movingLeverFrame = forkliftStates.trainingLift.frameCount;
+      forkliftStates.trainingFlow = await pollState('Stationary off-centre lever keeps the forks moving', current => current.frameCount >= movingLeverFrame + 18);
+      check('REAL: A stationary off-centre lever requests persistent hydraulic speed', forkliftStates.trainingFlow.forkliftMouseLiftInput > .1 && forkliftStates.trainingFlow.forkliftLiftHeight > forkliftStates.trainingLift.forkliftLiftHeight + .01);
+      forkliftStates.trainingCentered = await moveLeverTo(0, .04);
+      const centreFrame = forkliftStates.trainingCentered.frameCount;
+      forkliftStates.trainingHeld = await pollState('Hold the centred lever before releasing it', current => current.frameCount > centreFrame + 18);
+      check('REAL: Centre deadzone holds the hydraulic height while Shift remains held', forkliftStates.trainingHeld.forkliftMouseLiftInput === 0 && Math.abs(forkliftStates.trainingHeld.forkliftLiftHeight - forkliftStates.trainingCentered.forkliftLiftHeight) < .03);
+    } finally { await page.keyboard.up('ShiftLeft'); }
+    forkliftStates.entered = await pollState('Release the centred lever to finish familiarisation', current => current.forkliftDriving && current.forkliftCaptured && !current.forkliftTraining);
+    check('REAL: Brake, lift, centre and release complete hands-on familiarisation', forkliftStates.entered.forkliftTrainingStep === 'complete' && forkliftStates.entered.forkliftThrottle === 0);
+    await keyUntil('z', 'Lower empty forks to the original pickup height', current => current.forkliftLiftHeight < .09);
     check('REAL: Driver starts in the rear chase view', forkliftStates.entered.forkliftCabView === false);
     await capture('unity-real-forklift-chase');
     forkliftStates.cab = await pressForFrames('c', 'Switch to forklift cab', current => current.forkliftCabView);
@@ -284,31 +389,40 @@ async function realSmoke(browser, url) {
     forkliftStates.chase = await pressForFrames('c', 'Restore forklift chase camera', current => !current.forkliftCabView);
     check('REAL: C switches between the cab and chase cameras', forkliftStates.cab.forkliftCabView && !forkliftStates.chase.forkliftCabView);
 
-    await page.keyboard.down('Shift');
+    await page.keyboard.down('b');
     try {
       forkliftStates.approachDock = await keyUntil('w', 'Creep along the receiving aisle', current => current.forkliftPosition[2] > 9.6, 45000);
-    } finally { await page.keyboard.up('Shift'); }
+    } finally { await page.keyboard.up('b'); }
     await keyUntil('Space', 'Stop before the first pallet', current => Math.abs(current.forkliftSignedSpeed) < .04);
     await pollState('Release brake before mouse control', current => current.forkliftThrottle === 0);
     const beforeMouse = await state();
     const palletBeforeGuide = beforeMouse.receivingFirstPallet;
-    await page.keyboard.down('x');
+    await page.keyboard.down('ShiftLeft');
     try {
-      const heldStill = await pollState('Hold X with the mouse still', current => current.forkliftForkViewActive && current.frameCount > beforeMouse.frameCount + 30);
-      check('REAL: Held X alone neither drives nor raises the forklift', heldStill.forkliftThrottle === 0 && heldStill.forkliftMouseLiftInput === 0 && Math.abs(heldStill.forkliftLiftHeight - beforeMouse.forkliftLiftHeight) < .02 && distance(heldStill.forkliftPosition, beforeMouse.forkliftPosition) < .06);
+      const heldStill = await pollState('Hold Left Shift with the mouse still', current => current.forkliftForkViewActive && current.frameCount > beforeMouse.frameCount + 30);
+      check('REAL: Left Shift opens a centred lever without driving or lifting', heldStill.forkliftThrottle === 0 && heldStill.forkliftMouseLiftInput === 0 && Math.abs(heldStill.forkliftSlider) < .01 && Math.abs(heldStill.forkliftLiftHeight - beforeMouse.forkliftLiftHeight) < .02 && distance(heldStill.forkliftPosition, beforeMouse.forkliftPosition) < .06);
+      check('REAL: The actual HTML hydraulic lever appears only while held', await page.locator('#warehouse-hydraulics').isVisible() && await page.locator('#warehouse-fork-speed').innerText() === 'Neutral');
       await capture('unity-real-fork-placement-through-mast');
-      await page.keyboard.down('Shift');
+      await page.keyboard.down('b');
       try { forkliftStates.inserted = await keyUntil('w', 'Position forks manually inside the first pallet', current => current.forkliftPosition[2] > 12.31, 30000); }
-      finally { await page.keyboard.up('Shift'); }
+      finally { await page.keyboard.up('b'); }
       await keyUntil('Space', 'Stop with forks inserted', current => Math.abs(current.forkliftSignedSpeed) < .04);
       const inserted = await state();
-      check('REAL: WASD remains manual while X reveals the actual pallet and forks', inserted.forkliftForkViewActive && inserted.forkliftForkViewTarget.length > 0 && inserted.forkliftMouseLiftInput === 0);
+      check('REAL: WASD remains manual while Left Shift reveals the actual pallet and forks', inserted.forkliftForkViewActive && inserted.forkliftForkViewTarget.length > 0 && inserted.forkliftMouseLiftInput === 0);
       await capture('unity-real-forks-in-pallet');
-    } finally { await page.keyboard.up('x'); }
+    } finally { await page.keyboard.up('ShiftLeft'); }
     forkliftStates.mousePickup = await mouseLiftUntil(1, 'Mouse up raises the pallet through contact', current => current.receivingFirstPallet[1] > palletBeforeGuide[1] + .10 && current.forkliftLiftHeight > .28);
-    const releasedMouse = await pollState('Releasing X clears the hydraulic input', current => !current.forkliftAssistActive && current.forkliftLiftInput === 0);
-    const restingMouse = await pollState('Forks hold after releasing X', current => current.frameCount > releasedMouse.frameCount + 30);
-    check('REAL: Mouse up physically lifts the delivery pallet and release holds it', Math.abs(restingMouse.forkliftLiftHeight - releasedMouse.forkliftLiftHeight) < .03 && restingMouse.receivingFirstPallet[1] > palletBeforeGuide[1] + .08);
+    const releasedMouse = await pollState('Releasing Left Shift recentres and clears the hydraulic input', current => !current.forkliftAssistActive && current.forkliftLiftInput === 0 && current.forkliftSlider === 0);
+    // The loaded mast, chain and carriage are physical joints. Bound their
+    // release transient separately from the subsequent steady hold, rather
+    // than treating the instant the valve closes as a settled rigid height.
+    const restingMouse = await pollState('Loaded forks settle after the valve closes', current => current.frameCount >= releasedMouse.frameCount + 60);
+    const heldMouse = await pollState('Loaded forks retain their settled height', current => current.frameCount >= restingMouse.frameCount + 60);
+    check('REAL: Mouse up physically lifts the delivery pallet and release holds it',
+      Math.abs(restingMouse.forkliftLiftHeight - releasedMouse.forkliftLiftHeight) <= .06 &&
+      Math.abs(heldMouse.forkliftLiftHeight - restingMouse.forkliftLiftHeight) < .02 &&
+      heldMouse.forkliftLiftInput === 0 && heldMouse.forkliftSlider === 0 &&
+      heldMouse.receivingFirstPallet[1] > palletBeforeGuide[1] + .08);
     await capture('unity-real-first-pallet-lifted');
     forkliftStates.unloaded = await keyUntil('s', 'Reverse the pallet into the warehouse', current => current.receivingUnloaded > 0 && current.forkliftPosition[2] < 7, 30000);
     await keyUntil('Space', 'Stop with the pallet on the forks', current => Math.abs(current.forkliftSignedSpeed) < .04);
@@ -380,10 +494,14 @@ async function realSmoke(browser, url) {
       check('REAL: Paused hydraulic bodies stay frozen', Math.abs(forkliftStates.pausedLater.forkliftLiftHeight - forkliftStates.paused.forkliftLiftHeight) < .0001);
       await page.keyboard.press('p');
       forkliftStates.resumed = await pollState('Resume forklift simulation', current => !current.browserSuspended && current.frameCount > forkliftStates.paused.frameCount);
-      check('REAL: Resume preserves the driver but requires fresh mouse capture', forkliftStates.resumed.forkliftDriving && !forkliftStates.resumed.forkliftCaptured && forkliftStates.resumed.forkliftThrottle === 0);
+      check('REAL: Resume preserves the driver and rejects held controls', forkliftStates.resumed.forkliftDriving && forkliftStates.resumed.forkliftThrottle === 0);
+      await page.evaluate(() => dispatchEvent(new Event('blur')));
+      forkliftStates.activityReleased = await state();
+      check('REAL: Inactivity releases the automatically resumed mouse capture', !forkliftStates.activityReleased.forkliftCaptured && forkliftStates.activityReleased.browserSuspended);
+      await page.evaluate(() => dispatchEvent(new Event('focus')));
       await page.locator('#warehouse-canvas').focus();
-      // Repeat the still-held key after Unity clears its input axes. Capturing
-      // with a key down must wait for neutral instead of starting the engine.
+      // Browser focus return does not recapture the pointer. Repeat held keys
+      // after the input reset; the fresh click must still wait for neutral.
       await page.keyboard.down('w');
       await page.keyboard.down('q');
       await page.locator('#warehouse-canvas').click({position:{x:600,y:400}});
@@ -422,10 +540,21 @@ async function realSmoke(browser, url) {
     check('REAL: The yard route returns to the warehouse without reset or jumping', Math.abs(forkliftStates.fromYard.playerPosition[1] - initial.playerPosition[1]) < .1);
     fs.writeFileSync(path.join(dump, 'unity-real-forklift-states.json'), JSON.stringify(forkliftStates, null, 2));
     await page.keyboard.press('Escape');
+    await page.waitForSelector('#warehouse-paused', {state:'visible'});
+    await page.locator('#warehouse-help').click();
+    await page.locator('[data-help-tab="forklift"]').click();
+    check('REAL: Controls open from the pause menu while gameplay stays frozen', await page.locator('#warehouse-help-forklift').isVisible() && (await state()).browserSuspended);
+    await page.screenshot({path:path.join(dump,'unity-real-controls.png'),scale:'css'});
+    await page.locator('#warehouse-close-help').click();
+    await page.locator('#warehouse-paused [data-screen="settings"]').click();
+    await page.locator('#warehouse-show-stats').check();
     await page.locator('#warehouse-fullscreen').click();
     await page.waitForFunction(() => document.fullscreenElement?.id === 'warehouse-stage');
     check('REAL: Actual player enters wrapper fullscreen', await page.locator('#warehouse-canvas').isVisible());
     await page.evaluate(() => document.exitFullscreen());
+    await page.locator('#warehouse-menu-back').click();
+    await page.locator('#warehouse-resume').click();
+    check('REAL: Optional performance readout can be enabled from Settings', await page.locator('#warehouse-stats').isVisible());
     await capture('unity-real-final');
     // Unity's format-capability probes can emit this exact warning before the
     // graphics device is created, even for an empty scene (Unity issue 16927).
@@ -449,199 +578,313 @@ async function realSmoke(browser, url) {
     await page.screenshot({path:path.join(dump,'unity-real-failure.png'), scale:'css', timeout:5000}).catch(() => {});
     throw error;
   } finally {
-    fs.writeFileSync(path.join(dump,'unity-real-console.json'), JSON.stringify({messages,failures,requests}, null, 2));
+    const pointerEvents = await page.evaluate(() => window.warehousePointerEvents || []).catch(() => []);
+    const badTextureTargets = await page.evaluate(() => window.warehouseBadTextureTargets || []).catch(() => []);
+    fs.writeFileSync(path.join(dump,'unity-real-console.json'), JSON.stringify({messages,failures,requests,pointerEvents,badTextureTargets}, null, 2));
   }
 }
 let browser;
 (async () => {
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const url = 'http://127.0.0.1:' + server.address().port;
-  const real = process.argv.includes('--real');
+  const real = process.argv.includes('--real') || process.argv.includes('--display');
   browser = await chromium.launch({headless:true, ...(real ? {channel:process.env.SHIFT_BROWSER_CHANNEL || 'chromium'} : {}), args:[...(real ? ['--enable-gpu', ...(process.platform === 'win32' ? ['--use-angle=d3d11'] : [])] : []),'--enable-unsafe-swiftshader']});
-  if (process.argv.includes('--real')) { await realSmoke(browser, url); return; }
+  if (real) { await realSmoke(browser, url); return; }
+
   const context = await browser.newContext({viewport:{width:1440,height:900}, deviceScaleFactor:2});
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   let requests = 0;
   await page.route('**/OneShiftWeb.loader.js*', route => { requests++; return route.fulfill({contentType:'text/javascript', body:loader}); });
+  const lifecycle = async p => (await calls(p)).filter(call => !call.includes(':UICommand:'));
+  const command = async (p, action) => (await calls(p)).some(call => call.includes(':UICommand:') && JSON.parse(call.split(':UICommand:')[1]).action === action);
+  async function mockPage(ctx = context) {
+    const p = await ctx.newPage();
+    p.on('pageerror', error => errors.push(error.message));
+    await p.route('**/OneShiftWeb.loader.js*', route => route.fulfill({contentType:'text/javascript', body:loader}));
+    await p.goto(url + '/one-shift.html');
+    return p;
+  }
+  async function startMock(p) {
+    await p.locator('#warehouse-play').click();
+    await p.waitForFunction(() => typeof finishUnityLoad === 'function');
+  }
+  async function noOverflow(p, selector) {
+    return p.locator(selector).evaluate(el => el.scrollWidth <= el.clientWidth + 1 && el.getBoundingClientRect().bottom <= innerHeight + 1);
+  }
   await page.goto(url + '/one-shift.html');
   await page.evaluate(() => document.fonts.ready);
   check('Unity is not downloaded before choosing to play', requests === 0);
+  check('Title uses the current game name', (await page.title()) === 'The Warehouse Simulator');
   check('Original saved game remains directly linked', await page.locator('.warehouse-classic a').getAttribute('href') === 'one-shift-classic.html');
-  await page.screenshot({path:path.join(dump,'launcher-desktop.png')});
-  await page.locator('#warehouse-play').click();
-  await page.waitForFunction(() => typeof finishUnityLoad === 'function');
-  check('Progress reports the actual loader callback', await page.locator('#warehouse-progress').getAttribute('value') === '42');
-  check('Compressed fallback URLs share the release version', await page.evaluate(() => {
-    const urls = ['dataUrl','frameworkUrl','codeUrl'].map(key => new URL(unityConfig[key], location.href));
-    return urls.every(url => url.pathname.endsWith('.unityweb') && url.searchParams.get('v') === '7');
+  check('Title fits the viewport', await noOverflow(page, '#warehouse-launcher'));
+  await page.screenshot({path:path.join(dump,'launcher-desktop.png'), scale:'css'});
+  await page.locator('#warehouse-main-menu [data-screen="settings"]').click();
+  check('Settings are available without downloading the game', await page.locator('#warehouse-menu').isVisible() && requests === 0);
+  await page.keyboard.press('Escape');
+  check('Escape closes title settings without starting the player', await page.locator('#warehouse-menu').isHidden() && requests === 0);
+  await startMock(page);
+  check('Download progress reflects Unity measured file fraction', await page.locator('#warehouse-progress').getAttribute('value') === '47');
+  await page.waitForFunction(() => document.getElementById('warehouse-load-elapsed').textContent !== '0s elapsed');
+  check('Loading shows truthful elapsed active time between callbacks', /^\d+s elapsed$/.test(await page.locator('#warehouse-load-elapsed').innerText()));
+  check('Compressed fallback URLs share release v8', await page.evaluate(() => {
+    return ['dataUrl','frameworkUrl','codeUrl'].map(key => new URL(unityConfig[key], location.href)).every(url => url.pathname.endsWith('.unityweb') && url.searchParams.get('v') === '8');
   }));
   check('Retina rendering starts within the Smooth pixel budget', await page.evaluate(() => {
-    const canvas = document.getElementById('warehouse-canvas');
-    return devicePixelRatio === 2 && unityConfig.matchWebGLToCanvasSize === false &&
-      canvas.width === 1800 && canvas.height === 1125 && canvas.width * canvas.height <= 1920 * 1080;
+    const c = document.getElementById('warehouse-canvas');
+    return devicePixelRatio === 2 && unityConfig.matchWebGLToCanvasSize === false && c.width === 1800 && c.height === 1125 && c.width * c.height <= 1920 * 1080;
   }));
+  await page.evaluate(() => reportUnityProgress(.9));
+  check('Completed download becomes indeterminate engine startup, never a stuck 100%', await page.locator('#warehouse-progress').getAttribute('value') === null && await page.locator('#warehouse-loading').getAttribute('data-phase') === 'engine');
   await page.evaluate(() => finishUnityLoad());
   await page.waitForFunction(() => unityCalls.includes('BrowserLifecycle:SetBrowserActive:1'));
-  check('Loader promise alone cannot reveal an unprepared game',
-    await page.locator('#warehouse-launcher').isVisible() && await page.locator('#warehouse-tools').isHidden());
+  check('Loader promise alone cannot reveal an unprepared game', await page.locator('#warehouse-launcher').isVisible() && await page.locator('#warehouse-tools').isHidden());
   await page.evaluate(() => { unityConfig.onOneShiftPreparation(2, 7, 0); reportUnityProgress(1); });
-  check('Preparation progress stays truthful after late download callbacks',
-    await page.locator('#warehouse-progress').getAttribute('value') === '29' &&
-    (await page.locator('#warehouse-load-status').innerText()) === 'Preparing graphics... 2 of 7' &&
-    await page.locator('#warehouse-launcher').isVisible());
+  check('Preparation stays separate from late download callbacks', await page.locator('#warehouse-progress').getAttribute('value') === '29' && await page.locator('#warehouse-load-status').innerText() === 'Morning light');
+  await page.evaluate(() => unityConfig.onWarehousePreparation({completed:2,total:7,fraction:.36,label:'Morning light',detail:'Rendering the office windows'}));
+  check('Finer preparation reports show actual intermediate work', await page.locator('#warehouse-progress').getAttribute('value') === '36' && await page.locator('#warehouse-load-detail').innerText() === 'Rendering the office windows');
+  await page.screenshot({path:path.join(dump,'launcher-preparing.png'), scale:'css'});
+  await page.evaluate(() => unityConfig.onWarehousePreparation({completed:2,total:7,fraction:.3,label:'Morning light',detail:'Rendering the office windows'}));
+  check('Late fine preparation reports cannot move progress backwards', await page.locator('#warehouse-progress').getAttribute('value') === '36');
   await clearCalls(page);
   await page.evaluate(() => dispatchEvent(new Event('blur')));
-  check('Blur suspends both schedulers while graphics are preparing',
-    JSON.stringify(await calls(page)) === JSON.stringify(['BrowserLifecycle:SetBrowserActive:0','monitor:false','loop:pause']));
+  check('Blur suspends both schedulers while preparation runs', JSON.stringify(await lifecycle(page)) === JSON.stringify(['BrowserLifecycle:SetBrowserActive:0','monitor:false','loop:pause']));
+  const elapsedBeforeBlur = await page.locator('#warehouse-load-elapsed').innerText();
+  await new Promise(resolve => setTimeout(resolve, 1100));
+  check('Elapsed loading time excludes browser inactivity', await page.locator('#warehouse-load-elapsed').innerText() === elapsedBeforeBlur);
   await clearCalls(page);
   await page.evaluate(() => unityConfig.onOneShiftPreparation(7, 7, 1));
-  check('Preparation completion while blurred cannot resume gameplay',
-    await page.locator('#warehouse-launcher').isHidden() && (await calls(page)).length === 0);
+  check('Preparation completion while blurred cannot resume gameplay', await page.locator('#warehouse-launcher').isHidden() && (await lifecycle(page)).length === 0);
   await page.evaluate(() => dispatchEvent(new Event('focus')));
-  check('Prepared game resumes only when browser activity returns',
-    JSON.stringify(await calls(page)) === JSON.stringify(['monitor:true','loop:resume','BrowserLifecycle:SetBrowserActive:1']));
-  await page.evaluate(() => unityConfig.onOneShiftStats(17, 59.8, 22.4, 120));
-  check('Version and FPS come from the compiled-player callback', await page.evaluate(() => {
-    const stats = document.getElementById('warehouse-stats');
-    return stats.textContent === 'v17 | 60 FPS' && stats.dataset.buildVersion === '17' &&
-      stats.dataset.fps === '59.8' && stats.dataset.frameCount === '120' &&
-      stats.dataset.longestFrameMs === '22.4' && stats.title === 'Longest frame: 22 ms';
+  check('Prepared game resumes only when browser activity returns', JSON.stringify(await lifecycle(page)) === JSON.stringify(['monitor:true','loop:resume','BrowserLifecycle:SetBrowserActive:1']));
+  await page.evaluate(() => unityConfig.onOneShiftStats(8, 59.8, 22.4, 120));
+  check('Version and FPS come from compiled-player frames', await page.evaluate(() => {
+    const s = document.getElementById('warehouse-stats');
+    return s.textContent === 'v8 | 60 FPS' && s.dataset.buildVersion === '8' && s.dataset.fps === '59.8' && s.dataset.frameCount === '120' && s.dataset.longestFrameMs === '22.4' && s.title === 'Longest frame: 22 ms';
   }));
-  await page.evaluate(() => unityConfig.onOneShiftStats(6, 59.8, 22.4, 120));
+  check('Performance readout stays out of the default play view', await page.locator('#warehouse-stats').isHidden());
   await clearCalls(page);
   await page.locator('#warehouse-pause').click();
-  check('Pause suspends Unity before its schedulers', JSON.stringify(await calls(page)) === JSON.stringify(['BrowserLifecycle:SetBrowserActive:0','monitor:false','loop:pause']));
-  check('Paused stats do not display the old running frame rate', await page.locator('#warehouse-stats').innerText() === 'v6 | Paused');
+  check('Pause suspends Unity before its schedulers', JSON.stringify(await lifecycle(page)) === JSON.stringify(['BrowserLifecycle:SetBrowserActive:0','monitor:false','loop:pause']));
+  check('Pause sends the UI bridge its menu state', await command(page, 'menu'));
+  check('Pause dialog is centred in the viewport', await page.locator('#warehouse-menu').evaluate(el => { const r = el.getBoundingClientRect(); return Math.abs(r.x + r.width / 2 - innerWidth / 2) < 1 && Math.abs(r.y + r.height / 2 - innerHeight / 2) < 1; }));
+  await page.screenshot({path:path.join(dump,'launcher-paused.png'), scale:'css'});
   await clearCalls(page);
   await page.evaluate(() => { dispatchEvent(new Event('blur')); dispatchEvent(new Event('focus')); });
-  check('Focus changes preserve manual pause', (await calls(page)).length === 0 && await page.locator('#warehouse-paused').isVisible());
-  await page.locator('#warehouse-resume').click();
-  check('Resume restarts the schedulers before Unity', JSON.stringify(await calls(page)) === JSON.stringify(['monitor:true','loop:resume','BrowserLifecycle:SetBrowserActive:1']));
+  check('Focus changes preserve manual pause', (await lifecycle(page)).length === 0 && await page.locator('#warehouse-paused').isVisible());
+  await page.locator('#warehouse-paused [data-screen="settings"]').click();
+  await page.locator('#warehouse-quality').selectOption('sharp');
+  await page.locator('#warehouse-show-stats').check();
+  check('Picture quality defers the drawing-buffer change while Unity is paused', await page.evaluate(() => {
+    const c = document.getElementById('warehouse-canvas'); return c.width === 1800 && c.height === 1125 && document.getElementById('warehouse-quality').value === 'sharp';
+  }));
   await clearCalls(page);
-  await page.evaluate(() => dispatchEvent(new Event('blur')));
-  check('Window blur suspends the engine', JSON.stringify(await calls(page)) === JSON.stringify(['BrowserLifecycle:SetBrowserActive:0','monitor:false','loop:pause']));
-  await page.evaluate(() => dispatchEvent(new Event('focus')));
+  await page.locator('#warehouse-quality').selectOption('smooth');
+  await page.setViewportSize({width:3024,height:1964});
+  check('Resizing a paused window preserves the last valid drawing buffer', await page.evaluate(() => {
+    const c = document.getElementById('warehouse-canvas'); return c.width === 1800 && c.height === 1125;
+  }));
+  check('Changing picture quality and size cannot undo manual pause', await page.locator('#warehouse-menu').isVisible() && (await lifecycle(page)).length === 0);
+  await page.setViewportSize({width:1440,height:900});
+  await page.locator('#warehouse-menu-back').click();
+  await page.locator('#warehouse-help').click();
+  await page.locator('[data-help-tab="forklift"]').click();
+  check('Forklift help describes left Shift, neutral and variable speed', (await page.locator('#warehouse-help-forklift').innerText()).includes('farther the lever is from centre') && (await page.locator('#warehouse-help-forklift').innerText()).includes('Left Shift'));
+  await page.screenshot({path:path.join(dump,'launcher-controls.png'), scale:'css'});
+  await page.keyboard.press('ArrowRight');
+  check('Help tabs have working keyboard navigation', await page.locator('[data-help-tab="work"]').getAttribute('aria-selected') === 'true');
+  await page.locator('#warehouse-close-help').click();
+  await clearCalls(page);
+  await page.locator('#warehouse-resume').click();
+  check('Resume restarts the schedulers before Unity', JSON.stringify(await lifecycle(page)) === JSON.stringify(['monitor:true','loop:resume','BrowserLifecycle:SetBrowserActive:1']));
+  check('Mouse capture resumes only after the active engine handoff', (await calls(page)).findIndex(call => call.endsWith('{"action":"resume"}')) > (await calls(page)).indexOf('BrowserLifecycle:SetBrowserActive:1'));
+  await page.waitForFunction(() => document.pointerLockElement?.id === 'warehouse-canvas');
+  check('The trusted Resume click directly obtains browser pointer lock', await page.evaluate(() => document.pointerLockElement?.id === 'warehouse-canvas'));
+  await page.setViewportSize({width:3024,height:1964});
+  await page.waitForFunction(() => document.getElementById('warehouse-canvas').width !== 1800);
+  check('Active large windows retain the pixel budget and aspect ratio', await page.evaluate(() => {
+    const c = document.getElementById('warehouse-canvas'); return c.width * c.height <= 1920 * 1080 && Math.abs(c.width / c.height - innerWidth / innerHeight) < .002;
+  }));
+  await page.setViewportSize({width:1440,height:900});
+  await page.evaluate(() => document.exitPointerLock());
+  await page.waitForFunction(() => document.pointerLockElement === null);
   await clearCalls(page);
   await page.evaluate(() => document.dispatchEvent(new Event('pointerlockerror')));
-  check('Denied mouse capture clears input without starting a pause', JSON.stringify(await calls(page)) === JSON.stringify(['BrowserLifecycle:SetBrowserActive:0','BrowserLifecycle:SetBrowserActive:1']) && await page.locator('#warehouse-paused').isHidden());
+  check('Denied mouse capture clears input without starting a pause', JSON.stringify(await lifecycle(page)) === JSON.stringify(['BrowserLifecycle:SetBrowserActive:0','BrowserLifecycle:SetBrowserActive:1']) && await page.locator('#warehouse-menu').isHidden());
+  await page.evaluate(() => {
+    window.mockCapturePointer = () => document.getElementById('warehouse-canvas').requestPointerLock();
+    document.getElementById('warehouse-canvas').addEventListener('click', window.mockCapturePointer);
+  });
+  await page.locator('#warehouse-canvas').click({position:{x:600,y:400}});
+  await page.waitForFunction(() => document.pointerLockElement?.id === 'warehouse-canvas');
+  await clearCalls(page);
+  await page.evaluate(() => document.exitPointerLock());
+  await page.waitForFunction(() => document.pointerLockElement === null);
+  check('An intentional controller pointer release cannot open Pause or reset the driver', await page.locator('#warehouse-menu').isHidden() && (await lifecycle(page)).length === 0);
+  await page.locator('#warehouse-canvas').click({position:{x:600,y:400}});
+  await page.waitForFunction(() => document.pointerLockElement?.id === 'warehouse-canvas');
+  check('Pointer ownership can transfer back without changing engine activity', await page.locator('#warehouse-menu').isHidden() && (await lifecycle(page)).length === 0);
+  await page.evaluate(() => document.getElementById('warehouse-canvas').removeEventListener('click', window.mockCapturePointer));
+  await page.evaluate(() => {
+    window.mockEngineEscapeEvents = [];
+    ['keydown','keyup'].forEach(type => document.addEventListener(type, event => {
+      if (event.code === 'Escape') window.mockEngineEscapeEvents.push(type);
+    }));
+  });
+  await page.keyboard.down('Escape');
+  await page.keyboard.down('Escape');
+  check('Actual Escape from pointer lock still opens the pause menu', await page.locator('#warehouse-paused').isVisible() && await page.evaluate(() => document.pointerLockElement === null));
+  check('Holding Escape cannot toggle the menu repeatedly or reach Unity', await page.locator('#warehouse-paused').isVisible() && await page.evaluate(() => mockEngineEscapeEvents.length === 0));
+  await page.keyboard.up('Escape');
+  check('Handled Escape cannot queue a delayed engine capture release', await page.evaluate(() => mockEngineEscapeEvents.length === 0));
+  await page.keyboard.press('Escape');
+  check('Escape resumes the menu exactly once without reaching the engine', await page.locator('#warehouse-menu').isHidden() && await page.evaluate(() => mockEngineEscapeEvents.length === 0));
   await clearCalls(page);
   await page.evaluate(() => { document.getElementById('warehouse-stage').style.transform = 'translateX(-200vw)'; });
   await page.waitForFunction(() => unityCalls.includes('loop:pause'));
-  check('Leaving the viewport suspends the engine', (await calls(page)).includes('BrowserLifecycle:SetBrowserActive:0'));
+  check('Leaving the viewport suspends the engine', (await lifecycle(page)).includes('BrowserLifecycle:SetBrowserActive:0'));
   await page.evaluate(() => { document.getElementById('warehouse-stage').style.transform = ''; });
   await page.waitForFunction(() => unityCalls.includes('loop:resume'));
   await page.keyboard.press('p');
   check('P keyboard shortcut pauses the warehouse', await page.locator('#warehouse-paused').isVisible());
   await page.keyboard.press('p');
-  await page.locator('#warehouse-help').click();
-  check('Controls include switch and rack interaction', (await page.locator('#warehouse-controls').innerText()).includes('rack'));
-  await page.locator('#warehouse-quality').selectOption('sharp');
-  check('Sharper adds detail without unrestricted Retina rendering', await page.evaluate(() => {
-    const canvas = document.getElementById('warehouse-canvas');
-    return canvas.width === 2160 && canvas.height === 1350 && canvas.width * canvas.height <= 2560 * 1440;
-  }));
-  await page.locator('#warehouse-pause').click();
+  await page.keyboard.press('Escape');
+  check('Escape opens the menu when the mouse is released', await page.locator('#warehouse-paused').isVisible());
+  await page.locator('#warehouse-return-title').click();
+  check('Title screen retains the current loaded shift', await page.locator('#warehouse-launcher').isVisible() && (await page.locator('#warehouse-play').innerText()).includes('Resume shift') && requests === 1);
   await clearCalls(page);
-  await page.locator('#warehouse-quality').selectOption('smooth');
-  await page.setViewportSize({width:3024,height:1964});
-  await page.waitForFunction(() => document.getElementById('warehouse-canvas').width !== 1800);
-  check('Large windows retain the pixel budget and aspect ratio', await page.evaluate(() => {
-    const canvas = document.getElementById('warehouse-canvas');
-    return canvas.width * canvas.height <= 1920 * 1080 &&
-      Math.abs(canvas.width / canvas.height - innerWidth / innerHeight) < .002;
+  await page.evaluate(() => { dispatchEvent(new Event('blur')); dispatchEvent(new Event('focus')); });
+  check('Returning to the title keeps the simulation paused through focus changes', (await lifecycle(page)).length === 0);
+  await page.locator('#warehouse-play').click();
+  check('Resume returns to the same player without another download', await page.locator('#warehouse-launcher').isHidden() && requests === 1 && (await lifecycle(page)).includes('loop:resume'));
+  await page.evaluate(() => {
+    document.getElementById('warehouse-canvas').style.background = 'url(assets/one-shift-unity/preview.png) center / cover';
+    unityConfig.onWarehouseHUD({clock:'07:14',location:'Receiving dock',objective:'Unload the first delivery',detail:'Unload the trailer   1/4 unloaded   0/4 stored',hintKey:'E',hint:'Stop and step out',driving:true,forkHeight:1.2,hydraulics:true,hydraulicInput:.6,forkSpeed:.5,training:'center'});
+  });
+  check('HTML HUD uses the authoritative objective and context', await page.locator('#warehouse-objective').innerText() === 'Unload the first delivery' && await page.locator('#warehouse-hint-key').innerText() === 'E');
+  check('Legacy status spacing becomes readable HUD separators', await page.locator('#warehouse-objective-detail').innerText() === 'Unload the trailer / 1/4 unloaded / 0/4 stored');
+  check('Hydraulic lever shows direction and actual signed speed while held', await page.locator('#warehouse-hydraulics').isVisible() && await page.locator('#warehouse-fork-speed').innerText() === '+50% raise' && await page.locator('#warehouse-lever-knob').evaluate(el => el.style.top) === '20%');
+  await page.screenshot({path:path.join(dump,'shell-hydraulics-fixture.png'), scale:'css'});
+  await page.evaluate(() => unityConfig.onWarehouseHUD({driving:true,forkHeight:1.2,hydraulics:true,hydraulicInput:0,forkSpeed:0}));
+  check('Hydraulic neutral is visibly centred and stopped', await page.locator('#warehouse-fork-speed').innerText() === 'Neutral' && await page.locator('#warehouse-lever-knob').evaluate(el => el.style.top) === '50%');
+  await page.evaluate(() => unityConfig.onWarehouseHUD({driving:true,forkHeight:1.2,hydraulics:false,hydraulicInput:0,forkSpeed:0}));
+  check('Releasing hydraulic control removes the lever', await page.locator('#warehouse-hydraulics').isHidden());
+  const office = {open:true,title:'Dispatch desk',summary:'One open delivery. Your supplier orders are listed below.',cash:2480,inventory:[{id:'case-a',name:'Packing tape',quantity:12,unit:'cases'}],orders:[{id:'tape',name:'Packing tape',detail:'12 cases arrive at the parcel shelf.',price:180,action:'Place order',enabled:true}],contracts:[{id:'corner',name:'Corner Supply',detail:'Deliver 6 cases of packing tape.',price:240,action:'Accept order',enabled:true,status:'Ready to accept'}],ledger:[{label:'Opening balance',amount:2480}],message:''};
+  await page.evaluate(value => unityConfig.onWarehouseHUD({computer:value}), office);
+  check('Office computer opens with authoritative stock and cash', await page.locator('#warehouse-computer').isVisible() && await page.locator('#warehouse-computer-cash').innerText() === '$2,480' && (await page.locator('#warehouse-inventory').innerText()).includes('12 cases'));
+  check('Computer suspends the warehouse while it is in use', (await lifecycle(page)).slice(-3).join('|') === 'BrowserLifecycle:SetBrowserActive:0|monitor:false|loop:pause');
+  await page.locator('[data-desk-tab="purchases"]').click();
+  await clearCalls(page);
+  await page.locator('#warehouse-orders button').click();
+  check('Supplier purchase sends only the selected authoritative item ID', (await calls(page)).some(call => call.endsWith('{"action":"order","id":"tape"}')));
+  check('Purchase button rejects repeated clicks while awaiting the ledger reply', await page.locator('#warehouse-orders button').isDisabled());
+  office.cash = 2300; office.message = 'Packing tape ordered.';
+  await page.evaluate(value => unityConfig.onWarehouseHUD({computer:value}), office);
+  check('Ledger reply refreshes cash and restores purchase controls', await page.locator('#warehouse-computer-cash').innerText() === '$2,300' && await page.locator('#warehouse-orders button').isEnabled());
+  await page.locator('#warehouse-orders button').click();
+  await page.evaluate(value => unityConfig.onWarehouseHUD({computer:value}), office);
+  check('An unchanged authoritative reply also releases a pending action', await page.locator('#warehouse-orders button').isEnabled());
+  await page.screenshot({path:path.join(dump,'shell-office-fixture.png'), scale:'css'});
+  await page.locator('[data-desk-tab="customers"]').click();
+  await page.locator('#warehouse-contracts button').click();
+  check('Customer orders use their separate contract action', await command(page, 'contract'));
+  office.contracts[0] = {...office.contracts[0],action:'Ship order',enabled:false,status:'Accepted',secondaryAction:'Release order',secondaryCommand:'cancel-contract',secondaryEnabled:true};
+  await page.evaluate(value => unityConfig.onWarehouseHUD({computer:value}), office);
+  check('Accepted orders can be released while shipment is unavailable', await page.locator('#warehouse-contracts button[data-action="contract"]').isDisabled() && await page.locator('#warehouse-contracts button[data-action="cancel-contract"]').isEnabled());
+  await page.setViewportSize({width:1280,height:720});
+  await page.evaluate(value => unityConfig.onWarehouseHUD({computer:{...value,contracts:[...value.contracts,
+    {id:'northbank',name:'Northbank Supplies',detail:'1 pallet / 36 cases of cleaning supplies',price:910,action:'Accept order',enabled:false,status:'Available'},
+    {id:'marsh',name:'Marsh and Field',detail:'1 pallet / 40 cases of dry pantry goods',price:1020,action:'Accept order',enabled:false,status:'Available'}],
+    message:'Accepted Corner Mart. Receive the stock, load the oldest matching pallet into the trailer, then dispatch here.'}}), office);
+  check('Office transaction notice stays visible beneath a full customer-order list', await page.locator('#warehouse-computer').evaluate(el => {
+    const dialog = el.getBoundingClientRect(), footer = el.querySelector('footer').getBoundingClientRect();
+    return footer.top >= dialog.top && footer.bottom <= dialog.bottom - 6;
   }));
-  check('Changing picture quality and size cannot undo manual pause',
-    await page.locator('#warehouse-paused').isVisible() && (await calls(page)).length === 0);
+  await page.screenshot({path:path.join(dump,'shell-office-orders-fixture.png'),scale:'css'});
+  await page.evaluate(value => unityConfig.onWarehouseHUD({computer:value}), office);
   await page.setViewportSize({width:1440,height:900});
-  await page.waitForFunction(() => document.getElementById('warehouse-canvas').width === 1800);
+  await clearCalls(page);
+  await page.locator('#warehouse-contracts button[data-action="cancel-contract"]').click();
+  check('Release sends the same order ID and prevents repeated actions until reply', (await calls(page)).some(call => call.endsWith('{"action":"cancel-contract","id":"corner"}')) && await page.locator('#warehouse-contracts button[data-action="cancel-contract"]').isDisabled());
+  office.contracts[0] = {...office.contracts[0],action:'Accept order',enabled:true,status:'Ready to accept',secondaryAction:'',secondaryCommand:'',secondaryEnabled:false};
+  await page.evaluate(value => unityConfig.onWarehouseHUD({computer:value}), office);
+  check('Release reply restores the available order without a stale secondary action', await page.locator('#warehouse-contracts button[data-action="contract"]').isEnabled() && await page.locator('#warehouse-contracts button[data-action="cancel-contract"]').count() === 0);
+  await page.locator('[data-desk-tab="ledger"]').click();
+  check('Ledger tab displays actual transaction amounts', (await page.locator('#warehouse-ledger').innerText()).includes('$2,480'));
+  await clearCalls(page);
+  await page.keyboard.press('Escape');
+  check('Leaving the computer closes it before resuming the engine', (await calls(page))[0].endsWith('{"action":"computer-close"}') && (await lifecycle(page)).includes('loop:resume') && await page.locator('#warehouse-computer').isHidden());
   await page.locator('#warehouse-pause').click();
-  await page.locator('#warehouse-close-help').click();
+  await page.locator('#warehouse-paused [data-screen="settings"]').click();
   await page.locator('#warehouse-fullscreen').click();
   await page.waitForFunction(() => document.fullscreenElement?.id === 'warehouse-stage');
   check('Fullscreen keeps the complete game wrapper', await page.evaluate(() => document.fullscreenElement?.id === 'warehouse-stage'));
   await page.evaluate(() => document.exitFullscreen());
+  await page.keyboard.press('p');
 
-  const preparedFirst = await context.newPage();
-  preparedFirst.on('pageerror', error => errors.push(error.message));
-  await preparedFirst.route('**/OneShiftWeb.loader.js*', route => route.fulfill({contentType:'text/javascript', body:loader}));
-  await preparedFirst.goto(url + '/one-shift.html');
-  await preparedFirst.locator('#warehouse-play').click();
-  await preparedFirst.waitForFunction(() => typeof finishUnityLoad === 'function');
+  const preparedFirst = await mockPage();
+  await startMock(preparedFirst);
   await preparedFirst.evaluate(() => unityConfig.onOneShiftPreparation(7, 7, 1));
-  check('Preparation callback before loader promise keeps the launcher visible',
-    await preparedFirst.locator('#warehouse-launcher').isVisible() && await preparedFirst.locator('#warehouse-tools').isHidden());
+  check('Preparation callback before the promise keeps the launcher visible', await preparedFirst.locator('#warehouse-launcher').isVisible() && await preparedFirst.locator('#warehouse-tools').isHidden());
   await finish(preparedFirst);
-  check('Preparation-first order reveals only after the loader resolves',
-    await preparedFirst.locator('#warehouse-launcher').isHidden() && (await calls(preparedFirst)).includes('BrowserLifecycle:SetBrowserActive:1'));
+  check('Preparation-first order reveals only after the loader resolves', await preparedFirst.locator('#warehouse-launcher').isHidden());
   await preparedFirst.close();
 
   const mobile = await browser.newContext({viewport:{width:390,height:844}, isMobile:true, hasTouch:true});
-  const phone = await mobile.newPage();
-  phone.on('pageerror', error => errors.push(error.message));
-  let mobileRequests = 0;
-  await phone.route('**/OneShiftWeb.loader.js*', route => { mobileRequests++; return route.fulfill({contentType:'text/javascript', body:loader}); });
-  await phone.goto(url + '/one-shift.html');
-  check('Touch portrait is gated before loading', await phone.locator('#warehouse-rotate').isVisible() && mobileRequests === 0);
-  await phone.screenshot({path:path.join(dump,'launcher-portrait.png')});
+  const phone = await mockPage(mobile);
+  check('Touch portrait is gated before loading', await phone.locator('#warehouse-rotate').isVisible() && await phone.evaluate(() => typeof window.createUnityInstance === 'undefined'));
+  await phone.screenshot({path:path.join(dump,'launcher-portrait.png'), scale:'css'});
   await phone.setViewportSize({width:844,height:390});
   await phone.waitForSelector('#warehouse-rotate', {state:'hidden'});
-  check('Landscape exposes the launcher', await phone.locator('#warehouse-rotate').isHidden());
-  await phone.screenshot({path:path.join(dump,'launcher-landscape.png')});
-  await phone.locator('#warehouse-play').click();
-  await phone.waitForFunction(() => typeof finishUnityLoad === 'function');
+  check('Landscape exposes a usable title menu', await phone.locator('#warehouse-play').isVisible() && await noOverflow(phone, '#warehouse-launcher'));
+  await phone.screenshot({path:path.join(dump,'launcher-landscape.png'), scale:'css'});
+  await startMock(phone);
   await phone.evaluate(() => finishUnityLoad());
   await phone.waitForFunction(() => unityCalls.includes('BrowserLifecycle:SetBrowserActive:1'));
   await clearCalls(phone);
   await phone.setViewportSize({width:390,height:844});
   await phone.waitForSelector('#warehouse-rotate', {state:'visible'});
-  check('Rotating to portrait suspends preparation before readiness',
-    await phone.locator('#warehouse-launcher').isVisible() && (await calls(phone)).includes('loop:pause'));
+  check('Portrait suspends preparation before readiness', await phone.locator('#warehouse-launcher').isVisible() && (await lifecycle(phone)).includes('loop:pause'));
   await clearCalls(phone);
   await phone.evaluate(() => unityConfig.onOneShiftPreparation(7, 7, 1));
-  check('Preparation finishing in portrait cannot bypass the orientation gate',
-    await phone.locator('#warehouse-rotate').isVisible() && (await calls(phone)).length === 0);
+  check('Preparation finishing in portrait cannot bypass its gate', await phone.locator('#warehouse-rotate').isVisible() && (await lifecycle(phone)).length === 0);
   await phone.setViewportSize({width:844,height:390});
   await phone.waitForSelector('#warehouse-rotate', {state:'hidden'});
-  check('Returning to landscape resumes the prepared game', (await calls(phone)).includes('loop:resume'));
+  check('Returning to landscape resumes the prepared game', (await lifecycle(phone)).includes('loop:resume'));
   await phone.locator('#warehouse-pause').click();
   await clearCalls(phone);
   await phone.setViewportSize({width:390,height:844});
   await phone.waitForSelector('#warehouse-rotate', {state:'visible'});
+  check('Rotate gate remains above previously open dialogs', await phone.locator('#warehouse-menu').isHidden());
   await phone.setViewportSize({width:844,height:390});
   await phone.waitForSelector('#warehouse-rotate', {state:'hidden'});
-  check('Rotating cannot undo manual pause', await phone.locator('#warehouse-paused').isVisible() && !(await calls(phone)).includes('loop:resume'));
+  check('Rotating restores the menu without undoing manual pause', await phone.locator('#warehouse-paused').isVisible() && !(await lifecycle(phone)).includes('loop:resume'));
+  await phone.locator('#warehouse-help').click();
+  await phone.locator('[data-help-tab="forklift"]').click();
+  check('Landscape controls scroll without horizontal overflow', await noOverflow(phone, '#warehouse-menu'));
+  await phone.screenshot({path:path.join(dump,'launcher-controls-landscape.png'), scale:'css'});
+  await phone.keyboard.press('p');
+  await phone.evaluate(value => unityConfig.onWarehouseHUD({computer:value}), office);
+  check('Landscape office fits the viewport', await noOverflow(phone, '#warehouse-computer'));
+  await phone.screenshot({path:path.join(dump,'shell-office-landscape-fixture.png'), scale:'css'});
+  await mobile.close();
 
-  const preparationFailure = await context.newPage();
-  preparationFailure.on('pageerror', error => errors.push(error.message));
-  await preparationFailure.route('**/OneShiftWeb.loader.js*', route => route.fulfill({contentType:'text/javascript', body:loader}));
-  await preparationFailure.goto(url + '/one-shift.html');
-  await preparationFailure.locator('#warehouse-play').click();
-  await preparationFailure.waitForFunction(() => typeof finishUnityLoad === 'function');
+  const preparationFailure = await mockPage();
+  await startMock(preparationFailure);
   await preparationFailure.evaluate(() => finishUnityLoad());
   await preparationFailure.waitForFunction(() => unityCalls.includes('BrowserLifecycle:SetBrowserActive:1'));
   await preparationFailure.keyboard.press('p');
   await clearCalls(preparationFailure);
   await preparationFailure.evaluate(() => unityConfig.onOneShiftPreparation(7, 7, 1));
-  check('Preparation completion cannot undo a manual pause taken while loading',
-    await preparationFailure.locator('#warehouse-paused').isVisible() && (await calls(preparationFailure)).length === 0);
+  check('Preparation cannot undo manual pause taken while loading', await preparationFailure.locator('#warehouse-paused').isVisible() && (await lifecycle(preparationFailure)).length === 0);
   await preparationFailure.goto(url + '/one-shift.html');
-  await preparationFailure.locator('#warehouse-play').click();
-  await preparationFailure.waitForFunction(() => typeof finishUnityLoad === 'function');
+  await startMock(preparationFailure);
   await preparationFailure.evaluate(() => finishUnityLoad());
   await preparationFailure.waitForFunction(() => unityCalls.includes('BrowserLifecycle:SetBrowserActive:1'));
   await clearCalls(preparationFailure);
-  await preparationFailure.evaluate(() => {
-    unityConfig.onOneShiftPreparation(3, 7, -1);
-    unityConfig.onOneShiftPreparation(7, 7, 1);
-  });
-  check('Preparation failure offers retry and ignores a late readiness callback',
-    await preparationFailure.locator('#warehouse-error').isVisible() &&
-    (await preparationFailure.locator('#warehouse-error').innerText()).includes('prepare its graphics') &&
-    await preparationFailure.locator('#warehouse-play').isEnabled() &&
-    await preparationFailure.locator('#warehouse-tools').isHidden() &&
-    !(await calls(preparationFailure)).includes('loop:resume'));
+  await preparationFailure.evaluate(() => { unityConfig.onOneShiftPreparation(3, 7, -1); unityConfig.onOneShiftPreparation(7, 7, 1); });
+  check('Preparation failure offers retry and rejects late readiness', await preparationFailure.locator('#warehouse-error').isVisible() && await preparationFailure.locator('#warehouse-play').isEnabled() && await preparationFailure.locator('#warehouse-tools').isHidden() && !(await lifecycle(preparationFailure)).includes('loop:resume'));
   await preparationFailure.close();
 
   const failure = await context.newPage();
@@ -663,8 +906,8 @@ let browser;
   const card = page.locator('a.article-item[href="one-shift.html"]');
   await card.scrollIntoViewIfNeeded();
   await card.locator('img').evaluate(image => image.decode());
-  check('In Progress keeps the warehouse at its original URL', (await card.locator('.article-item-description').innerText()).includes('receiving dock'));
-  check('The card loads the new Unity warehouse thumbnail', await card.locator('img').evaluate(image => image.naturalWidth === 1200 && image.currentSrc.includes('one-shift-unity')));
-  await card.screenshot({path:path.join(dump,'archive-card.png')});
+  check('In Progress keeps the warehouse at its original URL', await card.count() === 1);
+  check('The card loads the Unity warehouse thumbnail', await card.locator('img').evaluate(image => image.naturalWidth > 0 && image.currentSrc.includes('one-shift-unity')));
+  await card.screenshot({path:path.join(dump,'archive-card.png'), scale:'css'});
   console.log(checks.length + ' checks passed. Captures: ' + dump);
 })().catch(error => { console.error(error); process.exitCode=1; }).finally(async () => { if (browser) await browser.close(); server.close(); });

@@ -19,6 +19,19 @@ namespace OneShift.RackLab
         static Material concrete, steel, panel, rubber, safety, wood, cream;
         static Transform root;
 
+        public static string RefreshRoadTiming()
+        {
+            if(EditorApplication.isPlaying)throw new InvalidOperationException("Stop Play before updating the saved route timing.");
+            var receiving=Object.FindFirstObjectByType<WarehouseReceiving>();
+            if(receiving==null)throw new Exception("Receiving start missing.");
+            receiving.arrivalSeconds=WarehouseTruckRoute.ArrivalDuration;
+            receiving.departureSeconds=WarehouseTruckRoute.DepartureDuration;
+            EditorUtility.SetDirty(receiving);
+            EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
+            EditorSceneManager.SaveScene(SceneManager.GetActiveScene());
+            return "Street arrival "+receiving.arrivalSeconds.ToString("F2")+" s; departure "+receiving.departureSeconds.ToString("F2")+" s.";
+        }
+
         [MenuItem("One Shift/Install receiving warehouse start")]
         public static string Install()
         {
@@ -56,7 +69,7 @@ namespace OneShift.RackLab
 
         static void RetireDisplays()
         {
-            var names = new[] { "Original green racks", "Four pallet finishes - full size", "Physical pallet handling examples", "Connected pallet rack - three bays", "Forklift aisle boundary", "FORKLIFT AISLE" };
+            var names = new[] { "Original green racks", "Four pallet finishes - full size", "Physical pallet handling examples", "Connected pallet rack - three bays", "Forklift aisle boundary", "FORKLIFT AISLE", "ONE SHIFT", "STORAGE / 01" };
             foreach (var item in SceneManager.GetActiveScene().GetRootGameObjects())
                 if (names.Contains(item.name)) Object.DestroyImmediate(item);
             var trial = GameObject.Find("Forklift driving trial");
@@ -89,9 +102,14 @@ namespace OneShift.RackLab
             var yard = Child("Parking lot and receiving dock", root);
             var asphalt = Lit("Yard asphalt", new Color(.19f, .21f, .19f), 0, .12f);
             float ground = -ReceivingTruckBuilder.FloorHeight;
-            Box("Parking lot", yard, new Vector3(0, ground - .15f, 35.5f), new Vector3(43, .30f, 49), asphalt);
+            Box("Parking lot", yard, new Vector3(0, ground - .15f, 35.5f), new Vector3(45, .30f, 49), asphalt);
             Box("Raised warehouse foundation", yard, new Vector3(0, -.78f, 1), new Vector3(23, 1.3f, 22), concrete);
-            Box("Receiving apron", yard, new Vector3(0, -.65f, 12.45f), new Vector3(23, 1.3f, .9f), concrete);
+            foreach(float side in new[]{-1f,1f})
+                Box("Receiving apron side",yard,new Vector3(side*6.3625f,-.65f,12.45f),new Vector3(10.275f,1.3f,.9f),concrete);
+            Box("Receiving apron threshold",yard,new Vector3(0,-.65f,12.095f),new Vector3(2.45f,1.3f,.19f),concrete);
+            // Recess the bridge seat. Its old full-width top coincided exactly
+            // with the steel plate over .71 m of depth, producing dock flicker.
+            Box("Recessed dock plate seat",yard,new Vector3(0,-.70f,12.545f),new Vector3(2.45f,1.2f,.71f),concrete);
             // The ramp joins apron and yard without a step. Its long slope also
             // gives the player an ordinary walking route to the parking lot.
             float rampAngle = Mathf.Atan2(ReceivingTruckBuilder.FloorHeight, 11.2f);
@@ -108,7 +126,8 @@ namespace OneShift.RackLab
             foreach (float side in new[] { -1f, 1f })
             {
                 Box("Backing lane", yard, new Vector3(side * 1.8f, ground + .01f, 32), new Vector3(.09f, .014f, 38), safety, false);
-                Box("Yard curb", yard, new Vector3(side * 21.3f, ground + .12f, 35.5f), new Vector3(.3f, .24f, 49), concrete);
+                if(side<0) Box("Yard curb", yard, new Vector3(-22.35f, ground + .12f, 35.5f), new Vector3(.3f, .24f, 49), concrete);
+                else Box("Yard curb", yard, new Vector3(22.35f, ground + .12f, 16), new Vector3(.3f, .24f, 10), concrete);
                 Box("Receiving jamb", yard, new Vector3(side * 2.15f, 2.55f, 11.93f), new Vector3(.24f, 5.1f, .36f), steel);
                 Box("Dock bumper", yard, new Vector3(side * 1.6f, -.47f, 13.01f), new Vector3(.30f, .92f, .24f), rubber);
                 Box("Door guard", yard, new Vector3(side * 2.25f, .55f, 11.45f), new Vector3(.28f, 1.1f, .28f), safety);
@@ -128,15 +147,15 @@ namespace OneShift.RackLab
             Box("Yard doorway masonry header", yard, new Vector3(8.6f, 2.88f, 12), new Vector3(2, .64f, .24f), concrete);
             Box("Yard doorway structural post", yard, new Vector3(10.2f, 4, 11.72f), new Vector3(.22f, 8, .25f), steel);
             Label("YARD", yard, new Vector3(8.6f, 2.84f, 11.80f), .12f);
-            Box("Rear yard curb", yard, new Vector3(0, ground + .12f, 59.8f), new Vector3(43, .24f, .3f), concrete);
-            Fence(yard, new Vector3(-21.3f, ground, 11.1f), new Vector3(-21.3f, ground, 59.8f));
-            Fence(yard, new Vector3(21.3f, ground, 11.1f), new Vector3(21.3f, ground, 59.8f));
-            Fence(yard, new Vector3(-21.3f, ground, 59.8f), new Vector3(21.3f, ground, 59.8f));
-            Fence(yard, new Vector3(-21.3f, ground, 11.1f), new Vector3(-11.5f, ground, 11.1f));
-            Fence(yard, new Vector3(11.5f, ground, 11.1f), new Vector3(21.3f, ground, 11.1f));
+            // The east drive feeds a wide swept truck entrance. The north
+            // opening gives a full-length tractor/trailer room to pull straight
+            // before reversing. No truck path crosses a curb or a closed fence.
+            Fence(yard, new Vector3(-22.35f, ground, 11.1f), new Vector3(-22.35f, ground, 59.8f));
+            Fence(yard, new Vector3(22.35f, ground, 11.1f), new Vector3(22.35f, ground, 21));
+            Fence(yard, new Vector3(-22.35f, ground, 11.1f), new Vector3(-11.5f, ground, 11.1f));
+            Fence(yard, new Vector3(11.5f, ground, 11.1f), new Vector3(22.35f, ground, 11.1f));
             Label("RECEIVING / 01", yard, new Vector3(0, 4.45f, 11.70f), .16f);
             Label("PARKING", yard, new Vector3(-9, ground + .03f, 40.4f), .25f, Quaternion.Euler(90, 0, 0));
-            Label("FIRST DELIVERY", yard, new Vector3(0, .013f, 8.1f), .17f, Quaternion.Euler(90, 0, 0));
             for (int i = 0; i < 3; i++)
             {
                 Box("Receiving lane mark", yard, new Vector3(-1.9f, .009f, 5.2f + i * 1.3f), new Vector3(.07f, .01f, .65f), safety, false);
@@ -153,7 +172,7 @@ namespace OneShift.RackLab
             foreach (float y in new[] { -.9f, -.4f }) Box("Receiving barrier rail", barrier, new Vector3(0, y, 0), new Vector3(4.05f, .065f, .065f), safety, false);
             Label("WAIT FOR DOORS", barrier, new Vector3(0, -.65f, -.045f), .10f);
             receiving.dockBarrier = barrierCollider;
-            receiving.dockPlate = Box("Dock bridge plate", root, new Vector3(0, -.05f, 12.79f), new Vector3(2.45f, .10f, 1.2f), steel).gameObject;
+            receiving.dockPlate = Box("Dock bridge plate", root, new Vector3(0, -.05f, 12.69f), new Vector3(2.45f, .10f, 1.0f), steel).gameObject;
             BatchVisuals(yard, "Yard");
             BatchVisuals(receiving.shutter, "Shutter");
         }
@@ -171,8 +190,7 @@ namespace OneShift.RackLab
                 foreach (var item in bay.exampleLoads) if (item != null) Object.DestroyImmediate(item);
                 bay.exampleLoads = Array.Empty<GameObject>();
             }
-            foreach (var label in row.GetComponentsInChildren<TextMesh>())
-                if (label.text == "FLOOR + TWO BEAM LEVELS") Object.DestroyImmediate(label.gameObject);
+            foreach (var label in row.GetComponentsInChildren<TextMesh>()) Object.DestroyImmediate(label.gameObject);
             foreach (var wear in row.GetComponentsInChildren<RackWearVariant>()) Object.DestroyImmediate(wear);
             Label("STORAGE / A01 - A03", root, new Vector3(-9.74f, 5.15f, 3.6f), .14f, Quaternion.Euler(0, -90, 0));
             return row;
@@ -181,6 +199,7 @@ namespace OneShift.RackLab
         static void BuildDelivery(WarehouseReceiving receiving)
         {
             ReceivingTruckBuilder.Build(receiving, root);
+            receiving.deliveryPrefab=AssetDatabase.LoadAssetAtPath<GameObject>(ForkliftHandlingBuilder.SamplePrefabPaths[1]).GetComponent<PalletCargo>();
             receiving.wheelChocks = Child("Parked wheel chocks", root).gameObject;
             foreach (float side in new[] { -1f, 1f })
                 foreach (float z in new[] { 14.66f, 15.77f })
@@ -197,8 +216,9 @@ namespace OneShift.RackLab
                 var cargo = package.GetComponent<PalletCargo>();
                 cargo.description = "Opening stock " + (i + 1).ToString("00");
                 cargo.cargoMass = 425; cargo.ApplyMassProperties();
-                foreach (var text in package.GetComponentsInChildren<TextMesh>())
-                    if (text.text.Contains("800") || text.text.Contains("1,764")) text.text = "STOCK " + (i + 1).ToString("00") + " / 992 lb / 450 kg";
+                foreach (var text in package.GetComponentsInChildren<TextMesh>()) Object.DestroyImmediate(text.gameObject);
+                foreach(var node in package.GetComponentsInChildren<Transform>())
+                    if(node!=null && node.name=="Package weight tag")Object.DestroyImmediate(node.gameObject);
                 receiving.cargo[i] = cargo;
             }
         }
@@ -229,6 +249,7 @@ namespace OneShift.RackLab
             require(receiving.cargo.Length == 4 && receiving.cargo.All(c => c != null && c.TotalMass == 450), "Four opening stock pallets, 450 kg each");
             require(receiving.storagePositions.Length == 18, "Three wall bays provide eighteen physical rack positions");
             require(receiving.roadWheels.Length == 18 && receiving.leftDoor.name == "Rear_Door_L" && receiving.rightDoor.name == "Rear_Door_R", "Original eighteen-wheel model retains its actual wheel and door hierarchy");
+            require(receiving.tractorPivot!=null && receiving.steeringPivots.Length==2 && receiving.deliveryPrefab!=null, "Original tractor articulates about its kingpin with two steering pivots and a real repeat-delivery prefab");
             var ceiling = receiving.truck.GetComponentsInChildren<BoxCollider>().First(c => c.name == "Trailer roof");
             require(Mathf.Abs(ceiling.bounds.min.y - ReceivingTruckBuilder.RoofClearance) < .002f, "Original trailer has 2.693 metre roof-bow clearance without scaling");
             require(receiving.cargo.All(c => c.GetComponent<Rigidbody>() != null && !c.GetComponent<Rigidbody>().isKinematic), "All stock starts as dynamic packages; transit restraints are temporary runtime state");

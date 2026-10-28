@@ -1,0 +1,204 @@
+{
+    "generatedUtc": "2026-10-28T02:04:27.4620637Z",
+    "unityVersion": "6000.3.27f1",
+    "method": "Production business transactions using a clone of the installed receiving start in an isolated preview scene. Native inventory, purchase and contract methods; actual supplier callback and explicitly simulated offsite shipment callback. No original scene objects, stock or assets are mutated. Does not certify physical driving, trailer support, road motion or browser interaction.",
+    "passed": true,
+    "checks": [
+        {
+            "name": "opening physical capital",
+            "passed": true,
+            "expectation": "Four independent opening pallets total 172 cases, $10,000 opening cash and three unaccepted retailer requests, with stable unique lot IDs.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "opening cases",
+                    "value": 172.0,
+                    "units": "cases"
+                },
+                {
+                    "name": "opening cash",
+                    "value": 10000.0,
+                    "units": "USD"
+                },
+                {
+                    "name": "physical lots",
+                    "value": 4.0,
+                    "units": "count"
+                }
+            ]
+        },
+        {
+            "name": "initialization is idempotent",
+            "passed": true,
+            "expectation": "Calling initialization again cannot duplicate the opening pallets, contracts or ledger balance.",
+            "error": "",
+            "measurements": []
+        },
+        {
+            "name": "invalid supplier item",
+            "passed": true,
+            "expectation": "An unknown item cannot charge cash, reserve delivery capacity or create physical stock.",
+            "error": "",
+            "measurements": []
+        },
+        {
+            "name": "one active retailer request without early payment",
+            "passed": true,
+            "expectation": "Accepting one request reserves no cash payout; a second request and a repeated unfulfilled action cannot pay or replace it.",
+            "error": "",
+            "measurements": []
+        },
+        {
+            "name": "release accepted order without inventory or payment changes",
+            "passed": true,
+            "expectation": "An accepted order can be released before dispatch and another accepted. Unknown, unaccepted, completed and shipping orders reject release without changing cash, physical stock or payout.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "rejected invalid release attempts",
+                    "value": 5.0,
+                    "units": "count"
+                },
+                {
+                    "name": "cash after release checks",
+                    "value": 10000.0,
+                    "units": "USD"
+                }
+            ]
+        },
+        {
+            "name": "unreceived stock cannot dispatch",
+            "passed": true,
+            "expectation": "Pallets still in the opening delivery do not qualify as received inventory, even for a matching accepted request.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "paper cases available for sale",
+                    "value": 0.0,
+                    "units": "cases"
+                }
+            ]
+        },
+        {
+            "name": "paid queued supplier order is visible and unique",
+            "passed": true,
+            "expectation": "One paper pallet deducts $560 once and reserves a real road delivery. Its 48 cases appear inbound before spawning; repeat purchases cannot double charge or replace the booking.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "cash after supplier booking",
+                    "value": 9440.0,
+                    "units": "USD"
+                },
+                {
+                    "name": "paper cases inbound including booking",
+                    "value": 144.0,
+                    "units": "cases"
+                }
+            ]
+        },
+        {
+            "name": "supplier arrival callback counts physical stock once",
+            "passed": true,
+            "expectation": "The booked shipment registers one actual new pallet, clears its pending count and retains 144 inbound paper cases. A repeated delivery callback cannot create more cases or charges.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "physical stock after arrival callback",
+                    "value": 5.0,
+                    "units": "pallets"
+                },
+                {
+                    "name": "purchased cases",
+                    "value": 48.0,
+                    "units": "cases"
+                }
+            ]
+        },
+        {
+            "name": "FIFO dates and stable lot identity",
+            "passed": true,
+            "expectation": "Eligible stock is selected by arrival day and then stable lot sequence, even after reversing the backing collection.",
+            "error": "",
+            "measurements": []
+        },
+        {
+            "name": "completed shipment pays and removes its manifest once",
+            "passed": true,
+            "expectation": "The explicitly simulated offsite callback pays the accepted request once and removes exactly its 48-case manifest. Repeating it cannot duplicate money, shipped cases or the replacement request.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "cash after completed dispatch",
+                    "value": 10790.0,
+                    "units": "USD"
+                },
+                {
+                    "name": "shipped cases",
+                    "value": 48.0,
+                    "units": "cases"
+                },
+                {
+                    "name": "remaining physical cases",
+                    "value": 124.0,
+                    "units": "cases"
+                }
+            ]
+        },
+        {
+            "name": "owned stock can request another truck without a purchase",
+            "passed": true,
+            "expectation": "After one completed shipment leaves the truck away, accepting another order for existing stock requests a free empty return. Repeated pickup requests cannot debit cash, create cases or alter the remaining pallets.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "cash after free return request",
+                    "value": 10790.0,
+                    "units": "USD"
+                },
+                {
+                    "name": "purchased cases after free return request",
+                    "value": 0.0,
+                    "units": "cases"
+                },
+                {
+                    "name": "remaining physical cases",
+                    "value": 124.0,
+                    "units": "cases"
+                }
+            ]
+        },
+        {
+            "name": "insufficient balance leaves orders untouched",
+            "passed": true,
+            "expectation": "With a fixture balance below the paper pallet price, both availability and purchase reject without creating a debit or delivery.",
+            "error": "",
+            "measurements": []
+        },
+        {
+            "name": "physical pallet capacity rejects another order",
+            "passed": true,
+            "expectation": "Fourteen real supplier transactions fill the remaining pallet capacity. A nineteenth pallet is rejected even with enough money, preserving the paid stock and case total.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "physical pallet count",
+                    "value": 18.0,
+                    "units": "pallets"
+                },
+                {
+                    "name": "cash remaining at capacity",
+                    "value": 2160.0,
+                    "units": "USD"
+                }
+            ]
+        },
+        {
+            "name": "unavailable receiving service cannot charge",
+            "passed": true,
+            "expectation": "If the fixture has no delivery prefab, a rejected booking rolls back its pending state and retains the original cash and physical stock.",
+            "error": "",
+            "measurements": []
+        }
+    ]
+}

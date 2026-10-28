@@ -16,7 +16,7 @@ namespace OneShift.RackLab
         const string Root = "Assets/RackLab/";
         const string Name = "Warehouse front office";
         static Transform root;
-        static Material cream, trim, carpet, wood, dark, paper, rust, carton, glass;
+        static Material cream, trim, carpet, wood, dark, paper, carton, glass;
 
         [MenuItem("One Shift/Install front office and parcels")]
         public static string Install()
@@ -40,7 +40,6 @@ namespace OneShift.RackLab
             wood = Mat("Laminate desk", new Color(.42f,.29f,.18f));
             dark = Mat("Office charcoal", new Color(.10f,.13f,.12f));
             paper = Mat("Paper and ceiling tile", new Color(.80f,.77f,.66f));
-            rust = Mat("Faded rust upholstery", new Color(.40f,.22f,.16f));
             carton = Mat("Parcel cardboard", new Color(.57f,.39f,.22f));
             glass = AssetDatabase.LoadAssetAtPath<Material>(Root + "Materials/Environment/Glass.mat");
             Room(); Furniture(); Entrance(); Parcels();
@@ -55,9 +54,9 @@ namespace OneShift.RackLab
         static void Room()
         {
             Box("Office carpet", root, new Vector3(7.6f,.018f,-7), new Vector3(7.5f,.032f,5.8f), carpet);
-            Box("West office partition", root, new Vector3(3.8f,1.5f,-7), new Vector3(.14f,3,6), cream);
+            Box("West office partition", root, new Vector3(3.8f,1.5f,-7.035f), new Vector3(.14f,3,5.93f), cream);
             // Open internal doorway with a glazed supervisor's view across the floor.
-            Box("Doorway west pier", root, new Vector3(4.2f,1.5f,-4), new Vector3(.8f,3,.14f), cream);
+            Box("Doorway west pier", root, new Vector3(4.235f,1.26f,-4), new Vector3(.73f,2.52f,.14f), cream);
             Box("Office north solid sill", root, new Vector3(8.7f,.54f,-4), new Vector3(5.2f,1.08f,.14f), cream);
             Box("Office north header", root, new Vector3(7.6f,2.76f,-4), new Vector3(7.6f,.48f,.14f), cream);
             foreach (float x in new[] { 4.62f, 6.12f }) Box("Interior door frame",root,new Vector3(x,1.23f,-4),new Vector3(.09f,2.46f,.20f),trim);
@@ -82,57 +81,43 @@ namespace OneShift.RackLab
                 float x=5.7f+i*3.7f;
                 Box("Office ceiling light",root,new Vector3(x,2.94f,-6.8f),new Vector3(.53f,.06f,1.08f),diffuser,false);
                 var light=Child("Office ceiling fill",root,new Vector3(x,2.83f,-6.8f)).gameObject.AddComponent<Light>();
-                light.type=LightType.Spot;light.transform.rotation=Quaternion.Euler(90,0,0);
-                light.color=new Color(1,.89f,.70f);light.intensity=18;light.range=4.1f;light.spotAngle=115;light.innerSpotAngle=85;
-                light.shadows=LightShadows.None;
+                // Two unshadowed point fills illuminate the ceiling and upper
+                // partitions as well as the worktop. The old short downward
+                // cones left every vertical surface outside their useful light.
+                light.type=LightType.Point;
+                light.color=new Color(1,.91f,.76f);light.intensity=13;light.range=6.2f;
+                light.shadows=LightShadows.None;light.lightmapBakeType=LightmapBakeType.Realtime;
             }
-            Label("OFFICE / PARCEL RECEIVING",root,new Vector3(8.5f,2.80f,-3.9f),.12f,180);
+            Label("OFFICE",root,new Vector3(7.9f,2.80f,-3.91f),.10f,180);
             Box("Front door masonry header",root,new Vector3(6.5f,2.8f,-10),new Vector3(1.6f,.8f,.24f),cream);
         }
 
         static void Furniture()
         {
-            // A modest dispatch desk, old tower PC, trays, chair and paperwork.
-            Box("Dispatch desk top",root,new Vector3(9.7f,.78f,-8.8f),new Vector3(2.35f,.07f,.86f),wood);
-            foreach(float x in new[]{8.75f,10.65f}) Box("Desk pedestal",root,new Vector3(x,.38f,-8.8f),new Vector3(.43f,.76f,.72f),trim);
-            Box("Monitor foot",root,new Vector3(9.7f,.85f,-9),new Vector3(.35f,.05f,.23f),dark,false);
-            Box("Monitor stem",root,new Vector3(9.7f,1.03f,-9),new Vector3(.08f,.34f,.08f),dark,false);
-            Box("Old office monitor",root,new Vector3(9.7f,1.22f,-9),new Vector3(.57f,.37f,.17f),dark,false);
-            Box("Monitor screen",root,new Vector3(9.7f,1.22f,-8.909f),new Vector3(.49f,.28f,.012f),carpet,false);
-            Label("RECEIVING\n01  /  MORNING SHIFT",root,new Vector3(9.7f,1.22f,-8.90f),.025f,180);
-            Box("Keyboard",root,new Vector3(9.7f,.84f,-8.59f),new Vector3(.47f,.035f,.15f),paper,false);
-            Box("Paper stack",root,new Vector3(10.47f,.85f,-8.6f),new Vector3(.27f,.06f,.35f),paper,false);
-            Box("Computer tower",root,new Vector3(10.1f,.25f,-8.8f),new Vector3(.24f,.48f,.46f),dark);
-            Chair(9.65f,-7.75f);
-            for(int i=0;i<2;i++)
-            {
-                float x=4.4f+i*.68f;
-                Box("Filing cabinet",root,new Vector3(x,.65f,-9.35f),new Vector3(.61f,1.3f,.57f),trim);
-                for(int j=0;j<4;j++)
-                {
-                    Box("Drawer face",root,new Vector3(x,.18f+j*.30f,-9.055f),new Vector3(.54f,.26f,.025f),cream,false);
-                    Box("Drawer pull",root,new Vector3(x,.20f+j*.30f,-9.02f),new Vector3(.17f,.025f,.035f),dark,false);
-                }
-            }
-            Box("Notice board frame",root,new Vector3(3.91f,1.75f,-6),new Vector3(.12f,1.1f,1.35f),wood);
-            Box("Cork notice board",root,new Vector3(3.98f,1.75f,-6),new Vector3(.025f,.98f,1.23f),carton,false);
-            for(int i=0;i<4;i++) Box("Pinned shift sheet",root,new Vector3(4.0f,1.52f+(i%2)*.42f,-6.4f+(i/2)*.56f),new Vector3(.015f,.30f,.22f),paper,false);
-            Box("Break counter",root,new Vector3(10.85f,.84f,-5.15f),new Vector3(.75f,.07f,1.5f),wood);
-            Box("Break cupboard",root,new Vector3(10.85f,.4f,-5.15f),new Vector3(.7f,.8f,1.4f),cream);
-            Box("Coffee machine",root,new Vector3(10.85f,1.06f,-5.6f),new Vector3(.29f,.38f,.29f),dark,false);
-            Box("Coffee pot",root,new Vector3(10.65f,.98f,-5.55f),new Vector3(.16f,.17f,.16f),trim,false);
-            Box("Time clock backing",root,new Vector3(4.08f,1.45f,-4.75f),new Vector3(.16f,.38f,.27f),dark);
-            Label("TIME CARDS",root,new Vector3(4.18f,1.75f,-4.75f),.05f,90);
+            // One workstation supports the business and small-parcel tasks.
+            // Keep the standing approach and both doorways entirely open.
+            var desk=Child("Office parcel receiving desk",root,Vector3.zero);
+            desk.gameObject.AddComponent<WarehouseParcelService>();
+            Box("Dispatch desk top",desk,new Vector3(8.8f,.78f,-8.8f),new Vector3(3.6f,.07f,.9f),wood);
+            foreach(float x in new[]{7.25f,10.35f}) Box("Desk pedestal",desk,new Vector3(x,.38f,-8.8f),new Vector3(.40f,.76f,.72f),trim);
+            var computer=Child("Office computer",desk,Vector3.zero);
+            computer.gameObject.AddComponent<WarehouseOfficeComputer>();
+            var target=computer.gameObject.AddComponent<BoxCollider>();
+            target.center=new Vector3(9.8f,1.20f,-8.99f);target.size=new Vector3(.64f,.43f,.20f);
+            Box("Monitor foot",computer,new Vector3(9.8f,.85f,-9),new Vector3(.35f,.05f,.23f),dark,false);
+            Box("Monitor stem",computer,new Vector3(9.8f,1.03f,-9),new Vector3(.08f,.34f,.08f),dark,false);
+            Box("Office monitor",computer,new Vector3(9.8f,1.22f,-9),new Vector3(.62f,.40f,.17f),dark,false);
+            var screen=Mat("Computer screen",new Color(.16f,.26f,.22f));
+            screen.EnableKeyword("_EMISSION");screen.SetColor("_EmissionColor",new Color(.13f,.23f,.18f));
+            screen.globalIlluminationFlags=MaterialGlobalIlluminationFlags.RealtimeEmissive;EditorUtility.SetDirty(screen);
+            Box("Monitor screen",computer,new Vector3(9.8f,1.22f,-8.908f),new Vector3(.54f,.31f,.012f),screen,false);
+            Label("WAREHOUSE DESK",computer,new Vector3(9.8f,1.22f,-8.898f),.028f,180);
+            var deskTarget=Child("Desk computer controls",desk,new Vector3(9.8f,.835f,-8.51f));
+            deskTarget.gameObject.AddComponent<WarehouseOfficeComputer>();
+            deskTarget.gameObject.AddComponent<BoxCollider>().size=new Vector3(.75f,.06f,.28f);
+            Box("Keyboard",computer,new Vector3(9.8f,.84f,-8.59f),new Vector3(.47f,.035f,.15f),paper,false);
+            Box("Computer tower",desk,new Vector3(10.0f,.25f,-8.8f),new Vector3(.24f,.48f,.46f),dark);
             Box("Door mat",root,new Vector3(6.5f,.045f,-9.25f),new Vector3(1.4f,.035f,.7f),dark,false);
-        }
-
-        static void Chair(float x,float z)
-        {
-            Box("Office chair cushion",root,new Vector3(x,.49f,z),new Vector3(.52f,.10f,.48f),rust);
-            Box("Office chair back",root,new Vector3(x,.85f,z+.22f),new Vector3(.51f,.6f,.09f),rust);
-            Box("Office chair stem",root,new Vector3(x,.24f,z),new Vector3(.09f,.42f,.09f),dark,false);
-            Box("Office chair feet",root,new Vector3(x,.08f,z),new Vector3(.64f,.06f,.08f),dark,false);
-            Box("Office chair cross feet",root,new Vector3(x,.08f,z),new Vector3(.08f,.06f,.64f),dark,false);
         }
 
         static void Entrance()
@@ -152,8 +137,7 @@ namespace OneShift.RackLab
             var blocker=Child("Closed front door collision",entry,new Vector3(6.5f,1.15f,-10)).gameObject.AddComponent<BoxCollider>();
             blocker.size=new Vector3(1.44f,2.30f,.12f);door.doorwayBlocker=blocker;
             Label("FRONT OFFICE",root,new Vector3(6.5f,2.67f,-10.16f),.15f,0);
-            Label("PARCEL DELIVERIES",root,new Vector3(8.45f,1.72f,-10.17f),.10f,0);
-            Box("Parcel direction sign",root,new Vector3(8.45f,1.72f,-10.14f),new Vector3(1.9f,.46f,.035f),dark,false);
+            Label("PARCELS",root,new Vector3(8.45f,1.72f,-10.14f),.085f,0);
             Box("Entrance landing",root,new Vector3(6.5f,-.14f,-11.25f),new Vector3(5.4f,.28f,2.5f),cream);
             Box("Door canopy",root,new Vector3(6.5f,2.94f,-11),new Vector3(5.6f,.16f,2.5f),trim);
             foreach(float x in new[]{3.85f,9.15f}) Box("Canopy post",root,new Vector3(x,1.44f,-12.1f),new Vector3(.09f,2.88f,.09f),trim);
@@ -173,12 +157,8 @@ namespace OneShift.RackLab
 
         static void Parcels()
         {
-            var station=Child("Office parcel receiving desk",root,Vector3.zero);
-            var service=station.gameObject.AddComponent<WarehouseParcelService>();
-            Box("Parcel desk",station,new Vector3(7.95f,.75f,-5.6f),new Vector3(2.8f,.10f,.85f),wood);
-            foreach(float x in new[]{6.75f,9.15f}) Box("Parcel desk leg",station,new Vector3(x,.36f,-5.6f),new Vector3(.08f,.72f,.62f),trim);
-            service.statusLabel=Label("PARCELS / delivery due this morning",station,new Vector3(7.95f,1.48f,-5.98f),.08f,180);
-            Box("Parcel desk sign",station,new Vector3(7.95f,1.48f,-6.01f),new Vector3(2.9f,.32f,.055f),dark);
+            var service=root.GetComponentInChildren<WarehouseParcelService>();
+            var station=service.transform;
             Box("Outside parcel shelf",root,new Vector3(8.3f,.54f,-11.05f),new Vector3(1.35f,.08f,.85f),wood);
             foreach(float x in new[]{7.75f,8.85f}) Box("Parcel shelf leg",root,new Vector3(x,.26f,-11.05f),new Vector3(.07f,.52f,.75f),trim);
             service.parcels=new WarehouseParcel[3];service.deskPlaces=new Transform[3];
@@ -192,7 +172,7 @@ namespace OneShift.RackLab
                 Box("Shipping label",node,new Vector3(.09f,height*.5f+.008f,.035f),new Vector3(.11f,.005f,.16f),paper,false,false);
                 for(int line=0;line<5;line++) Box("Parcel barcode",node,new Vector3(.055f+line*.014f,height*.5f+.011f,.065f),new Vector3(.006f,.003f,.065f),dark,false,false);
                 service.parcels[i]=parcel;
-                service.deskPlaces[i]=Child("Received parcel position "+(i+1),station,new Vector3(7.1f+i*.8f,.80f+height*.5f,-5.6f));
+                service.deskPlaces[i]=Child("Received parcel position "+(i+1),station,new Vector3(7.35f+i*.52f,.815f+height*.5f,-8.8f));
             }
         }
 
@@ -215,7 +195,12 @@ namespace OneShift.RackLab
             finally { door.doorwayBlocker.enabled=wasEnabled; foreach(var collider in leafColliders) collider.enabled=true; }
             var service=Object.FindFirstObjectByType<WarehouseParcelService>();
             if(service==null||service.parcels.Length!=3||service.deskPlaces.Length!=3) throw new Exception("Parcel bindings missing.");
-            var report="Office passed: real front opening, continuous porch/ramp support, clear warehouse doorway, three parcel bindings, two unshadowed office fixtures.";
+            var office=GameObject.Find(Name);
+            var fixtures=office.GetComponentsInChildren<Light>();
+            if(fixtures.Length!=2||fixtures.Any(l=>l.type!=LightType.Point||l.shadows!=LightShadows.None||l.range<6)) throw new Exception("Office needs two broad unshadowed fills.");
+            if(office.GetComponentsInChildren<WarehouseOfficeComputer>().Length!=2) throw new Exception("Computer and desk controls are not bound.");
+            if(office.GetComponentsInChildren<Transform>().Any(t=>t.name.Contains("chair")||t.name.Contains("Filing cabinet")||t.name.Contains("Coffee"))) throw new Exception("Extra office furniture returned.");
+            var report="Office passed: one computer workstation with parcel area, real front opening, continuous porch/ramp support, clear warehouse doorway, three parcel bindings, two broad unshadowed office fixtures.";
             File.WriteAllText(Root+"Reports/warehouse-office-validation.txt",report+"\n");
             return report;
         }

@@ -3,82 +3,117 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#303931">
-  <title>One Shift</title>
-  <meta name="description" content="Start a shift with an empty warehouse, wall racks and a delivery truck. Unload the trailer and put its pallets away with the yellow forklift.">
+  <meta name="theme-color" content="#252620">
+  <title>The Warehouse Simulator</title>
+  <meta name="description" content="Your warehouse, your first delivery. Unload the truck, find a place for every pallet, and run the business from the dispatch office.">
   <link rel="canonical" href="https://ethanwillingham.com/one-shift.html">
-  <meta property="og:title" content="One Shift">
-  <meta property="og:description" content="Start a shift with an empty warehouse, wall racks and a delivery truck. Unload the trailer and put its pallets away with the yellow forklift.">
+  <meta property="og:title" content="The Warehouse Simulator">
+  <meta property="og:description" content="Your warehouse, your first delivery. Unload the truck, find a place for every pallet, and run the business from the dispatch office.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://ethanwillingham.com/one-shift.html">
-  <meta property="og:image" content="https://ethanwillingham.com/assets/one-shift-unity/preview.png?v=1">
-  <meta property="og:image:alt" content="Morning sunlight crossing steel pallet racks and warehouse aisles.">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/one-shift-unity/preview.png?v=8">
+  <meta property="og:image:alt" content="A worker and yellow forklift in the sunlit warehouse, beside the dispatch office.">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="one-shift-unity.css?v=7">
+  <link rel="stylesheet" href="one-shift-unity.css?v=8">
   <script src="js/demo-activity.js?v=1" defer></script>
-  <script src="js/one-shift-unity.js?v=7" defer></script>
+  <script src="js/one-shift-unity.js?v=8" defer></script>
 </head>
 <body class="warehouse-page">
-<main id="warehouse-stage" aria-label="One Shift warehouse game">
-  <canvas id="warehouse-canvas" width="1280" height="720" tabindex="0" aria-label="Warehouse game. WASD to move, mouse to look, E to use a switch or enter the forklift." hidden></canvas>
+<main id="warehouse-stage" aria-label="The Warehouse Simulator">
+  <canvas id="warehouse-canvas" width="1280" height="720" tabindex="0" aria-label="Warehouse game. WASD to move, mouse to look, E to interact. Escape opens the menu." hidden></canvas>
   <section id="warehouse-launcher" class="warehouse-launcher" aria-labelledby="warehouse-title">
     <div class="warehouse-cover" aria-hidden="true"></div>
-    <div class="warehouse-intro">
-      <a class="warehouse-back" href="archive.html">In Progress</a>
-      <p class="warehouse-kicker">The warehouse floor</p>
-      <h1 id="warehouse-title">One Shift</h1>
-      <p class="warehouse-dek">The first delivery is backing into the dock. Climb into the yellow forklift, unload the trailer and fill the racks along the wall.</p>
-      <div class="warehouse-start">
-        <button id="warehouse-play" class="warehouse-primary" type="button">Enter the warehouse</button>
-        <p>Keyboard and mouse</p>
-      </div>
-      <div id="warehouse-loading" hidden>
-        <label for="warehouse-progress" id="warehouse-load-status" role="status" aria-live="polite">Loading warehouse...</label>
-        <progress id="warehouse-progress" value="0" max="100">0%</progress>
-      </div>
-      <p id="warehouse-error" class="warehouse-error" role="alert" hidden></p>
-      <dl class="warehouse-keys" aria-label="Keyboard controls">
-        <div><dt>W A S D</dt><dd>Walk / drive</dd></div>
-        <div><dt>Mouse</dt><dd>Look</dd></div>
-        <div><dt>E</dt><dd>Use / enter forklift</dd></div>
-        <div><dt>Shift / Space</dt><dd>Run / jump</dd></div>
-        <div><dt>Hold X + mouse</dt><dd>Raise / lower forks</dd></div>
-        <div><dt>Esc / P</dt><dd>Release mouse / pause</dd></div>
-      </dl>
-      <p class="warehouse-classic">The earlier illustrated game and your saved warehouse are <a href="one-shift-classic.html">still here</a>.</p>
+    <div class="warehouse-title-layout">
+      <header class="warehouse-wordmark">
+        <h1 id="warehouse-title"><span class="warehouse-wordmark-the">The</span><span>Warehouse</span><span class="warehouse-wordmark-last">Simulator</span></h1>
+        <p>A place for everything.</p>
+      </header>
+      <nav id="warehouse-main-menu" class="warehouse-main-menu" aria-label="Main menu">
+        <button id="warehouse-play" class="warehouse-primary" type="button"><span>Start shift</span><span aria-hidden="true">&gt;</span></button>
+        <button type="button" data-screen="settings">Settings</button>
+        <button type="button" data-screen="help">How to play</button>
+        <p id="warehouse-session-note" class="warehouse-session-note">Keyboard and mouse</p>
+      </nav>
+      <section id="warehouse-loading" class="warehouse-loading" aria-labelledby="warehouse-load-status" hidden>
+        <div class="warehouse-loading-kicker"><p class="warehouse-kicker">Opening the warehouse</p><output id="warehouse-load-elapsed" aria-live="off">0s elapsed</output></div>
+        <div class="warehouse-loading-heading"><h2 id="warehouse-load-status" role="status" aria-live="polite">Connecting...</h2><output id="warehouse-load-count" aria-live="off"></output></div>
+        <progress id="warehouse-progress" max="100" value="0" aria-labelledby="warehouse-load-status">0%</progress>
+        <ol class="warehouse-load-steps" aria-label="Loading stages">
+          <li data-load-step="download" aria-current="step"><span>01</span> Download</li>
+          <li data-load-step="engine"><span>02</span> Start</li>
+          <li data-load-step="prepare"><span>03</span> Prepare</li>
+        </ol>
+        <p id="warehouse-load-detail" class="warehouse-load-detail">Getting the game files.</p>
+        <p id="warehouse-load-tip" class="warehouse-load-tip">The first delivery arrives at the north dock.</p>
+      </section>
+      <div id="warehouse-error" class="warehouse-error" role="alert" hidden></div>
     </div>
+    <footer class="warehouse-title-footer">
+      <span>v8 <span aria-hidden="true">/</span> Web edition</span>
+      <nav aria-label="Game information"><button type="button" data-fullscreen>Full screen</button><button type="button" data-screen="about">About</button><a href="archive.html">More games</a></nav>
+    </footer>
   </section>
-  <nav id="warehouse-tools" class="warehouse-tools" aria-label="Game controls" hidden>
-    <output id="warehouse-stats" class="warehouse-stats" aria-label="Game version and frame rate" aria-live="off">Starting...</output>
-    <button id="warehouse-pause" type="button" aria-pressed="false">Pause</button>
-    <button id="warehouse-help" type="button" aria-expanded="false" aria-controls="warehouse-controls">Controls</button>
-    <button id="warehouse-fullscreen" type="button">Fullscreen</button>
-  </nav>
-  <aside id="warehouse-controls" class="warehouse-controls" hidden>
-    <label class="warehouse-quality" for="warehouse-quality">Picture
-      <select id="warehouse-quality"><option value="smooth">Smooth</option><option value="sharp">Sharper</option></select>
-    </label>
-    <p class="warehouse-quality-note">Smooth favours frame rate. Sharper favours detail.</p>
-    <h2>On the floor</h2>
-    <p>WASD to walk. Move the mouse to look. Shift to run, Space to jump, R to return to the entrance.</p>
-    <p>Aim at a wall switch and press E or click. Escape releases the mouse; P pauses the game.</p>
-    <p>The front office has a separate door for small parcels. E or click opens the door and picks up a box from the outside shelf. Carry it to the office parcel desk, then use E or click to receive it.</p>
-    <h2>In the forklift</h2>
-    <p>Press E near the yellow forklift to get in. On your first drive, read the short briefing and press E again. W/S drives forward and reverse; A/D steers. Space brakes, and Shift gives a slow approach. The parking brake releases when you drive.</p>
-    <p>Hold X and move the mouse up or down to raise or lower the forks. Keeping the mouse still holds their height. Release X to look around again. WASD still moves the truck while X is held.</p>
-    <p>Holding X also reveals the forks and nearby pallet edges through the mast and load. Line the forks up with the pallet pockets, drive them in, then lift clear. Lower onto the floor or rack and reverse out. The pallet's weight and balance still act on the forklift.</p>
-    <p>Q/Z raises and lowers the forks; T/G tilts the mast. Use these to reach the higher racks. C switches the rear and cab views. E brings the forklift to a stop and steps out when there is room. Tab shows the extra controls.</p>
-    <p><a href="one-shift-classic.html">Earlier illustrated game</a> <span aria-hidden="true">/</span> <a href="archive.html">In Progress</a></p>
-    <button id="warehouse-close-help" type="button">Close controls</button>
-  </aside>
-  <div id="warehouse-paused" class="warehouse-gate" hidden>
-    <div><p class="warehouse-kicker">One Shift</p><h2>Paused</h2><p>The warehouse will wait.</p><button id="warehouse-resume" class="warehouse-primary" type="button">Resume</button></div>
-  </div>
-  <div id="warehouse-rotate" class="warehouse-gate warehouse-rotate" hidden>
-    <div><p class="warehouse-kicker">One Shift</p><h2>Turn your screen sideways.</h2><p>The warehouse uses a keyboard and mouse.</p><p><a href="one-shift-classic.html">Play the illustrated game with touch</a></p></div>
-  </div>
+  <section id="warehouse-hud" class="warehouse-hud" aria-label="Shift status" hidden>
+    <div class="warehouse-objective">
+      <div class="warehouse-shift-line"><span id="warehouse-location">Warehouse floor</span><time id="warehouse-clock"></time></div>
+      <p id="warehouse-objective">Receive the first delivery</p>
+      <p id="warehouse-objective-detail"></p>
+    </div>
+    <div id="warehouse-drive-status" class="warehouse-drive-status" hidden><span>Fork height</span><output id="warehouse-fork-height">0.0 ft</output></div>
+    <div id="warehouse-training" class="warehouse-training" hidden><span id="warehouse-training-step"></span><p id="warehouse-training-copy"></p></div>
+    <div id="warehouse-context" class="warehouse-context" hidden><kbd id="warehouse-hint-key"></kbd><span id="warehouse-hint"></span></div>
+    <p id="warehouse-notice" class="warehouse-notice" role="status" hidden></p>
+    <aside id="warehouse-hydraulics" class="warehouse-hydraulics" aria-label="Fork hydraulic control" hidden>
+      <div class="warehouse-hydraulic-caption"><kbd>Left Shift</kbd><span>Hydraulics</span></div>
+      <div class="warehouse-lever"><span class="warehouse-lever-label warehouse-lever-up">Raise</span><div class="warehouse-lever-track"><span class="warehouse-lever-neutral"></span><span id="warehouse-lever-fill" class="warehouse-lever-fill"></span><span id="warehouse-lever-knob" class="warehouse-lever-knob"></span></div><span class="warehouse-lever-label warehouse-lever-down">Lower</span><span class="warehouse-lever-zero">0</span></div>
+      <output id="warehouse-fork-speed">Neutral</output><p>Move mouse to set speed.<br>Centre to hold. Release to stop.</p>
+    </aside>
+  </section>
+  <nav id="warehouse-tools" class="warehouse-tools" aria-label="Game controls" hidden><button id="warehouse-pause" type="button" aria-pressed="false">Menu <kbd>Esc</kbd></button></nav>
+  <output id="warehouse-stats" class="warehouse-stats" aria-label="Game version and frame rate" aria-live="off" hidden>v8</output>
+  <dialog id="warehouse-menu" class="warehouse-dialog" aria-labelledby="warehouse-menu-title">
+    <div class="warehouse-menu-shell">
+      <header class="warehouse-dialog-header"><div><p class="warehouse-kicker">The Warehouse Simulator</p><h2 id="warehouse-menu-title">Paused</h2></div><button id="warehouse-close-menu" class="warehouse-close" type="button" aria-label="Close menu">Close</button></header>
+      <section id="warehouse-paused" class="warehouse-pause-menu" hidden>
+        <p class="warehouse-menu-intro">The warehouse will wait.</p>
+        <nav aria-label="Pause menu"><button id="warehouse-resume" class="warehouse-primary" type="button">Resume shift <span aria-hidden="true">&gt;</span></button><button type="button" data-screen="settings">Settings</button><button id="warehouse-help" type="button" data-screen="help">How to play</button><button id="warehouse-return-title" type="button">Title screen</button></nav>
+      </section>
+      <section id="warehouse-settings" hidden>
+        <label class="warehouse-setting" for="warehouse-quality"><span><strong>Picture quality</strong><small>Choose detail or a lighter rendering load.</small></span><select id="warehouse-quality"><option value="smooth">Smooth</option><option value="sharp">Sharper</option></select></label>
+        <label class="warehouse-setting" for="warehouse-show-stats"><span><strong>Frame rate</strong><small>Show a small performance readout.</small></span><input id="warehouse-show-stats" type="checkbox"></label>
+        <div class="warehouse-setting"><span><strong>Display</strong><small>Use the whole screen.</small></span><button id="warehouse-fullscreen" type="button" data-fullscreen>Full screen</button></div>
+        <p class="warehouse-setting-note">Settings apply immediately. Your shift stays where you left it.</p>
+      </section>
+      <section id="warehouse-controls" class="warehouse-controls" hidden>
+        <div class="warehouse-help-tabs" role="tablist" aria-label="Controls"><button type="button" role="tab" id="warehouse-tab-floor" aria-selected="true" aria-controls="warehouse-help-floor" data-help-tab="floor">On foot</button><button type="button" role="tab" id="warehouse-tab-forklift" aria-selected="false" aria-controls="warehouse-help-forklift" data-help-tab="forklift" tabindex="-1">Forklift</button><button type="button" role="tab" id="warehouse-tab-work" aria-selected="false" aria-controls="warehouse-help-work" data-help-tab="work" tabindex="-1">The work</button></div>
+        <div id="warehouse-help-floor" role="tabpanel" aria-labelledby="warehouse-tab-floor">
+          <dl class="warehouse-key-list"><div><dt><kbd>W A S D</kbd></dt><dd>Walk</dd></div><div><dt><kbd>Mouse</kbd></dt><dd>Look around</dd></div><div><dt><kbd>E</kbd> or <kbd>Click</kbd></dt><dd>Use what you are looking at</dd></div><div><dt><kbd>Left Shift</kbd> / <kbd>Space</kbd></dt><dd>Run / jump</dd></div><div><dt><kbd>R</kbd></dt><dd>Return to the entrance</dd></div><div><dt><kbd>Esc</kbd> / <kbd>P</kbd></dt><dd>Open the pause menu</dd></div></dl>
+          <p>Use the wall switches to control the ceiling lights. Enter the yellow forklift with E. The computer in the dispatch office handles stock purchases and customer orders.</p>
+        </div>
+        <div id="warehouse-help-forklift" role="tabpanel" aria-labelledby="warehouse-tab-forklift" hidden>
+          <dl class="warehouse-key-list"><div><dt><kbd>W S</kbd> / <kbd>A D</kbd></dt><dd>Drive / steer</dd></div><div><dt><kbd>Space</kbd> / <kbd>B</kbd></dt><dd>Brake / slow approach</dd></div><div><dt><kbd>Left Shift</kbd> + <kbd>Mouse</kbd></dt><dd>Hold to use the hydraulic lever</dd></div><div><dt><kbd>Q Z</kbd> / <kbd>T G</kbd></dt><dd>Raise or lower / tilt mast</dd></div><div><dt><kbd>C</kbd> / <kbd>V</kbd></dt><dd>Change view / centre view</dd></div><div><dt><kbd>E</kbd> / <kbd>F</kbd></dt><dd>Stop and step out / parking brake</dd></div></dl>
+          <p>Hold Left Shift. Move the mouse up to raise the forks or down to lower them. The farther the lever is from centre, the faster the forks move. Centre the lever to hold their height. Release Shift to stop and look around.</p>
+          <p>Drive the forks into a pallet's pockets, then lift. Carry low and turn slowly. Lower onto a rack or the floor, then reverse out. H sounds the horn. Hold R while stopped to recover the forklift.</p>
+        </div>
+        <div id="warehouse-help-work" role="tabpanel" aria-labelledby="warehouse-tab-work" hidden>
+          <ol class="warehouse-work-steps"><li><strong>Receive the delivery</strong><p>Wait for the truck to park and open its doors at the north dock. Take each pallet out with the forklift.</p></li><li><strong>Put the stock away</strong><p>The wall racks have floor positions and two raised levels. Set pallets down on their supports, then withdraw the forks.</p></li><li><strong>Use the dispatch office</strong><p>Small parcels arrive at the front door. Carry them to the parcel desk. Use the computer to inspect the stock ledger and buy stock.</p></li><li><strong>Fill a customer order</strong><p>Accept a retailer order at the computer. Use the forklift to load the requested pallets from the oldest matching lot into the cleared trailer. Return to the computer to dispatch it. Payment arrives after the truck leaves.</p></li></ol>
+        </div>
+        <button id="warehouse-close-help" class="warehouse-subtle" type="button">Back</button>
+      </section>
+      <section id="warehouse-about" hidden><p class="warehouse-about-copy">A warehouse game by Ethan Willingham.</p><p>Receive deliveries, operate the forklift, and keep the business moving from the dispatch office.</p><p class="warehouse-classic">The earlier illustrated game and its saved warehouses are <a href="one-shift-classic.html">still here</a>.</p><a href="archive.html">More games</a></section>
+      <footer class="warehouse-menu-footer"><button id="warehouse-menu-back" class="warehouse-subtle" type="button" hidden>Back to menu</button><span>v8 / Web edition</span></footer>
+    </div>
+  </dialog>
+  <dialog id="warehouse-computer" class="warehouse-computer" aria-labelledby="warehouse-computer-title">
+    <header><div><p class="warehouse-kicker">Dispatch office</p><h2 id="warehouse-computer-title">Warehouse desk</h2></div><button id="warehouse-computer-close" type="button">Back to floor <kbd>Esc</kbd></button></header>
+    <div class="warehouse-computer-summary"><p id="warehouse-computer-summary"></p><div><span>Available cash</span><output id="warehouse-computer-cash"></output></div></div>
+    <nav class="warehouse-computer-tabs" role="tablist" aria-label="Office computer"><button role="tab" type="button" aria-selected="true" aria-controls="warehouse-desk-stock" id="warehouse-desk-tab-stock" data-desk-tab="stock">Stock</button><button role="tab" type="button" aria-selected="false" aria-controls="warehouse-desk-purchases" id="warehouse-desk-tab-purchases" data-desk-tab="purchases" tabindex="-1">Suppliers</button><button role="tab" type="button" aria-selected="false" aria-controls="warehouse-desk-customers" id="warehouse-desk-tab-customers" data-desk-tab="customers" tabindex="-1">Customer orders</button><button role="tab" type="button" aria-selected="false" aria-controls="warehouse-desk-ledger" id="warehouse-desk-tab-ledger" data-desk-tab="ledger" tabindex="-1">Ledger</button></nav>
+    <div class="warehouse-desk-body"><section id="warehouse-desk-stock" role="tabpanel" aria-labelledby="warehouse-desk-tab-stock"><div id="warehouse-inventory"></div></section><section id="warehouse-desk-purchases" role="tabpanel" aria-labelledby="warehouse-desk-tab-purchases" hidden><div id="warehouse-orders"></div></section><section id="warehouse-desk-customers" role="tabpanel" aria-labelledby="warehouse-desk-tab-customers" hidden><div id="warehouse-contracts"></div></section><section id="warehouse-desk-ledger" role="tabpanel" aria-labelledby="warehouse-desk-tab-ledger" hidden><div id="warehouse-ledger"></div></section></div>
+    <footer><p id="warehouse-computer-message" role="status"></p><span>Dispatch / Operations</span></footer>
+  </dialog>
+  <div id="warehouse-rotate" class="warehouse-gate warehouse-rotate" hidden><div><p class="warehouse-kicker">The Warehouse Simulator</p><div class="warehouse-rotate-drawing" aria-hidden="true"></div><h2>Turn your screen sideways.</h2><p>The warehouse uses a keyboard and mouse.</p><a href="one-shift-classic.html">Play the illustrated game with touch</a></div></div>
   <noscript><div class="warehouse-gate"><div><h2>JavaScript is needed to play.</h2><p>Enable JavaScript, then reload this page.</p><a href="archive.html">Back to In Progress</a></div></div></noscript>
 </main>
 </body>

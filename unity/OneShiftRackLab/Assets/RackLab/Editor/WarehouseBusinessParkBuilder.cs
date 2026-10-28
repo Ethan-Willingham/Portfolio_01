@@ -53,8 +53,11 @@ namespace OneShift.RackLab
             Building("East units", new Vector3(49, Ground, 6), 90, "PARKSIDE PRINT", "10 - 12", brick);
             Building("Southwest units", new Vector3(-42, Ground, -63), 180, "NORTHLINE PARTS", "01 - 03", brick);
             Building("Southeast units", new Vector3(43, Ground, -63), 180, "FIELD SERVICE", "14 - 16", blue);
-            Building("Northwest units", new Vector3(-42, Ground, 88), 0, "COMMERCIAL STORAGE", "07 - 09", blue);
-            Building("Northeast units", new Vector3(43, Ground, 88), 0, "PARKSIDE TRADE", "17 - 19", brick);
+            // Keep neighboring raised forecourts beyond the service street and
+            // the tractor's swept exit. At z=88 they overlapped that street by
+            // 2.6 m and put a five-centimetre ledge across the departing tyres.
+            Building("Northwest units", new Vector3(-42, Ground, 92), 0, "COMMERCIAL STORAGE", "07 - 09", blue);
+            Building("Northeast units", new Vector3(43, Ground, 92), 0, "PARKSIDE TRADE", "17 - 19", brick);
             BuildVehicles();
             BuildLights();
             foreach (var camera in Object.FindObjectsByType<Camera>(FindObjectsSortMode.None))
@@ -91,22 +94,25 @@ namespace OneShift.RackLab
         static void BuildGround()
         {
             var chunk = new Chunk("Roads and forecourt", root);
-            // The existing north yard stays a few millimetres above this base.
+            // Pavement rectangles meet at their edges. Coplanar intersections
+            // formerly made road and apron pixels alternate as the camera moved.
             chunk.Box("Business park ground", new Vector3(0, Ground - .18f, 12), new Vector3(244, .32f, 238), grass, true);
-            chunk.Box("Front visitor parking", new Vector3(0, Ground - .07f, -28), new Vector3(44, .14f, 17), asphalt, true);
+            chunk.Box("Front visitor parking", new Vector3(0, Ground - .07f, -27.75f), new Vector3(44, .14f, 11.5f), asphalt, true);
             chunk.Box("Front access street", new Vector3(0, Ground - .07f, -39), new Vector3(185, .14f, 11), asphalt, true);
-            chunk.Box("North service street", new Vector3(0, Ground - .07f, 68), new Vector3(185, .14f, 11), asphalt, true);
+            chunk.Box("North service street", new Vector3(0, Ground - .07f, 68), new Vector3(244, .14f, 11), asphalt, true);
             foreach (float side in new[] { -1f, 1f })
             {
-                chunk.Box("Side access drive", new Vector3(side * 27, Ground - .07f, 15), new Vector3(9, .14f, 107), asphalt, true);
-                chunk.Box("Warehouse side apron", new Vector3(side * 16.6f, Ground - .07f, .7f), new Vector3(10.2f, .14f, 20.6f), asphalt, true);
-                chunk.Box("Front connecting apron", new Vector3(side * 17, Ground - .07f, -15.8f), new Vector3(10, .14f, 10), asphalt, true);
+                chunk.Box("Side access drive", new Vector3(side * 27, Ground - .07f, 14.5f), new Vector3(9, .14f, 96), asphalt, true);
+                chunk.Box("Warehouse side apron", new Vector3(side * 17, Ground - .07f, .5f), new Vector3(11, .14f, 21), asphalt, true);
+                chunk.Box("Front connecting apron", new Vector3(side * 17.25f, Ground - .07f, -16), new Vector3(10.5f, .14f, 12), asphalt, true);
                 chunk.Box("Street pavement", new Vector3(side * 63, Ground + .045f, -46), new Vector3(59, .09f, 2.4f), concrete, true);
             }
             // Keep the office landing and ramp reservation clear: x 5.3..7.7,
             // z -12.5..-22. Ground meets the ramp without a raised curb.
             chunk.Box("Front walk", new Vector3(0, Ground + .025f, -23.25f), new Vector3(44, .05f, 2.5f), concrete, true);
             chunk.Box("Front foundation apron", new Vector3(0, Ground - .07f, -16), new Vector3(24, .14f, 12), asphalt, true);
+            chunk.Box("North truck entrance",new Vector3(0,Ground-.07f,61.25f),new Vector3(45,.14f,2.5f),asphalt,true);
+            chunk.Box("North truck pull-up apron",new Vector3(0,Ground-.07f,80.75f),new Vector3(30,.14f,14.5f),asphalt,true);
             for (int i = -6; i <= 6; i++)
                 chunk.Box("Visitor parking stripe", new Vector3(i * 3, Ground + .008f, -28.3f), new Vector3(.10f, .016f, 5.7f), cream);
             for (int i = -6; i <= 5; i++)
@@ -136,7 +142,7 @@ namespace OneShift.RackLab
             foreach (float side in new[] { -1f, 1f })
                 for (int i = 0; i < 5; i++)
                     Tree(chunk, new Vector3(side * (77 + (i % 2) * 4), Ground, -28 + i * 23), .95f + i % 3 * .13f);
-            foreach (float x in new[] { -18f, 18f }) Tree(chunk, new Vector3(x, Ground, 75.5f), 1.1f);
+            foreach (float x in new[] { -23f, 23f }) Tree(chunk, new Vector3(x, Ground, 77.5f), 1.1f);
             chunk.Box("Park directory base", new Vector3(-17.7f, Ground + .3f, -32.8f), new Vector3(4.1f, .6f, .6f), brick, true);
             chunk.Box("Park directory board", new Vector3(-17.7f, Ground + 1.1f, -32.8f), new Vector3(4, 1.3f, .18f), blue, true);
             Label("PARKSIDE BUSINESS PARK", root, new Vector3(-17.7f, Ground + 1.37f, -32.91f), .105f, Quaternion.identity);

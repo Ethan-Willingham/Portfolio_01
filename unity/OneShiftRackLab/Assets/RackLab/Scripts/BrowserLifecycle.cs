@@ -8,9 +8,10 @@ namespace OneShift.RackLab
     // The page owns its animation loop. This bridge freezes the simulation and
     // clears input before the page pauses Unity's exported main loop.
     [Preserve]
-    public sealed class BrowserLifecycle : MonoBehaviour
+    public sealed partial class BrowserLifecycle : MonoBehaviour
     {
-        public const int BuildVersion = 7;
+        public const int BuildVersion = 8;
+        public static bool GraphicsPreparing { get; private set; }
 #if UNITY_WEBGL && !UNITY_EDITOR
         [System.Runtime.InteropServices.DllImport("__Internal")]
         static extern void OneShiftRegisterBrowserLoop();
@@ -18,6 +19,8 @@ namespace OneShift.RackLab
         static extern void OneShiftReportPlayerStats(int version, float framesPerSecond, float longestFrameMs, int frameCount);
         [System.Runtime.InteropServices.DllImport("__Internal")]
         static extern void OneShiftReportGraphicsPreparation(int completed, int total, int ready);
+        [System.Runtime.InteropServices.DllImport("__Internal")]
+        static extern void WarehouseReportPreparation(string json);
 #endif
         bool pageActive = true;
         bool windowFocused = true;
@@ -86,12 +89,14 @@ namespace OneShift.RackLab
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void Install()
         {
-#if UNITY_WEBGL && !UNITY_EDITOR
             if (Object.FindFirstObjectByType<BrowserLifecycle>() != null) return;
+#if UNITY_WEBGL && !UNITY_EDITOR
             OneShiftRegisterBrowserLoop();
+#endif
             var bridge = new GameObject("BrowserLifecycle");
             DontDestroyOnLoad(bridge);
             var lifecycle = bridge.AddComponent<BrowserLifecycle>();
+#if UNITY_WEBGL && !UNITY_EDITOR
             Application.targetFrameRate = 60;
             WebGLInput.captureAllKeyboardInput = false;
             WebGLInput.stickyCursorLock = false;
@@ -104,6 +109,7 @@ namespace OneShift.RackLab
             // Preparation, page inactivity and manual pause share suspension
             // without replacing the original time scale on nested transitions.
             preparing = true;
+            GraphicsPreparing = true;
             ApplyState();
             StartCoroutine(PrepareGraphics());
         }
@@ -112,6 +118,7 @@ namespace OneShift.RackLab
         {
             const int stages = 7;
             ReportPreparation(0, stages, 0);
+            ReportFinePreparation(0, "Opening the warehouse", "Preparing the first view", 0);
             // Let scene Start methods place the delivery, with no physics step.
             yield return null;
             var walking = Object.FindFirstObjectByType<RackWalkController>();
@@ -138,12 +145,18 @@ namespace OneShift.RackLab
                 // Night, first sun, morning and afternoon include both banks
                 // of window volumes, shadows and the time-sliced room probe.
                 float[] hours = { originalHour, 6.05f, 9, 15 };
+                string[] phaseNames = { "Night lighting", "Sunrise", "Morning light", "Afternoon light" };
+                string[] viewNames = { "Warehouse floor", "Storage racks", "Receiving bay", "Warehouse walls", "Delivery truck", "Office", "Business park", "Player shadows" };
                 for (int phase = 0; phase < hours.Length; phase++)
                 {
                     dayNight.SetHour(hours[phase]);
                     dayNight.RequestReflection();
                     for (int view = 0; view < 8; view++)
                     {
+                        ReportFinePreparation((phase + view / 9f) / stages, phaseNames[phase], viewNames[view], phase);
+                        // Let the page paint the new work label before a first-use
+                        // shader operation can hold the engine's main thread.
+                        yield return null;
                         if (view < 4)
                             camera.transform.SetPositionAndRotation(originalPosition,
                                 Quaternion.Euler(0, view * 90, 0));
@@ -151,9 +164,11 @@ namespace OneShift.RackLab
                         {
                             Vector3 truckPosition = receiving != null && receiving.truck != null
                                 ? receiving.truck.position : new Vector3(0, 0, 24);
-                            var eye = truckPosition + new Vector3(7, 4, 6);
+                            Quaternion truckRotation = receiving != null && receiving.truck != null
+                                ? receiving.truck.rotation : Quaternion.identity;
+                            var eye = truckPosition + truckRotation * new Vector3(7, 4, 6);
                             camera.transform.SetPositionAndRotation(eye,
-                                Quaternion.LookRotation(truckPosition + new Vector3(0, 2, 7) - eye));
+                                Quaternion.LookRotation(truckPosition + truckRotation * new Vector3(0, 2, 7) - eye));
                         }
                         else
                         {
@@ -165,16 +180,20 @@ namespace OneShift.RackLab
                         }
                         yield return WaitForRenderedFrames(2);
                     }
+                    ReportFinePreparation((phase + 8f / 9) / stages, phaseNames[phase], "Finishing reflections", phase);
                     yield return WaitForReflection(dayNight);
                     if (preparationFailed) yield break;
                     ReportPreparation(phase + 1, stages, 0);
                 }
                 // The first all-off switch state has different lighting variants.
+                ReportFinePreparation(4f / stages, "Checking light switches", "Warehouse lights off", 4);
+                yield return null;
                 foreach (var row in rows) row.SetOn(false);
                 camera.transform.SetPositionAndRotation(originalPosition, originalRotation);
                 dayNight.SetHour(originalHour);
                 yield return WaitForRenderedFrames(2);
                 dayNight.SetHour(9);
+                ReportFinePreparation(4.4f / stages, "Checking light switches", "Daylight without ceiling lights", 4);
                 yield return WaitForRenderedFrames(2);
                 yield return WaitForReflection(dayNight);
                 if (preparationFailed) yield break;
@@ -183,6 +202,8 @@ namespace OneShift.RackLab
 
                 if (driver != null && forklift != null)
                 {
+                    ReportFinePreparation(5f / stages, "Preparing the forklift", "Fork visibility and hydraulic controls", 5);
+                    yield return null;
                     var eye = forklift.transform.TransformPoint(new Vector3(-2.4f, 1.4f, 3));
                     var forks = forklift.transform.TransformPoint(new Vector3(0, .35f, 1.5f));
                     camera.transform.SetPositionAndRotation(eye, Quaternion.LookRotation(forks - eye));
@@ -197,6 +218,8 @@ namespace OneShift.RackLab
                 ReportPreparation(6, stages, 0);
 
                 // Finish with the exact opening view, clock and reflection.
+                ReportFinePreparation(6f / stages, "Finishing your shift", "Restoring the opening light and view", 6);
+                yield return null;
                 // Cargo and the road truck have stayed frozen throughout.
                 camera.transform.SetPositionAndRotation(originalPosition, originalRotation);
                 dayNight.SetHour(originalHour);
@@ -218,9 +241,26 @@ namespace OneShift.RackLab
                 }
             }
             preparing = false;
+            GraphicsPreparing = false;
             ApplyState();
             ResetFrameSample();
             ReportPreparation(stages, stages, 1);
+        }
+
+        [System.Serializable]
+        sealed class PreparationDetail
+        {
+            public string label, detail;
+            public float fraction;
+            public int completed, total = 7;
+        }
+
+        static void ReportFinePreparation(float fraction, string label, string detail, int completed)
+        {
+#if UNITY_WEBGL && !UNITY_EDITOR
+            WarehouseReportPreparation(JsonUtility.ToJson(new PreparationDetail
+            { fraction = Mathf.Clamp01(fraction), label = label, detail = detail, completed = completed }));
+#endif
         }
 
         System.Collections.IEnumerator WaitForRenderedFrames(int count)
@@ -271,6 +311,10 @@ namespace OneShift.RackLab
                 if (row.RowNumber >= 1 && row.RowNumber <= rowOn.Length) rowOn[row.RowNumber - 1] = row.IsOn;
             var position = player != null ? player.transform.position : Vector3.zero;
             var sprungMasses = new float[4];
+            var shadowBudget = Object.FindFirstObjectByType<WarehouseShadowBudget>();
+            var shadowTiers = new int[shadowBudget != null ? shadowBudget.fixtures.Length : 0];
+            for (int i = 0; i < shadowTiers.Length; i++)
+                shadowTiers[i] = shadowBudget.fixtures[i].GetComponent<UniversalAdditionalLightData>().additionalLightsShadowResolutionTier;
             if (forklift != null && forklift.wheels != null)
                 for (int i = 0; i < sprungMasses.Length && i < forklift.wheels.Length; ++i)
                     if (forklift.wheels[i] != null) sprungMasses[i] = forklift.wheels[i].sprungMass;
@@ -284,11 +328,16 @@ namespace OneShift.RackLab
                 buildVersion = BuildVersion,
                 supportsStoreAndResolve = SystemInfo.supportsStoreAndResolveAction,
                 pipelineMsaaSamples = pipeline != null ? pipeline.msaaSampleCount : 0,
+                fixtureShadowAtlas = pipeline != null ? pipeline.additionalLightsShadowmapResolution : 0,
+                fixtureShadowLow = pipeline != null ? pipeline.additionalLightsShadowResolutionTierLow : 0,
+                fixtureShadowHigh = pipeline != null ? pipeline.additionalLightsShadowResolutionTierHigh : 0,
+                fixtureShadowTiers = shadowTiers,
                 cameraAntialiasing = cameraData != null ? cameraData.antialiasing.ToString() : "None",
                 rowOn = rowOn,
                 playerPosition = new[] { position.x, position.y, position.z },
                 playerWalkSpeed = player != null ? player.walkSpeed : 0,
                 playerRunSpeed = player != null ? player.runSpeed : 0,
+                playerSpeed = player != null ? player.HorizontalSpeedMps : 0,
                 playerYaw = player != null ? player.transform.eulerAngles.y : 0,
                 frontDoorOpen = door != null && door.IsOpen,
                 parcelsArrived = parcels != null && parcels.Arrived,
@@ -302,7 +351,7 @@ namespace OneShift.RackLab
                 receivingProgress = receiving != null ? receiving.ArrivalProgress : 0,
                 receivingWaiting = receiving != null && receiving.WaitingForClearance,
                 receivingTruckPosition = receiving != null && receiving.truck != null ? new[] {receiving.truck.position.x, receiving.truck.position.y, receiving.truck.position.z} : null,
-                receivingFirstPallet = receiving != null && receiving.cargo.Length > 0 ? new[] {receiving.cargo[0].transform.position.x, receiving.cargo[0].transform.position.y, receiving.cargo[0].transform.position.z} : null,
+                receivingFirstPallet = receiving != null && receiving.cargo.Length > 0 && receiving.cargo[0] != null ? new[] {receiving.cargo[0].transform.position.x, receiving.cargo[0].transform.position.y, receiving.cargo[0].transform.position.z} : null,
                 browserSuspended = suspended,
                 browserPreparing = preparing,
                 forkliftPosition = forklift != null ? new[] {forklift.transform.position.x, forklift.transform.position.y, forklift.transform.position.z} : null,
@@ -324,11 +373,22 @@ namespace OneShift.RackLab
                 forkliftAssistStage = driver != null ? driver.AssistStage : "Idle",
                 forkliftAssistStatus = driver != null ? driver.AssistStatus : "",
                 forkliftMouseLiftInput = driver != null ? driver.MouseLiftInput : 0,
+                forkliftSlider = driver != null ? driver.ForkSliderNormalized : 0,
+                forkliftTrainingStep = driver != null ? driver.TrainingStep : "",
                 forkliftForkViewActive = driver != null && driver.ForkViewActive,
                 forkliftForkViewTarget = driver != null ? driver.ForkViewTarget : null,
                 forkliftCabView = driver != null && driver.CabView,
                 forkliftCaptured = driver != null && driver.ControlsCaptured,
-                forkliftParked = forklift != null && forklift.ParkingBrake
+                forkliftParked = forklift != null && forklift.ParkingBrake,
+                computerOpen = computerOpen,
+                businessCash = uiBusiness != null ? uiBusiness.Cash : 0,
+                businessConservesCases = uiBusiness == null || uiBusiness.ConservesCases,
+                businessReceivedCases = uiBusiness != null ? uiBusiness.ReceivedCases : 0,
+                businessShippedCases = uiBusiness != null ? uiBusiness.ShippedCases : 0,
+                businessPurchasedCases = uiBusiness != null ? uiBusiness.PurchasedCases : 0,
+                businessOpeningCases = uiBusiness != null ? uiBusiness.OpeningCases : 0,
+                businessDeliveryBooked = uiBusiness != null && uiBusiness.PurchasePending,
+                businessActiveOrder = uiBusiness != null && uiBusiness.ActiveOrder != null ? uiBusiness.ActiveOrder.id : ""
             }));
         }
 
@@ -339,11 +399,13 @@ namespace OneShift.RackLab
             public float hour;
             public float timeScale, fixedDeltaTime, maximumDeltaTime;
             public int buildVersion, pipelineMsaaSamples;
+            public int fixtureShadowAtlas, fixtureShadowLow, fixtureShadowHigh;
+            public int[] fixtureShadowTiers;
             public bool supportsStoreAndResolve;
             public string cameraAntialiasing;
             public bool[] rowOn;
             public float[] playerPosition;
-            public float playerWalkSpeed, playerRunSpeed;
+            public float playerWalkSpeed, playerRunSpeed, playerSpeed;
             public float playerYaw;
             public bool frontDoorOpen, parcelsArrived, carryingParcel;
             public int parcelsReceived;
@@ -362,8 +424,13 @@ namespace OneShift.RackLab
             public bool forkliftAssistActive;
             public string forkliftAssistStage, forkliftAssistStatus;
             public float forkliftMouseLiftInput;
+            public float forkliftSlider;
+            public string forkliftTrainingStep;
             public bool forkliftForkViewActive;
             public string forkliftForkViewTarget;
+            public bool computerOpen, businessConservesCases, businessDeliveryBooked;
+            public int businessCash, businessReceivedCases, businessShippedCases, businessPurchasedCases, businessOpeningCases;
+            public string businessActiveOrder;
         }
 
         void OnApplicationFocus(bool focused)
@@ -380,7 +447,7 @@ namespace OneShift.RackLab
 
         void ApplyState()
         {
-            bool shouldSuspend = preparing || !pageActive || !windowFocused || applicationPaused;
+            bool shouldSuspend = preparing || computerOpen || !pageActive || !windowFocused || applicationPaused;
             if (suspended == shouldSuspend) return;
             suspended = shouldSuspend;
             ResetFrameSample();
@@ -408,6 +475,8 @@ namespace OneShift.RackLab
 
         void OnDestroy()
         {
+            ReleaseHUD();
+            GraphicsPreparing = false;
             if (!suspended) return;
             Time.timeScale = previousTimeScale;
             AudioListener.pause = previousAudioPause;

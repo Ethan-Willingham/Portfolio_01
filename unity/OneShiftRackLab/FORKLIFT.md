@@ -1,7 +1,7 @@
 # Warehouse forklift
 
 The classic yellow LPG counterbalance forklift drives and handles physical
-pallet loads in One Shift.
+pallet loads in The Warehouse Simulator.
 It was rebuilt from a fresh scene at the owner's request. The longer body has
 a rounded cast counterweight, black engine bonnet, horizontal aluminium propane
 bottle, large front tyres, smaller rear tyres and ivory dished wheels. The rear
@@ -169,45 +169,74 @@ all four wake signals is below 0.014 N. See the
 [PhysX jointed truck example](https://nvidia-omniverse.github.io/PhysX/physx/5.1.1/docs/Vehicles.html).
 Parking and inactivity clear that signal along with engine torque.
 
-The front wheels drive and brake. In neutral, driveline drag opposes each front
-wheel's rotation, up to 45 Nm per wheel, and tapers smoothly to zero below
-0.25 m/s tyre rolling speed. Neutral does not apply the service brake. Using
-brake torque for this small drag had incorrectly held the truck on an
-eight-degree slope after the parking brake was released.
+The front wheels drive and brake. Releasing the accelerator immediately clears
+the propulsion request. In neutral, driveline drag opposes each front wheel's
+rotation, up to 1,200 Nm per wheel, and tapers smoothly to zero below 0.4 m/s tyre
+rolling speed. Neutral uses finite opposing motor torque, without applying the
+service brake or replacing body velocity. The taper still permits gravity to
+roll the truck on a slope after the parking brake is released.
 
 The rear wheels use separate inside/outside
 steering angles, with a 60-degree inside limit at low speed reducing to
 12 degrees at speed. Engine torque tapers towards 4.3 m/s forward and 3 m/s
 reverse. Selecting the opposite direction brakes before reverse drive engages.
-Shift reduces power and applies progressive braking towards a slow approach.
-The wheels, rear axle and steering wheel follow their physical state.
+The central steering angle moves toward the request at 210 degrees per second,
+with a 260-degree return rate. Throttle ramps at 4.8 input units per second.
+Holding B reduces power and applies progressive braking towards a slow approach.
+The wheels, rear axle and steering wheel follow their physical state. Hydraulic
+forces, load mass, tyre contact and free roll/pitch remain part of the same
+physical model.
 
 `ForkliftPlayerInteraction` reuses the walking camera, disables the walking
-capsule while seated, and requires a brief familiarisation before first driving.
-E enters the seat. The first entry opens the briefing, with E or Enter to
-acknowledge and begin; later entries take one E. W/S drives and reverses, A/D
-steers, Space brakes, and Shift inches. Throttle releases the parking brake.
+capsule while seated, and requires practical familiarisation before first driving.
+E enters the seat. The first entry shows one action at a time: press Space to
+check the brake, hold Left Shift and move the mouse up to lift the empty forks
+slightly, then centre the lever and release Left Shift. The truck remains parked
+through these checks, with drive and steering input blocked. E and Enter do not
+skip them. Later entries take one E. Carrying a parcel blocks both entry and its
+E prompt. W/S drives and reverses, A/D steers, Space brakes, and B inches.
+Throttle releases the parking brake.
 E requests a stop and exit, applying the service brake until the truck is slow
 enough, then checking for clear floor at either side or behind the truck.
-Escape cancels an exit request and releases capture. C changes rear/cab view,
-and Tab shows the full control list. F parks, V centres, H sounds the horn,
-Q/Z raises and lowers, T/G tilts forward and back, and holding R while stopped
-recovers to a clear parking bay. Focus loss and browser pause clear driving and
-fork input; resuming requires a fresh click and neutral controls.
+Escape cancels an exit request and releases capture; the browser opens its pause
+menu. C changes rear/cab view, and Tab or F1 opens Controls. F parks, V centres,
+H sounds the horn, Q/Z raises and lowers, T/G tilts forward and back, and holding
+R while stopped recovers to a clear parking bay. Focus loss, pause, portrait
+gating and capture loss clear driving and fork input. A trusted Resume button
+can recapture the mouse; returning from inactivity needs a fresh click. In either
+case, held controls must return to neutral before they can move the truck.
+
+The browser HUD uses `ContextHint`, `ContextHintKey`, `TrainingStep`, `Notice`,
+`ForkControlHeld`, `ForkSliderNormalized` and `MouseLiftInput` from the driver.
+`ForkSliderNormalized` is the signed lever position; `MouseLiftInput` is its
+signed valve command. Both range from -1 to 1. The old IMGUI briefing and control
+panels are removed. Walking uses short acceleration and stopping ramps, limited
+air control and a 0.34 m jump. Its camera has fixed eye height and perspective,
+without head bob, roll or a sprint zoom.
 
 ## Mouse fork control and placement view
 
-Hold X and move the mouse up to raise the forks or down to lower them. The same
-finite-force hydraulic valve serves mouse control and Q/Z. Mouse movement is
-normalized by frame duration, so hand speed has the same effect at different
-render rates. A stationary mouse sends zero, closing the valve at the attained
-height. Release, capture loss, pause and exit clear the mouse command. The
-neutral-input gate prevents a held X from resuming when capture returns.
+Hold Left Shift to show a centred vertical hydraulic lever. Right Shift does
+not open it. Moving the mouse up or down moves the lever, with its position
+setting signed lift speed: up raises, down lowers, centre holds the attained
+height. A still mouse away from centre keeps that speed. Releasing Left Shift
+closes the valve, resets the lever to centre and returns the mouse to looking.
+The same finite-force hydraulics serve the lever and alternate Q/Z keys.
 
-Mouse look stays still while X is held. WASD continues to position the truck,
-Space brakes, and T/G tilts the mast. Manual Q/Z takes precedence over mouse
-movement. No automatic steering, pallet approach or lift starts from holding X.
-Loads remain independent dynamic bodies, lifted only through fork contact.
+`ForkliftMouseLift` accumulates mouse displacement, independent of render rate.
+Twenty Unity mouse-axis units span centre to an end stop. A 7.5 percent central
+dead zone closes the valve; the remaining travel uses a squared response for
+fine movement near centre and full flow at either end. A frame longer than
+0.12 seconds or invalid pointer input clears the lever and requires a release
+before another hold. Capture loss, pause and exit also clear it. The neutral
+gate prevents a held Left Shift from resuming when capture returns.
+
+Mouse look stays still while Left Shift is held. WASD continues to position the
+truck, B inches, Space brakes, and T/G tilts the mast. Q/Z works only while the
+mouse lever is closed, so a visible centred lever always means zero vertical
+flow. Holding Left Shift starts with zero lift command and never chooses a
+load, steers or approaches a pallet. Loads remain independent dynamic bodies,
+lifted only through fork contact.
 
 `ForkliftPlacementView` draws the two actual fork collision meshes and the board
 edges of one nearby pallet only where ordinary opaque geometry hides them.
@@ -215,7 +244,7 @@ The nearest pallet must be ahead, within 1.5 m laterally and 3 m of the fork tip
 Its edge mesh comes from the actual board colliders, leaving the fork pockets
 open. The warm, translucent overlay uses at most three draw calls and ordinary
 triangles supported by WebGL. It changes no existing materials or collisions,
-and disappears when X is released. The shader is included through Resources.
+and disappears when Left Shift is released. The shader is included through Resources.
 
 `ForkliftLoadAssist` remains an isolated validation fixture for historical
 handling tests. The player interaction no longer constructs or runs it.
@@ -291,15 +320,65 @@ that lag for an obstruction during a sharp turn and repeatedly snap the view.
 
 ## Validation
 
-`ForkliftHandlingValidation.ValidateMouseLiftAndSave()` checks stationary and
-released mouse input, physical raising/lowering at 30/60/120 Hz, a working-load
-pickup and setdown, and the unchanged overload limit. Its report is
-`Reports/forklift-mouse-lift-validation.json`. The browser checks the live input
-path, frozen look while X is held, and the occluded placement overlay.
-All six physical checks passed on 25 October 2026. The same input raised the
-empty forks 0.61 m at each tested render rate; the 800 kg package lifted 0.52 m
-and stayed in place after setdown and withdrawal. The 3,500 kg load stayed down
-at the hydraulic pressure limit.
+`WarehouseControlsBuilder.Install()` updates the saved forklift prefab and the
+current scene's control tuning without rebuilding geometry or stock. It saves
+backups under `Temp/ControlsBackup`. Reapply it after an older forklift prefab
+or scene is restored. `WarehouseControlsValidation.ValidateAndSave()` runs
+eleven deterministic checks of the persistent lever, centre/release handling,
+invalid and interrupted input, walking acceleration/stopping and air momentum
+at 30, 60, 120 and 144 Hz. It writes
+`Reports/warehouse-controls-validation.json` and does not simulate browser keys.
+
+`ForkliftHandlingValidation.ValidateMouseLiftAndSave()` checks a centred held
+lever, release and interrupted input, persistent physical raising/lowering at
+30/60/120 Hz, a working-load pickup and setdown, and the unchanged overload
+limit. Its report is `Reports/forklift-mouse-lift-validation.json`. All six
+checks passed with the v8 lever and final driveline tuning. The full 21-check
+driving pass and all eleven deterministic control checks also passed.
+
+`ForkliftDrivingValidation.ValidateAndSave()` advances the actual prefab in
+isolated PhysX scenes and saves measured results to
+`Assets/RackLab/Reports/forklift-driving-validation.json`. It checks floor support,
+acceleration, service braking, lift-off deceleration, steering response, inching,
+reverse, steering in both directions, two-track ramp climbing, one-sided ramp
+rollover, free fall and rotation, wall collision and cleared pause input. Grip
+checks measure tyre rolling in both directions, rear tyre contact during
+sustained turns, parking hold, and parking then releasing the brake on uphill
+and downhill slopes. The validation uses the production 0.005-second physics
+step and covers unloaded driving, not load capacity or lifting.
+
+With v8's final 1,200 Nm neutral drag, release from 4.16 m/s reached less than
+0.12 m/s after 4.59 m and 2.25 seconds. After the first 60 milliseconds the truck
+still travelled at 4.05 m/s, confirming a finite slowdown. The service brake
+stopped from the same speed in 1.69 m and 0.79 seconds. Central rear steering
+reached 21.25 degrees in 100 milliseconds and 49.18 degrees in 300 milliseconds.
+The eight-degree slope tests still rolled after parking release. These are
+isolated prefab measurements; an exported browser run remains a separate check.
+
+`ForkliftHandlingValidation.ValidateAndSave()` checks all four pallet variants
+through floor pickup, transport, release, and placement and retrieval at floor
+and upper rack levels. It also checks the middle level, the light and working
+packages, an 800 kg upper-rack cycle, hydraulic overload, off-centre loading and
+pause input. It uses the saved prefabs and actual collision geometry at the same
+physics timestep. `ForkliftCameraValidation.ValidateAndSave()` checks sharp
+turns at 30, 60, 120 and 144 Hz, obstruction clearance, and a frozen timestep.
+
+Run `node tools/test-one-shift-unity-browser.cjs --real` from the site root to
+exercise the compiled player's native entry, practical familiarisation,
+driving, Left Shift lever, placement overlay, physical unload and pause behavior.
+Omit `--real` for launcher checks. `tools/profile-one-shift-unity-browser.cjs`
+retains a 90-second measurement without screenshots. With `SHIFT_PROFILE_FORKS=1`
+it records brake/lift/centre/release steps and fine/full lever samples through
+native mouse and key events. Optional placement captures happen only after the
+measurement is saved.
+
+### Historical results
+
+The earlier mouse-motion controller's six physical checks passed on 25 October
+2026, before the persistent v8 lever. That version used X, and stopping the mouse
+closed its valve. Its matched input raised the empty forks 0.61 m at each tested
+render rate; the 800 kg package lifted 0.52 m and stayed in place after setdown
+and withdrawal. The 3,500 kg load stayed down at the hydraulic pressure limit.
 
 The retained `ForkliftHandlingValidation.ValidateAssistAndSave()` exercises held pickup,
 transport and setdown, a modest approach offset, elevated-rack retrieval,
@@ -318,26 +397,6 @@ pallets rose 194 to 197 mm, reversed into the warehouse, and stayed still after
 setdown and fork withdrawal. The deepest pickup drives the entire forklift into
 the original full-scale trailer. The inner mast reaches about 2.615 m beneath
 the physical 2.693 m roof. The test also catches dock-plate height differences.
-
-`ForkliftDrivingValidation.ValidateAndSave()` advances the actual prefab in
-isolated PhysX scenes and saves measured results to
-`Assets/RackLab/Reports/forklift-driving-validation.json`. It checks floor support,
-acceleration, service braking, inching, reverse, steering in both directions,
-two-track ramp climbing, one-sided ramp rollover, free fall and rotation, wall
-collision and cleared pause input. Grip checks measure tyre rolling in both
-directions, rear tyre contact during sustained turns, parking hold, and parking
-then releasing the brake on uphill and downhill slopes. The validation uses
-the production 0.005-second physics step. This pass covers unloaded driving,
-not load capacity or lifting. The browser test additionally exercises the
-compiled player's entry, driving controls, cameras and pause behavior.
-
-`ForkliftHandlingValidation.ValidateAndSave()` checks all four pallet variants
-through floor pickup, transport, release, and placement and retrieval at floor
-and upper rack levels. It also checks the middle level, the light and working
-packages, an 800 kg upper-rack cycle, hydraulic overload, off-centre loading and
-pause input. It uses the saved prefabs and actual collision geometry at the same
-physics timestep. `ForkliftCameraValidation.ValidateAndSave()` checks sharp
-turns at 30, 60, 120 and 144 Hz, obstruction clearance, and a frozen timestep.
 
 The 24 October 2026 handling validation passed all 21 checks. The 800 kg package
 completed the upper-rack placement and retrieval cycle, resting independently
@@ -365,5 +424,3 @@ The earlier browser release `v=4` passed all 51 compiled-player checks in Chrome
 WebGL 2, including lift, neutral hold, mast tilt, camera switching, driving,
 recovery and hydraulic input clearing on pause. The launcher passed its 22
 lifecycle checks. Browser and Windows exports completed with zero build errors.
-Run `node tools/test-one-shift-unity-browser.cjs --real` from the site root to
-exercise the compiled player, or omit `--real` for the launcher checks.

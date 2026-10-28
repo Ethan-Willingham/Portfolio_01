@@ -85,6 +85,8 @@ namespace OneShift.RackLab
             RunCheck(report, "settles on all four tires", "An unloaded stationary truck settles within 0.2 m of authored floor height with four supported wheels, less than 0.15 m/s motion and less than 3 degrees lean.", Settles);
             RunCheck(report, "forward acceleration", "Full throttle moves the actual rigidbody at least 8 m in 7 seconds, reaches 2 to 5.5 m/s, and stays straight and upright on level concrete.", Accelerates);
             RunCheck(report, "service braking", "Braking from driving speed stops within 4 seconds and 7 m, while preserving a nonzero physical stopping distance.", Brakes);
+            RunCheck(report, "lift-off deceleration", "Releasing the accelerator near 4.16 m/s removes propulsion immediately and slows through finite driveline torque, reaching below 0.12 m/s within 3 seconds and 6 m without applying the service or parking brake.", Coasts);
+            RunCheck(report, "prompt rear steering response", "Rear steering starts within the first 100 milliseconds, reaches its low-speed angle within 300 milliseconds, reverses promptly and recentres without altering body velocity.", SteeringResponse);
             RunCheck(report, "inching decelerates physically", "The inching pedal slows a moving truck to below 1.2 m/s without instantly replacing its velocity.", Inches);
             RunCheck(report, "reverse", "Reverse produces at least 3 m of backward travel and a final backward speed between 0.8 and 3.8 m/s.", Reverses);
             RunCheck(report, "right rear steering", "A right input at low speed turns the nose right. Front wheels remain unsteered and rear wheels steer left.", (rig, check) => RearSteers(rig, check, 1f));
@@ -179,6 +181,47 @@ namespace OneShift.RackLab
             float distance = check.Measure("backward travel", start.z - rig.Body.position.z, "m");
             float speed = check.Measure("signed final speed", Vector3.Dot(rig.Body.linearVelocity, rig.Body.rotation * Vector3.forward), "m/s");
             check.passed = distance > 3f && speed < -.8f && speed > -3.8f;
+        }
+
+        static void Coasts(Rig rig, Check check)
+        {
+            rig.Step(2f);
+            rig.Input(1f, 0f);
+            rig.Step(5f);
+            float entry = check.Measure("speed at accelerator release", rig.Controller.SpeedMps, "m/s");
+            Vector3 start = rig.Body.position;
+            rig.Input(0, 0);
+            rig.Step(.06f);
+            float first = check.Measure("speed after 60 milliseconds", rig.Controller.SpeedMps, "m/s");
+            float elapsed = .06f;
+            while (elapsed < 4 && rig.Controller.SpeedMps > .12f)
+            {
+                rig.Step(StepSeconds);
+                elapsed += StepSeconds;
+            }
+            float distance = check.Measure("neutral stopping distance", Vector3.Distance(start, rig.Body.position), "m");
+            check.Measure("neutral stopping time", elapsed, "s");
+            check.Measure("remaining drive request", rig.Controller.AppliedDriveTorque, "Nm");
+            check.passed = entry > 3.8f && entry < 4.5f && first > entry - .35f && first < entry && elapsed <= 3 &&
+                distance > .5f && distance <= 6 && rig.Controller.SpeedMps <= .12f &&
+                rig.Controller.AppliedDriveTorque == 0 && !rig.Controller.ServiceBrake && !rig.Controller.ParkingBrake;
+        }
+
+        static void SteeringResponse(Rig rig, Check check)
+        {
+            rig.Step(2f);
+            rig.Input(0, 1);
+            rig.Step(.1f);
+            float early = check.Measure("central steer after 100 milliseconds", Mathf.Abs(rig.Controller.SteerAngle), "degrees");
+            rig.Step(.2f);
+            float full = check.Measure("central steer after 300 milliseconds", Mathf.Abs(rig.Controller.SteerAngle), "degrees");
+            rig.Input(0, -1);
+            rig.Step(.25f);
+            float reversed = check.Measure("opposite central steer after 250 milliseconds", rig.Controller.SteerAngle, "degrees");
+            rig.Input(0, 0);
+            rig.Step(.2f);
+            float centre = check.Measure("released central steer after 200 milliseconds", Mathf.Abs(rig.Controller.SteerAngle), "degrees");
+            check.passed = early >= 18 && full > 40 && full < 55 && reversed > 10 && centre < .01f;
         }
 
         static void Inches(Rig rig, Check check)

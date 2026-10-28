@@ -1,27 +1,27 @@
 {
-    "generatedUtc": "2026-10-26T00:08:13.9344220Z",
+    "generatedUtc": "2026-10-28T01:51:48.4138051Z",
     "unityVersion": "6000.3.27f1",
     "method": "Isolated PhysX at the production 0.005 second timestep. Saved forklift, pallet, cargo and rack prefabs. Pickup, carrying and release use actual contacts; no load parenting, attached carrying joints or pose writes after initial placement.",
     "passed": true,
     "checks": [
         {
-            "name": "held stationary mouse cannot drive or lift",
+            "name": "centred lever and interrupted input",
             "passed": true,
-            "expectation": "Holding X without mouse movement leaves the truck and forks stationary; release and a long interrupted frame send no valve command.",
+            "expectation": "Holding Left Shift starts at centre. Release closes the valve. An interrupted frame clears the lever and requires a fresh hold.",
             "error": "",
             "measurements": [
                 {
-                    "name": "stationary held-X fork movement",
+                    "name": "centred held lever fork movement",
                     "value": 0.00015686452388763428,
                     "units": "m"
                 },
                 {
-                    "name": "stationary held-X truck movement",
+                    "name": "centred held lever truck movement",
                     "value": 0.00012492081441450864,
                     "units": "m"
                 },
                 {
-                    "name": "released X with moving mouse valve",
+                    "name": "released key with moving mouse valve",
                     "value": 0.0,
                     "units": "input"
                 },
@@ -29,97 +29,102 @@
                     "name": "long interrupted frame valve",
                     "value": 0.0,
                     "units": "input"
+                },
+                {
+                    "name": "held key after interruption valve",
+                    "value": 0.0,
+                    "units": "input"
                 }
             ]
         },
         {
-            "name": "direct mouse lift at 30 frames per second",
+            "name": "position lever at 30 frames per second",
             "passed": true,
-            "expectation": "The same mouse speed raises and lowers through the existing hydraulics at this render cadence. A stationary mouse closes the valve and no driving intent is generated.",
+            "expectation": "The same lever position produces physical raising and lowering at each render cadence. A stationary off-centre lever maintains speed; centre and release hold the attained height.",
             "error": "",
             "measurements": [
                 {
-                    "name": "height drift with held stationary mouse",
-                    "value": 0.009313583374023438,
+                    "name": "height drift with centred lever",
+                    "value": 0.009534716606140137,
                     "units": "m"
                 },
                 {
                     "name": "physical rise from upward mouse movement",
-                    "value": 0.6066981554031372,
+                    "value": 0.6213278770446777,
                     "units": "m"
                 },
                 {
                     "name": "physical lowering from downward mouse movement",
-                    "value": 0.2676878571510315,
+                    "value": 0.2741057276725769,
                     "units": "m"
                 },
                 {
                     "name": "truck movement without WASD",
-                    "value": 0.00017801683861762285,
+                    "value": 0.00017798750195652246,
                     "units": "m"
                 }
             ]
         },
         {
-            "name": "direct mouse lift at 60 frames per second",
+            "name": "position lever at 60 frames per second",
             "passed": true,
-            "expectation": "The same mouse speed raises and lowers through the existing hydraulics at this render cadence. A stationary mouse closes the valve and no driving intent is generated.",
+            "expectation": "The same lever position produces physical raising and lowering at each render cadence. A stationary off-centre lever maintains speed; centre and release hold the attained height.",
             "error": "",
             "measurements": [
                 {
-                    "name": "height drift with held stationary mouse",
-                    "value": 0.009313583374023438,
+                    "name": "height drift with centred lever",
+                    "value": 0.009534716606140137,
                     "units": "m"
                 },
                 {
                     "name": "physical rise from upward mouse movement",
-                    "value": 0.6066981554031372,
+                    "value": 0.6213278770446777,
                     "units": "m"
                 },
                 {
                     "name": "physical lowering from downward mouse movement",
-                    "value": 0.2676878571510315,
+                    "value": 0.2741057276725769,
                     "units": "m"
                 },
                 {
                     "name": "truck movement without WASD",
-                    "value": 0.00017801683861762285,
+                    "value": 0.00017798750195652246,
                     "units": "m"
                 }
             ]
         },
         {
-            "name": "direct mouse lift at 120 frames per second",
+            "name": "position lever at 120 frames per second",
             "passed": true,
-            "expectation": "The same mouse speed raises and lowers through the existing hydraulics at this render cadence. A stationary mouse closes the valve and no driving intent is generated.",
+            "expectation": "The same lever position produces physical raising and lowering at each render cadence. A stationary off-centre lever maintains speed; centre and release hold the attained height.",
             "error": "",
             "measurements": [
                 {
-                    "name": "height drift with held stationary mouse",
-                    "value": 0.009313583374023438,
+                    "name": "height drift with centred lever",
+                    "value": 0.009534716606140137,
                     "units": "m"
                 },
                 {
                     "name": "physical rise from upward mouse movement",
-                    "value": 0.6066981554031372,
+                    "value": 0.6213278770446777,
                     "units": "m"
                 },
                 {
                     "name": "physical lowering from downward mouse movement",
-                    "value": 0.2676878571510315,
+                    "value": 0.2741057276725769,
                     "units": "m"
                 },
                 {
                     "name": "truck movement without WASD",
-                    "value": 0.00017801683861762285,
+                    "value": 0.00017798750195652246,
                     "units": "m"
                 }
             ]
         },
         {
-            "name": "mouse-controlled working-load pickup and setdown",
+            "name": "lever-controlled working-load pickup and setdown",
             "passed": true,
-            "expectation": "After direct physical pocket insertion, mouse movement lifts and lowers an independent working load. Stopping the mouse holds it; normal driving carries it through contact.",
+            "expectation": "After direct physical pocket insertion, the lever lifts and lowers an independent working load. Centring holds it; normal driving carries it through contact.",
             "error": "",
             "measurements": [
                 {
@@ -144,22 +149,22 @@
                 },
                 {
                     "name": "pallet displacement before lift",
-                    "value": 2.4131611553457335e-7,
+                    "value": 2.4502813289473126e-7,
                     "units": "m"
                 },
                 {
                     "name": "actual tine penetration beyond pallet front",
-                    "value": 1.0260162353515626,
+                    "value": 1.0260863304138184,
                     "units": "m"
                 },
                 {
                     "name": "working load mouse lift",
-                    "value": 0.5179921388626099,
+                    "value": 0.5324967503547669,
                     "units": "m"
                 },
                 {
                     "name": "setdown drift after fork withdrawal",
-                    "value": 5.010580821362964e-7,
+                    "value": 4.650792106986046e-8,
                     "units": "m"
                 }
             ]
@@ -192,17 +197,17 @@
                 },
                 {
                     "name": "pallet displacement before lift",
-                    "value": 0.0000029033674309175696,
+                    "value": 0.0000020020120246044827,
                     "units": "m"
                 },
                 {
                     "name": "actual tine penetration beyond pallet front",
-                    "value": 1.0260205268859864,
+                    "value": 1.0259451866149903,
                     "units": "m"
                 },
                 {
                     "name": "heavy load rise under mouse command",
-                    "value": -0.000001601874828338623,
+                    "value": -0.000004503875970840454,
                     "units": "m"
                 },
                 {

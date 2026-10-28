@@ -1,0 +1,2 @@
+PASS 1202 actual tractor/trailer poses clear the scene's static collision. Maximum articulation 49.1 degrees.
+PASS Street arrival 44.10 s, forward street departure 25.25 s. Original dock datum and 2.693 m roof clearance unchanged.

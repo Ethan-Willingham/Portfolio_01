@@ -29,10 +29,10 @@ namespace OneShift.RackLab
         [Min(0)] public float driveTorquePerWheel = 1100;
         [Min(0.1f)] public float maximumForwardSpeed = 4.3f;
         [Min(0.1f)] public float maximumReverseSpeed = 3;
-        [Min(0.1f)] public float throttleResponse = 2.4f;
+        [Min(0.1f)] public float throttleResponse = 4.8f;
         [Min(0)] public float serviceBrakeTorque = 3300;
         [Min(0)] public float parkingBrakeTorque = 6000;
-        [Min(0)] public float coastingBrakeTorque = 45;
+        [Min(0)] public float coastingBrakeTorque = 1200;
         [Min(0.01f)] public float reverseEngagementSpeed = 0.14f;
         [Range(0.05f, 0.8f)] public float inchingTorqueFraction = 0.24f;
         [Min(0.1f)] public float inchingSpeed = 0.8f;
@@ -42,8 +42,8 @@ namespace OneShift.RackLab
         [Min(0.1f)] public float rearTrack = 0.98f;
         [Range(5, 60)] public float maximumRearSteerAngle = 60;
         [Range(3, 35)] public float highSpeedRearSteerAngle = 12;
-        [Min(1)] public float steeringRate = 65;
-        [Min(1)] public float steeringReturnRate = 85;
+        [Min(1)] public float steeringRate = 210;
+        [Min(1)] public float steeringReturnRate = 260;
 
         public bool Occupied { get; private set; }
         public float SpeedMps => body != null ? body.linearVelocity.magnitude : 0;
@@ -254,7 +254,9 @@ namespace OneShift.RackLab
                 float turnRadius = wheelbase / Mathf.Tan(innerAngle * Mathf.Deg2Rad) + rearTrack * 0.5f;
                 centreTarget = -Mathf.Sign(SteeringInput) * Mathf.Atan(wheelbase / turnRadius) * Mathf.Rad2Deg;
             }
-            float turnRate = Mathf.Abs(centreTarget) < Mathf.Abs(SteerAngle) ? steeringReturnRate : steeringRate;
+            bool returning = Mathf.Abs(centreTarget) < Mathf.Abs(SteerAngle) ||
+                Mathf.Sign(centreTarget) != Mathf.Sign(SteerAngle);
+            float turnRate = returning ? steeringReturnRate : steeringRate;
             SteerAngle = Mathf.MoveTowards(SteerAngle, centreTarget, turnRate * dt);
             ApplyRearSteering();
 
@@ -263,7 +265,10 @@ namespace OneShift.RackLab
             BrakingForDirectionChange = Mathf.Abs(request) > 0.03f &&
                 Mathf.Sign(request) * speed < -reverseEngagementSpeed;
             bool braking = ServiceBrake || BrakingForDirectionChange;
-            if (braking || parked) filteredThrottle = 0;
+            // Releasing the accelerator closes the drive request immediately.
+            // Acceleration still ramps through finite wheel torque, while
+            // opposite direction selection retains the physical brake phase.
+            if (braking || parked || Mathf.Abs(request) < .03f) filteredThrottle = 0;
             else filteredThrottle = Mathf.MoveTowards(filteredThrottle, request, throttleResponse * dt);
 
             float drive = 0;
@@ -310,7 +315,7 @@ namespace OneShift.RackLab
                     // for coasting makes PhysX hold a stationary truck on a
                     // slope even when that small brake cannot oppose gravity.
                     float rollingSpeed = wheel.rpm * Mathf.PI / 30 * wheel.radius;
-                    torque = -coastingBrakeTorque * Mathf.Clamp(rollingSpeed / .25f, -1, 1);
+                    torque = -coastingBrakeTorque * Mathf.Clamp(rollingSpeed / .4f, -1, 1);
                     if (Mathf.Abs(torque) < .0001f) torque = rearWakeTorque;
                 }
                 wheel.motorTorque = torque;

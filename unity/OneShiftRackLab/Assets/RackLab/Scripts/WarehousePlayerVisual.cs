@@ -31,7 +31,7 @@ namespace OneShift.RackLab
         void RestoreOwnViewHead()
         {
             if (headRenderer == null) return;
-            bool firstPerson = driver == null || !driver.IsDriving || driver.CabView;
+            bool firstPerson = !BrowserLifecycle.GraphicsPreparing && (driver == null || !driver.IsDriving || driver.CabView);
             headRenderer.shadowCastingMode = firstPerson ? ShadowCastingMode.ShadowsOnly : ShadowCastingMode.On;
         }
 

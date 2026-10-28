@@ -17,6 +17,56 @@ namespace OneShift.RackLab
         static readonly MethodInfo StartMethod = Method("Start"), TickMethod = Method("FixedUpdate"), CountMethod = Method("CountStock");
         static MethodInfo Method(string name) => typeof(WarehouseReceiving).GetMethod(name, BindingFlags.Instance | BindingFlags.NonPublic);
 
+        [MenuItem("One Shift/Validate street truck clearance")]
+        public static string ValidateRoadRoute()
+        {
+            if(EditorApplication.isPlayingOrWillChangePlaymode)throw new InvalidOperationException("Stop Play before route clearance validation.");
+            var source=SceneManager.GetActiveScene();
+            var preview=EditorSceneManager.NewPreviewScene();
+            var physics=preview.GetPhysicsScene();
+            var candidates=new Collider[256];
+            WarehouseReceiving receiving=null;
+            int poses=0;float articulation=0;
+            try
+            {
+                foreach(var root in source.GetRootGameObjects())
+                {
+                    if((root.hideFlags&HideFlags.DontSave)!=0)continue;
+                    var copy=Object.Instantiate(root);SceneManager.MoveGameObjectToScene(copy,preview);
+                    var sequence=copy.GetComponent<WarehouseReceiving>();if(sequence!=null)receiving=sequence;
+                }
+                if(receiving==null)throw new Exception("Receiving start missing.");
+                if(receiving.wheelChocks!=null)receiving.wheelChocks.SetActive(false);
+                if(receiving.dockPlate!=null)receiving.dockPlate.SetActive(false);
+                var truck=receiving.truck;var boxes=truck.GetComponentsInChildren<BoxCollider>();
+                for(int route=0;route<2;route++)for(int step=0;step<=600;step++)
+                {
+                    var pose=route==0?WarehouseTruckRoute.Arrival(step/600f,receiving.dockedPosition):WarehouseTruckRoute.Departure(step/600f,receiving.dockedPosition);
+                    truck.transform.SetPositionAndRotation(pose.position,pose.rotation);
+                    truck.position=pose.position;truck.rotation=pose.rotation;receiving.tractorPivot.localRotation=Quaternion.Euler(0,pose.articulation,0);
+                    articulation=Mathf.Max(articulation,Mathf.Abs(pose.articulation));Physics.SyncTransforms();poses++;
+                    foreach(var box in boxes)
+                    {
+                        var bounds=box.bounds;
+                        int count=physics.OverlapBox(bounds.center,bounds.extents,candidates,Quaternion.identity,~0,QueryTriggerInteraction.Ignore);
+                        if(count==candidates.Length)throw new Exception("Route audit collision buffer filled.");
+                        for(int i=0;i<count;i++)
+                        {
+                            var hit=candidates[i];
+                            if(hit==null || hit.transform.IsChildOf(truck.transform) || hit.attachedRigidbody!=null || hit is CharacterController)continue;
+                            if(Physics.ComputePenetration(box,box.transform.position,box.transform.rotation,hit,hit.transform.position,hit.transform.rotation,out _,out float depth) && depth>.035f)
+                                throw new Exception((route==0?"Arrival":"Departure")+" pose "+step+" "+box.name+" penetrates "+hit.name+" by "+depth.ToString("F3")+" m at "+pose.position);
+                        }
+                    }
+                }
+                if(articulation<25 || articulation>65)throw new Exception("Street arrival lost its controlled tractor articulation.");
+                string report="PASS "+poses+" actual tractor/trailer poses clear the scene's static collision. Maximum articulation "+articulation.ToString("F1")+" degrees.\n"+
+                    "PASS Street arrival "+WarehouseTruckRoute.ArrivalDuration.ToString("F2")+" s, forward street departure "+WarehouseTruckRoute.DepartureDuration.ToString("F2")+" s. Original dock datum and 2.693 m roof clearance unchanged.\n";
+                Directory.CreateDirectory("Assets/RackLab/Reports");File.WriteAllText("Assets/RackLab/Reports/warehouse-truck-route-validation.txt",report);return report;
+            }
+            finally{EditorSceneManager.ClosePreviewScene(preview);}
+        }
+
         [MenuItem("One Shift/Validate receiving sequence")]
         public static string ValidateAndSave()
         {
@@ -61,12 +111,15 @@ namespace OneShift.RackLab
                     body.useGravity = false; body.constraints = RigidbodyConstraints.FreezeAll;
                     Physics.SyncTransforms(); return blocker;
                 }
-                Require(receiving.arrivalSeconds == 16 && receiving.openingSeconds == 4, "Public arrival uses sixteen seconds backing and four seconds opening");
+                Require(Mathf.Abs(receiving.arrivalSeconds-WarehouseTruckRoute.ArrivalDuration)<.01f && receiving.openingSeconds == 4,
+                    "Public arrival follows the complete street route and retains four seconds opening");
                 Require(!receiving.dockPlate.activeSelf && receiving.dockBarrier.enabled && receiving.cargo.All(c => c.Body.isKinematic), "Transit starts with barrier, no bridge and restrained freight");
                 Vector3 start = receiving.truck.position;
-                var obstruction = Obstacle(start + new Vector3(0, 2.1f, -.8f));
+                Require(start.x>70 && start.z>60 && Vector3.Dot(receiving.truck.rotation*Vector3.forward,Vector3.left)>.99f,
+                    "Truck begins on the business park street facing along the road at "+start+", heading "+receiving.truck.rotation.eulerAngles);
+                var obstruction = Obstacle(start + receiving.truck.rotation*new Vector3(0, 2.1f, 22));
                 Advance(.3f);
-                Require(receiving.WaitingForClearance && Vector3.Distance(start, receiving.truck.position) < .001f && receiving.ArrivalProgress == 0, "Obstacle prevents backing before truck motion");
+                Require(receiving.WaitingForClearance && Vector3.Distance(start, receiving.truck.position) < .001f && receiving.ArrivalProgress == 0, "Obstacle ahead of original tractor prevents street motion");
                 Object.DestroyImmediate(obstruction); Physics.SyncTransforms();
                 Advance(receiving.arrivalSeconds * .5f);
                 Require(receiving.Phase == WarehouseReceiving.ReceivingPhase.Arriving && receiving.cargo.All(c => c.Body.isKinematic)
@@ -115,6 +168,41 @@ namespace OneShift.RackLab
                 Physics.SyncTransforms(); Advance(3);
                 Require(receiving.StoredCount == 4 && receiving.DeliveredCount == 4 && receiving.Phase == WarehouseReceiving.ReceivingPhase.Complete,
                     "All four independently supported rack pallets complete the first delivery");
+                Require(!receiving.CanDispatch(new[]{receiving.cargo[0]},out _),"An order on a rack cannot dispatch without physical trailer loading");
+                int created=0;
+                Require(receiving.RequestDelivery(1,(item,index)=>created++) && !receiving.RequestDelivery(1,null),
+                    "One paid supplier shipment queues; a second request cannot duplicate it");
+                var retained=receiving.cargo.ToArray();
+                Advance(.2f);
+                Require(created==0 && receiving.Phase==WarehouseReceiving.ReceivingPhase.Closing,
+                    "Queued supplier stock is not created while the current truck is still at the dock");
+                Advance(receiving.openingSeconds+receiving.departureSeconds+.5f);
+                Require(created==1 && receiving.Phase==WarehouseReceiving.ReceivingPhase.Arriving && receiving.cargo.Length==1
+                    && retained.All(item=>item!=null && !item.Body.isKinematic),
+                    "Next street arrival creates its one actual pallet while all prior warehouse stock remains independent");
+                Advance(receiving.arrivalSeconds+receiving.openingSeconds+.5f);
+                Advance(1);
+                bool paid=false;
+                var loaded=receiving.cargo[0];
+                Require(receiving.CanDispatch(new[]{loaded},out var reason),"A settled manifest on the real trailer deck can dispatch: "+reason);
+                obstruction=Obstacle(new Vector3(0,1.1f,12.6f));
+                Require(!receiving.TryDispatch(new[]{loaded},()=>paid=true),"Dock occupant prevents shipment acceptance and payment");
+                Object.DestroyImmediate(obstruction);Physics.SyncTransforms();
+                Require(receiving.TryDispatch(new[]{loaded},()=>paid=true),"Clear dock accepts a physically loaded manifest");
+                Require(!paid && loaded.Body.isKinematic,"Accepted freight is restrained in place without early payment");
+                Advance(receiving.openingSeconds+receiving.departureSeconds*.5f);
+                Require(!paid && loaded!=null && receiving.Phase==WarehouseReceiving.ReceivingPhase.Departing,
+                    "Order remains unpaid and physical while the actual truck exits the lot");
+                Advance(receiving.departureSeconds*.5f+.2f);
+                Require(paid && receiving.Phase==WarehouseReceiving.ReceivingPhase.Away,"Shipment completion callback fires after street departure");
+                Require(receiving.RequestPickup() && receiving.RequestPickup() && receiving.HasQueuedPickup,
+                    "A retailer pickup can book one free empty return after dispatch without buying stock");
+                Advance(.1f);
+                Require(receiving.Phase==WarehouseReceiving.ReceivingPhase.Arriving && receiving.cargo.Length==0 && !receiving.HasQueuedPickup
+                    && retained.All(item=>item!=null && !item.Body.isKinematic),"Empty pickup return creates no freight and preserves all warehouse pallets");
+                Advance(receiving.arrivalSeconds+receiving.openingSeconds+.5f);
+                Require(receiving.DoorsOpen && receiving.Phase==WarehouseReceiving.ReceivingPhase.Ready && receiving.cargo.Length==0,
+                    "Returned empty truck opens the original doors and waits for physically loaded retailer stock");
                 lines.Add("PASS receiving sequence");
             }
             catch (Exception error)

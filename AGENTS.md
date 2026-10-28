@@ -106,7 +106,7 @@ are ordinary scripts, with no bundle step and no Sluice dependencies. Read
 `archive.html` (In Progress). Bump the `?v=` values on its CSS and game scripts
 when changing them so deployed edits bypass stale caches.
 
-**One Shift** opens the Unity warehouse from `one-shift.html`, with its browser
+**The Warehouse Simulator** (formerly One Shift) opens the Unity warehouse from `one-shift.html`, with its browser
 launcher in `one-shift-unity.css` and `js/one-shift-unity.js`. Editable Unity source
 lives in `unity/OneShiftRackLab`; read its `README.md` and `WAREHOUSE_LIGHTING.md`
 before changing the scene. **One Shift > Build browser player** exports to
@@ -114,6 +114,11 @@ before changing the scene. **One Shift > Build browser player** exports to
 keyboard and mouse controls, landscape gate, and independent browser inactivity
 and manual pause. Verify an actual browser build before publishing. Keep the
 post on `archive.html` (In Progress), with its stable `one-shift.html` URL.
+The owner's 2026-10-27 direction uses a finished title screen, a minimal contextual
+HUD, and a three-step practical forklift introduction. Left Shift holds the
+variable hydraulic lever; X is no longer the control. The office computer buys
+supplier stock and accepts fictional retailer orders backed by physical pallets.
+Keep direct player handling, stock conservation, and separate pause/activity gates.
 
 The earlier illustrated game remains at `one-shift-classic.html`, using
 `one-shift.css` and the original `js/one-shift-*.js` simulation modules. Its saves

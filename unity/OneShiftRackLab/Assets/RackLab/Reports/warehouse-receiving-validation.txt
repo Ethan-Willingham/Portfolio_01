@@ -1,7 +1,8 @@
 Isolated PhysX scene. Actual starting assets and production receiving methods. No warehouse scene mutation.
-PASS Public arrival uses sixteen seconds backing and four seconds opening
+PASS Public arrival follows the complete street route and retains four seconds opening
 PASS Transit starts with barrier, no bridge and restrained freight
-PASS Obstacle prevents backing before truck motion
+PASS Truck begins on the business park street facing along the road at (94.79, -1.33, 68.00), heading (0.00, 270.00, 0.00)
+PASS Obstacle ahead of original tractor prevents street motion
 PASS Moving truck keeps freight restrained, doors closed and bridge unavailable
 PASS Doors only begin opening after truck reaches docked position
 PASS Docking releases every independent physical pallet and chocks wheels before bridge access
@@ -12,4 +13,17 @@ PASS Opening does not unload freight and actual trailer deck supports all four p
 PASS Off-rack floor stock counts unloaded without counting as stored
 PASS A pallet held six centimetres above its slot does not count as supported stock
 PASS All four independently supported rack pallets complete the first delivery
+PASS An order on a rack cannot dispatch without physical trailer loading
+PASS One paid supplier shipment queues; a second request cannot duplicate it
+PASS Queued supplier stock is not created while the current truck is still at the dock
+PASS Next street arrival creates its one actual pallet while all prior warehouse stock remains independent
+PASS A settled manifest on the real trailer deck can dispatch: 
+PASS Dock occupant prevents shipment acceptance and payment
+PASS Clear dock accepts a physically loaded manifest
+PASS Accepted freight is restrained in place without early payment
+PASS Order remains unpaid and physical while the actual truck exits the lot
+PASS Shipment completion callback fires after street departure
+PASS A retailer pickup can book one free empty return after dispatch without buying stock
+PASS Empty pickup return creates no freight and preserves all warehouse pallets
+PASS Returned empty truck opens the original doors and waits for physically loaded retailer stock
 PASS receiving sequence

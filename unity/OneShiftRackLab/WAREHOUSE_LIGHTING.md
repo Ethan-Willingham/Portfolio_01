@@ -30,9 +30,11 @@ meshes, without the eight-light-per-object limit. Desktop additional shadows hav
 clustered additional lights and punctual shadow bias. The floor and pallet
 materials use URP/Lit. There is no baked light remaining when a row switches off.
 
-The v7 exterior adds six warm wall-pack spotlights that fade with the same
-`WarehouseDayNight.Daylight` value as the sky. Two downward office spotlights
-light the dispatch room. These eight lights are unshadowed; the worker's real
+The exterior has six warm wall-pack spotlights that fade with the same
+`WarehouseDayNight.Daylight` value as the sky. The v8 office uses two broad point
+fills, each at intensity 13 with a 6.2 m range. They light the upper partitions,
+ceiling and single computer workstation. The former short downward cones left
+the room's vertical surfaces dark. These eight lights are unshadowed; the worker's real
 shadows come from the existing sun and twelve warehouse fixtures. They add no
 shadow maps or reflection probes, and do not request extra reflection captures.
 Inspect office light spill and exterior visibility at night when tuning them.
@@ -43,8 +45,24 @@ frames to settle. The low night ambient keeps silhouettes readable with every
 row off; it does not light the room as if the fixtures were still on.
 
 The browser export retains all twelve shadowed fixtures and the moving sun.
-Its main shadow map is 2048 pixels with two cascades and a 60-metre range; the fixture atlas is 1024
-pixels with 256-pixel slices. It uses 2x MSAA plus medium SMAA and downsampled contact
+Its main shadow map is 2048 pixels with two cascades, a 25 percent near split and
+a 60-metre range. The fixture atlas remains 1024 pixels. In v8,
+`WarehouseShadowBudget` gives the three fixtures nearest the camera 512-pixel
+slices and the other nine 128-pixel slices, totaling 933,888 requested texels
+inside the existing 1,048,576-pixel atlas. Distance selection runs every 0.4
+seconds with hysteresis to avoid changes from small camera movement. The three
+near fixtures and the sun use medium soft-shadow filtering; the remaining
+fixtures use low filtering. All twelve lights still cast shadows. This spends
+detail on nearby stock and the worker without increasing every map or adding
+shadow-casting lights. The export maps URP's High tier to 512 and Low to 128.
+The runtime changes only the serialized tier on `UniversalAdditionalLightData`
+through `JsonUtility.FromJsonOverwrite` when a light changes priority. This
+version of Unity rejects pixel counts in the native `Light.shadowResolution`
+enum, despite the older custom-resolution path still present in URP. The
+moving-camera check verifies both allocations and unchanged independent light
+settings; the browser diagnostics expose the actual tier and atlas values.
+
+The browser uses 2x MSAA plus medium SMAA and downsampled contact
 shading with four samples, medium normal reconstruction and medium blur.
 The time-sliced reflection faces are 64 pixels and periodic captures occur
 every twenty seconds. Switch changes and explicit clock changes still request
@@ -60,15 +78,22 @@ physics timestep. The actual gain still needs measurement on target Macs.
 
 The browser prepares actual rendered night, dawn, morning, afternoon and
 all-rows-off variants behind the loading screen, including completed room
-captures. It restores the opening reflection and 4:30 clock before allowing
-physics to advance. This addresses the first-use shader-link stalls measured
+captures. The v8 preparation retains seven stages and reports the current
+lighting phase and view. Its four lit phases visit eight views, including the
+street truck, office, business park and worker shadows. The remaining stages
+cover both all-off lighting states, the fork visibility overlay, and restoration
+of the opening view, reflection and 4:30 clock. Truck movement, physical freight
+and the simulation clock remain frozen throughout. Preparation yields before
+each work label so the browser can paint it before shader work begins.
+This addresses the first-use shader-link stalls measured
 in Chrome on the Windows workstation. Periodic live reflections remain enabled;
 the long trace did not show continuing stalls after the opening variants had
 linked. The v6 Chrome trace confirmed 2x multisampling and SMAA, with no long
 tasks or frame intervals over 50 ms in 90 seconds after preparation, including
 the first held-X mouse operation. The largest interval was 20.8 ms on the
 Windows RTX 3080 workstation. Recheck the exported player after rendering edits.
-The final v7 player was also measured in two 90-second Chrome runs at 1800 by
+The following measurements are historical, not results for the v8 changes.
+The final v7 player was measured in two 90-second Chrome runs at 1800 by
 1125 pixels on that RTX 3080 workstation, including first entry and native
 X/mouse use. Both confirmed 2x MSAA and SMAA. The first prepared in 27.68 seconds
 and had a 7 ms median, 14 ms 95th and 99th percentiles, ten frames over 50 ms,
@@ -85,6 +110,18 @@ A/B captures at morning, noon and afternoon, from opposite room views, removed
 the bright strips seen at the previous 40-metre cascade boundary. The shell
 geometry and material brightness remain unchanged. Apply the focused repair
 with `WarehouseLightingRepair.Install()` without rebuilding the receiving scene.
+
+The v8 surface repair also removes sources of flicker that are independent of
+shadow resolution. Road and apron rectangles now meet at their boundaries.
+Previously, visitor parking overlapped the front road and foundation apron,
+while both side drives overlapped the crossing streets at the same top height.
+The dock bridge now sits in a recessed concrete seat: the old apron coincided
+with 0.71 m of its steel top. The plate ends at the trailer deck edge at
+z=13.19. The office west partition and north doorway pier also meet without
+overlapping top faces. `WarehouseSurfaceAudit.Validate()` checks these authored
+slabs and the office junction; it does not claim to inspect every triangle of
+the original imported vehicle and pallet models. The first installed v8 audit
+passed 19 slabs and 88 matching-height comparisons.
 
 ## Sun and windows
 
@@ -141,3 +178,25 @@ rendering changes. The final v7 export had zero build errors and 42,305,038
 compressed bytes; its office walkthrough passed 22 checks and the launcher
 passed 40 simulated-loader checks. The earlier 64-check v7 gameplay pass
 preceded the final small rendering and HUD fixes.
+For v8, also run `WarehouseSurfaceAudit.Validate()`,
+`WarehouseReceivingValidation.ValidateRoadRoute()` and
+`WarehouseReceivingValidation.ValidateAndSave()` after the installers. Capture
+the office at night and daylight, and compare nearby worker, pallet and rack
+shadows while walking between fixtures. Repeat the browser performance trace
+after exporting; the older v6 and v7 traces do not validate the new shadow budget.
+
+The final v8 player confirms the 1024-pixel fixture atlas with three 512-pixel
+nearby slices and nine 128-pixel distant slices. An Editor camera audit verified
+that the detailed slices move to the opposite end of the room while preserving
+independent light settings. The surface audit passed 88 same-height comparisons
+across 19 slabs. The compiled office walkthrough passed 43 checks; office night
+and daylight captures were inspected. The corrected shell passed 18 focused
+fullscreen checks without graphics errors and 85 simulated-loader checks.
+
+A 90.04-second v8 Chrome trace on the RTX 3080 at 1800 by 1125 pixels included
+first forklift entry, training and native Left Shift lever operation. It confirmed
+2x MSAA and SMAA and measured 7 ms median, 13.9 ms 95th percentile, 14 ms 99th
+percentile and 20.8 ms maximum. There were no frames over 50 ms, long tasks or
+blocking WebGL calls over 20 ms during play. Startup took 29.98 seconds; the
+longest gap between fine preparation callbacks was 9.71 seconds. These results
+apply to this workstation and do not establish performance on other hardware.

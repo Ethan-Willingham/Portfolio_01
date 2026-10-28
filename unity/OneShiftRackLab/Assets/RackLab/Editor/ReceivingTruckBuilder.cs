@@ -55,6 +55,16 @@ namespace OneShift.RackLab
             receiving.leftDoorOpenDegrees = 270; receiving.rightDoorOpenDegrees = -270;
             receiving.roadWheels = transforms.Where(t => t.name.StartsWith("Wheel_", StringComparison.Ordinal)).ToArray();
             receiving.roadWheelRadius = .505f;
+            receiving.steeringPivots = transforms.Where(t => t.name.StartsWith("Steer_Tractor_Steer_", StringComparison.Ordinal)).ToArray();
+            var tractor = transforms.First(t => t.name == "Tractor_Root");
+            var coupling = transforms.First(t => t.name == "Trailer_Coupling");
+            // The trailer frame remains the root motion datum. Rotate the
+            // original tractor and its colliders about its real fifth wheel.
+            receiving.tractorPivot = Child("Original tractor kingpin articulation", truck);
+            receiving.tractorPivot.position = coupling.position;
+            tractor.SetParent(receiving.tractorPivot, true);
+            receiving.arrivalSeconds = WarehouseTruckRoute.ArrivalDuration;
+            receiving.departureSeconds = WarehouseTruckRoute.DepartureDuration;
             if (receiving.roadWheels.Length != 18) throw new Exception("Original truck must retain all eighteen wheel pivots.");
             ConvertMaterials(visual);
             foreach (var door in new[] { receiving.leftDoor, receiving.rightDoor })
@@ -75,13 +85,16 @@ namespace OneShift.RackLab
             }
             Collision(truck, "Trailer front bulkhead", new Vector3(0, FloorHeight + 1.35f, 16.1744f), new Vector3(2.51f, 2.7f, .08f));
             Collision(truck, "Trailer underframe", new Vector3(0, .95f, 8.1f), new Vector3(2.35f, .45f, 15.9f));
-            Collision(truck, "Tractor chassis", new Vector3(0, .77f, RearHinge + 2.05f), new Vector3(1.15f, .65f, 9.0f));
-            Collision(truck, "Tractor cab and sleeper", new Vector3(0, 2.02f, RearHinge + 2.65f), new Vector3(2.16f, 2.0f, 4.0f));
-            Collision(truck, "Tractor long hood", new Vector3(0, 1.7f, RearHinge + 5.45f), new Vector3(1.75f, 1.3f, 2.65f));
+            Collision(truck, "Tractor chassis", new Vector3(0, .77f, RearHinge + 2.05f), new Vector3(1.15f, .65f, 9.0f)).SetParent(receiving.tractorPivot, true);
+            Collision(truck, "Tractor cab and sleeper", new Vector3(0, 2.02f, RearHinge + 2.65f), new Vector3(2.16f, 2.0f, 4.0f)).SetParent(receiving.tractorPivot, true);
+            Collision(truck, "Tractor long hood", new Vector3(0, 1.7f, RearHinge + 5.45f), new Vector3(1.75f, 1.3f, 2.65f)).SetParent(receiving.tractorPivot, true);
             foreach (var wheel in receiving.roadWheels)
-                Collision(truck, "Road tyre contact", truck.InverseTransformPoint(wheel.position), new Vector3(.34f, 1.01f, 1.01f));
-            BatchFixed(transforms.First(t => t.name == "Tractor_Root"), "Tractor");
-            BatchFixed(transforms.First(t => t.name == "Trailer_Coupling"), "Trailer");
+            {
+                var tyre = Collision(truck, "Road tyre contact", truck.InverseTransformPoint(wheel.position), new Vector3(.34f, 1.01f, 1.01f));
+                if(wheel.IsChildOf(tractor)) tyre.SetParent(receiving.tractorPivot, true);
+            }
+            BatchFixed(tractor, "Tractor");
+            BatchFixed(coupling, "Trailer");
             var floorSocket = transforms.First(t => t.name == "Socket_Cargo_Floor");
             if (Mathf.Abs(floorSocket.position.y - .0005f) > .002f || Mathf.Abs(receiving.leftDoor.position.z - 13.05f) > .002f)
                 throw new Exception("Original truck import lost its metre scale or cargo-floor alignment.");
@@ -152,10 +165,11 @@ namespace OneShift.RackLab
         static Transform Child(string name, Transform parent)
         { var item = new GameObject(name).transform; item.SetParent(parent, false); return item; }
 
-        static void Collision(Transform parent, string name, Vector3 centre, Vector3 size)
+        static Transform Collision(Transform parent, string name, Vector3 centre, Vector3 size)
         {
             var item = Child(name, parent); item.localPosition = centre;
             var collider = item.gameObject.AddComponent<BoxCollider>(); collider.size = size; collider.contactOffset = .001f;
+            return item;
         }
     }
 }

@@ -1,6 +1,7 @@
 PASS Four opening stock pallets, 450 kg each
 PASS Three wall bays provide eighteen physical rack positions
 PASS Original eighteen-wheel model retains its actual wheel and door hierarchy
+PASS Original tractor articulates about its kingpin with two steering pivots and a real repeat-delivery prefab
 PASS Original trailer has 2.693 metre roof-bow clearance without scaling
 PASS All stock starts as dynamic packages; transit restraints are temporary runtime state
 PASS Forklift-sized path through actual wall opening and open trailer doors

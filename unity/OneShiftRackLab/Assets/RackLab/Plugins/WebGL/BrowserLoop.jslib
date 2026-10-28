@@ -13,5 +13,13 @@ mergeInto(LibraryManager.library, {
   OneShiftReportGraphicsPreparation: function (completed, total, ready) {
     if (typeof Module['onOneShiftPreparation'] === 'function')
       Module['onOneShiftPreparation'](completed, total, ready);
+  },
+  WarehouseReportPreparation: function (json) {
+    if (typeof Module['onWarehousePreparation'] === 'function')
+      Module['onWarehousePreparation'](UTF8ToString(json));
+  },
+  WarehouseReportHUD: function (json) {
+    if (typeof Module['onWarehouseHUD'] === 'function')
+      Module['onWarehouseHUD'](UTF8ToString(json));
   }
 });

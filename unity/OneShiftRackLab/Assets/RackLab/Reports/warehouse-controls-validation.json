@@ -1,0 +1,279 @@
+{
+    "generatedUtc": "2026-10-28T02:46:34.9383459Z",
+    "method": "Production hydraulic lever and walking response at 30, 60, 120 and 144 Hz. Input state and velocity integration only; native browser controls and physical ground contact require separate verification.",
+    "passed": true,
+    "checks": [
+        {
+            "name": "persistent hydraulic lever at 30 Hz",
+            "passed": true,
+            "expectation": "The same pointer distance selects the same positive and negative speed. A still mouse retains the lever position; centre stops.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "positive position",
+                    "value": 0.5000001788139343,
+                    "units": "normalized"
+                },
+                {
+                    "name": "valve after stationary mouse",
+                    "value": 0.2111031860113144,
+                    "units": "fraction"
+                },
+                {
+                    "name": "negative position",
+                    "value": -0.4999997913837433,
+                    "units": "normalized"
+                },
+                {
+                    "name": "negative valve",
+                    "value": -0.21110279858112336,
+                    "units": "fraction"
+                }
+            ]
+        },
+        {
+            "name": "walking start and stop at 30 Hz",
+            "passed": true,
+            "expectation": "Walking reaches 2.8 m/s promptly, then stops within 0.2 seconds and 0.25 m without reversing. Running retains a finite stopping distance.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "time to walk speed",
+                    "value": 0.1666666716337204,
+                    "units": "s"
+                },
+                {
+                    "name": "walking stopping time",
+                    "value": 0.13333334028720857,
+                    "units": "s"
+                },
+                {
+                    "name": "walking stopping distance",
+                    "value": 0.11999998986721039,
+                    "units": "m"
+                },
+                {
+                    "name": "running stopping distance",
+                    "value": 0.5199999213218689,
+                    "units": "m"
+                }
+            ]
+        },
+        {
+            "name": "persistent hydraulic lever at 60 Hz",
+            "passed": true,
+            "expectation": "The same pointer distance selects the same positive and negative speed. A still mouse retains the lever position; centre stops.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "positive position",
+                    "value": 0.49999985098838808,
+                    "units": "normalized"
+                },
+                {
+                    "name": "valve after stationary mouse",
+                    "value": 0.21110285818576814,
+                    "units": "fraction"
+                },
+                {
+                    "name": "negative position",
+                    "value": -0.500000536441803,
+                    "units": "normalized"
+                },
+                {
+                    "name": "negative valve",
+                    "value": -0.21110354363918305,
+                    "units": "fraction"
+                }
+            ]
+        },
+        {
+            "name": "walking start and stop at 60 Hz",
+            "passed": true,
+            "expectation": "Walking reaches 2.8 m/s promptly, then stops within 0.2 seconds and 0.25 m without reversing. Running retains a finite stopping distance.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "time to walk speed",
+                    "value": 0.1666666716337204,
+                    "units": "s"
+                },
+                {
+                    "name": "walking stopping time",
+                    "value": 0.11666667461395264,
+                    "units": "s"
+                },
+                {
+                    "name": "walking stopping distance",
+                    "value": 0.13999997079372407,
+                    "units": "m"
+                },
+                {
+                    "name": "running stopping distance",
+                    "value": 0.56333327293396,
+                    "units": "m"
+                }
+            ]
+        },
+        {
+            "name": "persistent hydraulic lever at 120 Hz",
+            "passed": true,
+            "expectation": "The same pointer distance selects the same positive and negative speed. A still mouse retains the lever position; centre stops.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "positive position",
+                    "value": 0.4999997019767761,
+                    "units": "normalized"
+                },
+                {
+                    "name": "valve after stationary mouse",
+                    "value": 0.211102694272995,
+                    "units": "fraction"
+                },
+                {
+                    "name": "negative position",
+                    "value": -0.5000000596046448,
+                    "units": "normalized"
+                },
+                {
+                    "name": "negative valve",
+                    "value": -0.21110305190086366,
+                    "units": "fraction"
+                }
+            ]
+        },
+        {
+            "name": "walking start and stop at 120 Hz",
+            "passed": true,
+            "expectation": "Walking reaches 2.8 m/s promptly, then stops within 0.2 seconds and 0.25 m without reversing. Running retains a finite stopping distance.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "time to walk speed",
+                    "value": 0.15833334624767304,
+                    "units": "s"
+                },
+                {
+                    "name": "walking stopping time",
+                    "value": 0.11666667461395264,
+                    "units": "s"
+                },
+                {
+                    "name": "walking stopping distance",
+                    "value": 0.15166662633419038,
+                    "units": "m"
+                },
+                {
+                    "name": "running stopping distance",
+                    "value": 0.5850000381469727,
+                    "units": "m"
+                }
+            ]
+        },
+        {
+            "name": "persistent hydraulic lever at 144 Hz",
+            "passed": true,
+            "expectation": "The same pointer distance selects the same positive and negative speed. A still mouse retains the lever position; centre stops.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "positive position",
+                    "value": 0.49999913573265078,
+                    "units": "normalized"
+                },
+                {
+                    "name": "valve after stationary mouse",
+                    "value": 0.21110214293003083,
+                    "units": "fraction"
+                },
+                {
+                    "name": "negative position",
+                    "value": -0.5000012516975403,
+                    "units": "normalized"
+                },
+                {
+                    "name": "negative valve",
+                    "value": -0.21110424399375916,
+                    "units": "fraction"
+                }
+            ]
+        },
+        {
+            "name": "walking start and stop at 144 Hz",
+            "passed": true,
+            "expectation": "Walking reaches 2.8 m/s promptly, then stops within 0.2 seconds and 0.25 m without reversing. Running retains a finite stopping distance.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "time to walk speed",
+                    "value": 0.1597222238779068,
+                    "units": "s"
+                },
+                {
+                    "name": "walking stopping time",
+                    "value": 0.118055559694767,
+                    "units": "s"
+                },
+                {
+                    "name": "walking stopping distance",
+                    "value": 0.1537036895751953,
+                    "units": "m"
+                },
+                {
+                    "name": "running stopping distance",
+                    "value": 0.5888891220092773,
+                    "units": "m"
+                }
+            ]
+        },
+        {
+            "name": "hydraulic release and malformed-frame clearing",
+            "passed": true,
+            "expectation": "Release, long frames and nonfinite pointer input zero both lever and valve. Interrupted holds cannot resume movement until released.",
+            "error": "",
+            "measurements": []
+        },
+        {
+            "name": "lever centre dead zone and full travel",
+            "passed": true,
+            "expectation": "Small centre movements close the valve. Both travel ends reach full hydraulic flow without exceeding it.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "centre valve",
+                    "value": 0.0,
+                    "units": "fraction"
+                },
+                {
+                    "name": "upper limit valve",
+                    "value": 1.0,
+                    "units": "fraction"
+                },
+                {
+                    "name": "lower limit valve",
+                    "value": -1.0,
+                    "units": "fraction"
+                }
+            ]
+        },
+        {
+            "name": "grounded reversal and air momentum",
+            "passed": true,
+            "expectation": "Grounded reversal begins promptly, while airborne input cannot erase running momentum in one frame. A zero timestep cannot move velocity.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "grounded velocity after reversing",
+                    "value": -1.5000004768371583,
+                    "units": "m/s"
+                },
+                {
+                    "name": "airborne forward momentum",
+                    "value": 2.200000524520874,
+                    "units": "m/s"
+                }
+            ]
+        }
+    ]
+}

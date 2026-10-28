@@ -1,0 +1,3 @@
+PASS 3 nearby High tiers and 9 Low tiers, independent light settings retained.
+PASS 3 nearby High tiers and 9 Low tiers, independent light settings retained.
+PASS Moving camera reallocates detail to the opposite end of the warehouse without native shadowResolution writes.

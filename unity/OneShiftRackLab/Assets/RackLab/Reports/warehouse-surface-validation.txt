@@ -1,1 +1,3 @@
-Surface checks passed: masonry starts at Y=0.3 above four complete plinths; no overlapping baseboard wall faces; roof deck and 77 ribs use a rough nonemissive material without probe reflections; painted structural steel has a matte reflection response.
+PASS 19 authored floor, yard, street and bridge slabs, 88 matching-height comparisons, no overlapping top area.
+PASS Office west partition ends at z=-4.07; the north doorway pier begins at its x=3.87 edge and stops beneath the header.
+PASS Active stock has no test-weight plaques; retained world signs use the existing transparent, depth-tested font shader.

@@ -46,6 +46,7 @@ namespace OneShift.RackLab
                 pipeline.mainLightShadowmapResolution = 2048;
                 pipeline.additionalLightsShadowmapResolution = 1024;
                 pipeline.shadowCascadeCount = 2;
+                pipeline.cascade2Split = .25f;
                 // Keep the far roof and walls inside the directional shadow
                 // volume; 40 m clipped thin panels and leaked bright sun strips.
                 pipeline.shadowDistance = 60;
@@ -53,6 +54,7 @@ namespace OneShift.RackLab
                 var serialized = new SerializedObject(pipeline);
                 serialized.FindProperty("m_AdditionalLightsShadowResolutionTierHigh").intValue = 512;
                 serialized.FindProperty("m_AdditionalLightsShadowResolutionTierMedium").intValue = 256;
+                serialized.FindProperty("m_AdditionalLightsShadowResolutionTierLow").intValue = 128;
                 serialized.FindProperty("m_SoftShadowQuality").intValue = (int)SoftShadowQuality.Low;
                 serialized.ApplyModifiedPropertiesWithoutUndo();
                 EditorUtility.SetDirty(pipeline);
@@ -90,8 +92,9 @@ namespace OneShift.RackLab
                     locationPathName = staging,
                     options = BuildOptions.None
                 });
-                if (report.summary.result != BuildResult.Succeeded)
-                    throw new InvalidOperationException("Browser build failed: " + report.summary.result);
+                if (report.summary.result != BuildResult.Succeeded || report.summary.totalErrors != 0)
+                    throw new InvalidOperationException("Browser build failed: " + report.summary.result +
+                        ", " + report.summary.totalErrors + " errors. Inspect the build report before publishing.");
                 WarehouseWebFramework.PrepareFile(Path.Combine(staging, "Build", BuildName + ".framework.js.unityweb"));
                 var files = new[] { BuildName + ".loader.js", BuildName + ".data.unityweb",
                     BuildName + ".framework.js.unityweb", BuildName + ".wasm.unityweb" };
@@ -180,11 +183,18 @@ namespace OneShift.RackLab
             if (report == null || report.summary.platform != BuildTarget.WebGL) return;
             foreach (var root in scene.GetRootGameObjects())
             {
+                var fixtures=root.GetComponentsInChildren<WarehouseLightRow>(true).SelectMany(row=>row.FixtureLights).ToArray();
+                if(fixtures.Length==12)
+                {
+                    var budget=root.AddComponent<WarehouseShadowBudget>();budget.fixtures=fixtures;
+                }
                 foreach (var light in root.GetComponentsInChildren<UniversalAdditionalLightData>(true))
                 {
                     var serialized = new SerializedObject(light);
-                    serialized.FindProperty("m_AdditionalLightsShadowResolutionTier").intValue = 1;
+                    bool fixture=Array.IndexOf(fixtures,light.GetComponent<Light>())>=0;
+                    serialized.FindProperty("m_AdditionalLightsShadowResolutionTier").intValue = fixture?0:1;
                     serialized.ApplyModifiedPropertiesWithoutUndo();
+                    if(light.GetComponent<Light>().type==LightType.Directional)light.softShadowQuality=SoftShadowQuality.Medium;
                 }
                 foreach (var camera in root.GetComponentsInChildren<UniversalAdditionalCameraData>(true))
                 {
