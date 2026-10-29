@@ -11,16 +11,16 @@
   var createOpen = false, createItem = '', createQuantity = 1, pendingCreate = null;
   var demoReadOnlyReason = 'Prepared for this walkthrough. Create and manage orders in Sandbox or your own business.';
   var pages = [
-    ['overview','Operations'], ['inventory','Inventory'], ['bins','Locations'],
-    ['purchaseOrders','Purchase orders'], ['salesOrders','Sales orders'],
-    ['tasks','Work queue'], ['transactions','Transactions']
+    ['overview','Overview'], ['inventory','Inventory'], ['bins','Locations'],
+    ['purchaseOrders','Supplier orders'], ['salesOrders','Customer orders'],
+    ['tasks','To do'], ['transactions','History']
   ];
   var tiles = [
-    ['transfer','Transfer','Move a carton between bins','01'],
-    ['pick','Pick','Follow a released sales order','02'],
-    ['lookup','Item lookup','Scan an item, carton or bin','03'],
-    ['ship','Ship','Verify cartons for collection','04'],
-    ['receive','Receive','Check a delivery against a PO','05']
+    ['receive','Receive','Check boxes that just arrived','01'],
+    ['transfer','Transfer','Put away or move a box','02'],
+    ['pick','Pick','Get boxes for a customer','03'],
+    ['ship','Ship','Load and send an order','04'],
+    ['lookup','Item lookup','Find out what is here','05']
   ];
   function node(tag, text, className) {
     var result = document.createElement(tag);
@@ -42,7 +42,11 @@
   function text(value, fallback) { return value == null || value === '' ? (fallback || '') : String(value); }
   function list(value) { return Array.isArray(value) ? value : []; }
   function lower(value) { return text(value).toLowerCase(); }
-  function statusLabel(value) { return text(value,'Open').replace(/([a-z])([A-Z])/g,'$1 $2').replace(/[_-]/g,' '); }
+  function statusLabel(value) {
+    var names={released:'Ready to pick',reserved:'Reserved for order',expected:'Awaiting receipt',loaded:'Loaded in van',picked:'Ready to load',
+      po_open:'Supplier order created',so_open:'Customer order created',allocate:'Stock reserved',seed:'Opening stock',receive:'Receive',transfer:'Transfer',pick:'Pick',load:'Load',ship:'Ship',putaway:'Put away'};
+    return names[lower(value)]||text(value,'Open').replace(/([a-z])([A-Z])/g,'$1 $2').replace(/[_-]/g,' ');
+  }
   function status(value) {
     var chip=node('span',statusLabel(value),'wms-status');
     chip.dataset.status=lower(value).replace(/\s/g,'');return chip;
@@ -56,6 +60,11 @@
   function findItem(sku) { return list(state && state.items).find(function(i){return i.sku===sku||i.id===sku;}); }
   function skuName(sku) { var item=findItem(sku);return item ? item.name : text(sku,'Unknown item'); }
   function itemCode(item) { return text(item.sku,item.id); }
+  function displayCode(sku) { var item=typeof sku==='object'?sku:findItem(sku);return item?text(item.code,itemCode(item)):text(sku); }
+  function binName(id) { var bin=list(state&&state.bins).find(function(b){return b.id===id;});return bin?text(bin.name,id):text(id,'Not placed'); }
+  function itemCell(sku,link) { return append(node('div',null,'wms-item-cell'),link?detailLink(skuName(sku),'inventory',sku):node('strong',skuName(sku)),small(displayCode(sku))); }
+  function locationCell(id,link) { return id?append(node('div',null,'wms-item-cell'),link?detailLink(id,'bins',id):mono(id),small(binName(id))):node('span','Not placed'); }
+  function explanation(title,copy) { return append(node('details',null,'wms-explanation'),node('summary',title),node('p',copy)); }
   function findOrder(kind,id) { return list(state && state[kind]).find(function(order){return order.id===id;}); }
   function orderCount(order,field) { return list(order.lines).reduce(function(sum,line){return sum+qty(line[field]);},0); }
   function isComplete(order) { return /^(complete|completed|closed|shipped|received|cancelled|canceled)$/i.test(order.status); }
@@ -156,24 +165,24 @@
   }
   function stockTable(rows,caption) {
     return table([
-      {key:'sku',label:'Item',render:function(item){return append(node('div',null,'wms-item-cell'),detailLink(itemCode(item),'inventory',itemCode(item)),small(item.name));}},
+      {key:'sku',label:'Item',render:function(item){return itemCell(itemCode(item),true);}},
       {key:'onHand',label:'On hand',numeric:true,render:function(i){return amount(i.onHand);}},
       {key:'available',label:'Available',numeric:true,render:function(i){return amount(i.available);}},
       {key:'reserved',label:'Allocated',numeric:true,render:function(i){return amount(i.reserved);}},
       {key:'picked',label:'Picked',numeric:true,render:function(i){return amount(i.picked);}},
       {key:'inReceiving',label:'Receiving',numeric:true,render:function(i){return amount(i.inReceiving);}},
-      {label:'UOM',render:function(i){return mono(i.uom||'CTN');}}
+      {label:'Unit',render:function(){return 'carton';}}
     ],rows,caption,'No inventory matches');
   }
   function cartonTable(rows) {
     return table([
       {key:'id',label:'Carton ID',render:function(c){return mono(c.id);}},
-      {key:'sku',label:'Item',render:function(c){return append(node('div',null,'wms-item-cell'),mono(c.sku),small(c.itemName||skuName(c.sku)));}},
-      {key:'binId',label:'Recorded bin',render:function(c){return c.binId?detailLink(c.binId,'bins',c.binId):'Not received';}},
-      {key:'physicalBin',label:'Physical bin',render:function(c){return mono(c.physicalBin||'In transit');}},
+      {key:'sku',label:'Item',render:function(c){return itemCell(c.sku,false);}},
+      {key:'binId',label:'Recorded location',render:function(c){return c.binId?locationCell(c.binId,true):'Not received';}},
+      {key:'physicalBin',label:'Actual location',render:function(c){return c.physicalBin?locationCell(c.physicalBin,false):'Being moved';}},
       {key:'status',label:'Status',render:function(c){return status(c.status);}},
       {key:'soId',label:'Document',render:function(c){return c.soId?detailLink(c.soId,'salesOrders',c.soId):c.poId?detailLink(c.poId,'purchaseOrders',c.poId):'Opening stock';}},
-      {key:'quantity',label:'CTN',numeric:true,render:function(c){return amount(c.quantity||1);}}
+      {key:'quantity',label:'Cartons',numeric:true,render:function(c){return amount(c.quantity||1);}}
     ],rows,'Physical cartons and their recorded locations','No cartons in this view');
   }
   function operationDashboard() {
@@ -182,12 +191,22 @@
     var totals=list(state.items).reduce(function(result,item){
       result.onHand+=qty(item.onHand);result.available+=qty(item.available);result.receiving+=qty(item.inReceiving);return result;
     },{onHand:0,available:0,receiving:0});
-    append(consoleBody,heading('Warehouse control / '+text(state.facility,'MAIN'),'Operations','Receive, locate, pick and ship the cartons that are physically in your warehouse.'));
-    append(consoleBody,append(node('dl',null,'wms-metrics'),metric('On hand',totals.onHand,'CTN in the warehouse'),metric('Available',totals.available,'CTN not allocated'),metric('Open purchase orders',openPO.length,'Inbound documents'),metric('Open sales orders',openSO.length,'Outbound documents')));
+    append(consoleBody,heading(text(state.facility,'Warehouse 01'),'Warehouse today','The office and handheld share one stock record. Each quantity is a sealed carton.'));
+    append(consoleBody,append(node('dl',null,'wms-metrics'),metric('In warehouse',totals.onHand,'cartons received'),metric('Ready to pick',totals.available,'cartons free for an order'),metric('Supplier orders',openPO.length,'deliveries to receive'),metric('Customer orders',openSO.length,'orders to send')));
+    var next=node('section',null,'wms-next-action'),expected=openPO.find(function(o){return o.canReceive;}),ready=openSO.find(function(o){return o.canPick;}),shipping=openSO.find(function(o){return o.canShip;}),release=openSO.find(function(o){return o.canRelease;});
+    var nextTitle,nextCopy,nextLabel,nextAction;
+    if(isDemo()&&state.demo){nextTitle=state.demo.complete?'Walkthrough complete':state.demo.stepTitle;nextCopy=state.demo.complete?'Every confirmed move is recorded below. Open History to follow the work from start to finish.':state.demo.instruction;nextLabel=state.demo.complete?'View history':'View handheld task';nextAction=function(){if(state.demo.complete)openPage('transactions');else if(callbacks.openHandheld)callbacks.openHandheld();};}
+    else if(expected){nextTitle='Receive the delivery';nextCopy='Check the supplier order, then scan the arriving boxes with Receive on the handheld.';nextLabel='View '+expected.id;nextAction=function(){openPage('purchaseOrders',expected.id);};}
+    else if(totals.receiving){nextTitle='Put received boxes away';nextCopy='Choose Transfer. Scan the receiving location, the box, and its storage location. Move the box before confirming.';nextLabel='Open Transfer';nextAction=function(){command('workflow','transfer');if(callbacks.openHandheld)callbacks.openHandheld();};}
+    else if(ready){nextTitle='Pick a customer order';nextCopy='The stock is reserved. Pick on the handheld shows which boxes to bring to Ready to ship.';nextLabel='View '+ready.id;nextAction=function(){openPage('salesOrders',ready.id);};}
+    else if(shipping){nextTitle='Finish the shipment';nextCopy='Load the picked boxes into the collection van. The stock leaves the record when the van departs.';nextLabel='View '+shipping.id;nextAction=function(){openPage('salesOrders',shipping.id);};}
+    else if(release){nextTitle='Prepare a customer order';nextCopy='Reserve its stock here, then collect the boxes with Pick on the handheld.';nextLabel='View '+release.id;nextAction=function(){openPage('salesOrders',release.id);};}
+    else{nextTitle=totals.onHand?'Choose an order to work on':'Start with a supplier delivery';nextCopy='A purchase order is your list of stock to buy. Book its delivery here, then check each arriving box on the floor.';nextLabel='View supplier orders';nextAction=function(){openPage('purchaseOrders');};}
+    append(next,append(node('div'),node('p','Next useful step','wms-eyebrow'),node('h3',nextTitle),node('p',nextCopy)),button(nextLabel,nextAction,'wms-primary'));consoleBody.appendChild(next);
     var split=node('div',null,'wms-dashboard-split');
     var inbound=node('section',null,'wms-dashboard-section'),outbound=node('section',null,'wms-dashboard-section');
-    append(inbound,append(node('header',null,'wms-section-heading'),node('h3','Inbound'),button('All purchase orders',function(){openPage('purchaseOrders');},'wms-link')));
-    append(outbound,append(node('header',null,'wms-section-heading'),node('h3','Outbound'),button('All sales orders',function(){openPage('salesOrders');},'wms-link')));
+    append(inbound,append(node('header',null,'wms-section-heading'),node('h3','Coming in'),button('Supplier orders',function(){openPage('purchaseOrders');},'wms-link')));
+    append(outbound,append(node('header',null,'wms-section-heading'),node('h3','Going out'),button('Customer orders',function(){openPage('salesOrders');},'wms-link')));
     append(inbound,orderSummary(openPO,'purchaseOrders'));append(outbound,orderSummary(openSO,'salesOrders'));append(split,inbound,outbound);consoleBody.appendChild(split);
     var exceptions=list(state.exceptions);
     var alerts=node('section',null,'wms-exceptions');
@@ -195,53 +214,54 @@
     if(!exceptions.length)alerts.appendChild(node('p','No inventory exceptions. Physical moves still need their scan confirmations.','wms-muted'));
     exceptions.forEach(function(issue){append(alerts,append(node('article',null,'wms-exception'),node('strong',issue.title),node('p',issue.detail)));});
     consoleBody.appendChild(alerts);
-    consoleBody.appendChild(node('p','CTN means one sealed carton. Carton IDs identify handling units, not serialized pieces.','wms-footnote'));
+    consoleBody.appendChild(explanation('From a paper stock sheet to this screen','Receive adds a delivered box. Transfer records where you put it. Pick reserves the right boxes for a customer and moves them to Ready to ship. Ship checks the van load. Scanning identifies a label; confirmation records the finished work. You still move every box yourself.'));
   }
   function orderSummary(rows,kind) {
     if(!rows.length)return node('p','No open documents.','wms-muted');
     var body=node('div',null,'wms-order-summary');
     rows.slice(0,4).forEach(function(order){
       var count=orderCount(order,'ordered'),done=orderCount(order,kind==='purchaseOrders'?'received':'shipped');
-      append(body,append(node('div'),append(node('div'),detailLink(order.id,kind,order.id),small(order.partner)),append(node('div'),status(order.status),small(done+' / '+count+' CTN'))));
+      append(body,append(node('div'),append(node('div'),detailLink(order.id,kind,order.id),small(order.partner)),append(node('div'),status(order.status),small(done+' / '+count+' cartons'))));
     });return body;
   }
   function inventoryPage() {
     var item=selected?list(state.items).find(function(i){return itemCode(i)===selected;}):null;
     if(item){
-      append(consoleBody,button('All inventory',function(){openPage('inventory');},'wms-back'),heading(itemCode(item),item.name,item.description));
-      append(consoleBody,append(node('dl',null,'wms-metrics'),metric('On hand',qty(item.onHand),'CTN'),metric('Available',qty(item.available),'CTN'),metric('Allocated',qty(item.reserved),'CTN'),metric('Pack size',qty(item.unitsPerCarton),'Units per CTN')));
+      append(consoleBody,button('All inventory',function(){openPage('inventory');},'wms-back'),heading(displayCode(item),item.name,item.description));
+      append(consoleBody,append(node('dl',null,'wms-metrics'),metric('On hand',qty(item.onHand),'cartons received'),metric('Available',qty(item.available),'ready to pick'),metric('Allocated',qty(item.reserved),'reserved for an order'),metric('Inside each carton',qty(item.unitsPerCarton),item.description)));
       var cartons=list(state.cartons).filter(function(c){return c.sku===itemCode(item)&&lower(c.status)!=='shipped';});
-      append(consoleBody,append(node('header',null,'wms-section-heading'),node('h3','Cartons by location'),small(cartons.length+' handling units')));
+      append(consoleBody,append(node('header',null,'wms-section-heading'),node('h3','Cartons by location'),small(cartons.length+' boxes')));
       append(consoleBody,tools(cartons,'Search carton, bin or order'),cartonTable(matching(cartons)));return;
     }
-    append(consoleBody,heading('Stock / CTN','Inventory','On hand includes allocated and picked cartons. Available stock is free for allocation.'));
+    append(consoleBody,heading('Stock / sealed cartons','Inventory','On hand is everything received. Available is stock in a pickable location that is not reserved for a customer.'));
     var rows=list(state.items);append(consoleBody,tools(rows,'Search item code or description'),stockTable(matching(rows),'Inventory quantities in sealed cartons'));
   }
   function binsPage() {
     var bin=selected?list(state.bins).find(function(b){return b.id===selected;}):null;
     if(bin){
-      append(consoleBody,button('All locations',function(){openPage('bins');},'wms-back'),heading('Bin '+bin.id,bin.name||bin.id,statusLabel(bin.kind)+' / '+(bin.canPick?'Picking permitted':'Not a picking source')));
-      append(consoleBody,append(node('dl',null,'wms-metrics'),metric('On hand',qty(bin.onHand),'CTN recorded here'),metric('Capacity',qty(bin.capacity),'CTN'),metric('Available',qty(bin.available),'CTN'),metric('Occupancy',Math.round(qty(bin.onHand)/Math.max(1,qty(bin.capacity))*100)+'%','Recorded stock')));
+      append(consoleBody,button('All locations',function(){openPage('bins');},'wms-back'),heading('Location '+bin.id,bin.name||bin.id,statusLabel(bin.kind)+' / '+(bin.canPick?'You can pick stock here':'Receive or move stock here before picking')));
+      append(consoleBody,append(node('dl',null,'wms-metrics'),metric('On hand',qty(bin.onHand),'CTN recorded here'),metric('Capacity',qty(bin.capacity),'cartons'),metric('Available',qty(bin.available),'cartons'),metric('Occupancy',Math.round(qty(bin.onHand)/Math.max(1,qty(bin.capacity))*100)+'%','Recorded stock')));
       var cartons=list(state.cartons).filter(function(c){return c.binId===bin.id||c.physicalBin===bin.id;});
       append(consoleBody,tools(cartons,'Search cartons in this bin'),cartonTable(matching(cartons)));return;
     }
-    append(consoleBody,heading('Location master','Locations','Rack slots, receiving and staging all have their own bin barcode. Scan both ends of every transfer.'));
+    append(consoleBody,heading('Every box has a place','Locations','A bin is a named storage spot. Receiving, shelves, Ready to ship and the van each have a location label.'));
+    consoleBody.appendChild(explanation('How to read a rack address','A01-02-01 means Row A, Bay 01, Level 02, left position. Levels count from the bottom; position 01 is left and 02 is right when facing the labels. S01 is small shelf 1. Match the whole address, then scan its label.'));
     var rows=list(state.bins);append(consoleBody,tools(rows,'Search bin or zone'),table([
-      {key:'id',label:'Bin',render:function(b){return detailLink(b.id,'bins',b.id);}},
+      {key:'id',label:'Location',render:function(b){return detailLink(b.id,'bins',b.id);}},
       {key:'name',label:'Description'},
       {key:'kind',label:'Type',render:function(b){return status(b.kind);}},
       {key:'onHand',label:'On hand',numeric:true,render:function(b){return amount(b.onHand);}},
       {key:'capacity',label:'Capacity',numeric:true,render:function(b){return amount(b.capacity);}},
       {key:'available',label:'Available',numeric:true,render:function(b){return amount(b.available);}},
       {key:'canPick',label:'Picking',render:function(b){return b.canPick?'Allowed':'No';}},
-      {label:'Utilization',render:function(b){var meter=node('meter');meter.min=0;meter.max=Math.max(1,qty(b.capacity));meter.value=qty(b.onHand);meter.setAttribute('aria-label',b.id+' occupancy');meter.title=qty(b.onHand)+' / '+qty(b.capacity)+' CTN';return meter;}}
+      {label:'Utilization',render:function(b){var meter=node('meter');meter.min=0;meter.max=Math.max(1,qty(b.capacity));meter.value=qty(b.onHand);meter.setAttribute('aria-label',b.id+' occupancy');meter.title=qty(b.onHand)+' / '+qty(b.capacity)+' cartons';return meter;}}
     ],matching(rows),'Warehouse bin locations','No locations match'));
   }
   function documentPage(kind) {
     var receiving=kind==='purchaseOrders',order=selected?findOrder(kind,selected):null;
     if(order){
       append(consoleBody,button(receiving?'All purchase orders':'All sales orders',function(){openPage(kind);},'wms-back'),heading(order.id,order.partner,order.reference|| (receiving?'Inbound purchase order':'Customer sales order')));
-      var info=append(node('dl',null,'wms-document-info'),dataPair(receiving?'Supplier':'Customer',order.partner),dataPair('Status',statusLabel(order.status)),dataPair('Unit of measure','CTN / sealed cartons'),dataPair('Order value',typeof order.amount==='number'?'$'+order.amount.toLocaleString('en-US'):'--'));
+      var info=append(node('dl',null,'wms-document-info'),dataPair(receiving?'Supplier':'Customer',order.partner),dataPair('Status',statusLabel(order.status)),dataPair('Unit of measure','Sealed cartons'),dataPair('Order value',typeof order.amount==='number'?'$'+order.amount.toLocaleString('en-US'):'--'));
       consoleBody.appendChild(info);
       var actions=node('div',null,'wms-document-actions');
       if(receiving){
@@ -249,33 +269,33 @@
         var receiveAction=button('Receive on handheld',function(){command('receive-order',order.id);if(callbacks.openHandheld)callbacks.openHandheld();},order.canBook?'':'wms-primary');
         receiveAction.disabled=order.canReceive!==true;receiveAction.title=receiveAction.disabled?'A delivered carton must be available for this PO before receiving.':'Receive delivered cartons on the warehouse floor.';actions.appendChild(receiveAction);
       }else{
-        actions.appendChild(actionButton('Release for picking','release-order',order.id,order.canRelease===true,order.actionReason,'wms-primary'));
+        actions.appendChild(actionButton('Reserve stock for picking','release-order',order.id,order.canRelease===true,order.actionReason,'wms-primary'));
         var pickAction=button('Pick on handheld',function(){command('pick-order',order.id);if(callbacks.openHandheld)callbacks.openHandheld();});
-        pickAction.disabled=order.canPick!==true;pickAction.title=pickAction.disabled?'Release the order and allocate stock before picking.':'Pick the allocated cartons on the warehouse floor.';actions.appendChild(pickAction);
+        pickAction.disabled=order.canPick!==true;pickAction.title=pickAction.disabled?'Reserve stock for this order before picking.':'Pick the allocated cartons on the warehouse floor.';actions.appendChild(pickAction);
         var shipAction=button(order.canShip?'Review shipment on handheld':'Ship on handheld',function(){command('ship-order',order.id);if(callbacks.openHandheld)callbacks.openHandheld();},order.canShip?'wms-primary':'');
         shipAction.disabled=order.canShip!==true;shipAction.title=shipAction.disabled?'Pick every order carton into staging before shipping.':'Continue loading and shipment confirmation on the warehouse floor.';actions.appendChild(shipAction);
       }
-      if(order.canCancel)actions.appendChild(actionButton('Cancel / release allocation','cancel-order',order.id,true));
+      if(order.canCancel)actions.appendChild(actionButton('Cancel order','cancel-order',order.id,true));
       consoleBody.appendChild(actions);
       if(isDemo())consoleBody.appendChild(node('p',demoReadOnlyReason,'wms-description'));
       if(order.actionReason)consoleBody.appendChild(node('p',order.actionReason,'wms-description'));
-      var columns=[{key:'sku',label:'Item',render:function(line){return append(node('div',null,'wms-item-cell'),detailLink(line.sku,'inventory',line.sku),small(line.itemName||skuName(line.sku)));}},{key:'ordered',label:'Ordered',numeric:true,render:function(line){return amount(line.ordered);}}];
+      var columns=[{key:'sku',label:'Item',render:function(line){return itemCell(line.sku,true);}},{key:'ordered',label:'Ordered',numeric:true,render:function(line){return amount(line.ordered);}}];
       if(receiving)columns.push({key:'received',label:'Received',numeric:true,render:function(line){return amount(line.received);}},{label:'Outstanding',numeric:true,render:function(line){return amount(qty(line.ordered)-qty(line.received));}});
       else ['allocated','picked','loaded','shipped'].forEach(function(key){columns.push({key:key,label:key[0].toUpperCase()+key.slice(1),numeric:true,render:function(line){return amount(line[key]);}});});
-      columns.push({label:'UOM',render:function(){return mono('CTN');}});
+      columns.push({label:'Unit',render:function(){return 'carton';}});
       consoleBody.appendChild(table(columns,list(order.lines),order.id+' document lines','No document lines'));
       var relevant=list(state.cartons).filter(function(c){return receiving?c.poId===order.id:c.soId===order.id;});
-      append(consoleBody,append(node('header',null,'wms-section-heading'),node('h3',receiving?'Inbound cartons':'Allocated cartons'),small(relevant.length+' handling units')));
+      append(consoleBody,append(node('header',null,'wms-section-heading'),node('h3',receiving?'Inbound cartons':'Allocated cartons'),small(relevant.length+' boxes')));
       consoleBody.appendChild(cartonTable(relevant));
-      consoleBody.appendChild(node('p',receiving?'Receiving posts each physically delivered carton into the scanned receiving bin. Transfer it to a storage bin afterward.':'Releasing allocates available stock. Pick and move the exact cartons to staging, then scan them onto the carrier before shipping.','wms-footnote'));
+      consoleBody.appendChild(node('p',receiving?'Receiving posts each physically delivered carton into the scanned receiving bin. Transfer it to a storage bin afterward.':'Reserving stock sets boxes aside for this customer. Pick and move the exact cartons to staging, then scan them onto the carrier before shipping.','wms-footnote'));
       return;
     }
-    append(consoleBody,heading(receiving?'Inbound documents':'Outbound documents',receiving?'Purchase orders':'Sales orders',receiving?'Match each delivered carton to its purchase order before putting it away.':'Release orders to allocate stock, then follow the handheld pick and shipping tasks.'));
+    append(consoleBody,heading(receiving?'Purchase orders / PO':'Sales orders / SO',receiving?'Supplier orders':'Customer orders',receiving?'What you ordered from a supplier. Receive each box against this list, then put it away.':'What a customer wants. Reserve the stock here, then use Pick and Ship on the handheld.'));
     var createAllowed=!isDemo()&&(state.mode==='sandbox'||qty(state.completedOrders)>0);
     var createButton=button(createOpen?'Close new document':receiving?'New purchase order':'New sales order',function(){createOpen=!createOpen;renderConsole();},'wms-primary');
     createButton.dataset.wmsCreate=kind;createButton.disabled=!createAllowed||!!pendingCreate;
     createButton.title=isDemo()?demoReadOnlyReason:createAllowed?'Create a document from the item catalog.':'Complete your first customer shipment to create more documents.';
-    append(consoleBody,append(node('div',null,'wms-document-create-action'),createButton,small(isDemo()?demoReadOnlyReason:createAllowed?'Whole-carton orders / 1 to 6 CTN per document':'Complete the first customer shipment to unlock new orders.')));
+    append(consoleBody,append(node('div',null,'wms-document-create-action'),createButton,small(isDemo()?demoReadOnlyReason:createAllowed?'Whole-carton orders / 1 to 6 cartons per order':'Complete the first customer shipment to unlock new orders.')));
     if(createOpen&&createAllowed)consoleBody.appendChild(newDocumentForm(kind));
     var rows=list(state[kind]);append(consoleBody,tools(rows,receiving?'Search PO or supplier':'Search SO or customer'),table([
       {key:'id',label:receiving?'PO number':'SO number',render:function(o){return detailLink(o.id,kind,o.id);}},
@@ -291,12 +311,12 @@
     var receiving=kind==='purchaseOrders',form=node('form',null,'wms-document-form');
     form.setAttribute('aria-label',receiving?'Create purchase order':'Create sales order');
     var itemLabel=node('label','Catalog item'),select=node('select');select.id='warehouse-wms-create-item';
-    list(state.items).forEach(function(item){var option=node('option',itemCode(item)+' / '+item.name);option.value=itemCode(item);select.appendChild(option);});
+    list(state.items).forEach(function(item){var option=node('option',item.name+' / '+displayCode(item));option.value=itemCode(item);select.appendChild(option);});
     if(!findItem(createItem))createItem=list(state.items).length?itemCode(state.items[0]):'';select.value=createItem;
-    var quantityLabel=node('label','Quantity / CTN'),quantity=node('input');quantity.type='number';quantity.id='warehouse-wms-create-quantity';quantity.min='1';quantity.max='6';quantity.step='1';quantity.required=true;quantity.value=createQuantity;
+    var quantityLabel=node('label','Quantity / cartons'),quantity=node('input');quantity.type='number';quantity.id='warehouse-wms-create-quantity';quantity.min='1';quantity.max='6';quantity.step='1';quantity.required=true;quantity.value=createQuantity;
     itemLabel.appendChild(select);quantityLabel.appendChild(quantity);
     var context=node('p',null,'wms-description');
-    function updateContext(){var item=findItem(select.value);context.textContent=item?item.unitsPerCarton+' contents units per sealed carton. '+(receiving?'Create the PO, then book its supplier delivery.':'Create the SO, then release it to allocate available cartons.'):'No catalog item is available.';}
+    function updateContext(){var item=findItem(select.value);context.textContent=item?item.unitsPerCarton+' pieces inside each sealed carton. '+(receiving?'Create the order, then book its supplier delivery.':'Create the order, then reserve its stock for picking.'):'No catalog item is available.';}
     select.addEventListener('change',function(){createItem=select.value;updateContext();});
     quantity.addEventListener('input',function(){createQuantity=quantity.value;});updateContext();
     var submit=button(receiving?'Create purchase order':'Create sales order',null,'wms-primary');submit.type='submit';submit.disabled=!!pendingCreate||!createItem;
@@ -310,27 +330,27 @@
     append(form,itemLabel,quantityLabel,submit,context);return form;
   }
   function tasksPage() {
-    append(consoleBody,heading('Floor execution','Work queue','Tasks guide the operator. Stock moves only after the physical carton and destination are verified.'));
+    append(consoleBody,heading('Work on the floor','To do','Use the handheld to work through these boxes. A confirmation updates the record after you finish the physical move.'));
     var rows=list(state.tasks);append(consoleBody,tools(rows,'Search task, item, bin or order'),table([
       {key:'id',label:'Task',render:function(t){return mono(t.id);}},
       {key:'type',label:'Work',render:function(t){return status(t.type);}},
       {key:'orderId',label:'Document',render:function(t){return t.orderId?detailLink(t.orderId,/receive/i.test(t.type)?'purchaseOrders':'salesOrders',t.orderId):'Internal move';}},
-      {key:'sku',label:'Item',render:function(t){return mono(t.sku);}},
-      {key:'sourceBin',label:'From',render:function(t){return mono(t.sourceBin);}},
-      {key:'destinationBin',label:'To',render:function(t){return mono(t.destinationBin);}},
-      {key:'quantity',label:'CTN',numeric:true,render:function(t){return amount(t.quantity);}},
+      {key:'sku',label:'Item',render:function(t){return itemCell(t.sku,false);}},
+      {key:'sourceBin',label:'From',render:function(t){return locationCell(t.sourceBin,false);}},
+      {key:'destinationBin',label:'To',render:function(t){return locationCell(t.destinationBin,false);}},
+      {key:'quantity',label:'Cartons',numeric:true,render:function(t){return amount(t.quantity);}},
       {key:'status',label:'Status',render:function(t){return status(t.status);}}
     ],matching(rows),'Warehouse work queue','The work queue is clear'));
   }
   function transactionsPage() {
-    append(consoleBody,heading('Inventory audit','Transactions','Every confirmed receipt, transfer, allocation, pick and shipment leaves an inventory record.'));
+    append(consoleBody,heading('Your stock record','History','Each confirmed action leaves a record: what moved, where it went, and which order it belongs to.'));
     var rows=list(state.transactions);append(consoleBody,tools(rows,'Search carton, document, bin or item'),table([
       {key:'id',label:'Sequence',render:function(t){return mono(t.id);}},
       {key:'time',label:'Posted',render:function(t){return mono(t.time);}},
       {key:'type',label:'Operation',render:function(t){return status(t.type);}},
       {key:'cartonId',label:'Carton',render:function(t){return mono(t.cartonId);}},
-      {key:'sku',label:'Item',render:function(t){return mono(t.sku);}},
-      {key:'quantity',label:'CTN',numeric:true,render:function(t){return amount(t.quantity);}},
+      {key:'sku',label:'Item',render:function(t){return itemCell(t.sku,false);}},
+      {key:'quantity',label:'Cartons',numeric:true,render:function(t){return amount(t.quantity);}},
       {key:'fromBin',label:'From',render:function(t){return mono(t.fromBin);}},
       {key:'toBin',label:'To',render:function(t){return mono(t.toBin);}},
       {key:'document',label:'Document',render:function(t){return mono(t.document);}}
@@ -364,18 +384,18 @@
       var control=button('',function(){command('workflow',tile[0]);},'wms-device-tile');control.dataset.wmsTile=tile[0];
       append(control,node('span',tile[3],'wms-tile-number'),node('strong',tile[1]),small(tile[2]));grid.appendChild(control);
     });handheldBody.appendChild(grid);
-    handheldBody.appendChild(node('p','Scan the barcode on a bin or carton. Physical stock and the ledger must agree.','wms-device-note'));
+    handheldBody.appendChild(node('p','One box = one carton. Choose a task, then follow one instruction at a time.','wms-device-note'));
   }
   function handheldDocuments(tile,workflow) {
     var receiving=tile==='receive',kind=receiving?'purchaseOrders':'salesOrders';
     var orders=list(state[kind]).filter(function(o){return !isComplete(o);});
-    append(handheldBody,node('p',receiving?'Inbound / receive':tile==='pick'?'Outbound / pick':'Outbound / ship','wms-device-eyebrow'),node('h2',receiving?'Select a PO':'Select a sales order'));
-    if(!orders.length){handheldBody.appendChild(empty('No open documents',receiving?'Book a purchase order from the office computer.':'Release a sales order from the office computer.'));return;}
+    append(handheldBody,node('p',receiving?'Receive a delivery':tile==='pick'?'Pick for a customer':'Send an order','wms-device-eyebrow'),node('h2',receiving?'Choose a supplier order':'Choose a customer order'));
+    if(!orders.length){handheldBody.appendChild(empty('No open documents',receiving?'Book a purchase order from the office computer.':'Reserve stock for a customer order at the office computer.'));return;}
     orders.forEach(function(order){
       var control=button('',function(){command(receiving?'receive-order':tile==='pick'?'pick-order':'ship-order',order.id);},'wms-device-order');
       var allowed=receiving?order.canReceive===true:tile==='pick'?order.canPick===true:order.canShip===true;
-      control.disabled=!allowed;control.title=allowed?'Open this floor task.':receiving?'Book and receive a physical delivery first.':tile==='pick'?'Release this order in the office first.':'Pick all order cartons into staging first.';
-      append(control,append(node('span'),node('strong',order.id),small(order.partner)),append(node('span'),status(order.status),small(orderCount(order,'ordered')+' CTN')));handheldBody.appendChild(control);
+      control.disabled=!allowed;control.title=allowed?'Open this floor task.':receiving?'Book and receive a physical delivery first.':tile==='pick'?'Reserve stock for this order in the office first.':'Pick all order cartons into staging first.';
+      append(control,append(node('span'),node('strong',order.id),small(order.partner)),append(node('span'),status(order.status),small(orderCount(order,'ordered')+' cartons')));handheldBody.appendChild(control);
     });
   }
   function handheldLookup() {
@@ -385,35 +405,35 @@
     var bin=list(state.bins).find(function(b){return b.id===code;});
     append(handheldBody,node('p','Item lookup','wms-device-eyebrow'),node('h2',item?item.name:bin?'Bin '+bin.id:'Scan to look up'));
     if(item){
-      append(handheldBody,node('p',itemCode(item),'wms-device-code'),node('p',item.description||'Sealed trade carton','wms-device-note'));
-      var values=append(node('dl',null,'wms-device-data'),dataPair('On hand',qty(item.onHand)+' CTN'),dataPair('Available',qty(item.available)+' CTN'),dataPair('Allocated',qty(item.reserved)+' CTN'),dataPair('Pack size',qty(item.unitsPerCarton)+' units / CTN'));
+      append(handheldBody,node('p',displayCode(item),'wms-device-code'),node('p',item.description||'Sealed trade carton','wms-device-note'));
+      var values=append(node('dl',null,'wms-device-data'),dataPair('On hand',qty(item.onHand)+' cartons'),dataPair('Available',qty(item.available)+' cartons'),dataPair('Allocated',qty(item.reserved)+' cartons'),dataPair('Pack size',qty(item.unitsPerCarton)+' units / cartons'));
       handheldBody.appendChild(values);
       if(carton)append(handheldBody,append(node('dl',null,'wms-device-data'),dataPair('Carton',carton.id),dataPair('Recorded bin',carton.binId),dataPair('Physical bin',carton.physicalBin),dataPair('Status',statusLabel(carton.status))));
       var locations=list(state.cartons).filter(function(c){return c.sku===itemCode(item)&&c.binId&&lower(c.status)!=='shipped';}).reduce(function(result,c){result[c.binId]=(result[c.binId]||0)+1;return result;},{});
       var locationList=node('div',null,'wms-device-locations');
-      Object.keys(locations).forEach(function(id){append(locationList,append(node('div'),mono(id),node('strong',locations[id]+' CTN')));});
+      Object.keys(locations).forEach(function(id){append(locationList,append(node('div'),locationCell(id,false),node('strong',locations[id]+' cartons')));});
       append(handheldBody,node('h3','Stock by bin'),locationList);
     }else if(bin){
-      append(handheldBody,node('p',bin.name,'wms-device-note'),append(node('dl',null,'wms-device-data'),dataPair('Type',statusLabel(bin.kind)),dataPair('On hand',qty(bin.onHand)+' CTN'),dataPair('Capacity',qty(bin.capacity)+' CTN'),dataPair('Picking',bin.canPick?'Allowed':'Not permitted')));
+      append(handheldBody,node('p',bin.name,'wms-device-note'),append(node('dl',null,'wms-device-data'),dataPair('Type',statusLabel(bin.kind)),dataPair('On hand',qty(bin.onHand)+' cartons'),dataPair('Capacity',qty(bin.capacity)+' cartons'),dataPair('Picking',bin.canPick?'Allowed':'Not permitted')));
       var inventory=list(state.cartons).filter(function(c){return c.binId===bin.id&&lower(c.status)!=='shipped';}).reduce(function(result,c){result[c.sku]=(result[c.sku]||0)+1;return result;},{});
-      var binList=node('div',null,'wms-device-locations');Object.keys(inventory).forEach(function(sku){append(binList,append(node('div'),mono(sku),node('strong',inventory[sku]+' CTN')));});handheldBody.appendChild(binList);
+      var binList=node('div',null,'wms-device-locations');Object.keys(inventory).forEach(function(sku){append(binList,append(node('div'),itemCell(sku,false),node('strong',inventory[sku]+' cartons')));});handheldBody.appendChild(binList);
     }else handheldBody.appendChild(node('p','Return to the floor, aim at a printed item, carton or bin label, and left-click to scan. Right-click brings this screen closer.','wms-device-note'));
   }
   function handheldWorkflow(workflow) {
     var title=tiles.find(function(t){return t[0]===workflow.tile;});
     append(handheldBody,node('p',(title?title[1]:'Warehouse task')+(workflow.orderId?' / '+workflow.orderId:''),'wms-device-eyebrow'),node('h2',text(workflow.title,'Scan the next label')));
-    if(workflow.total>0){var progress=node('progress');progress.max=qty(workflow.total);progress.value=qty(workflow.completed);progress.setAttribute('aria-label','Confirmed cartons');append(handheldBody,append(node('div',null,'wms-device-progress'),node('span',qty(workflow.completed)+' / '+qty(workflow.total)+' CTN'),progress));}
+    if(workflow.total>0){var progress=node('progress');progress.max=qty(workflow.total);progress.value=qty(workflow.completed);progress.setAttribute('aria-label','Confirmed cartons');append(handheldBody,append(node('div',null,'wms-device-progress'),node('span',qty(workflow.completed)+' / '+qty(workflow.total)+' cartons'),progress));}
     append(handheldBody,node('p',text(workflow.instruction,'Scan the barcode requested by this task.'),'wms-device-instruction'));
     var steps=append(node('dl',null,'wms-device-task-data'));
-    if(workflow.sourceBin)steps.appendChild(dataPair('From bin',workflow.sourceBin));
+    if(workflow.sourceBin)steps.appendChild(dataPair('From',workflow.sourceBin+' / '+binName(workflow.sourceBin)));
     if(workflow.cartonId)steps.appendChild(dataPair('Carton',workflow.cartonId));
-    if(workflow.destinationBin)steps.appendChild(dataPair('To bin',workflow.destinationBin));
+    if(workflow.destinationBin)steps.appendChild(dataPair('To',workflow.destinationBin+' / '+binName(workflow.destinationBin)));
     if(steps.children.length)handheldBody.appendChild(steps);
     if(workflow.canConfirm)handheldBody.appendChild(actionButton(workflow.confirmLabel||'Confirm carton','confirm','',true,null,'wms-device-confirm'));
     var pending=list(state.tasks).filter(function(t){return lower(t.type)===lower(workflow.tile)&&(!workflow.orderId||t.orderId===workflow.orderId);}).slice(0,3);
     if(pending.length){
       var next=node('section',null,'wms-device-next');next.appendChild(node('h3','Task lines'));
-      pending.forEach(function(t){append(next,append(node('div'),append(node('span'),mono(t.sku),small(t.sourceBin||t.destinationBin)),append(node('span'),node('strong',qty(t.quantity)+' CTN'),small(statusLabel(t.status)))));});
+      pending.forEach(function(t){append(next,append(node('div'),append(node('span'),node('strong',skuName(t.sku)),small(t.sourceBin||t.destinationBin)),append(node('span'),node('strong',qty(t.quantity)+' cartons'),small(statusLabel(t.status)))));});
       handheldBody.appendChild(next);
     }
   }

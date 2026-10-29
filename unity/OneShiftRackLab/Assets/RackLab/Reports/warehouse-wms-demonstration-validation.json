@@ -1,5 +1,5 @@
 {
-    "generatedUtc": "2026-10-29T20:17:35.1385574Z",
+    "generatedUtc": "2026-10-29T22:00:35.5131510Z",
     "scope": "Three isolated customer scenarios using production runtime, physical support checks, ledger and courier. Scans are decoded-label fixture input; explicit fixture placement settles in real PhysX. This does not simulate native mouse controls or rendered guidance.",
     "passed": true,
     "checks": [

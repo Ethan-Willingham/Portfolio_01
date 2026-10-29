@@ -11,18 +11,18 @@
   <meta property="og:description" content="An empty warehouse and $600. Start Latchford Distribution, handle every carton, and build a small trade-supply business.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://ethanwillingham.com/one-shift.html">
-  <meta property="og:image" content="https://ethanwillingham.com/assets/one-shift-unity/preview.png?v=12">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/one-shift-unity/preview.png?v=13">
   <meta property="og:image:alt" content="A worker and yellow forklift in the sunlit warehouse, beside the dispatch office.">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="one-shift-unity.css?v=12">
-  <link rel="stylesheet" href="one-shift-wms.css?v=12">
-  <link rel="stylesheet" href="one-shift-demos.css?v=12">
+  <link rel="stylesheet" href="one-shift-unity.css?v=13">
+  <link rel="stylesheet" href="one-shift-wms.css?v=13">
+  <link rel="stylesheet" href="one-shift-demos.css?v=13">
   <script src="js/demo-activity.js?v=1" defer></script>
-  <script src="js/one-shift-wms.js?v=12" defer></script>
-  <script src="js/one-shift-demos.js?v=12" defer></script>
-  <script src="js/one-shift-unity.js?v=12" defer></script>
+  <script src="js/one-shift-wms.js?v=13" defer></script>
+  <script src="js/one-shift-demos.js?v=13" defer></script>
+  <script src="js/one-shift-unity.js?v=13" defer></script>
 </head>
 <body class="warehouse-page">
 <main id="warehouse-stage" aria-label="The Warehouse Simulator">
@@ -58,7 +58,7 @@
       <div id="warehouse-error" class="warehouse-error" role="alert" hidden></div>
     </div>
     <footer class="warehouse-title-footer">
-      <span>v12 <span aria-hidden="true">/</span> Web edition</span>
+      <span>v13 <span aria-hidden="true">/</span> Web edition</span>
       <nav aria-label="Game information"><button type="button" data-fullscreen>Full screen</button><button type="button" data-screen="about">About</button><a href="archive.html">More games</a></nav>
     </footer>
   </section>
@@ -80,7 +80,7 @@
     </aside>
   </section>
   <nav id="warehouse-tools" class="warehouse-tools" aria-label="Game controls" hidden><button id="warehouse-handheld-toggle" type="button">TC22 <kbd>Q</kbd></button><button id="warehouse-pause" type="button" aria-pressed="false">Menu <kbd>Esc</kbd></button></nav>
-  <output id="warehouse-stats" class="warehouse-stats" aria-label="Game version and frame rate" aria-live="off" hidden>v12</output>
+  <output id="warehouse-stats" class="warehouse-stats" aria-label="Game version and frame rate" aria-live="off" hidden>v13</output>
   <dialog id="warehouse-menu" class="warehouse-dialog" aria-labelledby="warehouse-menu-title">
     <div class="warehouse-menu-shell">
       <header class="warehouse-dialog-header"><div><p class="warehouse-kicker">The Warehouse Simulator</p><h2 id="warehouse-menu-title">Paused</h2></div><button id="warehouse-close-menu" class="warehouse-close" type="button" aria-label="Close menu">Close</button></header>
@@ -107,12 +107,12 @@
           <p>Drive the forks into a pallet's pockets, then lift. Carry low and turn slowly. Lower onto a rack or the floor, then reverse out. H sounds the horn. Hold R while stopped to recover the forklift.</p>
         </div>
         <div id="warehouse-help-work" role="tabpanel" aria-labelledby="warehouse-tab-work" hidden>
-          <ol class="warehouse-work-steps"><li><strong>Open for business</strong><p>Latchford Distribution supplies garages, workshops and trade counters. Start with $600 and an empty warehouse, or choose Sandbox for stocked bins and example orders.</p></li><li><strong>Receive and put away</strong><p>Book PO-1001 in the office WMS. The courier brings three tape cartons to REC-01. Use Receive on your TC22, then Transfer each box into floor storage. Scan the source, carton and destination, set it down and confirm.</p></li><li><strong>Pick and ship</strong><p>Release SO-2001 in the office. Pick its allocated cartons into STAGE-01. When the collection van opens, use Ship to scan and load each carton into DISPATCH-01. Step clear and confirm shipment. Payment arrives after departure.</p></li><li><strong>Keep stock in its place</strong><p>Every rack position is a bin. Scan labels for Item lookup, and use Transfer when moving stock. The office tracks available stock, allocations, orders and location exceptions. New orders and upgrades open as your business grows.</p></li></ol>
+          <ol class="warehouse-work-steps"><li><strong>Open for business</strong><p>Latchford Distribution supplies garages, workshops and trade counters. Start with $600 and an empty warehouse, or choose Sandbox for stocked bins and example orders.</p></li><li><strong>Receive and put away</strong><p>Book PO-1001 in the office WMS. The courier brings three tape cartons to REC-01. Use Receive on your TC22, then Transfer each box to an empty small-shelf location. Scan the source, carton and destination, set it down and confirm.</p></li><li><strong>Pick and ship</strong><p>Reserve stock for SO-2001 in the office. Pick its allocated cartons into STAGE-01. When the collection van opens, use Ship to scan and load each carton into DISPATCH-01. Step clear and confirm shipment. Payment arrives after departure.</p></li><li><strong>Keep stock in its place</strong><p>Every rack position is a bin. Scan labels for Item lookup, and use Transfer when moving stock. The office tracks available stock, allocations, orders and location exceptions. New orders and upgrades open as your business grows.</p></li></ol>
         </div>
         <button id="warehouse-close-help" class="warehouse-subtle" type="button">Back</button>
       </section>
       <section id="warehouse-about" hidden><p class="warehouse-about-copy">A warehouse game by Ethan Willingham.</p><p>Build Latchford Distribution from its first cartons, or open an equipped warehouse in Sandbox. Progress lasts for the current page session.</p><p class="warehouse-classic">The earlier illustrated game and its saved warehouses are <a href="one-shift-classic.html">still here</a>.</p><a href="archive.html">More games</a></section>
-      <footer class="warehouse-menu-footer"><button id="warehouse-menu-back" class="warehouse-subtle" type="button" hidden>Back to menu</button><span>v12 / Web edition</span></footer>
+      <footer class="warehouse-menu-footer"><button id="warehouse-menu-back" class="warehouse-subtle" type="button" hidden>Back to menu</button><span>v13 / Web edition</span></footer>
     </div>
   </dialog>
   <dialog id="warehouse-computer" class="warehouse-computer" aria-labelledby="warehouse-computer-title">

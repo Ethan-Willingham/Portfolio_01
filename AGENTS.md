@@ -119,12 +119,15 @@ HUD, and a three-step practical forklift introduction. Left Shift holds the
 variable hydraulic lever; X is no longer the control. The office computer manages
 supplier purchases and fictional trade-customer orders backed by physical stock.
 Keep direct player handling, stock conservation, and separate pause/activity gates.
-The v12 WMS owns Career, Sandbox and Customer demos through `WarehouseWmsRuntime` and
-`WarehouseWmsLedger`. Career starts empty with $600; Sandbox starts with 100 owned
-cartons, two pending receipts, 90 labelled rack bins across rows A to E and seven other bins. The
+The v13 WMS owns Career, Sandbox and Customer demos through `WarehouseWmsRuntime` and
+`WarehouseWmsLedger`. Career starts with empty small shelves and $600; Sandbox starts with 100 owned
+cartons, two pending receipts, 90 main-rack bins across rows A to E, twelve small-shelf
+bins and four receiving/staging/dispatch bins. The floor-storage zones are removed;
+main racks face inward around a wide central loading space. The
 owner's 2026-10-28 direction is cartons only, eight varieties, with no item serials
 or integrations. The TC22 starts equipped with a live screen and no hand mesh.
-Hold left click to angle its top imager and keep a red surface aimer active.
+Hold left click to angle its top imager and project a flat red stripe onto surfaces.
+Written screen feedback and indicator colors identify accepted and rejected scans.
 Stable visible Code128 labels decode once per target acquisition. Right click toggles the enlarged
 screen, Q equips or stows it, and Enter confirms supported physical receipt,
 transfer, pick or load tasks. F remains an alternate scan key.
@@ -146,7 +149,11 @@ on the title-screen gallery with their own briefings and completion results.
 The room reflection uses a saved cubemap to avoid browser lighting instability.
 Keep the moving sun and real shadows, and do not restore periodic room captures
 without checking the office-entry browser sequence.
-Read the v12 section in
+All modes start at 9 a.m. and smoothly travel to 4 p.m. and back, thirty real minutes
+each way, with no night. Sandbox skips the forklift introduction; Career retains it.
+This is also an introductory electronic-inventory demo: prefer clear product names,
+explained location addresses and plain task instructions over unexplained WMS jargon.
+Read the v13 section in
 `docs/ONE_SHIFT.md` and use the WMS native browser checks before publishing.
 
 The earlier illustrated game remains at `one-shift-classic.html`, using

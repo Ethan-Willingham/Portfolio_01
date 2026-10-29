@@ -5,25 +5,28 @@ equipped Sandbox. It does not read or write the illustrated game's saves.
 Deliveries, stock, cash and equipment are session state, with no checkpoint persistence yet.
 Internal OneShift paths, namespace and Editor menus remain stable.
 
-The v12 browser offers an empty $600 distribution business and a stocked
-Sandbox with $10,000, 100 owned cartons, two unreceived PO cartons, 90 rack bins,
-three floor storage bins, two receiving bins, staging and a moving dispatch bin.
+The v13 browser offers a $600 distribution business with empty small shelves and
+a stocked Sandbox with $10,000, 100 owned cartons, two unreceived PO cartons,
+90 main-rack bins, twelve compact-shelf bins, two receiving bins, staging and a moving dispatch bin.
 The active goods are eight varieties of sealed cartons. The opening pallet truck
 and timed free parcels are disabled; their authored sources and checks remain.
 Customer demos is a third mode with prepared receiving/putaway, transfer and
 pick/shipping walkthroughs. Each uses the real WMS ledger and physical cartons,
 starts at 9 a.m., and gives one instruction and a location marker at a time.
 H opens its guide. Completion follows confirmed physical work, including actual
-carrier departure for shipping. See the v12 section in docs/ONE_SHIFT.md.
+carrier departure for shipping. See the v13 section in docs/ONE_SHIFT.md.
+All modes start at 9 a.m. and slowly cycle to 4 p.m. and back with no night.
+Sandbox allows immediate forklift driving; Career keeps the practical introduction.
 
 The room uses a saved reflection cubemap. Direct daylight, fixture lights and
 shadows remain live, with no recurring room captures in the browser. Rebuild the
 saved reflection after changing static room geometry; see WAREHOUSE_LIGHTING.md.
 
 The Zebra TC22 equips automatically with a live WMS screen and no hand model.
-Hold left click to angle its top scan window and keep the red aimer on;
+Hold left click to angle its top scan window and project a flat red scan stripe;
 stable labels decode once until the target changes or the trigger is released.
-Right click toggles enlarged screen inspection; Q equips or stows it. F is an
+Accepted and rejected scans briefly change the device screen and LED, with written
+feedback for muted play. Right click toggles enlarged screen inspection; Q equips or stows it. F is an
 alternate scan key and Enter confirms a ready task. Its tiles are Receive,
 Transfer, Pick, Ship and Item lookup. Hold left mouse while the device is stowed,
 or hold E in either state, to carry a carton; release that control to drop it.
@@ -35,8 +38,10 @@ and finance. New orders use whole-carton quantities from the eight-item catalog.
 
 Five labelled rack rows, A through E, each contain three bays. Bin addresses such
 as A01-01-01 identify row, bay, level and position; row endcaps and bay headers
-make the arrangement visible. There are 97 total bins and all 93 storage bins
-are populated in Sandbox. REC-02 and STAGE-01 sit beside the north garage door
+make the arrangement visible. There are 106 total bins. All 90 main-rack positions
+and ten of twelve small-shelf positions are populated in Sandbox. The main rows
+face inward around a wide loading lane; floor storage zones have been removed.
+REC-02 and STAGE-01 sit beside the north garage door
 with floor lettering, borders and wall signs, leaving the central dock route
 clear. REC-01 remains the front-door parcel receiving bin. Labels retain normal
 depth occlusion without distance-based visibility toggles.
@@ -147,14 +152,14 @@ courier advance. The manager shares the handheld's ledger and never grants stock
 by displaying it. Computer UI is browser-only; the Editor interaction logs that
 fact and leaves movement active. The illustrated game's saves remain untouched.
 
-The warehouse starts at 4:30 a.m. Three industrial switches on the south wall,
+The warehouse starts at 9 a.m. Three industrial switches on the south wall,
 beside the entrance electrical cabinet, control the west, centre and east rows
 of ceiling lights. Walk within 2.6 metres, aim at a switch, then press E or click.
 Each switch operates four fixtures. The lever position, indicator, glowing
 diffusers and actual light follow the same circuit state.
 
-The opening night reaches 7 a.m. in about 17 seconds. Daylight then lasts nine
-real minutes until sunset at 6 p.m.; the following night lasts 90 seconds.
+Daylight advances smoothly to 4 p.m. over thirty real minutes, then returns to
+9 a.m. over thirty minutes. There is no night phase or abrupt time reset.
 The sun crosses the southern sky from east to west with softer light and glare.
 Window-frame shadows and dust shafts follow its direction. The clock stops
 when the game loses focus. See [warehouse lighting](WAREHOUSE_LIGHTING.md) for

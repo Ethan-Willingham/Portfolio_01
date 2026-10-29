@@ -10,7 +10,7 @@ namespace OneShift.RackLab
     [Preserve]
     public sealed partial class BrowserLifecycle : MonoBehaviour
     {
-        public const int BuildVersion = 12;
+        public const int BuildVersion = 13;
         public static bool PointerIsLocked
         {
             get
@@ -153,9 +153,7 @@ namespace OneShift.RackLab
             }
             var originalPosition = camera.transform.position;
             var originalRotation = camera.transform.rotation;
-            float openingHour = dayNight.Hour;
-            var demonstration = Object.FindFirstObjectByType<WarehouseWmsRuntime>();
-            float originalHour = demonstration != null && demonstration.DemonstrationActive ? 9f : openingHour;
+            float originalHour = WarehouseDayNight.MorningHour;
             var rows = Object.FindObjectsByType<WarehouseLightRow>(FindObjectsSortMode.None);
             var rowStates = new bool[rows.Length];
             for (int i = 0; i < rows.Length; i++) rowStates[i] = rows[i].IsOn;
@@ -163,10 +161,9 @@ namespace OneShift.RackLab
             try
             {
                 // Render actual scene variants into the real player targets.
-                // Night, first sun, morning and afternoon include both banks
-                // of window volumes, shadows and the time-sliced room probe.
-                float[] hours = { openingHour, 6.05f, 9, 15 };
-                string[] phaseNames = { "Night lighting", "Sunrise", "Morning light", "Afternoon light" };
+                // Warm the slow working-day views before handing over control.
+                float[] hours = { originalHour, 11, 13, WarehouseDayNight.AfternoonHour };
+                string[] phaseNames = { "Morning light", "Late morning", "Midday light", "Afternoon light" };
                 string[] viewNames = { "Warehouse floor", "Storage racks", "Receiving bay", "Warehouse walls", "Delivery truck", "Office", "Business park", "Player shadows" };
                 for (int phase = 0; phase < hours.Length; phase++)
                 {

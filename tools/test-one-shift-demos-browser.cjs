@@ -177,6 +177,7 @@ function stage(label) { currentStage=label;phases.push({label,at:Date.now()});co
         await delay(700);decoded=await state();
         if(decoded.wms.state.scan.code===code&&decoded.wms.state.scan.sequence>before.wms.state.scan.sequence){
           check(label+' holds the red aimer on the real surface',decoded.wms.scannerTrigger&&decoded.wms.scannerAimVisible&&decoded.wms.scannerAimSurface);
+          check(label+' projects a flat stripe and shows visible acceptance',decoded.wms.scannerLineSegments>0&&decoded.wms.scannerFeedback==='success');
           const sequence=decoded.wms.state.scan.sequence;await delay(350);const continued=await state();
           check(label+' decodes once per held target',continued.wms.scannerAimVisible&&continued.wms.state.scan.sequence===sequence&&sequence===before.wms.state.scan.sequence+1);
           if(!laserCaptured){await capture('held-red-aimer');laserCaptured=true;}break;
@@ -234,7 +235,16 @@ function stage(label) { currentStage=label;phases.push({label,at:Date.now()});co
   }
   async function transfer(){
     stage('Transfer the prepared pick-face carton');const id=(await state()).wms.state.cartons[0].id;
-    await chooseTask('transfer');await scanLabel('BIN:C01-01-01','Transfer source');await scanLabel('CARTON:'+id,'Transfer carton');await pick(id);
+    await chooseTask('transfer');
+    await pitchTo(-75);const emptyBefore=await state();await page.mouse.down();await delay(1150);
+    const empty=await state();check('Empty hold shows a visible no-read result',empty.wms.scannerFeedback==='error'&&empty.wms.state.scan.sequence===emptyBefore.wms.state.scan.sequence+1);
+    await delay(350);check('Empty hold reports once without changing stock',(await state()).wms.state.scan.sequence===empty.wms.state.scan.sequence&&ledgerFingerprint(await state())===ledgerFingerprint(emptyBefore));
+    await capture('device-no-read');await page.mouse.up();await pitchTo(0);
+    const wrongState=await state(),wrongLabel=wrongState.wms.labels.filter(l=>l.code==='CARTON:'+id).sort((a,b)=>distance(wrongState.wms.cameraPosition,a.point)-distance(wrongState.wms.cameraPosition,b.point))[0];
+    await aimAt(wrongLabel.point);await page.mouse.down();await delay(700);const wrong=await state();
+    check('Wrong workflow scan is visibly rejected without moving inventory',wrong.wms.scannerFeedback==='error'&&wrong.wms.state.workflow.step==='source'&&ledgerFingerprint(wrong)===ledgerFingerprint(wrongState));
+    await capture('device-rejected');await page.mouse.up();
+    await scanLabel('BIN:C01-01-01','Transfer source');await scanLabel('CARTON:'+id,'Transfer carton');await pick(id);
     await approachRack('C01-01-02');await place(id,'C01-01-02');await scanLabel('BIN:C01-01-02','Transfer destination');
     await confirm('Post the transfer',s=>cartonAt(s,id).binId==='C01-01-02');
     check('Transfer preserves the one-carton quantity',onHand(await state())===1);
@@ -271,7 +281,7 @@ function stage(label) { currentStage=label;phases.push({label,at:Date.now()});co
   await page.waitForFunction(()=>window.actualUnity&&document.getElementById('warehouse-launcher').hidden,null,{timeout:240000});
   await click(page.locator('#warehouse-canvas'));await page.waitForFunction(()=>document.pointerLockElement?.id==='warehouse-canvas');await delay(500);
   let opening=await state('Opening');
-  check('Compiled v12 opens the selected fresh demo',opening.buildVersion===12&&opening.wms.state.mode==='demo'&&opening.wms.state.demo.id===demo&&opening.wms.conserves);
+  check('Compiled v13 opens the selected fresh demo',opening.buildVersion===13&&opening.wms.state.mode==='demo'&&opening.wms.state.demo.id===demo&&opening.wms.conserves);
   check('Customer walkthrough starts in daylight',opening.hour>=9&&opening.hour<9.5);
   check('Completion is initially hidden',!opening.wms.state.demo.complete&&!await page.locator('#warehouse-demo-complete').isVisible());
   await capture('demo-opening');const before=await state();await relativeMouse(60,0);const after=await state();degreesPerPixel=angleDelta(after.playerYaw,before.playerYaw)/60;

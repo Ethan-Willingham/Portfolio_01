@@ -7,6 +7,8 @@
   text-shadow:none;
 }
 .wms-console *, .wms-device * { box-sizing:border-box; }
+.wms-console { font-size:13px; }
+.wms-console .wms-description { line-height:1.6; }
 .wms-sr-only { position:absolute!important; width:1px!important; height:1px!important; padding:0!important; margin:-1px!important; overflow:hidden!important; clip:rect(0,0,0,0)!important; white-space:nowrap!important; border:0!important; }
 .wms-console button,.wms-device button { color:inherit; font:inherit; border:1px solid var(--wms-line); border-radius:3px; min-height:36px; padding:7px 12px; background:transparent; }
 .wms-console button:hover,.wms-device button:hover { background:#a44a2d0c; border-color:var(--wms-accent); }
@@ -41,6 +43,16 @@
 .wms-nav-bottom .wms-link { font-size:10px; font-weight:400; }
 .wms-console-body { min-width:0; min-height:0; overflow:auto; padding:22px 26px; scrollbar-color:var(--wms-line) transparent; }
 .wms-page-heading { margin:0 0 20px; }
+.wms-next-action { display:flex; align-items:center; justify-content:space-between; gap:22px; margin:20px 0; padding:18px 20px; border:1px solid var(--wms-line); border-left:4px solid var(--wms-accent); background:var(--wms-wash); }
+.wms-next-action h3 { margin:0 0 6px; font:600 18px/1.25 var(--font-body); }
+.wms-next-action p:last-child { margin:0; max-width:60ch; color:var(--wms-dim); line-height:1.55; }
+.wms-next-action button { flex-shrink:0; }
+.wms-explanation { margin:18px 0; padding:13px 16px; border:1px solid var(--wms-line); background:#c3b39615; }
+.wms-explanation summary { cursor:pointer; font-weight:600; }
+.wms-explanation p { margin:10px 0 0; max-width:90ch; color:var(--wms-dim); line-height:1.65; }
+.wms-device .wms-item-cell { min-width:0; white-space:normal; }
+.wms-device .wms-item-cell small { display:block; font-size:10px; line-height:1.4; }
+@media(max-width:1000px) { .wms-next-action { align-items:flex-start; flex-direction:column; gap:12px; } }
 .wms-eyebrow { margin:0 0 7px; color:var(--wms-dim); font:9px/1.5 var(--font-mono); letter-spacing:.07em; text-transform:uppercase; }
 .wms-console .wms-page-heading h2 { margin:0 0 8px; font:600 25px/1.15 var(--font-body); letter-spacing:-.025em; }
 .wms-page-heading .wms-description { margin:0; max-width:720px; font-size:12px; line-height:1.6; }

@@ -25,10 +25,10 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _Daylight: 0
+    - _Daylight: 1
     m_Colors:
-    - _CloudOffset: {r: 0.24874422, g: 0.6005217, b: 0, a: 0}
-    - _SunColor: {r: 1, g: 0.39, b: 0.12, a: 1}
-    - _SunDirection: {r: 0.9238795, g: -0.28881487, b: 0.25106293, a: 0}
+    - _CloudOffset: {r: -0.45961937, g: 0.45961937, b: 0, a: 0}
+    - _SunColor: {r: 1, g: 0.93, b: 0.8, a: 1}
+    - _SunDirection: {r: 0.70710677, g: 0.5336603, b: -0.46390378, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

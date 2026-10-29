@@ -79,11 +79,11 @@ namespace OneShift.RackLab
             {
                 var w=f.Runtime;f.PhysicsOnly(1);string id=w.Ledger.Cartons.Single().id;
                 Check(report,w.Ledger.OnHand()==1&&w.Ledger.Expected()==0&&w.Ledger.PurchaseOrders.Count==0&&w.Ledger.SalesOrders.Count==0&&w.CaptureDemonstration().step=="open-task","Transfer starts with one available carton and an uncluttered document list");
-                w.ResetWorkflow("transfer");Need(w.AcceptScan("BIN:C01-01-01")&&w.AcceptScan("CARTON:"+id)&&w.AcceptScan("BIN:F01"),w.Message);
-                f.Place(id,"F01",0);Need(w.Confirm(),w.Message);
+                w.ResetWorkflow("transfer");Need(w.AcceptScan("BIN:C01-01-01")&&w.AcceptScan("CARTON:"+id)&&w.AcceptScan("BIN:S01-01-01"),w.Message);
+                f.Place(id,"S01-01-01",0);Need(w.Confirm(),w.Message);
                 var guide=w.CaptureDemonstration();
-                Check(report,!guide.complete&&guide.sourceBin=="F01"&&guide.destinationBin=="C01-01-02","A different valid transfer does not falsely complete the demo and guidance follows the new recorded source");
-                Need(w.AcceptScan("BIN:F01")&&w.AcceptScan("CARTON:"+id)&&w.AcceptScan("BIN:C01-01-02"),w.Message);
+                Check(report,!guide.complete&&guide.sourceBin=="S01-01-01"&&guide.destinationBin=="C01-01-02","A different valid transfer does not falsely complete the demo and guidance follows the new recorded source");
+                Need(w.AcceptScan("BIN:S01-01-01")&&w.AcceptScan("CARTON:"+id)&&w.AcceptScan("BIN:C01-01-02"),w.Message);
                 Need(!w.Confirm(),"The demonstrated transfer ignored physical placement.");f.Place(id,"C01-01-02",0);Need(w.Confirm(),w.Message);
                 guide=w.CaptureDemonstration();
                 Check(report,guide.complete&&guide.transferred==1&&w.Ledger.OnHand()==1&&w.Ledger.Transactions.Count(t=>t.type=="TRANSFER")==2,"The corrected transfer records both real moves, completes the guide and preserves stock quantity");

@@ -65,6 +65,7 @@ function check(name,value){assert.ok(value,name);checks.push(name);console.log('
   },sample);
   check('WMS opens as an office desktop application',await page.locator('#warehouse-wms-console').isVisible());
   check('Operations has actual stock totals and open documents',(await page.locator('#warehouse-wms-console-body').innerText()).includes('30')&&await page.locator('[data-wms-detail="purchaseOrders:PO-1001"]').count()===1);
+  check('Overview gives a useful next action in plain language',(await page.locator('.wms-next-action').innerText()).includes('Receive the delivery'));
   await page.waitForTimeout(250);
   await page.screenshot({path:path.join(output,'office-operations.png')});
   await page.locator('[data-wms-page="inventory"]').click();
@@ -79,7 +80,7 @@ function check(name,value){assert.ok(value,name);checks.push(name);console.log('
   await page.locator('[data-wms-page="bins"]').click();
   check('Receiving, staging and rack locations share the bin master',await page.locator('.wms-table tbody tr').count()===5&&(await page.locator('.wms-table').innerText()).includes('STG-01'));
   await page.locator('[data-wms-detail="bins:REC-01"]').click();
-  check('Bin detail shows physical and recorded locations',(await page.locator('.wms-table thead').innerText()).includes('Physical bin')&&(await page.locator('.wms-table').innerText()).includes('CTN-000002'));
+  check('Bin detail shows physical and recorded locations',(await page.locator('.wms-table thead').innerText()).includes('Actual location')&&(await page.locator('.wms-table').innerText()).includes('CTN-000002'));
   await page.locator('[data-wms-page="purchaseOrders"]').click();
   await page.locator('[data-wms-detail="purchaseOrders:PO-1002"]').click();
   await page.locator('[data-wms-command="book-po"]').click();
@@ -134,12 +135,12 @@ function check(name,value){assert.ok(value,name);checks.push(name);console.log('
   await page.locator('[data-device-floor]').click();
   check('Return to scanning requests world-control ownership',await page.evaluate(()=>wmsPresentation.at(-1)===false));
   await page.evaluate(()=>WarehouseWmsUI.setPresentation({handheldInteractive:false}));
-  check('Scanning mode keeps the screen visible but removes UI focus targets',await page.locator('#warehouse-wms-handheld').isVisible()&&await page.locator('#warehouse-wms-handheld').evaluate(el=>el.inert));
+  check('Scanning uses the physical device without a duplicate HTML screen',await page.locator('#warehouse-wms-handheld').isHidden()&&await page.locator('#warehouse-wms-handheld').evaluate(el=>el.inert));
   check('Floor scanning has a visible centered barcode aimer',await page.locator('#warehouse-wms-reticle').isVisible()&&await page.locator('#warehouse-wms-reticle').evaluate(el=>{const r=el.getBoundingClientRect();return Math.abs(r.x+r.width/2-innerWidth/2)<1&&Math.abs(r.y+r.height/2-innerHeight/2)<1;}));
-  await page.evaluate(()=>{wmsMock.revision++;wmsMock.scan={sequence:1,code:'A01-02-01',label:'Storage / Aisle A',status:'success'};wmsMock.message='Destination read. Put the carton down in this bin.';wmsMock.severity='success';WarehouseWmsUI.receive(wmsMock);});
+  await page.evaluate(()=>{wmsMock.revision++;wmsMock.scan={sequence:1,code:'A01-02-01',label:'Storage / Aisle A',status:'success'};wmsMock.message='Destination read. Put the carton down in this bin.';wmsMock.severity='success';WarehouseWmsUI.receive(wmsMock);WarehouseWmsUI.setPresentation({handheldInteractive:true});});
   check('Scanner feedback displays the authoritative decoded label',(await page.locator('#warehouse-wms-scan-result').innerText()).includes('A01-02-01')&&(await page.locator('#warehouse-wms-scan-result').innerText()).toLowerCase().includes('read confirmed'));
   await page.evaluate(()=>{wmsMock.revision++;wmsMock.workflow.canConfirm=true;WarehouseWmsUI.receive(wmsMock);});
-  check('A physically ready task exposes its native Enter confirmation',await page.locator('[data-device-floor]').innerText()==='Enter Confirm / Q Device');
+  check('A physically ready task exposes a confirmation without posting it',await page.locator('.wms-device-confirm').count()===1&&(await page.evaluate(()=>wmsCommands.at(-1))).action==='workflow');
   await page.screenshot({path:path.join(output,'handheld-transfer-scan.png')});
   await page.evaluate(()=>{wmsMock.revision++;wmsMock.workflow={tile:'lookup'};wmsMock.scan={sequence:2,code:'CARTON:CTN-000001',label:'Packing tape',status:'success'};WarehouseWmsUI.receive(wmsMock);});
   check('Item lookup resolves carton IDs into item, stock and bin information',(await page.locator('#warehouse-wms-device-body').innerText()).includes('Packing tape')&&(await page.locator('#warehouse-wms-device-body').innerText()).includes('A01-01-01'));

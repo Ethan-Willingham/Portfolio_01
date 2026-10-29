@@ -28,9 +28,9 @@ namespace OneShift.RackLab
             !string.IsNullOrEmpty(collectionOrder)?(collectionBooked?"Use Ship on the TC22 to load and confirm the collection. Payment follows departure.":"Use Pick on the TC22 to move this order's allocated cartons into STAGE-01."):
             Ledger.Expected()>0?(inTransit.Count==Ledger.Expected()?"The driver will leave your cartons at REC-01 outside the front door.":"Right click inspects TC22. Receive the PO, then transfer cartons into storage."):
             Ledger.InReceiving()>0?"Use Transfer on the TC22. Move received cartons into a labelled storage bin before releasing an order.":
-            Sandbox?"Q: TC22 / F: scan / E: carry. Office WMS manages orders and stock.":
+            Sandbox?"Hold left mouse to scan. Right click opens the screen. Hold E to carry a box.":
             Ledger.OnHand()==0?(CompletedOrders==0?"Open the office WMS. Book PO-1001 for three cartons of packing tape.":"Open Purchase orders in the office WMS. Book the next delivery or create a new purchase order."):
-            "Release a sales order in the office WMS, then use Pick on your TC22.";
+            "Reserve stock for a customer order in the office WMS, then use Pick on your TC22.";
         public void SetDevice(bool equipped)=>Scanner.SetEquipped(equipped);
         public bool Scan()
         {
@@ -79,7 +79,7 @@ namespace OneShift.RackLab
             }
             if(w.step=="carton")
             {
-                if(kind!="carton")return Notice("Scan the carton handling label, not its item code or location.",false);
+                if(kind!="carton")return Notice("Scan the carton ID on the box, not its product or shelf label.",false);
                 var carton=Ledger.FindCarton(id);if(carton==null)return Notice("This carton is not on file.",false);
                 if(w.tile=="receive")
                 {
@@ -87,7 +87,7 @@ namespace OneShift.RackLab
                     if(carton.purchaseOrderId!=w.orderId)return Notice("Wrong PO. This carton belongs to "+carton.purchaseOrderId+".",false);
                     if(!IsInBin(id,w.sourceBin,out var receiptReason))return Notice(receiptReason,false);
                     w.cartonId=id;w.destinationBin=w.sourceBin;w.step="confirm";w.instruction="Receive 1 CTN of "+Ledger.FindItem(carton.itemId).name+" into "+w.sourceBin+". Enter confirms.";
-                    w.confirmLabel="Receive 1 CTN";return Notice("Carton matched to the PO. Confirm the receipt.",true);
+                    w.confirmLabel="Receive 1 carton";return Notice("Box matched to the supplier order. Confirm the receipt.",true);
                 }
                 if(carton.binId!=w.sourceBin)return Notice("Recorded location is "+carton.binId+". Scan that source bin first.",false);
                 if(w.tile=="transfer"&&carton.status!=L.CartonStatus.Available&&carton.status!=L.CartonStatus.Picked&&carton.status!=L.CartonStatus.Loaded)
@@ -121,9 +121,9 @@ namespace OneShift.RackLab
         {
             if(!new[]{"home","lookup","receive","transfer","pick","ship"}.Contains(tile))tile="home";
             Workflow=new WorkflowState{tile=tile,step=tile=="transfer"?"source":tile=="receive"||tile=="pick"||tile=="ship"?"order":tile,
-                title=tile=="receive"?"Receive purchase order":tile=="transfer"?"Transfer stock":tile=="pick"?"Pick sales order":tile=="ship"?"Ship sales order":tile=="lookup"?"Item lookup":"Latchford WMS",
-                instruction=tile=="transfer"?"Scan the recorded source bin, then the carton label.":tile=="receive"?"Choose the purchase order printed on your delivery paperwork.":
-                    tile=="pick"?"Choose a released sales order. The source bin and carton must match.":tile=="ship"?"Choose a picked sales order to load and confirm its shipment.":tile=="lookup"?"Scan an item, carton or location label with F.":"Choose Receive, Transfer, Pick, Ship or Item lookup."};
+                title=tile=="receive"?"Receive a delivery":tile=="transfer"?"Move a box":tile=="pick"?"Pick for a customer":tile=="ship"?"Send an order":tile=="lookup"?"Item lookup":"Latchford WMS",
+                instruction=tile=="transfer"?"Scan the box's current location label, then its carton label.":tile=="receive"?"Choose the supplier order number printed on your delivery paperwork.":
+                    tile=="pick"?"Choose a customer order with stock reserved for picking.":tile=="ship"?"Choose the picked customer order to load into the van.":tile=="lookup"?"Hold left mouse to scan an item, carton or location label.":"Choose Receive, Transfer, Pick, Ship or Item lookup."};
             Revision++;Changed?.Invoke();
         }
         public bool ChooseOrder(string tile,string id)

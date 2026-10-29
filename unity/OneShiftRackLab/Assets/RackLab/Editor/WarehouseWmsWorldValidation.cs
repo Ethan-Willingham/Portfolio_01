@@ -43,7 +43,8 @@ namespace OneShift.RackLab
             using(var rig=new Rig())
             {
                 var world=rig.world;
-                Pass(world.Bins.Count==6&&world.FindBin("REC-01")!=null&&world.FindBin("STAGE-01")!=null&&world.FindBin("F03")!=null,"Empty career registers its six physical bins without creating stock");
+                Pass(world.Bins.Count==15&&world.FindBin("REC-01")!=null&&world.FindBin("STAGE-01")!=null&&world.FindBin("S02-03-02")!=null,"Empty career registers three work areas and twelve original-model shelf bins without creating stock");
+                Pass(!world.Bins.Any(b=>b.Id.StartsWith("F")),"Removed floor storage areas leave no physical or scan targets behind");
                 Pass(rig.root.GetComponentsInChildren<WarehouseWmsCarton>().Length==0,"Bin installation grants no inventory");
                 var carton=world.CreateCarton("TEST-0001","TAPE-48","Packing tape",36,"ROLL",new Vector3(0,1,0));
                 var label=carton.GetComponent<WarehouseWmsCarton>().Labels[0];Physics.SyncTransforms();
@@ -67,11 +68,11 @@ namespace OneShift.RackLab
                 Pass(!Scan(label.ScanPoint+Vector3.forward*.05f,label.ScanPoint).success,"A label inside the minimum focus distance is rejected");
                 var trigger=rig.Box("Unrelated bin trigger",label.ScanPoint+Vector3.forward*.5f,new Vector3(1,1,.1f));trigger.isTrigger=true;Physics.SyncTransforms();
                 Pass(Scan(front,label.ScanPoint).success,"A bin volume does not hide its physical barcode");Object.DestroyImmediate(trigger.gameObject);
-                var bin=world.FindBin("F01");Physics.SyncTransforms();
-                Pass(Scan(bin.Label.ScanPoint+Vector3.up*1.65f,bin.Label.ScanPoint).success,"Floor-bin labels face upward and scan from standing height");
+                var bin=world.FindBin("S01-01-01");Physics.SyncTransforms();
+                Pass(Scan(bin.Label.ScanPoint+bin.Label.Normal*.75f,bin.Label.ScanPoint).success,"Small-shelf labels face the open floor and scan ahead of their shelf edge");
                 void Place(Vector3 position){carton.position=position;carton.transform.position=position;Physics.SyncTransforms();}
                 Place(bin.PlacementPosition(0,WarehouseWmsWorld.CartonSize(0)));carton.rotation=bin.PlacementRotation;carton.transform.rotation=bin.PlacementRotation;Physics.SyncTransforms();rig.Step(1);
-                Pass(world.ContainsSupported(bin,carton,out _),"A settled whole carton on the floor is physically in its selected bin");
+                Pass(world.ContainsSupported(bin,carton,out _),"A settled whole carton on an original small shelf is physically in its selected bin");
                 Vector3 settled=carton.position;Place(carton.position+Vector3.right*1.5f);
                 Pass(!world.ContainsSupported(bin,carton,out _),"A carton outside its bin cannot be confirmed");
                 Place(settled+Vector3.up*.30f);carton.linearVelocity=Vector3.zero;Physics.SyncTransforms();
@@ -85,24 +86,32 @@ namespace OneShift.RackLab
             }
             using(var rig=new Rig(true))
             {
-                var world=rig.world;var racks=world.Bins.Where(b=>b.Id.Length==9).ToArray();
+                var world=rig.world;var racks=world.Bins.Where(b=>b.Id.Length==9&&b.Id[0]!='S').ToArray();
+                var small=world.Bins.Where(b=>b.Id.StartsWith("S0")).ToArray();
                 Pass(racks.Length==90&&racks.Count(b=>b.CanPick)==30&&racks.Select(b=>b.Id).Distinct().Count()==90,"Sandbox has90 unique rack-bin addresses and30 reachable low faces across rows A to E");
+                Pass(small.Length==12&&small.All(b=>b.CanPick&&b.OwnsShelf&&b.Capacity==1)&&world.Bins.Count==105,"Twelve hand-pick shelf bins replace floor storage; Sandbox has105 bins before binding the collection van");
+                Pass(racks.Where(b=>b.Id[0]<='C').All(b=>b.Label.Normal.x>.99f)&&racks.Where(b=>b.Id[0]>='D').All(b=>b.Label.Normal.x<-.99f),"Left rows face east and right rows face west, keeping every picking face away from the wall");
+                float centralLeft=racks.Where(b=>b.Id[0]=='C').Max(b=>b.Volume.bounds.max.x);
+                float centralRight=racks.Where(b=>b.Id[0]=='D').Min(b=>b.Volume.bounds.min.x);
+                Pass(centralRight-centralLeft>11f,"Grouped racks leave more than11metres of clear central unloading width");
+                Pass(small.All(b=>b.Label.Normal.z>.99f&&b.Volume.bounds.max.x < -5.7f&&b.Volume.bounds.max.z < -8.7f),"Compact shelves face north and leave the south-wall switchbank and forklift route clear");
                 Pass(racks.All(b=>b.Volume.isTrigger&&b.Capacity==8),"Every rack bin has an explicit non-solid storage volume and capacity");
                 Pass(racks.Where(b=>b.OwnsShelf).All(TicketFitsBeam),"Every upper location ticket fits inside the actual beam face with a visible steel margin");
+                Pass(small.All(b=>TicketFitsSurface(b,rig.root.GetComponentsInChildren<BoxCollider>().Where(c=>c.name=="Shelf"))),"Small location tickets fit within the original shelf's scaled steel face");
                 Physics.SyncTransforms();
-                Pass(racks.Where(b=>b.OwnsShelf).All(b=>
+                Pass(racks.Concat(small).Where(b=>b.OwnsShelf).All(b=>
                     WarehouseWmsScanner.Trace(rig.physics,b.Label.ScanPoint+b.Label.Normal*.75f,-b.Label.Normal,null,rig.hits).code==b.Label.Code),
                     "Slim beam tickets keep a physically reachable barcode face ahead of the steel");
                 var loaded=new List<(WarehouseWmsBin bin,Rigidbody body)>();
                 for(int i=0;i<100;i++)
                 {
-                    var bin=racks[i%racks.Length];int variant=(i%racks.Length)%8;
-                    var body=world.CreateCarton("LOAD-"+i.ToString("0000"),"SKU-"+variant,"Workshop supplies",12,"EA",bin.PlacementPosition(i/racks.Length,WarehouseWmsWorld.CartonSize(variant)),variant);
+                    var bin=i<racks.Length?racks[i]:small[i-racks.Length];int variant=i%8;
+                    var body=world.CreateCarton("LOAD-"+i.ToString("0000"),"SKU-"+variant,"Workshop supplies",12,"EA",bin.PlacementPosition(0,WarehouseWmsWorld.CartonSize(variant)),variant);
                     body.rotation=bin.PlacementRotation;loaded.Add((bin,body));
                 }
                 Physics.SyncTransforms();rig.Step(2);
                 var failed=loaded.Where(p=>!world.ContainsSupported(p.bin,p.body,out _)).Select(p=>p.bin.Id+":"+p.body.position.ToString("F3")).ToArray();
-                Pass(failed.Length==0,"100 varied cartons remain supported in their real rack bins"+(failed.Length>0?" / "+string.Join(",",failed.Take(5)):""));
+                Pass(failed.Length==0,"100 varied cartons remain supported across90 pallet-rack and10 compact-shelf positions"+(failed.Length>0?" / "+string.Join(",",failed.Take(5)):""));
                 Pass(loaded.All(p=>!p.body.isKinematic&&p.body.IsSleeping()),"Settled populated stock sleeps while remaining dynamic and hand-pickable");
                 Pass(loaded.Select(p=>p.body.GetComponent<BoxCollider>().size).Distinct().Count()==8,"Sandbox cartons retain eight physical package sizes");
                 Pass(loaded.All(p=>p.body.GetComponent<WarehouseGrabbable>()!=null&&p.body.GetComponent<WarehouseWmsCarton>().Labels.Length==3),"Every carton has a carry marker, two carton barcodes and a side item barcode");
@@ -113,6 +122,7 @@ namespace OneShift.RackLab
                 {
                     van.root.SetPositionAndRotation(new Vector3(3,-1.3325f,-28.2f),Quaternion.Euler(0,180,0));
                     var dispatch=world.BindDispatch(van.root,van.deck);Vector3 before=dispatch.Center;
+                    Pass(world.Bins.Count==106&&world.Bins.Count(b=>b.Kind=="storage")==102,"Binding collection completes106 total bins with102 storage positions");
                     van.root.position+=Vector3.right*2;Physics.SyncTransforms();
                     Pass(Vector3.Distance(dispatch.Center,before+Vector3.right*2)<.001f&&dispatch.Id=="DISPATCH-01","Dispatch is a real moving bin attached to the van deck");
                 }
@@ -145,7 +155,13 @@ namespace OneShift.RackLab
         {
             var label=bin.Label;var bay=bin.GetComponentInParent<PalletRackBay>();
             if(label==null||!label.ShelfTicket||bay==null)return false;
-            foreach(var beam in bay.GetComponentsInChildren<BoxCollider>().Where(c=>c.name=="Load beam"))
+            return TicketFitsSurface(bin,bay.GetComponentsInChildren<BoxCollider>().Where(c=>c.name=="Load beam"));
+        }
+        static bool TicketFitsSurface(WarehouseWmsBin bin,IEnumerable<BoxCollider> surfaces)
+        {
+            var label=bin.Label;
+            if(label==null||!label.ShelfTicket)return false;
+            foreach(var beam in surfaces)
             {
                 bool fits=true;Vector3 half=beam.size*.5f;
                 for(int corner=0;corner<4;corner++)

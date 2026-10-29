@@ -70,9 +70,9 @@ namespace OneShift.RackLab
             var w=f.Runtime;f.PhysicsOnly(1.5f);Invoke(w,"AuditPhysicalBins");
             Need(w.Sandbox&&w.Cash==10000&&w.RacksOwned&&w.ForkliftOwned,"Sandbox must retain its equipment.");
             Need(w.Ledger.OnHand()==100&&w.Ledger.Expected()==2&&w.Bodies.Count==102,"Sandbox seed is not the intended populated warehouse.");
-            Need(w.Ledger.Bins.Count(b=>b.kind==L.BinKind.Storage&&b.id.Length==9)==90,"Every rack slot across rows A to E must be a registered bin.");
+            Need(w.Ledger.Bins.Count(b=>b.kind==L.BinKind.Storage&&b.id.Length==9&&!b.id.StartsWith("S"))==90,"Every rack slot across rows A to E must be a registered bin.");
             Need(w.Ledger.Items.All(i=>w.Ledger.OnHand(i.id)>0),"Opening stock is missing a carton variety.");
-            Need(w.Ledger.Bins.Where(b=>b.kind==L.BinKind.Storage).All(b=>w.Ledger.BinUsed(b.id)>0),"Opening stock must populate every rack row and floor storage bin.");
+            Need(w.Ledger.Bins.Where(b=>b.kind==L.BinKind.Storage&&!b.id.StartsWith("S")).All(b=>w.Ledger.BinUsed(b.id)>0)&&w.Ledger.Bins.Count(b=>b.id.StartsWith("S")&&w.Ledger.BinUsed(b.id)>0)==10,"Opening stock must populate every main rack location and ten small shelf locations.");
             int supported=0;var bad=new List<string>();
             foreach(var c in w.Ledger.Cartons.Where(c=>c.status!=L.CartonStatus.Expected))
             {if(w.IsInBin(c.id,c.binId,out var reason))supported++;else bad.Add(c.id+" / "+c.binId+": "+reason);}
@@ -131,29 +131,29 @@ namespace OneShift.RackLab
         static void TransferAndExceptions(Fixture f,ForkliftDrivingValidation.Check check)
         {
             f.Deliver();f.ReceiveAll();var w=f.Runtime;string id=w.Ledger.Cartons[0].id;
-            f.Place(id,"F01",0);Invoke(w,"AuditPhysicalBins");
+            f.Place(id,"S01-01-01",0);Invoke(w,"AuditPhysicalBins");
             Need(w.Ledger.FindCarton(id).binId=="REC-01"&&w.Ledger.InReceiving()==3,"Physical movement silently changed the WMS location.");
             var mismatch=(Dictionary<string,float>)Get(w,"mismatchSince");Need(mismatch.ContainsKey(id),"Moved stock did not begin an exception grace period.");
             mismatch[id]=Time.time-2;int revision=w.Revision;Invoke(w,"AuditPhysicalBins");
             Need(w.Revision>revision&&w.Capture().exceptions.Any(e=>e.id==id),"Mature location exceptions must notify the UI.");
-            w.ResetWorkflow("transfer");Need(w.AcceptScan("BIN:REC-01")&&w.AcceptScan("CARTON:"+id)&&w.AcceptScan("BIN:F02"),w.Message);
+            w.ResetWorkflow("transfer");Need(w.AcceptScan("BIN:REC-01")&&w.AcceptScan("CARTON:"+id)&&w.AcceptScan("BIN:S02-03-02"),w.Message);
             Need(!w.Confirm()&&w.Ledger.FindCarton(id).binId=="REC-01","Confirmation posted inventory without a carton in the destination.");
             var body=w.Bodies[id];body.position=new Vector3(8,.8f,4);body.linearVelocity=Vector3.zero;Physics.SyncTransforms();Invoke(w,"AuditPhysicalBins");
             Need(w.PhysicalBin(id)==""&&w.Capture().exceptions.Any(e=>e.id==id),"Stock outside every bin must remain an exception.");
-            f.Place(id,"F02",0);Need(w.Confirm(),w.Message);
-            Need(w.Ledger.FindCarton(id).binId=="F02"&&w.Ledger.Available()==1&&!w.Capture().exceptions.Any(e=>e.id==id),"Confirmed putaway did not reconcile the exception and availability.");
+            f.Place(id,"S02-03-02",0);Need(w.Confirm(),w.Message);
+            Need(w.Ledger.FindCarton(id).binId=="S02-03-02"&&w.Ledger.Available()==1&&!w.Capture().exceptions.Any(e=>e.id==id),"Confirmed putaway did not reconcile the exception and availability.");
             Need(w.Ledger.OnHand()==3&&w.Cash==480,"Transfer changed stock quantity or cash.");
         }
         static void PickWorkflow(Fixture f,ForkliftDrivingValidation.Check check)
         {
             f.Deliver();f.ReceiveAll();f.PutAwayAll();var w=f.Runtime;var first=w.Ledger.Cartons[0];
-            f.Place(first.id,"F02",0);
+            f.Place(first.id,"S02-03-02",0);
             Need(!w.ReleaseOrder("SO-2001")&&w.Ledger.Reserved()==0,"Release reserved a physically misplaced carton.");
-            f.Place(first.id,"F01",0);Need(w.ReleaseOrder("SO-2001"),w.Message);
+            f.Place(first.id,"S01-01-01",0);Need(w.ReleaseOrder("SO-2001"),w.Message);
             Need(w.Cash==480&&w.Ledger.Reserved()==3&&!w.Courier.Busy,"Order release must reserve only, with no payment or empty van yet.");
             Need(w.ChooseOrder("pick","SO-2001"),w.Message);
             Need(!w.AcceptScan("BIN:REC-01")&&!w.AcceptScan("ITEM:tape"),"Pick accepted the wrong first scan type.");
-            Need(w.AcceptScan("BIN:F01")&&w.AcceptScan("CARTON:"+first.id)&&w.AcceptScan("BIN:STAGE-01"),w.Message);
+            Need(w.AcceptScan("BIN:S01-01-01")&&w.AcceptScan("CARTON:"+first.id)&&w.AcceptScan("BIN:STAGE-01"),w.Message);
             Need(!w.Confirm()&&w.Ledger.Picked()==0,"Pick confirmation skipped physical staging.");
             f.Place(first.id,"STAGE-01",0);Need(w.Confirm(),w.Message);
             f.PickRemaining();Need(w.Ledger.FindSales("SO-2001").status==L.SalesStatus.Picked&&w.Courier.Busy&&w.Cash==480,"All picks should book one unpaid collection.");
@@ -188,10 +188,10 @@ namespace OneShift.RackLab
         {
             f.ReadyToLoad();f.LoadAll();var w=f.Runtime;var order=w.Ledger.FindSales("SO-2001");string id=order.manifest[0];
             Need(w.Confirm(),w.Message);Need((string)Get(w,"dispatchAuthorization")==order.id,"Return fixture did not authorize its manifest.");
-            w.ResetWorkflow("transfer");Need(w.AcceptScan("BIN:DISPATCH-01")&&w.AcceptScan("CARTON:"+id)&&w.AcceptScan("BIN:F02"),w.Message);
-            f.Place(id,"F02",0);Need(w.Confirm(),w.Message);
+            w.ResetWorkflow("transfer");Need(w.AcceptScan("BIN:DISPATCH-01")&&w.AcceptScan("CARTON:"+id)&&w.AcceptScan("BIN:S02-03-02"),w.Message);
+            f.Place(id,"S02-03-02",0);Need(w.Confirm(),w.Message);
             Need(w.Ledger.FindCarton(id).status==L.CartonStatus.Reserved&&w.Capture().salesOrders.Single(s=>s.id==order.id).canPick&&(string)Get(w,"dispatchAuthorization")=="","Returned dispatch stock did not restore pick work or clear authorization.");
-            Need(w.ChooseOrder("pick",order.id)&&w.AcceptScan("BIN:F02")&&w.AcceptScan("CARTON:"+id)&&w.AcceptScan("BIN:STAGE-01"),w.Message);
+            Need(w.ChooseOrder("pick",order.id)&&w.AcceptScan("BIN:S02-03-02")&&w.AcceptScan("CARTON:"+id)&&w.AcceptScan("BIN:STAGE-01"),w.Message);
             f.Place(id,"STAGE-01",0);Need(w.Confirm()&&w.Ledger.FindCarton(id).status==L.CartonStatus.Picked,w.Message);
             Need(w.Cash==480&&w.CompletedOrders==0&&w.Courier.ReadyForLoading,"Return and re-pick altered payment or let the van leave.");
         }
@@ -296,7 +296,7 @@ namespace OneShift.RackLab
             public void PutAwayAll()
             {
                 int index=0;foreach(var carton in Runtime.Ledger.Cartons.Where(c=>c.status==L.CartonStatus.Available).ToArray())
-                {Runtime.ResetWorkflow("transfer");Need(Runtime.AcceptScan("BIN:"+carton.binId)&&Runtime.AcceptScan("CARTON:"+carton.id)&&Runtime.AcceptScan("BIN:F01"),Runtime.Message);Place(carton.id,"F01",index++);Need(Runtime.Confirm(),Runtime.Message);}
+                {string bin=Runtime.World.Bins.Where(b=>b.Id.StartsWith("S")).OrderBy(b=>b.Id).ElementAt(index++).Id;Runtime.ResetWorkflow("transfer");Need(Runtime.AcceptScan("BIN:"+carton.binId)&&Runtime.AcceptScan("CARTON:"+carton.id)&&Runtime.AcceptScan("BIN:"+bin),Runtime.Message);Place(carton.id,bin,0);Need(Runtime.Confirm(),Runtime.Message);}
             }
             public void PickRemaining()
             {

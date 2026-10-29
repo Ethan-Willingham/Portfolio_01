@@ -53,7 +53,10 @@ Shader "OneShift/Warehouse World Text"
             half4 TextFragment(Varyings input) : SV_Target
             {
                 half4 color = input.color;
-                color.a *= SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv).a;
+                // Tighten the atlas edge slightly without clipping away the
+                // antialiasing needed by small, tilted labels and the TC22.
+                half coverage = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv).a;
+                color.a *= saturate((coverage - .5h) * 1.15h + .5h);
                 return color;
             }
             ENDHLSL

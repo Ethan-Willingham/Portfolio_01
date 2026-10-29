@@ -19,7 +19,12 @@ namespace OneShift.RackLab
         static Material cream, trim, carpet, wood, dark, paper, carton, glass;
 
         [MenuItem("One Shift/Install front office and parcels")]
-        public static string Install()
+        public static string Install() { return InstallOffice(true); }
+
+        [MenuItem("One Shift/Refresh office details only")]
+        public static string RefreshOffice() { return InstallOffice(false); }
+
+        static string InstallOffice(bool rebuildShell)
         {
             if (EditorApplication.isPlaying) throw new InvalidOperationException("Stop Play before installing the office.");
             var scene = SceneManager.GetActiveScene();
@@ -33,7 +38,7 @@ namespace OneShift.RackLab
             if (old != null) Object.DestroyImmediate(old);
             root = new GameObject(Name).transform;
             // Marker cuts the south door through both render geometry and collision.
-            WarehouseEnvironmentBuilder.InstallIntoScene();
+            if(rebuildShell) WarehouseEnvironmentBuilder.InstallIntoScene();
             cream = Mat("Old cream partitions", new Color(.66f,.64f,.55f));
             trim = Mat("Office olive trim", new Color(.30f,.34f,.29f));
             carpet = Mat("Tired office carpet", new Color(.22f,.27f,.25f));
@@ -66,8 +71,20 @@ namespace OneShift.RackLab
                 float x=6.77f+i*1.3f;
                 Box("Office glazed window",root,new Vector3(x,1.81f,-4),new Vector3(1.24f,1.4f,.035f),glass);
                 Box("Office mullion",root,new Vector3(x-.65f,1.8f,-4),new Vector3(.055f,1.47f,.17f),trim);
-                // A few angled slats at the top leave the warehouse visible.
-                for(int b=0;b<4;b++) Box("Venetian blind slat",root,new Vector3(x,2.40f-b*.085f,-4.13f),new Vector3(1.23f,.028f,.095f),paper);
+                // Real thin slats sit behind the glass, tilted open enough to
+                // see the floor. The headrail, bottom rail and tapes attach them.
+                Box("Blind headrail",root,new Vector3(x,2.50f,-4.14f),new Vector3(1.24f,.055f,.065f),trim,false);
+                for(int b=0;b<14;b++)
+                {
+                    var slat=Box("Venetian blind slat",root,new Vector3(x,2.44f-b*.070f,-4.14f),new Vector3(1.22f,.008f,.065f),paper,false);
+                    slat.localRotation=Quaternion.Euler(32,0,0);
+                }
+                Box("Blind bottom rail",root,new Vector3(x,1.49f,-4.14f),new Vector3(1.22f,.022f,.052f),paper,false);
+                foreach(float side in new[]{-.39f,.39f})
+                {
+                    Box("Blind ladder cord",root,new Vector3(x+side,1.99f,-4.178f),new Vector3(.007f,1.01f,.007f),trim,false);
+                    Box("Blind mounting bracket",root,new Vector3(x+side,2.50f,-4.105f),new Vector3(.035f,.07f,.08f),trim,false);
+                }
             }
             Box("Office window sill",root,new Vector3(8.7f,1.08f,-4),new Vector3(5.2f,.07f,.28f),trim);
             Box("Suspended office ceiling",root,new Vector3(7.6f,3.07f,-7),new Vector3(7.6f,.12f,6),paper);
@@ -127,6 +144,20 @@ namespace OneShift.RackLab
             deskTarget.gameObject.AddComponent<BoxCollider>().size=new Vector3(.75f,.06f,.28f);
             Box("Keyboard",computer,new Vector3(9.8f,.84f,-8.59f),new Vector3(.47f,.035f,.15f),paper,false);
             Box("Computer tower",desk,new Vector3(10.0f,.25f,-8.8f),new Vector3(.24f,.48f,.46f),dark);
+            Box("Mouse mat",desk,new Vector3(10.20f,.823f,-8.55f),new Vector3(.25f,.008f,.20f),dark,false);
+            var mouse=Box("Office mouse",desk,new Vector3(10.20f,.845f,-8.55f),new Vector3(.06f,.036f,.10f),paper,false);
+            mouse.localRotation=Quaternion.Euler(0,-8,0);
+            // A small paperwork tray and wall planner make this a dispatch
+            // workstation while preserving the clear parcel end of the desk.
+            Box("Paperwork tray",desk,new Vector3(9.0f,.835f,-8.94f),new Vector3(.38f,.035f,.27f),trim,false);
+            Box("Paperwork stack",desk,new Vector3(9.0f,.86f,-8.94f),new Vector3(.31f,.018f,.22f),paper,false);
+            Box("Wall planner backing",root,new Vector3(9.5f,1.98f,-9.845f),new Vector3(.66f,.52f,.022f),trim,false);
+            Box("Wall planner sheet",root,new Vector3(9.5f,1.98f,-9.829f),new Vector3(.61f,.47f,.006f),paper,false);
+            Box("Wall planner header",root,new Vector3(9.5f,2.16f,-9.824f),new Vector3(.58f,.065f,.004f),trim,false);
+            for(int line=0;line<4;line++) Box("Planner ruled line",root,new Vector3(9.5f,2.07f-line*.073f,-9.823f),new Vector3(.56f,.003f,.004f),trim,false);
+            foreach(float x in new[]{9.29f,9.43f,9.57f,9.71f}) Box("Planner day column",root,new Vector3(x,1.96f,-9.822f),new Vector3(.003f,.28f,.004f),trim,false);
+            Box("Desk power outlet",root,new Vector3(10.55f,.34f,-9.84f),new Vector3(.11f,.16f,.025f),paper,false);
+            foreach(float y in new[]{.31f,.37f}) Box("Outlet socket",root,new Vector3(10.55f,y,-9.824f),new Vector3(.043f,.025f,.006f),dark,false);
             Box("Door mat",root,new Vector3(6.5f,.045f,-9.25f),new Vector3(1.4f,.035f,.7f),dark,false);
         }
 
@@ -140,10 +171,16 @@ namespace OneShift.RackLab
             var leafCollision=door.leaf.gameObject.AddComponent<BoxCollider>();
             leafCollision.center=new Vector3(.71f,1.16f,0);leafCollision.size=new Vector3(1.42f,2.32f,.075f);
             Box("Lower door panel",door.leaf,new Vector3(.71f,.44f,0),new Vector3(1.42f,.88f,.075f),trim,false,false);
-            Box("Front door glass",door.leaf,new Vector3(.71f,1.56f,0),new Vector3(1.28f,1.26f,.03f),glass,false,false);
-            foreach(float x in new[]{.035f,1.385f}) Box("Door stile",door.leaf,new Vector3(x,1.55f,0),new Vector3(.07f,1.4f,.08f),trim,false,false);
+            Box("Front door glass",door.leaf,new Vector3(.71f,1.56f,0),new Vector3(1.22f,1.26f,.03f),glass,false,false);
+            foreach(float x in new[]{.05f,1.37f}) Box("Door stile",door.leaf,new Vector3(x,1.55f,0),new Vector3(.10f,1.4f,.08f),trim,false,false);
             Box("Door upper rail",door.leaf,new Vector3(.71f,2.27f,0),new Vector3(1.42f,.07f,.08f),trim,false,false);
-            foreach(float z in new[]{-.10f,.10f}) Box("Door push bar",door.leaf,new Vector3(.71f,1.03f,z),new Vector3(1.1f,.04f,.04f),paper,false,false);
+            foreach(float side in new[]{-1f,1f})
+            {
+                foreach(float y in new[]{1.02f,1.28f})
+                    Box("Door handle mounting post",door.leaf,new Vector3(1.37f,y,side*.067f),new Vector3(.032f,.032f,.065f),dark,false,false);
+                Box("Door pull handle",door.leaf,new Vector3(1.37f,1.15f,side*.108f),new Vector3(.028f,.29f,.028f),dark,false,false);
+                Box("Door lock plate",door.leaf,new Vector3(1.37f,.93f,side*.043f),new Vector3(.05f,.065f,.008f),paper,false,false);
+            }
             var blocker=Child("Closed front door collision",entry,new Vector3(6.5f,1.15f,-10)).gameObject.AddComponent<BoxCollider>();
             blocker.size=new Vector3(1.44f,2.30f,.12f);door.doorwayBlocker=blocker;
             Label("FRONT OFFICE",root,new Vector3(6.5f,2.67f,-10.16f),.15f,0);
@@ -209,8 +246,14 @@ namespace OneShift.RackLab
             var fixtures=office.GetComponentsInChildren<Light>();
             if(fixtures.Length!=2||fixtures.Any(l=>l.type!=LightType.Point||l.shadows!=LightShadows.None||l.range<6)) throw new Exception("Office needs two broad unshadowed fills.");
             if(office.GetComponentsInChildren<WarehouseOfficeComputer>().Length!=2) throw new Exception("Computer and desk controls are not bound.");
+            var slats=office.GetComponentsInChildren<Transform>().Where(t=>t.name=="Venetian blind slat").ToArray();
+            if(slats.Length!=56||slats.Any(t=>t.localScale.y>.01f||Mathf.Abs(Mathf.DeltaAngle(t.localEulerAngles.x,32))>.01f))
+                throw new Exception("Office blinds need thin, angled slats across four windows.");
+            var pulls=door.leaf.GetComponentsInChildren<Transform>().Where(t=>t.name=="Door pull handle").ToArray();
+            if(pulls.Length!=2||pulls.Any(t=>Mathf.Abs(t.localPosition.x-1.37f)>.001f)||door.leaf.GetComponentsInChildren<Transform>().Count(t=>t.name=="Door handle mounting post")!=4)
+                throw new Exception("Both door pulls must mount to the solid latch stile.");
             if(office.GetComponentsInChildren<Transform>().Any(t=>t.name.Contains("chair")||t.name.Contains("Filing cabinet")||t.name.Contains("Coffee"))) throw new Exception("Extra office furniture returned.");
-            var report="Office passed: one computer workstation with parcel area, real front opening, continuous porch/ramp support, clear warehouse doorway, three parcel bindings, two broad unshadowed office fixtures.";
+            var report="Office passed: one computer workstation with clear parcel area, restrained desk essentials, four mounted blinds with 56 thin angled slats, two door pulls attached to the latch stile, real front opening, continuous porch/ramp support, clear warehouse doorway, three parcel bindings, two broad unshadowed office fixtures.";
             File.WriteAllText(Root+"Reports/warehouse-office-validation.txt",report+"\n");
             return report;
         }

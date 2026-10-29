@@ -21,6 +21,30 @@ namespace OneShift.RackLab
             return Validate();
         }
 
+        // Apply the working-day clock without rebuilding the warehouse shell.
+        [MenuItem("One Shift/Install morning working day")]
+        public static string InstallWorkingDay()
+        {
+            if (EditorApplication.isPlaying) throw new InvalidOperationException("Stop Play before installing daylight.");
+            var cycle = Object.FindFirstObjectByType<WarehouseDayNight>();
+            Require(cycle != null, "Warehouse clock missing.");
+            ConfigureDaylight(cycle);
+            cycle.SetHour(cycle.startHour);
+            WarehouseReflectionCacheBuilder.InstallIntoScene();
+            EditorUtility.SetDirty(cycle);
+            EditorSceneManager.MarkSceneDirty(cycle.gameObject.scene);
+            EditorSceneManager.SaveOpenScenes();
+            AssetDatabase.SaveAssets();
+            return Validate();
+        }
+
+        static void ConfigureDaylight(WarehouseDayNight cycle)
+        {
+            cycle.startHour = WarehouseDayNight.MorningHour;
+            cycle.dayLengthMinutes = 30;
+            cycle.daytimeAmbientIntensity = .9f;
+        }
+
         public static void InstallIntoScene()
         {
             if (EditorApplication.isPlaying) throw new InvalidOperationException("Stop Play before installing lighting.");
@@ -28,12 +52,9 @@ namespace OneShift.RackLab
             var cycle = sun.GetComponent<WarehouseDayNight>() ?? sun.gameObject.AddComponent<WarehouseDayNight>();
             cycle.sun = sun;
             cycle.windows = Object.FindObjectsByType<WarehouseSunVolume>(FindObjectsSortMode.None);
-            cycle.startHour = 4.5f;
-            cycle.dayLengthMinutes = 9;
-            cycle.nightLengthMinutes = 1.5f;
+            ConfigureDaylight(cycle);
             cycle.peakSunIntensity = 2.35f;
             cycle.beamIntensity = .75f;
-            cycle.daytimeAmbientIntensity = .8f;
             sun.lightmapBakeType = LightmapBakeType.Realtime;
             sun.shadows = LightShadows.Soft;
             WarehouseLightingRepair.ConfigureSun(sun);
@@ -78,8 +99,8 @@ namespace OneShift.RackLab
             var cycle = Object.FindFirstObjectByType<WarehouseDayNight>();
             Require(cycle != null && cycle.sun != null, "Sun cycle missing.");
             WarehouseReflectionCacheBuilder.Validate();
-            Require(cycle.startHour < 6 && cycle.windows.Length == 16, "Night start or window bindings invalid.");
-            Require(cycle.dayLengthMinutes >= 8 && cycle.dayLengthMinutes <= 10, "Daylight should last eight to ten real minutes.");
+            Require(Mathf.Abs(cycle.startHour-9)<.001f && cycle.windows.Length == 16, "Morning start or window bindings invalid.");
+            Require(Mathf.Abs(cycle.dayLengthMinutes-30)<.001f, "Each daylight direction should take thirty real minutes.");
             var rows = Object.FindObjectsByType<WarehouseLightRow>(FindObjectsSortMode.None);
             var switches = Object.FindObjectsByType<WarehouseLightSwitch>(FindObjectsSortMode.None);
             Require(rows.Length == 3 && switches.Length == 3, "Expected three independent rows and three switches.");
@@ -98,16 +119,15 @@ namespace OneShift.RackLab
             var originalStates = rows.Select(row => row.IsOn).ToArray();
             try
             {
-                foreach (float hour in new[] { 0f, 4.5f, 6f, 8f, 12f, 16f, 18f, 21f, 23.99f })
+                foreach (float hour in new[] { 9f, 10f, 12f, 14f, 16f })
                 {
                     cycle.SetHour(hour);
                     var direction = -cycle.TowardSun;
-                    bool night = hour <= 6 || hour >= 18;
-                    Require(!night || cycle.sun.intensity < .0001f, "Sun illuminates from below horizon.");
+                    Require(cycle.sun.intensity > 0 && cycle.Daylight>.99f, "Working hours must stay fully daylight.");
                     foreach (var window in cycle.windows)
                     {
                         bool visible = window.GetComponent<Renderer>().enabled;
-                        Require(!visible || (!night && Vector3.Dot(direction, window.windowInward) > .025f), "A back-facing or night window emits sunlight.");
+                        Require(!visible || Vector3.Dot(direction, window.windowInward) > .025f, "A back-facing window emits sunlight.");
                         if (!visible) continue;
                         var matrix = window.VolumeMatrix();
                         Require(Mathf.Abs(matrix.determinant) > .001f, "Singular window volume.");
@@ -116,7 +136,7 @@ namespace OneShift.RackLab
                         var bounds = window.GetComponent<MeshFilter>().sharedMesh.bounds;
                         Require(bounds.Contains(matrix.MultiplyPoint3x4(Vector3.zero)), "Moving sunlight is outside its mesh bounds.");
                     }
-                    if (hour == 8) Require(direction.x < 0, "Morning sun must enter east windows.");
+                    if (hour == 9) Require(direction.x < 0, "Morning sun must enter east windows.");
                     if (hour == 16) Require(direction.x > 0, "Evening sun must enter west windows.");
                 }
                 for (int selected = -1; selected < 3; selected++)
@@ -125,29 +145,27 @@ namespace OneShift.RackLab
                     for (int row = 0; row < 3; row++)
                         Require(rows[row].FixtureLights.All(light => light.enabled == (row == selected)), "Switch affects another row or leaves a light behind.");
                 }
-                float nightHours = 24 - (WarehouseDayNight.SunsetHour - WarehouseDayNight.MorningHour);
-                float openingSeconds = (WarehouseDayNight.MorningHour - cycle.startHour) * cycle.nightLengthMinutes * 60 / nightHours;
-                Require(openingSeconds >= 15 && openingSeconds <= 20, "The opening night should reach morning in fifteen to twenty seconds.");
-                cycle.SetHour(cycle.startHour);
-                cycle.Advance(openingSeconds);
-                Require(Mathf.Abs(cycle.Hour - WarehouseDayNight.MorningHour) < .001f, "Opening night fails to arrive at morning.");
-                cycle.Advance(60);
-                Require(cycle.Hour > 7 && cycle.Hour < 9, "Morning does not slow down for the working day.");
+                float legSeconds=cycle.dayLengthMinutes*60;
                 cycle.SetHour(WarehouseDayNight.MorningHour);
-                cycle.Advance(cycle.dayLengthMinutes * 60);
-                Require(Mathf.Abs(cycle.Hour - WarehouseDayNight.SunsetHour) < .001f && cycle.sun.intensity < .0001f,
-                    "The slow day must finish at sunset without skipping it.");
-                cycle.Advance(cycle.nightLengthMinutes * 60);
-                Require(Mathf.Abs(cycle.Hour - WarehouseDayNight.MorningHour) < .001f, "The fast overnight period fails to reach the next morning.");
-                cycle.SetHour(cycle.startHour);
+                cycle.Advance(legSeconds*.5f);
+                Require(Mathf.Abs(cycle.Hour-12.5f)<.001f,"Working day midpoint is incorrect.");
+                cycle.Advance(legSeconds*.5f-30);
+                float beforeTurn=cycle.Hour;
                 cycle.Advance(30);
+                Require(Mathf.Abs(cycle.Hour-WarehouseDayNight.AfternoonHour)<.001f,"Daylight must reach 4 p.m. after thirty minutes.");
+                cycle.Advance(30);
+                Require(Mathf.Abs(cycle.Hour-beforeTurn)<.001f,"Afternoon reversal is not smooth and symmetric.");
+                cycle.Advance(legSeconds-30);
+                Require(Mathf.Abs(cycle.Hour-WarehouseDayNight.MorningHour)<.001f,"Daylight must return to morning without a night phase.");
+                cycle.SetHour(cycle.startHour);
+                cycle.Advance(legSeconds*1.25f);
                 float wholeStepHour = cycle.Hour;
                 cycle.SetHour(cycle.startHour);
-                for (int step = 0; step < 60; step++) cycle.Advance(.5f);
-                Require(Mathf.Abs(cycle.Hour - wholeStepHour) < .001f, "Crossing the fast-to-slow boundary depends on frame rate.");
-                cycle.SetHour(23.99f);
-                cycle.Advance(1);
-                Require(cycle.Hour < 1, "Clock fails at midnight.");
+                for (int step = 0; step < 4500; step++) cycle.Advance(.5f);
+                Require(Mathf.Abs(cycle.Hour-wholeStepHour)<.001f,"Daylight reversal depends on frame rate.");
+                cycle.SetHour(0);Require(cycle.Hour==9,"Manual clock input allows night.");
+                cycle.SetHour(24);Require(cycle.Hour==16,"Manual clock input exceeds afternoon.");
+                Require(RenderSettings.ambientEquatorColor.r>=.30f&&RenderSettings.ambientGroundColor.r>=.22f,"Stock shadow faces have lost the intended indirect fill.");
                 cycle.paused = true;
                 float pausedHour = cycle.Hour;
                 cycle.Advance(60);
@@ -166,7 +184,7 @@ namespace OneShift.RackLab
                 cycle.SetHour(Application.isPlaying ? originalHour : cycle.startHour);
                 for (int i = 0; i < rows.Length; i++) rows[i].SetOn(originalStates[i]);
             }
-            string report = "Passed: night start; morning reached in 15-20 seconds; slow eight-to-ten-minute daylight; faster overnight return; frame-independent morning transition; nine solar times; east sunrise and west sunset; sixteen aligned window volumes with moving mesh bounds; no night or back-facing shafts; twelve unique shadowed fixtures; independent three-row switching; accessible switch raycasts; midnight wrap; pause. Forward+ and additional-light shadows enabled.";
+            string report = "Passed: 9 a.m. start; thirty-minute morning-to-4 p.m. travel and thirty-minute return; smooth symmetric reversal; frame-independent phase; manual inputs clamp to daylight; five solar times; sixteen aligned window volumes; no back-facing shafts; useful equator/ground indirect fill; twelve unique shadowed fixtures; independent three-row switching; switch raycasts; pause. Cached environment reflection retained with the local probe disabled.";
             File.WriteAllText(Root + "Reports/warehouse-lighting-validation.txt", report + "\n");
             Debug.Log(report);
             return report;

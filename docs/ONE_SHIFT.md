@@ -15,7 +15,60 @@ keeps its `.loader.js` extension. Bump the launcher CSS/script query versions an
 the build version in `js/one-shift-unity.js` and `BrowserLifecycle.BuildVersion`
 whenever the published build changes.
 
-## Current v12: scanner presentation and customer demonstrations
+## Current v13: a readable warehouse and a first electronic stock record
+
+The customer-facing demonstration keeps the five real floor tasks but explains
+them in everyday terms. Supplier orders are purchase orders; customer orders are
+sales orders. Product names lead each inventory row, with short product codes
+beside them. Location descriptions explain row, bay, level and left/right position
+while the exact printed scan addresses remain unchanged. The office overview
+offers one next useful action based on actual stock and order state. In a guided
+demo that action follows the current walkthrough. Expandable explanations cover
+the move from paper records and how to read a shelf address. Every quantity remains
+a whole sealed carton, and the ledger still owns every transaction.
+
+All modes open at 9 a.m. The sky travels smoothly to 4 p.m. over thirty real
+minutes, then returns over thirty minutes, without a night phase or an abrupt
+reset. Pause and browser inactivity still stop time independently. More indirect
+fill keeps shaded carton faces readable. The saved environment reflection and
+disabled local probe retain the v12 flicker repair. Browser rendering uses 4x
+MSAA with SMAA; no lights or shadow maps were added.
+
+The five main rack rows are grouped against the side walls, with an eleven-metre
+central loading space. Right-hand rows face inward. The three floor-storage zones
+are gone. Two copies of the original compact rack model sit along the forklift
+wall, with twelve labelled shelf positions. Career starts with these shelves empty.
+Sandbox has 106 total locations, 102 storage locations, 100 owned cartons and two
+expected cartons. Ninety main-rack locations and ten compact-shelf locations hold
+the opening stock; two small slots are deliberately empty. Sandbox forklift entry
+skips the practical introduction. Career still requires it.
+
+Large signs use matte charcoal panels, cream legends and restrained mounting and
+border details. Carton and location labels stay plain, with higher-resolution
+type and less luminous paper. Office blinds now have thin angled slats, headrails
+and cords; the door pull mounts on its solid latch stile. A few desk and wall
+essentials keep the single-computer office simple.
+
+The TC22 projects a flat horizontal red stripe onto nearby surfaces while held.
+It stops at occluders and splits across disconnected faces. The screen and LED
+show scanning, accepted and rejected results, so sound is optional. A held label
+still reads once; an empty hold reports once and can then acquire a real label.
+
+Integrated Editor checks pass 46 world assertions, nine runtime scenarios and
+19 demonstration assertions. The browser UI contract passes 42 checks.
+Native Chrome checks pass 29 transfer checks, 69 receiving/putaway checks and
+64 picking/shipping checks, including held-scan feedback and one offsite payment.
+The Sandbox/office walkthrough passes 25 checks, including immediate forklift
+driving, inward-facing rack scans and returning from the computer. It was rerun
+on the final export, with the darker label ink and clearer physical device text.
+The build has zero errors and 42,778,788 compressed bytes. A 24-second populated
+Sandbox pan measured 7 ms median, 14 ms p95 and 27.7 ms maximum browser presentation
+intervals, with no long tasks on this Windows workstation. This is a short
+presentation sample, not GPU timing or a guarantee for other hardware. Entry points are
+`tools/test-one-shift-v13-browser.cjs`, `tools/test-one-shift-demos-browser.cjs`
+and `tools/test-one-shift-wms-ui.cjs`.
+
+## v12: scanner presentation and customer demonstrations
 
 The title screen has three modes: Start business, Sandbox and Customer demos.
 The demonstration gallery describes the work, prepared documents and outcome

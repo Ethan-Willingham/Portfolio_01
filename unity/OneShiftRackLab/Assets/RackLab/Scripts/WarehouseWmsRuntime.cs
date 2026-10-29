@@ -44,7 +44,7 @@ namespace OneShift.RackLab
         float nextAudit;
         bool initialized;
         static readonly string[] Sku = { "tape", "towels", "gloves", "mailers", "stretch", "labels", "wipes", "bags" };
-        static readonly string[] Names = { "Packing tape", "Shop towels", "Work gloves", "Padded mailers", "Stretch film", "Shipping labels", "Workshop wipes", "Parts bags" };
+        static readonly string[] Names = { "Clear packing tape", "Blue shop towels", "Work gloves, large", "Padded mailers, medium", "Clear stretch wrap", "Shipping labels, 4 x 6", "Cleaning wipes", "Resealable parts bags" };
         static readonly string[] Contents = { "36 rolls", "12 packs", "24 pairs", "50 mailers", "6 rolls", "20 rolls", "8 tubs", "100 bags" };
         static readonly string[] ContentUnits = { "ROLL", "PACK", "PAIR", "EA", "ROLL", "ROLL", "TUB", "EA" };
         static readonly int[] Units = {36,12,24,50,6,20,8,100}, Costs = {40,40,60,32,46,28,44,22}, Prices = {70,70,105,55,76,49,74,38};
@@ -77,6 +77,8 @@ namespace OneShift.RackLab
             racks=FindNamed("Starting wall racks");rackSign=FindNamed("STORAGE / A01 - A03");
             var drive=FindLocal<ForkliftDriveController>();forklift=drive!=null?drive.gameObject:null;
             RacksOwned=ForkliftOwned=sandbox;
+            var driver=FindLocal<ForkliftPlayerInteraction>();
+            if(driver!=null)driver.SetSandboxReady(sandbox&&!DemonstrationActive);
             if(racks!=null)racks.SetActive(sandbox);if(rackSign!=null)rackSign.SetActive(false);if(forklift!=null)forklift.SetActive(sandbox);
             Walking.SetSpawnPose(new Vector3(0,.025f,sandbox?-3.6f:1f),Quaternion.Euler(0,sandbox?0:145,0));
             World=WarehouseWmsWorld.Ensure(transform);World.Initialize(sandbox);
@@ -106,7 +108,7 @@ namespace OneShift.RackLab
                 L.BinKind type=kind.IndexOf("receiv",StringComparison.OrdinalIgnoreCase)>=0?L.BinKind.Receiving:
                     kind.IndexOf("dispatch",StringComparison.OrdinalIgnoreCase)>=0?L.BinKind.Dispatch:
                     kind.IndexOf("stag",StringComparison.OrdinalIgnoreCase)>=0||kind.IndexOf("pack",StringComparison.OrdinalIgnoreCase)>=0?L.BinKind.Stage:L.BinKind.Storage;
-                Ledger.AddBin(new L.Bin(bin.Id,bin.Id,type,bin.Capacity,bin.CanPick));
+                Ledger.AddBin(new L.Bin(bin.Id,WarehouseWmsVocabulary.BinName(bin.Id),type,bin.Capacity,bin.CanPick));
             }
         }
         void SeedCareerOrders()
@@ -117,15 +119,14 @@ namespace OneShift.RackLab
         }
         void SeedSandbox()
         {
-            var bins=Ledger.Bins.Where(b=>b.kind==L.BinKind.Storage).ToArray();
+            var bins=Ledger.Bins.Where(b=>b.kind==L.BinKind.Storage).OrderBy(b=>b.id.StartsWith("S")?1:0).ThenBy(b=>b.id).ToArray();
             int count=0;
             for(int b=0;b<bins.Length&&count<100;b++)
             {
                 var view=World.FindBin(bins[b].id);if(view==null)continue;
-                // Five complete rack rows hold one carton per bin. The ten
-                // floor cartons keep the opening total at 100, with every
-                // storage location represented and room for new purchases.
-                int perBin=Math.Min(bins[b].capacity,bins[b].id=="F01"?4:bins[b].id.StartsWith("F")?3:1);
+                // One carton at each main rack address, then ten on the small
+                // shelves. Two small locations remain open for practice moves.
+                int perBin=Math.Min(bins[b].capacity,1);
                 for(int j=0;j<perBin&&count<100;j++)
                 {
                     string sku=Sku[b%Sku.Length],id=NewCarton();

@@ -52,7 +52,7 @@ namespace OneShift.RackLab
         readonly Dictionary<int, Mesh> cartonMeshes = new Dictionary<int, Mesh>();
         readonly RaycastHit[] supportHits = new RaycastHit[24];
         Material[] cardboard;
-        Material tape, paper, ink, shelf, guide, steel, signAccent;
+        Material tape, paper, ink, shelf, guide, steel, signPanel, signTrim;
         PhysicsScene physics;
         Transform stockRoot;
         bool initialized, racksAdded;
@@ -73,12 +73,15 @@ namespace OneShift.RackLab
                 Mat("WMS kraft board", new Color(.54f,.37f,.22f)), Mat("WMS pale board",new Color(.66f,.50f,.32f)),
                 Mat("WMS recycled board",new Color(.43f,.34f,.24f)), Mat("WMS cream carton",new Color(.73f,.68f,.54f)) };
             tape = Mat("WMS carton tape", new Color(.38f,.27f,.16f));
-            paper = Mat("WMS label stock", new Color(.88f,.85f,.74f), true);
-            ink = Mat("WMS label ink", new Color(.07f,.10f,.08f), true);
+            paper = Mat("WMS matte label stock", new Color(.72f,.70f,.64f));
+            ink = Mat("WMS printed ink", new Color(.055f,.065f,.055f));
+            paper.SetFloat("_Smoothness",.04f);ink.SetFloat("_Smoothness",.02f);
             shelf = Mat("WMS shelf deck",new Color(.48f,.42f,.30f));
-            guide = Mat("WMS bay paint",new Color(.69f,.55f,.32f),true);
+            guide = Mat("WMS bay paint",new Color(.55f,.43f,.25f));
             steel = Mat("WMS sign post",new Color(.25f,.29f,.25f));
-            signAccent = Mat("WMS sign rust stripe",new Color(.53f,.29f,.16f),true);
+            signPanel = Mat("WMS charcoal enamel sign",new Color(.115f,.145f,.125f));
+            signTrim = Mat("WMS muted brass sign trim",new Color(.48f,.37f,.23f));
+            signPanel.SetFloat("_Smoothness",.06f);signTrim.SetFloat("_Smoothness",.08f);
             stockRoot = Child("Physical WMS cartons",transform,Vector3.zero);
             ReplaceLegacySigns();
             // The porch shelf is the courier's real drop point. Internal receiving
@@ -89,13 +92,11 @@ namespace OneShift.RackLab
             // remain an unobstructed travel lane to the door and dock plate.
             AddFloorBin("REC-02","receiving",new Vector3(-3.9f,.012f,10f),new Vector3(3f,1.45f,2f),18,false);
             AddFloorBin("STAGE-01","staging",new Vector3(3.9f,.012f,10f),new Vector3(3f,1.45f,2f),18,false);
-            AreaSigns("RECEIVING","REC-02 / INBOUND",-3.9f);
-            AreaSigns("STAGING","STAGE-01 / OUTBOUND",3.9f);
+            AreaSigns("GOODS RECEIVING","REC-02 / INBOUND",-3.9f);
+            AreaSigns("READY TO SHIP","STAGE-01 / OUTBOUND",3.9f);
             Sign(transform,new Vector3(8.28f,1.70f,-10.68f),Quaternion.identity,new Vector2(.88f,.27f),"PARCEL RECEIVING","REC-01 / FRONT DOOR");
             WarehouseCareer.Cube("Parcel sign post extension",transform,new Vector3(8.28f,1.49f,-10.665f),new Vector3(.025f,.36f,.025f),steel);
-            AddFloorBin("F01","storage",new Vector3(-3.6f,.012f,-1.8f),new Vector3(1.82f,1.5f,1.82f),12,true);
-            AddFloorBin("F02","storage",new Vector3(-.8f,.012f,-1.8f),new Vector3(1.82f,1.5f,1.82f),12,true);
-            AddFloorBin("F03","storage",new Vector3(2f,.012f,-1.8f),new Vector3(1.82f,1.5f,1.82f),12,true);
+            AddSmallShelves();
             if (sandbox) AddRacks(true);
         }
 
@@ -108,13 +109,14 @@ namespace OneShift.RackLab
             Transform row = FindNamed("Starting wall racks");
             if (row == null) { Debug.LogError("The WMS could not find the authored rack row."); return; }
             racksAdded = true; row.gameObject.SetActive(true);
+            row.SetPositionAndRotation(new Vector3(-10.5f,0,3.6f),Quaternion.Euler(0,-90,0));
             if (!sandbox) { RegisterRackRow(row, "A"); return; }
             var rows=new List<Transform>{row};
-            float[] rowX={-6.2f,-2.2f,3.7f,9.5f};
+            float[] rowX={-7.6f,-4.7f,7.6f,10.5f};
             for(int i=0;i<rowX.Length;i++)
             {
                 var copy=Instantiate(row.gameObject,row.parent);copy.name="WMS storage row "+(char)('B'+i);
-                copy.transform.SetPositionAndRotation(new Vector3(rowX[i],0,3.6f),row.rotation);
+                copy.transform.SetPositionAndRotation(new Vector3(rowX[i],0,3.6f),Quaternion.Euler(0,i<2?-90:90,0));
                 rows.Add(copy.transform);owned.Add(copy);
             }
             for(int i=0;i<rows.Count;i++)RegisterRackRow(rows[i],((char)('A'+i)).ToString());
@@ -128,7 +130,7 @@ namespace OneShift.RackLab
                 // The bay identifier shares the top beam face, between its two
                 // location tickets. Nothing floats over the rack opening.
                 Sign(bays[b].transform,new Vector3(0,PalletRackBay.BeamPitch*2-.065f,-.535f),Quaternion.identity,new Vector2(.44f,.108f),
-                    "BAY "+aisle+(b+1).ToString("00"),"LOCATION / LEVEL / POSITION");
+                    "BAY "+(b+1).ToString("00"),"");
                 var slots = bays[b].palletPositions.OrderBy(p => p.localPosition.y).ThenBy(p => p.localPosition.x).ToArray();
                 for (int slot = 0; slot < slots.Length; slot++)
                 {
@@ -154,7 +156,7 @@ namespace OneShift.RackLab
                     // A 108 mm ticket has a real steel margin above and below.
                     float ticketY=level==1?.15f:-PalletRackBay.DeckAboveBeam-.066f;
                     bin.Label=Label(node,new Vector3(0,ticketY,-.534f),Quaternion.Euler(0,180,0),new Vector2(.49f,.108f),
-                        "BIN:"+id,"bin",id,id,level==1?"PICK FACE":"RESERVE");
+                        "BIN:"+id,"bin",id,id,"LEVEL "+level+" / "+(position==1?"LEFT":"RIGHT"));
                     bins.Add(bin);
                 }
             }
@@ -165,6 +167,36 @@ namespace OneShift.RackLab
                 string range="BAYS 01 - "+bays.Length.ToString("00");
                 Sign(transform,new Vector3(row.position.x,2.75f,front),Quaternion.identity,new Vector2(.48f,.62f),"ROW "+aisle,range,true);
                 Sign(transform,new Vector3(row.position.x,2.75f,back),Quaternion.Euler(0,180,0),new Vector2(.48f,.62f),"ROW "+aisle,range,true);
+            }
+        }
+
+        void AddSmallShelves()
+        {
+            // This is the owner's original three-shelf green rack, retained in
+            // Resources for browser builds. It is distinct from the pallet row.
+            var source=Resources.Load<GameObject>("WarehouseSmallShelf");
+            if(source==null){Debug.LogError("The original small shelving prefab is missing from Resources.");return;}
+            for(int bay=1;bay<=2;bay++)
+            {
+                var rack=Instantiate(source,transform);rack.name="Small shelving / S"+bay.ToString("00");owned.Add(rack);
+                rack.transform.SetPositionAndRotation(new Vector3(bay==1?-9.4f:-6.9f,0,-9.15f),Quaternion.Euler(0,180,0));
+                rack.transform.localScale=new Vector3(.8f,.55f,.8f);
+                // Slots use world metre dimensions, so carton size and gravity
+                // are never scaled with the reused rack mesh and colliders.
+                for(int level=1;level<=3;level++)for(int position=1;position<=2;position++)
+                {
+                    string id="S"+bay.ToString("00")+"-"+level.ToString("00")+"-"+position.ToString("00");
+                    var node=Child("Bin / "+id,transform,Vector3.zero);
+                    node.SetPositionAndRotation(rack.transform.TransformPoint(new Vector3(position==1?-.576f:.576f,level*1.12f+.015f,0)),rack.transform.rotation);
+                    var bin=node.gameObject.AddComponent<WarehouseWmsBin>();
+                    bin.Id=id;bin.Kind="storage";bin.Capacity=1;bin.CanPick=true;bin.OwnsShelf=true;
+                    bin.Volume=node.gameObject.AddComponent<BoxCollider>();bin.Volume.isTrigger=true;
+                    bin.Volume.center=new Vector3(0,.265f,0);bin.Volume.size=new Vector3(.89f,.53f,.84f);
+                    bin.Label=Label(node,new Vector3(0,-.0385f,-.435f),Quaternion.Euler(0,180,0),new Vector2(.43f,.062f),
+                        "BIN:"+id,"bin",id,id,"LEVEL "+level+" / "+(position==1?"LEFT":"RIGHT"));
+                    bins.Add(bin);
+                }
+                Sign(transform,new Vector3(rack.transform.position.x,2.09f,-8.712f),Quaternion.Euler(0,180,0),new Vector2(.66f,.15f),"SHELF "+bay.ToString("00"),"");
             }
         }
 
@@ -179,8 +211,8 @@ namespace OneShift.RackLab
             var text=new GameObject("Floor marking / "+value).AddComponent<TextMesh>();
             text.transform.SetParent(transform,false);text.transform.localPosition=position;
             text.transform.localRotation=Quaternion.Euler(90,0,0);WarehouseCareer.UseWarehouseFont(text);
-            text.fontSize=64;text.anchor=TextAnchor.MiddleCenter;text.alignment=TextAlignment.Center;text.text=value;
-            text.color=new Color(.82f,.72f,.49f);WarehouseWmsLabel.FitText(text,size,position);
+            text.fontSize=128;text.anchor=TextAnchor.MiddleCenter;text.alignment=TextAlignment.Center;text.text=value;
+            text.color=new Color(.52f,.44f,.28f);WarehouseWmsLabel.FitText(text,size,position);
             var renderer=text.GetComponent<Renderer>();renderer.shadowCastingMode=ShadowCastingMode.Off;renderer.receiveShadows=false;
         }
         void ReplaceLegacySigns()
@@ -200,26 +232,59 @@ namespace OneShift.RackLab
         void Sign(Transform parent,Vector3 position,Quaternion rotation,Vector2 size,string heading,string detail,bool rowMarker=false)
         {
             var sign=Child("Wayfinding / "+heading,parent,position);sign.localRotation=rotation;
-            var backing=WarehouseCareer.Cube("Cream warehouse sign",sign,Vector3.zero,new Vector3(size.x,size.y,.016f),paper);
+            bool industrial=rowMarker||size.x>=.8f;
+            var backing=WarehouseCareer.Cube(industrial?"Matte enamel wayfinding panel":"Plain printed bay card",sign,Vector3.zero,new Vector3(size.x,size.y,.016f),industrial?signPanel:paper);
             backing.GetComponent<Renderer>().shadowCastingMode=ShadowCastingMode.Off;
-            WarehouseCareer.Cube("Left classification stripe",sign,new Vector3(-size.x*.478f,0,-.009f),new Vector3(size.x*.044f,size.y,.002f),signAccent);
+            if(industrial)SignHardware(sign,size);
             var title=new GameObject("Sign heading").AddComponent<TextMesh>();title.transform.SetParent(sign,false);
-            WarehouseCareer.UseWarehouseFont(title);title.fontSize=64;title.anchor=TextAnchor.MiddleCenter;title.alignment=TextAlignment.Center;
-            title.text=rowMarker?heading.Substring(4):heading;title.color=new Color(.10f,.15f,.11f);title.fontStyle=FontStyle.Bold;
-            WarehouseWmsLabel.FitText(title,new Vector2(size.x*.83f,size.y*(rowMarker?.48f:.40f)),new Vector3(size.x*.018f,size.y*(rowMarker?.04f:.13f),-.0105f));
-            var caption=new GameObject("Sign detail").AddComponent<TextMesh>();caption.transform.SetParent(sign,false);
-            WarehouseCareer.UseWarehouseFont(caption);caption.fontSize=40;caption.anchor=TextAnchor.MiddleCenter;caption.alignment=TextAlignment.Center;
-            caption.text=detail;caption.color=title.color;
-            WarehouseWmsLabel.FitText(caption,new Vector2(size.x*.83f,size.y*(rowMarker?.09f:.17f)),new Vector3(size.x*.018f,-size.y*.30f,-.0105f));
+            WarehouseCareer.UseWarehouseFont(title);title.fontSize=128;title.anchor=TextAnchor.MiddleCenter;title.alignment=TextAlignment.Center;
+            title.text=rowMarker?heading.Substring(4):heading;
+            title.color=industrial?new Color(.65f,.63f,.55f):new Color(.004f,.004f,.004f);title.fontStyle=FontStyle.Bold;
+            bool hasDetail=!string.IsNullOrEmpty(detail);
+            WarehouseWmsLabel.FitText(title,new Vector2(size.x*.86f,size.y*(rowMarker?.48f:hasDetail?.43f:.65f)),new Vector3(0,size.y*(rowMarker?.04f:hasDetail?.13f:0),-.0105f));
+            if(hasDetail)
+            {
+                var caption=new GameObject("Sign detail").AddComponent<TextMesh>();caption.transform.SetParent(sign,false);
+                WarehouseCareer.UseWarehouseFont(caption);caption.fontSize=64;caption.anchor=TextAnchor.MiddleCenter;caption.alignment=TextAlignment.Center;
+                caption.text=detail;caption.color=title.color;
+                WarehouseWmsLabel.FitText(caption,new Vector2(size.x*.86f,size.y*(rowMarker?.11f:.18f)),new Vector3(0,-size.y*.30f,-.0105f));
+            }
             if(rowMarker)
             {
                 var eyebrow=new GameObject("Row category").AddComponent<TextMesh>();eyebrow.transform.SetParent(sign,false);WarehouseCareer.UseWarehouseFont(eyebrow);
-                eyebrow.fontSize=40;eyebrow.anchor=TextAnchor.MiddleCenter;eyebrow.alignment=TextAlignment.Center;eyebrow.color=title.color;eyebrow.text="ROW";
+                eyebrow.fontSize=64;eyebrow.anchor=TextAnchor.MiddleCenter;eyebrow.alignment=TextAlignment.Center;eyebrow.color=title.color;eyebrow.text="ROW";
                 WarehouseWmsLabel.FitText(eyebrow,new Vector2(size.x*.55f,size.y*.10f),new Vector3(size.x*.018f,size.y*.36f,-.0105f));
                 foreach(float x in new[]{-size.x*.29f,size.x*.29f})
                     WarehouseCareer.Cube("Upright sign clamp",sign,new Vector3(x,0,.025f),new Vector3(.025f,size.y*.80f,.05f),steel);
             }
-            foreach(var renderer in sign.GetComponentsInChildren<Renderer>()){renderer.shadowCastingMode=ShadowCastingMode.Off;renderer.receiveShadows=false;}
+            foreach(var renderer in sign.GetComponentsInChildren<Renderer>()){renderer.shadowCastingMode=ShadowCastingMode.Off;renderer.receiveShadows=true;}
+        }
+
+        void SignHardware(Transform parent,Vector2 size)
+        {
+            // One shared-material mesh per sign carries its inset keyline,
+            // classification band and four square fixing heads. No extra lights
+            // or renderer per bolt, and no decoration on the small bin tickets.
+            var vertices=new List<Vector3>();var triangles=new List<int>();var normals=new List<Vector3>();
+            void Plate(float x,float y,float width,float height)
+            {
+                int first=vertices.Count;const float z=-.010f;
+                vertices.Add(new Vector3(x-width*.5f,y-height*.5f,z));vertices.Add(new Vector3(x-width*.5f,y+height*.5f,z));
+                vertices.Add(new Vector3(x+width*.5f,y+height*.5f,z));vertices.Add(new Vector3(x+width*.5f,y-height*.5f,z));
+                for(int i=0;i<4;i++)normals.Add(Vector3.back);
+                triangles.Add(first);triangles.Add(first+1);triangles.Add(first+2);triangles.Add(first);triangles.Add(first+2);triangles.Add(first+3);
+            }
+            float inset=Mathf.Min(.026f,size.y*.075f),line=Mathf.Min(.005f,size.y*.014f);
+            float xEdge=size.x*.5f-inset,yEdge=size.y*.5f-inset;
+            Plate(0,yEdge,size.x-inset*2,line);Plate(0,-yEdge,size.x-inset*2,line);
+            Plate(-xEdge,0,line,size.y-inset*2);Plate(xEdge,0,line,size.y-inset*2);
+            Plate(0,-size.y*.415f,size.x*.74f,size.y*.028f);
+            float bolt=Mathf.Min(.014f,size.y*.045f);
+            foreach(float x in new[]{-1f,1f})foreach(float y in new[]{-1f,1f})
+                Plate(x*(size.x*.5f-inset*.5f),y*(size.y*.5f-inset*.5f),bolt,bolt);
+            var mesh=new Mesh{name="Industrial sign border and fixings"};mesh.SetVertices(vertices);mesh.SetNormals(normals);mesh.SetTriangles(triangles,0);mesh.RecalculateBounds();owned.Add(mesh);
+            var node=Child("Inset border and mounting heads",parent,Vector3.zero);node.gameObject.AddComponent<MeshFilter>().sharedMesh=mesh;
+            node.gameObject.AddComponent<MeshRenderer>().sharedMaterial=signTrim;
         }
 
         WarehouseWmsBin AddFloorBin(string id,string kind,Vector3 floor,Vector3 size,int capacity,bool canPick,
@@ -242,7 +307,7 @@ namespace OneShift.RackLab
                 WarehouseCareer.Cube("Receiving label upright",node,new Vector3(local.x,local.y*.5f,local.z+.012f),new Vector3(.025f,local.y,.025f),steel);
                 WarehouseCareer.Cube("Receiving label holder",node,local+new Vector3(0,0,.009f),new Vector3(.50f,.26f,.012f),steel);
             }
-            bin.Label=Label(node,node.InverseTransformPoint(plaque),Quaternion.Inverse(node.rotation)*angle,new Vector2(.48f,.24f),"BIN:"+id,"bin",id,id,kind.ToUpperInvariant()+" / CTN");
+            bin.Label=Label(node,node.InverseTransformPoint(plaque),Quaternion.Inverse(node.rotation)*angle,new Vector2(.48f,.24f),"BIN:"+id,"bin",id,id,WarehouseWmsVocabulary.BinName(id));
             bins.Add(bin);return bin;
         }
 
@@ -302,7 +367,7 @@ namespace OneShift.RackLab
             else if(carton.Labels!=null)foreach(var old in carton.Labels)if(old!=null){old.gameObject.SetActive(false);WarehouseCourierVisuals.Remove(old.gameObject);}
             Vector3 size=body.GetComponent<BoxCollider>().size;
             Vector2 paperSize=new Vector2(Mathf.Min(.32f,size.x*.82f),Mathf.Min(.20f,size.y*.79f));
-            string detail=sku+" / "+unitsPerCarton+" "+unit+" / 1 CTN";
+            string detail=WarehouseWmsVocabulary.ItemCode(sku)+" / "+unitsPerCarton+" "+unit;
             var front=Label(body.transform,new Vector3(0,0,size.z*.5f+.002f),Quaternion.identity,paperSize,"CARTON:"+cartonId,"carton",cartonId,itemName,detail);
             var top=Label(body.transform,new Vector3(0,size.y*.5f+.003f,-size.z*.10f),Quaternion.Euler(-90,0,0),paperSize,"CARTON:"+cartonId,"carton",cartonId,itemName,detail);
             var item=Label(body.transform,new Vector3(-size.x*.5f-.002f,0,0),Quaternion.Euler(0,-90,0),
@@ -314,8 +379,8 @@ namespace OneShift.RackLab
         {
             var carton=body!=null?body.GetComponent<WarehouseWmsCarton>():null;if(carton==null)return;
             carton.DocumentId=documentId;
-            string detail=carton.Sku+" / "+carton.UnitsPerCarton+" "+carton.Unit+" / 1 CTN";
-            if(!string.IsNullOrEmpty(documentId))detail+="\n"+documentId+" / LATCHFORD DISTRIBUTION";
+            string detail=WarehouseWmsVocabulary.ItemCode(carton.Sku)+" / "+carton.UnitsPerCarton+" "+carton.Unit;
+            if(!string.IsNullOrEmpty(documentId))detail+="\n"+documentId;
             if(carton.Labels!=null)foreach(var label in carton.Labels)if(label!=null)label.SetPrintedDetail(carton.ItemName,detail);
         }
 

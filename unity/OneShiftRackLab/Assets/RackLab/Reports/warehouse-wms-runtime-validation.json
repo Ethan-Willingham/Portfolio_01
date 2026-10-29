@@ -1,5 +1,5 @@
 {
-    "generatedUtc": "2026-10-29T01:37:09.1467378Z",
+    "generatedUtc": "2026-10-29T22:00:28.7708657Z",
     "method": "Production WMS runtime, ledger, courier and actual warehouse collision cloned into isolated PhysX at 20 ms. Workflow scans use decoded-label fixture input; carton placement is explicit test setup followed by real physics settling.",
     "scope": "Physical support, workflow transactions, exact manifests and courier departure. Native handheld input, camera framing and optical label occlusion remain separate browser and scanner checks. The open source scene is never changed.",
     "passed": true,
@@ -20,7 +20,7 @@
         {
             "name": "Sandbox stock occupies its labelled bins",
             "passed": true,
-            "expectation": "One hundred real cartons, eight items, three rack rows and separate receiving/staging bins reconcile with opening WMS stock.",
+            "expectation": "One hundred real cartons, eight items, five rack rows and separate receiving/staging bins reconcile with opening WMS stock.",
             "error": "",
             "measurements": [
                 {

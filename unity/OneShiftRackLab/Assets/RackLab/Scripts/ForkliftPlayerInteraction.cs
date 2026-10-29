@@ -13,6 +13,13 @@ namespace OneShift.RackLab
         public float interactionDistance = 3f;
         public bool IsDriving => driving;
         public bool TrainingOpen => driving && !trained;
+        public void SetSandboxReady(bool sandbox)
+        {
+            if (!sandbox) return;
+            trained = true;
+            trainingStep = 3;
+            trainingCentered = true;
+        }
         public string TrainingStep => trained ? "complete" : trainingStep == 0 ? "brake" : trainingStep == 1 ? "lift" : "center";
         public bool CabView => cabView;
         public bool ParkingBrake => parkingBrake;
@@ -38,7 +45,7 @@ namespace OneShift.RackLab
             recoverHeld > 0 ? "Keep holding to return to the parking bay" :
             mouseLift.NeedsRelease ? "Release, then hold again to use the forks" :
             TrainingOpen ? TrainingHint : ForkControlHeld ? "Centre the lever to stop the forks" :
-            !hasDriven ? "Drive towards the first pallet" :
+            !hasDriven ? "Drive forward or reverse" :
             lift != null && lift.LiftHeightMeters > .65f && vehicle.SpeedMps > .8f ? "Carry low and turn slowly" :
             vehicle.SpeedMps < .2f ? "Adjust the forks" : "";
         bool CanOfferEntry => walking != null && vehicle != null && vehicle.isActiveAndEnabled && walking.CanControl &&

@@ -72,20 +72,24 @@ namespace OneShift.RackLab
             mesh.subMeshCount = 2; mesh.SetTriangles(white, 0); mesh.SetTriangles(black, 1); mesh.RecalculateBounds();
             node.AddComponent<MeshFilter>().sharedMesh = mesh;
             var renderer = node.AddComponent<MeshRenderer>(); renderer.sharedMaterials = new[] { paper, ink };
-            renderer.shadowCastingMode = ShadowCastingMode.Off; renderer.receiveShadows = false;
+            renderer.shadowCastingMode = ShadowCastingMode.Off; renderer.receiveShadows = true;
             var text = new GameObject("Printed description").AddComponent<TextMesh>();
             text.transform.SetParent(node.transform, false); text.transform.localPosition = new Vector3(0, size.y * .29f, .0012f);
             text.transform.localRotation = Quaternion.Euler(0, 180, 0);
             WarehouseCareer.UseWarehouseFont(text); text.anchor = TextAnchor.UpperCenter; text.alignment = TextAlignment.Center;
-            text.fontSize = 40;
-            text.color = new Color(.12f, .16f, .13f);
+            text.fontSize = 72;
+            text.fontStyle = FontStyle.Bold;
+            // Unlit text colours are linear: printed ink must remain darker
+            // than the shaded paper rather than appearing luminous on it.
+            text.color = new Color(.004f, .004f, .004f);
             label.DescriptionText=text;label.SetPrintedDetail(caption,detail);
             var human = new GameObject("Human-readable code").AddComponent<TextMesh>();
             human.transform.SetParent(node.transform, false); human.transform.localPosition = new Vector3(0, -size.y * .34f, .0012f);
             human.transform.localRotation = Quaternion.Euler(0, 180, 0);
             WarehouseCareer.UseWarehouseFont(human); human.anchor = TextAnchor.UpperCenter; human.alignment = TextAlignment.Center;
-            human.fontSize = 32;
-            human.color = text.color; human.text = code;
+            human.fontSize = 56;
+            human.color = text.color;
+            human.text = kind=="item"?WarehouseWmsVocabulary.ItemCode(id):id;
             label.CodeText=human;
             FitPrint(human,label.CodeArea);
             label.ScanFace = node.AddComponent<BoxCollider>(); label.ScanFace.isTrigger = true;
@@ -101,8 +105,10 @@ namespace OneShift.RackLab
             Caption=caption;
             if(DescriptionText==null)return;
             string[] lines=(detail??"").Split('\n');
-            string value=Fit((caption??"").ToUpperInvariant(),25);
-            for(int i=0;i<Mathf.Min(ShelfTicket?1:2,lines.Length);i++)value+="\n"+Fit(lines[i],30);
+            string value=Fit((caption??"").ToUpperInvariant(),30);
+            // One bold address is the shelf ticket's reading target. Level and
+            // side are already encoded in it, without another miniature line.
+            for(int i=0;i<Mathf.Min(ShelfTicket?0:2,lines.Length);i++)value+="\n"+Fit(lines[i],30);
             DescriptionText.text=value;
             FitPrint(DescriptionText,DescriptionArea);
         }

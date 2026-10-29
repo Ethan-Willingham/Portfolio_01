@@ -58,6 +58,8 @@ namespace OneShift.RackLab
             public float[] cameraPosition,cameraRotation;
             public float holdDistance;
             public bool scannerTrigger,scannerAimVisible,scannerAimSurface;
+            public string scannerFeedback,scannerFeedbackMessage;
+            public int scannerLineSegments;
             public float[] scannerAimPoint,scannerEmitter,scannerDirection;
         }
         [Serializable] sealed class WmsBodyDebug {public string id;public float[] position,rotation,velocity,size;public bool kinematic;}
@@ -69,6 +71,7 @@ namespace OneShift.RackLab
             var held=uiWalking.GetComponent<WarehouseGrabber>()?.HeldBody;
             string json=JsonUtility.ToJson(new WmsDebug{state=uiWms.Capture(),conserves=valid,invariantReason=reason,courierState=uiWms.Courier.State.ToString(),courierStatus=uiWms.Courier.Status,
                 scannerTrigger=uiWms.Scanner.TriggerHeld,scannerAimVisible=uiWms.Scanner.AimVisible,scannerAimSurface=uiWms.Scanner.AimHasSurface,
+                scannerFeedback=uiWms.Scanner.FeedbackStatus,scannerFeedbackMessage=uiWms.Scanner.FeedbackMessage,scannerLineSegments=uiWms.Scanner.ProjectedLineSegments,
                 scannerAimPoint=V(uiWms.Scanner.AimPoint),scannerEmitter=V(uiWms.Scanner.EmitterPosition),scannerDirection=V(uiWms.Scanner.EmitterDirection),
                 cameraPosition=V(uiWalking.eyes.transform.position),cameraRotation=V(uiWalking.eyes.transform.eulerAngles),holdDistance=uiWalking.GetComponent<WarehouseGrabber>().HoldDistance,
                 heldCarton=held!=null?held.GetComponent<WarehouseWmsCarton>()?.Id:"",bodies=uiWms.Bodies.Where(p=>p.Value!=null).Select(p=>new WmsBodyDebug{id=p.Key,position=V(p.Value.position),rotation=V(p.Value.rotation.eulerAngles),velocity=V(p.Value.linearVelocity),size=V(p.Value.GetComponent<Collider>().bounds.size),kinematic=p.Value.isKinematic}).ToArray(),

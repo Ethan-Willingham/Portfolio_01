@@ -50,7 +50,7 @@ namespace OneShift.RackLab
                 // Keep the far roof and walls inside the directional shadow
                 // volume; 40 m clipped thin panels and leaked bright sun strips.
                 pipeline.shadowDistance = 60;
-                pipeline.msaaSampleCount = 2;
+                pipeline.msaaSampleCount = 4;
                 var serialized = new SerializedObject(pipeline);
                 serialized.FindProperty("m_AdditionalLightsShadowResolutionTierHigh").intValue = 512;
                 serialized.FindProperty("m_AdditionalLightsShadowResolutionTierMedium").intValue = 256;

@@ -24,7 +24,7 @@ namespace OneShift.RackLab
             public DemonstrationState demo;
         }
         [Serializable] public sealed class ItemRow
-        {public string id,sku,name,description,uom;public int unitsPerCarton,onHand,available,reserved,picked,inReceiving;}
+        {public string id,sku,code,name,description,uom;public int unitsPerCarton,onHand,available,reserved,picked,inReceiving;}
         [Serializable] public sealed class BinRow
         {public string id,name,kind;public int capacity,onHand,available;public bool canPick;}
         [Serializable] public sealed class CartonRow
@@ -57,7 +57,7 @@ namespace OneShift.RackLab
                 revision=Revision+Ledger.Revision,mode=DemonstrationActive?"demo":Sandbox?"sandbox":"career",facility="Latchford Distribution / WH-01",cash=Cash,completedOrders=CompletedOrders,
                 demo=CaptureDemonstration(),
                 message=Message,severity=Severity,equipped=Scanner.Equipped,scan=ScanResult,workflow=Workflow,
-                items=Ledger.Items.Select(i=>new ItemRow{id=i.id,sku=i.id,name=i.name,description=i.description,uom=i.uom,unitsPerCarton=i.unitsPerCarton,
+                items=Ledger.Items.Select(i=>new ItemRow{id=i.id,sku=i.id,code=WarehouseWmsVocabulary.ItemCode(i.id),name=i.name,description=i.description,uom=i.uom,unitsPerCarton=i.unitsPerCarton,
                     onHand=Ledger.OnHand(i.id),available=Ledger.Available(i.id),reserved=Ledger.Reserved(i.id),picked=Ledger.Picked(i.id),inReceiving=Ledger.InReceiving(i.id)}).ToArray(),
                 bins=Ledger.Bins.Where(b=>b.enabled).Select(b=>new BinRow{id=b.id,name=b.name,kind=b.kind.ToString(),capacity=b.capacity,
                     onHand=Ledger.BinUsed(b.id),available=Ledger.Available(null,b.id),canPick=b.canPick}).ToArray(),

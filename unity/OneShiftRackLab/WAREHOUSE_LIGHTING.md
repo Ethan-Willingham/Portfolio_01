@@ -1,14 +1,18 @@
 # Warehouse lighting
 
-The room starts at 4:30 a.m. with its three ceiling-light rows on. The exterior
-is dark, and the high windows admit no direct sunlight until dawn. The opening
-night reaches 7 a.m. in about 17 seconds. The clock then slows: 7 a.m. to sunset
-takes nine real minutes. The following night takes 90 seconds. Sunrise is at
-6 a.m., noon at 12 and sunset at 6 p.m.
-The sun travels from the east wall, across the southern sky, to the west wall.
-The 41-degree latitude gives a 49-degree midday elevation at this equinox setting.
-Start time, latitude, day and night duration, light intensity and manual pause are Inspector fields on
-`High warehouse daylight > Warehouse Day Night`. The clock stops on loss of focus.
+V13 starts every mode at 9 a.m., with the three ceiling-light rows on. The sun
+travels toward 4 p.m. over thirty real minutes, then returns to 9 a.m. over the
+next thirty. A cosine curve slows it smoothly at both ends before it reverses.
+There is no night phase, midnight jump or dark opening; manual hour changes
+also clamp to the 9 a.m. to 4 p.m. interval. The clock stops on loss of focus
+and preserves its direction while paused.
+
+The sun travels from the east side across the southern sky to the west, then
+retraces that path. The 41-degree latitude gives a 49-degree midday elevation.
+Start hour, latitude, one-way duration, intensity and manual pause are Inspector
+fields on `High warehouse daylight > Warehouse Day Night`.
+`WarehouseDayNightBuilder.InstallWorkingDay()` applies these settings without
+rebuilding the warehouse shell.
 
 ## Switches and fixtures
 
@@ -23,7 +27,12 @@ soft real-time shadows. The roof fixture housings remain the existing geometry.
 Fixture intensity is 26, peak sunlight is 2.35, and window shafts use 75 percent
 of their former energy. Lens emission is a warm (.84, .80, .70), avoiding white
 clipping in the browser while the fixture's actual light output stays at 26.
-Daytime ambient is softer, while the low night ambient remains unchanged.
+V13 increases the broad equator and ground ambient so shadowed carton faces
+retain their brown material instead of falling to black. The hemisphere colors
+are sky (.38, .43, .48), equator (.34, .36, .35) and ground (.25, .255, .235),
+scaled by .9. Direct fixture and sunlight intensity stay unchanged; no extra
+lights or shadow maps are added. This targets indirect fill rather than raising
+the already bright top faces or printed labels.
 Forward+ lighting allows all twelve fixtures to illuminate the combined room
 meshes, without the eight-light-per-object limit. Desktop additional shadows have a
 4096-pixel atlas with 1024-pixel high-resolution slices. The rack shader supports
@@ -83,9 +92,9 @@ Runtime-created bay labels, carton labels and the fish plaque bind to the same
 depth-tested font material as the authored signs. Each scene shares one material
 per font and refreshes its texture when Unity rebuilds the font atlas.
 
-Desktop and browser players share the cached room reflection. The low night
-ambient keeps silhouettes readable with every
-row off; it does not light the room as if the fixtures were still on.
+Desktop and browser players share the cached room reflection. Switching a row
+off still removes its direct illumination and shadows, while broad daylight
+ambient keeps the shaded geometry readable.
 
 The browser export retains all twelve shadowed fixtures and the moving sun.
 Its main shadow map is 2048 pixels with two cascades, a 25 percent near split and
@@ -105,7 +114,7 @@ enum, despite the older custom-resolution path still present in URP. The
 moving-camera check verifies both allocations and unchanged independent light
 settings; the browser diagnostics expose the actual tier and atlas values.
 
-The browser uses 2x MSAA plus medium SMAA and downsampled contact
+The v13 browser uses 4x MSAA plus medium SMAA and downsampled contact
 shading with four samples, medium normal reconstruction and medium blur.
 Before v12, the browser captured six 64-pixel reflection faces every twenty
 seconds and after switch or explicit clock changes. The cached cubemap removes
@@ -119,13 +128,13 @@ limits to 3,686,400 pixels and 1.5. This prevents a Retina display from silently
 quadrupling the render workload. It does not change the layout, camera view or
 physics timestep. The actual gain still needs measurement on target Macs.
 
-The browser prepares actual rendered night, dawn, morning, afternoon and
-all-rows-off variants behind the loading screen. V12 uses the saved room cubemap
-throughout; it does not wait for new captures. The v8 preparation retains seven stages and reports the current
+The browser prepares actual rendered 9 a.m., 11 a.m., 1 p.m., 4 p.m. and
+all-rows-off variants behind the loading screen. It uses the saved room cubemap
+throughout; it does not wait for new captures. Preparation retains seven stages and reports the current
 lighting phase and view. Its four lit phases visit eight views, including the
 street truck, office, business park and worker shadows. The remaining stages
 cover both all-off lighting states, the fork visibility overlay, and restoration
-of the opening view, reflection and 4:30 clock. Truck movement, physical freight
+of the opening view, reflection and 9 a.m. clock. Truck movement, physical freight
 and the simulation clock remain frozen throughout. Preparation yields before
 each work label so the browser can paint it before shader work begins.
 This addresses the first-use shader-link stalls measured
@@ -174,9 +183,10 @@ walls, roof, racks and stock cast and receive the moving shadows. At midday
 the roof blocks direct sun except through the high windows. Low morning and
 evening rays reach farther into the room.
 
-The sky shader draws the sun disc from that exact light direction, with warm
-twilight, sparse stars and one layer of analytic clouds. Cloud drift follows
-the game hour continuously across midnight, so pause and inactivity freeze it
+The sky shader draws the sun disc from that exact light direction and one layer
+of analytic clouds. Its older twilight and star variants remain in the shader,
+but the v13 working day never enters them. Cloud drift follows
+the game hour through the smooth reversal, so pause and inactivity freeze it
 with the sun. It uses one sky pass without cloud textures, cloud meshes or
 volumetric ray marching. Clouds do not cast an additional moving shadow layer.
 
@@ -219,21 +229,28 @@ the shell. A full rack-floor rebuild restores the asset trial; restore
 `WarehousePlayerBuilder.Install()` to rebuild the public layout. The office
 marker also preserves its south opening during later shell rebuilds.
 
-`WarehouseDayNightBuilder.Validate()` checks nine times across the cycle,
+`WarehouseDayNightBuilder.Validate()` checks five times across the working day,
 sun-facing volume selection and alignment, moving mesh bounds, twelve unique
-shadowed fixtures, independent row states, switch reachability, midnight wrapping
-and pause. It also checks the fast opening dawn, nine-minute day, faster night
-and a continuous transition across morning at different frame intervals.
-It restores the pre-test row states and night start in Edit mode.
+shadowed fixtures, independent row states, switch reachability and pause. It
+also checks thirty minutes each way, a smooth symmetric afternoon reversal,
+frame independence, clamped manual hours, useful indirect fill and the disabled
+local probe. It restores the pre-test row states and morning start in Edit mode.
 The report is `Assets/RackLab/Reports/warehouse-lighting-validation.txt`.
-Also inspect night, morning, noon and afternoon captures; verify all-off and each
+Also inspect morning, noon and afternoon captures; verify all-off and each
 row independently in Play mode, check the console, and run the floor and rack
 movement checks. Source scripts live in `Assets/RackLab/Scripts`, with builders
 in `Editor` and the sky shader in `Shaders`.
 The office, business-park and worker builders each provide `Validate()` checks;
+`WarehouseOfficeBuilder.RefreshOffice()` rebuilds only the office furniture,
+glazing and entrance without regenerating the warehouse shell. V13 adds four
+properly mounted blinds with 56 thin 32-degree slats, ladder cords and rails;
+a mouse, paper tray, small wall planner and power outlet; and two pull handles
+whose mounting posts attach to the door's solid latch stile. The parcel end of
+the desk and both walkways remain clear. Run `WarehouseOfficeLightingRepair.Install()`
+and recapture the environment reflection after a refresh.
 `WarehouseFrontOfficeValidation.ValidateAndSave()` covers parcel lifecycle and
 door obstruction on a temporary copy. Capture the entrance and worker shadows
-at dawn, noon and night, then rerun the actual browser performance trace after
+in morning, noon and afternoon light, then rerun the actual browser performance trace after
 rendering changes. The final v7 export had zero build errors and 42,305,038
 compressed bytes; its office walkthrough passed 22 checks and the launcher
 passed 40 simulated-loader checks. The earlier 64-check v7 gameplay pass
@@ -241,7 +258,7 @@ preceded the final small rendering and HUD fixes.
 For v8, also run `WarehouseSurfaceAudit.Validate()`,
 `WarehouseReceivingValidation.ValidateRoadRoute()` and
 `WarehouseReceivingValidation.ValidateAndSave()` after the installers. Capture
-the office at night and daylight, and compare nearby worker, pallet and rack
+the office with rows on and off, and compare nearby worker, pallet and rack
 shadows while walking between fixtures. Repeat the browser performance trace
 after exporting; the older v6 and v7 traces do not validate the new shadow budget.
 

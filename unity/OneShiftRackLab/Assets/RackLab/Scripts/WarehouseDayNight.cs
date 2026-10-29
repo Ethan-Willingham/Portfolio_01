@@ -6,16 +6,14 @@ namespace OneShift.RackLab
     [DefaultExecutionOrder(-100)]
     public sealed class WarehouseDayNight : MonoBehaviour
     {
-        public const float MorningHour = 7;
-        public const float SunsetHour = 18;
-        [Range(0, 24)] public float startHour = 4.5f;
-        [Tooltip("Real minutes from 07:00 through sunset at 18:00.")]
-        [Min(1)] public float dayLengthMinutes = 9;
-        [Tooltip("Real minutes from sunset through the next morning. At 1.5 minutes, the initial 04:30 to 07:00 takes 17.3 seconds.")]
-        [Min(.25f)] public float nightLengthMinutes = 1.5f;
+        public const float MorningHour = 9;
+        public const float AfternoonHour = 16;
+        [Range(MorningHour, AfternoonHour)] public float startHour = MorningHour;
+        [Tooltip("Real minutes from morning to afternoon, and the same duration back. No night phase.")]
+        [Min(1)] public float dayLengthMinutes = 30;
         [Min(0)] public float peakSunIntensity = 2.35f;
         [Range(0, 1)] public float beamIntensity = .75f;
-        [Range(0, 1)] public float daytimeAmbientIntensity = .8f;
+        [Range(0, 1)] public float daytimeAmbientIntensity = .9f;
         [Range(0, 65)] public float latitude = 41;
         public bool paused;
         public Light sun;
@@ -34,6 +32,7 @@ namespace OneShift.RackLab
         float reflectionTimer;
         int reflectionRender = -1;
         bool reflectionRequested;
+        double daylightPhase;
         Material previousSky;
         static readonly int SunDirectionId = Shader.PropertyToID("_SunDirection");
         static readonly int SunColorId = Shader.PropertyToID("_SunColor");
@@ -64,21 +63,13 @@ namespace OneShift.RackLab
         public void Advance(float seconds)
         {
             if (seconds <= 0 || paused) return;
-            float daylightHours = SunsetHour - MorningHour;
-            float nightHours = 24 - daylightHours;
-            float daySeconds = Mathf.Max(1, dayLengthMinutes) * 60;
-            float nightSeconds = Mathf.Max(.25f, nightLengthMinutes) * 60;
-            float fromMorning = Mathf.Repeat(Hour - MorningHour, 24);
-            // Map the two clock speeds onto one continuous real-time cycle.
-            // Crossing sunrise, sunset or midnight consumes the entire delta,
-            // so the pace is independent of frame rate and no hours are skipped.
-            float elapsed = fromMorning < daylightHours
-                ? fromMorning * daySeconds / daylightHours
-                : daySeconds + (fromMorning - daylightHours) * nightSeconds / nightHours;
-            elapsed = Mathf.Repeat(elapsed + seconds, daySeconds + nightSeconds);
-            ApplyHour(elapsed < daySeconds
-                ? MorningHour + elapsed * daylightHours / daySeconds
-                : SunsetHour + (elapsed - daySeconds) * nightHours / nightSeconds, false);
+            double legSeconds = Mathf.Max(1, dayLengthMinutes) * 60.0;
+            // A cosine eases the sun to rest at each end before reversing.
+            // Keep the phase in double precision so small frame steps agree
+            // with large advances and a paused clock never loses its direction.
+            daylightPhase = (daylightPhase + seconds / legSeconds) % 2.0;
+            float progress = (float)((1.0 - System.Math.Cos(daylightPhase * System.Math.PI)) * .5);
+            ApplyHour(Mathf.Lerp(MorningHour, AfternoonHour, progress), false);
         }
 
         public static Vector3 SunPosition(float hour, float latitudeDegrees)
@@ -91,15 +82,18 @@ namespace OneShift.RackLab
 
         public void SetHour(float hour)
         {
+            hour = Mathf.Clamp(hour, MorningHour, AfternoonHour);
+            float progress = Mathf.InverseLerp(MorningHour, AfternoonHour, hour);
+            daylightPhase = System.Math.Acos(1.0 - 2.0 * progress) / System.Math.PI;
             ApplyHour(hour, true);
         }
 
         void ApplyHour(float hour, bool changedManually)
         {
-            // Slow browser frames must not turn the accelerated opening dawn
-            // into a request for another six-face room capture every frame.
+            // Manual changes can refresh an explicitly authored realtime probe;
+            // ordinary clock progression never requests an extra capture.
             if (changedManually && Mathf.Abs(Mathf.DeltaAngle(Hour * 15, hour * 15)) > .75f) RequestReflection();
-            Hour = Mathf.Repeat(hour, 24);
+            Hour = Mathf.Clamp(hour, MorningHour, AfternoonHour);
             TowardSun = SunPosition(Hour, latitude);
             Daylight = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(-.08f, .38f, TowardSun.y));
             float direct = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(0, .32f, TowardSun.y));
@@ -107,17 +101,19 @@ namespace OneShift.RackLab
             if (sun != null)
             {
                 sun.transform.rotation = Quaternion.LookRotation(-TowardSun, Vector3.up);
-                // Keep this as URP's main light at night, with zero energy. Disabling
-                // it would promote a ceiling fixture into the main-light slot.
+                // Keep this as URP's main light so no ceiling fixture is
+                // promoted into the directional-light slot.
                 sun.enabled = true;
                 sun.intensity = peakSunIntensity * direct;
                 sun.color = sunColor;
                 RenderSettings.sun = sun;
             }
             RenderSettings.ambientMode = AmbientMode.Trilight;
-            RenderSettings.ambientSkyColor = Color.Lerp(new Color(.017f, .023f, .038f), new Color(.34f, .40f, .46f) * daytimeAmbientIntensity, Daylight);
-            RenderSettings.ambientEquatorColor = Color.Lerp(new Color(.012f, .017f, .025f), new Color(.22f, .25f, .26f) * daytimeAmbientIntensity, Daylight);
-            RenderSettings.ambientGroundColor = Color.Lerp(new Color(.006f, .008f, .012f), new Color(.10f, .105f, .09f) * daytimeAmbientIntensity, Daylight);
+            // Broad bounced daylight keeps the unlit sides of brown cartons
+            // readable without increasing direct fixture energy or shadow cost.
+            RenderSettings.ambientSkyColor = new Color(.38f, .43f, .48f) * daytimeAmbientIntensity;
+            RenderSettings.ambientEquatorColor = new Color(.34f, .36f, .35f) * daytimeAmbientIntensity;
+            RenderSettings.ambientGroundColor = new Color(.25f, .255f, .235f) * daytimeAmbientIntensity;
             RenderSettings.ambientIntensity = 1;
             RenderSettings.reflectionIntensity = .55f;
             RenderSettings.fogColor = Color.Lerp(new Color(.009f, .014f, .027f), new Color(.54f, .65f, .73f), Daylight);
@@ -128,8 +124,8 @@ namespace OneShift.RackLab
                 material.SetFloat(DaylightId, Daylight);
                 material.SetColor(SunColorId, sunColor);
                 // Drift follows simulation time, so manual pause, inactivity and
-                // browser preparation all preserve the same sky. A circular path
-                // remains continuous across midnight without an extra clock.
+                // browser preparation all preserve the same sky. The phase
+                // follows the same smooth daylight reversal without another clock.
                 float cloudPhase = Hour * Mathf.PI / 12;
                 material.SetVector(CloudOffsetId, new Vector4(Mathf.Cos(cloudPhase) * .65f,
                     Mathf.Sin(cloudPhase) * .65f, 0, 0));
