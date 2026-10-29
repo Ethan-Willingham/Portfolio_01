@@ -59,6 +59,14 @@ identities into the canonical ledger, and removes the supplement after counting 
 response once. A missing or different report stops that refresh. This prevents a
 laptop update from losing or duplicating the published PC contribution.
 
+The laptop's concurrent October 29 refresh (commit `268af8ae`) recovered another
+29,266,005 tokens on October 22 and 23. Its public counters are preserved in
+`pendingCanonical`, outside the headline until the laptop imports the private PC
+report. Both computers have GPT-6.1 Sol records on those days, so aggregate totals
+alone cannot establish their overlap. The laptop's private ledger already retains
+that work; the import deduplicates it with the PC report and clears the pending
+snapshot. No laptop counters were discarded during the Git merge.
+
 The recovered July 25 to 26 records include GPT-5.6 Terra and Luna. Their historical
 price rows are explicitly marked as estimates: the earlier rates are calculated by
 reversing the official July 30 reductions (20% for Terra, 80% for Luna), rather than

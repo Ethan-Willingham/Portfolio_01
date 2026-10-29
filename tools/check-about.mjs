@@ -67,6 +67,14 @@ if (stats.supplement) {
     check(JSON.stringify(combined) === JSON.stringify(stats.days), 'published usage differs from canonical days plus its supplement');
   } catch (error) { check(false, error.message); }
 } else check(!stats.nativeDays, 'canonical baseline remains without a usage supplement');
+if (stats.pendingCanonical) {
+  const p = stats.pendingCanonical;
+  check(Boolean(stats.supplement), 'a pending canonical refresh must be reconciled when its supplement is absorbed');
+  check(p.collection?.ledgerId === stats.collection.ledgerId && p.collection.cutoff >= stats.collection.cutoff, 'pending canonical refresh has incompatible provenance');
+  check(p.totalTokens === sum(Object.values(p.days || {}).map(d => d.totalTokens)), 'pending canonical token total does not sum');
+  check(Math.abs(p.cost - sum(Object.values(p.days || {}).map(d => d.cost))) < 1e-8, 'pending canonical cost does not sum');
+  try { addUsageDays(p.days); } catch (error) { check(false, error.message); }
+}
 for (const [day, row] of Object.entries(stats.days || {})) {
   check(day > stats.legacy.through, `${day} overlaps the frozen legacy baseline`);
   const rows = Object.entries(row.models || {});

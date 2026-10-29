@@ -293,7 +293,7 @@ stats.retainedDays = usage.retainedDays;
 if (usage.nativeDays) stats.nativeDays = usage.nativeDays;
 else delete stats.nativeDays;
 if (usage.supplement) stats.supplement = usage.supplement;
-else delete stats.supplement;
+else { delete stats.supplement; delete stats.pendingCanonical; }
 if (usage.localReportPath) log(`  private laptop handoff: ${usage.localReportPath}`);
 stats.methodology = { ...stats.methodology,
   collector: 'native Claude messages and Codex response records, with legacy cumulative counters', collectorVersion: '2',

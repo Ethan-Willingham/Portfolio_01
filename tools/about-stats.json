@@ -4696,5 +4696,77 @@
       },
       "retained": []
     }
+  },
+  "pendingCanonical": {
+    "note": "Concurrent laptop refresh. Preserved outside the headline until the private desktop report is merged into the canonical ledger; aggregate day/model rows cannot establish overlap.",
+    "commit": "268af8ae4a9df6ed193f4282bbf8e397a396ba5e",
+    "collection": {
+      "ledgerId": "ad869c9bf7907245d6181fffd3ced9f98185a7070464096b52a5cfc52de46b2e",
+      "cutoff": "2026-10-29T16:53:15.139Z",
+      "timezone": "America/Chicago",
+      "files": 86,
+      "claudeMessages": 5782,
+      "codexSessions": 700,
+      "cacheDurationInconsistencies": 1,
+      "imports": {
+        "54cfd7f2b3e7303d79443844fc26726befa2948eabdb49ac2ca48e7c24b6605d": {
+          "tokens": 270309266,
+          "events": 2054,
+          "first": "2026-09-11T00:52:28.933Z",
+          "last": "2026-09-23T19:24:50.331Z"
+        }
+      },
+      "retained": []
+    },
+    "totalTokens": 29266005,
+    "cost": 4.852349200000003,
+    "days": {
+      "2026-10-22": {
+        "totalTokens": 27238538,
+        "cost": 4.400943200000002,
+        "models": {
+          "gpt-6.1-sol": {
+            "input": 424293,
+            "cacheWrite": 0,
+            "cacheWrite1h": 0,
+            "cacheRead": 26726272,
+            "output": 87973,
+            "totalTokens": 27238538,
+            "cost": 4.400943200000002,
+            "requests": 163,
+            "pricing": "deduplicated native responses, standard API rates",
+            "longContext": {
+              "input": 0,
+              "cacheWrite": 0,
+              "cacheRead": 0,
+              "output": 0
+            }
+          }
+        }
+      },
+      "2026-10-23": {
+        "totalTokens": 2027467,
+        "cost": 0.4514060000000001,
+        "models": {
+          "gpt-6.1-sol": {
+            "input": 102700,
+            "cacheWrite": 0,
+            "cacheWrite1h": 0,
+            "cacheRead": 1919360,
+            "output": 5407,
+            "totalTokens": 2027467,
+            "cost": 0.4514060000000001,
+            "requests": 26,
+            "pricing": "deduplicated native responses, standard API rates",
+            "longContext": {
+              "input": 0,
+              "cacheWrite": 0,
+              "cacheRead": 0,
+              "output": 0
+            }
+          }
+        }
+      }
+    }
   }
 }
