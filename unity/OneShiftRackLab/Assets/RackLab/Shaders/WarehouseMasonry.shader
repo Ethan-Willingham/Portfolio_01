@@ -44,6 +44,9 @@ Shader "OneShift/Warehouse Masonry"
             #pragma multi_compile_fragment _ _SCREEN_SPACE_OCCLUSION
             #pragma multi_compile_fog
             #pragma multi_compile_instancing
+            // Painted blockwork is matte. Keep its diffuse light, mortar
+            // relief and real shadows without a glossy direct-light lobe.
+            #define _SPECULARHIGHLIGHTS_OFF 1
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
             struct MasonryAttributes

@@ -5,14 +5,25 @@ equipped Sandbox. It does not read or write the illustrated game's saves.
 Deliveries, stock, cash and equipment are session state, with no checkpoint persistence yet.
 Internal OneShift paths, namespace and Editor menus remain stable.
 
-The v11 browser starts either an empty $600 distribution business or a stocked
+The v12 browser offers an empty $600 distribution business and a stocked
 Sandbox with $10,000, 100 owned cartons, two unreceived PO cartons, 90 rack bins,
 three floor storage bins, two receiving bins, staging and a moving dispatch bin.
 The active goods are eight varieties of sealed cartons. The opening pallet truck
 and timed free parcels are disabled; their authored sources and checks remain.
+Customer demos is a third mode with prepared receiving/putaway, transfer and
+pick/shipping walkthroughs. Each uses the real WMS ledger and physical cartons,
+starts at 9 a.m., and gives one instruction and a location marker at a time.
+H opens its guide. Completion follows confirmed physical work, including actual
+carrier departure for shipping. See the v12 section in docs/ONE_SHIFT.md.
 
-The Zebra TC22 equips automatically with a live WMS screen. Left click scans;
-right click toggles enlarged screen inspection; Q equips or stows it. F is an
+The room uses a saved reflection cubemap. Direct daylight, fixture lights and
+shadows remain live, with no recurring room captures in the browser. Rebuild the
+saved reflection after changing static room geometry; see WAREHOUSE_LIGHTING.md.
+
+The Zebra TC22 equips automatically with a live WMS screen and no hand model.
+Hold left click to angle its top scan window and keep the red aimer on;
+stable labels decode once until the target changes or the trigger is released.
+Right click toggles enlarged screen inspection; Q equips or stows it. F is an
 alternate scan key and Enter confirms a ready task. Its tiles are Receive,
 Transfer, Pick, Ship and Item lookup. Hold left mouse while the device is stowed,
 or hold E in either state, to carry a carton; release that control to drop it.

@@ -13,6 +13,8 @@ namespace OneShift.RackLab
         bool WmsCommand(UIRequest request)
         {
             if(uiWms==null||request.action==null)return false;
+            if(request.action=="device-trigger")
+            {uiWms.Scanner.SetTriggerHeld(request.id=="1");return true;}
             if(request.action=="device-equip")
             {uiWms.SetDevice(request.id=="1");PublishHUD();return true;}
             if(request.action=="device-focus")
@@ -30,7 +32,7 @@ namespace OneShift.RackLab
         ComputerState WmsComputerSnapshot()
         {
             var w=uiWms;
-            var state=new ComputerState{open=computerOpen,revision=uiRevision+w.Revision+w.Ledger.Revision,mode=w.Sandbox?"sandbox":"career",company="Latchford Distribution",title="Business office",
+            var state=new ComputerState{open=computerOpen,revision=uiRevision+w.Revision+w.Ledger.Revision,mode=w.DemonstrationActive?"demo":w.Sandbox?"sandbox":"career",company="Latchford Distribution",title="Business office",
                 cash=w.Cash,completedOrders=w.CompletedOrders,message=w.Message,stage=w.Objective,stageDetail=w.ObjectiveDetail,suggestedTab="overview",
                 transitioning=ComputerTransitioning,transitionProgress=computerTransition!=null?computerTransition.Progress:0,transitionDirection=computerTransition!=null&&computerTransition.Returning?"out":"in",
                 summary="Warehouse management / whole-carton distribution"};
@@ -55,18 +57,22 @@ namespace OneShift.RackLab
             public WmsLabelDebug[] labels;
             public float[] cameraPosition,cameraRotation;
             public float holdDistance;
+            public bool scannerTrigger,scannerAimVisible,scannerAimSurface;
+            public float[] scannerAimPoint,scannerEmitter,scannerDirection;
         }
-        [Serializable] sealed class WmsBodyDebug {public string id;public float[] position,rotation,velocity;public bool kinematic;}
-        [Serializable] sealed class WmsBinDebug {public string id;public float[] center,size;}
+        [Serializable] sealed class WmsBodyDebug {public string id;public float[] position,rotation,velocity,size;public bool kinematic;}
+        [Serializable] sealed class WmsBinDebug {public string id;public float[] center,size;public float surfaceY;}
         [Serializable] sealed class WmsLabelDebug {public string code,kind,id;public float[] point,normal;}
         [Preserve] public void ReportWmsState(string unused)
         {
             if(uiWms==null)return;bool valid=uiWms.Ledger.CheckInvariants(out var reason);
             var held=uiWalking.GetComponent<WarehouseGrabber>()?.HeldBody;
             string json=JsonUtility.ToJson(new WmsDebug{state=uiWms.Capture(),conserves=valid,invariantReason=reason,courierState=uiWms.Courier.State.ToString(),courierStatus=uiWms.Courier.Status,
+                scannerTrigger=uiWms.Scanner.TriggerHeld,scannerAimVisible=uiWms.Scanner.AimVisible,scannerAimSurface=uiWms.Scanner.AimHasSurface,
+                scannerAimPoint=V(uiWms.Scanner.AimPoint),scannerEmitter=V(uiWms.Scanner.EmitterPosition),scannerDirection=V(uiWms.Scanner.EmitterDirection),
                 cameraPosition=V(uiWalking.eyes.transform.position),cameraRotation=V(uiWalking.eyes.transform.eulerAngles),holdDistance=uiWalking.GetComponent<WarehouseGrabber>().HoldDistance,
-                heldCarton=held!=null?held.GetComponent<WarehouseWmsCarton>()?.Id:"",bodies=uiWms.Bodies.Where(p=>p.Value!=null).Select(p=>new WmsBodyDebug{id=p.Key,position=V(p.Value.position),rotation=V(p.Value.rotation.eulerAngles),velocity=V(p.Value.linearVelocity),kinematic=p.Value.isKinematic}).ToArray(),
-                bins=uiWms.World.Bins.Select(b=>new WmsBinDebug{id=b.Id,center=V(b.Center),size=V(b.Volume.size)}).ToArray(),
+                heldCarton=held!=null?held.GetComponent<WarehouseWmsCarton>()?.Id:"",bodies=uiWms.Bodies.Where(p=>p.Value!=null).Select(p=>new WmsBodyDebug{id=p.Key,position=V(p.Value.position),rotation=V(p.Value.rotation.eulerAngles),velocity=V(p.Value.linearVelocity),size=V(p.Value.GetComponent<Collider>().bounds.size),kinematic=p.Value.isKinematic}).ToArray(),
+                bins=uiWms.World.Bins.Select(b=>new WmsBinDebug{id=b.Id,center=V(b.Center),size=V(b.Volume.size),surfaceY=b.SurfaceY}).ToArray(),
                 labels=UnityEngine.Object.FindObjectsByType<WarehouseWmsLabel>(FindObjectsSortMode.None).Select(l=>new WmsLabelDebug{code=l.Code,kind=l.Kind,id=l.Id,point=V(l.ScanPoint),normal=V(l.Normal)}).ToArray()});
             // WebGL's log buffer truncates long lines. Keep this read-only
             // diagnostic complete without adding a gameplay command channel.

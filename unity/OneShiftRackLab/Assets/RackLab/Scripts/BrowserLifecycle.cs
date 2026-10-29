@@ -10,7 +10,7 @@ namespace OneShift.RackLab
     [Preserve]
     public sealed partial class BrowserLifecycle : MonoBehaviour
     {
-        public const int BuildVersion = 11;
+        public const int BuildVersion = 12;
         public static bool PointerIsLocked
         {
             get
@@ -114,7 +114,8 @@ namespace OneShift.RackLab
             DontDestroyOnLoad(bridge);
             var lifecycle = bridge.AddComponent<BrowserLifecycle>();
 #if UNITY_WEBGL && !UNITY_EDITOR
-            WarehouseWmsRuntime.Ensure(WarehouseInitialMode() != 1);
+            int initialMode = WarehouseInitialMode();
+            WarehouseWmsRuntime.Ensure(initialMode != 1, initialMode == 2 ? "receive" : initialMode == 3 ? "transfer" : initialMode == 4 ? "pick-ship" : "");
             Application.targetFrameRate = 60;
             WebGLInput.captureAllKeyboardInput = false;
             WebGLInput.stickyCursorLock = false;
@@ -152,7 +153,9 @@ namespace OneShift.RackLab
             }
             var originalPosition = camera.transform.position;
             var originalRotation = camera.transform.rotation;
-            float originalHour = dayNight.Hour;
+            float openingHour = dayNight.Hour;
+            var demonstration = Object.FindFirstObjectByType<WarehouseWmsRuntime>();
+            float originalHour = demonstration != null && demonstration.DemonstrationActive ? 9f : openingHour;
             var rows = Object.FindObjectsByType<WarehouseLightRow>(FindObjectsSortMode.None);
             var rowStates = new bool[rows.Length];
             for (int i = 0; i < rows.Length; i++) rowStates[i] = rows[i].IsOn;
@@ -162,7 +165,7 @@ namespace OneShift.RackLab
                 // Render actual scene variants into the real player targets.
                 // Night, first sun, morning and afternoon include both banks
                 // of window volumes, shadows and the time-sliced room probe.
-                float[] hours = { originalHour, 6.05f, 9, 15 };
+                float[] hours = { openingHour, 6.05f, 9, 15 };
                 string[] phaseNames = { "Night lighting", "Sunrise", "Morning light", "Afternoon light" };
                 string[] viewNames = { "Warehouse floor", "Storage racks", "Receiving bay", "Warehouse walls", "Delivery truck", "Office", "Business park", "Player shadows" };
                 for (int phase = 0; phase < hours.Length; phase++)

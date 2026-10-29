@@ -119,12 +119,13 @@ HUD, and a three-step practical forklift introduction. Left Shift holds the
 variable hydraulic lever; X is no longer the control. The office computer manages
 supplier purchases and fictional trade-customer orders backed by physical stock.
 Keep direct player handling, stock conservation, and separate pause/activity gates.
-The v11 WMS owns both modes through `WarehouseWmsRuntime` and
+The v12 WMS owns Career, Sandbox and Customer demos through `WarehouseWmsRuntime` and
 `WarehouseWmsLedger`. Career starts empty with $600; Sandbox starts with 100 owned
 cartons, two pending receipts, 90 labelled rack bins across rows A to E and seven other bins. The
 owner's 2026-10-28 direction is cartons only, eight varieties, with no item serials
-or integrations. The TC22 starts equipped in a first-person hand with a live screen.
-Left click scans actual visible Code128 labels, right click toggles the enlarged
+or integrations. The TC22 starts equipped with a live screen and no hand mesh.
+Hold left click to angle its top imager and keep a red surface aimer active.
+Stable visible Code128 labels decode once per target acquisition. Right click toggles the enlarged
 screen, Q equips or stows it, and Enter confirms supported physical receipt,
 transfer, pick or load tasks. F remains an alternate scan key.
 Receiving, staging and the moving dispatch van are bins too. The office WMS
@@ -137,7 +138,15 @@ pointer capture; Unity must not request a second lock after an interface closes.
 Hold left mouse with the scanner stowed, or hold E in either mode, to carry a box.
 Releasing that input drops it. Pickup preserves orientation; right mouse rotates.
 Loose cartons use bounded rigidbody grab forces, not parenting. Receiving and
-staging flank the north garage; printed labels have no distance pop-in. Read the v11 section in
+staging flank the north garage; slim shelf labels fit their beam faces and have no distance pop-in.
+Customer demos prepare three isolated scenarios: receiving with putaway, transfer,
+and picking/shipping. The guide follows real transactions and physical stock;
+only actual offsite shipment completes shipping. H opens its guide. Keep all three
+on the title-screen gallery with their own briefings and completion results.
+The room reflection uses a saved cubemap to avoid browser lighting instability.
+Keep the moving sun and real shadows, and do not restore periodic room captures
+without checking the office-entry browser sequence.
+Read the v12 section in
 `docs/ONE_SHIFT.md` and use the WMS native browser checks before publishing.
 
 The earlier illustrated game remains at `one-shift-classic.html`, using

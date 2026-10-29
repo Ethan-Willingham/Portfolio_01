@@ -49,7 +49,6 @@ namespace OneShift.RackLab
             if (cycle.roomReflection != null)
             {
                 var probe = cycle.roomReflection;
-                probe.mode = ReflectionProbeMode.Realtime;
                 probe.refreshMode = ReflectionProbeRefreshMode.ViaScripting;
                 probe.timeSlicingMode = ReflectionProbeTimeSlicingMode.IndividualFaces;
                 probe.resolution = 128;
@@ -69,6 +68,7 @@ namespace OneShift.RackLab
             var glass = AssetDatabase.LoadAssetAtPath<Material>(Root + "Materials/Environment/Glass.mat");
             if (glass != null) { glass.SetColor("_BaseColor", new Color(.13f, .17f, .18f, .055f)); EditorUtility.SetDirty(glass); }
             cycle.SetHour(cycle.startHour);
+            WarehouseReflectionCacheBuilder.InstallIntoScene();
             EditorUtility.SetDirty(sky);
             EditorUtility.SetDirty(cycle);
         }
@@ -77,6 +77,7 @@ namespace OneShift.RackLab
         {
             var cycle = Object.FindFirstObjectByType<WarehouseDayNight>();
             Require(cycle != null && cycle.sun != null, "Sun cycle missing.");
+            WarehouseReflectionCacheBuilder.Validate();
             Require(cycle.startHour < 6 && cycle.windows.Length == 16, "Night start or window bindings invalid.");
             Require(cycle.dayLengthMinutes >= 8 && cycle.dayLengthMinutes <= 10, "Daylight should last eight to ten real minutes.");
             var rows = Object.FindObjectsByType<WarehouseLightRow>(FindObjectsSortMode.None);

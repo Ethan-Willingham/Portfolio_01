@@ -209,9 +209,13 @@
   .warehouse-tools { right:12px; }.warehouse-context { bottom:24px; font-size:12px; max-width:calc(100% - 28px); }.warehouse-drive-status { left:18px; }
   .warehouse-computer { width:calc(100vw - 16px); padding:10px 10px 5px; }.warehouse-desktop { padding:10px; }.warehouse-app-workspace { grid-template-columns:135px minmax(0,1fr); }.warehouse-desk-body { padding:18px; }.warehouse-computer-summary { padding:12px 18px; }.warehouse-cash output { font-size:22px; }.warehouse-computer h2 { font-size:22px; }.warehouse-app-status > span { display:none; }.warehouse-taskbar > span { display:none; }.warehouse-taskbar time { margin-left:auto; }
 }
+@media(max-height:800px) and (orientation:landscape) {
+  .warehouse-title-layout { padding-top:34px; padding-bottom:88px; }.warehouse-wordmark { margin-bottom:24px; }.warehouse-wordmark h1 { font-size:clamp(45px,6.2vw,76px); }
+  .warehouse-wordmark > p { margin-top:16px; font-size:18px; }.warehouse-main-menu { gap:3px; width:310px; }.warehouse-main-menu button { min-height:44px; padding:9px 15px; font-size:15px; }.warehouse-session-note { margin-top:8px; }
+}
 @media(max-height:650px) and (orientation:landscape) {
   .warehouse-title-layout { padding-top:28px; padding-bottom:76px; width:75%; }.warehouse-wordmark { margin-bottom:22px; }.warehouse-wordmark h1 { font-size:clamp(42px,6.2vw,70px); }.warehouse-wordmark h1 .warehouse-wordmark-the { margin-bottom:8px; font-size:15px; }
-  .warehouse-wordmark > p { margin-top:14px; font-size:16px; }.warehouse-main-menu { gap:3px; width:255px; }.warehouse-main-menu button { min-height:44px; padding:9px 15px; font-size:15px; }.warehouse-session-note { margin-top:8px; }
+  .warehouse-wordmark > p { margin-top:14px; font-size:16px; }.warehouse-main-menu { gap:3px; width:310px; }.warehouse-main-menu button { min-height:44px; padding:9px 15px; font-size:15px; }.warehouse-session-note { margin-top:8px; }
   .warehouse-title-footer { bottom:12px; }.warehouse-loading { width:410px; }.warehouse-load-tip { display:none; }.warehouse-load-steps { margin:12px 0; }.warehouse-load-detail { min-height:0; font-size:12px; }.warehouse-loading h2 { font-size:18px; margin-bottom:12px; }
   .warehouse-dialog { max-height:calc(100dvh - 24px); }.warehouse-menu-shell { padding:23px 28px; }.warehouse-dialog-header { margin-bottom:18px; }.warehouse-dialog-header h2 { font-size:29px; }.warehouse-menu-footer { margin-top:18px; padding-top:12px; }
   .warehouse-hydraulics { right:16px; width:130px; transform:translateY(-35%); }.warehouse-lever { height:140px; margin:10px auto; }.warehouse-hydraulics > p { display:none; }.warehouse-hydraulic-caption { gap:5px; }

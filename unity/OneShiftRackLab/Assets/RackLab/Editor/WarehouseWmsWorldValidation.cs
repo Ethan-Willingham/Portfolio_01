@@ -88,6 +88,11 @@ namespace OneShift.RackLab
                 var world=rig.world;var racks=world.Bins.Where(b=>b.Id.Length==9).ToArray();
                 Pass(racks.Length==90&&racks.Count(b=>b.CanPick)==30&&racks.Select(b=>b.Id).Distinct().Count()==90,"Sandbox has90 unique rack-bin addresses and30 reachable low faces across rows A to E");
                 Pass(racks.All(b=>b.Volume.isTrigger&&b.Capacity==8),"Every rack bin has an explicit non-solid storage volume and capacity");
+                Pass(racks.Where(b=>b.OwnsShelf).All(TicketFitsBeam),"Every upper location ticket fits inside the actual beam face with a visible steel margin");
+                Physics.SyncTransforms();
+                Pass(racks.Where(b=>b.OwnsShelf).All(b=>
+                    WarehouseWmsScanner.Trace(rig.physics,b.Label.ScanPoint+b.Label.Normal*.75f,-b.Label.Normal,null,rig.hits).code==b.Label.Code),
+                    "Slim beam tickets keep a physically reachable barcode face ahead of the steel");
                 var loaded=new List<(WarehouseWmsBin bin,Rigidbody body)>();
                 for(int i=0;i<100;i++)
                 {
@@ -128,10 +133,30 @@ namespace OneShift.RackLab
                     min=Vector3.Min(min,p);max=Vector3.Max(max,p);
                 }
                 if(min.x < -label.PaperSize.x*.48f||max.x > label.PaperSize.x*.48f||min.y < -label.PaperSize.y*.48f||max.y > label.PaperSize.y*.48f)return false;
-                if(text==label.DescriptionText&&min.y < label.PaperSize.y*.02f)return false;
-                if(text==label.CodeText&&max.y > -label.PaperSize.y*.32f)return false;
+                Rect area=text==label.DescriptionText?label.DescriptionArea:label.CodeArea;
+                const float tolerance=.00005f;
+                if(min.x<area.xMin-tolerance||max.x>area.xMax+tolerance||min.y<area.yMin-tolerance||max.y>area.yMax+tolerance)return false;
+                var textRect=Rect.MinMaxRect(min.x,min.y,max.x,max.y);
+                if(textRect.Overlaps(label.BarcodeArea))return false;
             }
             return true;
+        }
+        static bool TicketFitsBeam(WarehouseWmsBin bin)
+        {
+            var label=bin.Label;var bay=bin.GetComponentInParent<PalletRackBay>();
+            if(label==null||!label.ShelfTicket||bay==null)return false;
+            foreach(var beam in bay.GetComponentsInChildren<BoxCollider>().Where(c=>c.name=="Load beam"))
+            {
+                bool fits=true;Vector3 half=beam.size*.5f;
+                for(int corner=0;corner<4;corner++)
+                {
+                    var world=label.transform.TransformPoint(new Vector3(((corner&1)==0?-1:1)*label.PaperSize.x*.5f,((corner&2)==0?-1:1)*label.PaperSize.y*.5f,0));
+                    Vector3 p=beam.transform.InverseTransformPoint(world)-beam.center;
+                    if(Mathf.Abs(p.x)>half.x-.005f||Mathf.Abs(p.y)>half.y-.005f||p.z> -half.z-.001f||p.z< -half.z-.008f)fits=false;
+                }
+                if(fits)return true;
+            }
+            return false;
         }
         sealed class Rig:IDisposable
         {

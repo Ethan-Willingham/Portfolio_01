@@ -201,7 +201,7 @@ namespace OneShift.RackLab
         static void Set(object value,string name,object assigned)=>value.GetType().GetField(name,Fields).SetValue(value,assigned);
         static void Invoke(object value,string name)=>value.GetType().GetMethod(name,Fields).Invoke(value,null);
 
-        sealed class Fixture:IDisposable
+        internal sealed class Fixture:IDisposable
         {
             readonly Scene previousActive,scene;
             readonly PhysicsScene physics;
@@ -221,7 +221,7 @@ namespace OneShift.RackLab
             public readonly WarehouseWmsRuntime Runtime;
             public Scene Scene=>scene;
             public float SimulatedSeconds{get;private set;}
-            public Fixture(WarehouseReceiving source,bool sandbox)
+            public Fixture(WarehouseReceiving source,bool sandbox,string demonstrationId="")
             {
                 original=source;originalActive=WarehouseReceiving.Active;originalCargo=(PalletCargo[])source.cargo.Clone();originalPositions=originalCargo.Select(c=>c.transform.position).ToArray();
                 originalVehicle=source.gameObject.scene.GetRootGameObjects().SelectMany(root=>root.GetComponentsInChildren<ForkliftDriveController>(true)).First().gameObject;
@@ -242,7 +242,7 @@ namespace OneShift.RackLab
                     var player=Create("Disposable WMS walker");var motor=player.AddComponent<CharacterController>();motor.height=1.78f;motor.radius=.25f;motor.center=Vector3.up*.89f;
                     var eye=Create("Disposable WMS camera").AddComponent<Camera>();eye.transform.SetParent(player.transform,false);eye.transform.localPosition=Vector3.up*1.65f;eye.enabled=false;
                     Walking=player.AddComponent<RackWalkController>();Walking.eyes=eye;Invoke(Walking,"Awake");Set(Walking,"parcelService",null);Set(Walking,"receiving",Receiving);Set(Walking,"captured",true);Set(Walking,"awaitNeutral",false);Grabber=Walking.Grabber;
-                    Runtime=Create("Disposable WMS account").AddComponent<WarehouseWmsRuntime>();Runtime.Initialize(sandbox);Invoke(Receiving,"Start");
+                    Runtime=Create("Disposable WMS account").AddComponent<WarehouseWmsRuntime>();Runtime.Initialize(sandbox,demonstrationId);Invoke(Receiving,"Start");
                     Physics.SyncTransforms();SceneManager.SetActiveScene(previousActive);
                 }
                 catch{Dispose();throw;}

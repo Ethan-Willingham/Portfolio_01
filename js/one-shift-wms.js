@@ -5,10 +5,11 @@
   // by the Unity warehouse before its authoritative snapshot changes here.
   var api, callbacks = {}, state = null, initialized = false;
   var presentation = {handheldOpen:false, handheldInteractive:false, consoleOpen:false, active:true};
-  var handheld, handheldBody, handheldNotice, handheldFooter, deviceShade, scanReticle, consoleApp, consoleBody, consoleStatus;
+  var handheld, handheldBody, handheldNotice, handheldFooter, deviceShade, scanReticle, consoleApp, consoleBody, consoleStatus, equipmentControl;
   var tab = 'overview', selected = '', query = '', filter = 'all', sortKey = '', sortDirection = 1;
   var lastSignature = '', lastScan = -1, searchTimer = null;
   var createOpen = false, createItem = '', createQuantity = 1, pendingCreate = null;
+  var demoReadOnlyReason = 'Prepared for this walkthrough. Create and manage orders in Sandbox or your own business.';
   var pages = [
     ['overview','Operations'], ['inventory','Inventory'], ['bins','Locations'],
     ['purchaseOrders','Purchase orders'], ['salesOrders','Sales orders'],
@@ -37,6 +38,7 @@
     return result;
   }
   function qty(value) { return Math.max(0,Number(value)||0); }
+  function isDemo() { return !!state && state.mode==='demo'; }
   function text(value, fallback) { return value == null || value === '' ? (fallback || '') : String(value); }
   function list(value) { return Array.isArray(value) ? value : []; }
   function lower(value) { return text(value).toLowerCase(); }
@@ -71,6 +73,7 @@
   }
   function dataPair(label,value) { return append(node('div'),node('dt',label),node('dd',text(value,'--'))); }
   function actionButton(label,action,id,enabled,reason,className) {
+    if(isDemo()&&['create-po','create-so','book-po','cancel-order','release-order'].includes(action)){enabled=false;reason=demoReadOnlyReason;}
     var result=button(label,function(){command(action,id);},className);
     result.disabled=enabled===false;result.dataset.wmsCommand=action;result.dataset.wmsId=text(id);
     if(reason)result.title=reason;
@@ -254,6 +257,7 @@
       }
       if(order.canCancel)actions.appendChild(actionButton('Cancel / release allocation','cancel-order',order.id,true));
       consoleBody.appendChild(actions);
+      if(isDemo())consoleBody.appendChild(node('p',demoReadOnlyReason,'wms-description'));
       if(order.actionReason)consoleBody.appendChild(node('p',order.actionReason,'wms-description'));
       var columns=[{key:'sku',label:'Item',render:function(line){return append(node('div',null,'wms-item-cell'),detailLink(line.sku,'inventory',line.sku),small(line.itemName||skuName(line.sku)));}},{key:'ordered',label:'Ordered',numeric:true,render:function(line){return amount(line.ordered);}}];
       if(receiving)columns.push({key:'received',label:'Received',numeric:true,render:function(line){return amount(line.received);}},{label:'Outstanding',numeric:true,render:function(line){return amount(qty(line.ordered)-qty(line.received));}});
@@ -267,11 +271,11 @@
       return;
     }
     append(consoleBody,heading(receiving?'Inbound documents':'Outbound documents',receiving?'Purchase orders':'Sales orders',receiving?'Match each delivered carton to its purchase order before putting it away.':'Release orders to allocate stock, then follow the handheld pick and shipping tasks.'));
-    var createAllowed=state.mode==='sandbox'||qty(state.completedOrders)>0;
+    var createAllowed=!isDemo()&&(state.mode==='sandbox'||qty(state.completedOrders)>0);
     var createButton=button(createOpen?'Close new document':receiving?'New purchase order':'New sales order',function(){createOpen=!createOpen;renderConsole();},'wms-primary');
     createButton.dataset.wmsCreate=kind;createButton.disabled=!createAllowed||!!pendingCreate;
-    createButton.title=createAllowed?'Create a document from the item catalog.':'Complete your first customer shipment to create more documents.';
-    append(consoleBody,append(node('div',null,'wms-document-create-action'),createButton,small(createAllowed?'Whole-carton orders / 1 to 6 CTN per document':'Complete the first customer shipment to unlock new orders.')));
+    createButton.title=isDemo()?demoReadOnlyReason:createAllowed?'Create a document from the item catalog.':'Complete your first customer shipment to create more documents.';
+    append(consoleBody,append(node('div',null,'wms-document-create-action'),createButton,small(isDemo()?demoReadOnlyReason:createAllowed?'Whole-carton orders / 1 to 6 CTN per document':'Complete the first customer shipment to unlock new orders.')));
     if(createOpen&&createAllowed)consoleBody.appendChild(newDocumentForm(kind));
     var rows=list(state[kind]);append(consoleBody,tools(rows,receiving?'Search PO or supplier':'Search SO or customer'),table([
       {key:'id',label:receiving?'PO number':'SO number',render:function(o){return detailLink(o.id,kind,o.id);}},
@@ -298,6 +302,7 @@
     var submit=button(receiving?'Create purchase order':'Create sales order',null,'wms-primary');submit.type='submit';submit.disabled=!!pendingCreate||!createItem;
     form.addEventListener('submit',function(event){
       event.preventDefault();var count=Number(quantity.value);
+      if(isDemo())return;
       if(!Number.isInteger(count)||count<1||count>6||!findItem(select.value)){quantity.reportValidity();return;}
       createItem=select.value;createQuantity=count;pendingCreate={kind:kind,ids:list(state[kind]).map(function(order){return order.id;})};
       submit.disabled=true;command(receiving?'create-po':'create-so',createItem+':'+count);
@@ -341,6 +346,7 @@
   }
   function renderConsole() {
     if(!initialized)return;
+    equipmentControl.disabled=isDemo();equipmentControl.title=isDemo()?'Equipment and finance are prepared for this walkthrough. Available in Sandbox or your own business.':'';
     consoleApp.querySelectorAll('[data-wms-page]').forEach(function(control){var active=control.dataset.wmsPage===tab;control.setAttribute('aria-current',active?'page':'false');});
     retainView(consoleBody,function(){
       consoleBody.replaceChildren();
@@ -490,7 +496,8 @@
     var workspace=node('div',null,'wms-workspace'),navigation=node('nav',null,'wms-navigation');navigation.setAttribute('aria-label','Warehouse management');
     append(navigation,node('p','WAREHOUSE','wms-nav-label'));
     pages.forEach(function(page){var control=button(page[1],function(){openPage(page[0]);});control.dataset.wmsPage=page[0];navigation.appendChild(control);});
-    append(navigation,append(node('div',null,'wms-nav-bottom'),node('p','CTN / Sealed cartons'),button('Equipment and finance',function(){showConsole(false);if(callbacks.openBusiness)callbacks.openBusiness();else document.getElementById('warehouse-dispatch-task').click();selectBusinessEquipment();},'wms-link')));
+    equipmentControl=button('Equipment and finance',function(){showConsole(false);if(callbacks.openBusiness)callbacks.openBusiness();else document.getElementById('warehouse-dispatch-task').click();selectBusinessEquipment();},'wms-link');
+    append(navigation,append(node('div',null,'wms-nav-bottom'),node('p','CTN / Sealed cartons'),equipmentControl));
     consoleBody=node('div',null,'wms-console-body');consoleBody.id='warehouse-wms-console-body';append(workspace,navigation,consoleBody);consoleApp.appendChild(workspace);
     consoleStatus=node('p');consoleStatus.setAttribute('role','status');
     append(consoleApp,append(node('footer',null,'wms-console-status'),consoleStatus,node('span','Inventory ledger / Local session')));desktop.appendChild(consoleApp);

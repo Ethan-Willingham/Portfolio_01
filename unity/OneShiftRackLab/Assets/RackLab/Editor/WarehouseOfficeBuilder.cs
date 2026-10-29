@@ -73,8 +73,11 @@ namespace OneShift.RackLab
             Box("Suspended office ceiling",root,new Vector3(7.6f,3.07f,-7),new Vector3(7.6f,.12f,6),paper);
             for(float x=3.8f;x<11.5f;x+=.61f) Box("Ceiling tee",root,new Vector3(x,2.995f,-7),new Vector3(.025f,.025f,6),trim,false);
             for(float z=-10;z<=-4;z+=1.2f) Box("Ceiling cross tee",root,new Vector3(7.6f,2.99f,z),new Vector3(7.6f,.025f,.025f),trim,false);
-            var diffuser=Mat("Office light diffuser",new Color(.82f,.79f,.68f));
-            diffuser.EnableKeyword("_EMISSION");diffuser.SetColor("_EmissionColor",new Color(.65f,.61f,.48f));
+            var diffuser=Mat("Office light diffuser",new Color(1.15f,1.10f,.96f));
+            // A fluorescent lens stays steadily bright independently of
+            // nearby lights, shadow priority and reflection state.
+            diffuser.shader=Shader.Find("Universal Render Pipeline/Unlit");
+            diffuser.shaderKeywords=Array.Empty<string>();diffuser.SetColor("_BaseColor",new Color(1.15f,1.10f,.96f));
             diffuser.globalIlluminationFlags=MaterialGlobalIlluminationFlags.None;EditorUtility.SetDirty(diffuser);
             for(int i=0;i<2;i++)
             {
@@ -87,6 +90,7 @@ namespace OneShift.RackLab
                 light.type=LightType.Point;
                 light.color=new Color(1,.91f,.76f);light.intensity=13;light.range=6.2f;
                 light.shadows=LightShadows.None;light.lightmapBakeType=LightmapBakeType.Realtime;
+                light.renderMode=LightRenderMode.ForcePixel;
             }
             Label("OFFICE",root,new Vector3(7.9f,2.80f,-3.91f),.10f,180);
             Box("Front door masonry header",root,new Vector3(6.5f,2.8f,-10),new Vector3(1.6f,.8f,.24f),cream);
@@ -255,6 +259,11 @@ namespace OneShift.RackLab
                 var node=Child(mesh.name,root,Vector3.zero);node.gameObject.isStatic=true;node.gameObject.AddComponent<MeshFilter>().sharedMesh=mesh;
                 var renderer=node.gameObject.AddComponent<MeshRenderer>();renderer.sharedMaterial=group.Key;
                 if(group.Key==glass) renderer.shadowCastingMode=ShadowCastingMode.Off;
+                if(group.Key.name=="Office light diffuser")
+                {
+                    renderer.shadowCastingMode=ShadowCastingMode.Off;renderer.receiveShadows=false;
+                    renderer.lightProbeUsage=LightProbeUsage.Off;renderer.reflectionProbeUsage=ReflectionProbeUsage.Off;
+                }
                 foreach(var filter in group){Object.DestroyImmediate(filter.GetComponent<MeshRenderer>());Object.DestroyImmediate(filter);}
             }
         }

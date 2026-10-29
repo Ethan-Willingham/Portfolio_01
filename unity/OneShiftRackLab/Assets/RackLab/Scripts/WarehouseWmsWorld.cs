@@ -52,7 +52,7 @@ namespace OneShift.RackLab
         readonly Dictionary<int, Mesh> cartonMeshes = new Dictionary<int, Mesh>();
         readonly RaycastHit[] supportHits = new RaycastHit[24];
         Material[] cardboard;
-        Material tape, paper, ink, shelf, guide, steel;
+        Material tape, paper, ink, shelf, guide, steel, signAccent;
         PhysicsScene physics;
         Transform stockRoot;
         bool initialized, racksAdded;
@@ -78,7 +78,9 @@ namespace OneShift.RackLab
             shelf = Mat("WMS shelf deck",new Color(.48f,.42f,.30f));
             guide = Mat("WMS bay paint",new Color(.69f,.55f,.32f),true);
             steel = Mat("WMS sign post",new Color(.25f,.29f,.25f));
+            signAccent = Mat("WMS sign rust stripe",new Color(.53f,.29f,.16f),true);
             stockRoot = Child("Physical WMS cartons",transform,Vector3.zero);
+            ReplaceLegacySigns();
             // The porch shelf is the courier's real drop point. Internal receiving
             // and dispatch remain separate bins, even when they contain no stock.
             AddFloorBin("REC-01","receiving",new Vector3(8.28f,.56f,-11.05f),new Vector3(1.5f,1.25f,.72f),8,false,
@@ -89,7 +91,7 @@ namespace OneShift.RackLab
             AddFloorBin("STAGE-01","staging",new Vector3(3.9f,.012f,10f),new Vector3(3f,1.45f,2f),18,false);
             AreaSigns("RECEIVING","REC-02 / INBOUND",-3.9f);
             AreaSigns("STAGING","STAGE-01 / OUTBOUND",3.9f);
-            Sign(transform,new Vector3(8.28f,1.70f,-10.68f),Quaternion.identity,new Vector2(1.1f,.30f),"PARCEL RECEIVING","REC-01 / FRONT DOOR");
+            Sign(transform,new Vector3(8.28f,1.70f,-10.68f),Quaternion.identity,new Vector2(.88f,.27f),"PARCEL RECEIVING","REC-01 / FRONT DOOR");
             WarehouseCareer.Cube("Parcel sign post extension",transform,new Vector3(8.28f,1.49f,-10.665f),new Vector3(.025f,.36f,.025f),steel);
             AddFloorBin("F01","storage",new Vector3(-3.6f,.012f,-1.8f),new Vector3(1.82f,1.5f,1.82f),12,true);
             AddFloorBin("F02","storage",new Vector3(-.8f,.012f,-1.8f),new Vector3(1.82f,1.5f,1.82f),12,true);
@@ -123,8 +125,10 @@ namespace OneShift.RackLab
             var bays = row.GetComponentsInChildren<PalletRackBay>(true).OrderBy(b => row.InverseTransformPoint(b.transform.position).x).ToArray();
             for (int b = 0; b < bays.Length; b++)
             {
-                Sign(bays[b].transform,new Vector3(0,4.55f,-.66f),Quaternion.identity,new Vector2(1.12f,.34f),
-                    "BAY "+aisle+(b+1).ToString("00"),"LEVEL - POSITION");
+                // The bay identifier shares the top beam face, between its two
+                // location tickets. Nothing floats over the rack opening.
+                Sign(bays[b].transform,new Vector3(0,PalletRackBay.BeamPitch*2-.065f,-.535f),Quaternion.identity,new Vector2(.44f,.108f),
+                    "BAY "+aisle+(b+1).ToString("00"),"LOCATION / LEVEL / POSITION");
                 var slots = bays[b].palletPositions.OrderBy(p => p.localPosition.y).ThenBy(p => p.localPosition.x).ToArray();
                 for (int slot = 0; slot < slots.Length; slot++)
                 {
@@ -141,9 +145,16 @@ namespace OneShift.RackLab
                         var deck=WarehouseCareer.Cube("Carton shelf deck",node,new Vector3(0,surface-.013f,0),new Vector3(1.04f,.026f,1.17f),shelf);
                         var collider=deck.gameObject.AddComponent<BoxCollider>();collider.contactOffset=.005f;
                     }
-                    if(level==1)WarehouseCareer.Cube("Low pick location plate",node,new Vector3(0,.19f,-.600f),new Vector3(.50f,.24f,.012f),steel);
-                    bin.Label=Label(node,new Vector3(0,level==1?.19f:-.06f,-.607f),Quaternion.Euler(0,180,0),new Vector2(.46f,.21f),
-                        "BIN:"+id,"bin",id,id,level==1?"PICK FACE / CTN":"RESERVE / CTN");
+                    if(level==1)
+                    {
+                        WarehouseCareer.Cube("Low pick ticket holder",node,new Vector3(0,.15f,-.526f),new Vector3(.51f,.13f,.012f),steel);
+                        WarehouseCareer.Cube("Ticket holder foot",node,new Vector3(0,.045f,-.519f),new Vector3(.025f,.09f,.025f),steel);
+                    }
+                    // The authored beam face is z=-.530 and 130 mm tall.
+                    // A 108 mm ticket has a real steel margin above and below.
+                    float ticketY=level==1?.15f:-PalletRackBay.DeckAboveBeam-.066f;
+                    bin.Label=Label(node,new Vector3(0,ticketY,-.534f),Quaternion.Euler(0,180,0),new Vector2(.49f,.108f),
+                        "BIN:"+id,"bin",id,id,level==1?"PICK FACE":"RESERVE");
                     bins.Add(bin);
                 }
             }
@@ -151,15 +162,15 @@ namespace OneShift.RackLab
             if(locations.Length>0)
             {
                 float front=locations.Min(p=>p.z)-.72f,back=locations.Max(p=>p.z)+.72f;
-                string range="BAYS 01 - "+bays.Length.ToString("00")+" / LEVELS 01 - 03";
-                Sign(transform,new Vector3(row.position.x,3.2f,front),Quaternion.identity,new Vector2(1.14f,.60f),"ROW "+aisle,range);
-                Sign(transform,new Vector3(row.position.x,3.2f,back),Quaternion.Euler(0,180,0),new Vector2(1.14f,.60f),"ROW "+aisle,range);
+                string range="BAYS 01 - "+bays.Length.ToString("00");
+                Sign(transform,new Vector3(row.position.x,2.75f,front),Quaternion.identity,new Vector2(.48f,.62f),"ROW "+aisle,range,true);
+                Sign(transform,new Vector3(row.position.x,2.75f,back),Quaternion.Euler(0,180,0),new Vector2(.48f,.62f),"ROW "+aisle,range,true);
             }
         }
 
         void AreaSigns(string name,string location,float x)
         {
-            Sign(transform,new Vector3(x,2.65f,11.65f),Quaternion.identity,new Vector2(2.55f,.78f),name,location);
+            Sign(transform,new Vector3(x,2.58f,11.65f),Quaternion.identity,new Vector2(2.15f,.52f),name,location);
             PaintedText(name,new Vector3(x,.030f,8.34f),new Vector2(2.65f,.37f));
             PaintedText(location,new Vector3(x,.031f,7.96f),new Vector2(2.40f,.19f));
         }
@@ -172,19 +183,42 @@ namespace OneShift.RackLab
             text.color=new Color(.82f,.72f,.49f);WarehouseWmsLabel.FitText(text,size,position);
             var renderer=text.GetComponent<Renderer>();renderer.shadowCastingMode=ShadowCastingMode.Off;renderer.receiveShadows=false;
         }
-        void Sign(Transform parent,Vector3 position,Quaternion rotation,Vector2 size,string heading,string detail)
+        void ReplaceLegacySigns()
+        {
+            // Legacy pallet-truck wording is misleading in the carton WMS.
+            foreach(string name in new[]{"OFFICE","RECEIVING / 01","YARD"})
+            {var previous=FindNamed(name);if(previous!=null)previous.gameObject.SetActive(false);}
+            Sign(transform,new Vector3(7.9f,2.76f,-3.905f),Quaternion.Euler(0,180,0),new Vector2(1.15f,.25f),"OFFICE","WAREHOUSE MANAGEMENT");
+            Sign(transform,new Vector3(0,4.43f,11.69f),Quaternion.identity,new Vector2(1.75f,.40f),"DOCK 01","KEEP VEHICLE ACCESS CLEAR");
+            var old=FindNamed("WAIT FOR DOORS");
+            if(old!=null)
+            {
+                Sign(old.parent,old.localPosition+new Vector3(0,0,-.005f),old.localRotation,new Vector2(.92f,.19f),"DOCK EDGE","KEEP CLEAR");
+                old.gameObject.SetActive(false);
+            }
+        }
+        void Sign(Transform parent,Vector3 position,Quaternion rotation,Vector2 size,string heading,string detail,bool rowMarker=false)
         {
             var sign=Child("Wayfinding / "+heading,parent,position);sign.localRotation=rotation;
             var backing=WarehouseCareer.Cube("Cream warehouse sign",sign,Vector3.zero,new Vector3(size.x,size.y,.016f),paper);
             backing.GetComponent<Renderer>().shadowCastingMode=ShadowCastingMode.Off;
+            WarehouseCareer.Cube("Left classification stripe",sign,new Vector3(-size.x*.478f,0,-.009f),new Vector3(size.x*.044f,size.y,.002f),signAccent);
             var title=new GameObject("Sign heading").AddComponent<TextMesh>();title.transform.SetParent(sign,false);
             WarehouseCareer.UseWarehouseFont(title);title.fontSize=64;title.anchor=TextAnchor.MiddleCenter;title.alignment=TextAlignment.Center;
-            title.text=heading;title.color=new Color(.10f,.15f,.11f);
-            WarehouseWmsLabel.FitText(title,new Vector2(size.x*.88f,size.y*.42f),new Vector3(0,size.y*.14f,-.010f));
+            title.text=rowMarker?heading.Substring(4):heading;title.color=new Color(.10f,.15f,.11f);title.fontStyle=FontStyle.Bold;
+            WarehouseWmsLabel.FitText(title,new Vector2(size.x*.83f,size.y*(rowMarker?.48f:.40f)),new Vector3(size.x*.018f,size.y*(rowMarker?.04f:.13f),-.0105f));
             var caption=new GameObject("Sign detail").AddComponent<TextMesh>();caption.transform.SetParent(sign,false);
             WarehouseCareer.UseWarehouseFont(caption);caption.fontSize=40;caption.anchor=TextAnchor.MiddleCenter;caption.alignment=TextAlignment.Center;
             caption.text=detail;caption.color=title.color;
-            WarehouseWmsLabel.FitText(caption,new Vector2(size.x*.89f,size.y*.19f),new Vector3(0,-size.y*.29f,-.010f));
+            WarehouseWmsLabel.FitText(caption,new Vector2(size.x*.83f,size.y*(rowMarker?.09f:.17f)),new Vector3(size.x*.018f,-size.y*.30f,-.0105f));
+            if(rowMarker)
+            {
+                var eyebrow=new GameObject("Row category").AddComponent<TextMesh>();eyebrow.transform.SetParent(sign,false);WarehouseCareer.UseWarehouseFont(eyebrow);
+                eyebrow.fontSize=40;eyebrow.anchor=TextAnchor.MiddleCenter;eyebrow.alignment=TextAlignment.Center;eyebrow.color=title.color;eyebrow.text="ROW";
+                WarehouseWmsLabel.FitText(eyebrow,new Vector2(size.x*.55f,size.y*.10f),new Vector3(size.x*.018f,size.y*.36f,-.0105f));
+                foreach(float x in new[]{-size.x*.29f,size.x*.29f})
+                    WarehouseCareer.Cube("Upright sign clamp",sign,new Vector3(x,0,.025f),new Vector3(.025f,size.y*.80f,.05f),steel);
+            }
             foreach(var renderer in sign.GetComponentsInChildren<Renderer>()){renderer.shadowCastingMode=ShadowCastingMode.Off;renderer.receiveShadows=false;}
         }
 

@@ -11,16 +11,18 @@
   <meta property="og:description" content="An empty warehouse and $600. Start Latchford Distribution, handle every carton, and build a small trade-supply business.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://ethanwillingham.com/one-shift.html">
-  <meta property="og:image" content="https://ethanwillingham.com/assets/one-shift-unity/preview.png?v=11">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/one-shift-unity/preview.png?v=12">
   <meta property="og:image:alt" content="A worker and yellow forklift in the sunlit warehouse, beside the dispatch office.">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="one-shift-unity.css?v=11">
-  <link rel="stylesheet" href="one-shift-wms.css?v=11">
+  <link rel="stylesheet" href="one-shift-unity.css?v=12">
+  <link rel="stylesheet" href="one-shift-wms.css?v=12">
+  <link rel="stylesheet" href="one-shift-demos.css?v=12">
   <script src="js/demo-activity.js?v=1" defer></script>
-  <script src="js/one-shift-wms.js?v=11" defer></script>
-  <script src="js/one-shift-unity.js?v=11" defer></script>
+  <script src="js/one-shift-wms.js?v=12" defer></script>
+  <script src="js/one-shift-demos.js?v=12" defer></script>
+  <script src="js/one-shift-unity.js?v=12" defer></script>
 </head>
 <body class="warehouse-page">
 <main id="warehouse-stage" aria-label="The Warehouse Simulator">
@@ -35,6 +37,7 @@
       <nav id="warehouse-main-menu" class="warehouse-main-menu" aria-label="Main menu">
         <button id="warehouse-play" class="warehouse-primary" type="button"><span>Start business</span><span aria-hidden="true">&gt;</span></button>
         <button id="warehouse-sandbox" class="warehouse-mode-choice" type="button"><span>Sandbox</span><small>Populated warehouse. Example orders.</small></button>
+        <button id="warehouse-demos" class="warehouse-mode-choice" type="button"><span>Customer demos</span><small>Guided receiving, transfers and shipping.</small></button>
         <button id="warehouse-new-career" type="button" hidden>New business</button>
         <button type="button" data-screen="settings">Settings</button>
         <button type="button" data-screen="help">How to play</button>
@@ -55,7 +58,7 @@
       <div id="warehouse-error" class="warehouse-error" role="alert" hidden></div>
     </div>
     <footer class="warehouse-title-footer">
-      <span>v10 <span aria-hidden="true">/</span> Web edition</span>
+      <span>v12 <span aria-hidden="true">/</span> Web edition</span>
       <nav aria-label="Game information"><button type="button" data-fullscreen>Full screen</button><button type="button" data-screen="about">About</button><a href="archive.html">More games</a></nav>
     </footer>
   </section>
@@ -77,7 +80,7 @@
     </aside>
   </section>
   <nav id="warehouse-tools" class="warehouse-tools" aria-label="Game controls" hidden><button id="warehouse-handheld-toggle" type="button">TC22 <kbd>Q</kbd></button><button id="warehouse-pause" type="button" aria-pressed="false">Menu <kbd>Esc</kbd></button></nav>
-  <output id="warehouse-stats" class="warehouse-stats" aria-label="Game version and frame rate" aria-live="off" hidden>v10</output>
+  <output id="warehouse-stats" class="warehouse-stats" aria-label="Game version and frame rate" aria-live="off" hidden>v12</output>
   <dialog id="warehouse-menu" class="warehouse-dialog" aria-labelledby="warehouse-menu-title">
     <div class="warehouse-menu-shell">
       <header class="warehouse-dialog-header"><div><p class="warehouse-kicker">The Warehouse Simulator</p><h2 id="warehouse-menu-title">Paused</h2></div><button id="warehouse-close-menu" class="warehouse-close" type="button" aria-label="Close menu">Close</button></header>
@@ -96,7 +99,7 @@
         <div class="warehouse-help-tabs" role="tablist" aria-label="Controls"><button type="button" role="tab" id="warehouse-tab-floor" aria-selected="true" aria-controls="warehouse-help-floor" data-help-tab="floor">On foot</button><button type="button" role="tab" id="warehouse-tab-forklift" aria-selected="false" aria-controls="warehouse-help-forklift" data-help-tab="forklift" tabindex="-1">Forklift</button><button type="button" role="tab" id="warehouse-tab-work" aria-selected="false" aria-controls="warehouse-help-work" data-help-tab="work" tabindex="-1">The work</button></div>
         <div id="warehouse-help-floor" role="tabpanel" aria-labelledby="warehouse-tab-floor">
           <dl class="warehouse-key-list"><div><dt><kbd>W A S D</kbd></dt><dd>Walk</dd></div><div><dt><kbd>Mouse</kbd></dt><dd>Look around</dd></div><div><dt><kbd>E</kbd> or <kbd>Click</kbd></dt><dd>Use what you are looking at</dd></div><div><dt><kbd>Left Shift</kbd> / <kbd>Space</kbd></dt><dd>Run / jump</dd></div><div><dt><kbd>R</kbd></dt><dd>Return to the entrance</dd></div><div><dt><kbd>Esc</kbd> / <kbd>P</kbd></dt><dd>Open the pause menu</dd></div></dl>
-          <p>Hold the left mouse button to carry a carton while the TC22 is stowed, or hold E in either mode. Release to put it down. Scroll the mouse wheel to bring it closer or move it farther away. While carrying, hold the right mouse button and move the mouse to rotate the carton. It keeps its orientation until you rotate it.</p><p>Q equips or stows your TC22. Left click scans a visible barcode. Right click brings its live screen closer or returns it to your hand. Enter confirms a ready warehouse task. The office WMS manages purchase orders, sales orders, stock and bin history. The Business app handles equipment upgrades. Later, enter your forklift with E. Wall switches control the ceiling lights.</p>
+          <p>Hold the left mouse button to carry a carton while the TC22 is stowed, or hold E in either mode. Release to put it down. Scroll the mouse wheel to bring it closer or move it farther away. While carrying, hold the right mouse button and move the mouse to rotate the carton. It keeps its orientation until you rotate it.</p><p>Q equips or stows your TC22. Hold left click to aim the scanner and scan a visible barcode. Right click brings its live screen closer or returns it to your hand. Enter confirms a ready warehouse task. The office WMS manages purchase orders, sales orders, stock and bin history. The Business app handles equipment upgrades. Later, enter your forklift with E. Wall switches control the ceiling lights.</p>
         </div>
         <div id="warehouse-help-forklift" role="tabpanel" aria-labelledby="warehouse-tab-forklift" hidden>
           <dl class="warehouse-key-list"><div><dt><kbd>W S</kbd> / <kbd>A D</kbd></dt><dd>Drive / steer</dd></div><div><dt><kbd>Space</kbd> / <kbd>B</kbd></dt><dd>Brake / slow approach</dd></div><div><dt><kbd>Left Shift</kbd> + <kbd>Mouse</kbd></dt><dd>Hold to use the hydraulic lever</dd></div><div><dt><kbd>Q Z</kbd> / <kbd>T G</kbd></dt><dd>Raise or lower / tilt mast</dd></div><div><dt><kbd>C</kbd> / <kbd>V</kbd></dt><dd>Change view / centre view</dd></div><div><dt><kbd>E</kbd> / <kbd>F</kbd></dt><dd>Stop and step out / parking brake</dd></div></dl>
@@ -109,7 +112,7 @@
         <button id="warehouse-close-help" class="warehouse-subtle" type="button">Back</button>
       </section>
       <section id="warehouse-about" hidden><p class="warehouse-about-copy">A warehouse game by Ethan Willingham.</p><p>Build Latchford Distribution from its first cartons, or open an equipped warehouse in Sandbox. Progress lasts for the current page session.</p><p class="warehouse-classic">The earlier illustrated game and its saved warehouses are <a href="one-shift-classic.html">still here</a>.</p><a href="archive.html">More games</a></section>
-      <footer class="warehouse-menu-footer"><button id="warehouse-menu-back" class="warehouse-subtle" type="button" hidden>Back to menu</button><span>v10 / Web edition</span></footer>
+      <footer class="warehouse-menu-footer"><button id="warehouse-menu-back" class="warehouse-subtle" type="button" hidden>Back to menu</button><span>v12 / Web edition</span></footer>
     </div>
   </dialog>
   <dialog id="warehouse-computer" class="warehouse-computer" aria-labelledby="warehouse-computer-title">

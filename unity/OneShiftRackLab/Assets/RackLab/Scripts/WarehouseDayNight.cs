@@ -26,7 +26,9 @@ namespace OneShift.RackLab
         public float Hour { get; private set; }
         public float Daylight { get; private set; }
         public Vector3 TowardSun { get; private set; }
-        public bool ReflectionPending => roomReflection != null && roomReflection.enabled &&
+        bool UsesRealtimeReflection => roomReflection != null && roomReflection.enabled &&
+            roomReflection.mode == ReflectionProbeMode.Realtime;
+        public bool ReflectionPending => UsesRealtimeReflection &&
             (reflectionRequested || (reflectionRender >= 0 && !roomReflection.IsFinishedRendering(reflectionRender)));
         Material runtimeSky;
         float reflectionTimer;
@@ -50,9 +52,13 @@ namespace OneShift.RackLab
         {
             if (!Application.isFocused) return;
             if (!paused) Advance(Time.deltaTime);
-            reflectionTimer += Time.deltaTime;
-            // Time-sliced cubemaps capture the actual room, including switched rows.
-            if (reflectionRequested || reflectionTimer >= reflectionIntervalSeconds) RefreshReflection();
+            // The shipped room uses an Editor-captured cubemap. Only explicitly
+            // authored realtime probes may schedule six-face render work.
+            if (UsesRealtimeReflection)
+            {
+                reflectionTimer += Time.deltaTime;
+                if (reflectionRequested || reflectionTimer >= reflectionIntervalSeconds) RefreshReflection();
+            }
         }
 
         public void Advance(float seconds)
@@ -134,11 +140,11 @@ namespace OneShift.RackLab
                     if (window != null) window.SetSunlight(-TowardSun, sunColor, direct * beamIntensity);
         }
 
-        public void RequestReflection() { reflectionRequested = true; }
+        public void RequestReflection() { reflectionRequested = UsesRealtimeReflection; }
 
         void RefreshReflection()
         {
-            if (roomReflection == null || !roomReflection.enabled) return;
+            if (!UsesRealtimeReflection) return;
             if (reflectionRender >= 0 && !roomReflection.IsFinishedRendering(reflectionRender)) return;
             reflectionRender = roomReflection.RenderProbe();
             reflectionTimer = 0;

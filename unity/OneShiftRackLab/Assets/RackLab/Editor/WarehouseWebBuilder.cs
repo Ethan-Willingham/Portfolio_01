@@ -204,7 +204,8 @@ namespace OneShift.RackLab
                     camera.antialiasing = AntialiasingMode.SubpixelMorphologicalAntiAliasing;
                     camera.antialiasingQuality = AntialiasingQuality.Medium;
                 }
-                foreach (var probe in root.GetComponentsInChildren<ReflectionProbe>(true)) probe.resolution = 64;
+                foreach (var probe in root.GetComponentsInChildren<ReflectionProbe>(true))
+                    if (probe.mode == ReflectionProbeMode.Realtime) probe.resolution = 64;
                 foreach (var clock in root.GetComponentsInChildren<WarehouseDayNight>(true))
                     clock.reflectionIntervalSeconds = 20;
             }

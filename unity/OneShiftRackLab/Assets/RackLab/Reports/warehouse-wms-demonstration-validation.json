@@ -1,0 +1,27 @@
+{
+    "generatedUtc": "2026-10-29T20:17:35.1385574Z",
+    "scope": "Three isolated customer scenarios using production runtime, physical support checks, ledger and courier. Scans are decoded-label fixture input; explicit fixture placement settles in real PhysX. This does not simulate native mouse controls or rendered guidance.",
+    "passed": true,
+    "checks": [
+        "Receiving opens with exactly two unreceived cartons and no automatic receipt",
+        "Reading demonstration guidance does not mutate stock or grant progress",
+        "Prepared demonstrations protect their documents and equipment from unrelated manager mutations",
+        "A wrong handheld tile recovers with the correct task instruction",
+        "Location guidance exposes a real physical label and camera projection",
+        "One receipt advances exactly one carton and duplicate confirmation is rejected",
+        "Received stock still requires guided physical putaway",
+        "Receiving finishes only after both real cartons are received and supported in their assigned storage bins",
+        "Receiving and putaway conserve all cartons: Stock, order allocations and bin capacities reconcile.",
+        "Transfer starts with one available carton and an uncluttered document list",
+        "A different valid transfer does not falsely complete the demo and guidance follows the new recorded source",
+        "The corrected transfer records both real moves, completes the guide and preserves stock quantity",
+        "Transfers conserve stock after correction: Stock, order allocations and bin capacities reconcile.",
+        "Picking opens with one prepared allocation and no free shipment progress",
+        "A confirmed physical pick books the actual carrier without shipping or paying",
+        "The loaded manifest remains on hand and the demonstration stays incomplete before departure",
+        "Closing doors and driving out do not prematurely finish the customer demonstration",
+        "Only actual offsite departure completes picking and shipping and posts one customer payment",
+        "The completed customer shipment conserves all stock and allocation quantities: Stock, order allocations and bin capacities reconcile."
+    ],
+    "failure": ""
+}

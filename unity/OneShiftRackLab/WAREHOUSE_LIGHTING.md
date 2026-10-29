@@ -39,6 +39,39 @@ shadows come from the existing sun and twelve warehouse fixtures. They add no
 shadow maps or reflection probes, and do not request extra reflection captures.
 Inspect office light spill and exterior visibility at night when tuning them.
 
+V12 keeps both office fills at intensity 13 and range 6.2 m, with ForcePixel
+rendering. Their visible diffuser faces use a steady warm-white unlit material,
+without shadow or reflection dependencies. Painted masonry retains its diffuse
+lighting, relief and shadows, with direct glossy highlights disabled.
+
+The actual WebGL office-entry captures still showed large brightness jumps after
+those surface changes. Both point-light intensities and fixture shadow tiers
+stayed constant. A fixed-camera diagnostic counted 21 enabled lights at dawn
+and 15 by day, below the runtime visible-light cap of 32. Disabling or freezing
+the realtime reflection probe removed the observed clipped state; the same scene
+did not reproduce it in the Editor. This is consistent with Unity's reported
+[WebGL/ANGLE additional-light indexing issue UUM-142771](https://discussions.unity.com/t/understanding-the-default-mobile-web-urp-quality-choices-80-no-forward-etc/1719281),
+rather than insufficient shadow resolution or excess office-light intensity.
+
+An initial custom local cubemap still reproduced the jump in the actual browser,
+so avoiding realtime capture alone was insufficient. The room now uses that
+128-pixel Editor capture as `RenderSettings.customReflection`, with the local
+probe disabled. The probe's bounds remain available for offline recapture.
+`WarehouseDayNight` only queues, waits for or renders enabled probes explicitly
+set to Realtime, so there is no six-face render work during play or loading.
+The final browser export passed seven stationary morning captures and eight
+office-entry poses: wall and desk detail remain visible without the previous
+brightness jump. The computer return restores pointer capture without browser
+or active shader errors. Direct sun, ambient light, fixture switches and all existing shadows
+remain live. Reflections represent the authored morning room; they do not update
+for moving cartons, switched rows or the changing sky. Apply the repair through
+`WarehouseOfficeLightingRepair.Install()` in the existing RackFloor scene. It
+adds no lights, probes or shadow maps. After changing the room architecture,
+`WarehouseReflectionCacheBuilder.Rebuild()` refreshes the saved cubemap at
+`Assets/RackLab/Materials/Environment/WarehouseRoomReflection.exr`. Final browser
+office-entry inspection is still required after export; Editor checks alone did
+not reproduce this issue.
+
 V9 retains this lighting budget in both Career and Sandbox. The career courier
 adds no lights or reflection probes. Carton and floor-guide materials are retained
 in Resources for WebGL; their shaders do not add a lighting pass. The monitor's
@@ -50,9 +83,8 @@ Runtime-created bay labels, carton labels and the fish plaque bind to the same
 depth-tested font material as the authored signs. Each scene shares one material
 per font and refreshes its texture when Unity rebuilds the font atlas.
 
-The desktop room reflection probe captures the actual lighting in time-sliced 128-pixel
-faces, every eight seconds and after a switch changes. Reflections can take several
-frames to settle. The low night ambient keeps silhouettes readable with every
+Desktop and browser players share the cached room reflection. The low night
+ambient keeps silhouettes readable with every
 row off; it does not light the room as if the fixtures were still on.
 
 The browser export retains all twelve shadowed fixtures and the moving sun.
@@ -75,10 +107,10 @@ settings; the browser diagnostics expose the actual tier and atlas values.
 
 The browser uses 2x MSAA plus medium SMAA and downsampled contact
 shading with four samples, medium normal reconstruction and medium blur.
-The time-sliced reflection faces are 64 pixels and periodic captures occur
-every twenty seconds. Switch changes and explicit clock changes still request
-a fresh capture. Normal clock advancement does not request extra cubemaps on
-slow frames. The builder restores the desktop pipeline and contact-shading
+Before v12, the browser captured six 64-pixel reflection faces every twenty
+seconds and after switch or explicit clock changes. The cached cubemap removes
+that recurring render work and keeps switch changes from requesting a capture.
+The builder restores the desktop pipeline and contact-shading
 assets after export.
 
 The browser launcher defaults to Smooth, capping the drawing buffer at
@@ -88,8 +120,8 @@ quadrupling the render workload. It does not change the layout, camera view or
 physics timestep. The actual gain still needs measurement on target Macs.
 
 The browser prepares actual rendered night, dawn, morning, afternoon and
-all-rows-off variants behind the loading screen, including completed room
-captures. The v8 preparation retains seven stages and reports the current
+all-rows-off variants behind the loading screen. V12 uses the saved room cubemap
+throughout; it does not wait for new captures. The v8 preparation retains seven stages and reports the current
 lighting phase and view. Its four lit phases visit eight views, including the
 street truck, office, business park and worker shadows. The remaining stages
 cover both all-off lighting states, the fork visibility overlay, and restoration
@@ -97,8 +129,8 @@ of the opening view, reflection and 4:30 clock. Truck movement, physical freight
 and the simulation clock remain frozen throughout. Preparation yields before
 each work label so the browser can paint it before shader work begins.
 This addresses the first-use shader-link stalls measured
-in Chrome on the Windows workstation. Periodic live reflections remain enabled;
-the long trace did not show continuing stalls after the opening variants had
+in Chrome on the Windows workstation. Periodic live reflections were enabled
+in that historical trace, which did not show continuing stalls after the opening variants had
 linked. The v6 Chrome trace confirmed 2x multisampling and SMAA, with no long
 tasks or frame intervals over 50 ms in 90 seconds after preparation, including
 the first held-X mouse operation. The largest interval was 20.8 ms on the

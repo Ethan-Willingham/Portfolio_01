@@ -15,6 +15,8 @@ namespace OneShift.RackLab
         public TextMesh DescriptionText;
         public TextMesh CodeText;
         public Vector2 PaperSize;
+        public Rect DescriptionArea, CodeArea, BarcodeArea;
+        public bool ShelfTicket;
         public Vector3 Normal => transform.forward;
         public Vector3 ScanPoint => ScanFace != null ? ScanFace.transform.TransformPoint(ScanFace.center) : transform.position;
         public Renderer[] Visuals;
@@ -29,6 +31,16 @@ namespace OneShift.RackLab
             node.transform.SetParent(parent, false); node.transform.localPosition = position; node.transform.localRotation = rotation;
             var label = node.AddComponent<WarehouseWmsLabel>();
             label.Code = code; label.Kind = kind; label.Id = id; label.Caption = caption; label.PaperSize = size;
+            label.ShelfTicket = kind == "bin" && size.y <= .13f;
+            label.DescriptionArea = label.ShelfTicket
+                ? new Rect(-size.x*.465f,-size.y*.27f,size.x*.365f,size.y*.62f)
+                : new Rect(-size.x*.45f,size.y*.035f,size.x*.90f,size.y*.405f);
+            label.CodeArea = label.ShelfTicket
+                ? new Rect(-size.x*.04f,-size.y*.425f,size.x*.50f,size.y*.13f)
+                : new Rect(-size.x*.45f,-size.y*.455f,size.x*.90f,size.y*.12f);
+            label.BarcodeArea = label.ShelfTicket
+                ? new Rect(-size.x*.06f,-size.y*.21f,size.x*.53f,size.y*.60f)
+                : new Rect(-size.x*.47f,-size.y*.29f,size.x*.94f,size.y*.28f);
             var mesh = new Mesh { name = "Code 128 / " + code };
             var vertices = new List<Vector3>(); var white = new List<int>(); var black = new List<int>();
             var normals = new List<Vector3>(); var uv = new List<Vector2>();
@@ -43,9 +55,9 @@ namespace OneShift.RackLab
             }
             Quad(-size.x * .5f, -size.y * .5f, size.x, size.y, 0, white);
             int modules = WarehouseCode128.ModuleCount(symbols) + 20;
-            float module = size.x * .94f / modules;
-            float cursor = -size.x * .47f + module * 10;
-            float barcodeY = -size.y * .29f, barcodeHeight = size.y * .28f;
+            float module = label.BarcodeArea.width / modules;
+            float cursor = label.BarcodeArea.xMin + module * 10;
+            float barcodeY = label.BarcodeArea.yMin, barcodeHeight = label.BarcodeArea.height;
             foreach (int symbol in symbols)
             {
                 string widths = WarehouseCode128.Pattern(symbol);
@@ -75,10 +87,10 @@ namespace OneShift.RackLab
             human.fontSize = 32;
             human.color = text.color; human.text = code;
             label.CodeText=human;
-            FitText(human,new Vector2(size.x*.90f,size.y*.12f),new Vector3(0,-size.y*.395f,.0012f));
+            FitPrint(human,label.CodeArea);
             label.ScanFace = node.AddComponent<BoxCollider>(); label.ScanFace.isTrigger = true;
-            label.ScanFace.center = new Vector3(0, barcodeY + barcodeHeight * .5f, .003f);
-            label.ScanFace.size = new Vector3(size.x * .94f, barcodeHeight + size.y * .08f, .004f);
+            label.ScanFace.center = new Vector3(label.BarcodeArea.center.x, barcodeY + barcodeHeight * .5f, .003f);
+            label.ScanFace.size = new Vector3(label.BarcodeArea.width, barcodeHeight, .004f);
             label.Visuals = new Renderer[] { renderer, text.GetComponent<Renderer>(), human.GetComponent<Renderer>() };
             return label;
         }
@@ -90,10 +102,12 @@ namespace OneShift.RackLab
             if(DescriptionText==null)return;
             string[] lines=(detail??"").Split('\n');
             string value=Fit((caption??"").ToUpperInvariant(),25);
-            for(int i=0;i<Mathf.Min(2,lines.Length);i++)value+="\n"+Fit(lines[i],30);
+            for(int i=0;i<Mathf.Min(ShelfTicket?1:2,lines.Length);i++)value+="\n"+Fit(lines[i],30);
             DescriptionText.text=value;
-            FitText(DescriptionText,new Vector2(PaperSize.x*.90f,PaperSize.y*.405f),new Vector3(0,PaperSize.y*.2375f,.0012f));
+            FitPrint(DescriptionText,DescriptionArea);
         }
+        static void FitPrint(TextMesh text,Rect area)
+        {FitText(text,area.size,new Vector3(area.center.x,area.center.y,.0012f));}
         // characterSize is multiplied by the font's real glyph metrics. Fit
         // those generated bounds, including line spacing, into an explicit
         // print area instead of estimating size from a character count.

@@ -2,7 +2,7 @@
 
 The Warehouse Simulator, formerly One Shift, keeps its stable `one-shift.html`
 address and click-to-load Unity browser launcher. The current home screen uses an
-actual scene image, a clear Start business action, Sandbox, settings and a separate control
+actual scene image, a clear Start business action, Sandbox, Customer demos and a separate control
 guide. The HTML interface supplies the clock, contextual interactions, pause
 menu, hydraulic slider and office computer. The old grey debug panels and
 floating black pallet labels are absent from the playable scene.
@@ -15,7 +15,67 @@ keeps its `.loader.js` extension. Bump the launcher CSS/script query versions an
 the build version in `js/one-shift-unity.js` and `BrowserLifecycle.BuildVersion`
 whenever the published build changes.
 
-## Current v11: handheld controls and warehouse layout
+## Current v12: scanner presentation and customer demonstrations
+
+The title screen has three modes: Start business, Sandbox and Customer demos.
+The demonstration gallery describes the work, prepared documents and outcome
+before loading Unity. Receiving starts with two expected cartons in REC-02 and
+finishes after receipt and rack putaway. Transfer moves one carton between two
+low rack bins. Pick, stage and ship starts with one allocated customer carton;
+it finishes only after physical van loading and the offsite shipment callback.
+Demonstrations open at 9 a.m. and use isolated session state. Their office console
+remains inspectable, while unrelated purchases, order changes and upgrades are
+disabled. There is no automatic worker or scripted stock completion.
+
+`WarehouseWmsDemonstration` observes the normal workflow, physical placement and
+ledger. Its snapshot supplies one current instruction, confirmed milestones and
+a camera-projected location target. The shipping route leaves turning clearance
+before the office doorway. H opens the guide; it pauses separately from
+browser inactivity. Completion presents the actual result and offers another
+scenario or continued exploration. Restarting opens a fresh page. A one-use,
+short-lived session flag carries an explicit Start click across that reset;
+visiting a demo URL by itself still requires clicking Start.
+
+The TC22 uses original geometry based on Zebra's TC22 proportions and SE4710
+red aiming-dot configuration. It floats without a hand. Hold left mouse to tilt
+the top exit window toward the target and keep the red beam and surface dot on.
+The ray stops at the nearest physical surface. Stable new labels decode once per
+held acquisition; keeping the same barcode under the aimer does not repeat the
+transaction. Release, stow, inspection, carrying, pause and focus loss cancel
+the trigger. Right click inspects the live screen, Q equips or stows it, and F
+remains a single-scan alternate. No additional lights are used for the aimer.
+
+Rack tickets now sit on the actual beam face inside its 130 mm height, retaining
+Code128 quiet zones and matching scan colliders. Row end markers, beam-mounted
+bay IDs and receiving/staging signs use a consistent hierarchy. Labels retain
+ordinary depth tests without distance visibility toggles.
+
+The office comparison found a browser-only brightness jump, with unchanged
+fixture intensities and shadow tiers. Fixed-camera isolation ruled out the
+32-light camera limit and recovered normal wall detail with the live reflection
+path disabled. The release uses a saved environment reflection with the local
+probe disabled; direct sun, shadows,
+ambient daylight and the two office fills remain dynamic. Painted concrete has
+matte highlights, and diffuser faces use a steady unlit material. The saved
+reflection does not track moving cartons or vehicles.
+
+The three native Chrome walkthroughs passed: receiving and putaway (60 checks),
+transfer (23), and picking through actual offsite shipment (58). They use real
+mouse/keyboard controls and read-only state observation. The isolated Editor
+scenario checks passed 19 assertions, and warehouse world checks passed 39.
+Title/gallery layout and keyboard checks passed 28 at 1280 by 720 and 900 by 600.
+The final 42,669,123-byte browser export has zero build errors. Seven stationary
+morning captures and eight office-entry poses preserve wall and desk detail
+without the previous brightness jump. Returning from the office computer restores
+pointer capture with no browser or active shader errors. Entry points are
+`WarehouseOfficeLightingRepair.Install()`,
+`WarehouseWmsWorldValidation.ValidateAndSave()`,
+`WarehouseWmsDemonstrationValidation.ValidateAndSave()`, and the browser checks
+`tools/test-one-shift-demos-ui.cjs`, `tools/test-one-shift-demos-browser.cjs` and
+`tools/test-one-shift-office-lighting.cjs`. Close the Editor before browser work
+and run one Unity rendering workload at a time.
+
+## v11: handheld controls and warehouse layout
 
 The TC22 equips automatically as a handheld device with a live WMS screen. Left
 click scans the visible label. Right click toggles a larger screen inspection;

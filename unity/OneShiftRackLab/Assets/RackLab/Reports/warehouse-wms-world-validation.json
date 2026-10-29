@@ -1,5 +1,5 @@
 {
-    "generatedUtc": "2026-10-29T17:01:45.0128951Z",
+    "generatedUtc": "2026-10-29T20:17:34.6075224Z",
     "scope": "Original Code128 encoding, actual physical label raycasts, authored rack-bin geometry, box support and a populated sleeping-stock fixture in isolated PhysX. No native browser input or rendered UI is simulated by these checks.",
     "passed": true,
     "checks": [
@@ -33,6 +33,8 @@
         "All18 authored wall-rack positions become bins; the six low faces are pickable",
         "Sandbox has90 unique rack-bin addresses and30 reachable low faces across rows A to E",
         "Every rack bin has an explicit non-solid storage volume and capacity",
+        "Every upper location ticket fits inside the actual beam face with a visible steel margin",
+        "Slim beam tickets keep a physically reachable barcode face ahead of the steel",
         "100 varied cartons remain supported in their real rack bins",
         "Settled populated stock sleeps while remaining dynamic and hand-pickable",
         "Sandbox cartons retain eight physical package sizes",

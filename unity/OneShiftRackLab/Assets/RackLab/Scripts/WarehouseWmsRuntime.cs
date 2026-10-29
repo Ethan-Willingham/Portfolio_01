@@ -48,17 +48,19 @@ namespace OneShift.RackLab
         static readonly string[] Contents = { "36 rolls", "12 packs", "24 pairs", "50 mailers", "6 rolls", "20 rolls", "8 tubs", "100 bags" };
         static readonly string[] ContentUnits = { "ROLL", "PACK", "PAIR", "EA", "ROLL", "ROLL", "TUB", "EA" };
         static readonly int[] Units = {36,12,24,50,6,20,8,100}, Costs = {40,40,60,32,46,28,44,22}, Prices = {70,70,105,55,76,49,74,38};
-        public static WarehouseWmsRuntime Ensure(bool sandbox)
+        public static WarehouseWmsRuntime Ensure(bool sandbox,string demonstrationId="")
         {
             var scene=SceneManager.GetActiveScene();
             var existing=scene.GetRootGameObjects().SelectMany(root=>root.GetComponentsInChildren<WarehouseWmsRuntime>(true)).FirstOrDefault();
             if(existing!=null)return existing;
             var value=new GameObject("Latchford WMS").AddComponent<WarehouseWmsRuntime>();
-            value.Initialize(sandbox);return value;
+            value.Initialize(sandbox,demonstrationId);return value;
         }
-        public void Initialize(bool sandbox)
+        public void Initialize(bool sandbox,string demonstrationId="")
         {
-            if(initialized)return;initialized=true;Sandbox=sandbox;Cash=sandbox?10000:600;
+            if(initialized)return;initialized=true;
+            DemonstrationId=NormalizeDemonstration(demonstrationId);sandbox=sandbox||DemonstrationActive;
+            Sandbox=sandbox;Cash=DemonstrationActive?0:sandbox?10000:600;
             Walking=FindLocal<RackWalkController>();
             if(Walking==null)throw new InvalidOperationException("WMS needs the warehouse player.");
             grabber=Walking.GetComponent<WarehouseGrabber>();
@@ -90,6 +92,7 @@ namespace OneShift.RackLab
             for(int i=0;i<Sku.Length;i++)Ledger.AddItem(new L.Item(Sku[i],Names[i],Units[i],Contents[i]+" per carton","Hartwell Trade Supply"));
             RegisterBins();
             finance.Add(new WarehouseBusiness.LedgerEntry("Opening working capital",Cash));
+            if(DemonstrationActive){SeedDemonstration();return;}
             if(sandbox)SeedSandbox();else SeedCareerOrders();
             Notice(sandbox?"Sandbox is stocked. Right click inspects your TC22. Try SO-2001 or receive the cartons in REC-02.":
                 "Open the office WMS and book PO-1001. Your TC22 receives and moves each carton.",true);
@@ -167,6 +170,7 @@ namespace OneShift.RackLab
         bool ReadDraft(string payload,out string sku,out int quantity,out string reason)
         {
             sku="";quantity=0;reason="Complete your first shipment before creating new purchase or sales orders.";
+            if(DemonstrationActive){reason="This demonstration has its documents prepared. Create new orders in Career or Sandbox.";return false;}
             if(!Sandbox&&CompletedOrders<1)return false;
             reason="Choose a catalogue item and a whole quantity from 1 to 6 CTN.";
             if(string.IsNullOrEmpty(payload))return false;
@@ -180,6 +184,7 @@ namespace OneShift.RackLab
         public bool CanBook(string id,out string reason)
         {
             var po=Ledger.FindPurchase(id);reason="Select an open purchase order.";
+            if(DemonstrationActive){reason="Demonstration freight is already prepared. Book new deliveries in Career or Sandbox.";return false;}
             if(po==null||po.status==L.PurchaseStatus.Received||po.status==L.PurchaseStatus.Cancelled)return false;
             if(bookedPurchases.Contains(id)){reason="Delivery already booked. Receive the outstanding cartons.";return false;}
             if(Courier.Busy){reason="Wait for the current van visit to finish.";return false;}
@@ -211,6 +216,7 @@ namespace OneShift.RackLab
         }
         public bool CanRelease(string id,out string reason)
         {
+            if(DemonstrationActive){reason="Demonstration allocation is already prepared. Release new orders in Career or Sandbox.";return false;}
             if(!string.IsNullOrEmpty(collectionOrder)){reason="Finish the current collection before releasing another sales order.";return false;}
             if(Courier.Busy){reason="Wait for the current van visit to finish.";return false;}
             if(!Ledger.CanReleaseSalesOrder(id,out reason))return false;
@@ -233,6 +239,7 @@ namespace OneShift.RackLab
         }
         public bool CancelOrder(string id)
         {
+            if(DemonstrationActive)return Notice("Keep this demonstration's prepared order. Restart the scenario for a fresh example.",false);
             if(collectionOrder==id&&collectionBooked)return Notice("A collection is already booked. Complete this shipment before cancelling further orders.",false);
             if(!Ledger.CancelSalesOrder(id))return Notice(Ledger.LastMessage,false);
             if(collectionOrder==id)collectionOrder=dispatchAuthorization="";
@@ -253,6 +260,7 @@ namespace OneShift.RackLab
         public bool CanUpgrade(string id,out string reason)
         {
             int price=WarehouseCareer.UpgradePrice(id);reason="Upgrade unavailable.";
+            if(DemonstrationActive){reason="Equipment purchases belong to Career or Sandbox.";return false;}
             if(price<0)return false;if(Owns(id)){reason="Already installed.";return false;}
             if(id=="racks"&&racks==null){reason="The rack installation is unavailable.";return false;}
             if((id=="forklift"||id=="flames")&&forklift==null){reason="The forklift installation is unavailable.";return false;}

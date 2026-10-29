@@ -3,6 +3,9 @@ mergeInto(LibraryManager.library, {
     return document.pointerLockElement === Module['canvas'] ? 1 : 0;
   },
   WarehouseInitialMode: function () {
+    if (window.warehouseRequestedMode === 'demo') {
+      return window.warehouseRequestedDemo === 'transfer' ? 3 : window.warehouseRequestedDemo === 'pick-ship' ? 4 : 2;
+    }
     return window.warehouseRequestedMode === 'sandbox' ? 0 : 1;
   },
   OneShiftRegisterBrowserLoop__deps: ['emscripten_pause_main_loop', 'emscripten_resume_main_loop'],

@@ -21,6 +21,7 @@ namespace OneShift.RackLab
             public TransactionRow[] transactions;
             public TaskRow[] tasks;
             public ExceptionRow[] exceptions;
+            public DemonstrationState demo;
         }
         [Serializable] public sealed class ItemRow
         {public string id,sku,name,description,uom;public int unitsPerCarton,onHand,available,reserved,picked,inReceiving;}
@@ -53,7 +54,8 @@ namespace OneShift.RackLab
             Workflow.total=po!=null?po.lines.Sum(l=>l.ordered):so!=null?so.lines.Sum(l=>l.ordered):0;
             Workflow.completed=po!=null?po.lines.Sum(l=>l.received):so!=null?so.lines.Sum(l=>Workflow.tile=="ship"?l.loaded:l.picked):0;
             return new Snapshot{
-                revision=Revision+Ledger.Revision,mode=Sandbox?"sandbox":"career",facility="Latchford Distribution / WH-01",cash=Cash,completedOrders=CompletedOrders,
+                revision=Revision+Ledger.Revision,mode=DemonstrationActive?"demo":Sandbox?"sandbox":"career",facility="Latchford Distribution / WH-01",cash=Cash,completedOrders=CompletedOrders,
+                demo=CaptureDemonstration(),
                 message=Message,severity=Severity,equipped=Scanner.Equipped,scan=ScanResult,workflow=Workflow,
                 items=Ledger.Items.Select(i=>new ItemRow{id=i.id,sku=i.id,name=i.name,description=i.description,uom=i.uom,unitsPerCarton=i.unitsPerCarton,
                     onHand=Ledger.OnHand(i.id),available=Ledger.Available(i.id),reserved=Ledger.Reserved(i.id),picked=Ledger.Picked(i.id),inReceiving=Ledger.InReceiving(i.id)}).ToArray(),
@@ -68,7 +70,7 @@ namespace OneShift.RackLab
                 salesOrders=Ledger.SalesOrders.Select(s=>
                 {bool release=CanRelease(s.id,out var reason);bool loaded=Ledger.CanShip(s.id,out _);return new OrderRow{id=s.id,partner=s.customer,status=s.status.ToString(),reference="Local trade customer / parcel collection",
                     canRelease=release,canPick=s.manifest.Any(id=>Ledger.FindCarton(id).status==L.CartonStatus.Reserved),canShip=s.status==L.SalesStatus.Picked||s.status==L.SalesStatus.Loading||loaded,
-                    canCancel=!(collectionBooked&&collectionOrder==s.id)&&(s.status==L.SalesStatus.Open||s.status==L.SalesStatus.Released),actionReason=release?"Reserve FIFO cartons and create pick work.":
+                    canCancel=!DemonstrationActive&&!(collectionBooked&&collectionOrder==s.id)&&(s.status==L.SalesStatus.Open||s.status==L.SalesStatus.Released),actionReason=release?"Reserve FIFO cartons and create pick work.":
                         s.status==L.SalesStatus.Shipped?"Shipment departed. Payment posted.":s.status!=L.SalesStatus.Open?"Use the TC22 to complete physical pick and ship work.":reason,
                     amount=s.lines.Sum(l=>l.ordered*Price(l.itemId)),lines=Lines(s.lines.ToArray())};}).ToArray(),
                 transactions=Ledger.Transactions.Reverse().Take(300).Select(t=>new TransactionRow{id="TX-"+t.sequence.ToString("00000"),time="Event "+t.sequence,type=t.type,

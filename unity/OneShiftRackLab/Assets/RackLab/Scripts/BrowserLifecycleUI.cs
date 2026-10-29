@@ -135,7 +135,7 @@ namespace OneShift.RackLab
         public string HUDSnapshot()
         {
             var state = new HUDState();
-            state.mode = uiWms != null ? uiWms.Sandbox ? "sandbox" : "career" : uiCareer != null ? "career" : "sandbox";
+            state.mode = uiWms != null ? uiWms.DemonstrationActive ? "demo" : uiWms.Sandbox ? "sandbox" : "career" : uiCareer != null ? "career" : "sandbox";
             var grabber = uiWalking != null ? uiWalking.GetComponent<WarehouseGrabber>() : null;
             state.holding = grabber != null && grabber.IsHolding;
             state.carryDistance = grabber != null ? grabber.HoldDistance : 0;

@@ -21,20 +21,23 @@
   var portrait = false, lastActive = null, loopPaused = false, mode = 'title';
   var pendingLoopPause = 0;
   var menuScreen = '', computerOpen = false, escapeHandled = false, lastComputer = '', wrapperFullscreen = false;
-  var gameMode = new URLSearchParams(window.location.search).get('mode') === 'sandbox' ? 'sandbox' : 'career';
-  var pendingMode = '', computerTransitioning = false;
+  var requested = new URLSearchParams(window.location.search);
+  var gameMode = requested.get('mode') === 'demo' ? 'demo' : requested.get('mode') === 'sandbox' ? 'sandbox' : 'career';
+  var demoId = window.WarehouseDemoUI.valid(requested.get('demo')) ? requested.get('demo') : 'receive';
+  var pendingMode = '', pendingDemo = '', computerTransitioning = false;
   var handheldOpen = false, handheldInteractive = false, pendingHandheld = false;
-  var capturePending = false, carryKeyHeld = false;
+  var capturePending = false, carryKeyHeld = false, scannerTriggerHeld = false;
   window.warehouseRequestedMode = gameMode;
+  window.warehouseRequestedDemo = demoId;
   var hudState = {}, loadingPhase = 'download', loadStart = 0, loadingTimer = null, lastLoadChange = 0;
   var preparationFraction = 0, preparationCompleted = 0, preparationTotal = 7, hasFinePreparation = false;
-  var build = 'assets/one-shift-unity/Build/OneShiftWeb', version = '?v=11';
+  var build = 'assets/one-shift-unity/Build/OneShiftWeb', version = '?v=12';
   var preparationNames = ['Night lighting', 'First daylight', 'Morning light', 'Afternoon light', 'Ceiling light controls', 'Fork placement view', 'Opening the doors'];
   var tips = [
     'Your first three cartons arrive at the front door.',
     'Hold E to carry a carton. Release to set it down. Scroll to adjust distance.',
     'Hold the right mouse button to turn a carton before setting it down.',
-    'Left click scans. Right click inspects the TC22. Q equips or stows it.',
+    'Hold left click to aim and scan. Right click inspects the TC22. Q stows it.',
     'Your customers are the local garages, workshops and trade counters.',
     'Receive, transfer, pick and ship with the TC22. Manage orders in the office WMS.'
   ];
@@ -59,10 +62,17 @@
   function unlockPointer() {
     if (document.pointerLockElement === canvas && document.exitPointerLock) document.exitPointerLock();
   }
+  function setScannerTrigger(held) {
+    if (scannerTriggerHeld === held) return;
+    scannerTriggerHeld = held;
+    sendCommand('device-trigger',held ? '1' : '0');
+  }
   function syncWmsPresentation() {
     if (!window.WarehouseWmsUI) return;
     window.WarehouseWmsUI.setPresentation({handheldOpen:handheldOpen, handheldInteractive:handheldInteractive,
       active:mode === 'play' && activity.active() && !portrait && !menuScreen && !computerOpen && !hudState.driving && !hudState.holding});
+    if (window.WarehouseDemoUI) window.WarehouseDemoUI.setPresentation({playing:mode === 'play',
+      covered:!!menuScreen || computerOpen || portrait || !activity.active(), inspecting:handheldInteractive});
   }
   function focusHandheld(interactive) {
     if (!instance || !graphicsReady || hudState.driving || portrait) return;
@@ -72,6 +82,7 @@
       return;
     }
     var wasInteractive = handheldInteractive, ownedPointer = document.pointerLockElement === canvas;
+    if (interactive) setScannerTrigger(false);
     handheldOpen = true; handheldInteractive = interactive;
     sendCommand('device-equip','1');
     if (interactive || wasInteractive) sendCommand('device-focus',interactive ? '1' : '0');
@@ -79,6 +90,7 @@
     if (!interactive && !manuallyPaused && !menuScreen) { canvas.focus({preventScroll:true}); requestMouseCapture(); if (wasInteractive || !ownedPointer) sendCommand('resume'); }
   }
   function stowHandheld() {
+    setScannerTrigger(false);
     var wasInteractive = handheldInteractive, ownedPointer = document.pointerLockElement === canvas;
     handheldOpen = false; handheldInteractive = false; pendingHandheld = false;
     if (wasInteractive) sendCommand('device-focus','0');
@@ -91,6 +103,7 @@
     deviceFocus:focusHandheld, closeDevice:stowHandheld, openHandheld:function() { focusHandheld(true); },
     openBusiness:function() { showBusiness(true); }, closeConsole:function() { showBusiness(false); }
   });
+  window.WarehouseDemoUI.init({launch:function(id){chooseSession('demo',id);},menu:openMenu,resume:resume,title:returnTitle});
   function syncStatsVisibility() { stats.hidden = mode !== 'play' || !byId('show-stats').checked; }
   function reportPlayerStats(buildVersion, framesPerSecond, longestFrameMs, frameCount) {
     playerBuildVersion = buildVersion;
@@ -190,8 +203,8 @@
     launcher.hidden = true;
     tools.hidden = false;
     hud.hidden = false;
-    setText(byId('session-note'), (gameMode === 'sandbox' ? 'Sandbox' : 'Latchford Distribution') + ' / current session.');
-    play.innerHTML = '<span>Resume ' + (gameMode === 'sandbox' ? 'sandbox' : 'business') + '</span><span aria-hidden="true">&gt;</span>';
+    setText(byId('session-note'), (gameMode === 'demo' ? window.WarehouseDemoUI.title(demoId) : gameMode === 'sandbox' ? 'Sandbox' : 'Latchford Distribution') + ' / current session.');
+    play.innerHTML = '<span>Resume ' + (gameMode === 'demo' ? 'demonstration' : gameMode === 'sandbox' ? 'sandbox' : 'business') + '</span><span aria-hidden="true">&gt;</span>';
     byId('new-career').hidden = false;
     play.disabled = false;
     byId('main-menu').hidden = false;
@@ -232,6 +245,7 @@
     byId('hydraulics').hidden = !hudState.hydraulics || !activity.active() || manuallyPaused || !!menuScreen || computerOpen || portrait;
     if (!instance) return;
     var active = activity.active() && !manuallyPaused && !menuScreen && !computerOpen && !handheldInteractive && !portrait && !failed && mode !== 'title';
+    if (!active) setScannerTrigger(false);
     var inspectingOnFloor = handheldInteractive && activity.active() && !manuallyPaused && !menuScreen && !computerOpen && !portrait && !failed && mode === 'play';
     if (pendingLoopPause && (active || !inspectingOnFloor)) {
       cancelAnimationFrame(pendingLoopPause); pendingLoopPause = 0;
@@ -294,9 +308,9 @@
       manuallyPaused = true;
       if (!wasMenu) sendCommand('menu');
     }
-    ['paused','settings','controls','about','new-session'].forEach(function (id) { byId(id).hidden = true; });
-    byId({pause:'paused',settings:'settings',help:'controls',about:'about',new:'new-session'}[screen]).hidden = false;
-    setText(byId('menu-title'), {pause:'Paused',settings:'Settings',help:'How to play',about:'The warehouse',new:'Start a new session?'}[screen]);
+    ['paused','settings','controls','about','new-session','demo-help','demo-complete'].forEach(function (id) { byId(id).hidden = true; });
+    byId({pause:'paused',settings:'settings',help:'controls',about:'about',new:'new-session','demo-help':'demo-help','demo-complete':'demo-complete'}[screen]).hidden = false;
+    setText(byId('menu-title'), {pause:'Paused',settings:'Settings',help:'How to play',about:'The warehouse',new:'Start a new session?','demo-help':'Walkthrough guide','demo-complete':'Demonstration complete'}[screen]);
     byId('menu-back').hidden = screen === 'pause' || screen === 'help' || screen === 'new';
     unlockPointer();
     syncActivity();
@@ -343,6 +357,7 @@
     manuallyPaused = true;
     closeMenu(false);
     mode = 'title';
+    window.WarehouseDemoUI.hideGallery();
     launcher.hidden = false;
     loading.hidden = true;
     byId('main-menu').hidden = false;
@@ -354,9 +369,11 @@
   function releaseMouseCapture(event) {
     capturePending = false;
     if (document.pointerLockElement === canvas) {
+      if (handheldInteractive || menuScreen || computerOpen) { unlockPointer(); return; }
       if (lastActive === true && !computerOpen && !computerTransitioning && !handheldInteractive) sendCommand('resume');
       return;
     }
+    setScannerTrigger(false);
     // Walking, driving and the office deliberately transfer cursor ownership.
     // A pointer-lock change alone does not express a request to pause. Their
     // controllers already stop input when capture is absent. Only a failed
@@ -380,27 +397,44 @@
     setText(play, 'Reload and try again');
     syncActivity();
   }
-  function chooseSession(choice) {
+  function chooseSession(choice,selectedDemo) {
     if (starting && !instance) return;
+    if (choice === 'demo') demoId = window.WarehouseDemoUI.valid(selectedDemo) ? selectedDemo : demoId;
     if (!instance) { start(choice); return; }
     pendingMode = choice;
-    setText(byId('new-session-copy'), choice === 'sandbox' ? 'Open a fresh, equipped warehouse in Sandbox.' : 'Start Latchford Distribution again with $600 and an empty warehouse.');
-    setText(byId('confirm-new-session'), choice === 'sandbox' ? 'Open fresh sandbox' : 'Start new business');
+    pendingDemo = demoId;
+    if (choice === 'demo' && gameMode === 'demo' && hudState.wms && hudState.wms.demo && hudState.wms.demo.complete) { launchNewSession(); return; }
+    setText(byId('new-session-copy'), choice === 'demo' ? 'Open a fresh '+window.WarehouseDemoUI.title(demoId).toLowerCase()+' demonstration.' : choice === 'sandbox' ? 'Open a fresh, equipped warehouse in Sandbox.' : 'Start Latchford Distribution again with $600 and an empty warehouse.');
+    setText(byId('confirm-new-session'), choice === 'demo' ? 'Start walkthrough' : choice === 'sandbox' ? 'Open fresh sandbox' : 'Start new business');
     openMenu('new');
+  }
+  function launchNewSession() {
+    var destination = new URL(window.location.href);
+    destination.searchParams.set('mode',pendingMode);
+    if (pendingMode === 'demo') {
+      destination.searchParams.set('demo',pendingDemo);
+      // Preserve this explicit Start click across the fresh-page reset. A URL
+      // alone never starts downloading the player without a user action.
+      try { sessionStorage.setItem('warehouse-demo-launch',JSON.stringify({id:pendingDemo,at:Date.now()})); } catch (_) {}
+    } else destination.searchParams.delete('demo');
+    destination.searchParams.set('v','12');window.location.assign(destination.href);
   }
   function start(requestedMode) {
     if (failed) { window.location.reload(); return; }
     if (instance && graphicsReady) { resume(); return; }
     if (starting || portrait) return;
-    gameMode = requestedMode === 'sandbox' ? 'sandbox' : 'career';
+    gameMode = requestedMode === 'demo' ? 'demo' : requestedMode === 'sandbox' ? 'sandbox' : 'career';
     window.warehouseRequestedMode = gameMode;
+    window.warehouseRequestedDemo = demoId;
+    window.WarehouseDemoUI.hideGallery();
     stage.dataset.mode = gameMode;
     if (gameMode === 'sandbox') tips = [
-      'Sandbox begins with racks, a forklift and a four-pallet delivery.',
-      'The road truck backs into the north dock and opens its doors.',
-      'Carry pallets low and turn slowly.',
-      'The office computer handles stock purchases and retailer orders.'
+      'Sandbox starts with 100 owned cartons across labelled storage bins.',
+      'Receiving and outbound staging are beside the north garage.',
+      'Hold left click to aim the TC22. A successful read gives a short beep.',
+      'The office WMS shares the handheld inventory and order records.'
     ];
+    if (gameMode === 'demo') tips = ['Your walkthrough begins with stock and documents prepared.','Follow one instruction at a time. Press H whenever you want the guide.','A scan identifies the carton. Physical placement and confirmation complete the work.'];
     var probe = document.createElement('canvas'), gl = probe.getContext('webgl2');
     if (!gl || typeof WebAssembly !== 'object') {
       showError('This browser cannot run the warehouse. Use a browser with WebGL 2 enabled. The illustrated game is available in About.');
@@ -422,7 +456,7 @@
         frameworkUrl:build + '.framework.js.unityweb' + version,
         codeUrl:build + '.wasm.unityweb' + version,
         streamingAssetsUrl:'assets/one-shift-unity/StreamingAssets',
-        companyName:'Ethan Willingham', productName:'The Warehouse Simulator', productVersion:'9',
+        companyName:'Ethan Willingham', productName:'The Warehouse Simulator', productVersion:'12',
         matchWebGLToCanvasSize:false, devicePixelRatio:1,
         onOneShiftStats:reportPlayerStats, onOneShiftPreparation:reportPreparation,
         onWarehousePreparation:reportFinePreparation, onWarehouseHUD:reportHUD,
@@ -449,7 +483,8 @@
     if (typeof value === 'string') { try { value = JSON.parse(value); } catch (_) { return; } }
     if (!value || typeof value !== 'object') return;
     hudState = value;
-    if (value.mode === 'career' || value.mode === 'sandbox') stage.dataset.mode = value.mode;
+    if (value.mode === 'career' || value.mode === 'sandbox' || value.mode === 'demo') stage.dataset.mode = value.mode;
+    window.WarehouseDemoUI.receive(value.wms && value.wms.demo);
     setText(byId('clock'), value.clock);
     setText(byId('desktop-clock'), value.clock || 'Office');
     setText(byId('location'), value.location || 'Warehouse floor');
@@ -561,7 +596,7 @@
     var focusAction = focused && focused.dataset.action, focusId = focused && focused.dataset.id;
     var sandbox = value.mode === 'sandbox' || (!value.mode && gameMode === 'sandbox');
     setText(byId('computer-title'), value.company || value.title || 'Latchford Distribution');
-    setText(byId('computer-mode'), sandbox ? 'Business / Sandbox' : 'Business / Career');
+    setText(byId('computer-mode'), value.mode === 'demo' ? 'Business / Demonstration' : sandbox ? 'Business / Sandbox' : 'Business / Career');
     setText(byId('computer-summary'), value.summary);
     setText(byId('computer-cash'), money(value.cash));
     setText(byId('computer-message'), value.message || 'Ready. Choose a task from the left.');
@@ -652,13 +687,10 @@
   }
   play.addEventListener('click', function () { start('career'); });
   byId('sandbox').addEventListener('click', function () { chooseSession('sandbox'); });
+  byId('demos').addEventListener('click', function () { window.WarehouseDemoUI.showGallery(demoId); });
   byId('new-career').addEventListener('click', function () { chooseSession('career'); });
   byId('cancel-new-session').addEventListener('click', function () { closeMenu(false); });
-  byId('confirm-new-session').addEventListener('click', function () {
-    var destination = new URL(window.location.href);
-    destination.searchParams.set('mode', pendingMode === 'sandbox' ? 'sandbox' : 'career');
-    window.location.assign(destination.href);
-  });
+  byId('confirm-new-session').addEventListener('click', launchNewSession);
   quality.addEventListener('change', function () { sizeCanvas(); saveDisplay(); });
   byId('show-stats').addEventListener('change', function () { syncStatsVisibility(); saveDisplay(); });
   pause.addEventListener('click', function () { openMenu('pause'); });
@@ -699,7 +731,8 @@
     if (event.repeat) return;
     var input = event.target && /INPUT|SELECT|TEXTAREA/.test(event.target.tagName);
     if (input) return;
-    if (event.code === 'KeyE') carryKeyHeld = true;
+    if (event.code === 'KeyE') { carryKeyHeld = true; setScannerTrigger(false); }
+    if (event.code === 'KeyH' && gameMode === 'demo' && !menuScreen && !computerOpen && !handheldInteractive) {event.preventDefault();event.stopImmediatePropagation();window.WarehouseDemoUI.help();return;}
     if (!menuScreen && !computerOpen && !computerTransitioning && graphicsReady && !hudState.driving) {
       if (event.code === 'KeyQ') { event.preventDefault(); event.stopImmediatePropagation(); if (handheldOpen) stowHandheld(); else focusHandheld(false); return; }
       if (event.code === 'KeyF' && handheldOpen && !handheldInteractive) { event.preventDefault(); event.stopImmediatePropagation(); sendCommand('wms-scan'); return; }
@@ -723,10 +756,11 @@
     }
     escapeHandled = false;
   }, true);
-  window.addEventListener('blur', function () { carryKeyHeld = false; capturePending = false; });
+  window.addEventListener('blur', function () { carryKeyHeld = false; capturePending = false; setScannerTrigger(false); });
+  window.addEventListener('mouseup', function (event) { if (event.button === 0) setScannerTrigger(false); },true);
   window.addEventListener('mousedown', function (event) {
     if (!instance || !graphicsReady || mode !== 'play' || menuScreen || computerOpen || computerTransitioning || portrait || !activity.active()) return;
-    if (event.button === 2 && !hudState.driving && !hudState.holding && !carryKeyHeld && !(event.buttons & 1)) {
+    if (event.button === 2 && !hudState.driving && !hudState.holding && !carryKeyHeld && (!(event.buttons & 1) || scannerTriggerHeld)) {
       if (event.target === canvas || handheldInteractive) {
         event.preventDefault(); event.stopImmediatePropagation(); focusHandheld(!handheldInteractive);
       }
@@ -738,7 +772,7 @@
     }
     if (handheldOpen && !hudState.driving) {
       event.preventDefault(); event.stopImmediatePropagation();
-      if (!hudState.holding && !carryKeyHeld) sendCommand('wms-scan');
+      if (!hudState.holding && !carryKeyHeld) setScannerTrigger(true);
     }
   }, true);
   stage.addEventListener('contextmenu', function (event) { event.preventDefault(); });
@@ -749,4 +783,10 @@
   activity.onChange(syncActivity);
   if (gameMode === 'sandbox') setText(byId('session-note'), 'Sandbox selected. Choose Sandbox for a fresh equipped warehouse.');
   syncFullscreen();
+  if (gameMode === 'demo') {
+    window.WarehouseDemoUI.showGallery(demoId);
+    try { var launch = JSON.parse(sessionStorage.getItem('warehouse-demo-launch') || 'null');sessionStorage.removeItem('warehouse-demo-launch');
+      if (launch && launch.id === demoId && Date.now()-launch.at >= 0 && Date.now()-launch.at < 20000) start('demo');
+    } catch (_) {}
+  }
 })();
