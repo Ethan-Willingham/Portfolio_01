@@ -2063,6 +2063,52 @@
           }
         }
       }
+    },
+    "2026-10-22": {
+      "totalTokens": 27238538,
+      "cost": 4.400943200000002,
+      "models": {
+        "gpt-6.1-sol": {
+          "input": 424293,
+          "cacheWrite": 0,
+          "cacheWrite1h": 0,
+          "cacheRead": 26726272,
+          "output": 87973,
+          "totalTokens": 27238538,
+          "cost": 4.400943200000002,
+          "pricing": "deduplicated native responses, standard API rates",
+          "requests": 163,
+          "longContext": {
+            "input": 0,
+            "cacheWrite": 0,
+            "cacheRead": 0,
+            "output": 0
+          }
+        }
+      }
+    },
+    "2026-10-23": {
+      "totalTokens": 2027467,
+      "cost": 0.4514060000000001,
+      "models": {
+        "gpt-6.1-sol": {
+          "input": 102700,
+          "cacheWrite": 0,
+          "cacheWrite1h": 0,
+          "cacheRead": 1919360,
+          "output": 5407,
+          "totalTokens": 2027467,
+          "cost": 0.4514060000000001,
+          "pricing": "deduplicated native responses, standard API rates",
+          "requests": 26,
+          "longContext": {
+            "input": 0,
+            "cacheWrite": 0,
+            "cacheRead": 0,
+            "output": 0
+          }
+        }
+      }
     }
   },
   "daily": {
@@ -2118,7 +2164,7 @@
       18225562
     ]
   },
-  "updated": "2026-10-20",
+  "updated": "2026-10-29",
   "retainedDays": {
     "2026-07-23": {
       "totalTokens": 131738515,
@@ -2147,11 +2193,11 @@
   },
   "collection": {
     "ledgerId": "ad869c9bf7907245d6181fffd3ced9f98185a7070464096b52a5cfc52de46b2e",
-    "cutoff": "2026-10-20T14:16:22.733Z",
+    "cutoff": "2026-10-29T16:53:15.139Z",
     "timezone": "America/Chicago",
-    "files": 126,
+    "files": 86,
     "claudeMessages": 5782,
-    "codexSessions": 698,
+    "codexSessions": 700,
     "cacheDurationInconsistencies": 1,
     "imports": {
       "54cfd7f2b3e7303d79443844fc26726befa2948eabdb49ac2ca48e7c24b6605d": {
