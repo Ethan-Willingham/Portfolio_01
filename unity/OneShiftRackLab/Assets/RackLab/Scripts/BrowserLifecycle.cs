@@ -10,7 +10,7 @@ namespace OneShift.RackLab
     [Preserve]
     public sealed partial class BrowserLifecycle : MonoBehaviour
     {
-        public const int BuildVersion = 9;
+        public const int BuildVersion = 10;
         public static bool GraphicsPreparing { get; private set; }
 #if UNITY_WEBGL && !UNITY_EDITOR
         [System.Runtime.InteropServices.DllImport("__Internal")]
@@ -99,7 +99,7 @@ namespace OneShift.RackLab
             DontDestroyOnLoad(bridge);
             var lifecycle = bridge.AddComponent<BrowserLifecycle>();
 #if UNITY_WEBGL && !UNITY_EDITOR
-            if (WarehouseInitialMode() == 1) WarehouseCareer.Ensure();
+            WarehouseWmsRuntime.Ensure(WarehouseInitialMode() != 1);
             Application.targetFrameRate = 60;
             WebGLInput.captureAllKeyboardInput = false;
             WebGLInput.stickyCursorLock = false;
@@ -451,7 +451,7 @@ namespace OneShift.RackLab
         void ApplyState()
         {
             if (!PresentationActive) computerTransition?.ResetPresentationClock();
-            bool shouldSuspend = preparing || computerOpen || ComputerTransitioning || !pageActive || !windowFocused || applicationPaused;
+            bool shouldSuspend = preparing || computerOpen || deviceInteractive || ComputerTransitioning || !pageActive || !windowFocused || applicationPaused;
             if (suspended == shouldSuspend) return;
             suspended = shouldSuspend;
             ResetFrameSample();

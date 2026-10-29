@@ -126,6 +126,121 @@ namespace OneShift.RackLab
         {
             var lines=new List<string>();ValidateShelfPlacement(lines);return string.Join("\n",lines)+"\n";
         }
+        [MenuItem("One Shift/Validate settled carton dispatch orientations")]
+        public static string ValidateCartonOrientations()
+        {
+            var lines=new List<string>();
+            using(var rig=new Rig())
+            {
+                var service=rig.service;
+                var cartons=new[]{rig.Carton(new Vector3(-3,1,0),false),rig.Carton(new Vector3(-2,1,0),false)};
+                for(int i=0;i<cartons.Length;i++)cartons[i].GetComponent<BoxCollider>().size=WarehouseWmsWorld.CartonSize(i);
+                Need(service.BeginCollection(cartons,()=>{}),"Orientation collection starts with a real manifest");
+                rig.Until(()=>service.State==WarehouseCourierService.VisitState.WaitingForLoading,90);
+                void Place(int index,Quaternion rotation,float gap=0)
+                {
+                    var body=cartons[index];body.isKinematic=false;body.useGravity=true;
+                    body.position=service.CargoPlacementPosition(index,body);body.rotation=service.VanTransform.rotation*rotation;
+                    body.transform.SetPositionAndRotation(body.position,body.rotation);Physics.SyncTransforms();
+                    body.position+=Vector3.up*(service.DeckBounds.max.y+.005f+gap-body.GetComponent<BoxCollider>().bounds.min.y);
+                    body.transform.SetPositionAndRotation(body.position,body.rotation);
+                    body.linearVelocity=body.angularVelocity=Vector3.zero;Physics.SyncTransforms();
+                }
+                foreach(var angle in new[]{Vector3.zero,new Vector3(90,0,0),new Vector3(270,0,0),new Vector3(0,0,90),new Vector3(180,0,0)})
+                {
+                    for(int i=0;i<cartons.Length;i++)Place(i,Quaternion.Euler(angle));
+                    // Advance actual contact settling without advancing the
+                    // courier's departure countdown during this pose fixture.
+                    for(int frame=0;frame<60;frame++)rig.physics.Simulate(Step);
+                    Need(cartons.All(body=>!body.isKinematic&&body.linearVelocity.sqrMagnitude<.025f),"The orientation manifest physically settles");
+                    Need(service.CanDispatch(out string reason),"A supported flat face must dispatch at "+angle+": "+reason);
+                    lines.Add("PASS Actual tape and towel cartons settle and can dispatch at rotation "+angle+".");
+                }
+                Place(0,Quaternion.Euler(45,0,0));
+                Need(!service.CanDispatch(out string inclined)&&inclined.Contains("flat"),"A 45-degree carton remains rejected even with zero velocity");
+                lines.Add("PASS A carton inclined 45 degrees is rejected.");
+                Place(0,Quaternion.identity,.2f);
+                Need(!service.CanDispatch(out string airborne)&&airborne.Contains("deck"),"A motionless airborne carton still needs real deck support");
+                lines.Add("PASS A motionless airborne carton is rejected.");
+                Place(0,Quaternion.identity);cartons[0].linearVelocity=Vector3.right*.3f;
+                Need(!service.CanDispatch(out string moving)&&moving.Contains("settle"),"A moving flat carton cannot dispatch");
+                Place(0,Quaternion.identity);cartons[0].angularVelocity=Vector3.up*.5f;
+                Need(!service.CanDispatch(out string spinning)&&spinning.Contains("settle"),"A spinning flat carton cannot dispatch");
+                lines.Add("PASS Linear and angular motion still prevent dispatch.");
+                Place(0,Quaternion.identity);cartons[0].isKinematic=true;
+                Need(!service.CanDispatch(out _),"A held or restrained carton cannot dispatch");
+                lines.Add("PASS A kinematic carton still prevents dispatch.");
+            }
+            string report=string.Join("\n",lines)+"\n";Save("warehouse-courier-orientations-validation.txt",report);return report;
+        }
+        [MenuItem("One Shift/Validate eight WMS courier carton sizes")]
+        public static string ValidateCartonSizes()
+        {
+            var lines=new List<string>();
+            for(int batch=0;batch<2;batch++)using(var rig=new Rig())
+            {
+                var service=rig.service;int delivered=0,dropped=0;float deepest=0;
+                var cartons=new Rigidbody[4];
+                for(int i=0;i<cartons.Length;i++)
+                {
+                    cartons[i]=rig.Carton(service.DeliverySpawnPosition(i),true);
+                    cartons[i].GetComponent<BoxCollider>().size=WarehouseWmsWorld.CartonSize(batch*4+i);
+                }
+                Need(service.BeginDelivery(cartons,()=>delivered++,body=>dropped++),"Varied carton manifest accepted");
+                Physics.SyncTransforms();
+                foreach(var body in cartons)
+                {
+                    float bottom=body.GetComponent<BoxCollider>().bounds.min.y;
+                    Need(Mathf.Abs(bottom-service.DeckBounds.max.y-.005f)<.001f,"Each actual carton rests above the van deck: "+body.GetComponent<BoxCollider>().size);
+                }
+                var near=new Collider[128];
+                rig.BeforePhysics=()=>
+                {
+                    if(service.State!=WarehouseCourierService.VisitState.PlacingCarton || dropped>=cartons.Length)return;
+                    var moving=cartons[dropped].GetComponent<BoxCollider>();
+                    int count=rig.physics.OverlapBox(moving.bounds.center,moving.bounds.extents,near,Quaternion.identity,~0,QueryTriggerInteraction.Ignore);
+                    Need(count<near.Length,"Carton overlap buffer remains bounded");
+                    for(int n=0;n<count;n++)
+                    {
+                        var other=near[n];if(other==moving || other.transform.IsChildOf(service.transform))continue;
+                        if(Physics.ComputePenetration(moving,moving.transform.position,moving.transform.rotation,other,other.transform.position,other.transform.rotation,out _,out float depth))deepest=Mathf.Max(deepest,depth);
+                    }
+                };
+                rig.Until(()=>delivered==1,280);rig.Until(()=>!service.Busy,75);rig.Advance(1);
+                Need(dropped==4 && delivered==1,"Every varied carton is released once");
+                Need(deepest<.004f,"Actual sized placement does not intersect shelf or earlier cartons: "+deepest+" m");
+                foreach(var body in cartons)
+                {
+                    var bounds=body.GetComponent<BoxCollider>().bounds;
+                    Need(!body.isKinematic && body.useGravity && bounds.min.y>.54f && bounds.min.x>7.59f && bounds.max.x<9.01f && bounds.min.z>-11.48f && bounds.max.z<-10.62f,"Varied carton remains supported on the receiving shelf: "+bounds);
+                    Need(Vector3.Dot(body.transform.forward,Vector3.back)>.99f,"Delivered carton barcode faces the operator on the porch");
+                }
+                lines.Add("PASS Carton variants "+batch*4+" to "+(batch*4+3)+" clear the deck, complete actual courier delivery once, face their labels toward the porch, remain on the shelf, and limit placement penetration to "+deepest.ToString("F4")+" m.");
+            }
+            // A thin obstruction outside the old fixed box but inside the wide
+            // or tall carton must stop carrying before its physical shape clips.
+            using(var rig=new Rig())
+            {
+                var flags=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic;
+                var field=typeof(WarehouseCourierService).GetField("carried",flags);
+                var clear=typeof(WarehouseCourierService).GetMethod("CarriedPoseClear",flags);
+                foreach(int variant in new[]{4,5})
+                {
+                    var body=rig.Carton(new Vector3(35,5,35),true);
+                    Vector3 half=WarehouseWmsWorld.CartonSize(variant)*.5f;
+                    body.GetComponent<BoxCollider>().size=half*2;field.SetValue(rig.service,body);
+                    Vector3 edge=variant==4?Vector3.up*(half.y-.002f):Vector3.right*(half.x-.002f);
+                    var blocker=rig.Blocker(body.position+edge);blocker.GetComponent<BoxCollider>().size=Vector3.one*.008f;
+                    Physics.SyncTransforms();
+                    Need(!(bool)clear.Invoke(rig.service,new object[]{body.position,Quaternion.identity}),"Actual carton overhang stops carrying, variant "+variant);
+                    Object.DestroyImmediate(blocker);Physics.SyncTransforms();
+                    Need((bool)clear.Invoke(rig.service,new object[]{body.position,Quaternion.identity}),"Carrying resumes when the obstruction is removed");
+                    Object.DestroyImmediate(body.gameObject);
+                }
+                lines.Add("PASS Thin obstacles at the tall and wide carton overhangs stop carrying, and removing them restores clearance.");
+            }
+            string report=string.Join("\n",lines)+"\n";Save("warehouse-wms-courier-sizes-validation.txt",report);return report;
+        }
         static void ValidateShelfPlacement(List<string> lines)
         {
             foreach(float step in new[]{.005f,.02f})using(var rig=new Rig(step))

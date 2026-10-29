@@ -184,7 +184,7 @@ async function realSmoke(browser, url) {
     await page.bringToFront();
     await page.locator('#warehouse-canvas').focus();
     const initial = await state();
-    check('REAL: Compiled sandbox player reports version 9 and SMAA', initial.buildVersion === 9 && initial.cameraAntialiasing === 'SubpixelMorphologicalAntiAliasing' && initial.pipelineMsaaSamples === 2);
+    check('REAL: Compiled sandbox player reports version 10 and SMAA', initial.buildVersion === 10 && initial.cameraAntialiasing === 'SubpixelMorphologicalAntiAliasing' && initial.pipelineMsaaSamples === 2);
     check('REAL: Compiled player applies the bounded twelve-fixture shadow budget',
       initial.fixtureShadowAtlas === 1024 && initial.fixtureShadowLow === 128 && initial.fixtureShadowHigh === 512 &&
       Array.isArray(initial.fixtureShadowTiers) && initial.fixtureShadowTiers.length === 12 &&
@@ -620,8 +620,8 @@ let browser;
   await page.waitForFunction(() => document.getElementById('warehouse-load-elapsed').textContent !== '0s elapsed');
   check('Loading shows truthful elapsed active time between callbacks', /^\d+s elapsed$/.test(await page.locator('#warehouse-load-elapsed').innerText()));
   check('Career mode is selected before creating the engine', await page.evaluate(() => unityRequestedMode === 'career'));
-  check('Compressed fallback URLs share release v9', await page.evaluate(() => {
-    return ['dataUrl','frameworkUrl','codeUrl'].map(key => new URL(unityConfig[key], location.href)).every(url => url.pathname.endsWith('.unityweb') && url.searchParams.get('v') === '9');
+  check('Compressed fallback URLs share release v10', await page.evaluate(() => {
+    return ['dataUrl','frameworkUrl','codeUrl'].map(key => new URL(unityConfig[key], location.href)).every(url => url.pathname.endsWith('.unityweb') && url.searchParams.get('v') === '10');
   }));
   check('Retina rendering starts within the Smooth pixel budget', await page.evaluate(() => {
     const c = document.getElementById('warehouse-canvas');
@@ -650,10 +650,10 @@ let browser;
   check('Preparation completion while blurred cannot resume gameplay', await page.locator('#warehouse-launcher').isHidden() && (await lifecycle(page)).length === 0);
   await page.evaluate(() => dispatchEvent(new Event('focus')));
   check('Prepared game resumes only when browser activity returns', JSON.stringify(await lifecycle(page)) === JSON.stringify(['monitor:true','loop:resume','BrowserLifecycle:SetBrowserActive:1']));
-  await page.evaluate(() => unityConfig.onOneShiftStats(9, 59.8, 22.4, 120));
+  await page.evaluate(() => unityConfig.onOneShiftStats(10, 59.8, 22.4, 120));
   check('Version and FPS come from compiled-player frames', await page.evaluate(() => {
     const s = document.getElementById('warehouse-stats');
-    return s.textContent === 'v9 | 60 FPS' && s.dataset.buildVersion === '9' && s.dataset.fps === '59.8' && s.dataset.frameCount === '120' && s.dataset.longestFrameMs === '22.4' && s.title === 'Longest frame: 22 ms';
+    return s.textContent === 'v10 | 60 FPS' && s.dataset.buildVersion === '10' && s.dataset.fps === '59.8' && s.dataset.frameCount === '120' && s.dataset.longestFrameMs === '22.4' && s.title === 'Longest frame: 22 ms';
   }));
   check('Performance readout stays out of the default play view', await page.locator('#warehouse-stats').isHidden());
   await clearCalls(page);
@@ -762,52 +762,90 @@ let browser;
   check('Hydraulic neutral is visibly centred and stopped', await page.locator('#warehouse-fork-speed').innerText() === 'Neutral' && await page.locator('#warehouse-lever-knob').evaluate(el => el.style.top) === '50%');
   await page.evaluate(() => unityConfig.onWarehouseHUD({driving:true,forkHeight:1.2,hydraulics:false,hydraulicInput:0,forkSpeed:0}));
   check('Releasing hydraulic control removes the lever', await page.locator('#warehouse-hydraulics').isHidden());
-  const office = {open:true,title:'Dispatch desk',summary:'One open delivery. Your supplier orders are listed below.',cash:2480,inventory:[{id:'case-a',name:'Packing tape',quantity:12,unit:'cases'}],orders:[{id:'tape',name:'Packing tape',detail:'12 cases arrive at the parcel shelf.',price:180,action:'Place order',enabled:true}],contracts:[{id:'corner',name:'Corner Supply',detail:'Deliver 6 cases of packing tape.',price:240,action:'Accept order',enabled:true,status:'Ready to accept'}],ledger:[{label:'Opening balance',amount:2480}],message:''};
-  await page.evaluate(value => unityConfig.onWarehouseHUD({computer:value}), office);
-  check('Office computer opens with authoritative stock and cash', await page.locator('#warehouse-computer').isVisible() && await page.locator('#warehouse-computer-cash').innerText() === '$2,480' && (await page.locator('#warehouse-inventory').innerText()).includes('12 cases'));
+  // Mock snapshots test shell ownership and command routing only. Physical
+  // stock, barcode rays and allocation rules have separate Unity fixtures.
+  const wms = {
+    revision:1,mode:'sandbox',facility:'LATCHFORD / MAIN',completedOrders:0,message:'Ready. Choose a document or floor task.',severity:'info',
+    scan:{sequence:0,code:'',label:'',status:'ready'},workflow:{tile:'home',step:'',canConfirm:false},
+    items:[{id:'TAPE-48',sku:'TAPE-48',name:'Packing tape',uom:'CTN',unitsPerCarton:36,onHand:12,available:9,reserved:3,picked:0,inReceiving:0}],
+    bins:[{id:'F01',name:'Floor storage',kind:'Storage',capacity:12,onHand:12,available:9,canPick:true},{id:'REC-01',name:'Front receiving',kind:'Receiving',capacity:8,onHand:0,available:0,canPick:false},{id:'STAGE-01',name:'Outbound staging',kind:'Stage',capacity:18,onHand:0,available:0,canPick:false}],
+    cartons:[{id:'CTN-000001',sku:'TAPE-48',itemName:'Packing tape',binId:'F01',physicalBin:'F01',status:'Available',poId:'PO-1000',soId:'',quantity:1,uom:'CTN'}],
+    purchaseOrders:[{id:'PO-1001',partner:'Bracken Trade Supplies',status:'Open',reference:'Workshop replenishment',amount:120,canBook:true,canReceive:false,lines:[{sku:'TAPE-48',itemName:'Packing tape',ordered:3,received:0}]}],
+    salesOrders:[{id:'SO-2001',partner:'Miller Motor Works',status:'Open',reference:'Trade counter restock',amount:210,canRelease:true,canPick:false,canShip:false,canCancel:true,lines:[{sku:'TAPE-48',itemName:'Packing tape',ordered:3,allocated:0,picked:0,loaded:0,shipped:0}]}],
+    tasks:[],transactions:[{id:'000001',time:'08:10',type:'Receive',sku:'TAPE-48',cartonId:'CTN-000001',quantity:1,fromBin:'',toBin:'REC-01',document:'PO-1000'}],exceptions:[]
+  };
+  const office = {open:true,mode:'sandbox',title:'Latchford Distribution',summary:'Equipment and finance',cash:2480,suggestedTab:'overview',inventory:[{id:'TAPE-48',name:'Packing tape',quantity:12,unit:'cartons'}],orders:[],contracts:[],upgrades:[{id:'fish',name:'Singing fish',detail:'A singing fish for the dispatch office.',price:95,action:'Buy and install',enabled:true,owned:false}],ledger:[{label:'Opening balance',amount:2480}],message:''};
+  await page.evaluate(value => unityConfig.onWarehouseHUD({driving:false,computer:value.office,wms:value.wms}), {office,wms});
+  check('Office opens the manager WMS by default with authoritative cash', await page.locator('#warehouse-computer').isVisible() && await page.locator('#warehouse-wms-console').isVisible() && await page.locator('#warehouse-business').isHidden() && await page.locator('#warehouse-computer-cash').innerText() === '$2,480');
   check('Computer suspends the warehouse while it is in use', (await lifecycle(page)).slice(-3).join('|') === 'BrowserLifecycle:SetBrowserActive:0|monitor:false|loop:pause');
-  await page.locator('[data-desk-tab="purchases"]').click();
+  await page.locator('[data-wms-page="inventory"]').click();
+  check('Manager inventory shows item catalog and whole carton stock', (await page.locator('.wms-table').innerText()).includes('TAPE-48') && (await page.locator('.wms-table').innerText()).includes('12'));
+  await page.locator('[data-wms-page="purchaseOrders"]').click();
+  await page.locator('[data-wms-detail="purchaseOrders:PO-1001"]').click();
   await clearCalls(page);
-  await page.locator('#warehouse-orders button').click();
-  check('Supplier purchase sends only the selected authoritative item ID', (await calls(page)).some(call => call.endsWith('{"action":"order","id":"tape"}')));
-  check('Purchase button rejects repeated clicks while awaiting the ledger reply', await page.locator('#warehouse-orders button').isDisabled());
-  office.cash = 2300; office.message = 'Packing tape ordered.';
-  await page.evaluate(value => unityConfig.onWarehouseHUD({computer:value}), office);
-  check('Ledger reply refreshes cash and restores purchase controls', await page.locator('#warehouse-computer-cash').innerText() === '$2,300' && await page.locator('#warehouse-orders button').isEnabled());
-  await page.locator('#warehouse-orders button').click();
-  await page.evaluate(value => unityConfig.onWarehouseHUD({computer:value}), office);
-  check('An unchanged authoritative reply also releases a pending action', await page.locator('#warehouse-orders button').isEnabled());
-  await page.screenshot({path:path.join(dump,'shell-office-fixture.png'), scale:'css'});
-  await page.locator('[data-desk-tab="customers"]').click();
-  await page.locator('#warehouse-contracts button').click();
-  check('Customer orders use their separate contract action', await command(page, 'contract'));
-  office.contracts[0] = {...office.contracts[0],action:'Ship order',enabled:false,status:'Accepted',secondaryAction:'Release order',secondaryCommand:'cancel-contract',secondaryEnabled:true};
-  await page.evaluate(value => unityConfig.onWarehouseHUD({computer:value}), office);
-  check('Accepted orders can be released while shipment is unavailable', await page.locator('#warehouse-contracts button[data-action="contract"]').isDisabled() && await page.locator('#warehouse-contracts button[data-action="cancel-contract"]').isEnabled());
+  await page.locator('[data-wms-command="book-po"]').click();
+  check('Manager booking sends the authoritative PO ID through the WMS bridge', (await calls(page)).some(call => call.endsWith('{"action":"wms-book-po","id":"PO-1001"}')));
+  wms.revision++;wms.purchaseOrders[0].status='InTransit';wms.purchaseOrders[0].canBook=false;wms.message='Courier booked for PO-1001.';
+  office.cash=2360;
+  await page.evaluate(value => unityConfig.onWarehouseHUD({computer:value.office,wms:value.wms}), {office,wms});
+  check('A confirmed booking updates cash and prevents another booking', await page.locator('#warehouse-computer-cash').innerText() === '$2,360' && await page.locator('[data-wms-command="book-po"]').count()===0);
+  await page.locator('[data-wms-page="inventory"]').click();
+  check('Booking a PO does not optimistically add stock to the displayed inventory', (await page.locator('.wms-table tbody tr').first().innerText()).includes('12'));
+  await page.locator('[data-wms-page="purchaseOrders"]').click();
+  await page.locator('[data-wms-detail="purchaseOrders:PO-1001"]').click();
+  await page.screenshot({path:path.join(dump,'shell-office-fixture.png'),scale:'css'});
+  await page.locator('[data-wms-page="salesOrders"]').click();
+  await page.locator('[data-wms-detail="salesOrders:SO-2001"]').click();
+  await clearCalls(page);
+  await page.locator('[data-wms-command="release-order"]').click();
+  check('Sales allocation uses the WMS order command instead of a legacy contract action', (await calls(page)).some(call => call.endsWith('{"action":"wms-release-order","id":"SO-2001"}')) && !await command(page,'contract'));
   await page.setViewportSize({width:1280,height:720});
-  await page.evaluate(value => unityConfig.onWarehouseHUD({computer:{...value,contracts:[...value.contracts,
-    {id:'northbank',name:'Northbank Supplies',detail:'1 pallet / 36 cases of cleaning supplies',price:910,action:'Accept order',enabled:false,status:'Available'},
-    {id:'marsh',name:'Marsh and Field',detail:'1 pallet / 40 cases of dry pantry goods',price:1020,action:'Accept order',enabled:false,status:'Available'}],
-    message:'Accepted Corner Mart. Receive the stock, load the oldest matching pallet into the trailer, then dispatch here.'}}), office);
-  check('Office transaction notice stays visible beneath a full customer-order list', await page.locator('#warehouse-computer').evaluate(el => {
-    const dialog = el.getBoundingClientRect(), footer = el.querySelector('footer').getBoundingClientRect();
-    return footer.top >= dialog.top && footer.bottom <= dialog.bottom - 6;
-  }));
+  wms.revision++;wms.message='SO-2001 released. Pick its allocated cartons into STAGE-01.';
+  await page.evaluate(value => unityConfig.onWarehouseHUD({computer:value.office,wms:value.wms}), {office,wms});
+  check('Manager transaction notice stays visible inside the office window', await page.locator('.wms-console-status').evaluate(el => {const r=el.getBoundingClientRect(),dialog=document.getElementById('warehouse-computer').getBoundingClientRect();return r.top>=dialog.top&&r.bottom<=dialog.bottom;}));
   await page.screenshot({path:path.join(dump,'shell-office-orders-fixture.png'),scale:'css'});
-  await page.evaluate(value => unityConfig.onWarehouseHUD({computer:value}), office);
   await page.setViewportSize({width:1440,height:900});
-  await clearCalls(page);
-  await page.locator('#warehouse-contracts button[data-action="cancel-contract"]').click();
-  check('Release sends the same order ID and prevents repeated actions until reply', (await calls(page)).some(call => call.endsWith('{"action":"cancel-contract","id":"corner"}')) && await page.locator('#warehouse-contracts button[data-action="cancel-contract"]').isDisabled());
-  office.contracts[0] = {...office.contracts[0],action:'Accept order',enabled:true,status:'Ready to accept',secondaryAction:'',secondaryCommand:'',secondaryEnabled:false};
-  await page.evaluate(value => unityConfig.onWarehouseHUD({computer:value}), office);
-  check('Release reply restores the available order without a stale secondary action', await page.locator('#warehouse-contracts button[data-action="contract"]').isEnabled() && await page.locator('#warehouse-contracts button[data-action="cancel-contract"]').count() === 0);
+  await page.locator('#warehouse-dispatch-task').click();
+  check('Business opens equipment with only overview, upgrades and ledger navigation', await page.locator('#warehouse-business').isVisible() && await page.locator('[data-desk-tab="upgrades"]').getAttribute('aria-selected')==='true' && (await page.locator('[data-desk-tab]').evaluateAll(tabs=>tabs.map(tab=>tab.dataset.deskTab).join('|')))==='overview|upgrades|ledger');
   await page.locator('[data-desk-tab="ledger"]').click();
-  check('Ledger tab displays actual transaction amounts', (await page.locator('#warehouse-ledger').innerText()).includes('$2,480'));
+  check('Business ledger displays the authoritative transaction amounts', (await page.locator('#warehouse-ledger').innerText()).includes('$2,480'));
   await clearCalls(page);
   await page.keyboard.press('Escape');
   check('Leaving the computer resumes scheduling before its camera-return command', (await calls(page)).findIndex(call => call.endsWith('{"action":"computer-close"}')) > (await calls(page)).indexOf('BrowserLifecycle:SetBrowserActive:1') && !await command(page, 'resume') && await page.locator('#warehouse-computer').isHidden());
-  await page.locator('#warehouse-pause').click();
+
+  const handheldPage=await mockPage();await startMock(handheldPage);await finish(handheldPage);
+  await handheldPage.evaluate(value => unityConfig.onWarehouseHUD({driving:false,computer:{open:false,transitioning:false},wms:value}),wms);
+  await handheldPage.evaluate(()=>{window.mockWmsPointerEvents=[];['pointerlockchange','pointerlockerror'].forEach(type=>document.addEventListener(type,()=>mockWmsPointerEvents.push({type,locked:document.pointerLockElement?.id||'',focused:document.activeElement?.id||''})));});
+  await clearCalls(handheldPage);
+  await handheldPage.keyboard.press('q');
+  check('Q opens all five handheld tasks and pauses world scheduling', await handheldPage.locator('#warehouse-wms-handheld').isVisible() && await handheldPage.locator('[data-wms-tile]').count()===5 && await handheldPage.locator('#warehouse-wms-handheld').evaluate(el=>el.classList.contains('is-interactive')&&!el.inert) && (await lifecycle(handheldPage)).join('|')==='BrowserLifecycle:SetBrowserActive:0|monitor:false|loop:pause');
+  check('Q transfers input ownership to the device', (await calls(handheldPage)).some(call=>call.endsWith('{"action":"device-equip","id":"1"}')) && (await calls(handheldPage)).some(call=>call.endsWith('{"action":"device-focus","id":"1"}')));
+  await clearCalls(handheldPage);
+  await handheldPage.evaluate(()=>{dispatchEvent(new Event('blur'));dispatchEvent(new Event('focus'));});
+  check('Browser focus changes cannot resume an interactive handheld', !(await lifecycle(handheldPage)).includes('loop:resume') && await handheldPage.locator('#warehouse-wms-handheld').evaluate(el=>el.classList.contains('is-interactive')));
+  await handheldPage.locator('[data-wms-tile="transfer"]').click();
+  check('Handheld tiles choose a workflow through the shared bridge', (await calls(handheldPage)).some(call=>call.endsWith('{"action":"wms-workflow","id":"transfer"}')));
+  wms.revision++;wms.workflow={tile:'transfer',step:'destination',title:'Scan destination bin',instruction:'Place CTN-000001 in F01, then scan the destination.',cartonId:'CTN-000001',sourceBin:'REC-01',destinationBin:'F01',canConfirm:false,completed:0,total:1};
+  await handheldPage.evaluate(value=>unityConfig.onWarehouseHUD({wms:value}),wms);
+  await clearCalls(handheldPage);
+  await handheldPage.keyboard.press('f');
+  check('F cannot submit a scan while the interactive touchscreen owns input', !await command(handheldPage,'wms-scan'));
+  await handheldPage.locator('[data-device-floor]').click();
+  await handheldPage.waitForFunction(()=>document.pointerLockElement?.id==='warehouse-canvas',{},{timeout:6000}).catch(async error=>{console.error('Handheld pointer diagnostics',await handheldPage.evaluate(()=>({events:mockWmsPointerEvents,calls:unityCalls,focus:document.hasFocus(),focused:document.activeElement?.id,device:document.getElementById('warehouse-wms-handheld').className})));throw error;});
+  check('Return to scanning resumes before mouse capture and floor input', (await lifecycle(handheldPage)).join('|')==='monitor:true|loop:resume|BrowserLifecycle:SetBrowserActive:1' && (await calls(handheldPage)).findIndex(call=>call.endsWith('{"action":"resume"}'))>(await calls(handheldPage)).indexOf('BrowserLifecycle:SetBrowserActive:1') && await handheldPage.locator('#warehouse-wms-handheld').evaluate(el=>el.inert&&!el.classList.contains('is-interactive')) && await handheldPage.evaluate(()=>document.activeElement?.id==='warehouse-canvas'));
+  await clearCalls(handheldPage);
+  await handheldPage.keyboard.down('f');await handheldPage.keyboard.down('f');await handheldPage.keyboard.up('f');
+  check('Holding F submits exactly one scan per press and release', (await calls(handheldPage)).filter(call=>call.endsWith('{"action":"wms-scan"}')).length===1);
+  wms.revision++;wms.workflow.canConfirm=true;wms.scan={sequence:1,code:'BIN:F01',label:'F01',status:'success'};wms.message='Destination read. Confirm the transfer.';
+  await handheldPage.evaluate(value=>unityConfig.onWarehouseHUD({wms:value}),wms);
+  check('Confirmed scan feedback exposes the authoritative ready task', (await handheldPage.locator('#warehouse-wms-scan-result').innerText()).includes('F01') && await handheldPage.locator('[data-device-floor]').innerText()==='Enter Confirm / Q Device');
+  await clearCalls(handheldPage);await handheldPage.keyboard.press('Enter');
+  check('Enter requests one authoritative WMS confirmation', (await calls(handheldPage)).filter(call=>call.endsWith('{"action":"wms-confirm"}')).length===1);
+  await handheldPage.keyboard.press('q');
+  await handheldPage.getByRole('button',{name:'Stow',exact:true}).click();
+  check('Stowing clears device ownership and resumes the floor', await handheldPage.locator('#warehouse-wms-handheld').isHidden() && (await calls(handheldPage)).some(call=>call.endsWith('{"action":"device-equip","id":"0"}')) && await handheldPage.evaluate(()=>document.pointerLockElement?.id==='warehouse-canvas'&&document.activeElement?.id==='warehouse-canvas'));
+  await handheldPage.close();await page.bringToFront();
+  await page.keyboard.press('p');
   await page.locator('#warehouse-paused [data-screen="settings"]').click();
   await page.locator('#warehouse-fullscreen').click();
   await page.waitForFunction(() => document.fullscreenElement?.id === 'warehouse-stage');
@@ -816,7 +854,7 @@ let browser;
   await page.keyboard.press('p');
 
   const modes = await mockPage();
-  check('Fresh title separates the empty business from the equipped sandbox', (await modes.locator('#warehouse-play').innerText()).includes('Start business') && (await modes.locator('#warehouse-sandbox').innerText()).includes('Fresh session'));
+  check('Fresh title separates the empty business from the populated sandbox', (await modes.locator('#warehouse-play').innerText()).includes('Start business') && (await modes.locator('#warehouse-sandbox').innerText()).includes('Populated warehouse'));
   await startMock(modes); await finish(modes);
   await modes.locator('#warehouse-pause').click();
   await modes.locator('#warehouse-return-title').click();
@@ -840,22 +878,23 @@ let browser;
 
   const career = {
     open:true,mode:'career',company:'Latchford Distribution',title:'Latchford Distribution',summary:'Independent trade supplies / 0 orders delivered',
-    cash:600,completedOrders:0,stage:'Start your distribution business',stageDetail:'The office computer is through the glass doorway. Order three cartons of packing tape.',suggestedTab:'purchases',
+    cash:600,completedOrders:0,stage:'Start your distribution business',stageDetail:'Book PO-1001 in the WMS. Receive its three cartons into REC-01.',suggestedTab:'overview',
     inventory:[{id:'tape',name:'Packing tape',quantity:0,unit:'cartons'},{id:'towels',name:'Shop towels',quantity:0,unit:'cartons'},{id:'gloves',name:'Work gloves',quantity:0,unit:'cartons'}],
-    orders:[
-      {id:'tape',name:'Packing tape',detail:'3 cartons / 36 rolls per carton. Driver delivers to the front porch.',price:120,action:'Send purchase order',enabled:true},
-      {id:'towels',name:'Shop towels',detail:"Finish Miller Motor Works' first order to open this supplier.",price:160,action:'Send purchase order',enabled:false},
-      {id:'gloves',name:'Work gloves',detail:"Finish Miller Motor Works' first order to open this supplier.",price:180,action:'Send purchase order',enabled:false}
-    ],
-    contracts:[{id:'tape',name:'Miller Motor Works',detail:'Receive 3 cartons in the highlighted packing tape bay first.',price:210,action:'Accept and book collection',enabled:false,status:'Stock needed'}],
+    orders:[],contracts:[],
     upgrades:[
-      {id:'racks',name:'Pallet racks',detail:'Complete three customer orders to expand into pallet handling.',price:300,action:'Buy and install',enabled:false,owned:false},
-      {id:'forklift',name:'Used forklift',detail:'Complete three customer orders to expand into pallet handling.',price:650,action:'Buy and install',enabled:false,owned:false},
+      {id:'racks',name:'Warehouse racks',detail:'Complete three customer orders to expand your storage.',price:300,action:'Buy and install',enabled:false,owned:false},
+      {id:'forklift',name:'Used forklift',detail:'Complete three customer orders to expand your handling equipment.',price:650,action:'Buy and install',enabled:false,owned:false},
       {id:'fish',name:'Singing fish',detail:'A reward after your first completed customer order.',price:95,action:'Buy and install',enabled:false,owned:false},
       {id:'flames',name:'Forklift flame kit',detail:'Buy the forklift before fitting its flame kit.',price:65,action:'Buy and install',enabled:false,owned:false}
     ],
-    ledger:[{label:'Opening working capital',amount:600}],message:'The lease is paid. Start with a small packing-tape purchase order.'
+    ledger:[{label:'Opening working capital',amount:600}],message:'The lease is paid. Book the opening purchase order in the WMS.'
   };
+  const careerWms=structuredClone(wms);
+  careerWms.revision=1;careerWms.mode='career';careerWms.workflow={tile:'home',canConfirm:false};careerWms.scan={sequence:0,code:'',label:'',status:'ready'};
+  careerWms.items.forEach(item=>{item.onHand=item.available=item.reserved=item.picked=item.inReceiving=0;});
+  careerWms.bins.forEach(bin=>{bin.onHand=bin.available=0;});careerWms.cartons=[];careerWms.transactions=[];
+  careerWms.purchaseOrders[0].status='Open';careerWms.purchaseOrders[0].canBook=true;careerWms.salesOrders[0].canRelease=false;
+  careerWms.message='Book PO-1001 to start your first delivery.';
   const desk = await mockPage(); await startMock(desk); await finish(desk);
   await clearCalls(desk);
   await desk.evaluate(() => unityConfig.onWarehouseHUD({clock:'8:10 AM',holding:true,carryDistance:1.6,hintKey:'E / Click',hint:'Put down Packing tape / carton 003. Wheel: distance. Hold right mouse: rotate.',notice:'Stock checked in. The customer order is ready at the computer.',computer:{open:false,transitioning:false}}));
@@ -869,12 +908,13 @@ let browser;
   await desk.setViewportSize({width:1440,height:900});
   await desk.evaluate(() => unityConfig.onWarehouseHUD({holding:false,computer:{open:false,transitioning:true,transitionDirection:'in',transitionProgress:.5}}));
   check('The physical approach remains active without revealing the computer early', await desk.locator('#warehouse-computer').isHidden() && (await lifecycle(desk)).length === 0 && await desk.locator('#warehouse-stage').evaluate(el => el.classList.contains('is-computer-transitioning')));
-  await desk.evaluate(value => unityConfig.onWarehouseHUD({clock:'8:10 AM',computer:value}), career);
+  await desk.evaluate(value => unityConfig.onWarehouseHUD({clock:'8:10 AM',computer:value.career,wms:value.careerWms}), {career,careerWms});
   await desk.locator('.warehouse-monitor-screen').evaluate(async el => { await Promise.all(el.getAnimations().map(animation => animation.finished)); });
-  check('The completed camera approach opens the career application with real cash and zero stock', await desk.locator('#warehouse-computer').isVisible() && await desk.locator('#warehouse-computer-cash').innerText() === '$600' && await desk.locator('#warehouse-computer-title').innerText() === 'Latchford Distribution' && (await desk.locator('#warehouse-inventory').innerText()).includes('0 cartons'));
-  check('The opening application follows the authoritative suggested task', await desk.locator('[data-desk-tab="purchases"]').getAttribute('aria-selected') === 'true');
-  check('The first-day supplier list keeps later products visible with their actual unlock condition', await desk.locator('#warehouse-orders button:enabled').count() === 1 && await desk.locator('#warehouse-orders [data-id="tape"]').isEnabled() && (await desk.locator('#warehouse-orders').innerText()).includes("Finish Miller Motor Works' first order"));
+  check('The completed camera approach opens the career manager WMS with real cash', await desk.locator('#warehouse-computer').isVisible() && await desk.locator('#warehouse-wms-console').isVisible() && await desk.locator('#warehouse-computer-cash').innerText() === '$600' && await desk.locator('#warehouse-computer-title').innerText() === 'Latchford Distribution');
+  await desk.locator('[data-wms-page="purchaseOrders"]').click();
+  check('The first-day WMS exposes the opening PO while new documents remain locked', await desk.locator('[data-wms-detail="purchaseOrders:PO-1001"]').isVisible() && await desk.locator('[data-wms-create="purchaseOrders"]').isDisabled());
   await desk.screenshot({path:path.join(dump,'career-computer-suppliers.png'),scale:'css'});
+  await desk.locator('#warehouse-dispatch-task').click();
   await desk.locator('[data-desk-tab="overview"]').click();
   check('Overview presents the first-day goal and completed-order count', await desk.locator('#warehouse-business-stage').innerText() === career.stage && await desk.locator('#warehouse-completed-orders').innerText() === '0');
   await desk.screenshot({path:path.join(dump,'career-computer-overview.png'),scale:'css'});
@@ -884,7 +924,7 @@ let browser;
   check('The desktop is usable while the warehouse remains paused', await desk.locator('#warehouse-desktop-home').isVisible() && await desk.locator('#warehouse-business').isHidden());
   await desk.screenshot({path:path.join(dump,'career-computer-desktop.png'),scale:'css'});
   await desk.locator('#warehouse-dispatch-task').click();
-  check('The taskbar restores the existing business window and selected page', await desk.locator('#warehouse-business').isVisible() && await desk.locator('[data-desk-tab="overview"]').getAttribute('aria-selected') === 'true');
+  check('The Business taskbar shortcut opens its equipment page', await desk.locator('#warehouse-business').isVisible() && await desk.locator('[data-desk-tab="upgrades"]').getAttribute('aria-selected') === 'true');
   await desk.locator('[data-desk-tab="upgrades"]').click();
   check('Equipment and decoration use authoritative unlock rules', await desk.locator('#warehouse-upgrades button').count() === 4 && await desk.locator('#warehouse-upgrades button').evaluateAll(buttons => buttons.every(button => button.disabled)));
   career.completedOrders = 1; career.cash = 690; career.upgrades[2].enabled = true; career.upgrades[2].detail = 'A singing fish for the dispatch office.';
@@ -898,7 +938,7 @@ let browser;
   await desk.screenshot({path:path.join(dump,'career-computer-upgrades.png'),scale:'css'});
   await desk.setViewportSize({width:1280,height:600});
   check('Long office pages provide real content scrolling', await desk.locator('.warehouse-desk-body').evaluate(el => { el.scrollTop=el.scrollHeight; return el.scrollTop>0; }));
-  await desk.locator('[data-desk-tab="purchases"]').click();
+  await desk.locator('[data-desk-tab="ledger"]').click();
   check('Changing business pages starts at the new page heading', await desk.locator('.warehouse-desk-body').evaluate(el => el.scrollTop===0));
   await clearCalls(desk);
   await desk.locator('#warehouse-computer-close').click();
@@ -954,7 +994,7 @@ let browser;
   check('Landscape controls scroll without horizontal overflow', await noOverflow(phone, '#warehouse-menu'));
   await phone.screenshot({path:path.join(dump,'launcher-controls-landscape.png'), scale:'css'});
   await phone.keyboard.press('p');
-  await phone.evaluate(value => unityConfig.onWarehouseHUD({clock:'8:10 AM',computer:value}), {...career,cash:600,completedOrders:0,suggestedTab:'purchases'});
+  await phone.evaluate(value => unityConfig.onWarehouseHUD({clock:'8:10 AM',computer:value.career,wms:value.careerWms}), {career:{...career,cash:600,completedOrders:0,suggestedTab:'overview'},careerWms});
   check('Landscape office fits the viewport', await noOverflow(phone, '#warehouse-computer'));
   await phone.locator('.warehouse-monitor-screen').evaluate(async el => { await Promise.all(el.getAnimations().map(animation => animation.finished)); });
   await phone.screenshot({path:path.join(dump,'shell-office-landscape-fixture.png'), scale:'css'});
@@ -999,5 +1039,6 @@ let browser;
   check('In Progress keeps the warehouse at its original URL', await card.count() === 1);
   check('The card loads the Unity warehouse thumbnail', await card.locator('img').evaluate(image => image.naturalWidth > 0 && image.currentSrc.includes('one-shift-unity')));
   await card.screenshot({path:path.join(dump,'archive-card.png'), scale:'css'});
+  fs.writeFileSync(path.join(dump,'shell-mock-report.json'),JSON.stringify({passed:true,checks,errors,scope:'Mock Unity-loader shell lifecycle, input ownership and WMS command routing. No rendered Unity or physical inventory assertions.'},null,2));
   console.log(checks.length + ' checks passed. Captures: ' + dump);
 })().catch(error => { console.error(error); process.exitCode=1; }).finally(async () => { if (browser) await browser.close(); server.close(); });

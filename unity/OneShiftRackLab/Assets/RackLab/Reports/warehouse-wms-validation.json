@@ -1,0 +1,153 @@
+{
+    "generatedUtc": "2026-10-29T00:32:14.4640176Z",
+    "method": "Production WMS ledger with deterministic receiving, bin transfers, exact allocations, picking, loading and offsite shipment transactions. No Unity scene or warehouse state is changed.",
+    "scope": "Domain integrity only. Physical carton movement, scanner label visibility, supported bin placement and browser controls require their separate runtime checks.",
+    "passed": true,
+    "checks": [
+        {
+            "name": "definitions reject duplicates and invalid carton units",
+            "error": "",
+            "passed": true
+        },
+        {
+            "name": "definition and order inputs are copied",
+            "error": "",
+            "passed": true
+        },
+        {
+            "name": "expected delivery is not on-hand inventory",
+            "error": "",
+            "passed": true
+        },
+        {
+            "name": "partial receipt tracks the exact purchase line",
+            "error": "",
+            "passed": true
+        },
+        {
+            "name": "wrong PO and duplicate receipt leave stock unchanged",
+            "error": "",
+            "passed": true
+        },
+        {
+            "name": "receiving rejects wrong, closed and full bins",
+            "error": "",
+            "passed": true
+        },
+        {
+            "name": "expected cartons cannot exceed purchase quantities",
+            "error": "",
+            "passed": true
+        },
+        {
+            "name": "transfer checks source, destination and capacity",
+            "error": "",
+            "passed": true
+        },
+        {
+            "name": "transfer records the scanned route once",
+            "error": "",
+            "passed": true
+        },
+        {
+            "name": "reserve locations require transfer before picking",
+            "error": "",
+            "passed": true
+        },
+        {
+            "name": "short second sales line cannot reserve the first",
+            "error": "",
+            "passed": true
+        },
+        {
+            "name": "allocation reserves oldest eligible handling units",
+            "error": "",
+            "passed": true
+        },
+        {
+            "name": "reservations exclude stock from another sales order",
+            "error": "",
+            "passed": true
+        },
+        {
+            "name": "duplicate release and reserved transfers reject",
+            "error": "",
+            "passed": true
+        },
+        {
+            "name": "pick requires the correct order, carton and source",
+            "error": "",
+            "passed": true
+        },
+        {
+            "name": "pick requires open staging with capacity",
+            "error": "",
+            "passed": true
+        },
+        {
+            "name": "partial picking preserves exact line progress",
+            "error": "",
+            "passed": true
+        },
+        {
+            "name": "loading requires picked stock and dispatch capacity",
+            "error": "",
+            "passed": true
+        },
+        {
+            "name": "loading does not ship or remove on-hand stock",
+            "error": "",
+            "passed": true
+        },
+        {
+            "name": "incomplete and split-vehicle manifests cannot ship",
+            "error": "",
+            "passed": true
+        },
+        {
+            "name": "offsite shipment decrements stock exactly once",
+            "error": "",
+            "passed": true
+        },
+        {
+            "name": "cancelling an unpicked order releases reservations",
+            "error": "",
+            "passed": true
+        },
+        {
+            "name": "picked stock must be returned before cancellation",
+            "error": "",
+            "passed": true
+        },
+        {
+            "name": "loaded stock can return through a validated bin move",
+            "error": "",
+            "passed": true
+        },
+        {
+            "name": "only an untouched purchase order can be cancelled",
+            "error": "",
+            "passed": true
+        },
+        {
+            "name": "bin opening is recorded and occupied bins cannot close",
+            "error": "",
+            "passed": true
+        },
+        {
+            "name": "the next purchase and sales order repeat cleanly",
+            "error": "",
+            "passed": true
+        },
+        {
+            "name": "transaction history retains quantities and stable sequence",
+            "error": "",
+            "passed": true
+        },
+        {
+            "name": "100 mixed orders conserve stock and line quantities",
+            "error": "",
+            "passed": true
+        }
+    ]
+}

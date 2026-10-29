@@ -22,17 +22,19 @@
   var menuScreen = '', computerOpen = false, escapeHandled = false, lastComputer = '', wrapperFullscreen = false;
   var gameMode = new URLSearchParams(window.location.search).get('mode') === 'sandbox' ? 'sandbox' : 'career';
   var pendingMode = '', computerTransitioning = false;
+  var handheldOpen = false, handheldInteractive = false, pendingHandheld = false;
   window.warehouseRequestedMode = gameMode;
   var hudState = {}, loadingPhase = 'download', loadStart = 0, loadingTimer = null, lastLoadChange = 0;
   var preparationFraction = 0, preparationCompleted = 0, preparationTotal = 7, hasFinePreparation = false;
-  var build = 'assets/one-shift-unity/Build/OneShiftWeb', version = '?v=9';
+  var build = 'assets/one-shift-unity/Build/OneShiftWeb', version = '?v=10';
   var preparationNames = ['Night lighting', 'First daylight', 'Morning light', 'Afternoon light', 'Ceiling light controls', 'Fork placement view', 'Opening the doors'];
   var tips = [
     'Your first three cartons arrive at the front door.',
     'Press E to pick up a carton. Scroll to adjust its distance.',
     'Hold the right mouse button to turn a carton before setting it down.',
+    'Q opens the TC22. F scans a label. Enter confirms a ready task.',
     'Your customers are the local garages, workshops and trade counters.',
-    'Use the office computer to buy supplies, take orders and add equipment.'
+    'Receive, transfer, pick and ship with the TC22. Manage orders in the office WMS.'
   ];
   try {
     var saved = JSON.parse(localStorage.getItem('warehouse-display-v1') || 'null');
@@ -55,6 +57,35 @@
   function unlockPointer() {
     if (document.pointerLockElement === canvas && document.exitPointerLock) document.exitPointerLock();
   }
+  function syncWmsPresentation() {
+    if (!window.WarehouseWmsUI) return;
+    window.WarehouseWmsUI.setPresentation({handheldOpen:handheldOpen, handheldInteractive:handheldInteractive,
+      active:mode === 'play' && activity.active() && !portrait && !menuScreen && !computerOpen && !hudState.driving});
+  }
+  function focusHandheld(interactive) {
+    if (!instance || !graphicsReady || hudState.driving || portrait) return;
+    if (computerOpen || computerTransitioning) {
+      pendingHandheld = true;
+      if (computerOpen) closeComputer(true);
+      return;
+    }
+    handheldOpen = true; handheldInteractive = interactive;
+    sendCommand('device-equip','1');
+    sendCommand('device-focus',interactive ? '1' : '0');
+    syncActivity(); syncWmsPresentation();
+    if (!interactive && !manuallyPaused && !menuScreen) { canvas.focus({preventScroll:true}); requestMouseCapture(); sendCommand('resume'); }
+  }
+  function stowHandheld() {
+    handheldOpen = false; handheldInteractive = false; pendingHandheld = false;
+    sendCommand('device-focus','0'); sendCommand('device-equip','0');
+    syncActivity(); syncWmsPresentation();
+    if (!computerOpen && !manuallyPaused && !menuScreen) { canvas.focus({preventScroll:true}); requestMouseCapture(); sendCommand('resume'); }
+  }
+  if (window.WarehouseWmsUI) window.WarehouseWmsUI.init({
+    command:function(action,id) { sendCommand('wms-' + action,id); },
+    deviceFocus:focusHandheld, closeDevice:stowHandheld, openHandheld:function() { focusHandheld(true); },
+    openBusiness:function() { showBusiness(true); }, closeConsole:function() { showBusiness(false); }
+  });
   function syncStatsVisibility() { stats.hidden = mode !== 'play' || !byId('show-stats').checked; }
   function reportPlayerStats(buildVersion, framesPerSecond, longestFrameMs, frameCount) {
     playerBuildVersion = buildVersion;
@@ -182,9 +213,10 @@
     progress.style.animationPlayState = activity.active() ? 'running' : 'paused';
     stage.dataset.browserActive = String(activity.active());
     pause.setAttribute('aria-pressed', String(manuallyPaused));
+    syncWmsPresentation();
     byId('hydraulics').hidden = !hudState.hydraulics || !activity.active() || manuallyPaused || !!menuScreen || computerOpen || portrait;
     if (!instance) return;
-    var active = activity.active() && !manuallyPaused && !menuScreen && !computerOpen && !portrait && !failed && mode !== 'title';
+    var active = activity.active() && !manuallyPaused && !menuScreen && !computerOpen && !handheldInteractive && !portrait && !failed && mode !== 'title';
     if (active === lastActive) return;
     if (playerBuildVersion !== null) setText(stats, 'v' + playerBuildVersion + (active ? ' | Measuring...' : ' | Paused'));
     var module = instance.Module;
@@ -231,6 +263,7 @@
   function openMenu(screen) {
     if (failed && screen === 'pause') return;
     if (computerOpen) closeComputer(false);
+    if (handheldInteractive) { handheldInteractive = false; sendCommand('device-focus','0'); }
     var wasMenu = !!menuScreen;
     menuScreen = screen;
     if (instance && mode !== 'title') {
@@ -402,6 +435,7 @@
     byId('notice').hidden = !value.notice;
     setText(byId('notice'), value.notice);
     byId('drive-status').hidden = !value.driving;
+    if (byId('handheld-toggle')) byId('handheld-toggle').disabled = !!value.driving;
     setText(byId('fork-height'), (clamp(value.forkHeight, 0, 100) * 3.28084).toFixed(1) + ' ft');
     var training = {
       brake:['First drive / 1 of 3','Press Space to check the brake.'],
@@ -417,6 +451,9 @@
     setText(byId('fork-speed'), Math.abs(speed) < .005 ? 'Neutral' : (speed > 0 ? '+' : '-') + Math.round(Math.abs(speed) * 100) + '% ' + (speed > 0 ? 'raise' : 'lower'));
     byId('hydraulics').hidden = !value.hydraulics || !activity.active() || manuallyPaused || !!menuScreen || computerOpen || portrait;
     if (value.computer) renderComputer(value.computer);
+    if (value.wms && window.WarehouseWmsUI) window.WarehouseWmsUI.receive(value.wms);
+    syncWmsPresentation();
+    if (pendingHandheld && !computerOpen && !computerTransitioning) { pendingHandheld = false; focusHandheld(true); }
   }
   function money(value) {
     if (typeof value === 'string') return value;
@@ -480,6 +517,7 @@
       showBusiness(true);
       var suggested = ['overview','stock','purchases','customers','upgrades','ledger'].includes(value.suggestedTab) ? value.suggestedTab : 'overview';
       openDeskTab(suggested, true);
+      if (window.WarehouseWmsUI) window.WarehouseWmsUI.showConsole(true);
     } else if (!value.open && computerOpen) {
       computerOpen = false;
       if (computer.open) computer.close();
@@ -493,15 +531,15 @@
     var focusAction = focused && focused.dataset.action, focusId = focused && focused.dataset.id;
     var sandbox = value.mode === 'sandbox' || (!value.mode && gameMode === 'sandbox');
     setText(byId('computer-title'), value.company || value.title || 'Latchford Distribution');
-    setText(byId('computer-mode'), sandbox ? 'Dispatch / Sandbox' : 'Trade supplies / Career');
+    setText(byId('computer-mode'), sandbox ? 'Business / Sandbox' : 'Business / Career');
     setText(byId('computer-summary'), value.summary);
     setText(byId('computer-cash'), money(value.cash));
     setText(byId('computer-message'), value.message || 'Ready. Choose a task from the left.');
     setText(byId('business-stage'), value.stage || (sandbox ? 'Your warehouse is ready' : 'Open for business'));
-    setText(byId('business-stage-detail'), value.stageDetail || (sandbox ? 'Handle the incoming pallets and run the warehouse from here.' : 'Buy a starter delivery, bring the cartons inside, and fill your first local order.'));
+    setText(byId('business-stage-detail'), value.stageDetail || 'Manage orders and stock in the WMS. Equipment and cash history are here.');
     setText(byId('completed-orders'), Math.max(0, Number(value.completedOrders) || 0));
     setText(byId('stock-lines'), (value.inventory || []).filter(function (item) { return Number(item.quantity) > 0; }).length);
-    setText(byId('customer-note'), sandbox ? 'Accept a retailer order, load the oldest matching stock into the cleared trailer, and dispatch it here.' : 'Accept an order, load its goods into the pickup van, and collect payment after departure.');
+    setText(byId('customer-note'), 'Release an order in the WMS, then pick, load and confirm its shipment.');
     makeTable(byId('inventory'), ['Item','Available'], (value.inventory || []).map(function (item) { return [item.name, item.quantity + (item.unit ? ' ' + item.unit : '')]; }), 'Stock will appear here as deliveries are received.');
     makeOrders(byId('orders'), value.orders || [], 'order', 'No supplier stock is available.');
     makeOrders(byId('contracts'), value.contracts || [], 'contract', 'There are no open customer orders.');
@@ -518,6 +556,7 @@
     computerOpen = false;
     lastComputer = '';
     if (computer.open) computer.close();
+    if (window.WarehouseWmsUI) window.WarehouseWmsUI.showConsole(false);
     syncActivity();
     if (resumePlay && !manuallyPaused && mode === 'play' && !portrait) canvas.focus({preventScroll:true});
     // The trusted click obtains native lock. Unity owns the return camera move
@@ -526,6 +565,7 @@
     sendCommand('computer-close');
   }
   function showBusiness(open) {
+    if (window.WarehouseWmsUI) window.WarehouseWmsUI.showConsole(false);
     byId('business').hidden = !open;
     byId('desktop-home').hidden = open;
     byId('dispatch-task').setAttribute('aria-pressed', String(open));
@@ -598,8 +638,9 @@
   byId('menu-back').addEventListener('click', menuBack);
   byId('close-help').addEventListener('click', menuBack);
   byId('computer-close').addEventListener('click', function () { closeComputer(true); });
+  if (byId('handheld-toggle')) byId('handheld-toggle').addEventListener('click', function () { focusHandheld(!handheldInteractive); });
   byId('computer-minimize').addEventListener('click', function () { showBusiness(false); });
-  byId('desktop-toggle').addEventListener('click', function () { showBusiness(byId('business').hidden); });
+  byId('desktop-toggle').addEventListener('click', function () { showBusiness(false); });
   document.querySelectorAll('[data-open-business]').forEach(function (button) { button.addEventListener('click', function () { showBusiness(true); }); });
   document.querySelectorAll('[data-desk-open]').forEach(function (button) { button.addEventListener('click', function () { openDeskTab(button.dataset.deskOpen, true); }); });
   document.querySelectorAll('[data-screen]').forEach(function (button) { button.addEventListener('click', function () { openMenu(button.dataset.screen); }); });
@@ -620,6 +661,7 @@
       event.preventDefault(); event.stopImmediatePropagation();
       if (event.repeat) return;
       if (computerOpen) closeComputer(true);
+      else if (handheldInteractive) focusHandheld(false);
       else if (menuScreen) { if (menuScreen === 'pause') resume(); else menuBack(); }
       else openMenu('pause');
       return;
@@ -627,6 +669,11 @@
     if (event.repeat) return;
     var input = event.target && /INPUT|SELECT|TEXTAREA/.test(event.target.tagName);
     if (input) return;
+    if (!menuScreen && !computerOpen && !computerTransitioning && graphicsReady && !hudState.driving) {
+      if (event.code === 'KeyQ') { event.preventDefault(); event.stopImmediatePropagation(); focusHandheld(!handheldInteractive); return; }
+      if (event.code === 'KeyF' && handheldOpen && !handheldInteractive) { event.preventDefault(); event.stopImmediatePropagation(); sendCommand('wms-scan'); return; }
+      if (event.code === 'Enter' && handheldOpen && !handheldInteractive) { event.preventDefault(); event.stopImmediatePropagation(); sendCommand('wms-confirm'); return; }
+    }
     if (event.code === 'KeyP' && !computerOpen) {
       event.preventDefault();
       if (menuScreen) resume(); else openMenu('pause');

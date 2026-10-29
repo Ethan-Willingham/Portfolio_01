@@ -1,0 +1,140 @@
+{
+    "generatedUtc": "2026-10-29T01:37:09.1467378Z",
+    "method": "Production WMS runtime, ledger, courier and actual warehouse collision cloned into isolated PhysX at 20 ms. Workflow scans use decoded-label fixture input; carton placement is explicit test setup followed by real physics settling.",
+    "scope": "Physical support, workflow transactions, exact manifests and courier departure. Native handheld input, camera framing and optical label occlusion remain separate browser and scanner checks. The open source scene is never changed.",
+    "passed": true,
+    "checks": [
+        {
+            "name": "career opening and scene-local initialization",
+            "passed": true,
+            "expectation": "The empty career has one account, physical bins and example documents without changing the authored scene.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "courier simulation",
+                    "value": 0.0,
+                    "units": "s"
+                }
+            ]
+        },
+        {
+            "name": "Sandbox stock occupies its labelled bins",
+            "passed": true,
+            "expectation": "One hundred real cartons, eight items, three rack rows and separate receiving/staging bins reconcile with opening WMS stock.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "supported opening cartons",
+                    "value": 100.0,
+                    "units": "cartons"
+                },
+                {
+                    "name": "courier simulation",
+                    "value": 0.0,
+                    "units": "s"
+                }
+            ]
+        },
+        {
+            "name": "manager creates repeatable validated documents",
+            "passed": true,
+            "expectation": "All eight catalogue items support fresh purchase and sales documents. Invalid quantities reject atomically and drafts do not move stock or money.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "courier simulation",
+                    "value": 0.0,
+                    "units": "s"
+                }
+            ]
+        },
+        {
+            "name": "purchase creates a real unreceived delivery",
+            "passed": true,
+            "expectation": "Booking debits once; the physical driver delivers exactly the ordered cartons, which remain Expected until scanned receiving.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "delivered physical cartons",
+                    "value": 3.0,
+                    "units": "cartons"
+                },
+                {
+                    "name": "courier simulation",
+                    "value": 136.6323699951172,
+                    "units": "s"
+                }
+            ]
+        },
+        {
+            "name": "receipt requires a correct PO and supported carton",
+            "passed": true,
+            "expectation": "Wrong PO, held, airborne and kinematic cartons cannot be received; a supported duplicate scan cannot receive twice.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "courier simulation",
+                    "value": 136.6323699951172,
+                    "units": "s"
+                }
+            ]
+        },
+        {
+            "name": "physical movement alone does not transfer inventory",
+            "passed": true,
+            "expectation": "A misplaced carton remains in its recorded bin and raises an exception; source/carton/destination confirmation reconciles only actual supported placement.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "courier simulation",
+                    "value": 136.6323699951172,
+                    "units": "s"
+                }
+            ]
+        },
+        {
+            "name": "pick work validates exact stock and staging",
+            "passed": true,
+            "expectation": "Release allocates real source stock, wrong cartons and missing staging reject, and completed picks book one collection without paying.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "staged allocated cartons",
+                    "value": 3.0,
+                    "units": "cartons"
+                },
+                {
+                    "name": "courier simulation",
+                    "value": 136.6323699951172,
+                    "units": "s"
+                }
+            ]
+        },
+        {
+            "name": "loaded stock needs scanner authorization and offsite departure",
+            "passed": true,
+            "expectation": "Physically loaded boxes alone cannot leave; scan-confirmed exact loading and cleared ramp authorize the real courier, then one offsite payment posts.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "courier simulation",
+                    "value": 201.0861358642578,
+                    "units": "s"
+                }
+            ]
+        },
+        {
+            "name": "returned dispatch stock can be picked again",
+            "passed": true,
+            "expectation": "A loaded carton returns through the recorded dispatch bin, invalidates shipment authorization and appears as outstanding pick work.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "courier simulation",
+                    "value": 166.77880859375,
+                    "units": "s"
+                }
+            ]
+        }
+    ]
+}

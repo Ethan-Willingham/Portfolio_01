@@ -5,72 +5,60 @@ equipped Sandbox. It does not read or write the illustrated game's saves.
 Deliveries, stock, cash and equipment are session state, with no checkpoint persistence yet.
 Internal OneShift paths, namespace and Editor menus remain stable.
 
-The browser's default Start business opens Latchford Distribution with $600,
-no stock, truck, racks or forklift. Purchase carton batches on the office computer,
-receive the courier's physical delivery on the front porch, carry it into the
-highlighted floor bay, then book a local customer's collection. Load the exact
-marked cartons into its van; payment arrives after it leaves. Buy racks and a
-forklift after three completed orders to begin physical pallet deliveries and
-north-dock dispatch. The singing fish and forklift flame kit are optional purchases.
-The full rules and prices are in `docs/ONE_SHIFT.md` at the repository root.
+The v10 browser starts either an empty $600 distribution business or a stocked
+Sandbox with $10,000, 100 owned cartons, two unreceived PO cartons, 54 rack bins,
+three floor storage bins, two receiving bins, staging and a moving dispatch bin.
+The active goods are eight varieties of sealed cartons. The opening pallet truck
+and timed free parcels are disabled; their authored sources and checks remain.
 
-Loose cartons use `WarehouseGrabber`: E/click picks up or puts down, wheel adjusts
-distance, right mouse rotates. Bodies stay dynamic and collide while held.
-`WarehouseCareer` owns the career ledger and exact manifests; the courier owns
-visible road motion, driver handling and the offsite completion boundary.
-The office camera zooms in before the HTML desktop opens and returns on close.
-Career installs at runtime before the authored receiving service starts.
-Editor Play retains the authored Sandbox unless a career fixture explicitly
-initializes it. Install `WarehouseCareerBuilder.Install()` before exporting so
-the runtime floor-guide and carton materials survive shader stripping.
+Q opens the Zebra TC22 task selector. Choose Receive, Transfer, Pick, Ship or Item
+lookup, return to scanning, aim at the printed label and press F. Enter confirms a
+ready task. E/click picks up and sets down, wheel adjusts distance, and right mouse
+rotates. The office monitor opens the manager WMS with PO/SO examples, stock, bin
+contents, task lines and transaction history. The Business app handles equipment
+and finance. New orders use whole-carton quantities from the eight-item catalog.
 
-The career checks run against isolated physics scenes. Inspect the JSON reports'
-`passed` fields before exporting; a completed command can still contain failed checks.
-`WarehouseGrabberValidation.ValidateAndSave()`
-checks 18 handling and control-transfer cases; `WarehouseControlsValidation.ValidateAndSave()`
-checks 12 control cases; `WarehouseCourierValidation.ValidateRoute()` checks 1,002 van poses,
-and `ValidateAndSave()` checks 26 delivery, obstruction, collection, shelf placement and queue conditions.
-`WarehouseCareerValidation.ValidateAndSave()` checks 12 transaction and physical-stock cases,
-including repeat carton orders, supported putaway, exact manifests, equipment, optional purchases
-and paid pallet dispatch. Carton and pallet placement in these fixtures is explicit setup,
-so the separate native browser walkthrough remains necessary:
-`node tools/test-one-shift-career-browser.cjs`. It uses normal walking, aiming, pickup and
-computer controls, observing state without changing it.
-WarehouseComputerValidation.ValidateAndSave() checks monitor entry, paused focus,
-stale resumed frame time, bounded return, restored view and exactly-once callbacks
-at 30, 60, 120 and 144 Hz. The previous browser and office
-walkthroughs now explicitly select Sandbox. Forklift performance runs also select Sandbox.
+WarehouseWmsLedger is the one stock authority. WarehouseWmsRuntime,
+WarehouseWmsWorkflow and WarehouseWmsSnapshot connect it to physical bins,
+WarehouseWmsScanner, courier visits and both browser interfaces. Receive posts
+stock into receiving; Transfer makes it available in pickable storage; SO release
+allocates the oldest eligible cartons; Pick stages them. Collection is booked
+only after all picks. Ship loads the exact manifest and authorizes departure after
+the player steps clear. Payment and stock decrement happen offsite, once.
+The full rules, limits and primary references are in docs/ONE_SHIFT.md.
 
-The final v9 browser export is 42,475,170 compressed bytes with zero build errors.
-Native career verification completed the first paid shipment and a repeat purchase
-through 156 gameplay assertions. The separate 90-second forklift profile had no
-frame intervals over 50 ms or long tasks on this RTX 3080 workstation. Full results
-and the bounded startup-console warning review are recorded in `docs/ONE_SHIFT.md`.
+The handheld model, carton geometry and Code128 label meshes are original code.
+Barcodes check range, orientation and solid occlusion. Labels use per-carton
+handling IDs, not item serial numbers. Physics, pickup and supported placement
+remain real. A physically moved box does not silently change the WMS record.
+Racks, forklift, singing fish and flame decals remain career purchases.
 
-The Sandbox start has three empty rack bays along the west wall, eighteen pallet
-positions, a clear floor, and a north receiving dock overlooking a parking lot.
-A separate YARD doorway connects the warehouse to the fenced lot's access ramp.
-A road truck drives along the north street, turns into the east entrance,
-aligns and backs into the dock over about 45 active seconds, then opens its
-original trailer doors over four seconds. The warehouse shutter starts raised
-so the arrival is visible. Obstructions hold the sequence. Once the doors are
-fully open, the dock barrier clears and the plate opens the physical route.
-Four 992 lb (450 kg) pallets wait inside, for the player to unload and put away.
-The status line counts unloaded stock and pallets supported in rack positions.
-The dock plate is flush with both floors. Clearance checks cover the complete
-walk to the lot. The compact mast fits beneath the trailer roof with the forks
-at carrying height; the roof remains a physical obstacle to raising too far.
+BrowserLifecycle installs the WMS at runtime before the authored receiving
+service starts. Editor Play without that browser bootstrap retains the authored
+legacy rack/pallet trial. Do not use that Editor start as a v10 browser validation.
+Install WarehouseCareerBuilder.Install() before exporting to retain runtime
+materials and shaders. Preserve the office camera transition and input locks.
 
-The existing yellow forklift and owner's pallet and rack assets are reused.
-The delivery truck is the owner's original American 18-wheeler and 53-foot
-trailer, built on 23 October. Its tracked FBX retains all eighteen wheel pivots,
-original materials and real rear doors, which fold 270 degrees against the sides.
-The wheels turn during the arrival. The trailer's actual floor sits 1.3325 m
-above the yard and has 2.693 m of interior clearance beneath its roof bows.
-The yard extends to 60 m north of the warehouse origin for its full-length arrival.
-See [road truck source and integration](RECEIVING_TRUCK.md). The former finish
-displays, load comparisons and rollover ramp are removed from the active start;
-their source prefabs, builders and checks remain available.
+Run WarehouseWmsValidation.ValidateAndSave(),
+WarehouseWmsWorldValidation.ValidateAndSave() and
+WarehouseWmsRuntimeValidation.ValidateAndSave(), then inspect their JSON passed
+fields. These fixtures include explicit physical setup; they do not replace the
+native browser walkthrough tools/test-one-shift-wms-browser.cjs. The UI fixture is
+tools/test-one-shift-wms-ui.cjs. Run relevant grabber, courier and controls checks
+when changing those systems. Earlier v9 career and pallet tests retain historical
+coverage but assume a different start and are not the current WMS walkthrough.
+
+The v10 export is 42,570,428 compressed bytes with zero build errors. Ledger,
+world and runtime fixtures pass 29, 37 and nine checks respectively. Native
+browser sessions verify full Sandbox and career receiving-to-shipping cycles,
+including offsite payment and repeat ordering. The career route is
+tools/test-one-shift-wms-career-browser.cjs; populated performance is measured by
+tools/profile-one-shift-wms-browser.cjs. Close the Editor and run Unity browser
+workloads one at a time. See docs/ONE_SHIFT.md for validation scope and results.
+
+The original yellow forklift, owner's rack geometry, road truck and pallet assets
+remain in the project. The truck is documented in RECEIVING_TRUCK.md; it is not
+part of the v10 carton-only opening. Source and build details below remain valid.
 
 The room now has concrete block walls, ribbed upper cladding, an exposed steel
 roof, high multi-pane windows and warm sunlight with sparse drifting dust.
@@ -83,12 +71,6 @@ onto a covered parcel shelf and a pedestrian ramp. Aim at the door and press E
 or click to open or close it. The surrounding business park has six neighboring
 units, visitor parking, planted verges and a parcel van; the north truck yard
 and its walking route remain in use.
-
-In Sandbox, three small parcels appear on the outside shelf after 35 active seconds. Aim
-at a box and press E or click to carry it, then use the parcel desk or its sign
-inside the office to receive it. Carry one at a time; forklift entry is blocked
-while holding a parcel. Delivery and receipt are session state, independent of
-the four pallet loads and the illustrated game's inventory and saves.
 
 Open `Assets/RackLab/Scenes/RackFloor.unity` and press Play. The browser player
 is the current release target; rebuild the Windows player before using
@@ -127,17 +109,11 @@ first two neutral captured frames discard pending UI mouse motion. Keep these
 boundaries when changing input: Unity's deferred pointer-lock request cannot
 reliably capture from its ordinary frame loop after an intentional release.
 
-In the browser, aim at the office monitor or keyboard and press E. The Sandbox
-desk buys supplier pallets, accepts or releases retailer requests, shows actual
-stock and inbound lots, and dispatches physically loaded orders. Accepting the
-next request summons a free empty pickup when the previous truck has left.
-Purchases debit
-once, acceptance never pays, and the retailer pays only after departure. FIFO
-lot selection and case conservation are checked against actual pallet objects.
-Close the computer to let time and the truck advance. This is a simplified
-wholesale loop using fictional clients, not an Amazon bidding service. The HTML
-computer is browser-only; using its interaction in the Editor logs that fact
-and leaves scene movement active. The illustrated game's saves remain untouched.
+In the browser, aim at the office monitor or keyboard and press E. The camera
+moves into the screen before the WMS desktop opens. Close it to let time and the
+courier advance. The manager shares the handheld's ledger and never grants stock
+by displaying it. Computer UI is browser-only; the Editor interaction logs that
+fact and leaves movement active. The illustrated game's saves remain untouched.
 
 The warehouse starts at 4:30 a.m. Three industrial switches on the south wall,
 beside the entrance electrical cabinet, control the west, centre and east rows

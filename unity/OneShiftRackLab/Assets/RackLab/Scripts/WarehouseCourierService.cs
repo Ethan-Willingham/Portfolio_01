@@ -19,12 +19,14 @@ namespace OneShift.RackLab
         public Transform VanTransform { get { Initialize();return visuals.root; } }
         public Transform DriverTransform { get { Initialize();return visuals.driver.root; } }
         public Bounds DeckBounds { get { Initialize();return visuals.deck.bounds; } }
+        public BoxCollider DeckCollider { get { Initialize();return visuals.deck; } }
+        public Func<bool> DispatchAuthorized;
         public Vector3 LoadingPosition=>new Vector3(3,WarehouseCourierRoute.Ground+.05f,-23.75f);
         public Vector3 DriverPosition=>visuals!=null?visuals.driver.root.position:WarehouseCourierRoute.StreetStart;
         public float RearDoorOpen { get; private set; }
         public float RampOpen { get; private set; }
         public int LoadedCount { get { if(active==null || active.delivery)return 0;int count=0;foreach(var body in active.cartons)if(BoxIsOnDeck(body))count++;return count; } }
-        public Vector3 CargoPlacementPosition(int index){Initialize();return visuals.root.TransformPoint(Slot(Mathf.Clamp(index,0,5)));}
+        public Vector3 CargoPlacementPosition(int index,Rigidbody carton=null){Initialize();return visuals.root.TransformPoint(Slot(Mathf.Clamp(index,0,5),carton));}
 
         sealed class Visit
         {
@@ -76,12 +78,27 @@ namespace OneShift.RackLab
             Tick(Time.fixedDeltaTime);
         }
 
-        public Vector3 DeliverySpawnPosition(int index)
+        public Vector3 DeliverySpawnPosition(int index,Rigidbody carton=null)
         {
-            Vector3 slot=Slot(Mathf.Clamp(index,0,5));
+            Vector3 slot=Slot(Mathf.Clamp(index,0,5),carton);
             return WarehouseCourierRoute.StreetStart+Quaternion.Euler(0,270,0)*slot;
         }
-        static Vector3 Slot(int index)=>new Vector3(index%2==0?-.55f:.55f,WarehouseCourierVisuals.DeckHeight+.18f,-1.55f+(index/2)*.76f);
+        static Vector3 Slot(int index,Rigidbody carton=null)
+        {
+            CartonGeometry(carton,out Vector3 centre,out Vector3 half);
+            return new Vector3(index%2==0?-.55f:.55f,WarehouseCourierVisuals.DeckHeight+half.y+.005f,-1.55f+(index/2)*.76f)-centre;
+        }
+        // All stock uses a root box collider. Use its scaled physical shape for
+        // deck support, carrying and shelf clearance, including a shifted centre.
+        static void CartonGeometry(Rigidbody carton,out Vector3 centre,out Vector3 half)
+        {
+            centre=Vector3.zero;half=new Vector3(.24f,.18f,.19f);
+            var box=carton!=null?carton.GetComponent<BoxCollider>():null;if(box==null)return;
+            Vector3 scale=box.transform.lossyScale;
+            centre=Vector3.Scale(box.center,scale);
+            half=Vector3.Scale(box.size*.5f,new Vector3(Mathf.Abs(scale.x),Mathf.Abs(scale.y),Mathf.Abs(scale.z)));
+        }
+        static Vector3 ClearanceExtents(Vector3 half,float skin)=>new Vector3(Mathf.Max(.01f,half.x+skin),Mathf.Max(.01f,half.y+skin),Mathf.Max(.01f,half.z+skin));
 
         public bool BeginDelivery(Rigidbody[] cartons,Action delivered,Action<Rigidbody> cartonDropped=null)
         {
@@ -119,7 +136,7 @@ namespace OneShift.RackLab
             visuals.root.gameObject.SetActive(true);visuals.driver.root.gameObject.SetActive(true);
             SetVanPose(WarehouseCourierRoute.StreetStart,Quaternion.Euler(0,270,0));
             RearDoorOpen=RampOpen=doorAmount=0;visuals.SetRearDoors(0);visuals.SetRamp(0);visuals.SetDriverDoor(0);
-            if(active.delivery)for(int i=0;i<active.cartons.Length;i++){active.cartons[i].gameObject.SetActive(true);Restrain(active.cartons[i],new Pose(Slot(i),Quaternion.identity));}
+            if(active.delivery)for(int i=0;i<active.cartons.Length;i++){active.cartons[i].gameObject.SetActive(true);Restrain(active.cartons[i],new Pose(Slot(i,active.cartons[i]),Quaternion.identity));}
             SeatDriver();Change(VisitState.DrivingIn,"Courier driving from the front street");
         }
 
@@ -262,7 +279,7 @@ namespace OneShift.RackLab
         }
         void DropCarton()
         {
-            Rigidbody dropped=carried;MoveCarton(dropped,dropTarget,Quaternion.identity);
+            Rigidbody dropped=carried;MoveCarton(dropped,dropTarget,Quaternion.Euler(0,180,0));
             carried=null;dropped.isKinematic=false;dropped.useGravity=true;dropped.linearVelocity=Vector3.zero;dropped.angularVelocity=Vector3.zero;dropped.WakeUp();
             cartonIndex++;active.dropped?.Invoke(dropped);
             if(cartonIndex>=active.cartons.Length && !active.notified){active.notified=true;active.complete?.Invoke();}
@@ -316,17 +333,19 @@ namespace OneShift.RackLab
         }
         bool ShelfTarget(float x,out Vector3 target)
         {
-            float support=ShelfSupport(x);target=new Vector3(x,support+.185f,-11.05f);
+            CartonGeometry(carried,out Vector3 centre,out Vector3 half);
+            float support=ShelfSupport(x);target=new Vector3(x,support+half.y+.005f,-11.05f)-centre;
             return support>=.54f && support<=1.08f && ShelfTargetClear(target,carried);
         }
         float ShelfSupport(float x)
         {
             float support=float.NegativeInfinity;
+            CartonGeometry(carried,out _,out Vector3 half);
             // A single centre ray misses a tilted support's higher corner.
             // Sample the footprint and clear the whole supporting carton.
             for(int column=-1;column<=1;column++)for(int row=-1;row<=1;row++)
             {
-                int count=physics.Raycast(new Vector3(x+column*.20f,2.1f,-11.05f+row*.15f),Vector3.down,hits,1.8f,~0,QueryTriggerInteraction.Ignore);
+                int count=physics.Raycast(new Vector3(x+column*Mathf.Max(.02f,half.x-.04f),2.1f,-11.05f+row*Mathf.Max(.02f,half.z-.04f)),Vector3.down,hits,1.8f,~0,QueryTriggerInteraction.Ignore);
                 for(int i=0;i<count;i++)
                 {
                     var hit=hits[i];if(hit.collider==null || (carried!=null && hit.collider.attachedRigidbody==carried) || hit.collider.transform.IsChildOf(transform) || hit.normal.y<.85f)continue;
@@ -338,9 +357,29 @@ namespace OneShift.RackLab
         }
         void RestartPlacement(Vector3 target)
         {dropTarget=target;liftStart=carried.position;liftRotation=carried.rotation;clock=0;}
+        float ShelfTransitHeight(Vector3 half,Vector3 centre)
+        {
+            float height=Mathf.Max(liftStart.y,dropTarget.y+Mathf.Max(.24f,half.y+.06f));
+            // During the turn, a corner sweeps farther out than either final
+            // footprint. Clear all neighbouring stock in that swept corridor,
+            // including cartons left by an earlier visit, before moving across.
+            float radius=new Vector2(half.x,half.z).magnitude+new Vector2(centre.x,centre.z).magnitude+.015f;
+            Vector3 min=Vector3.Min(liftStart,dropTarget),max=Vector3.Max(liftStart,dropTarget);
+            Vector3 query=(min+max)*.5f;query.y=1.25f;
+            Vector3 extents=(max-min)*.5f;extents.x+=radius;extents.z+=radius;extents.y=1.25f;
+            int count=physics.OverlapBox(query,extents,overlaps,Quaternion.identity,~0,QueryTriggerInteraction.Ignore);
+            for(int i=0;i<count;i++)
+            {
+                var collider=overlaps[i];
+                if(Ignore(collider)||collider.attachedRigidbody==null||collider.attachedRigidbody==carried)continue;
+                height=Mathf.Max(height,collider.bounds.max.y+half.y+Mathf.Abs(centre.y)+.025f);
+            }
+            return height;
+        }
         void PlaceOnShelf(float dt)
         {
-            if(!ShelfTarget(dropTarget.x,out Vector3 current))
+            CartonGeometry(carried,out Vector3 centre,out Vector3 half);
+            if(!ShelfTarget(dropTarget.x+centre.x,out Vector3 current))
             {
                 if(FindShelfSpace(out Vector3 alternative))RestartPlacement(alternative);
                 else {clock=Mathf.Max(0,clock-dt);Status="Clear space on the parcel shelf: "+pathObstruction;}
@@ -351,16 +390,16 @@ namespace OneShift.RackLab
             // Lift clear first, move sideways above the stack, then lower
             // vertically. A diagonal move from the courier's hands clips the
             // lower carton's edge and can push it into a permanent obstruction.
-            float clearance=Mathf.Max(liftStart.y,dropTarget.y+.24f);
+            float clearance=ShelfTransitHeight(half,centre);
             Vector3 raised=new Vector3(liftStart.x,clearance,liftStart.z);
             Vector3 above=new Vector3(dropTarget.x,clearance,dropTarget.z);
             Vector3 position;Quaternion rotation;
             if(clock<.35f)
             {position=Vector3.Lerp(liftStart,raised,Mathf.SmoothStep(0,1,clock/.35f));rotation=liftRotation;}
             else if(clock<.95f)
-            {float t=Mathf.SmoothStep(0,1,(clock-.35f)/.6f);position=Vector3.Lerp(raised,above,t);rotation=Quaternion.Slerp(liftRotation,Quaternion.identity,t);}
+            {float t=Mathf.SmoothStep(0,1,(clock-.35f)/.6f);position=Vector3.Lerp(raised,above,t);rotation=Quaternion.Slerp(liftRotation,Quaternion.Euler(0,180,0),t);}
             else
-            {position=Vector3.Lerp(above,dropTarget,Mathf.SmoothStep(0,1,(clock-.95f)/.45f));rotation=Quaternion.identity;}
+            {position=Vector3.Lerp(above,dropTarget,Mathf.SmoothStep(0,1,(clock-.95f)/.45f));rotation=Quaternion.Euler(0,180,0);}
             if(!PlacementPoseClear(position,rotation))
             {
                 clock=Mathf.Max(0,clock-dt);Status="Clear the carton placement path: "+pathObstruction;return;
@@ -371,7 +410,8 @@ namespace OneShift.RackLab
         }
         bool PlacementPoseClear(Vector3 position,Quaternion rotation)
         {
-            int count=physics.OverlapBox(position,new Vector3(.238f,.178f,.188f),overlaps,rotation,~0,QueryTriggerInteraction.Ignore);
+            CartonGeometry(carried,out Vector3 centre,out Vector3 half);
+            int count=physics.OverlapBox(position+rotation*centre,ClearanceExtents(half,-.002f),overlaps,rotation,~0,QueryTriggerInteraction.Ignore);
             if(count==overlaps.Length)return false;
             for(int i=0;i<count;i++)
             {
@@ -382,14 +422,17 @@ namespace OneShift.RackLab
         }
         bool ShelfTargetClear(Vector3 position,Rigidbody ignore)
         {
-            int count=physics.OverlapBox(position,new Vector3(.233f,.173f,.183f),overlaps,Quaternion.identity,~0,QueryTriggerInteraction.Ignore);
+            CartonGeometry(ignore,out Vector3 centre,out Vector3 half);
+            Vector3 shapeCentre=position+centre;
+            int count=physics.OverlapBox(shapeCentre,ClearanceExtents(half,-.007f),overlaps,Quaternion.identity,~0,QueryTriggerInteraction.Ignore);
+            if(count==overlaps.Length)return false;
             for(int i=0;i<count;i++)
             {
                 var collider=overlaps[i];if(collider==null || collider.attachedRigidbody==ignore || collider.transform.IsChildOf(transform))continue;
                 // PhysX contact separation can lift a resting support by a few
                 // millimetres while the driver lowers the next carton. Treat
                 // that contact as support, then follow its measured top plane.
-                if(collider.bounds.max.y<=position.y-.18f+.03f && collider.bounds.center.y<position.y-.18f)continue;
+                if(collider.bounds.max.y<=shapeCentre.y-half.y+.03f && collider.bounds.center.y<shapeCentre.y-half.y)continue;
                 pathObstruction=collider.name+" at "+collider.bounds.center;return false;
             }
             return true;
@@ -406,16 +449,23 @@ namespace OneShift.RackLab
             }
             return min.x>=-.90f && max.x<=.90f && min.z>=-2.31f && max.z<=.67f && min.y>=WarehouseCourierVisuals.DeckHeight-.045f && max.y<=WarehouseCourierVisuals.RoofHeight-.06f;
         }
-        public bool CanDispatch(out string reason)
+        public bool CanDispatch(out string reason, bool requireAuthorization = true)
         {
+            if(requireAuthorization && DispatchAuthorized!=null && !DispatchAuthorized())
+            {reason="Confirm the loaded shipment on the TC22";return false;}
             reason="Wait for the collection van to open";if(!ReadyForLoading)return false;
             if(active.held!=null && active.held()){reason="Put down the held carton before departure";return false;}
             foreach(var body in active.cartons)
             {
                 if(body==null){reason="A reserved carton is missing";return false;}
                 if(!BoxIsOnDeck(body)){reason="Place every reserved carton fully inside the van";return false;}
-                if(body.isKinematic || body.linearVelocity.sqrMagnitude>.025f || body.angularVelocity.sqrMagnitude>.08f || Vector3.Dot(body.transform.up,Vector3.up)<.92f)
-                {reason="Let the cartons stand upright and settle on the deck";return false;}
+                // These sealed trade cartons have no upright-only handling
+                // requirement. Any flat face is valid, with the same physical
+                // settling, deck support and clearance checks as upright stock.
+                float flatFace=Mathf.Max(Mathf.Abs(Vector3.Dot(body.transform.up,Vector3.up)),
+                    Mathf.Abs(Vector3.Dot(body.transform.right,Vector3.up)),Mathf.Abs(Vector3.Dot(body.transform.forward,Vector3.up)));
+                if(body.isKinematic || body.linearVelocity.sqrMagnitude>.025f || body.angularVelocity.sqrMagnitude>.08f || flatFace<.92f)
+                {reason="Let each carton rest flat and settle on the deck";return false;}
                 if(!Supported(body,0)){reason="Rest each carton on the deck or a settled carton";return false;}
             }
             int count=physics.OverlapBox(visuals.root.TransformPoint(new Vector3(0,1.08f,-1.5f)),new Vector3(1.1f,1.03f,2.75f),overlaps,visuals.root.rotation,~0,QueryTriggerInteraction.Ignore);
@@ -476,7 +526,9 @@ namespace OneShift.RackLab
         }
         bool CarriedPoseClear(Vector3 position,Quaternion rotation)
         {
-            int count=physics.OverlapBox(position,new Vector3(.25f,.19f,.20f),overlaps,rotation,~0,QueryTriggerInteraction.Ignore);
+            CartonGeometry(carried,out Vector3 centre,out Vector3 half);
+            int count=physics.OverlapBox(position+rotation*centre,ClearanceExtents(half,.01f),overlaps,rotation,~0,QueryTriggerInteraction.Ignore);
+            if(count==overlaps.Length)return false;
             for(int i=0;i<count;i++)if(!Ignore(overlaps[i]) && overlaps[i].attachedRigidbody!=carried){pathObstruction=overlaps[i].name;return false;}
             return true;
         }

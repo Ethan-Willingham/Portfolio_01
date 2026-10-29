@@ -1,0 +1,3 @@
+PASS Carton variants 0 to 3 clear the deck, complete actual courier delivery once, face their labels toward the porch, remain on the shelf, and limit placement penetration to 0.0000 m.
+PASS Carton variants 4 to 7 clear the deck, complete actual courier delivery once, face their labels toward the porch, remain on the shelf, and limit placement penetration to 0.0000 m.
+PASS Thin obstacles at the tall and wide carton overhangs stop carrying, and removing them restores clearance.

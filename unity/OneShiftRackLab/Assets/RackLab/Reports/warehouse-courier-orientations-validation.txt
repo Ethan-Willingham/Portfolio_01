@@ -1,0 +1,9 @@
+PASS Actual tape and towel cartons settle and can dispatch at rotation (0.00, 0.00, 0.00).
+PASS Actual tape and towel cartons settle and can dispatch at rotation (90.00, 0.00, 0.00).
+PASS Actual tape and towel cartons settle and can dispatch at rotation (270.00, 0.00, 0.00).
+PASS Actual tape and towel cartons settle and can dispatch at rotation (0.00, 0.00, 90.00).
+PASS Actual tape and towel cartons settle and can dispatch at rotation (180.00, 0.00, 0.00).
+PASS A carton inclined 45 degrees is rejected.
+PASS A motionless airborne carton is rejected.
+PASS Linear and angular motion still prevent dispatch.
+PASS A kinematic carton still prevents dispatch.

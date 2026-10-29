@@ -34,8 +34,10 @@ namespace OneShift.RackLab
             uiLift = UnityEngine.Object.FindFirstObjectByType<ForkliftLiftController>();
             uiClock = UnityEngine.Object.FindFirstObjectByType<WarehouseDayNight>();
             uiReceiving = UnityEngine.Object.FindFirstObjectByType<WarehouseReceiving>();
+            uiWms = UnityEngine.Object.FindFirstObjectByType<WarehouseWmsRuntime>();
             uiCareer = UnityEngine.Object.FindFirstObjectByType<WarehouseCareer>();
-            if (uiCareer != null) uiCareer.Changed += CareerChanged;
+            if (uiWms != null) uiWms.Changed += WmsChanged;
+            else if (uiCareer != null) uiCareer.Changed += CareerChanged;
             else { uiBusiness = WarehouseBusiness.Ensure(); uiBusiness.Changed += BusinessChanged; }
             computerTransition = gameObject.AddComponent<WarehouseComputerTransition>();
         }
@@ -43,7 +45,7 @@ namespace OneShift.RackLab
         void Update()
         {
             if (preparing || Time.unscaledTime < nextHUD) return;
-            if (uiLift == null && uiCareer != null && uiCareer.ForkliftOwned)
+            if (uiLift == null && ((uiCareer != null && uiCareer.ForkliftOwned) || (uiWms != null && uiWms.ForkliftOwned)))
             {
                 uiDriver = UnityEngine.Object.FindFirstObjectByType<ForkliftPlayerInteraction>();
                 uiLift = UnityEngine.Object.FindFirstObjectByType<ForkliftLiftController>();
@@ -96,6 +98,7 @@ namespace OneShift.RackLab
             catch (ArgumentException) { return; }
             if (request == null) return;
             uiRevision++;
+            if (WmsCommand(request)) return;
             switch (request.action)
             {
                 case "computer-close":
@@ -105,16 +108,16 @@ namespace OneShift.RackLab
                     ApplyState();
                     break;
                 case "order":
-                    if (computerOpen) { if (uiCareer != null) uiCareer.Purchase(request.id); else uiBusiness?.Purchase(request.id); }
+                    if (computerOpen) { if (uiWms != null) uiWms.Book(request.id); else if (uiCareer != null) uiCareer.Purchase(request.id); else uiBusiness?.Purchase(request.id); }
                     break;
                 case "contract":
-                    if (computerOpen) { if (uiCareer != null) uiCareer.Accept(request.id); else uiBusiness?.ContractAction(request.id); }
+                    if (computerOpen) { if (uiWms != null) uiWms.ReleaseOrder(request.id); else if (uiCareer != null) uiCareer.Accept(request.id); else uiBusiness?.ContractAction(request.id); }
                     break;
                 case "cancel-contract":
                     if (computerOpen) uiBusiness?.ReleaseContract(request.id);
                     break;
                 case "upgrade":
-                    if (computerOpen) uiCareer?.Upgrade(request.id);
+                    if (computerOpen) { if (uiWms != null) uiWms.Upgrade(request.id); else uiCareer?.Upgrade(request.id); }
                     break;
                 case "resume":
                     if (!suspended && !preparing && !computerOpen && !ComputerTransitioning)
@@ -132,7 +135,7 @@ namespace OneShift.RackLab
         public string HUDSnapshot()
         {
             var state = new HUDState();
-            state.mode = uiCareer != null ? "career" : "sandbox";
+            state.mode = uiWms != null ? uiWms.Sandbox ? "sandbox" : "career" : uiCareer != null ? "career" : "sandbox";
             var grabber = uiWalking != null ? uiWalking.GetComponent<WarehouseGrabber>() : null;
             state.holding = grabber != null && grabber.IsHolding;
             state.carryDistance = grabber != null ? grabber.HoldDistance : 0;
@@ -164,7 +167,12 @@ namespace OneShift.RackLab
                 if (p.y < -.3f) state.location = "Business park";
                 else if (p.x > 3.8f && p.z < -4 && p.z > -10) state.location = "Office";
             }
-            if (uiCareer != null)
+            if (uiWms != null)
+            {
+                state.objective = uiWms.Objective; state.detail = uiWms.ObjectiveDetail;
+                state.computer = WmsComputerSnapshot(); state.wms = uiWms.Capture();
+            }
+            else if (uiCareer != null)
             {
                 state.objective = uiCareer.Objective;
                 state.detail = uiCareer.ObjectiveDetail;
@@ -247,6 +255,7 @@ namespace OneShift.RackLab
         void ReleaseHUD()
         {
             if (uiBusiness != null) uiBusiness.Changed -= BusinessChanged;
+            if (uiWms != null) uiWms.Changed -= WmsChanged;
             if (uiCareer != null) uiCareer.Changed -= CareerChanged;
             if (computerOpen && uiWalking != null) uiWalking.SetExternalControl(true);
         }
@@ -257,6 +266,7 @@ namespace OneShift.RackLab
             public bool driving, hydraulics, holding;
             public float forkHeight, forkSpeed, hydraulicInput, carryDistance;
             public ComputerState computer;
+            public WarehouseWmsRuntime.Snapshot wms;
         }
         [Serializable, Preserve] sealed class ComputerState
         {

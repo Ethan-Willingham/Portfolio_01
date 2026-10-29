@@ -116,17 +116,23 @@ and manual pause. Verify an actual browser build before publishing. Keep the
 post on `archive.html` (In Progress), with its stable `one-shift.html` URL.
 The owner's 2026-10-27 direction uses a finished title screen, a minimal contextual
 HUD, and a three-step practical forklift introduction. Left Shift holds the
-variable hydraulic lever; X is no longer the control. The office computer buys
-supplier stock and accepts fictional retailer orders backed by physical pallets.
+variable hydraulic lever; X is no longer the control. The office computer manages
+supplier purchases and fictional trade-customer orders backed by physical stock.
 Keep direct player handling, stock conservation, and separate pause/activity gates.
-The v9 default is the empty Latchford Distribution career: buy carton batches,
-receive a visible courier, physically place cartons in marked bays, then load
-customer collections into a van. Payment follows the carrier's actual departure.
-The home-screen Sandbox button retains the equipped v8 start and its separate
-pallet business. Career racks and forklift are earned purchases required for
-pallet orders. `WarehouseCareer` owns this new session state; `WarehouseBusiness`
-continues to own Sandbox. The computer has a physical camera transition and
-HTML desktop. Loose cartons use bounded rigidbody grab forces, not parenting.
+The v10 WMS owns both modes through `WarehouseWmsRuntime` and
+`WarehouseWmsLedger`. Career starts empty with $600; Sandbox starts with 100 owned
+cartons, two pending receipts, 54 labelled rack bins and seven other bins. The
+owner's 2026-10-28 direction is cartons only, eight varieties, with no item serials
+or integrations. Q opens the Zebra TC22, F scans actual visible Code128 labels,
+and Enter confirms supported physical receipt, transfer, pick or load tasks.
+Receiving, staging and the moving dispatch van are bins too. The office WMS
+shares exact stock and PO/SO line quantities, allocations, work and history.
+Only offsite shipment pays. Old `WarehouseCareer`/`WarehouseBusiness` source
+and pallet fixtures remain but are inactive in both browser starts. Racks,
+forklift, fish and flame decals remain upgrades. Progress is session-only.
+The computer retains its camera transition and HTML desktop. Loose cartons use
+bounded rigidbody grab forces, not parenting. Read the v10 section in
+`docs/ONE_SHIFT.md` and use the WMS native browser checks before publishing.
 
 The earlier illustrated game remains at `one-shift-classic.html`, using
 `one-shift.css` and the original `js/one-shift-*.js` simulation modules. Its saves

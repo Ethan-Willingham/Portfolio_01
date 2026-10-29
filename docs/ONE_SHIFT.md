@@ -1,7 +1,7 @@
 # The Warehouse Simulator
 
 The Warehouse Simulator, formerly One Shift, keeps its stable `one-shift.html`
-address and click-to-load Unity browser launcher. The v9 home screen uses an
+address and click-to-load Unity browser launcher. The v10 home screen uses an
 actual scene image, a clear Start business action, Sandbox, settings and a separate control
 guide. The HTML interface supplies the clock, contextual interactions, pause
 menu, hydraulic slider and office computer. The old grey debug panels and
@@ -15,7 +15,142 @@ keeps its `.loader.js` extension. Bump the launcher CSS/script query versions an
 the build version in `js/one-shift-unity.js` and `BrowserLifecycle.BuildVersion`
 whenever the published build changes.
 
-## Career: Latchford Distribution
+## Current v10: carton warehouse management
+
+`WarehouseWmsRuntime` now owns both browser modes. Its shared
+`WarehouseWmsLedger` is the inventory authority for the TC22 handheld and office
+WMS. The earlier career and pallet business classes remain as source and test
+fixtures; neither runs alongside the WMS. The active trade is sealed cartons
+only. A carton handling ID identifies one physical box, not serialized items.
+There are no ERP, carrier or Zebra software integrations.
+
+Start business opens an empty leased warehouse with $600. Book PO-1001 for three
+cartons of tape in the office. A driver brings the actual boxes to REC-01 outside
+the front door. Receive them there, transfer them into floor storage, release
+SO-2001 for Miller Motor Works, pick its three allocated cartons into STAGE-01,
+then load the collection van. Confirm the shipment after stepping clear. The
+$210 payment posts only when the carrier leaves the site. Picking completion
+books collection; sales-order release by itself does not summon a van.
+
+Sandbox starts with $10,000, racks, a forklift and 100 owned cartons. Two further
+cartons are physically in REC-02 against an open PO, awaiting receipt. Three
+example purchase orders and three sales orders include multi-item documents.
+Eight carton types represent tape, towels, gloves, mailers, stretch film, labels,
+wipes and parts bags. Their sizes, board finishes, tape and printed contents vary.
+The old opening trailer and timed free parcels are disabled in both modes.
+
+Every location is a bin: REC-01 on the porch, REC-02 inside, F01 through F03
+for floor storage, STAGE-01 for picked stock, and DISPATCH-01 in the moving van.
+Sandbox adds three rack rows with 54 individually labelled bins, such as
+A01-01-01. Ground positions are pick faces; upper positions are reserve storage.
+The complete Sandbox has 61 bins, with all 57 storage bins populated. Stock must
+be transferred from reserve to a pick face before allocation. Racks and the forklift remain purchasable career
+upgrades after three completed orders. The singing fish and flame kit remain.
+
+Q opens the TC22 task selector and pauses floor controls. Choose Transfer, Pick,
+Item lookup, Ship or Receive, then return to scanning. F reads the actual label
+under the aiming point; Enter confirms a ready task. Q returns to task selection.
+Scanning checks the barcode face, viewing angle, range and intervening solid
+geometry. The printed labels encode valid Code128 with checksum and quiet zones.
+The simulation reads the targeted label's payload, rather than performing camera
+image recognition. Box handling labels use CARTON, side product labels use ITEM,
+and locations use BIN prefixes. No textbox substitutes for physical scanning.
+
+Receive checks PO, receiving bin and exact carton before posting one CTN.
+Transfer checks source, carton and destination. Pick uses the released order's
+oldest eligible cartons and requires their actual placement in staging. Ship
+requires the staged allocation, dispatch label and supported placement inside
+the open van. Confirming a held, missing or unsupported carton fails. Loading
+retains on-hand stock until the offsite shipment completes. Duplicate receipts,
+double reservations and repeated shipment callbacks cannot duplicate stock or
+cash. Moving a box without posting a task raises a location discrepancy after a
+short settling allowance. Transfer can reconcile a misplaced box or return a
+picked or loaded carton to storage before departure.
+
+The office opens with a WMS console: operations, inventory, bins, purchase and
+sales orders, work queue, transaction history and exceptions. Tables support
+search and detail views. Quantities distinguish on hand, available, allocated,
+receiving, picked and loaded stock. Orders display line progress and explain
+unavailable actions. New purchase and sales orders use the item catalog and one
+to six whole cartons, unlocked after the first career shipment. Booking a PO
+debits cash; creating or releasing an SO does not pay. Equipment and finance are
+in a separate Business app on the same desktop.
+
+E or click carries and sets down cartons, the wheel adjusts distance, and right
+mouse rotates. Physics remains dynamic. The computer camera transition, manual
+pause, browser inactivity and landscape gate retain independent control locks.
+Progress remains session-only. Resume keeps the open page's session; switching
+modes confirms a fresh start. The illustrated game's saves are untouched.
+
+The device is original code-authored geometry using the proportions in the
+[Zebra TC22/TC27 reference guide](https://www.zebra.com/content/dam/support-dam/en/documentation/unrestricted/guide/product/tc22-tc27-prg-en.pdf).
+Workflow references are Microsoft's documentation for
+[warehouse mobile menus](https://learn.microsoft.com/en-us/dynamics365/supply-chain/warehousing/configure-mobile-devices-warehouse),
+[purchase receiving](https://learn.microsoft.com/en-us/dynamics365/supply-chain/warehousing/tasks/set-up-mobile-device-menu-item-register-received-items)
+and [putaway](https://learn.microsoft.com/en-us/dynamics365/supply-chain/warehousing/tasks/set-up-mobile-device-menu-item-purchase-order-putaway).
+This is an independent simplified WMS built for physical play.
+
+Validation entry points are `WarehouseWmsValidation.ValidateAndSave()` for the
+ledger, `WarehouseWmsWorldValidation.ValidateAndSave()` for geometry and scans,
+and `WarehouseWmsRuntimeValidation.ValidateAndSave()` for integrated transactions.
+Read each report's `passed` field, not just command completion. The native browser
+walkthrough is `tools/test-one-shift-wms-browser.cjs`; the UI fixture is
+`tools/test-one-shift-wms-ui.cjs`. The empty-business route is
+`tools/test-one-shift-wms-career-browser.cjs`, and the populated performance run is
+`tools/profile-one-shift-wms-browser.cjs`. Run these Unity browser workloads one
+at a time, with the Editor closed. The previous career and pallet walkthroughs
+describe v9 and earlier layouts and are historical regression fixtures.
+
+### v10 release checks
+
+The browser export is 42,570,428 compressed bytes with zero build errors. The
+production ledger passes 29 checks, physical label and bin validation passes
+37, and integrated WMS transactions pass nine. Courier validation passes 26
+checks, all eight carton sizes complete delivery, and nine orientation checks
+cover flat-face dispatch and rejection of unsupported or moving freight.
+
+The UI fixture passes 41 checks and the mocked launcher passes 119. The actual
+Sandbox walkthrough passes 213 gameplay assertions: all three barcode types,
+blocked scans, transfer, partial receipt, duplicate rejection, live manager
+tables, exact picks, loading, offsite shipment and new PO/SO creation. It finishes
+with 99 cartons and $10,210 after receiving two cartons and shipping three for
+$210. Creating the next documents changes neither stock nor cash.
+
+That walkthrough initially failed its final console classification because its
+collector had discarded the first observed state boundary. The original report
+is retained separately from the gameplay results. Preserving an actual state
+record classifies the three documented unused startup shaders correctly; the
+classifier itself is unchanged. The harness now retains that boundary at boot.
+
+The native career check completes the empty start, real courier delivery, porch
+receipt, putaway, allocation, all three picks and loads, offsite payment, and a
+second purchase. Its original run reached 152 checks before a set-down leaned
+against adjacent boxes. The same browser session completed another 105 checks
+after native pickup and repositioning, with the production placement checks
+unchanged. The harness now uses more widely spaced staging positions. Cash moves
+from $600 to $480, then $690 after shipment and $610 after booking two towels.
+Those two new cartons remain Expected, with zero on-hand stock until receipt.
+Fresh career logs retain the startup boundary and have no active shader failures,
+browser errors or failed assets.
+
+The final populated Sandbox profile measures 90.014 seconds on this machine's
+RTX 3080 through D3D11, with an 1800 by 1125 canvas, 2x MSAA and SMAA. Active
+presentation intervals are 6.9 ms median, 9.5 ms at p95, 12.8 ms at p99 and
+36.1 ms maximum. None exceed 50 ms; no measured long tasks or WebGL entry-point
+calls exceed 20 ms. These are observed browser presentation and CPU-call timings,
+not GPU execution measurements or a guarantee for other hardware. The two
+intentional TC22 task-selection pauses are retained separately. All 100 owned
+cartons and 102 physical bodies remain unchanged after native walking, camera
+movement, three scans and device stowing. Local click-to-ready time is 30.4 s,
+including startup and graphical preparation; network download time will vary.
+
+## Earlier v9 career and Sandbox reference
+
+The following sections through the illustrated-game heading record the previous
+release, its retained scene systems and verification. For the active inventory,
+starting stock and order flow, use the v10 rules above.
+
+### Career: Latchford Distribution
 
 The default starts with an empty warehouse, $600 of working capital and a paid
 lease. There is no opening truck, stock, forklift or rack row. The old decorative

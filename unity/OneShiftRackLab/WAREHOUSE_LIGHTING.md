@@ -158,6 +158,22 @@ effect; it is not a full volumetric atmosphere or ray-traced global illumination
 
 ## Rebuild and verify
 
+The v10 WMS keeps this light and shadow budget. Its three rack rows reuse the
+authored geometry and materials. Cartons use shared meshes and materials, real
+shadows and sleeping rigidbodies after settling. Code128 label bars cull beyond
+7 m and label text beyond 4.5 m, refreshed every 0.35 seconds. The handheld,
+cartons, bin markings and labels introduce no lights. Profile the populated
+Sandbox browser build when changing this system; the earlier mostly empty
+warehouse traces do not establish the cost of its 102 opening cartons.
+
+The v10 populated 90.014-second browser profile on the local RTX 3080 uses an
+1800 by 1125 canvas with 2x MSAA and SMAA. Active presentation intervals measure
+6.9 ms median, 9.5 ms p95, 12.8 ms p99 and 36.1 ms maximum, with none above
+50 ms and no measured long tasks. The two TC22 selection pauses are identified
+from independent frame observations and reported separately. These are browser
+presentation intervals, not GPU execution times or minimum-hardware guarantees.
+All 102 physical cartons remain accounted for after walking, panning and scans.
+
 Choose **One Shift > Install warehouse day and night** outside Play mode in
 `RackFloor.unity`. It backs up and rebuilds the existing architecture while
 retaining the floor, rack and player objects, then installs the rows and cycle.
