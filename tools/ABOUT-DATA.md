@@ -10,6 +10,68 @@ The wrapper starts from live `main` in a clean temporary worktree. It collects u
 refreshes the commit timeline, page attribution and search index, checks the
 result, then commits and pushes. A failed collector or validator stops publication.
 
+## October 29, 2026 PC refresh and laptop handoff
+
+The total is **39,756,675,304 tokens**, displayed as **39.8B**. This preserves the
+38,460,572,594 tokens published October 20 and adds **1,296,102,710 tokens** from
+9,003 retained PC Codex responses. GPT-6 Astra accounts for 1,033,916,642 of those
+tokens and GPT-6.1 Sol for 262,186,068. Their API-equivalent cost is $1,432.46.
+
+The PC collection is frozen at October 29, 2026, 11:38 AM America/Chicago, before
+this refresh began. Its measured responses run from October 21 through October 28
+in that timezone. Every added response is later than the canonical Mac collection's
+October 20 cutoff. The collector now reads native `token_usage_record` responses.
+It verifies their thread counters, deduplicates response identities, excludes
+inherited parent history, and uses older cumulative records only for threads with
+no native response records. Legacy notifications missed 56 responses worth
+14,089,566 tokens in the retained PC logs.
+
+The PC also recovered a September export containing **689,902,927 older tokens**
+from July 25 through September 7 absent from the previously imported PC report.
+These remain outside the new headline until the laptop's canonical ledger can
+deduplicate them. Another **560,915,291 tokens** survive only as database totals
+for 50 pruned chats absent from the retained logs and old exports. They have no
+response-level category or pricing evidence and are also excluded. Browser chats
+and hidden image-generation usage cannot be reconstructed from these sources.
+
+The desktop writes a private `local-usage-export.json` plus an immutable copy named
+with its content hash under `~/.local/share/about-usage/`. The handoff file
+`pc-usage-2026-10-29.json` is a copy of that export. Copy it privately to the laptop,
+pull the latest `main`, and run:
+
+```sh
+node tools/update-about.mjs --write --import-ledger=/private/path/pc-usage-2026-10-29.json
+node tools/check-about.mjs
+```
+
+The private report contains counters and hashed deduplication identities, with no
+prompts or conversation text. Keep it outside the public checkout. It includes the
+older recovered response records as well as the newly published PC responses.
+The separate database audit in the handoff requires manual reconciliation before
+any of its totals can be counted.
+
+`tools/about-usage-refresh.mjs` supports this handoff without replacing the Mac's
+private ledger identity. Public `nativeDays` retain the canonical October 20 days;
+`supplement` records only the newer PC daily aggregates, coverage and private report
+hash. `days` is their checked sum. Repeated desktop refreshes replace the same
+supplement. A laptop refresh requires the exact matching private report, merges its
+identities into the canonical ledger, and removes the supplement after counting each
+response once. A missing or different report stops that refresh. This prevents a
+laptop update from losing or duplicating the published PC contribution.
+
+The recovered July 25 to 26 records include GPT-5.6 Terra and Luna. Their historical
+price rows are explicitly marked as estimates: the earlier rates are calculated by
+reversing the official July 30 reductions (20% for Terra, 80% for Luna), rather than
+applying today's rates backward. The current model pages and reductions were checked
+October 29 against the official [Terra page](https://developers.openai.com/api/docs/models/gpt-5.6-terra),
+[Luna page](https://developers.openai.com/api/docs/models/gpt-5.6-luna), and
+[changelog](https://developers.openai.com/api/docs/changelog). These older records
+do not affect this refresh's displayed cost.
+
+Run `node tools/test-about-usage-refresh.mjs` for native-response completeness,
+missing notifications, copied history, repeated desktop refreshes, lost ledgers and
+exact laptop report imports.
+
 ## September 23, 2026 refresh
 
 The total is **26,995,093,658 tokens**, displayed as **27.0B**. It combines the published

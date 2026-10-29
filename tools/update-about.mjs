@@ -38,7 +38,7 @@
    ============================================================================ */
 import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { collectUsage } from './about-usage.mjs';
+import { collectPublishedUsage } from './about-usage-refresh.mjs';
 import { isPost, postSlug, reconcilePost } from './about-post-history.mjs';
 import { execSync } from 'node:child_process';
 
@@ -284,13 +284,19 @@ log(`  + ${fresh.length} new commits since ${new Date(lastTs * 1000).toISOString
 log(H('3/4  TOKENS  ') + dim('deduplicated native usage + dated API prices'));
 const attr = loadData(F_ATTR);
 let stats = JSON.parse(readFileSync(F_STATS, 'utf8'));
-const usage = await collectUsage({ registry: MODEL_REGISTRY, stats, write: WRITE,
+const usage = await collectPublishedUsage({ registry: MODEL_REGISTRY, stats, write: WRITE,
   imports: process.argv.filter(a => a.startsWith('--import-usage=')).map(a => a.slice('--import-usage='.length)),
+  ledgerImports: process.argv.filter(a => a.startsWith('--import-ledger=')).map(a => a.slice('--import-ledger='.length)),
   cutoff: process.env.ABOUT_USAGE_CUTOFF || new Date().toISOString() });
 stats.days = usage.days;
 stats.retainedDays = usage.retainedDays;
+if (usage.nativeDays) stats.nativeDays = usage.nativeDays;
+else delete stats.nativeDays;
+if (usage.supplement) stats.supplement = usage.supplement;
+else delete stats.supplement;
+if (usage.localReportPath) log(`  private laptop handoff: ${usage.localReportPath}`);
 stats.methodology = { ...stats.methodology,
-  collector: 'native Claude messages and Codex cumulative counters', collectorVersion: '1',
+  collector: 'native Claude messages and Codex response records, with legacy cumulative counters', collectorVersion: '2',
   pricingVerified: MODEL_REGISTRY.verified,
   priceMeaning: 'Standard API-equivalent estimate at dated list prices, not an invoice; excludes service-tier premiums and tool charges',
   cacheWriteAssumption: 'Native Claude cache duration is used when recorded; otherwise five-minute writes',
@@ -397,7 +403,9 @@ about = replaceStat(about, 'cost', costStr);
 about = about.replace(/<p data-about-token-total>[\s\S]*?<\/p>/, `<p data-about-token-total>${dispTok.toLocaleString('en-US')} tokens in total: input, cache reads, cache writes, and output.</p>`);
 about = about.replace(/((?:src|data-(?:history|attribution)-(?:data|script))="js\/(?:git-history(?:-data)?|git-attribution(?:-data)?)\.js)(?:\?v=[^"]+)?(")/g, '$1?v=' + hist.obj.generated + '$2');
 const stamp = new Date(today() + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-const freshnessParagraph = `<p data-about-freshness>Updated ${stamp} from my Mac logs, with some usage from my PC. These totals cover all my projects. The dollar figure uses API list prices, not my bill. <a href="https://github.com/Ethan-Willingham/Portfolio_01/blob/main/tools/ABOUT-DATA.md">Sources and calculation.</a></p>`;
+const macStamp = new Date(stats.collection.cutoff).toLocaleDateString('en-US', { timeZone: 'America/Chicago', month: 'long', day: 'numeric', year: 'numeric' });
+const coverage = stats.supplement ? `Mac logs run through ${macStamp}, with newer PC usage added separately.` : 'Collected from retained Mac and PC logs.';
+const freshnessParagraph = `<p data-about-freshness>Updated ${stamp}. ${coverage} These totals cover all my projects and include earlier published estimates. Pruned logs and browser chats leave gaps. The dollar figure uses API list prices, not my bill. <a href="https://github.com/Ethan-Willingham/Portfolio_01/blob/main/tools/ABOUT-DATA.md">Sources and calculation.</a></p>`;
 if (!/<p data-about-freshness>[\s\S]*?<\/p>/.test(about)) throw new Error('about.html is missing the freshness marker');
 about = about.replace(/<p data-about-freshness>[\s\S]*?<\/p>/, freshnessParagraph);
 const categoryTotals = Object.values(stats.days).flatMap(d => Object.values(d.models));

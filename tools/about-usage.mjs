@@ -68,10 +68,45 @@ export function priceUsage(registry, id, day, u) {
   const outputMult = long ? p.longContext.outputMultiplier : 1;
   return ((u.input * p.input + u.cacheRead * p.cacheRead + (u.cacheWrite - u.cacheWrite1h) * p.cacheWrite5m + u.cacheWrite1h * (p.cacheWrite1h || p.cacheWrite5m)) * inputMult + u.output * p.output * outputMult) / 1e6;
 }
-export function aggregateUsage(ledger, registry, through, cutoff) {
+export function mergeNative(responses, id, record) {
+  const old = responses[id];
+  if (old && (old.session !== record.session || old.model !== record.model || old.usage.join(',') !== record.usage.join(',') || old.cumulative?.join(',') !== record.cumulative?.join(','))) throw new Error('Conflicting native response counters');
+  responses[id] = old && old.timestamp < record.timestamp ? old : record;
+}
+export function* codexUsage(ledger) {
+  const nativeSessions = new Map();
+  for (const response of Object.values(ledger.responses || {})) {
+    const list = nativeSessions.get(response.session) || [];
+    list.push(response);
+    nativeSessions.set(response.session, list);
+  }
+  for (const [session, native] of nativeSessions) {
+    // Check every cumulative checkpoint against the response sum before replacing
+    // legacy notifications. Their timestamps can trail the response by a minute.
+    let running = fields.map(() => 0);
+    const responseCounters = new Set();
+    for (const response of native.sort((a, b) => a.timestamp.localeCompare(b.timestamp) || total(a.cumulative || []) - total(b.cumulative || []))) {
+      if (!response.cumulative) throw new Error('Native response is missing its thread counters');
+      if (total(response.cumulative) < total(running)) running = fields.map(() => 0);
+      running = running.map((n, i) => n + response.usage[i]);
+      if (running.join(',') !== response.cumulative.join(',')) throw new Error('Partial native response coverage; recover the complete thread history before counting it');
+      responseCounters.add(response.usage.join(','));
+    }
+    const nativeTotal = native.reduce((n, response) => n + total(response.usage), 0);
+    for (const point of Object.values(ledger.codex[session] || {})) {
+      if (!total(point.cumulative)) continue;
+      // Legacy notifications can permanently omit a response from their running
+      // sum. Their per-response counters still identify a native response.
+      if (Date.parse(point.timestamp) < Date.parse(native[0].timestamp) || total(point.cumulative) > nativeTotal || (point.last && total(point.last) && !responseCounters.has(point.last.join(',')))) throw new Error('A legacy usage response is absent from the complete native history');
+    }
+  }
+  for (const [session, stream] of Object.entries(ledger.codex)) if (!nativeSessions.has(session)) yield* codexDeltas(stream);
+  for (const response of Object.values(ledger.responses || {})) yield response;
+}
+export function aggregateUsage(ledger, registry, through, cutoff, after = '') {
   const days = {};
   const add = u => {
-    if (u.timestamp > cutoff) return;
+    if (u.timestamp > cutoff || (after && u.timestamp <= after)) return;
     const day = localDay(u.timestamp);
     if (day <= through) return;
     const tokens = u.input + u.cacheWrite + u.cacheRead + u.output;
@@ -89,20 +124,35 @@ export function aggregateUsage(ledger, registry, through, cutoff) {
     m.totalTokens += tokens; m.cost += cost; d.totalTokens += tokens; d.cost += cost;
   };
   for (const record of Object.values(ledger.claude)) add(record);
-  for (const stream of Object.values(ledger.codex)) for (const p of codexDeltas(stream)) {
+  for (const p of codexUsage(ledger)) {
     const [input, cached, writes, output] = p.usage;
     add({ timestamp: p.timestamp, model: p.model, input: input - cached - writes, cacheRead: cached, cacheWrite: writes, cacheWrite1h: 0, output });
   }
   return Object.fromEntries(Object.entries(days).sort(([a], [b]) => a.localeCompare(b)));
 }
-export async function collectUsage({ registry, stats, write = false, imports = [], cutoff = new Date().toISOString(), privateFile = join(homedir(), '.local/share/about-usage/native-ledger.json'), codexRoots = [join(homedir(), '.codex/sessions'), join(homedir(), '.codex/archived_sessions')], claudeRoots = [join(homedir(), '.claude/projects')], excludeSession = process.env.CODEX_THREAD_ID }) {
+export async function collectUsage({ registry, stats, write = false, imports = [], ledgerImports = [], cutoff = new Date().toISOString(), after = '', privateFile = join(homedir(), '.local/share/about-usage/native-ledger.json'), codexRoots = [join(homedir(), '.codex/sessions'), join(homedir(), '.codex/archived_sessions')], claudeRoots = [join(homedir(), '.claude/projects')], excludeSession = process.env.CODEX_THREAD_ID || process.env.CODEX_SESSION_ID }) {
   let ledger = existsSync(privateFile) ? JSON.parse(readFileSync(privateFile, 'utf8')) : { version: 1, id: randomUUID(), codex: {}, claude: {}, imports: {} };
   if (ledger.version !== 1) throw new Error('Unsupported private usage ledger');
   if (stats.methodology.usageLedgerId && stats.methodology.usageLedgerId !== hash(ledger.id)) throw new Error('Restore the private native usage ledger before refreshing this published dataset');
+  ledger.responses ||= {};
+  for (const file of ledgerImports) {
+    const imported = JSON.parse(readFileSync(file, 'utf8'));
+    if (imported.version !== 1 || !imported.codex || !imported.claude) throw new Error('Unsupported imported private usage ledger');
+    for (const [session, stream] of Object.entries(imported.codex)) for (const p of Object.values(stream)) mergePoint(ledger.codex[session] ||= {}, p);
+    for (const [id, response] of Object.entries(imported.responses || {})) mergeNative(ledger.responses, id, response);
+    // The private ledger already hashes message identities. Do not hash them twice.
+    for (const [id, message] of Object.entries(imported.claude)) {
+      const old = ledger.claude[id];
+      if (old && (old.model !== message.model || (old.request && message.request && old.request !== message.request))) throw new Error('Conflicting imported Claude identity');
+      if (!old || message.output > old.output || (message.output === old.output && message.input + message.cacheWrite + message.cacheRead > old.input + old.cacheWrite + old.cacheRead)) ledger.claude[id] = { ...message, timestamp: old && old.timestamp < message.timestamp ? old.timestamp : message.timestamp, request: message.request || old?.request };
+    }
+    Object.assign(ledger.imports, imported.imports || {});
+  }
   let files = 0, duplicates = 0;
   for (const file of [...new Set(codexRoots.flatMap(jsonlFiles))]) {
     let session, inheritedUntil = 0, ordinal = 0, model, activeTurn;
     const models = new Map();
+    const responses = [];
     for await (const row of rows(file)) {
       const p = row.payload || {};
       const index = row.ordinal ?? ordinal++;
@@ -113,6 +163,11 @@ export async function collectUsage({ registry, stats, write = false, imports = [
       if (!session || session === excludeSession || index < inheritedUntil || row.timestamp > cutoff) continue;
       if (row.type === 'turn_context') { model = p.model; models.set(p.turn_id, p.model); }
       if (row.type === 'event_msg' && p.type === 'task_started') activeTurn = p.turn_id;
+      if (row.type === 'token_usage_record' && p.thread_id === session) {
+        if (!p.response_id || !p.usage) throw new Error('Native usage is missing its response identity or counters');
+        if (p.usage.total_tokens !== undefined && p.usage.total_tokens !== (p.usage.input_tokens || 0) + (p.usage.output_tokens || 0)) throw new Error('Native token total does not sum');
+        responses.push({ id: hash(p.response_id), turn: p.turn_id, timestamp: row.timestamp, usage: vector(p.usage), cumulative: p.thread_token_usage ? vector(p.thread_token_usage) : null });
+      }
       if (row.type !== 'event_msg' || p.type !== 'token_count' || !p.info?.total_token_usage) continue;
       const loggedModel = models.get(p.turn_id || activeTurn) || model;
       if (!loggedModel) throw new Error('Codex usage has no model context');
@@ -120,6 +175,13 @@ export async function collectUsage({ registry, stats, write = false, imports = [
       const before = Object.keys(stream).length;
       mergePoint(stream, { timestamp: row.timestamp, model: loggedModel, cumulative: vector(p.info.total_token_usage), last: p.info.last_token_usage ? vector(p.info.last_token_usage) : null });
       if (Object.keys(stream).length === before) duplicates++;
+    }
+    for (const response of responses) {
+      const loggedModel = models.get(response.turn);
+      if (!loggedModel) throw new Error('Native response has no model context');
+      const u = response.usage;
+      if (u.some(v => !Number.isSafeInteger(v) || v < 0) || u[1] + u[2] > u[0] || u[4] > u[3]) throw new Error('Invalid native response counter');
+      mergeNative(ledger.responses, response.id, { timestamp: response.timestamp, model: loggedModel, session: hash(session), usage: u, cumulative: response.cumulative });
     }
     files++;
   }
@@ -156,7 +218,7 @@ export async function collectUsage({ registry, stats, write = false, imports = [
     message.reportedCacheWrite1h = message.cacheWrite1h;
     message.cacheWrite1h = message.cacheWrite;
   }
-  const days = aggregateUsage(ledger, registry, stats.legacy.through, cutoff);
+  const days = aggregateUsage(ledger, registry, stats.legacy.through, cutoff, after);
   // Preserve the one-time pre-native snapshot only where the surviving logs cannot recover it.
   const retainedDays = stats.retainedDays || stats.days;
   const retained = [];
@@ -175,5 +237,5 @@ export async function collectUsage({ registry, stats, write = false, imports = [
     writeFileSync(temp, JSON.stringify(ledger) + '\n', { mode: 0o600 });
     renameSync(temp, privateFile);
   }
-  return { days: Object.fromEntries(Object.entries(days).sort(([a], [b]) => a.localeCompare(b))), retainedDays, evidence: { ledgerId: hash(ledger.id), cutoff, timezone: 'America/Chicago', files, claudeMessages: Object.keys(ledger.claude).length, codexSessions: Object.keys(ledger.codex).length, cacheDurationInconsistencies: Object.values(ledger.claude).filter(m => m.reportedCacheWrite1h !== undefined).length, imports: ledger.imports, retained }, duplicates };
+  return { ledger, days: Object.fromEntries(Object.entries(days).sort(([a], [b]) => a.localeCompare(b))), retainedDays, evidence: { ledgerId: hash(ledger.id), cutoff, timezone: 'America/Chicago', files, claudeMessages: Object.keys(ledger.claude).length, codexSessions: new Set([...Object.keys(ledger.codex), ...Object.values(ledger.responses).map(r => r.session)]).size, nativeResponses: Object.keys(ledger.responses).length, cacheDurationInconsistencies: Object.values(ledger.claude).filter(m => m.reportedCacheWrite1h !== undefined).length, imports: ledger.imports, retained }, duplicates };
 }

@@ -3,6 +3,7 @@
    update-about.mjs and update-about-live.sh run this before anything is pushed. */
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { addUsageDays } from './about-usage-refresh.mjs';
 
 const REPO = process.cwd();
 const errors = [];
@@ -53,6 +54,19 @@ if (stats.collection) {
   }
   check(!/\/Users\/|[A-Z]:\\\\Users\\\\|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i.test(JSON.stringify(stats)), 'public usage data contains a private path or raw session ID');
 }
+if (stats.supplement) {
+  const s = stats.supplement;
+  check(s.version === 1 && Boolean(stats.nativeDays), 'usage supplement is missing its canonical baseline');
+  check(/^[a-f0-9]{64}$/.test(s.ledgerId || '') && /^[a-f0-9]{64}$/.test(s.reportHash || ''), 'usage supplement identities must be hashed');
+  check(s.after === stats.collection.cutoff && s.after <= s.cutoff, 'usage supplement overlaps the canonical collection');
+  check(s.collection?.ledgerId === s.ledgerId && s.collection?.cutoff === s.cutoff, 'usage supplement evidence disagrees with its coverage');
+  check(s.totalTokens === sum(Object.values(s.days || {}).map(d => d.totalTokens)), 'usage supplement token total does not sum');
+  check(Math.abs(s.cost - sum(Object.values(s.days || {}).map(d => d.cost))) < 1e-8, 'usage supplement cost does not sum');
+  try {
+    const combined = addUsageDays(stats.nativeDays, s.days);
+    check(JSON.stringify(combined) === JSON.stringify(stats.days), 'published usage differs from canonical days plus its supplement');
+  } catch (error) { check(false, error.message); }
+} else check(!stats.nativeDays, 'canonical baseline remains without a usage supplement');
 for (const [day, row] of Object.entries(stats.days || {})) {
   check(day > stats.legacy.through, `${day} overlaps the frozen legacy baseline`);
   const rows = Object.entries(row.models || {});
@@ -93,7 +107,7 @@ for (const [key, value] of Object.entries(expectedStats)) {
 }
 check((about.match(/<p data-about-freshness>/g) || []).length === 1, 'about.html must contain exactly one freshness marker');
 const freshnessDate = new Date(stats.updated + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-check(about.includes(`<p data-about-freshness>Updated ${freshnessDate} `), 'about.html freshness date does not match the usage ledger');
+check(about.includes(`<p data-about-freshness>Updated ${freshnessDate} `) || about.includes(`<p data-about-freshness>Updated ${freshnessDate}.`), 'about.html freshness date does not match the usage ledger');
 check(about.includes(`<p data-about-token-total>${displayTokens.toLocaleString('en-US')} tokens in total:`), 'about.html exact token total disagrees with the usage ledger');
 
 check(ledger.version === 2 && ledger.residualsInitialized, 'attribution ledger migration is incomplete');
