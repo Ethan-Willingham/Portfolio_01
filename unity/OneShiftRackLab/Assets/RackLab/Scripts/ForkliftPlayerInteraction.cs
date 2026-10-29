@@ -146,6 +146,9 @@ namespace OneShift.RackLab
 
         void Capture(bool active)
         {
+#if UNITY_WEBGL && !UNITY_EDITOR
+            if (active && !BrowserLifecycle.PointerIsLocked) active = false;
+#endif
             bool ownedCapture = captured;
             captured = active;
             awaitNeutral = active;
@@ -155,7 +158,13 @@ namespace OneShift.RackLab
             // transition, so only the previous owner may release that lock.
             if (active || ownedCapture)
             {
+#if UNITY_WEBGL && !UNITY_EDITOR
+                // The page acquires native lock from a trusted gesture and
+                // handles browser rejection. Unity must never defer a retry.
+                if (!active) Cursor.lockState = CursorLockMode.None;
+#else
                 Cursor.lockState = active ? CursorLockMode.Locked : CursorLockMode.None;
+#endif
                 Cursor.visible = !active;
             }
             if (vehicle != null && !active) vehicle.SetDriverInput(0, 0, true, parkingBrake, false);
@@ -185,7 +194,7 @@ namespace OneShift.RackLab
             if (Input.GetKeyDown(KeyCode.Escape)) { exitRequested = false; Capture(false); }
             if (!captured && Input.GetMouseButtonDown(0)) Capture(true);
             if (!captured) { vehicle.SetDriverInput(0, 0, true, parkingBrake, false); if (lift != null) lift.ClearInput(); return; }
-            if (Cursor.lockState != CursorLockMode.Locked)
+            if (!BrowserLifecycle.PointerIsLocked)
             {
                 ClearForkControl();
                 vehicle.SetDriverInput(0, 0, true, parkingBrake, false);

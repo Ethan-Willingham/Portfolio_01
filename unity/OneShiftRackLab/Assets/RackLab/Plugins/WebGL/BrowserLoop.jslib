@@ -1,4 +1,7 @@
 mergeInto(LibraryManager.library, {
+  WarehousePointerLocked: function () {
+    return document.pointerLockElement === Module['canvas'] ? 1 : 0;
+  },
   WarehouseInitialMode: function () {
     return window.warehouseRequestedMode === 'sandbox' ? 0 : 1;
   },

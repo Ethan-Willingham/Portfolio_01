@@ -5,7 +5,7 @@
   // by the Unity warehouse before its authoritative snapshot changes here.
   var api, callbacks = {}, state = null, initialized = false;
   var presentation = {handheldOpen:false, handheldInteractive:false, consoleOpen:false, active:true};
-  var handheld, handheldBody, handheldNotice, handheldFooter, scanReticle, consoleApp, consoleBody, consoleStatus;
+  var handheld, handheldBody, handheldNotice, handheldFooter, deviceShade, scanReticle, consoleApp, consoleBody, consoleStatus;
   var tab = 'overview', selected = '', query = '', filter = 'all', sortKey = '', sortDirection = 1;
   var lastSignature = '', lastScan = -1, searchTimer = null;
   var createOpen = false, createItem = '', createQuantity = 1, pendingCreate = null;
@@ -391,7 +391,7 @@
       append(handheldBody,node('p',bin.name,'wms-device-note'),append(node('dl',null,'wms-device-data'),dataPair('Type',statusLabel(bin.kind)),dataPair('On hand',qty(bin.onHand)+' CTN'),dataPair('Capacity',qty(bin.capacity)+' CTN'),dataPair('Picking',bin.canPick?'Allowed':'Not permitted')));
       var inventory=list(state.cartons).filter(function(c){return c.binId===bin.id&&lower(c.status)!=='shipped';}).reduce(function(result,c){result[c.sku]=(result[c.sku]||0)+1;return result;},{});
       var binList=node('div',null,'wms-device-locations');Object.keys(inventory).forEach(function(sku){append(binList,append(node('div'),mono(sku),node('strong',inventory[sku]+' CTN')));});handheldBody.appendChild(binList);
-    }else handheldBody.appendChild(node('p','Aim at a printed item label, carton barcode or bin label. Press F to scan the barcode under the aimer.','wms-device-note'));
+    }else handheldBody.appendChild(node('p','Return to the floor, aim at a printed item, carton or bin label, and left-click to scan. Right-click brings this screen closer.','wms-device-note'));
   }
   function handheldWorkflow(workflow) {
     var title=tiles.find(function(t){return t[0]===workflow.tile;});
@@ -435,12 +435,14 @@
   }
   function updatePresentation() {
     if(!initialized)return;
-    handheld.hidden=!presentation.handheldOpen||!presentation.active||presentation.consoleOpen;
-    scanReticle.hidden=handheld.hidden||presentation.handheldInteractive;
+    var equipped=presentation.handheldOpen&&presentation.active&&!presentation.consoleOpen;
+    handheld.hidden=!equipped||!presentation.handheldInteractive;
+    deviceShade.hidden=handheld.hidden;
+    scanReticle.hidden=!equipped||presentation.handheldInteractive;
     handheld.classList.toggle('is-interactive',presentation.handheldInteractive);
     handheld.inert=!presentation.handheldInteractive;
     handheld.setAttribute('aria-label','Zebra TC22 warehouse handheld'+(presentation.handheldInteractive?', task selection':', scanning view'));
-    handheldFooter.querySelector('[data-device-floor]').textContent=presentation.handheldInteractive?'Return to scanning':state&&state.workflow&&state.workflow.canConfirm?'Enter Confirm / Q Device':'F Scan label / Q Device';
+    handheldFooter.querySelector('[data-device-floor]').textContent='Return to scanning / Right click';
     consoleApp.hidden=!presentation.consoleOpen;
     var task=document.getElementById('warehouse-wms-task');if(task)task.setAttribute('aria-pressed',String(presentation.consoleOpen));
   }
@@ -463,6 +465,7 @@
     var stage=document.getElementById('warehouse-stage'),desktop=document.querySelector('.warehouse-desktop');
     if(!stage||!desktop)return api;
     handheld=append(node('aside',null,'wms-device'),node('div',null,'wms-device-speaker'));handheld.id='warehouse-wms-handheld';handheld.hidden=true;
+    handheld.setAttribute('role','dialog');handheld.setAttribute('aria-modal','true');
     var deviceScreen=node('div',null,'wms-device-screen');
     append(deviceScreen,append(node('div',null,'wms-device-statusbar'),node('span','WAREHOUSE 01'),node('span','LOCAL SESSION')));
     var deviceHead=node('header',null,'wms-device-header');
@@ -472,11 +475,13 @@
     handheldBody=node('div',null,'wms-device-body');handheldBody.id='warehouse-wms-device-body';deviceScreen.appendChild(handheldBody);
     handheldNotice=node('div',null,'wms-device-notice');handheldNotice.id='warehouse-wms-scan-result';handheldNotice.setAttribute('role','status');handheldNotice.setAttribute('aria-live','polite');deviceScreen.appendChild(handheldNotice);
     handheldFooter=node('footer',null,'wms-device-footer');
-    var floor=button('Return to scanning',function(){if(callbacks.deviceFocus)callbacks.deviceFocus(false);},'wms-device-floor');floor.dataset.deviceFloor='';
+    var floor=button('Return to scanning / Right click',function(){if(callbacks.deviceFocus)callbacks.deviceFocus(false);},'wms-device-floor');floor.dataset.deviceFloor='';
     var cancel=button('Cancel task',function(){command('cancel');});cancel.dataset.deviceCancel='';
     append(handheldFooter,floor,cancel);deviceScreen.appendChild(handheldFooter);handheld.appendChild(deviceScreen);
     var bezel=node('div',null,'wms-device-brand');append(bezel,node('strong','ZEBRA'),node('span','TC22'),button('Stow',function(){if(callbacks.closeDevice)callbacks.closeDevice();}));
-    append(handheld,bezel);stage.appendChild(handheld);
+    append(handheld,bezel);
+    deviceShade=node('div',null,'wms-device-focus-shade');deviceShade.hidden=true;deviceShade.setAttribute('aria-hidden','true');
+    deviceShade.addEventListener('click',function(){if(callbacks.deviceFocus)callbacks.deviceFocus(false);});stage.appendChild(deviceShade);stage.appendChild(handheld);
     scanReticle=node('span',null,'wms-scan-reticle');scanReticle.id='warehouse-wms-reticle';scanReticle.hidden=true;scanReticle.setAttribute('aria-hidden','true');stage.appendChild(scanReticle);
     consoleApp=node('section',null,'wms-console');consoleApp.id='warehouse-wms-console';consoleApp.hidden=true;consoleApp.setAttribute('aria-label','Warehouse management console');
     var titlebar=node('header',null,'wms-titlebar');
@@ -506,14 +511,14 @@
       if(created){openPage(createdKind,created.id);return;}
     }
     if(presentation.consoleOpen)renderConsole();
-    if(presentation.handheldOpen)renderHandheld();
+    if(presentation.handheldOpen&&presentation.handheldInteractive)renderHandheld();
   }
   api=window.WarehouseWmsUI={
     init:init,receive:receive,render:receive,
     setPresentation:function(value){
-      var wasDeviceOpen=presentation.handheldOpen,wasConsoleOpen=presentation.consoleOpen;
+      var wasDeviceOpen=presentation.handheldOpen,wasInspecting=presentation.handheldInteractive,wasConsoleOpen=presentation.consoleOpen;
       Object.assign(presentation,value||{});
-      if(presentation.handheldOpen&&!wasDeviceOpen)renderHandheld();
+      if(presentation.handheldOpen&&presentation.handheldInteractive&&(!wasDeviceOpen||!wasInspecting))renderHandheld();
       if(presentation.consoleOpen&&!wasConsoleOpen)renderConsole();
       updatePresentation();
     },

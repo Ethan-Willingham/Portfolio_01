@@ -168,22 +168,24 @@
 .wms-document-form p{grid-column:1/-1;margin:0;font-size:12px}
 @media(max-width:900px){.wms-document-form{grid-template-columns:minmax(140px,1fr) 90px}.wms-document-form button{grid-column:1/-1;justify-self:start}}
 
-/* Floor control keeps the real handheld visible in the world. The HTML view
-   becomes a small readout; Q opens the full touchscreen for choosing work. */
-.wms-device:not(.is-interactive){top:115px;bottom:auto;right:max(22px,env(safe-area-inset-right));width:300px;height:auto;max-height:calc(100dvh - 240px);min-height:0;padding:0;border:1px solid var(--wms-dim);border-radius:5px;background:var(--wms-paper);box-shadow:0 5px 20px #0004;transform:none}
-.wms-device:not(.is-interactive)::before,.wms-device:not(.is-interactive)::after,.wms-device:not(.is-interactive) .wms-device-speaker,.wms-device:not(.is-interactive) .wms-device-brand,.wms-device:not(.is-interactive) .wms-device-statusbar,.wms-device:not(.is-interactive) .wms-device-header,.wms-device:not(.is-interactive) .wms-device-next,.wms-device:not(.is-interactive) .wms-device-confirm,.wms-device:not(.is-interactive) [data-device-cancel],.wms-device:not(.is-interactive) .wms-device-tiles{display:none}
-.wms-device:not(.is-interactive) .wms-device-screen{border:0;border-radius:4px}
-.wms-device:not(.is-interactive) .wms-device-body{flex:0 1 auto;max-height:235px;overflow:hidden;padding:12px}
-.wms-device:not(.is-interactive) h2{font-size:16px;margin-bottom:8px}
-.wms-device:not(.is-interactive) .wms-device-instruction{font-size:12px;margin:6px 0 9px;padding:5px 0 5px 9px}
-.wms-device:not(.is-interactive) .wms-device-task-data{margin:5px 0 0}
-.wms-device:not(.is-interactive) .wms-device-task-data>div{padding:4px 0}
-.wms-device:not(.is-interactive) .wms-device-progress{margin-bottom:7px}
-.wms-device:not(.is-interactive) .wms-device-progress>span{margin-bottom:3px}
-.wms-device:not(.is-interactive) .wms-device-notice{max-height:80px;font-size:10px;padding:7px 10px}
-.wms-device:not(.is-interactive) .wms-device-notice small{display:none}
-.wms-device:not(.is-interactive) .wms-device-footer{padding:4px}
-.wms-device:not(.is-interactive) .wms-device-floor{min-height:27px;padding:4px;font-size:9px}
-@media(max-height:520px){.wms-device:not(.is-interactive){top:105px;width:276px;max-height:calc(100dvh - 200px);right:14px}.wms-device:not(.is-interactive) .wms-device-body{max-height:175px;padding:9px}.wms-device:not(.is-interactive) .wms-device-notice{max-height:58px}}
+/* The physical first-person display stays live. Only inspection uses HTML. */
+.wms-device:not(.is-interactive){display:none}
+.wms-device-focus-shade{position:absolute;inset:0;z-index:3;background:#10181069}
+.wms-device-focus-shade[hidden]{display:none}
+.wms-device.is-interactive{left:50%;top:50%;right:auto;bottom:auto;width:min(390px,calc((100dvh - 48px)*.49),calc(100vw - 32px));height:min(790px,calc(100dvh - 48px));min-height:260px;padding:24px 12px 9px;border-radius:32px;transform:translate(-50%,-50%);z-index:4;animation:tc22-inspect-in .2s ease-out both}
+.wms-device.is-interactive .wms-device-body{padding:16px 14px}
+.wms-device.is-interactive .wms-device-header{padding:12px}
+.wms-device.is-interactive .wms-device-header strong{font-size:15px}
+.wms-device.is-interactive h2{font-size:23px}
+.wms-device.is-interactive .wms-device-tile{min-height:102px;padding:12px}
+.wms-device.is-interactive .wms-device-tile:last-child{min-height:72px}
+.wms-device.is-interactive .wms-device-tile strong{font-size:14px}
+.wms-device.is-interactive .wms-device-tile small{font-size:11px}
+.wms-device.is-interactive .wms-device-note,.wms-device.is-interactive .wms-device-notice{font-size:11px}
+.wms-device.is-interactive .wms-device-footer .wms-device-floor{min-height:42px;font-size:11px}
+.wms-device.is-interactive .wms-device-brand{padding:8px 6px 2px}
+@keyframes tc22-inspect-in{from{transform:translate(calc(-50% + 24vw),calc(-50% + 24vh)) scale(.36) rotate(8deg);opacity:.4}to{transform:translate(-50%,-50%) scale(1);opacity:1}}
+@media(max-height:560px){.wms-device.is-interactive{width:min(300px,calc(100vw - 28px));height:calc(100dvh - 24px);padding:18px 10px 5px;border-radius:24px}.wms-device.is-interactive .wms-device-body{padding:10px}.wms-device.is-interactive .wms-device-header{padding:7px 10px}.wms-device.is-interactive .wms-device-tile{min-height:72px;padding:9px}.wms-device.is-interactive .wms-device-tile:last-child{min-height:57px}.wms-device.is-interactive h2{font-size:18px}.wms-device.is-interactive .wms-device-header strong{font-size:12px}.wms-device.is-interactive .wms-device-footer .wms-device-floor{min-height:32px;font-size:10px}.wms-device.is-interactive .wms-device-brand{padding:5px 5px 1px}}
+@media(prefers-reduced-motion:reduce){.wms-device.is-interactive{animation:none}}
 .wms-scan-reticle{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:25px;height:13px;border-left:1px solid var(--wh-paper);border-right:1px solid var(--wh-paper);filter:drop-shadow(0 1px 1px #000);pointer-events:none;z-index:3}
 .wms-scan-reticle::before{content:'';position:absolute;top:6px;left:8px;width:7px;height:1px;background:var(--wh-paper);box-shadow:0 0 1px #000}

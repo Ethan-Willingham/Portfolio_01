@@ -26,7 +26,7 @@ namespace OneShift.RackLab
             Ledger.OnHand()==0?(CompletedOrders==0?"Start your distribution business":"Restock your warehouse"):"Manage your warehouse";
         public string ObjectiveDetail => Workflow.tile!="home"&&Workflow.tile!="lookup"?Workflow.instruction:
             !string.IsNullOrEmpty(collectionOrder)?(collectionBooked?"Use Ship on the TC22 to load and confirm the collection. Payment follows departure.":"Use Pick on the TC22 to move this order's allocated cartons into STAGE-01."):
-            Ledger.Expected()>0?(inTransit.Count==Ledger.Expected()?"The driver will leave your cartons at REC-01 outside the front door.":"Q opens TC22. Receive the PO, then transfer cartons into storage."):
+            Ledger.Expected()>0?(inTransit.Count==Ledger.Expected()?"The driver will leave your cartons at REC-01 outside the front door.":"Right click inspects TC22. Receive the PO, then transfer cartons into storage."):
             Ledger.InReceiving()>0?"Use Transfer on the TC22. Move received cartons into a labelled storage bin before releasing an order.":
             Sandbox?"Q: TC22 / F: scan / E: carry. Office WMS manages orders and stock.":
             Ledger.OnHand()==0?(CompletedOrders==0?"Open the office WMS. Book PO-1001 for three cartons of packing tape.":"Open Purchase orders in the office WMS. Book the next delivery or create a new purchase order."):
@@ -35,7 +35,7 @@ namespace OneShift.RackLab
         public bool Scan()
         {
             if(!Scanner.Equipped||Walking==null||!Walking.CanControl||Walking.VehicleMode||Time.timeScale<=0)
-                return Notice("Return to scanning and aim at a label. F scans while you are on foot.",false);
+                return Notice("Return to scanning and aim at a label. Left click scans while you are on foot.",false);
             var result=Scanner.TryScan();
             ScanResult.code=result.code??"";ScanResult.label=result.label??"";ScanResult.sequence++;
             if(!result.success){ScanResult.status="error";return Notice(result.message,false);}
@@ -74,7 +74,7 @@ namespace OneShift.RackLab
                 if(w.tile=="transfer"&&bin.kind==L.BinKind.Dispatch&&!Courier.ReadyForLoading)return Notice("Wait for the collection van to open before returning a loaded carton.",false);
                 if(w.tile=="pick"&&!Ledger.FindSales(w.orderId).manifest.Any(c=>Ledger.FindCarton(c).binId==id&&Ledger.FindCarton(c).status==L.CartonStatus.Reserved))
                     return Notice("This bin has no unpicked cartons allocated to "+w.orderId+".",false);
-                w.sourceBin=id;w.step="carton";w.instruction="Scan the carton label in "+id+". F triggers a scan.";
+                w.sourceBin=id;w.step="carton";w.instruction="Scan the carton label in "+id+". Left click scans.";
                 return Notice("Location "+id+" confirmed.",true);
             }
             if(w.step=="carton")

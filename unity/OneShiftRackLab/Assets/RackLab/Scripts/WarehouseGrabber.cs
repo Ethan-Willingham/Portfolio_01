@@ -28,7 +28,7 @@ namespace OneShift.RackLab
         BoxCollider heldBox;
         WarehouseGrabbable heldMarker, aimMarker;
         PhysicsScene physics;
-        Quaternion rotationInView;
+        Quaternion heldOrientation;
         Vector3 halfExtents, scaledBoxCentre, lastViewPosition;
         float holdDistance = 1.5f, occludedSeconds;
         bool hasViewPosition;
@@ -53,12 +53,14 @@ namespace OneShift.RackLab
         public bool HasObstruction { get; private set; }
         public Vector3 HoldTarget { get; private set; }
         public string LastReleaseReason { get; private set; } = "";
+        public bool HeldWithUseKey { get; set; }
         public string HeldLabel => heldMarker == null ? "" : heldMarker.Label;
         public string AimLabel => aimMarker == null ? "" : aimMarker.Label;
-        public string HintKey => IsHolding ? IsRotating ? "Right mouse" : "E / Click" : aimBody != null ? "E / Click" : "";
+        public string HintKey => IsHolding ? IsRotating ? "Right mouse" : HeldWithUseKey ? "Hold E" : "Hold left mouse" :
+            aimBody != null ? walking != null && walking.HandheldEquipped ? "Hold E" : "Hold left mouse / E" : "";
         public string Hint => IsHolding ? IsRotating ? "Rotate with the mouse. Release right mouse to look." :
-            "Put down " + HeldLabel + ". Wheel: distance. Hold right mouse: rotate." :
-            aimBody != null ? "Pick up " + AimLabel : "";
+            "Release to put down " + HeldLabel + ". Wheel: distance. Hold right mouse: rotate." :
+            aimBody != null ? "Hold to carry " + AimLabel : "";
 
         void Awake() { Bind(GetComponent<RackWalkController>()); }
 
@@ -127,7 +129,9 @@ namespace OneShift.RackLab
             halfExtents = Vector3.Scale(box.size * .5f, Abs(box.transform.lossyScale));
             scaledBoxCentre = Vector3.Scale(box.center, box.transform.lossyScale);
             holdDistance = Mathf.Clamp(Vector3.Distance(View.position, centre), SafeMinimumDistance, MaximumDistance);
-            rotationInView = Quaternion.Inverse(View.rotation) * body.rotation;
+            // Looking around changes only the carry position. Preserve the
+            // carton's original world orientation until deliberately rotated.
+            heldOrientation = body.rotation;
             originalDetection = body.collisionDetectionMode;
             originalInterpolation = body.interpolation;
             originalSolverIterations = body.solverIterations;
@@ -178,7 +182,7 @@ namespace OneShift.RackLab
 
         public bool ConsumeUse()
         {
-            if (IsHolding) { Release(); return true; }
+            if (IsHolding) return true;
             if (aimBody == null) return false;
             TryPickup(aimBody);
             return true;
@@ -190,10 +194,8 @@ namespace OneShift.RackLab
             if (!IsHolding || !ControlsAvailable) return;
             AdjustDistance(wheelNotches);
             if (!IsRotating || !Finite(mouseDelta.x) || !Finite(mouseDelta.y)) return;
-            Quaternion target = View.rotation * rotationInView;
-            target = Quaternion.AngleAxis(Mathf.Clamp(mouseDelta.x * RotationSensitivity, -20, 20), View.up) *
-                Quaternion.AngleAxis(Mathf.Clamp(-mouseDelta.y * RotationSensitivity, -20, 20), View.right) * target;
-            rotationInView = Quaternion.Inverse(View.rotation) * target;
+            heldOrientation = Quaternion.AngleAxis(Mathf.Clamp(mouseDelta.x * RotationSensitivity, -20, 20), View.up) *
+                Quaternion.AngleAxis(Mathf.Clamp(-mouseDelta.y * RotationSensitivity, -20, 20), View.right) * heldOrientation;
         }
 
         public void AdjustDistance(float wheelNotches)
@@ -265,7 +267,7 @@ namespace OneShift.RackLab
 
             Vector3 desiredVelocity = Vector3.ClampMagnitude((target - centre) * 12f, MaximumHoldSpeed);
             ApplyHoldForce(desiredVelocity);
-            ApplyRotation(View.rotation * rotationInView);
+            ApplyRotation(heldOrientation);
         }
 
         void ApplyHoldForce(Vector3 desiredVelocity)

@@ -44,7 +44,18 @@ namespace OneShift.RackLab
         WarehouseParcelService parcelDesk, parcelService;
         IWarehouseInteraction worldInteraction;
         WarehouseGrabber grabber;
+        WarehouseWmsScanner scanner;
+        enum CarryControl { None, UseKey, LeftMouse }
+        CarryControl carryControl;
         public WarehouseGrabber Grabber => grabber;
+        public bool HandheldEquipped
+        {
+            get
+            {
+                if (scanner == null) scanner = GetComponent<WarehouseWmsScanner>();
+                return scanner != null && scanner.Equipped;
+            }
+        }
         public bool CarryingParcel => parcelService != null && parcelService.Carried != null;
         public bool CarryingObject => CarryingParcel || (grabber != null && grabber.IsHolding);
         bool HasGrabAction => grabber != null && !CarryingParcel && (grabber.IsHolding || grabber.AimBody != null);
@@ -171,18 +182,34 @@ namespace OneShift.RackLab
 
         void Capture(bool value)
         {
+#if UNITY_WEBGL && !UNITY_EDITOR
+            // Only the launcher's trusted browser event acquires native lock.
+            // Unity's deferred request otherwise rejects after Chrome Escape.
+            if (value && !BrowserLifecycle.PointerIsLocked)
+            {
+                captured = awaitNeutral = false;
+                captureQuietFrames = 0;
+                ClearMovement();
+                return;
+            }
+#endif
             if (captured == value && !value) { ClearMovement(); return; }
             captured = value;
             awaitNeutral = value;
             if (value) { captureRequestedAt = Time.unscaledTime; captureQuietFrames = 2; }
             ClearMovement();
+#if UNITY_WEBGL && !UNITY_EDITOR
+            if (!value) Cursor.lockState = CursorLockMode.None;
+#else
             Cursor.lockState = value ? CursorLockMode.Locked : CursorLockMode.None;
+#endif
             Cursor.visible = !value;
         }
 
         void ClearMovement()
         {
             if (grabber != null) grabber.Suspend();
+            carryControl = CarryControl.None;
             horizontalVelocity = Vector3.zero;
             verticalSpeed = HorizontalSpeedMps = 0;
             groundNormal = Vector3.up;
@@ -242,7 +269,7 @@ namespace OneShift.RackLab
             {
                 // Browser pointer lock is asynchronous. Wait briefly for its
                 // click request, but clear state if capture is later lost.
-                if (Cursor.lockState != CursorLockMode.Locked)
+                if (!BrowserLifecycle.PointerIsLocked)
                 {
                     if (Time.unscaledTime - captureRequestedAt > .2f) Capture(false);
                     ClearTargets();
@@ -259,6 +286,13 @@ namespace OneShift.RackLab
                     ClearTargets();
                     return;
                 }
+                if (grabber != null && grabber.IsHolding && carryControl != CarryControl.None &&
+                    !(carryControl == CarryControl.UseKey ? Input.GetKey(KeyCode.E) : Input.GetMouseButton(0)))
+                {
+                    grabber.Release();
+                    carryControl = CarryControl.None;
+                }
+                if (grabber == null || !grabber.IsHolding) carryControl = CarryControl.None;
                 var mouse = new Vector2(Input.GetAxisRaw("Mouse X"), Input.GetAxisRaw("Mouse Y"));
                 if (grabber != null) grabber.HandlePointerInput(Input.GetMouseButton(1), mouse, Input.mouseScrollDelta.y);
                 if (grabber == null || !grabber.IsRotating)
@@ -273,10 +307,21 @@ namespace OneShift.RackLab
                 MoveFeet(desired, Time.deltaTime);
                 if (Input.GetKeyDown(KeyCode.R)) ResetPosition();
                 ResolveTarget();
-                bool use = CanControl && Time.frameCount != suppressUseFrame &&
-                    (Input.GetKeyDown(KeyCode.E) || (alreadyCaptured && Input.GetMouseButtonDown(0)));
+                bool useKey = Input.GetKeyDown(KeyCode.E);
+                bool mouseUse = alreadyCaptured && Input.GetMouseButtonDown(0) && !HandheldEquipped;
+                bool use = CanControl && Time.frameCount != suppressUseFrame && (useKey || mouseUse);
                 bool grabUsed = use && grabber != null && !CarryingParcel && grabber.ConsumeUse();
-                if (grabUsed) ClearTargets();
+                if (grabUsed)
+                {
+                    // A second held control never converts a carry into a
+                    // toggle or changes which release puts the carton down.
+                    if (grabber.IsHolding && carryControl == CarryControl.None)
+                    {
+                        carryControl = useKey ? CarryControl.UseKey : CarryControl.LeftMouse;
+                        grabber.HeldWithUseKey = useKey;
+                    }
+                    ClearTargets();
+                }
                 else if (use && lightSwitch != null) lightSwitch.Toggle();
                 else if (use && officeDoor != null) officeDoor.Toggle();
                 else if (use && parcelDesk != null && CarryingParcel) parcelDesk.Receive();

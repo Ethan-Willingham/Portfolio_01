@@ -1,5 +1,5 @@
 {
-    "generatedUtc": "2026-10-28T16:46:29.9100646Z",
+    "generatedUtc": "2026-10-29T17:01:44.2742231Z",
     "unityVersion": "6000.3.27f1",
     "method": "Production grabber and walking lifecycle in isolated PhysX at 0.005-second steps. Actual dynamic box, floor, wall and player capsule contacts. No changes to the open scene or assets.",
     "scope": "Physics, eligibility and lifecycle checks. Native pointer capture, E/click priority, wheel and right-mouse feel still require the real browser player.",
@@ -147,7 +147,7 @@
             "measurements": [
                 {
                     "name": "maximum doorway penetration",
-                    "value": 0.0038366317749023439,
+                    "value": 0.0,
                     "units": "m"
                 },
                 {
@@ -165,7 +165,7 @@
             "measurements": [
                 {
                     "name": "driver penetration during complete carry",
-                    "value": 0.000012502074241638184,
+                    "value": 0.00003819167613983154,
                     "units": "m"
                 },
                 {
@@ -175,7 +175,7 @@
                 },
                 {
                     "name": "carton lower deck face",
-                    "value": -0.7925011515617371,
+                    "value": -0.792500913143158,
                     "units": "m"
                 },
                 {
@@ -193,12 +193,12 @@
             "measurements": [
                 {
                     "name": "lowest held carton centre",
-                    "value": 0.3209954500198364,
+                    "value": 0.22580286860466004,
                     "units": "m"
                 },
                 {
                     "name": "floor penetration while lowering",
-                    "value": 0.0029324889183044435,
+                    "value": 0.005440354347229004,
                     "units": "m"
                 }
             ]
@@ -218,6 +218,19 @@
                     "name": "peak angular speed",
                     "value": 2.986276865005493,
                     "units": "rad/s"
+                }
+            ]
+        },
+        {
+            "name": "looking preserves the picked carton orientation",
+            "passed": true,
+            "expectation": "Pickup retains the original orientation and ordinary camera yaw and pitch do not rotate the held box.",
+            "error": "",
+            "measurements": [
+                {
+                    "name": "orientation drift after looking",
+                    "value": 0.0,
+                    "units": "degrees"
                 }
             ]
         },

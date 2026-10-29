@@ -10,7 +10,22 @@ namespace OneShift.RackLab
     [Preserve]
     public sealed partial class BrowserLifecycle : MonoBehaviour
     {
-        public const int BuildVersion = 10;
+        public const int BuildVersion = 11;
+        public static bool PointerIsLocked
+        {
+            get
+            {
+#if UNITY_WEBGL && !UNITY_EDITOR
+                return WarehousePointerLocked() != 0;
+#else
+                return Cursor.lockState == CursorLockMode.Locked;
+#endif
+            }
+        }
+#if UNITY_WEBGL && !UNITY_EDITOR
+        [System.Runtime.InteropServices.DllImport("__Internal")]
+        static extern int WarehousePointerLocked();
+#endif
         public static bool GraphicsPreparing { get; private set; }
 #if UNITY_WEBGL && !UNITY_EDITOR
         [System.Runtime.InteropServices.DllImport("__Internal")]

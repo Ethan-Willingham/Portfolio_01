@@ -19,20 +19,22 @@
   var instance = null, starting = false, failed = false, manuallyPaused = false;
   var preparationStarted = false, graphicsReady = false, playerBuildVersion = null;
   var portrait = false, lastActive = null, loopPaused = false, mode = 'title';
+  var pendingLoopPause = 0;
   var menuScreen = '', computerOpen = false, escapeHandled = false, lastComputer = '', wrapperFullscreen = false;
   var gameMode = new URLSearchParams(window.location.search).get('mode') === 'sandbox' ? 'sandbox' : 'career';
   var pendingMode = '', computerTransitioning = false;
   var handheldOpen = false, handheldInteractive = false, pendingHandheld = false;
+  var capturePending = false, carryKeyHeld = false;
   window.warehouseRequestedMode = gameMode;
   var hudState = {}, loadingPhase = 'download', loadStart = 0, loadingTimer = null, lastLoadChange = 0;
   var preparationFraction = 0, preparationCompleted = 0, preparationTotal = 7, hasFinePreparation = false;
-  var build = 'assets/one-shift-unity/Build/OneShiftWeb', version = '?v=10';
+  var build = 'assets/one-shift-unity/Build/OneShiftWeb', version = '?v=11';
   var preparationNames = ['Night lighting', 'First daylight', 'Morning light', 'Afternoon light', 'Ceiling light controls', 'Fork placement view', 'Opening the doors'];
   var tips = [
     'Your first three cartons arrive at the front door.',
-    'Press E to pick up a carton. Scroll to adjust its distance.',
+    'Hold E to carry a carton. Release to set it down. Scroll to adjust distance.',
     'Hold the right mouse button to turn a carton before setting it down.',
-    'Q opens the TC22. F scans a label. Enter confirms a ready task.',
+    'Left click scans. Right click inspects the TC22. Q equips or stows it.',
     'Your customers are the local garages, workshops and trade counters.',
     'Receive, transfer, pick and ship with the TC22. Manage orders in the office WMS.'
   ];
@@ -60,7 +62,7 @@
   function syncWmsPresentation() {
     if (!window.WarehouseWmsUI) return;
     window.WarehouseWmsUI.setPresentation({handheldOpen:handheldOpen, handheldInteractive:handheldInteractive,
-      active:mode === 'play' && activity.active() && !portrait && !menuScreen && !computerOpen && !hudState.driving});
+      active:mode === 'play' && activity.active() && !portrait && !menuScreen && !computerOpen && !hudState.driving && !hudState.holding});
   }
   function focusHandheld(interactive) {
     if (!instance || !graphicsReady || hudState.driving || portrait) return;
@@ -69,17 +71,20 @@
       if (computerOpen) closeComputer(true);
       return;
     }
+    var wasInteractive = handheldInteractive, ownedPointer = document.pointerLockElement === canvas;
     handheldOpen = true; handheldInteractive = interactive;
     sendCommand('device-equip','1');
-    sendCommand('device-focus',interactive ? '1' : '0');
+    if (interactive || wasInteractive) sendCommand('device-focus',interactive ? '1' : '0');
     syncActivity(); syncWmsPresentation();
-    if (!interactive && !manuallyPaused && !menuScreen) { canvas.focus({preventScroll:true}); requestMouseCapture(); sendCommand('resume'); }
+    if (!interactive && !manuallyPaused && !menuScreen) { canvas.focus({preventScroll:true}); requestMouseCapture(); if (wasInteractive || !ownedPointer) sendCommand('resume'); }
   }
   function stowHandheld() {
+    var wasInteractive = handheldInteractive, ownedPointer = document.pointerLockElement === canvas;
     handheldOpen = false; handheldInteractive = false; pendingHandheld = false;
-    sendCommand('device-focus','0'); sendCommand('device-equip','0');
+    if (wasInteractive) sendCommand('device-focus','0');
+    sendCommand('device-equip','0');
     syncActivity(); syncWmsPresentation();
-    if (!computerOpen && !manuallyPaused && !menuScreen) { canvas.focus({preventScroll:true}); requestMouseCapture(); sendCommand('resume'); }
+    if (!computerOpen && !manuallyPaused && !menuScreen) { canvas.focus({preventScroll:true}); requestMouseCapture(); if (wasInteractive || !ownedPointer) sendCommand('resume'); }
   }
   if (window.WarehouseWmsUI) window.WarehouseWmsUI.init({
     command:function(action,id) { sendCommand('wms-' + action,id); },
@@ -192,6 +197,9 @@
     byId('main-menu').hidden = false;
     syncOrientation();
     syncStatsVisibility();
+    handheldOpen = true;
+    sendCommand('device-equip','1');
+    syncWmsPresentation();
     if (activity.active() && !portrait && !manuallyPaused && !menuScreen && !computerOpen) canvas.focus({preventScroll:true});
   }
   function sizeCanvas(resuming) {
@@ -207,6 +215,13 @@
     if (canvas.width !== renderWidth) canvas.width = renderWidth;
     if (canvas.height !== renderHeight) canvas.height = renderHeight;
   }
+  function pausePlayerLoop() {
+    pendingLoopPause = 0;
+    if (!instance || lastActive !== false) return;
+    var module = instance.Module;
+    if (module && typeof module.SetRefreshMonitorActive === 'function') module.SetRefreshMonitorActive(false);
+    if (!loopPaused && module && typeof module.pauseMainLoop === 'function') { module.pauseMainLoop(); loopPaused = true; }
+  }
   function syncActivity() {
     // Download callbacks can change the progress state while the page is hidden.
     // Keep a newly created indeterminate animation under the same activity gate.
@@ -217,6 +232,11 @@
     byId('hydraulics').hidden = !hudState.hydraulics || !activity.active() || manuallyPaused || !!menuScreen || computerOpen || portrait;
     if (!instance) return;
     var active = activity.active() && !manuallyPaused && !menuScreen && !computerOpen && !handheldInteractive && !portrait && !failed && mode !== 'title';
+    var inspectingOnFloor = handheldInteractive && activity.active() && !manuallyPaused && !menuScreen && !computerOpen && !portrait && !failed && mode === 'play';
+    if (pendingLoopPause && (active || !inspectingOnFloor)) {
+      cancelAnimationFrame(pendingLoopPause); pendingLoopPause = 0;
+      if (!active) pausePlayerLoop();
+    }
     if (active === lastActive) return;
     if (playerBuildVersion !== null) setText(stats, 'v' + playerBuildVersion + (active ? ' | Measuring...' : ' | Paused'));
     var module = instance.Module;
@@ -232,8 +252,12 @@
       hudState.hydraulics = false;
       byId('hydraulics').hidden = true;
       instance.SendMessage('BrowserLifecycle', 'SetBrowserActive', '0');
-      if (module && typeof module.SetRefreshMonitorActive === 'function') module.SetRefreshMonitorActive(false);
-      if (module && typeof module.pauseMainLoop === 'function') { module.pauseMainLoop(); loopPaused = true; }
+      lastActive = false;
+      // Device focus has already stopped input and simulation. Let the hidden
+      // first-person model reach the canvas before freezing its final picture.
+      if (inspectingOnFloor && !loopPaused) {
+        pendingLoopPause = requestAnimationFrame(function () { pendingLoopPause = requestAnimationFrame(pausePlayerLoop); });
+      } else pausePlayerLoop();
       unlockPointer();
     }
     lastActive = active;
@@ -293,14 +317,15 @@
     if (resume && instance && mode !== 'title' && lastActive === true) resumeControls();
   }
   function requestMouseCapture() {
-    // Unity defers requests made outside its own input handlers. Request the
-    // browser lock from this trusted HTML click/key before restoring its input
-    // state, so Resume and Close do not need a second click on the warehouse.
-    if (document.pointerLockElement !== canvas && canvas.requestPointerLock) {
+    // Only the host requests native lock. Chrome may reject an immediate
+    // reacquisition after Escape; leave a fresh click available, without a
+    // deferred Unity request or an unhandled rejection stopping the player.
+    if (!capturePending && document.pointerLockElement !== canvas && canvas.requestPointerLock) {
+      capturePending = true;
       try {
         var request = canvas.requestPointerLock();
-        if (request && typeof request.catch === 'function') request.catch(function () {});
-      } catch (_) { /* The normal Click hint remains available if capture is denied. */ }
+        if (request && typeof request.then === 'function') request.then(function () { capturePending = false; }, function () { capturePending = false; });
+      } catch (_) { capturePending = false; }
     }
   }
   function resumeControls() {
@@ -327,6 +352,11 @@
     play.focus({preventScroll:true});
   }
   function releaseMouseCapture(event) {
+    capturePending = false;
+    if (document.pointerLockElement === canvas) {
+      if (lastActive === true && !computerOpen && !computerTransitioning && !handheldInteractive) sendCommand('resume');
+      return;
+    }
     // Walking, driving and the office deliberately transfer cursor ownership.
     // A pointer-lock change alone does not express a request to pause. Their
     // controllers already stop input when capture is absent. Only a failed
@@ -638,7 +668,7 @@
   byId('menu-back').addEventListener('click', menuBack);
   byId('close-help').addEventListener('click', menuBack);
   byId('computer-close').addEventListener('click', function () { closeComputer(true); });
-  if (byId('handheld-toggle')) byId('handheld-toggle').addEventListener('click', function () { focusHandheld(!handheldInteractive); });
+  if (byId('handheld-toggle')) byId('handheld-toggle').addEventListener('click', function () { if (handheldOpen) stowHandheld(); else focusHandheld(false); });
   byId('computer-minimize').addEventListener('click', function () { showBusiness(false); });
   byId('desktop-toggle').addEventListener('click', function () { showBusiness(false); });
   document.querySelectorAll('[data-open-business]').forEach(function (button) { button.addEventListener('click', function () { showBusiness(true); }); });
@@ -669,8 +699,9 @@
     if (event.repeat) return;
     var input = event.target && /INPUT|SELECT|TEXTAREA/.test(event.target.tagName);
     if (input) return;
+    if (event.code === 'KeyE') carryKeyHeld = true;
     if (!menuScreen && !computerOpen && !computerTransitioning && graphicsReady && !hudState.driving) {
-      if (event.code === 'KeyQ') { event.preventDefault(); event.stopImmediatePropagation(); focusHandheld(!handheldInteractive); return; }
+      if (event.code === 'KeyQ') { event.preventDefault(); event.stopImmediatePropagation(); if (handheldOpen) stowHandheld(); else focusHandheld(false); return; }
       if (event.code === 'KeyF' && handheldOpen && !handheldInteractive) { event.preventDefault(); event.stopImmediatePropagation(); sendCommand('wms-scan'); return; }
       if (event.code === 'Enter' && handheldOpen && !handheldInteractive) { event.preventDefault(); event.stopImmediatePropagation(); sendCommand('wms-confirm'); return; }
     }
@@ -682,6 +713,7 @@
     }
   }, true);
   window.addEventListener('keyup', function (event) {
+    if (event.code === 'KeyE') carryKeyHeld = false;
     if (event.code !== 'Escape') return;
     // Some browsers reserve Escape's keydown for their pointer-lock UI but
     // deliver keyup. Do not reopen a menu that this same key just closed.
@@ -691,6 +723,25 @@
     }
     escapeHandled = false;
   }, true);
+  window.addEventListener('blur', function () { carryKeyHeld = false; capturePending = false; });
+  window.addEventListener('mousedown', function (event) {
+    if (!instance || !graphicsReady || mode !== 'play' || menuScreen || computerOpen || computerTransitioning || portrait || !activity.active()) return;
+    if (event.button === 2 && !hudState.driving && !hudState.holding && !carryKeyHeld && !(event.buttons & 1)) {
+      if (event.target === canvas || handheldInteractive) {
+        event.preventDefault(); event.stopImmediatePropagation(); focusHandheld(!handheldInteractive);
+      }
+      return;
+    }
+    if (event.button !== 0 || event.target !== canvas || handheldInteractive) return;
+    if (document.pointerLockElement !== canvas) {
+      event.preventDefault(); event.stopImmediatePropagation(); canvas.focus({preventScroll:true}); requestMouseCapture(); return;
+    }
+    if (handheldOpen && !hudState.driving) {
+      event.preventDefault(); event.stopImmediatePropagation();
+      if (!hudState.holding && !carryKeyHeld) sendCommand('wms-scan');
+    }
+  }, true);
+  stage.addEventListener('contextmenu', function (event) { event.preventDefault(); });
   window.addEventListener('resize', syncOrientation);
   document.addEventListener('pointerlockchange', releaseMouseCapture);
   document.addEventListener('pointerlockerror', releaseMouseCapture);

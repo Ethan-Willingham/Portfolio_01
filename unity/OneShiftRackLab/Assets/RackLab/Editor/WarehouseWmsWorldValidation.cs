@@ -86,7 +86,7 @@ namespace OneShift.RackLab
             using(var rig=new Rig(true))
             {
                 var world=rig.world;var racks=world.Bins.Where(b=>b.Id.Length==9).ToArray();
-                Pass(racks.Length==54&&racks.Count(b=>b.CanPick)==18&&racks.Select(b=>b.Id).Distinct().Count()==54,"Sandbox has54 unique rack-bin addresses and18 reachable low faces");
+                Pass(racks.Length==90&&racks.Count(b=>b.CanPick)==30&&racks.Select(b=>b.Id).Distinct().Count()==90,"Sandbox has90 unique rack-bin addresses and30 reachable low faces across rows A to E");
                 Pass(racks.All(b=>b.Volume.isTrigger&&b.Capacity==8),"Every rack bin has an explicit non-solid storage volume and capacity");
                 var loaded=new List<(WarehouseWmsBin bin,Rigidbody body)>();
                 for(int i=0;i<100;i++)

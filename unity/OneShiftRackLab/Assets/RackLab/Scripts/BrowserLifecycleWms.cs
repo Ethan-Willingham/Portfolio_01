@@ -17,7 +17,7 @@ namespace OneShift.RackLab
             {uiWms.SetDevice(request.id=="1");PublishHUD();return true;}
             if(request.action=="device-focus")
             {
-                deviceInteractive=request.id=="1";ApplyState();
+                deviceInteractive=request.id=="1";uiWms.Scanner.SetInspecting(deviceInteractive);ApplyState();
                 if(!deviceInteractive&&!suspended)uiWalking?.ResumeControlsFromUI();PublishHUD();return true;
             }
             if(!request.action.StartsWith("wms-"))return false;

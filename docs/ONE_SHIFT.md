@@ -1,7 +1,7 @@
 # The Warehouse Simulator
 
 The Warehouse Simulator, formerly One Shift, keeps its stable `one-shift.html`
-address and click-to-load Unity browser launcher. The v10 home screen uses an
+address and click-to-load Unity browser launcher. The current home screen uses an
 actual scene image, a clear Start business action, Sandbox, settings and a separate control
 guide. The HTML interface supplies the clock, contextual interactions, pause
 menu, hydraulic slider and office computer. The old grey debug panels and
@@ -15,7 +15,55 @@ keeps its `.loader.js` extension. Bump the launcher CSS/script query versions an
 the build version in `js/one-shift-unity.js` and `BrowserLifecycle.BuildVersion`
 whenever the published build changes.
 
-## Current v10: carton warehouse management
+## Current v11: handheld controls and warehouse layout
+
+The TC22 equips automatically as a handheld device with a live WMS screen. Left
+click scans the visible label. Right click toggles a larger screen inspection;
+Q equips or stows the device, F remains an alternate scan key, and Enter confirms
+a ready task. Transfer, Pick, Item lookup, Ship and Receive share the office WMS
+stock and document state.
+
+Hold left mouse with the scanner stowed, or hold E with it equipped or stowed,
+to carry a carton. Release the held pickup control to drop it. Pickup preserves
+the carton's orientation; right mouse and mouse movement deliberately rotate a
+held carton, and the wheel adjusts carrying distance. Rotation takes priority
+over scanner inspection while carrying. Browser-owned pointer capture handles
+returning from the computer and handheld, so a rejected pointer-lock request
+does not crash Unity.
+
+Sandbox has five rack rows, A through E, with three bays each and 90 rack bins.
+Thirty ground positions are pick faces and 60 upper positions are reserve.
+Row endcaps and bay headers explain addresses such as A01-01-01: row A, bay 01,
+level 01, position 01. Its 97 total bins include 93 populated storage bins,
+holding 100 owned cartons, plus two expected PO cartons in REC-02. The eight
+carton varieties and empty career start remain unchanged.
+
+REC-02 receiving and STAGE-01 outbound staging sit together by the north garage
+door with floor lettering, stronger painted borders and wall signs. The central
+dock route remains clear. REC-01 stays on the front porch for career parcel
+deliveries and has its own receiving sign. Location and carton labels no longer
+switch off at distance; ordinary depth occlusion and camera framing still apply.
+
+The focused browser check is `tools/test-one-shift-v11-browser.cjs`; set
+`SHIFT_V11_OFFICE_ONLY=1` for its shorter computer-return regression. The v11
+export is 42,575,081 compressed bytes with zero build errors. Grabber validation
+passes 19 checks, including orientation retention; world validation passes 37.
+Focused native Chrome sessions verify left-click scanning, the enlarged live
+screen, hold/release pickup, deliberate rotation, Q while carrying, and the dock
+walk. The 12-check office continuation passes normal return, a deliberately
+rejected SecurityError promise, and fresh-click recovery without Unity alerts,
+browser errors or active shader failures. Two automated walking waypoints were
+corrected to pass around floor stock and stand within computer interaction range.
+Full shipment cycles and a long performance profile were not repeated for v11.
+The earlier native WMS scripts assume the v10 rack layout
+and toggle pickup controls and need adaptation before reuse. The v10 results
+below are historical evidence, not verification of the v11 build.
+
+## v10 warehouse management reference
+
+The stock and order rules below remain applicable. Controls, layout counts and
+release checks in this section describe v10; use the v11 section above for the
+current controls and layout.
 
 `WarehouseWmsRuntime` now owns both browser modes. Its shared
 `WarehouseWmsLedger` is the inventory authority for the TC22 handheld and office

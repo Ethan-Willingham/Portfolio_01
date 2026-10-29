@@ -1,5 +1,5 @@
 {
-    "generatedUtc": "2026-10-29T01:14:43.7243948Z",
+    "generatedUtc": "2026-10-29T17:01:45.0128951Z",
     "scope": "Original Code128 encoding, actual physical label raycasts, authored rack-bin geometry, box support and a populated sleeping-stock fixture in isolated PhysX. No native browser input or rendered UI is simulated by these checks.",
     "passed": true,
     "checks": [
@@ -31,7 +31,7 @@
         "Carrier-restrained stock cannot be received by a volume alone",
         "Moving stock must settle before confirmation",
         "All18 authored wall-rack positions become bins; the six low faces are pickable",
-        "Sandbox has54 unique rack-bin addresses and18 reachable low faces",
+        "Sandbox has90 unique rack-bin addresses and30 reachable low faces across rows A to E",
         "Every rack bin has an explicit non-solid storage volume and capacity",
         "100 varied cartons remain supported in their real rack bins",
         "Settled populated stock sleeps while remaining dynamic and hand-pickable",

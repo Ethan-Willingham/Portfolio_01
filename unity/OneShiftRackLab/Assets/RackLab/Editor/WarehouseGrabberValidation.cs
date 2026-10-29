@@ -57,6 +57,7 @@ namespace OneShift.RackLab
             Check(report, "collection route handles the driver and real van", "The recorded carry uses production walking past the driver and along the pavement, climbs the authored ramp, enters the cargo van, sets down upright stock and walks back out.", CollectionRoute);
             Check(report, "lowering respects the floor", "Looking down lowers the carton physically, preserves the floor contact and permits a stable gravity-driven setdown.", Floor);
             Check(report, "rotation uses physical torque", "Right-mouse rotation keeps the view still, applies no immediate pose write and rotates the real box with bounded angular speed.", Rotation);
+            Check(report, "looking preserves the picked carton orientation", "Pickup retains the original orientation and ordinary camera yaw and pitch do not rotate the held box.", PreserveOrientation);
             Check(report, "rotation cannot sweep through a wall", "An elongated held carton rotates against a wall while its actual collision body stays within 1.5 cm of the wall boundary.", RotationAtWall);
             Check(report, "release restores the free body", "Setdown retains a dynamic collider and gravity, restores original solver settings and player collision, caps release energy and falls to the floor.", Release);
             Check(report, "player collision is restored only after separation", "A released carton overlapping the capsule cannot push the player; collision returns after separation and pre-existing ignore rules are preserved.", PlayerCollision);
@@ -438,6 +439,23 @@ namespace OneShift.RackLab
                 "The box must rotate physically while the camera stays still.");
             rig.Grabber.HandlePointerInput(false, Vector2.zero, 0);
             Need(!rig.Grabber.IsRotating, "Releasing right mouse must end rotation mode.");
+        }
+
+        static void PreserveOrientation(Rig rig, ForkliftDrivingValidation.Check check)
+        {
+            var carton = rig.Carton(new Vector3(0, 1.65f, 1.5f));
+            Quaternion original = Quaternion.Euler(11, 37, -8);
+            carton.rotation = original;
+            Physics.SyncTransforms();
+            Need(rig.Grabber.TryPickup(carton), "An arbitrarily oriented carton should pick up.");
+            Need(Quaternion.Angle(original, carton.rotation) < .001f, "Pickup must not snap the carton rotation.");
+            rig.Camera.transform.rotation = Quaternion.Euler(12, 28, 0);
+            rig.Grabber.HandlePointerInput(false, new Vector2(8, 4), 0);
+            rig.Step(1.5f);
+            float drift = Quaternion.Angle(original, carton.rotation);
+            check.Measure("orientation drift after looking", drift, "degrees");
+            Need(rig.Grabber.IsHolding && drift < 2 && !rig.Grabber.IsRotating,
+                "Looking and moving the carry target must preserve the original world orientation.");
         }
 
         static void RotationAtWall(Rig rig, ForkliftDrivingValidation.Check check)

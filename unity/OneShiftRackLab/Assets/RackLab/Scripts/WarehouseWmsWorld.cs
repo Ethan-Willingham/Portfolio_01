@@ -55,8 +55,6 @@ namespace OneShift.RackLab
         Material tape, paper, ink, shelf, guide, steel;
         PhysicsScene physics;
         Transform stockRoot;
-        Camera view;
-        float nextLabelCheck;
         bool initialized, racksAdded;
         public IReadOnlyList<WarehouseWmsBin> Bins => bins;
         public IReadOnlyList<WarehouseWmsLabel> Labels => labels;
@@ -85,8 +83,14 @@ namespace OneShift.RackLab
             // and dispatch remain separate bins, even when they contain no stock.
             AddFloorBin("REC-01","receiving",new Vector3(8.28f,.56f,-11.05f),new Vector3(1.5f,1.25f,.72f),8,false,
                 new Vector3(8.28f,1.32f,-10.68f),Quaternion.Euler(0,180,0),false);
-            AddFloorBin("REC-02","receiving",new Vector3(-3.8f,.012f,8.7f),new Vector3(2.5f,1.45f,2.1f),18,false);
-            AddFloorBin("STAGE-01","staging",new Vector3(1.7f,.012f,-5.7f),new Vector3(2.0f,1.45f,2.0f),18,false);
+            // Both dock work areas flank the garage. The middle 4.8 metres
+            // remain an unobstructed travel lane to the door and dock plate.
+            AddFloorBin("REC-02","receiving",new Vector3(-3.9f,.012f,10f),new Vector3(3f,1.45f,2f),18,false);
+            AddFloorBin("STAGE-01","staging",new Vector3(3.9f,.012f,10f),new Vector3(3f,1.45f,2f),18,false);
+            AreaSigns("RECEIVING","REC-02 / INBOUND",-3.9f);
+            AreaSigns("STAGING","STAGE-01 / OUTBOUND",3.9f);
+            Sign(transform,new Vector3(8.28f,1.70f,-10.68f),Quaternion.identity,new Vector2(1.1f,.30f),"PARCEL RECEIVING","REC-01 / FRONT DOOR");
+            WarehouseCareer.Cube("Parcel sign post extension",transform,new Vector3(8.28f,1.49f,-10.665f),new Vector3(.025f,.36f,.025f),steel);
             AddFloorBin("F01","storage",new Vector3(-3.6f,.012f,-1.8f),new Vector3(1.82f,1.5f,1.82f),12,true);
             AddFloorBin("F02","storage",new Vector3(-.8f,.012f,-1.8f),new Vector3(1.82f,1.5f,1.82f),12,true);
             AddFloorBin("F03","storage",new Vector3(2f,.012f,-1.8f),new Vector3(1.82f,1.5f,1.82f),12,true);
@@ -103,12 +107,15 @@ namespace OneShift.RackLab
             if (row == null) { Debug.LogError("The WMS could not find the authored rack row."); return; }
             racksAdded = true; row.gameObject.SetActive(true);
             if (!sandbox) { RegisterRackRow(row, "A"); return; }
-            var rowB = Instantiate(row.gameObject, row.parent); rowB.name = "WMS storage row B";
-            rowB.transform.SetPositionAndRotation(new Vector3(-4.6f, 0, 3.6f), row.rotation);
-            var rowC = Instantiate(row.gameObject, row.parent); rowC.name = "WMS storage row C";
-            rowC.transform.SetPositionAndRotation(new Vector3(3f, 0, 3.6f), row.rotation);
-            RegisterRackRow(row,"A");RegisterRackRow(rowB.transform,"B");RegisterRackRow(rowC.transform,"C");
-            owned.Add(rowB); owned.Add(rowC);
+            var rows=new List<Transform>{row};
+            float[] rowX={-6.2f,-2.2f,3.7f,9.5f};
+            for(int i=0;i<rowX.Length;i++)
+            {
+                var copy=Instantiate(row.gameObject,row.parent);copy.name="WMS storage row "+(char)('B'+i);
+                copy.transform.SetPositionAndRotation(new Vector3(rowX[i],0,3.6f),row.rotation);
+                rows.Add(copy.transform);owned.Add(copy);
+            }
+            for(int i=0;i<rows.Count;i++)RegisterRackRow(rows[i],((char)('A'+i)).ToString());
         }
 
         void RegisterRackRow(Transform row, string aisle)
@@ -116,6 +123,8 @@ namespace OneShift.RackLab
             var bays = row.GetComponentsInChildren<PalletRackBay>(true).OrderBy(b => row.InverseTransformPoint(b.transform.position).x).ToArray();
             for (int b = 0; b < bays.Length; b++)
             {
+                Sign(bays[b].transform,new Vector3(0,4.55f,-.66f),Quaternion.identity,new Vector2(1.12f,.34f),
+                    "BAY "+aisle+(b+1).ToString("00"),"LEVEL - POSITION");
                 var slots = bays[b].palletPositions.OrderBy(p => p.localPosition.y).ThenBy(p => p.localPosition.x).ToArray();
                 for (int slot = 0; slot < slots.Length; slot++)
                 {
@@ -138,6 +147,45 @@ namespace OneShift.RackLab
                     bins.Add(bin);
                 }
             }
+            var locations=bays.SelectMany(b=>b.palletPositions).Select(p=>p.position).ToArray();
+            if(locations.Length>0)
+            {
+                float front=locations.Min(p=>p.z)-.72f,back=locations.Max(p=>p.z)+.72f;
+                string range="BAYS 01 - "+bays.Length.ToString("00")+" / LEVELS 01 - 03";
+                Sign(transform,new Vector3(row.position.x,3.2f,front),Quaternion.identity,new Vector2(1.14f,.60f),"ROW "+aisle,range);
+                Sign(transform,new Vector3(row.position.x,3.2f,back),Quaternion.Euler(0,180,0),new Vector2(1.14f,.60f),"ROW "+aisle,range);
+            }
+        }
+
+        void AreaSigns(string name,string location,float x)
+        {
+            Sign(transform,new Vector3(x,2.65f,11.65f),Quaternion.identity,new Vector2(2.55f,.78f),name,location);
+            PaintedText(name,new Vector3(x,.030f,8.34f),new Vector2(2.65f,.37f));
+            PaintedText(location,new Vector3(x,.031f,7.96f),new Vector2(2.40f,.19f));
+        }
+        void PaintedText(string value,Vector3 position,Vector2 size)
+        {
+            var text=new GameObject("Floor marking / "+value).AddComponent<TextMesh>();
+            text.transform.SetParent(transform,false);text.transform.localPosition=position;
+            text.transform.localRotation=Quaternion.Euler(90,0,0);WarehouseCareer.UseWarehouseFont(text);
+            text.fontSize=64;text.anchor=TextAnchor.MiddleCenter;text.alignment=TextAlignment.Center;text.text=value;
+            text.color=new Color(.82f,.72f,.49f);WarehouseWmsLabel.FitText(text,size,position);
+            var renderer=text.GetComponent<Renderer>();renderer.shadowCastingMode=ShadowCastingMode.Off;renderer.receiveShadows=false;
+        }
+        void Sign(Transform parent,Vector3 position,Quaternion rotation,Vector2 size,string heading,string detail)
+        {
+            var sign=Child("Wayfinding / "+heading,parent,position);sign.localRotation=rotation;
+            var backing=WarehouseCareer.Cube("Cream warehouse sign",sign,Vector3.zero,new Vector3(size.x,size.y,.016f),paper);
+            backing.GetComponent<Renderer>().shadowCastingMode=ShadowCastingMode.Off;
+            var title=new GameObject("Sign heading").AddComponent<TextMesh>();title.transform.SetParent(sign,false);
+            WarehouseCareer.UseWarehouseFont(title);title.fontSize=64;title.anchor=TextAnchor.MiddleCenter;title.alignment=TextAlignment.Center;
+            title.text=heading;title.color=new Color(.10f,.15f,.11f);
+            WarehouseWmsLabel.FitText(title,new Vector2(size.x*.88f,size.y*.42f),new Vector3(0,size.y*.14f,-.010f));
+            var caption=new GameObject("Sign detail").AddComponent<TextMesh>();caption.transform.SetParent(sign,false);
+            WarehouseCareer.UseWarehouseFont(caption);caption.fontSize=40;caption.anchor=TextAnchor.MiddleCenter;caption.alignment=TextAlignment.Center;
+            caption.text=detail;caption.color=title.color;
+            WarehouseWmsLabel.FitText(caption,new Vector2(size.x*.89f,size.y*.19f),new Vector3(0,-size.y*.29f,-.010f));
+            foreach(var renderer in sign.GetComponentsInChildren<Renderer>()){renderer.shadowCastingMode=ShadowCastingMode.Off;renderer.receiveShadows=false;}
         }
 
         WarehouseWmsBin AddFloorBin(string id,string kind,Vector3 floor,Vector3 size,int capacity,bool canPick,
@@ -149,7 +197,7 @@ namespace OneShift.RackLab
             if(markFloor)
             {
                 var line=node.gameObject.AddComponent<LineRenderer>();line.sharedMaterial=guide;line.loop=true;line.useWorldSpace=false;
-                line.positionCount=4;line.widthMultiplier=.038f;line.shadowCastingMode=ShadowCastingMode.Off;line.receiveShadows=false;
+                line.positionCount=4;line.widthMultiplier=kind=="storage"?.038f:.065f;line.shadowCastingMode=ShadowCastingMode.Off;line.receiveShadows=false;
                 line.SetPositions(new[]{new Vector3(-size.x*.5f,.007f,-size.z*.5f),new Vector3(size.x*.5f,.007f,-size.z*.5f),new Vector3(size.x*.5f,.007f,size.z*.5f),new Vector3(-size.x*.5f,.007f,size.z*.5f)});
             }
             Vector3 plaque=labelPosition.HasValue?labelPosition.Value:floor+new Vector3(0,.014f,-size.z*.5f-.20f);
@@ -297,21 +345,8 @@ namespace OneShift.RackLab
         Transform FindNamed(string name)
         {foreach(var root in gameObject.scene.GetRootGameObjects())foreach(var node in root.GetComponentsInChildren<Transform>(true))if(node.name==name)return node;return null;}
 
-        void LateUpdate()
-        {
-            if(!initialized||Time.timeScale<=0||Time.unscaledTime<nextLabelCheck)return;nextLabelCheck=Time.unscaledTime+.35f;
-            if(view==null){var walker=FindObjectsByType<RackWalkController>(FindObjectsSortMode.None).FirstOrDefault(w=>w.gameObject.scene==gameObject.scene);if(walker!=null)view=walker.eyes;}
-            if(view==null)return;
-            // Text and narrow bars are useful only at handling distances. Bodies
-            // keep ordinary world shadows; labels add no shadows or light passes.
-            for(int i=labels.Count-1;i>=0;i--)
-            {
-                var label=labels[i];if(label==null){labels.RemoveAt(i);continue;}
-                float squared=(label.transform.position-view.transform.position).sqrMagnitude;
-                if(label.Visuals!=null)for(int r=0;r<label.Visuals.Length;r++)
-                    if(label.Visuals[r]!=null)label.Visuals[r].enabled=squared<(r==0?49f:20.25f);
-            }
-        }
+        // Printed labels remain part of their physical surfaces at all distances.
+        // Ordinary camera-frustum and depth tests hide them, never a distance toggle.
         void OnDestroy(){foreach(var value in owned)if(value!=null)WarehouseCourierVisuals.Remove(value);owned.Clear();}
     }
 }

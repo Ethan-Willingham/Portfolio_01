@@ -160,8 +160,9 @@ effect; it is not a full volumetric atmosphere or ray-traced global illumination
 
 The v10 WMS keeps this light and shadow budget. Its three rack rows reuse the
 authored geometry and materials. Cartons use shared meshes and materials, real
-shadows and sleeping rigidbodies after settling. Code128 label bars cull beyond
-7 m and label text beyond 4.5 m, refreshed every 0.35 seconds. The handheld,
+shadows and sleeping rigidbodies after settling. Since v11, Code128 label bars
+and text remain enabled at every distance; normal frustum and depth tests apply.
+The first-person TC22 updates its live text at 5 Hz. The handheld,
 cartons, bin markings and labels introduce no lights. Profile the populated
 Sandbox browser build when changing this system; the earlier mostly empty
 warehouse traces do not establish the cost of its 102 opening cartons.

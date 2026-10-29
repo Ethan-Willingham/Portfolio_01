@@ -24,7 +24,7 @@ namespace OneShift.RackLab
         public bool ForkliftOwned { get; private set; }
         public bool FishOwned { get; private set; }
         public bool FlamesOwned { get; private set; }
-        public string Message { get; private set; } = "TC22 ready. Q opens your handheld; F scans a label.";
+        public string Message { get; private set; } = "TC22 ready. Left click scans; right click inspects the screen.";
         public string Severity { get; private set; } = "info";
         public int Revision { get; private set; }
         public event Action Changed;
@@ -91,7 +91,7 @@ namespace OneShift.RackLab
             RegisterBins();
             finance.Add(new WarehouseBusiness.LedgerEntry("Opening working capital",Cash));
             if(sandbox)SeedSandbox();else SeedCareerOrders();
-            Notice(sandbox?"Sandbox is stocked. Q opens your TC22. Try SO-2001 or receive the cartons in REC-02.":
+            Notice(sandbox?"Sandbox is stocked. Right click inspects your TC22. Try SO-2001 or receive the cartons in REC-02.":
                 "Open the office WMS and book PO-1001. Your TC22 receives and moves each carton.",true);
         }
         void RegisterBins()
@@ -119,9 +119,10 @@ namespace OneShift.RackLab
             for(int b=0;b<bins.Length&&count<100;b++)
             {
                 var view=World.FindBin(bins[b].id);if(view==null)continue;
-                // Fill every aisle: four cartons in F01, three in other pick
-                // faces, one in each upper reserve bin, 100 owned cartons total.
-                int perBin=Math.Min(bins[b].capacity,bins[b].id=="F01"?4:bins[b].canPick?3:1);
+                // Five complete rack rows hold one carton per bin. The ten
+                // floor cartons keep the opening total at 100, with every
+                // storage location represented and room for new purchases.
+                int perBin=Math.Min(bins[b].capacity,bins[b].id=="F01"?4:bins[b].id.StartsWith("F")?3:1);
                 for(int j=0;j<perBin&&count<100;j++)
                 {
                     string sku=Sku[b%Sku.Length],id=NewCarton();

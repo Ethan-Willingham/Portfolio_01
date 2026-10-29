@@ -5,18 +5,30 @@ equipped Sandbox. It does not read or write the illustrated game's saves.
 Deliveries, stock, cash and equipment are session state, with no checkpoint persistence yet.
 Internal OneShift paths, namespace and Editor menus remain stable.
 
-The v10 browser starts either an empty $600 distribution business or a stocked
-Sandbox with $10,000, 100 owned cartons, two unreceived PO cartons, 54 rack bins,
+The v11 browser starts either an empty $600 distribution business or a stocked
+Sandbox with $10,000, 100 owned cartons, two unreceived PO cartons, 90 rack bins,
 three floor storage bins, two receiving bins, staging and a moving dispatch bin.
 The active goods are eight varieties of sealed cartons. The opening pallet truck
 and timed free parcels are disabled; their authored sources and checks remain.
 
-Q opens the Zebra TC22 task selector. Choose Receive, Transfer, Pick, Ship or Item
-lookup, return to scanning, aim at the printed label and press F. Enter confirms a
-ready task. E/click picks up and sets down, wheel adjusts distance, and right mouse
-rotates. The office monitor opens the manager WMS with PO/SO examples, stock, bin
+The Zebra TC22 equips automatically with a live WMS screen. Left click scans;
+right click toggles enlarged screen inspection; Q equips or stows it. F is an
+alternate scan key and Enter confirms a ready task. Its tiles are Receive,
+Transfer, Pick, Ship and Item lookup. Hold left mouse while the device is stowed,
+or hold E in either state, to carry a carton; release that control to drop it.
+Pickup preserves orientation, right mouse and mouse movement rotate a held
+carton, and the wheel adjusts distance. Carry rotation takes priority over
+scanner inspection. The office monitor opens the manager WMS with PO/SO examples, stock, bin
 contents, task lines and transaction history. The Business app handles equipment
 and finance. New orders use whole-carton quantities from the eight-item catalog.
+
+Five labelled rack rows, A through E, each contain three bays. Bin addresses such
+as A01-01-01 identify row, bay, level and position; row endcaps and bay headers
+make the arrangement visible. There are 97 total bins and all 93 storage bins
+are populated in Sandbox. REC-02 and STAGE-01 sit beside the north garage door
+with floor lettering, borders and wall signs, leaving the central dock route
+clear. REC-01 remains the front-door parcel receiving bin. Labels retain normal
+depth occlusion without distance-based visibility toggles.
 
 WarehouseWmsLedger is the one stock authority. WarehouseWmsRuntime,
 WarehouseWmsWorkflow and WarehouseWmsSnapshot connect it to physical bins,
@@ -35,20 +47,29 @@ Racks, forklift, singing fish and flame decals remain career purchases.
 
 BrowserLifecycle installs the WMS at runtime before the authored receiving
 service starts. Editor Play without that browser bootstrap retains the authored
-legacy rack/pallet trial. Do not use that Editor start as a v10 browser validation.
+legacy rack/pallet trial. Do not use that Editor start as a current browser validation.
 Install WarehouseCareerBuilder.Install() before exporting to retain runtime
 materials and shaders. Preserve the office camera transition and input locks.
+Pointer capture belongs to the browser launcher, including returns from the
+computer and handheld; rejected pointer-lock requests must not crash Unity.
 
 Run WarehouseWmsValidation.ValidateAndSave(),
 WarehouseWmsWorldValidation.ValidateAndSave() and
 WarehouseWmsRuntimeValidation.ValidateAndSave(), then inspect their JSON passed
 fields. These fixtures include explicit physical setup; they do not replace the
-native browser walkthrough tools/test-one-shift-wms-browser.cjs. The UI fixture is
+focused v11 browser check tools/test-one-shift-v11-browser.cjs. The v11 export is
+42,575,081 compressed bytes with zero build errors. Grabber and world fixtures
+pass 19 and 37 checks. Focused Chrome sessions verify the handheld, box controls,
+dock route and computer return, including rejected pointer capture and recovery.
+Set SHIFT_V11_OFFICE_ONLY=1 for the shorter office regression. Full shipment
+cycles and long performance profiling were not repeated; see docs/ONE_SHIFT.md
+for the exact scope. The previous native WMS browser scripts assume the v10 layout and toggle
+pickup controls and need adaptation before reuse. The UI fixture is
 tools/test-one-shift-wms-ui.cjs. Run relevant grabber, courier and controls checks
 when changing those systems. Earlier v9 career and pallet tests retain historical
 coverage but assume a different start and are not the current WMS walkthrough.
 
-The v10 export is 42,570,428 compressed bytes with zero build errors. Ledger,
+Historical v10 verification: the export is 42,570,428 compressed bytes with zero build errors. Ledger,
 world and runtime fixtures pass 29, 37 and nine checks respectively. Native
 browser sessions verify full Sandbox and career receiving-to-shipping cycles,
 including offsite payment and repeat ordering. The career route is
@@ -58,7 +79,7 @@ workloads one at a time. See docs/ONE_SHIFT.md for validation scope and results.
 
 The original yellow forklift, owner's rack geometry, road truck and pallet assets
 remain in the project. The truck is documented in RECEIVING_TRUCK.md; it is not
-part of the v10 carton-only opening. Source and build details below remain valid.
+part of the current carton-only opening. Source and build details below remain valid.
 
 The room now has concrete block walls, ribbed upper cladding, an exposed steel
 roof, high multi-pane windows and warm sunlight with sparse drifting dust.

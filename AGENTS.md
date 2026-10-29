@@ -119,19 +119,25 @@ HUD, and a three-step practical forklift introduction. Left Shift holds the
 variable hydraulic lever; X is no longer the control. The office computer manages
 supplier purchases and fictional trade-customer orders backed by physical stock.
 Keep direct player handling, stock conservation, and separate pause/activity gates.
-The v10 WMS owns both modes through `WarehouseWmsRuntime` and
+The v11 WMS owns both modes through `WarehouseWmsRuntime` and
 `WarehouseWmsLedger`. Career starts empty with $600; Sandbox starts with 100 owned
-cartons, two pending receipts, 54 labelled rack bins and seven other bins. The
+cartons, two pending receipts, 90 labelled rack bins across rows A to E and seven other bins. The
 owner's 2026-10-28 direction is cartons only, eight varieties, with no item serials
-or integrations. Q opens the Zebra TC22, F scans actual visible Code128 labels,
-and Enter confirms supported physical receipt, transfer, pick or load tasks.
+or integrations. The TC22 starts equipped in a first-person hand with a live screen.
+Left click scans actual visible Code128 labels, right click toggles the enlarged
+screen, Q equips or stows it, and Enter confirms supported physical receipt,
+transfer, pick or load tasks. F remains an alternate scan key.
 Receiving, staging and the moving dispatch van are bins too. The office WMS
 shares exact stock and PO/SO line quantities, allocations, work and history.
 Only offsite shipment pays. Old `WarehouseCareer`/`WarehouseBusiness` source
 and pallet fixtures remain but are inactive in both browser starts. Racks,
 forklift, fish and flame decals remain upgrades. Progress is session-only.
-The computer retains its camera transition and HTML desktop. Loose cartons use
-bounded rigidbody grab forces, not parenting. Read the v10 section in
+The computer retains its camera transition and HTML desktop. The browser owns
+pointer capture; Unity must not request a second lock after an interface closes.
+Hold left mouse with the scanner stowed, or hold E in either mode, to carry a box.
+Releasing that input drops it. Pickup preserves orientation; right mouse rotates.
+Loose cartons use bounded rigidbody grab forces, not parenting. Receiving and
+staging flank the north garage; printed labels have no distance pop-in. Read the v11 section in
 `docs/ONE_SHIFT.md` and use the WMS native browser checks before publishing.
 
 The earlier illustrated game remains at `one-shift-classic.html`, using

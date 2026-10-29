@@ -37,7 +37,7 @@ namespace OneShift.RackLab
             var source=Object.FindFirstObjectByType<WarehouseReceiving>();Need(source!=null,"Open the installed warehouse scene first.");
             var report=new Report{generatedUtc=DateTime.UtcNow.ToString("O")};
             Test(report,source,false,"career opening and scene-local initialization","The empty career has one account, physical bins and example documents without changing the authored scene.",Opening);
-            Test(report,source,true,"Sandbox stock occupies its labelled bins","One hundred real cartons, eight items, three rack rows and separate receiving/staging bins reconcile with opening WMS stock.",SandboxStock);
+            Test(report,source,true,"Sandbox stock occupies its labelled bins","One hundred real cartons, eight items, five rack rows and separate receiving/staging bins reconcile with opening WMS stock.",SandboxStock);
             Test(report,source,true,"manager creates repeatable validated documents","All eight catalogue items support fresh purchase and sales documents. Invalid quantities reject atomically and drafts do not move stock or money.",ManagerDocuments);
             Test(report,source,false,"purchase creates a real unreceived delivery","Booking debits once; the physical driver delivers exactly the ordered cartons, which remain Expected until scanned receiving.",PurchaseDelivery);
             Test(report,source,false,"receipt requires a correct PO and supported carton","Wrong PO, held, airborne and kinematic cartons cannot be received; a supported duplicate scan cannot receive twice.",ReceiptBoundaries);
@@ -70,7 +70,7 @@ namespace OneShift.RackLab
             var w=f.Runtime;f.PhysicsOnly(1.5f);Invoke(w,"AuditPhysicalBins");
             Need(w.Sandbox&&w.Cash==10000&&w.RacksOwned&&w.ForkliftOwned,"Sandbox must retain its equipment.");
             Need(w.Ledger.OnHand()==100&&w.Ledger.Expected()==2&&w.Bodies.Count==102,"Sandbox seed is not the intended populated warehouse.");
-            Need(w.Ledger.Bins.Count(b=>b.id.StartsWith("A")||b.id.StartsWith("B")||b.id.StartsWith("C"))==54,"Every rack slot must be a registered bin.");
+            Need(w.Ledger.Bins.Count(b=>b.kind==L.BinKind.Storage&&b.id.Length==9)==90,"Every rack slot across rows A to E must be a registered bin.");
             Need(w.Ledger.Items.All(i=>w.Ledger.OnHand(i.id)>0),"Opening stock is missing a carton variety.");
             Need(w.Ledger.Bins.Where(b=>b.kind==L.BinKind.Storage).All(b=>w.Ledger.BinUsed(b.id)>0),"Opening stock must populate every rack row and floor storage bin.");
             int supported=0;var bad=new List<string>();

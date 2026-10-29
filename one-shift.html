@@ -11,16 +11,16 @@
   <meta property="og:description" content="An empty warehouse and $600. Start Latchford Distribution, handle every carton, and build a small trade-supply business.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://ethanwillingham.com/one-shift.html">
-  <meta property="og:image" content="https://ethanwillingham.com/assets/one-shift-unity/preview.png?v=10">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/one-shift-unity/preview.png?v=11">
   <meta property="og:image:alt" content="A worker and yellow forklift in the sunlit warehouse, beside the dispatch office.">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="one-shift-unity.css?v=10">
-  <link rel="stylesheet" href="one-shift-wms.css?v=10">
+  <link rel="stylesheet" href="one-shift-unity.css?v=11">
+  <link rel="stylesheet" href="one-shift-wms.css?v=11">
   <script src="js/demo-activity.js?v=1" defer></script>
-  <script src="js/one-shift-wms.js?v=10" defer></script>
-  <script src="js/one-shift-unity.js?v=10" defer></script>
+  <script src="js/one-shift-wms.js?v=11" defer></script>
+  <script src="js/one-shift-unity.js?v=11" defer></script>
 </head>
 <body class="warehouse-page">
 <main id="warehouse-stage" aria-label="The Warehouse Simulator">
@@ -68,7 +68,7 @@
     <div id="warehouse-drive-status" class="warehouse-drive-status" hidden><span>Fork height</span><output id="warehouse-fork-height">0.0 ft</output></div>
     <div id="warehouse-training" class="warehouse-training" hidden><span id="warehouse-training-step"></span><p id="warehouse-training-copy"></p></div>
     <div id="warehouse-context" class="warehouse-context" hidden><kbd id="warehouse-hint-key"></kbd><span id="warehouse-hint"></span></div>
-    <div id="warehouse-carry" class="warehouse-carry" hidden><span><kbd>E</kbd> Set down</span><span><kbd>Wheel</kbd> Distance <output id="warehouse-carry-distance"></output></span><span><kbd>Right mouse</kbd> Rotate</span></div>
+    <div id="warehouse-carry" class="warehouse-carry" hidden><span>Release to set down</span><span><kbd>Wheel</kbd> Distance <output id="warehouse-carry-distance"></output></span><span><kbd>Right mouse</kbd> Rotate</span></div>
     <p id="warehouse-notice" class="warehouse-notice" role="status" hidden></p>
     <aside id="warehouse-hydraulics" class="warehouse-hydraulics" aria-label="Fork hydraulic control" hidden>
       <div class="warehouse-hydraulic-caption"><kbd>Left Shift</kbd><span>Hydraulics</span></div>
@@ -96,7 +96,7 @@
         <div class="warehouse-help-tabs" role="tablist" aria-label="Controls"><button type="button" role="tab" id="warehouse-tab-floor" aria-selected="true" aria-controls="warehouse-help-floor" data-help-tab="floor">On foot</button><button type="button" role="tab" id="warehouse-tab-forklift" aria-selected="false" aria-controls="warehouse-help-forklift" data-help-tab="forklift" tabindex="-1">Forklift</button><button type="button" role="tab" id="warehouse-tab-work" aria-selected="false" aria-controls="warehouse-help-work" data-help-tab="work" tabindex="-1">The work</button></div>
         <div id="warehouse-help-floor" role="tabpanel" aria-labelledby="warehouse-tab-floor">
           <dl class="warehouse-key-list"><div><dt><kbd>W A S D</kbd></dt><dd>Walk</dd></div><div><dt><kbd>Mouse</kbd></dt><dd>Look around</dd></div><div><dt><kbd>E</kbd> or <kbd>Click</kbd></dt><dd>Use what you are looking at</dd></div><div><dt><kbd>Left Shift</kbd> / <kbd>Space</kbd></dt><dd>Run / jump</dd></div><div><dt><kbd>R</kbd></dt><dd>Return to the entrance</dd></div><div><dt><kbd>Esc</kbd> / <kbd>P</kbd></dt><dd>Open the pause menu</dd></div></dl>
-          <p>Look at a carton and press E to pick it up or put it down. Scroll the mouse wheel to bring it closer or move it farther away. Hold the right mouse button and move the mouse to rotate it.</p><p>Q opens your TC22. F scans a visible barcode, and Enter confirms a ready warehouse task. The office WMS manages purchase orders, sales orders, stock and bin history. The Business app handles equipment upgrades. Later, enter your forklift with E. Wall switches control the ceiling lights.</p>
+          <p>Hold the left mouse button to carry a carton while the TC22 is stowed, or hold E in either mode. Release to put it down. Scroll the mouse wheel to bring it closer or move it farther away. While carrying, hold the right mouse button and move the mouse to rotate the carton. It keeps its orientation until you rotate it.</p><p>Q equips or stows your TC22. Left click scans a visible barcode. Right click brings its live screen closer or returns it to your hand. Enter confirms a ready warehouse task. The office WMS manages purchase orders, sales orders, stock and bin history. The Business app handles equipment upgrades. Later, enter your forklift with E. Wall switches control the ceiling lights.</p>
         </div>
         <div id="warehouse-help-forklift" role="tabpanel" aria-labelledby="warehouse-tab-forklift" hidden>
           <dl class="warehouse-key-list"><div><dt><kbd>W S</kbd> / <kbd>A D</kbd></dt><dd>Drive / steer</dd></div><div><dt><kbd>Space</kbd> / <kbd>B</kbd></dt><dd>Brake / slow approach</dd></div><div><dt><kbd>Left Shift</kbd> + <kbd>Mouse</kbd></dt><dd>Hold to use the hydraulic lever</dd></div><div><dt><kbd>Q Z</kbd> / <kbd>T G</kbd></dt><dd>Raise or lower / tilt mast</dd></div><div><dt><kbd>C</kbd> / <kbd>V</kbd></dt><dd>Change view / centre view</dd></div><div><dt><kbd>E</kbd> / <kbd>F</kbd></dt><dd>Stop and step out / parking brake</dd></div></dl>
