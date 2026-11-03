@@ -106,7 +106,8 @@ are ordinary scripts, with no bundle step and no Sluice dependencies. Read
 `archive.html` (In Progress). Bump the `?v=` values on its CSS and game scripts
 when changing them so deployed edits bypass stale caches.
 
-**The Warehouse Simulator** (formerly One Shift) opens the Unity warehouse from `one-shift.html`, with its browser
+**The Warehouse Simulator** (formerly One Shift) retains the Unity warehouse at
+`one-shift.html?view=warehouse`, with its browser
 launcher in `one-shift-unity.css` and `js/one-shift-unity.js`. Editable Unity source
 lives in `unity/OneShiftRackLab`; read its `README.md` and `WAREHOUSE_LIGHTING.md`
 before changing the scene. **One Shift > Build browser player** exports to
@@ -114,6 +115,35 @@ before changing the scene. **One Shift > Build browser player** exports to
 keyboard and mouse controls, landscape gate, and independent browser inactivity
 and manual pause. Verify an actual browser build before publishing. Keep the
 post on `archive.html` (In Progress), with its stable `one-shift.html` URL.
+The owner's 2026-11-03 direction makes guided receiving the default at
+`one-shift.html` and explicitly keeps the 3D warehouse: a fast "What would you
+like to do?" screen, Inbound, then a selected receiving lesson beside its native
+delivery. Read the v14 section in `docs/ONE_SHIFT.md`. `js/one-shift-entry.js`
+keeps the opening menus independent of Unity and the old cover image. Sources
+are `js/one-shift-inbound-model.js`, `js/one-shift-inbound.js`,
+`js/one-shift-inbound-warehouse.js` and `one-shift-inbound.css`. The dedicated host
+loads Unity on lesson selection and reuses it across lessons. Native mode 5 uses
+`WarehouseInboundPractice` to prepare exact delivered units and labels in REC-02
+before showing a fixed, clickable dock view. No walking or pointer capture is
+required. The browser model owns receipt state; native sync changes recorded
+labels and colors without moving units or creating a second WMS ledger.
+The eight examples follow the owner's Endpoint Cloud KB links, with fictional
+session-only data and no company API or inventory writes. They include lot,
+serial, date, ASN and completion-status training; the carton-only rule below
+still governs the separate original game modes. Preserve large controls, plain
+instructions, visible quantities, keyboard access, landscape mobile lessons and
+independent pause/activity/orientation gates. Its palette and local type follow
+the One Shift exception, without global site restyling. The original receiving
+and putaway briefing remains at `one-shift.html?mode=demo&demo=receive`, with
+Career, Sandbox and all three old demos available in their existing launcher.
+Run `node tools/test-one-shift-inbound-model.cjs`,
+`node tools/test-one-shift-inbound-host.cjs`,
+`WarehouseInboundPracticeValidation.ValidateAndSave()` and affected native browser
+paths. Native adapter or bridge changes require a new versioned Unity export.
+For batch work, prefer validation and report verification followed by export in
+a fresh Editor process.
+Bump changed asset query versions, including both hosts' build URLs when the
+shared player changes.
 The owner's 2026-10-27 direction uses a finished title screen, a minimal contextual
 HUD, and a three-step practical forklift introduction. Left Shift holds the
 variable hydraulic lever; X is no longer the control. The office computer manages

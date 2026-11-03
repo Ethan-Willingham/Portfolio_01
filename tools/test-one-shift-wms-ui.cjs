@@ -55,7 +55,8 @@ function check(name,value){assert.ok(value,name);checks.push(name);console.log('
   browser=await chromium.launch({headless:true,channel:process.env.SHIFT_BROWSER_CHANNEL||'chrome'});
   page=await browser.newPage({viewport:{width:1280,height:720}});
   page.on('pageerror',error=>errors.push(error.message));
-  await page.goto('http://127.0.0.1:'+server.address().port+'/one-shift.html');
+  await page.goto('http://127.0.0.1:'+server.address().port+'/one-shift.html?view=warehouse');
+  await page.waitForFunction(()=>!!document.getElementById('warehouse-wms-console'));
   if(!await page.evaluate(()=>!!window.WarehouseWmsUI))await page.addScriptTag({url:'/js/one-shift-wms.js'});
   await page.addStyleTag({url:'/one-shift-wms.css'});
   await page.evaluate(snapshot=>{

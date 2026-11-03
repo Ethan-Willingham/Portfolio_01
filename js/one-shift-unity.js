@@ -31,7 +31,7 @@
   window.warehouseRequestedDemo = demoId;
   var hudState = {}, loadingPhase = 'download', loadStart = 0, loadingTimer = null, lastLoadChange = 0;
   var preparationFraction = 0, preparationCompleted = 0, preparationTotal = 7, hasFinePreparation = false;
-  var build = 'assets/one-shift-unity/Build/OneShiftWeb', version = '?v=13';
+  var build = 'assets/one-shift-unity/Build/OneShiftWeb', version = '?v=14';
   var preparationNames = ['Morning light', 'Late morning', 'Midday light', 'Afternoon light', 'Ceiling light controls', 'Fork placement view', 'Opening the doors'];
   var tips = [
     'Your first three cartons arrive at the front door.',
@@ -456,7 +456,7 @@
         frameworkUrl:build + '.framework.js.unityweb' + version,
         codeUrl:build + '.wasm.unityweb' + version,
         streamingAssetsUrl:'assets/one-shift-unity/StreamingAssets',
-        companyName:'Ethan Willingham', productName:'The Warehouse Simulator', productVersion:'13',
+        companyName:'Ethan Willingham', productName:'The Warehouse Simulator', productVersion:'14',
         matchWebGLToCanvasSize:false, devicePixelRatio:1,
         onOneShiftStats:reportPlayerStats, onOneShiftPreparation:reportPreparation,
         onWarehousePreparation:reportFinePreparation, onWarehouseHUD:reportHUD,

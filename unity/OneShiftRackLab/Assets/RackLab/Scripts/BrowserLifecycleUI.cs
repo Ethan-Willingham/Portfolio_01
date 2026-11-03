@@ -22,6 +22,7 @@ namespace OneShift.RackLab
         WarehouseReceiving uiReceiving;
         WarehouseBusiness uiBusiness;
         WarehouseCareer uiCareer;
+        WarehouseInboundPractice uiInbound;
         WarehouseComputerTransition computerTransition;
         public bool ComputerOpen => computerOpen;
         public bool ComputerTransitioning => computerTransition != null && computerTransition.Active;
@@ -35,8 +36,10 @@ namespace OneShift.RackLab
             uiClock = UnityEngine.Object.FindFirstObjectByType<WarehouseDayNight>();
             uiReceiving = UnityEngine.Object.FindFirstObjectByType<WarehouseReceiving>();
             uiWms = UnityEngine.Object.FindFirstObjectByType<WarehouseWmsRuntime>();
+            uiInbound = UnityEngine.Object.FindFirstObjectByType<WarehouseInboundPractice>();
             uiCareer = UnityEngine.Object.FindFirstObjectByType<WarehouseCareer>();
-            if (uiWms != null) uiWms.Changed += WmsChanged;
+            if (uiInbound != null) { uiCareer = null; uiBusiness = null; }
+            else if (uiWms != null) uiWms.Changed += WmsChanged;
             else if (uiCareer != null) uiCareer.Changed += CareerChanged;
             else { uiBusiness = WarehouseBusiness.Ensure(); uiBusiness.Changed += BusinessChanged; }
             computerTransition = gameObject.AddComponent<WarehouseComputerTransition>();
@@ -98,6 +101,14 @@ namespace OneShift.RackLab
             catch (ArgumentException) { return; }
             if (request == null) return;
             uiRevision++;
+            if (uiInbound != null)
+            {
+                if (request.action == "inbound-setup" || request.action == "inbound-sync")
+                    uiInbound.Apply(request.value,request.action == "inbound-setup");
+                else if (request.action == "inbound-report") uiInbound.PublishScene();
+                // No legacy warehouse command can create a second stock record.
+                return;
+            }
             if (WmsCommand(request)) return;
             switch (request.action)
             {
@@ -135,7 +146,7 @@ namespace OneShift.RackLab
         public string HUDSnapshot()
         {
             var state = new HUDState();
-            state.mode = uiWms != null ? uiWms.DemonstrationActive ? "demo" : uiWms.Sandbox ? "sandbox" : "career" : uiCareer != null ? "career" : "sandbox";
+            state.mode = uiInbound != null ? "inbound" : uiWms != null ? uiWms.DemonstrationActive ? "demo" : uiWms.Sandbox ? "sandbox" : "career" : uiCareer != null ? "career" : "sandbox";
             var grabber = uiWalking != null ? uiWalking.GetComponent<WarehouseGrabber>() : null;
             state.holding = grabber != null && grabber.IsHolding;
             state.carryDistance = grabber != null ? grabber.HoldDistance : 0;
@@ -167,7 +178,15 @@ namespace OneShift.RackLab
                 if (p.y < -.3f) state.location = "Business park";
                 else if (p.x > 3.8f && p.z < -4 && p.z > -10) state.location = "Office";
             }
-            if (uiWms != null)
+            if (uiInbound != null)
+            {
+                state.location = "Receiving / REC-02";
+                state.objective = "Practice receiving";
+                state.detail = "Click a delivery label, then follow the receiving screen.";
+                state.hint = state.hintKey = "";
+                state.computer = new ComputerState { open = false };
+            }
+            else if (uiWms != null)
             {
                 state.objective = uiWms.Objective; state.detail = uiWms.ObjectiveDetail;
                 state.computer = WmsComputerSnapshot(); state.wms = uiWms.Capture();

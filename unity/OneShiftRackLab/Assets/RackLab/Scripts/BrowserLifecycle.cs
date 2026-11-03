@@ -10,7 +10,7 @@ namespace OneShift.RackLab
     [Preserve]
     public sealed partial class BrowserLifecycle : MonoBehaviour
     {
-        public const int BuildVersion = 13;
+        public const int BuildVersion = 14;
         public static bool PointerIsLocked
         {
             get
@@ -115,7 +115,8 @@ namespace OneShift.RackLab
             var lifecycle = bridge.AddComponent<BrowserLifecycle>();
 #if UNITY_WEBGL && !UNITY_EDITOR
             int initialMode = WarehouseInitialMode();
-            WarehouseWmsRuntime.Ensure(initialMode != 1, initialMode == 2 ? "receive" : initialMode == 3 ? "transfer" : initialMode == 4 ? "pick-ship" : "");
+            if (initialMode == 5) WarehouseInboundPractice.Ensure();
+            else WarehouseWmsRuntime.Ensure(initialMode != 1, initialMode == 2 ? "receive" : initialMode == 3 ? "transfer" : initialMode == 4 ? "pick-ship" : "");
             Application.targetFrameRate = 60;
             WebGLInput.captureAllKeyboardInput = false;
             WebGLInput.stickyCursorLock = false;
@@ -149,6 +150,24 @@ namespace OneShift.RackLab
             if (camera == null || dayNight == null)
             {
                 ReportPreparation(0, stages, -1);
+                yield break;
+            }
+            var inbound = Object.FindFirstObjectByType<WarehouseInboundPractice>();
+            if (inbound != null)
+            {
+                // Receiving has one fixed view and no vehicle. Warm exactly that
+                // presentation instead of all seven exploratory game stages.
+                ReportFinePreparation(.2f,"Preparing your delivery","Receiving bay and carton labels",0);
+                inbound.ResetCamera();
+                dayNight.SetHour(WarehouseDayNight.MorningHour);
+                dayNight.RequestReflection();
+                yield return WaitForRenderedFrames(3);
+                yield return WaitForReflection(dayNight);
+                if (preparationFailed) { ReportPreparation(0,1,-1); yield break; }
+                preparing = false; GraphicsPreparing = false;
+                ApplyState(); ResetFrameSample();
+                inbound.PublishScene();
+                ReportPreparation(1,1,1);
                 yield break;
             }
             var originalPosition = camera.transform.position;

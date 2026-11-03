@@ -173,7 +173,7 @@ function stage(label) { currentStage=label;phases.push({label,at:Date.now()});co
   await page.waitForFunction(()=>window.actualUnity&&document.getElementById('warehouse-launcher').hidden,null,{timeout:240000});
   await click(page.locator('#warehouse-canvas'));await page.waitForFunction(()=>document.pointerLockElement?.id==='warehouse-canvas');await delay(450);
   const opening=await state('Opening');
-  check('Sandbox opens v13 in slow morning daylight',opening.buildVersion===13&&opening.hour>=9&&opening.hour<9.1);
+  check('Sandbox opens the v14 player in slow morning daylight',opening.buildVersion===14&&opening.hour>=9&&opening.hour<9.1);
   check('All 100 owned cartons and 106 locations are present',onHand(opening)===100&&opening.wms.state.cartons.length===102&&opening.wms.bins.length===106&&opening.wms.conserves);
   check('Floor storage is replaced by twelve compact-shelf bins',!opening.wms.bins.some(b=>/^F0/.test(b.id))&&opening.wms.bins.filter(b=>/^S0/.test(b.id)).length===12);
   check('Right-side rack labels face the picking aisle',opening.wms.labels.filter(l=>/^BIN:[DE]/.test(l.code)).every(l=>l.normal[0]<-.9));

@@ -13,7 +13,7 @@ function check(label,value){assert.ok(value,label);checks.push(label);console.lo
   const page=await browser.newPage({viewport:{width:1280,height:720}});let unityRequests=0;
   page.on('pageerror',error=>errors.push(error.message));page.on('request',request=>{if(/OneShiftWeb\./.test(request.url()))unityRequests++;});
   for(const [width,height] of [[1280,720],[900,600]]){
-    await page.setViewportSize({width,height});await page.goto('http://127.0.0.1:'+server.address().port+'/one-shift.html');
+    await page.setViewportSize({width,height});await page.goto('http://127.0.0.1:'+server.address().port+'/one-shift.html?view=warehouse');
     await page.locator('#warehouse-demos').waitFor();await page.screenshot({path:path.join(output,'title-'+width+'.png')});
     const title=await page.evaluate(()=>{const menu=document.getElementById('warehouse-main-menu').getBoundingClientRect(),footer=document.querySelector('.warehouse-title-footer').getBoundingClientRect();return{menuBottom:menu.bottom,footerTop:footer.top};});
     measurements.push({width,height,title});check(width+' title menu clears its footer',title.menuBottom<=title.footerTop);
