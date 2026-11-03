@@ -6,6 +6,7 @@
   var current = null;
   var restartId = '';
   var lessonLaunchRequested = false;
+  var scannerDialog, gameDialog, presentedId = '', hudState = {}, dialogKind = '';
   var sourceRoot = 'https://endpoint.my.site.com/supportportal/s/article/';
   var sources = {
     mobile: 'Receive-Items-on-Mobile', asn: 'Receive-Purchase-Orders-with-Advanced-Ship-Notices-ASNs',
@@ -40,24 +41,40 @@
       card('practice/date','Date tracked','An expiration date','Read the date on the label and record the quantity.','Practice date receiving') +
       card('practice/partial','Partial delivery','Only part arrived','Receive what arrived and leave the rest of the order open.','Practice a partial receipt') + '</div>' + link('inbound','Back to receiving methods');
   }
-  function newSession(id) { return {state:model.create(id),step:0,message:'',kind:'success',draft:{}}; }
+  function newSession(id) { return {state:model.create(id),step:0,message:'',kind:'success',draft:{},scanned:false,walked:false,lastScan:''}; }
   function fixture() { return current.state.scenario; }
   function accounted() { return current.state.received + current.state.damaged; }
   function deliveryLeft() { return Math.max(0, fixture().delivery - accounted()); }
   function coreLabel() { return {lot:'Lot #',date:'Exp Date',serial:'Serial #'}[fixture().tracking] || 'Item value'; }
+  var draftFields = {'receipt-core':'core','receipt-quantity':'quantity','receipt-damaged':'damaged','po-number':'poNumber','receipt-location':'location'};
+  function draftValue(key,fallback) {
+    if ((key === 'quantity' || key === 'damaged') && current.draft.receiptCount !== current.state.receipts.length) return fallback;
+    return Object.prototype.hasOwnProperty.call(current.draft,key) ? current.draft[key] : fallback;
+  }
+  function rememberDraftField(control) {
+    if (!current || !control || !draftFields[control.id]) return;
+    var key = draftFields[control.id];
+    current.draft[key] = control.value;
+    if (key === 'quantity' || key === 'damaged') current.draft.receiptCount = current.state.receipts.length;
+  }
+  function rememberFormDraft() {
+    if (current && scannerDialog && scannerDialog.open) scannerDialog.querySelectorAll('.in-scanner-body input,.in-scanner-body select').forEach(rememberDraftField);
+  }
   function field(id,label,type,value,hint) {
-    return '<label for="' + id + '">' + label + '</label><input id="' + id + '" name="' + id + '" type="' + (type || 'text') + '" value="' + escape(value || '') + '"' + (type === 'number' ? ' inputmode="numeric" min="0" step="1"' : '') + ' autocomplete="off"' + (hint ? ' aria-describedby="' + id + '-hint"' : '') + '>' + (hint ? '<p class="in-field-note" id="' + id + '-hint">' + hint + '</p>' : '');
+    return '<label for="' + id + '">' + label + '</label><input id="' + id + '" name="' + id + '" type="' + (type || 'text') + '" value="' + escape(value == null ? '' : value) + '"' + (type === 'number' ? ' inputmode="numeric" min="0" step="1"' : '') + ' autocomplete="off"' + (hint ? ' aria-describedby="' + id + '-hint"' : '') + '>' + (hint ? '<p class="in-field-note" id="' + id + '-hint">' + hint + '</p>' : '');
   }
   function locationSelect() {
-    var s = current.state;
-    return '<label for="receipt-location">' + (fixture().channel === 'web' ? 'Bin Number' : 'Receiving location') + '</label><select name="receipt-location" id="receipt-location"><option value="">Choose a receiving bin</option><option value="REC-02"' + (s.location === 'REC-02' ? ' selected' : '') + '>REC-02 / Receiving door 2</option></select><p class="in-field-note">This delivery is at REC-02. A bin is the named location where stock is recorded.</p>';
+    var location = draftValue('location',current.state.location);
+    return '<label for="receipt-location">' + (fixture().channel === 'web' ? 'Bin Number' : 'Receiving location') + '</label><select name="receipt-location" id="receipt-location"><option value=""' + (!location ? ' selected' : '') + '>Choose a receiving bin</option><option value="REC-02"' + (location === 'REC-02' ? ' selected' : '') + '>REC-02 / Receiving door 2</option></select><p class="in-field-note">This delivery is at REC-02. A bin is the named location where stock is recorded.</p>';
   }
   function feedback() { return '<p id="in-feedback" class="in-feedback" role="status" aria-live="polite" data-kind="' + current.kind + '"' + (!current.message ? ' hidden' : '') + '>' + escape(current.message) + '</p>'; }
   function showFeedback(message,kind,focusId) {
     current.message = message; current.kind = kind || 'error';
     var target = document.getElementById('in-feedback');
-    target.hidden = false; target.dataset.kind = current.kind; target.textContent = message;
-    if (focusId && document.getElementById(focusId)) document.getElementById(focusId).focus();
+    if (target) { target.hidden = false; target.dataset.kind = current.kind; target.textContent = message; }
+    floorNotice(message);
+    if (window.InboundWarehouse) window.InboundWarehouse.feedback(current.kind !== 'error',message);
+    if (focusId && scannerDialog && scannerDialog.open && document.getElementById(focusId)) document.getElementById(focusId).focus();
   }
   function receipts() {
     var entries = current.state.inventory;
@@ -107,70 +124,125 @@
     if (current.step >= 4) return resultView();
     var serial = f.tracking === 'serial';
     var fields = '';
-    if (f.tracking !== 'basic') fields += field('receipt-core',coreLabel(),f.tracking === 'date' ? 'date' : 'text','',serial ? 'Read a unique number from the delivery label.' : 'Use the value printed on the delivery label.');
-    if (!serial) fields += field('receipt-quantity','Qty / units arriving now','number','','Count this delivery. ' + deliveryLeft() + ' units are still waiting to be recorded.');
-    if (serial) fields += '<p class="in-field-note">Click each labelled box in the warehouse to scan it. Each scan receives one unit. You can also type its number below.</p>';
-    return task(serial ? 'Scan each serial number' : 'Record what arrived',serial ? 'Each unit needs its own serial number. Click its box in the 3D view, or type the number and choose Scan.' : 'Read the delivery label. Enter the quantity you actually received.',
-      device('Receive Item Detail', '<form class="in-form" data-form="receipt" novalidate>' + fields + '<p class="in-field-note">Receiving location: ' + escape(s.location) + '</p><div class="in-actions"><button class="in-primary" type="submit">' + (serial ? 'Scan serial number' : 'OK') + '</button>' + button('back-step','Back') + '</div></form>'), 'Step 4 of 5');
+    if (serial) return task('Scan each serial number','Return to the warehouse. Aim the scanner at each unit label and hold left mouse. Each accepted scan receives one unit.',device('Receive Item Detail', '<p>' + s.received + ' of ' + f.delivery + ' units received.</p>' + receipts() + button('return-floor','Return to warehouse','in-primary')), 'Step 4 of 5');
+    if (!current.scanned) return task('Read a delivery label','Return to the warehouse. Walk close to a carton, aim at its barcode and hold left mouse to scan.',device('Receive Item Detail',button('return-floor','Return to warehouse','in-primary')), 'Step 4 of 5');
+    if (f.tracking !== 'basic') fields += field('receipt-core',coreLabel(),f.tracking === 'date' ? 'date' : 'text',draftValue('core',''),'Use the value printed on the delivery label.');
+    fields += field('receipt-quantity','Qty / units arriving now','number',draftValue('quantity',''),'Count this delivery. ' + deliveryLeft() + ' units are still waiting to be recorded.');
+    return task('Record what arrived','You read the label on the warehouse floor. Enter the quantity you actually received.',
+      device('Receive Item Detail', '<form class="in-form" data-form="receipt" novalidate>' + fields + '<p class="in-field-note">Receiving location: ' + escape(s.location) + '</p><div class="in-actions"><button class="in-primary" type="submit">'+(f.tracking === 'basic'?'OK':'Add Line')+'</button>' + button('return-floor','Back to warehouse') + '</div></form>'), 'Step 4 of 5');
   }
   function asnTask() {
     var f = fixture();
     if (current.step === 0) return task('Open Receive Inventory','Use this tile to scan a container from an assigned ASN shipment.',device('Mobile home',button('next','Receive Inventory','in-order-button')), 'Step 1 of 4');
-    if (current.step === 1) return task('Scan the container label','Click the container in the warehouse to scan it. This shipment is already assigned to you.',device('Receive Inventory','<form class="in-form" data-form="container" novalidate>' + field('container-code','Container barcode','text','','You can also type ASN-1001 from its label.') + '<div class="in-actions"><button type="submit" class="in-primary">Look up container</button></div></form>'), 'Step 2 of 4');
+    if (current.step === 1) return task('Scan the container label','Return to the floor. Aim at the barcode on the front of the container and hold left mouse. This shipment is assigned to you.',device('Receive Inventory',button('return-floor','Return to warehouse','in-primary')), 'Step 2 of 4');
     if (current.step >= 3) return resultView();
     return task('Check the container contents','The supplier sent these details in advance. You do not type each quantity.',device('Receive Inventory / ASN-1001',
       '<ul class="in-manifest">' + f.manifest.map(function (line) { return '<li><strong>' + escape(line.itemName) + '</strong><span>' + line.quantity + ' units' + (line.core ? ' / ' + escape(line.core) : '') + '</span></li>'; }).join('') + '</ul><form class="in-form" data-form="asn" novalidate>' + locationSelect() + '<button class="in-primary" type="submit">OK</button></form>'), 'Step 3 of 4');
   }
   function webTask() {
     var f = fixture();
-    if (current.step === 0) return task('Find the purchase order','Use Process Receipt on the web console. ASN containers are received on mobile.',device('Process Receipt','<form class="in-form" data-form="web-order" novalidate>' + field('po-number','PO Number','text','','Type ' + escape(f.po) + ' from the delivery label.') + '<button type="submit" class="in-primary">GO</button></form>'), 'Step 1 of 3');
+    if (current.step === 0) return task('Find the purchase order','Use Process Receipt on the web console. ASN containers are received on mobile.',device('Process Receipt','<form class="in-form" data-form="web-order" novalidate>' + field('po-number','PO Number','text',draftValue('poNumber',''),'Type ' + escape(f.po) + ' from the delivery label.') + '<button type="submit" class="in-primary">GO</button></form>'), 'Step 1 of 3');
     if (current.step >= 2) return resultView();
     return task('Choose a bin and record the delivery','Four units arrived: three good, one damaged. The damaged unit goes to the Damage bin.',device('Process Receipt / ' + escape(f.po),'<form class="in-form" data-form="receipt" novalidate>' + locationSelect() +
-      field('receipt-quantity',"Add Qty Recv'd / good units",'number','','Enter the good quantity only.') + field('receipt-damaged','Add Qty Damaged','number','','Good and damaged quantities are added together.') + '<button class="in-primary" type="submit">COMMIT TRANSACTIONS</button></form>') + receipts(), 'Step 2 of 3');
+      field('receipt-quantity',"Add Qty Recv'd / good units",'number',draftValue('quantity',''),'Enter the good quantity only.') + field('receipt-damaged','Add Qty Damaged','number',draftValue('damaged',''),'Good and damaged quantities are added together.') + '<button class="in-primary" type="submit">COMMIT TRANSACTIONS</button></form>') + receipts(), 'Step 2 of 3');
   }
   function closeTask() {
     if (current.state.finished) return resultView();
     return task('Review the received order','All four units have been received. The order is still open until you complete it.',device('Receive Detail / ' + escape(fixture().po),receipts() + button('review-complete','OK','in-primary')), 'Step 1 of 2');
   }
+  function floorNotice(message) { var node = document.getElementById('in-floor-notice'); if (node) node.textContent = message || ''; }
+  function instruction() {
+    var f = fixture(), s = current.state;
+    if (hudState.holding) return {title:'Set the carton down',instruction:'Let go of E or the left mouse button to set it inside the marked REC-02 receiving area. Stock is recorded separately.'};
+    if (s.finished) return {title:'Purchase order completed',instruction:'You can explore the warehouse, or choose another receiving lesson from Menu.'};
+    if (current.closing) return {title:'Review the order',instruction:'Open the handheld screen to confirm completion or leave the order open.'};
+    if (f.channel === 'close') return {title:'Review the received order',instruction:'Right click to inspect the handheld. The four cartons are received; the purchase order still needs completion.'};
+    if (accounted() === f.delivery) return {title:'Delivery received',instruction:s.remaining ? 'The other '+s.remaining+' units remain on order. Open the handheld to review, or leave the order open.' : 'Your receipt is recorded. Open '+(f.channel === 'web' ? 'the office computer' : 'the handheld')+' to review the result.'};
+    if (!current.walked) return {title:'Walk to the delivery',instruction:'Use WASD or the arrow keys. Look down at the cartons by Goods Receiving. Hold E to lift a box; release E to set it down.'};
+    if (f.channel === 'web') return {title:'Use the office computer',instruction:'Check the four cartons: three good, one damaged. Walk to the glass office across the warehouse, aim at the monitor and press E.'};
+    if (f.channel === 'asn') return current.step === 0 ? {title:'Open Receive Inventory',instruction:'Right click to inspect your handheld, then choose Receive Inventory.'} : current.step === 1 ? {title:'Scan the container',instruction:'Aim at the barcode on the front of the container and hold left mouse. F is an alternate scan key.'} : {title:'Confirm the manifest',instruction:'Right click to review the five units on your handheld. Choose OK to receive the container.'};
+    if (current.step < 3) return {title:'Open your receiving task',instruction:'Right click to inspect the handheld. Choose Receiving, '+f.po+', then '+f.itemName.toLowerCase()+'.'};
+    if (f.tracking === 'serial') return {title:'Scan each serial label',instruction:'Aim at each carton barcode and hold left mouse. Each accepted scan receives one unit. '+s.received+' of '+f.delivery+' received.'};
+    if (!current.scanned) return {title:'Scan a delivery label',instruction:'Move close, aim at a carton barcode, and hold left mouse. Use F for a single scan.'};
+    return {title:'Record what arrived',instruction:'Right click to inspect your handheld. Enter the counted quantity'+(f.tracking !== 'basic'?' and the label value':'')+', then choose '+(f.tracking === 'basic'?'OK':'Add Line')+'.'};
+  }
+  function taskView() { return current.closing ? completeView() : current.state.finished ? resultView() : ({mobile:mobileTask,asn:asnTask,web:webTask,close:closeTask}[fixture().channel])(); }
   function lesson() {
-    var f = fixture();
-    var body = current.closing ? completeView() : current.state.finished ? resultView() : ({mobile:mobileTask,asn:asnTask,web:webTask,close:closeTask}[f.channel])();
-    return breadcrumbs(titles[f.id]) + '<header class="in-lesson-head"><p class="in-eyebrow">' + (f.channel === 'web' ? 'Web console' : 'Mobile app') + ' / Guided practice</p><h1>' + titles[f.id] + '</h1></header>' +
-      '<div class="in-workspace"><div class="in-world-column"><div class="in-scene-slot"></div><p class="in-scan-readout" id="in-scan-readout" role="status">Click a box in the warehouse to read its label.</p>' + visual() + '</div>' + body + '</div><div class="in-task-commands">' + link(f.channel === 'mobile' ? 'mobile' : 'inbound','Back to examples') + button('restart','Start again','in-link') + '</div><p class="in-lesson-source">Guided 3D practice with simplified software screens. <a href="' + sourceRoot + sources[f.channel] + '" target="_blank" rel="noopener">Open the matching Endpoint Cloud guide (new tab)</a>.</p>';
+    return '<section class="in-game-shell" aria-label="Receiving warehouse game"><div class="in-scene-slot"></div><div class="in-game-hud"><aside class="in-game-guide" aria-label="Current task"><p class="in-eyebrow">'+escape(titles[fixture().id])+'</p><h1 id="in-game-objective"></h1><p id="in-game-instruction"></p><div class="in-game-progress" id="in-game-progress"></div></aside><nav class="in-game-tools" aria-label="Game controls">'+button('open-device',fixture().channel === 'web'?'Office':'TC22')+button('guide','Guide <kbd>H</kbd>')+button('menu','Menu <kbd>Esc</kbd>')+'</nav><span class="in-game-reticle" aria-hidden="true"></span><p class="in-game-context" id="in-game-context"></p><div class="in-game-keys"><span><kbd>WASD</kbd> Walk</span><span><kbd>E</kbd> Hold to carry</span><span>Right click: handheld</span></div></div><p id="in-floor-notice" role="status" aria-live="polite"></p></section>'+
+      '<dialog class="in-scanner-dialog" id="in-scanner-dialog" aria-labelledby="in-device-title"><header class="in-scanner-header"><div><h2 id="in-device-title">TC22</h2><p>Receiving / Practice</p></div>'+button('return-floor','Return to warehouse')+'</header><div class="in-scanner-body"></div><footer class="in-scanner-footer"><span>'+escape(fixture().po)+' / REC-02</span><span>Example delivery</span></footer></dialog><dialog class="in-game-dialog" id="in-game-dialog" aria-labelledby="in-game-dialog-title"></dialog>';
+  }
+  function refreshHUD() {
+    if (!current) return;
+    var guide = instruction(), f = fixture();
+    document.getElementById('in-game-objective').textContent = guide.title;
+    document.getElementById('in-game-instruction').textContent = guide.instruction;
+    document.getElementById('in-game-progress').textContent = accounted()+' / '+f.delivery+' delivered units recorded';
+    var context = document.getElementById('in-game-context');
+    context.textContent = hudState.hint ? (hudState.hintKey ? hudState.hintKey+' / ' : '')+hudState.hint : 'Left mouse: scan label / Right mouse: handheld';
+    if (window.InboundWarehouse) window.InboundWarehouse.update(current.state,guide);
+  }
+  function onHUD(value) {
+    var previous=hudState.inbound||{}, scan=value.inbound||{};
+    hudState=value; if (!current) return;
+    if(scan.hasWalked)current.walked=true;
+    if(scan.scannerMessage && (scan.scannerFeedback==='error'||scan.scannerFeedback==='success') &&
+      (scan.scannerMessage!==previous.scannerMessage||scan.scannerFeedback!==previous.scannerFeedback))floorNotice(scan.scannerMessage);
+    refreshHUD();
+  }
+  function onDevice(open,computer) {
+    if (!current || !scannerDialog) return;
+    if (!open) { rememberFormDraft(); if(scannerDialog.open)scannerDialog.close(); return; }
+    scannerDialog.classList.toggle('is-computer',!!computer);
+    document.getElementById('in-device-title').textContent=computer?'Office computer':'TC22';
+    scannerDialog.querySelector('.in-scanner-body').innerHTML=computer && fixture().channel!=='web' ? '<article class="in-task"><h2>Use your handheld for this lesson</h2><p>This receiving method uses the TC22. Return to the warehouse and right click to inspect it.</p>'+button('return-floor','Return to warehouse','in-primary')+'</article>' : taskView();
+    if(!scannerDialog.open)scannerDialog.showModal();
+  }
+  function closeGameDialog(resume) { if(gameDialog && gameDialog.open)gameDialog.close();dialogKind='';if(window.InboundWarehouse){window.InboundWarehouse.setModal(false);if(resume)window.InboundWarehouse.play();} }
+  function openGameDialog(kind) {
+    if (!current) return;
+    if(scannerDialog.open && window.InboundWarehouse)window.InboundWarehouse.closeDevice(false);
+    dialogKind=kind;
+    var f=fixture(), guide=instruction();
+    var body=kind==='guide' ? '<h2 id="in-game-dialog-title">How to receive this delivery</h2><p><strong>'+escape(guide.title)+'</strong></p><p>'+escape(guide.instruction)+'</p><ul><li>WASD or arrow keys: walk. Mouse: look around.</li><li>Hold E to carry a carton. Release E to put it down. Right mouse rotates a held carton.</li><li>Hold left mouse to scan a barcode. F takes one scan.</li><li>Right click or Tab: inspect your handheld. Q: equip or stow it.</li><li>Walk to the office monitor and press E to use web receiving.</li></ul><p>'+f.delivery+' units arrived against '+f.ordered+' ordered on '+escape(f.po)+'.</p><p><a href="'+sourceRoot+sources[f.channel]+'" target="_blank" rel="noopener">Open the matching Endpoint Cloud guide (new tab)</a></p>' : '<h2 id="in-game-dialog-title">Warehouse paused</h2><p>'+escape(titles[f.id])+'. '+accounted()+' of '+f.delivery+' delivered units recorded.</p>';
+    gameDialog.innerHTML=body+'<div class="in-actions">'+button('resume-game','Back to game','in-primary')+(kind==='menu'?button('guide','How to play')+button('restart','Start this lesson again')+link('inbound','Choose another lesson','in-secondary'):'')+'</div>';
+    if(window.InboundWarehouse)window.InboundWarehouse.setModal(true);
+    if(!gameDialog.open)gameDialog.showModal();
   }
   function nativeScan(code) {
-    if (!current) return;
-    var f = fixture();
-    if (!code) { document.getElementById('in-scan-readout').textContent = 'Click a labelled box to read it.'; return; }
-    document.getElementById('in-scan-readout').textContent = 'Label read: ' + code;
-    if (f.channel === 'asn' && current.step === 1) { var found = model.selectContainer(current.state,code); if (found.ok) next(2); else showFeedback(found.message); }
-    else if (f.channel === 'mobile' && current.step === 2 && (code === f.sku || f.tracking !== 'basic')) next(3);
-    else if (f.channel === 'mobile' && current.step === 3) {
-      if (f.tracking === 'serial') receiveSerial(code);
-      else if (f.tracking === 'lot' || f.tracking === 'date') { document.getElementById('receipt-core').value = code; showFeedback('Label read. Enter how many units arrived.','success','receipt-quantity'); }
-      else showFeedback('Item label read: ' + code + '. Count the delivery, then enter the quantity.','success','receipt-quantity');
-    }
+    if (!current || !code) return;
+    var f=fixture();
+    if (f.channel==='asn' && current.step===1) { var selected=model.selectContainer(current.state,code); if(selected.ok){current.scanned=true;current.lastScan=code;next(2);showFeedback('Container read. Right click to check its contents.','success');}else showFeedback(selected.message);return; }
+    var matches=f.tracking==='serial'?f.serials.indexOf(code)!==-1:code===(f.core||f.sku);
+    if(!matches){showFeedback('That label is not the item for this task. Aim at this delivery.');return;}
+    current.scanned=true;current.lastScan=code;if(f.tracking==='lot'||f.tracking==='date')current.draft.core=code;
+    if(f.channel==='mobile' && current.step===3 && f.tracking==='serial'){receiveSerial(code);return;}
+    render(false);showFeedback('Read '+code+'. Right click to continue on the handheld.','success');
   }
   function attachWarehouse() {
     if (!current) return;
-    var target = main.querySelector('.in-scene-slot');
-    main.querySelector('.in-task').inert = true;
-    if (!lessonLaunchRequested && !window.InboundWarehouse) { target.innerHTML = '<div class="in-visual"><h2>Your 3D receiving lesson</h2><p>The warehouse loads once for all examples.</p>' + button('start-3d','Open the warehouse','in-primary') + '</div>'; return; }
-    if (window.InboundWarehouse) { window.InboundWarehouse.mount(target,current.state,{onScan:nativeScan}); return; }
-    target.innerHTML = '<p class="in-note" role="status">Opening the warehouse...</p>';
-    window.loadInboundWarehouse().then(function () { if (current) attachWarehouse(); }).catch(function () { if (current) target.innerHTML = '<p>Could not load the warehouse. Check your connection and reload.</p>'; });
+    var target=main.querySelector('.in-scene-slot');
+    if(!lessonLaunchRequested&&!window.InboundWarehouse){target.innerHTML='<div class="in-warehouse-loading"><h2>Enter the warehouse</h2><p>Walk, carry cartons and scan their labels. Use a keyboard and mouse.</p>'+button('start-3d','Play this lesson','in-primary')+'</div>';return;}
+    if(window.InboundWarehouse){window.InboundWarehouse.mount(target,current.state,{guide:instruction(),onScan:nativeScan,onHUD:onHUD,onDevice:onDevice,onNotice:floorNotice,onMenu:function(){if(restartDialog.open)restartDialog.close();else if(gameDialog.open)closeGameDialog(true);else openGameDialog('menu');},onHelp:function(){openGameDialog('guide');},onAvailability:function(value){var control=main.querySelector('[data-action="open-device"]');if(control)control.disabled=!value;}});if(gameDialog.open||restartDialog.open)window.InboundWarehouse.setModal(true);return;}
+    target.innerHTML='<div class="in-warehouse-loading"><h2>Opening the warehouse...</h2></div>';
+    window.loadInboundWarehouse().then(function(){if(current)attachWarehouse();}).catch(function(){if(current)target.innerHTML='<div class="in-warehouse-loading"><h2>The warehouse could not load.</h2><p>Check your connection and reload this page.</p></div>';});
   }
-  function render(focus) {
-    if (window.InboundWarehouse) window.InboundWarehouse.park();
-    var route = location.hash.slice(1), id = route.split('/')[1];
-    current = null;
-    if (route.indexOf('practice/') === 0 && model.catalog.some(function (f) { return f.id === id; })) {
-      current = sessions[id] || (sessions[id] = newSession(id)); main.innerHTML = lesson();
-    } else main.innerHTML = route === 'inbound' ? inbound() : route === 'mobile' ? mobile() : home();
-    document.title = current ? titles[id] + ' | Receiving practice' : 'Receiving practice';
-    document.body.classList.toggle('inbound-3d',!!current);
-    if (current) attachWarehouse();
-    if (focus) { var heading = document.getElementById('in-step-title') || main.querySelector('h1'); heading.tabIndex = -1; heading.focus(); }
+  function render(focus,reset) {
+    var route=location.hash.slice(1),id=route.split('/')[1];
+    var playable=route.indexOf('practice/')===0&&model.catalog.some(function(f){return f.id===id;});
+    if(!playable||presentedId!==id){
+      if(window.InboundWarehouse)window.InboundWarehouse.park();
+      if(scannerDialog&&scannerDialog.open)scannerDialog.close();if(gameDialog&&gameDialog.open)gameDialog.close();
+      presentedId='';current=null;scannerDialog=gameDialog=null;hudState={};
+    }
+    document.body.classList.toggle('inbound-game',playable);document.body.classList.remove('inbound-3d');
+    if(playable){
+      current=sessions[id]||(sessions[id]=newSession(id));
+      if(presentedId!==id){main.innerHTML=lesson();presentedId=id;scannerDialog=document.getElementById('in-scanner-dialog');gameDialog=document.getElementById('in-game-dialog');scannerDialog.addEventListener('cancel',function(e){e.preventDefault();window.InboundWarehouse.closeDevice(true);});gameDialog.addEventListener('cancel',function(e){e.preventDefault();closeGameDialog(true);});attachWarehouse();}
+      scannerDialog.querySelector('.in-scanner-body').innerHTML=taskView();refreshHUD();
+      if(reset&&window.InboundWarehouse)window.InboundWarehouse.update(current.state,instruction(),true);
+      if(focus&&scannerDialog.open){var heading=document.getElementById('in-step-title');if(heading)heading.focus();}
+    }else{main.innerHTML=route==='inbound'?inbound():route==='mobile'?mobile():home();if(focus){var title=main.querySelector('h1');title.tabIndex=-1;title.focus();}}
+    document.title=current?titles[id]+' | Receiving practice':'Receiving practice';
   }
   function next(step) { current.step = step == null ? current.step + 1 : step; current.message = ''; render(true); }
   function receiptResult(result) {
@@ -178,13 +250,22 @@
     current.message = result.message; current.kind = 'success';
     current.step = fixture().channel === 'web' ? 2 : fixture().channel === 'asn' ? 3 : 4;
     render(true);
+    floorNotice(result.message); if(window.InboundWarehouse)window.InboundWarehouse.feedback(true,result.message);
   }
   function receiveSerial(number) {
+    if (!canReceive()) return;
     var result = model.receive(current.state,{core:number});
     if (!result.ok) { showFeedback(result.message,'error','receipt-core'); return; }
     if (deliveryLeft() === 0) receiptResult(result);
-    else { current.message = result.message + ' Scan the next unit.'; current.kind = 'success'; render(false); document.getElementById('receipt-core').focus(); }
+    else { current.message = result.message + ' Scan the next unit.'; current.kind = 'success'; render(false); }
+    floorNotice(current.message);window.InboundWarehouse.feedback(true,current.message);
   }
+  function canReceive() {
+    if(!window.InboundWarehouse||!window.InboundWarehouse.checkReceiving()){showFeedback('Put every delivered carton down inside REC-02 before recording this receipt.');return false;}
+    return true;
+  }
+  main.addEventListener('input',function (event) { rememberDraftField(event.target); });
+  main.addEventListener('change',function (event) { rememberDraftField(event.target); });
   main.addEventListener('click',function (event) {
     var lessonLink = event.target.closest('a[href^="#practice/"]');
     if (lessonLink) lessonLaunchRequested = true;
@@ -192,12 +273,18 @@
     if (!control || !current) return;
     var action = control.dataset.action;
     if (action === 'start-3d') { lessonLaunchRequested = true; attachWarehouse(); }
+    else if (action === 'open-device') { if(window.InboundWarehouse)window.InboundWarehouse.openDevice(); }
+    else if (action === 'return-floor') { if(window.InboundWarehouse)window.InboundWarehouse.closeDevice(true); }
+    else if (action === 'guide') openGameDialog('guide');
+    else if (action === 'menu') openGameDialog('menu');
+    else if (action === 'resume-game') closeGameDialog(true);
     else if (action === 'next') next();
     else if (action === 'back-step') next(Math.max(0,current.step - 1));
     else if (action === 'more') next(fixture().channel === 'web' ? 1 : fixture().channel === 'asn' ? 1 : 3);
     else if (action === 'review-complete') { current.closing = true; current.message = ''; render(true); }
     else if (action === 'cancel-close') { current.closing = false; current.message = 'The purchase order is still open. No quantities changed.'; current.kind = 'success'; render(true); }
     else if (action === 'confirm-close') {
+      if(!window.InboundWarehouse||!window.InboundWarehouse.ready())return;
       current.state.integrated = document.getElementById('integration-setup').value === 'yes';
       var completion = model.complete(current.state);
       if (completion.ok) { current.closing = false; current.message = ''; render(true); } else showFeedback(completion.message);
@@ -208,6 +295,7 @@
       current.message = undo.message; current.kind = 'success'; render(true);
     } else if (action === 'restart') {
       restartId = fixture().id;
+      closeGameDialog(false);
       restartDialog.showModal();
       if (window.InboundWarehouse) window.InboundWarehouse.setModal(true);
     }
@@ -221,12 +309,8 @@
       if (String(data.get('po-number')).trim().toUpperCase() !== f.po) { showFeedback('Use ' + f.po + ', the purchase order on this delivery label.','error','po-number'); return; }
       next(1); return;
     }
-    if (form.dataset.form === 'container') {
-      var selected = model.selectContainer(current.state,String(data.get('container-code')).trim());
-      if (selected.ok) next(2); else showFeedback(selected.message,'error','container-code');
-      return;
-    }
-    if (f.tracking === 'serial') { receiveSerial(String(data.get('receipt-core')).trim()); return; }
+    if (!canReceive()) return;
+    if (f.channel==='mobile' && !current.scanned) { showFeedback('Return to the floor and scan a delivery label first.'); return; }
     if ((f.tracking === 'lot' || f.tracking === 'date') && String(data.get('receipt-core')).trim() !== f.core) {
       showFeedback('For this delivery, use ' + f.core + ' exactly as printed on the label.','error','receipt-core'); return;
     }
@@ -246,7 +330,7 @@
   document.getElementById('inbound-app').appendChild(restartDialog);
   restartDialog.addEventListener('close',function () { if(window.InboundWarehouse)window.InboundWarehouse.setModal(false); });
   document.getElementById('in-cancel-restart').addEventListener('click',function () { restartDialog.close(); });
-  document.getElementById('in-confirm-restart').addEventListener('click',function () { if (restartId) sessions[restartId] = newSession(restartId); restartDialog.close(); render(true); });
+  document.getElementById('in-confirm-restart').addEventListener('click',function () { if (restartId) sessions[restartId] = newSession(restartId); restartDialog.close(); hudState={}; render(true,true); if(window.InboundWarehouse)window.InboundWarehouse.play(); });
   window.addEventListener('hashchange',function () { restartDialog.close(); help.close(); render(true); });
   render(false);
 }());

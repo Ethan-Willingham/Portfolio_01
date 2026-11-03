@@ -297,6 +297,8 @@ body.inbound-page.inbound-3d #inbound-app .in-bin { margin-top:13px; font-size:1
 #inbound-app .in-task.is-loading :disabled { cursor:wait; }
 body.inbound-page .in-orientation-gate { position:fixed; inset:0; z-index:50; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:20px; min-height:100vh; min-height:100dvh; padding:34px; background:var(--in-surface); color:var(--in-ink); text-align:center; }
 body.inbound-page .in-orientation-gate h1 { max-width:450px; margin:0; font:600 32px/1.2 var(--in-font); letter-spacing:-.025em; }
+body.inbound-page dialog.in-orientation-gate { width:100vw; max-width:none; height:100dvh; max-height:none; margin:0; border:0; }
+body.inbound-page dialog.in-orientation-gate::backdrop { background:var(--in-surface); }
 body.inbound-page .in-orientation-gate p { max-width:390px; margin:0; font-size:18px; line-height:1.5; color:var(--in-muted); }
 body.inbound-page .in-orientation-gate button,body.inbound-page .in-orientation-gate a { display:inline-flex; align-items:center; justify-content:center; min-height:54px; padding:12px 20px; border:1px solid var(--in-muted); border-radius:5px; background:var(--in-paper); color:var(--in-ink); font:600 18px/1.5 var(--in-font); text-decoration:none; }
 @media (min-width:681px) and (max-width:1100px) {
@@ -319,4 +321,125 @@ body.inbound-page .in-orientation-gate button,body.inbound-page .in-orientation-
   body.inbound-page.inbound-3d #inbound-app .in-lesson-head { margin-bottom:16px; }
   #inbound-app .in-warehouse-stage { min-height:285px; }
   #inbound-app .in-warehouse-controls { padding:7px 10px; }
+}
+
+/* In a lesson the warehouse fills the screen. Software opens on the TC22. */
+body.inbound-page.inbound-game { overflow:hidden; background:var(--in-ink); }
+body.inbound-page.inbound-game #inbound-app.in-shell { width:100%; max-width:none; min-height:100dvh; padding:0; }
+body.inbound-page.inbound-game #inbound-app > :is(.in-header,.in-footer) { display:none; }
+body.inbound-page.inbound-game #inbound-app #in-main { width:100%; height:100dvh; min-height:240px; padding:0; }
+#inbound-app .in-game-shell { position:fixed; inset:0; isolation:isolate; width:100%; height:100vh; height:100dvh; min-height:240px; overflow:hidden; background:var(--in-ink); }
+#inbound-app .in-game-shell .in-scene-slot { position:absolute; inset:0; }
+#inbound-app .in-game-shell .in-warehouse-stage { position:absolute; inset:0; width:100%; height:100%; aspect-ratio:auto; min-height:0; border:0; border-radius:0; }
+#inbound-app .in-game-shell #in-warehouse-canvas { cursor:default; touch-action:none; }
+#inbound-app .in-game-shell .in-warehouse-controls { display:none; }
+#inbound-app .in-game-shell .in-warehouse-loading { padding:32px; }
+#inbound-app .in-game-shell .in-warehouse-loading h2 { font-size:clamp(27px,3vw,38px); max-width:600px; }
+#inbound-app .in-game-shell .in-warehouse-loading p { font-size:18px; }
+#inbound-app .in-game-shell .in-warehouse-loading progress { width:min(100%,460px); }
+#inbound-app .in-game-hud { position:absolute; z-index:6; inset:0; pointer-events:none; color:var(--in-surface); }
+#inbound-app .in-game-guide { position:absolute; top:max(20px,env(safe-area-inset-top)); left:max(24px,env(safe-area-inset-left)); width:min(370px,calc(100% - 295px)); padding:18px 20px 15px; border:1px solid #c3b39673; border-left:3px solid var(--in-line); border-radius:4px; background:#252620e8; color:var(--in-surface); }
+#inbound-app .in-game-guide .in-eyebrow { color:var(--in-paper); font-size:13px; letter-spacing:.05em; margin-bottom:9px; }
+#inbound-app .in-game-guide h1 { margin:0 0 10px; color:var(--in-surface); font-size:23px; line-height:1.2; letter-spacing:-.025em; }
+#inbound-app .in-game-guide p { color:var(--in-paper); font-size:17px; line-height:1.45; }
+#inbound-app .in-game-progress { margin-top:13px; padding-top:11px; border-top:1px solid #c3b39673; color:var(--in-paper); font-size:14px; font-weight:600; }
+#inbound-app .in-game-progress progress { display:block; width:100%; height:4px; margin:8px 0 0; border:0; accent-color:var(--in-paper); background:#655e4c; }
+#inbound-app .in-game-tools { position:absolute; top:max(20px,env(safe-area-inset-top)); right:max(24px,env(safe-area-inset-right)); display:flex; align-items:center; flex-wrap:wrap; justify-content:flex-end; gap:8px; pointer-events:auto; }
+#inbound-app .in-game-tools :is(button,a) { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-width:62px; min-height:48px; padding:10px 15px; border:1px solid #c3b396a6; border-radius:4px; background:#252620e8; color:var(--in-surface); font:600 16px/1.4 var(--in-font); text-decoration:none; }
+#inbound-app .in-game-tools :is(button,a):hover { background:var(--in-muted); }
+#inbound-app .in-game-tools :is(button,a):focus-visible { outline-color:var(--in-paper); }
+#inbound-app .in-game-tools kbd,#inbound-app .in-game-context kbd,#inbound-app .in-game-keys kbd { display:inline-block; padding:2px 6px; border:1px solid #c3b396a6; border-radius:3px; background:#2526204d; color:var(--in-paper); font:600 13px/1.5 var(--in-font); }
+#inbound-app .in-game-reticle { position:absolute; top:50%; left:50%; width:5px; height:5px; border:1px solid var(--in-ink); border-radius:50%; background:var(--in-surface); box-shadow:0 0 0 2px #2526204d; transform:translate(-50%,-50%); pointer-events:none; }
+#inbound-app .in-game-reticle.is-target { width:10px; height:10px; border:2px solid var(--in-surface); background:transparent; box-shadow:0 0 0 1px var(--in-ink); }
+#inbound-app .in-game-context { position:absolute; left:50%; bottom:max(26px,env(safe-area-inset-bottom)); display:flex; align-items:center; justify-content:center; gap:12px; width:max-content; max-width:calc(100% - 48px); min-height:47px; padding:10px 16px; border:1px solid #c3b39680; border-radius:4px; background:#252620eb; color:var(--in-surface); font-size:17px; text-align:center; transform:translateX(-50%); }
+#inbound-app .in-game-context:empty { display:none; }
+#inbound-app .in-game-keys { position:absolute; left:max(24px,env(safe-area-inset-left)); bottom:max(26px,env(safe-area-inset-bottom)); display:flex; align-items:center; flex-wrap:wrap; gap:6px 13px; max-width:310px; padding:8px 12px; border-radius:3px; background:#252620cc; color:var(--in-paper); font-size:14px; line-height:1.7; }
+#inbound-app #in-floor-notice { position:absolute; z-index:7; left:50%; bottom:max(91px,calc(env(safe-area-inset-bottom) + 65px)); width:max-content; max-width:min(600px,calc(100% - 48px)); padding:11px 17px; border:1px solid #c3b39680; border-radius:4px; background:#252620ed; color:var(--in-surface); font-size:17px; line-height:1.45; text-align:center; transform:translateX(-50%); pointer-events:none; }
+#inbound-app #in-floor-notice:empty { display:none; }
+#inbound-app .in-game-shell .in-warehouse-gate { z-index:4; padding:28px; background:#252620c9; }
+#inbound-app .in-game-shell .in-warehouse-gate h2 { max-width:600px; font-size:32px; }
+#inbound-app .in-game-shell .in-warehouse-gate p { max-width:480px; font-size:18px; }
+#inbound-app .in-game-shell .in-warehouse-gate button { min-height:54px; font-size:18px; }
+
+body.inbound-page dialog.in-scanner-dialog { position:fixed; inset:18px 24px 18px auto; width:440px; max-width:calc(100% - 32px); height:calc(100dvh - 36px); max-height:820px; margin:auto 0; padding:16px 11px 12px; overflow:hidden; border:2px solid var(--in-muted); border-radius:22px; background:var(--in-ink); color:var(--in-surface); font:18px/1.5 var(--in-font); box-shadow:inset 0 0 0 3px #171a16,0 16px 60px #171a1666; }
+body.inbound-page dialog.in-scanner-dialog[open] { display:flex; flex-direction:column; }
+body.inbound-page dialog.in-scanner-dialog::backdrop { background:#25262040; }
+#inbound-app .in-scanner-header { display:flex; flex:none; align-items:center; justify-content:space-between; gap:12px; padding:0 7px 14px; color:var(--in-surface); }
+#inbound-app .in-scanner-header :is(h1,h2,h3) { margin:0; color:var(--in-surface); font-size:21px; font-weight:600; line-height:1.25; }
+#inbound-app .in-scanner-header p { margin:2px 0 0; font-size:13px; color:var(--in-paper); }
+#inbound-app .in-scanner-header button { flex-shrink:0; min-height:46px; padding:9px 12px; border:1px solid var(--in-line); border-radius:4px; background:transparent; color:var(--in-surface); font-size:15px; }
+#inbound-app .in-scanner-header button:hover { background:var(--in-muted); }
+#inbound-app .in-scanner-header button:focus-visible { outline-color:var(--in-paper); }
+#inbound-app .in-scanner-body { flex:1; min-height:0; overflow:auto; overscroll-behavior:contain; padding:23px 21px; border:1px solid var(--in-muted); border-radius:6px; background:var(--in-surface); color:var(--in-ink); scrollbar-color:var(--in-muted) var(--in-soft); }
+#inbound-app .in-scanner-body .in-task { padding:0; border:0; border-radius:0; background:transparent; }
+#inbound-app .in-scanner-body .in-task > h2 { font-size:25px; }
+#inbound-app .in-scanner-body .in-task > p { font-size:17px; }
+#inbound-app .in-scanner-body .in-step { margin-bottom:8px; }
+#inbound-app .in-scanner-body .in-device { padding:17px; margin-top:20px; }
+#inbound-app .in-scanner-body .in-device-bar { margin:-17px -17px 17px; padding:11px 16px; font-size:15px; }
+#inbound-app .in-scanner-body .in-form label { font-size:17px; }
+#inbound-app .in-scanner-body .in-actions { gap:10px; margin-top:18px; }
+#inbound-app .in-scanner-body .in-actions > :is(button,a) { flex:1 1 130px; }
+#inbound-app .in-scanner-body .in-actions .in-link { flex-basis:100%; }
+#inbound-app .in-scanner-body .in-field-note { font-size:15px; }
+#inbound-app .in-scanner-body .in-feedback { font-size:16px; }
+#inbound-app .in-scanner-footer { flex:none; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:5px 14px; padding:11px 7px 0; color:var(--in-paper); font-size:13px; }
+#inbound-app .in-scanner-footer button { min-height:44px; padding:8px 12px; border:1px solid var(--in-line); border-radius:4px; background:transparent; color:var(--in-surface); font-size:14px; }
+#inbound-app .in-scanner-footer button:focus-visible { outline-color:var(--in-paper); }
+body.inbound-page dialog.in-scanner-dialog.is-computer { inset:24px; width:min(980px,calc(100% - 48px)); height:calc(100dvh - 48px); max-height:850px; margin:auto; padding:14px; border-radius:9px; }
+#inbound-app .in-scanner-dialog.is-computer .in-scanner-body { padding:28px 32px; }
+#inbound-app .in-scanner-dialog.is-computer .in-task { max-width:760px; margin:0 auto; }
+#inbound-app .in-scanner-dialog.is-computer .in-form { grid-template-columns:1fr; }
+body.inbound-page dialog.in-game-dialog { width:min(680px,calc(100% - 32px)); max-height:calc(100dvh - 40px); margin:auto; padding:32px; overflow:auto; border:1px solid var(--in-line); border-radius:7px; background:var(--in-surface); color:var(--in-ink); font:18px/1.5 var(--in-font); }
+body.inbound-page dialog.in-game-dialog::backdrop { background:#252620a8; }
+#inbound-app .in-game-dialog :is(h1,h2) { margin:0 0 16px; font-size:30px; line-height:1.2; }
+#inbound-app .in-game-dialog p { margin:12px 0; }
+#inbound-app .in-game-dialog ul { padding-left:24px; }
+#inbound-app .in-game-dialog li { margin:8px 0; }
+#inbound-app .in-game-dialog button { min-height:52px; padding:12px 20px; border:1px solid var(--in-muted); border-radius:5px; background:transparent; color:var(--in-ink); font:600 17px/1.5 var(--in-font); }
+#inbound-app .in-game-dialog button.in-primary { border-color:var(--in-rust); background:var(--in-rust); color:var(--in-surface); }
+#inbound-app .in-game-dialog .in-actions { margin-top:22px; }
+@media (max-width:1000px) {
+  #inbound-app .in-game-guide { top:14px; left:16px; width:320px; max-width:calc(100% - 275px); padding:15px 17px 13px; }
+  #inbound-app .in-game-guide h1 { font-size:21px; }
+  #inbound-app .in-game-guide p { font-size:16px; }
+  #inbound-app .in-game-tools { top:14px; right:16px; }
+  #inbound-app .in-game-tools :is(button,a) { min-width:56px; min-height:46px; padding:10px 12px; font-size:15px; }
+  #inbound-app .in-game-keys { left:16px; bottom:16px; max-width:230px; font-size:13px; }
+  #inbound-app .in-game-context { bottom:16px; font-size:16px; max-width:calc(100% - 32px); }
+  body.inbound-page dialog.in-scanner-dialog { inset:12px 16px 12px auto; width:410px; height:calc(100dvh - 24px); padding:13px 9px 10px; border-radius:18px; }
+  #inbound-app .in-scanner-body { padding:19px 17px; }
+}
+@media (max-height:550px) {
+  #inbound-app .in-game-guide { top:12px; left:14px; width:300px; padding:12px 15px 11px; }
+  #inbound-app .in-game-guide .in-eyebrow { font-size:12px; margin-bottom:6px; }
+  #inbound-app .in-game-guide h1 { font-size:20px; margin-bottom:7px; }
+  #inbound-app .in-game-guide p { font-size:15px; line-height:1.4; }
+  #inbound-app .in-game-progress { margin-top:9px; padding-top:8px; font-size:13px; }
+  #inbound-app .in-game-tools { top:12px; right:14px; gap:6px; }
+  #inbound-app .in-game-tools :is(button,a) { min-height:44px; padding:8px 10px; }
+  #inbound-app .in-game-keys { bottom:12px; left:14px; padding:6px 9px; max-width:190px; }
+  #inbound-app .in-game-context { bottom:12px; padding:8px 12px; min-height:44px; }
+  #inbound-app #in-floor-notice { bottom:71px; padding:9px 14px; font-size:15px; }
+  #inbound-app .in-game-shell .in-warehouse-gate { gap:12px; }
+  #inbound-app .in-game-shell .in-warehouse-gate h2 { font-size:27px; }
+  #inbound-app .in-game-shell .in-warehouse-gate p { font-size:16px; }
+  body.inbound-page dialog.in-scanner-dialog { inset:8px 12px 8px auto; width:390px; height:calc(100dvh - 16px); padding:10px 8px 8px; border-radius:14px; }
+  #inbound-app .in-scanner-header { padding:0 5px 9px; }
+  #inbound-app .in-scanner-header :is(h1,h2,h3) { font-size:19px; }
+  #inbound-app .in-scanner-header button { min-height:44px; }
+  #inbound-app .in-scanner-body { padding:17px 15px; }
+  #inbound-app .in-scanner-footer { padding:7px 5px 0; }
+  body.inbound-page dialog.in-scanner-dialog.is-computer { inset:12px; width:calc(100% - 24px); height:calc(100dvh - 24px); }
+  #inbound-app .in-scanner-dialog.is-computer .in-scanner-body { padding:20px 26px; }
+  body.inbound-page dialog.in-game-dialog { max-height:calc(100dvh - 24px); padding:24px; }
+}
+@media (max-width:680px) {
+  #inbound-app .in-game-guide { width:calc(100% - 145px); max-width:310px; padding:13px 15px; }
+  #inbound-app .in-game-tools { flex-direction:column; gap:6px; align-items:stretch; }
+  #inbound-app .in-game-tools :is(button,a) { min-height:44px; }
+  #inbound-app .in-game-context { bottom:14px; }
+  #inbound-app .in-game-keys { bottom:76px; max-width:190px; }
+  body.inbound-page dialog.in-scanner-dialog { inset:8px 8px 8px auto; width:min(410px,calc(100% - 16px)); max-width:calc(100% - 16px); }
+  #inbound-app .in-scanner-dialog.is-computer .in-scanner-body { padding:18px; }
 }

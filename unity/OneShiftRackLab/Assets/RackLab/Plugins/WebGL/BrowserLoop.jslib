@@ -26,9 +26,6 @@ mergeInto(LibraryManager.library, {
     var receiver = window.InboundWarehouse;
     if (receiver && typeof receiver.onSceneSynced === 'function') receiver.onSceneSynced(JSON.parse(UTF8ToString(json)));
   },
-  WarehouseInboundPointerOverCanvas: function () {
-    return Module['canvas'] && Module['canvas'].matches(':hover') ? 1 : 0;
-  },
   OneShiftRegisterBrowserLoop__deps: ['emscripten_pause_main_loop', 'emscripten_resume_main_loop'],
   OneShiftRegisterBrowserLoop: function () {
     // Export the engine's own scheduling controls for the host page.

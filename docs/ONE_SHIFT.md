@@ -1,10 +1,11 @@
 # The Warehouse Simulator
 
 `one-shift.html` now opens Receiving practice. The owner's 2026-11-03 direction
-keeps the 3D warehouse with guided receiving steps, reached through a lightweight
-"What would you like to do?" opening and an Inbound choice. Each selected method
-opens its own delivery in the warehouse beside plain software instructions for
-people unfamiliar with computers. The original Warehouse Simulator launcher,
+makes each lesson a playable first-person warehouse, reached through an immediate
+"What would you like to do?" opening and an Inbound choice. Walk to the delivery,
+handle cartons and scan their labels, then use receiving software on the TC22
+or office computer. Plain instructions guide people unfamiliar with computers.
+The original Warehouse Simulator launcher,
 formerly One Shift, remains available at `one-shift.html?view=warehouse`; its
 two-carton receiving and putaway briefing is
 `one-shift.html?mode=demo&demo=receive`.
@@ -23,19 +24,31 @@ the build versions in `js/one-shift-unity.js`,
 `js/one-shift-inbound-warehouse.js` and `BrowserLifecycle.BuildVersion`
 whenever the published build changes.
 
-## Current v14: guided receiving in the 3D warehouse
+## Current v15: playable receiving in the warehouse
 
 The default path is Home > Inbound > a receiving method. Mobile purchase-order
 receiving has basic, lot-number, serial-number, expiration-date and partial-delivery
 examples. ASN container receiving, web receiving and purchase-order completion
-are separate examples. Each selected example opens the 3D receiving dock with its
-actual delivered unit count and labels. A fixed camera keeps every unit reachable
-by clicking, with no walking or mouse capture to learn. The software panel gives
-one next instruction and the current quantities. Buttons are large, keyboard
-focus is visible, feedback includes words, and there is no timer. Back keeps
-practice work while the page is open; Start again confirms before clearing that
-example. The warehouse stays loaded while changing examples. Active mobile
-lessons use landscape; portrait shows the rotation gate and suspends interaction.
+are separate examples. Each selected example opens the playable 3D warehouse
+with its actual delivered unit count and labels. A small contextual guide gives
+one next instruction and the current quantities. Receiving screens open on
+demand through the handheld or office computer. Buttons are large, keyboard
+focus is visible, feedback includes words, and there is no timer. Returning to
+the menus keeps practice records while the page is open; Start again confirms
+before clearing that example. The warehouse stays loaded while changing examples.
+Gameplay requires a keyboard and mouse. Coarse-pointer portrait views show the
+rotation gate and suspend interaction; returning to landscape preserves manual
+pause.
+
+WASD or arrow keys walk, and the mouse looks around after Start playing captures
+it. Hold E to carry a carton; releasing E sets it down. Holding left mouse also
+carries while the scanner is stowed. Right mouse rotates a held carton. Q equips
+or stows the TC22. Hold left mouse to aim its imager and scan a visible barcode;
+F takes a single scan. Right click or Tab opens the handheld software. Web
+receiving requires walking to the glass office, aiming at the monitor and
+pressing E. H opens the guide and Escape opens the menu. A first click that
+captures the mouse does not also scan. Device screens release pointer capture;
+returning to the floor reacquires it through a deliberate user action.
 
 These are simplified practice screens following the linked Endpoint Cloud
 articles, not an exact reproduction of the company's interface. All goods,
@@ -56,7 +69,7 @@ the practice sessions.
   `js/one-shift-inbound-model.js` and `js/one-shift-inbound.js` for the opening
   menus. Selecting a lesson loads `js/demo-activity.js` and
   `js/one-shift-inbound-warehouse.js`, then the shared Unity build. Opening a
-  lesson URL directly requires its Open the warehouse action. Any `mode` query,
+  lesson URL directly requires its Play this lesson action. Any `mode` query,
   or `view=warehouse`, opens the retained game launcher instead. The splash does
   not request the old warehouse cover or compiled player.
 - `js/one-shift-inbound-model.js` owns the eight fixtures, receipts, inventory,
@@ -64,43 +77,52 @@ the practice sessions.
   uses the same module. `create`, `setLocation`, `selectContainer`, `receive`,
   `complete` and `undoLast` are the transaction boundary.
 - `js/one-shift-inbound.js` renders hash routes (`#inbound`, `#mobile` and
-  `#practice/<id>`) and keeps each example's state in memory. It provides
-  the native scene slot, labeled forms, result tables, source links, Help and
-  restart confirmation. No browser storage or network writes are used by this
-  practice runtime.
+  `#practice/<id>`) and keeps each example's state in memory. It provides the
+  playable scene, current objective, device dialogs, labeled forms, result
+  tables, source links, guide and restart confirmation. No browser storage or
+  network writes are used by this practice runtime.
 - `js/one-shift-inbound-warehouse.js` is the dedicated receiving Unity host. It
   does not load the original game's HUD or WMS browser interface. It retains one
-  player instance, mounts it beside the selected lesson, and parks it on menu
-  screens. `DemoActivity` stops frame scheduling on inactivity; manual pause,
-  dialogs and the mobile orientation gate are independent. Controls wait for
-  graphics preparation and acknowledgement of the current receipt snapshot.
+  player instance, mounts it as the selected lesson's main view, and parks it on
+  menu screens. It owns pointer capture and the handheld interface. The native
+  office camera transition continues until the computer opens. `DemoActivity`
+  stops frame scheduling on inactivity; manual pause, dialogs and the mobile
+  orientation gate are independent. Each gate clears held input. Controls wait
+  for graphics preparation and acknowledgement of the current receipt snapshot.
 - `WarehouseInboundPractice.cs` is an isolated native scene adapter, selected as
   mode 5 by `BrowserLoop.jslib` from `window.OneShiftShell.lesson`. It reads
   `initialInboundState` before graphics preparation and creates exactly the
   delivered units in REC-02, each representing one `EA`. It suppresses the old
   pallet, parcel, business and forklift simulations and creates no
-  `WarehouseWmsRuntime` or second inventory ledger.
+  `WarehouseWmsRuntime` or second inventory ledger. It retains the walking
+  controller, physical carton grabber, office camera and TC22 scanner.
 
 The browser model is the receiving authority. `inbound-setup` explicitly replaces
 the native fixture; `inbound-sync` only updates the recorded-status labels and
 colors of the same physical units. Neither action silently transfers stock to
-another location. The native adapter checks receipt quantities, tracking values
-and REC-02 location against the actual delivery before accepting the snapshot.
-`inbound-report` reads it back. `InboundWarehouse.onSceneSynced` includes the
-lesson, sync version, delivered/good/damaged/waiting counts, physical unit count
-and unit scan codes with viewport positions. Old snapshots cannot replace newer
-state. The UI remains gated until its current sync version is acknowledged.
+another location. Explicit setup reseeds the selected example; ordinary receipt,
+Undo and completion actions preserve the physical bodies and their positions.
+Before posting a receipt, the browser requests a fresh `inbound-report` and
+requires every delivered unit to be settled in REC-02 with nothing held. The
+native adapter independently checks newly recorded units against their actual
+supported placement, as well as receipt quantities, tracking values and the
+REC-02 location. `InboundWarehouse.onSceneSynced` includes the lesson, sync
+version, delivered/good/damaged/waiting counts, physical unit count, placement
+and held state, and unit scan codes with viewport positions. Old snapshots
+cannot replace newer state. The UI remains gated until its current sync version
+is acknowledged.
 
-Native carton clicks raycast the visible scene and call
-`InboundWarehouse.onScan(code)`. The browser interprets that code for the current
-guided step and validates any receipt. Native clicks never post stock on their
-own. ASN has five inner units and a labelled outer container; serial units have
-distinct labels. The web example visibly distinguishes its damaged unit. Receipt
-and Undo change recorded status while every unit stays at the receiving dock.
-The new mode warms only its actual fixed dock view, rather than the original
-game's full set of walking, vehicle and lighting views.
+The physical TC22 decodes visible Code128 labels through the scanner's range,
+orientation and occlusion checks, then calls `InboundWarehouse.onScan(code)`.
+The browser interprets that code for the current guided step and validates any
+receipt. A mouse click on a carton is not a substitute for scanning its label.
+ASN has five inner units and a labelled outer container; serial units have
+distinct labels. The web example visibly distinguishes its damaged unit. The
+player can carry cartons, but moving one does not change its inventory record.
+The record likewise never moves a carton. There is no automatic unloading,
+putaway or scripted carton transport in this receiving mode.
 
-The shared compiled player is v14. The original game modes retain their v13
+The v15 source selects this dedicated playable mode. The original game modes retain their v13
 carton ledger, keyboard and mouse controls, landscape gate, independent
 activity/manual pause and all three demonstration scenarios. Their two-carton
 receiving walkthrough still includes physical putaway and is separate from these
@@ -121,13 +143,14 @@ one transaction, retaining its tracking values. The linked article documents
 receiving-bin overrides; this physical fixture uses REC-02 throughout. The same
 container cannot post twice. ASN receiving is not offered on the web path.
 
-Web practice uses Process Receipt, PO Number and GO. It requires a manually
+Web practice opens at the physical office monitor using E, then follows Process
+Receipt, PO Number and GO. It requires a manually
 selected Bin Number, then separate Add Qty Recv'd and Add Qty Damaged values.
 COMMIT TRANSACTIONS records good stock in REC-02 and damaged stock under the
 `DAMAGE` condition/location in the practice record. Both counts reduce the
 outstanding order quantity. The fixture rejects attempts to classify its damaged
-unit as good stock. The red damaged unit stays visible at the dock; this lesson
-does not simulate its subsequent physical removal or putaway.
+unit as good stock. Committing does not remove the red damaged unit from the
+dock; this lesson does not perform subsequent physical removal or putaway.
 
 Completing a PO requires an explicit confirmation and never receives missing
 units. Without an external integration, completion gives `Receiving Complete`.
@@ -139,8 +162,8 @@ narrative says "Receive Detail"; the practice follows the receiving narrative.
 
 Undo is a training-only correction of the last receipt. It reverses that receipt's
 inventory and adds a reversal to the journal; an ASN reverses as one container.
-It assumes nothing has moved or been exported and does not model every production
-Undo restriction. Invalid input leaves the record unchanged. Received good plus
+It does not export anything, move cartons or model every production Undo
+restriction. Invalid input leaves the record unchanged. Received good plus
 damaged plus outstanding must equal ordered; recorded inventory and the net
 journal quantities must equal received good plus damaged.
 
@@ -157,36 +180,31 @@ The owner supplied these articles for the 2026-11-03 implementation:
 | [Close Purchase Orders from Mobile](https://endpoint.my.site.com/supportportal/s/article/Close-Purchase-Orders-from-Mobile) | Explicit completion and the two integration-dependent statuses. |
 | [Receiving on the Web](https://endpoint.my.site.com/supportportal/s/article/Receiving-on-the-Web) | Process Receipt, manual bin selection, good/damaged quantities and commit. |
 
-### v14 checks and limits
+### v15 checks and limits
 
-`node tools/test-one-shift-inbound-model.cjs` passes 20 checks covering fixture
-isolation, quantities, tracking values, duplicate serials, atomic ASN receipt,
-bin selection, damage, conservation, Undo and completion.
-`WarehouseInboundPracticeValidation.ValidateAndSave()` passes 68 checks in a
-disposable preview of RackFloor, exercising the production adapter against all
-eight fixtures. It checks exact unit counts, printed codes, fixed-camera
-sightlines, unchanged body identities and positions through receipt/Undo, and
-rejection of conflicting
-tracking, serial, bin, quantity or stale snapshots. Its report is
-`Assets/RackLab/Reports/inbound-practice-validation.json`. The final validation
-process exits successfully with all 68 checks passing. The v14 browser export
-has zero build errors and 42,788,552 compressed bytes.
+Run `node tools/test-one-shift-inbound-model.cjs` for fixture isolation,
+quantities, tracking values, duplicate serials, atomic ASN receipt, bin selection,
+damage, conservation, Undo and completion. Run
+`node tools/test-one-shift-inbound-host.cjs` for current acknowledgement and
+graphics readiness, stale acknowledgements, first-click pointer capture,
+capture rejection and retry, scanner trigger release, the F scan shortcut, device inspection,
+office transitions, fresh physical receipt preflight, Escape handling, player
+reuse and loading failures. These host tests use small DOM and Unity stubs;
+they do not prove that the exported game's controls or rendered labels work.
 
-Actual browser checks cover all eight lessons and their native receipt counts.
-Basic, lot, serial and ASN checks use clicks on the physical cartons or container.
-Checks include over-receiving, duplicate serials, Undo, manual web-bin selection,
-three good units plus one damaged unit, the partial order's remaining balance,
-and explicit integrated completion. One player/loader serves every lesson.
-Manual pause/resume, Help and return, 844 by 390 landscape, and a 390 by 844
-narrow desktop layout pass. Offscreen rendering stops while a visible form can
-still record its receipt. The retained receiving/putaway demo also boots with
-its guide and scanner, and both hosts have no browser console errors.
+Run `node tools/test-one-shift-inbound-browser.cjs` for the exported player in
+Chrome. It uses actual mouse, keyboard and page controls, observing the native
+HUD without injecting scans, transforms or transactions. Reports and screenshots
+are written to `research/receiving-v15-browser` by default; `SHIFT_INBOUND_DUMP`
+can select another output directory.
 
-`node tools/test-one-shift-inbound-host.cjs` passes nine host lifecycle checks
-with small DOM and Unity stubs. These cover current acknowledgement and graphics
-readiness, stale acknowledgements, pause/resume, offscreen forms, dialogs,
-coarse-pointer portrait gating, preserved manual pause after rotation, player
-reuse and loading failures. Physical touch-device testing remains separate.
+`WarehouseInboundPracticeValidation.ValidateAndSave()` exercises the native
+adapter in a disposable preview of RackFloor. Its report is
+`Assets/RackLab/Reports/inbound-practice-validation.json`. Verify exact fixture
+counts and codes, movement and physical handling, receipt/Undo body conservation,
+supported placement, and rejection of conflicting tracking, serial, bin,
+quantity or stale snapshots. Keep validation results tied to the exact source
+and exported build being tested.
 
 For batch work, run `ValidateAndSave()`, verify the report's `passed` field, exit
 that Editor process, then run `WarehouseWebBuilder.BuildWeb()` in a fresh one.
@@ -194,13 +212,53 @@ The combined `ValidateAndBuild()` entry point also rejects a failed report;
 separate processes are recommended for batch validation and export. Validation
 does not save changes to the authored scene.
 
-Verify the actual exported browser player after native changes, including native
-label clicks, all receiving paths, lesson switching without another download,
-receipt/scene acknowledgement, pause/activity/orientation gates and narrow
-landscape layout. The original game's receiving, transfer and shipping counts
-below describe the v13 release and are not evidence for this new mode. Bump the
+Verify the actual exported browser player after native changes: walk and look,
+carry and release cartons, scan real visible labels, use the handheld, walk to
+the office and return, and complete every receiving path. Check rejection while
+holding a carton or leaving one outside REC-02, followed by successful receipt
+after supported placement. Also check lesson switching without another download,
+receipt/scene acknowledgement, pointer-lock retry, pause/activity/orientation
+gates and narrow landscape layout. Keyboard and mouse are required; a portrait
+gate is not evidence of touch play support. Bump the
 entry, model, interface, host and CSS query versions when changing those files;
 native adapter or bridge changes also require a versioned Unity export.
+
+The 2026-11-03 v15 export passed all 83 native checks, 20 receiving-model checks
+and 17 host checks. Unity produced 42,790,835 compressed bytes with zero build
+errors. The native report covers all eight fixtures, actual Code128 ray queries,
+force-based carrying, receipt rejection for held or displaced freight, and
+unchanged physical bodies through receipt and Undo.
+The Chrome walkthrough passed 47 checks across all eight receiving paths in one
+player instance: movement, carrying, physical scans, mobile tracking values,
+duplicate serial rejection, ASN receipt, partial orders, office receiving and
+return, explicit completion, and Escape pause. No browser errors or gameplay
+shader failures were reported. Screenshots and the report are retained in
+`research/receiving-v15-browser`.
+
+Mouse capture must be supported by the browser. The embedded in-app browser
+rejected capture during v15 testing with a Chromium error; the same exported
+player accepted capture and real game input in Chrome. Failed capture offers
+a retry and instructions to open the page in Chrome or Edge.
+
+### Historical v14 verification
+
+The previous fixed-camera receiving version passed 20 model checks, nine stubbed
+host lifecycle checks and 68 native adapter checks. Native checks covered exact
+unit counts, printed codes, fixed-camera sightlines, unchanged body identities
+and positions through receipt/Undo, and conflicting or stale snapshots. Its
+browser export had zero build errors and 42,788,552 compressed bytes.
+
+The v14 browser checks covered all eight lessons and their native receipt counts.
+Basic, lot, serial and ASN used clicks on physical cartons or the container.
+They covered over-receiving, duplicate serials, Undo, manual web-bin selection,
+three good units plus one damaged unit, partial remaining quantities and explicit
+integrated completion. One player/loader served every lesson. Pause/resume,
+Help and return, 844 by 390 landscape, 390 by 844 narrow desktop and offscreen
+rendering gates were checked. The retained receiving/putaway demo booted with
+its guide and scanner, and both hosts had no browser console errors. Those
+results describe v14; they do not validate v15 walking, scanning, handling or
+device transitions. The original game's checks below describe their named
+historical releases.
 
 ## Unity v13: a readable warehouse and a first electronic stock record
 

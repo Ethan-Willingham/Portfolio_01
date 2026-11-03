@@ -281,7 +281,7 @@ function stage(label) { currentStage=label;phases.push({label,at:Date.now()});co
   await page.waitForFunction(()=>window.actualUnity&&document.getElementById('warehouse-launcher').hidden,null,{timeout:240000});
   await click(page.locator('#warehouse-canvas'));await page.waitForFunction(()=>document.pointerLockElement?.id==='warehouse-canvas');await delay(500);
   let opening=await state('Opening');
-  check('Compiled v14 opens the selected fresh demo',opening.buildVersion===14&&opening.wms.state.mode==='demo'&&opening.wms.state.demo.id===demo&&opening.wms.conserves);
+  check('Compiled v15 opens the selected fresh demo',opening.buildVersion===15&&opening.wms.state.mode==='demo'&&opening.wms.state.demo.id===demo&&opening.wms.conserves);
   check('Customer walkthrough starts in daylight',opening.hour>=9&&opening.hour<9.5);
   check('Completion is initially hidden',!opening.wms.state.demo.complete&&!await page.locator('#warehouse-demo-complete').isVisible());
   await capture('demo-opening');const before=await state();await relativeMouse(60,0);const after=await state();degreesPerPixel=angleDelta(after.playerYaw,before.playerYaw)/60;

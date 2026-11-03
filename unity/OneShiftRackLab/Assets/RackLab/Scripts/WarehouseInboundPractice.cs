@@ -8,7 +8,7 @@ using UnityEngine.Scripting;
 namespace OneShift.RackLab
 {
     // This mode visualizes the browser practice record. It never creates a WMS
-    // ledger or posts a receipt. A native click reports a label; the browser
+    // ledger or posts a receipt. The physical TC22 reports a label; the browser
     // validates the user's action and sends the resulting authoritative state.
     [Preserve]
     public sealed class WarehouseInboundPractice : MonoBehaviour
@@ -29,18 +29,23 @@ namespace OneShift.RackLab
             public Receipt[] receipts;
             public int syncVersion, received, damaged, remaining;
             public bool finished;
-            public string status, location;
+            public string status, location, guideTitle, guideInstruction;
         }
         [Serializable] public sealed class UnitState
         {
-            public string code, sku, core, status;
-            public float[] viewport;
+            public string code, sku, core, status, physicalBin;
+            public bool held, settled;
+            public float[] viewport, position;
         }
         [Serializable] public sealed class SceneState
         {
-            public bool sceneReady, graphicsReady, wmsRuntimePresent;
+            public bool sceneReady, graphicsReady, wmsRuntimePresent, allDeliveredAtReceiving, inspected, hasWalked, holding;
+            public bool scannerEquipped, scannerInspecting, scannerTrigger, scannerAimVisible, scannerAimSurface, canControl;
             public string lesson, error, physicalBin = "REC-02";
+            public string guideTitle, guideInstruction, scannerFeedback, scannerMessage, lastScan;
             public int syncVersion, delivered, good, damaged, waiting, physicalUnits;
+            public float walkedDistance;
+            public float[] playerPosition, cameraPosition, cameraRotation, scannerAimPoint;
             public UnitState[] units;
         }
         sealed class Unit
@@ -59,11 +64,14 @@ namespace OneShift.RackLab
         RackWalkController walking;
         BrowserLifecycle lifecycle;
         Camera view;
+        public WarehouseWmsScanner Scanner { get; private set; }
         PracticeState state;
         GameObject containerView;
         WarehouseWmsLabel containerLabel;
         Material paper, ink, trayMaterial;
-        bool initialized;
+        bool initialized, inspected;
+        float walkedDistance;
+        Vector3 previousPlayerPosition;
         int lastWidth, lastHeight;
         string fixtureSignature = "";
 
@@ -74,15 +82,13 @@ namespace OneShift.RackLab
         static extern void WarehouseInboundScan(string code);
         [System.Runtime.InteropServices.DllImport("__Internal")]
         static extern void WarehouseInboundSceneSynced(string json);
-        [System.Runtime.InteropServices.DllImport("__Internal")]
-        static extern int WarehouseInboundPointerOverCanvas();
 #endif
 
         public static WarehouseInboundPractice Ensure()
         {
             var existing = UnityEngine.Object.FindFirstObjectByType<WarehouseInboundPractice>();
             if (existing != null) return existing;
-            var value = new GameObject("Receiving practice visualization").AddComponent<WarehouseInboundPractice>();
+            var value = new GameObject("Receiving practice warehouse").AddComponent<WarehouseInboundPractice>();
             value.InitializeWorld();
 #if UNITY_WEBGL && !UNITY_EDITOR
             if (!value.Apply(WarehouseInitialInboundState(), true))
@@ -119,14 +125,20 @@ namespace OneShift.RackLab
             foreach (var service in FindAll<WarehouseCourierService>()) service.enabled = false;
             foreach (var drive in FindAll<ForkliftDriveController>()) drive.gameObject.SetActive(false);
             foreach (var driver in FindAll<ForkliftPlayerInteraction>()) driver.enabled = false;
-            foreach (var scanner in FindAll<WarehouseWmsScanner>()) { scanner.SetEquipped(false); scanner.enabled = false; }
             foreach (var body in FindAll<PalletCargo>()) body.gameObject.SetActive(false);
             var decorativeVan = FindNamed("Decorative parcel van");
             if (decorativeVan != null) decorativeVan.SetActive(false);
-            walking.SetExternalControl(false);
-            walking.enabled = false;
-            if (walking.Grabber != null) { walking.Grabber.Suspend(); walking.Grabber.enabled = false; }
+            walking.enabled = true;
+            walking.SetExternalControl(true);
+            var grabber = walking.GetComponent<WarehouseGrabber>();
+            if (grabber == null) grabber = walking.gameObject.AddComponent<WarehouseGrabber>();
+            grabber.enabled = true; grabber.Bind(walking);
             view = walking.eyes;
+            view.transform.localPosition = new Vector3(0,RackWalkController.StandingEyeHeight,0);
+            Scanner = walking.GetComponent<WarehouseWmsScanner>();
+            if (Scanner == null) Scanner = walking.gameObject.AddComponent<WarehouseWmsScanner>();
+            Scanner.enabled = true; Scanner.Bind(walking); Scanner.SetEquipped(true);
+            Scanner.Scanned += Scanned;
             world = WarehouseWmsWorld.Ensure(transform);
             world.Initialize(true);
             dock = world.FindBin("REC-02");
@@ -148,12 +160,8 @@ namespace OneShift.RackLab
         public void ResetCamera()
         {
             if (view == null || dock == null) return;
-            // A seated, fixed view keeps every label reachable without walking
-            // or pointer capture. Its horizontal framing survives canvas resize.
-            var target = new Vector3(dock.Center.x,.35f,dock.Center.z);
-            var position = target + new Vector3(.30f,2.25f,-3.65f);
-            view.transform.SetPositionAndRotation(position,Quaternion.LookRotation(target-position));
-            view.fieldOfView = Mathf.Clamp(Camera.HorizontalToVerticalFieldOfView(60f,Mathf.Max(.35f,view.aspect)),35f,100f);
+            // Resizing must preserve the player's actual floor position and look.
+            walking.RefreshPerspective();
             lastWidth = Screen.width; lastHeight = Screen.height;
         }
 
@@ -199,6 +207,10 @@ namespace OneShift.RackLab
             }
             if (good != next.received || damaged != next.damaged || good + damaged > f.delivery || next.remaining != f.ordered-good-damaged)
             { PublishScene("Receipt totals do not reconcile with the purchase order."); return false; }
+            if (!setup)
+                for (int i=0;i<units.Count;i++)
+                    if (units[i].status=="Waiting" && specs[i].status!="Waiting" && !AtReceiving(units[i],out string reason))
+                    { PublishScene("Before receiving " + units[i].code + ": " + reason); return false; }
             if (setup) Seed(f,specs);
             for (int i = 0; i < units.Count; i++)
             {
@@ -207,6 +219,7 @@ namespace OneShift.RackLab
             }
             state = next;
             fixtureSignature = JsonUtility.ToJson(f);
+            Scanner?.SetPracticeScreen(Title,Instruction,next.scenario.po + " / " + (good+damaged) + " of " + f.delivery + " received");
             PublishScene();
             return true;
         }
@@ -238,6 +251,7 @@ namespace OneShift.RackLab
 
         void Seed(Scenario f, List<Unit> specs)
         {
+            walking.GetComponent<WarehouseGrabber>()?.Suspend();
             foreach (var unit in units) if (unit.body != null) { unit.body.gameObject.SetActive(false); WarehouseCareer.Remove(unit.body.gameObject); }
             units.Clear();
             if (containerView != null) { containerView.SetActive(false); WarehouseCareer.Remove(containerView); }
@@ -249,8 +263,9 @@ namespace OneShift.RackLab
                 var size = WarehouseWmsWorld.CartonSize(0);
                 var position = new Vector3(dock.Center.x+(i%columns-(columns-1)*.5f)*.78f,dock.SurfaceY+size.y*.5f+.01f,dock.Center.z+(i/columns-(rows-1)*.5f)*.70f);
                 var body = world.CreateCarton("IN-"+(i+1).ToString("000"),unit.sku,unit.name,1,"EA",position,0);
-                body.isKinematic = true; body.useGravity = false;
+                body.isKinematic = false; body.useGravity = true;
                 body.rotation = dock.PlacementRotation; body.transform.SetPositionAndRotation(position,dock.PlacementRotation);
+                body.WakeUp();
                 var carton = body.GetComponent<WarehouseWmsCarton>();
                 carton.DocumentId = f.po;
                 foreach (var label in carton.Labels) { label.gameObject.SetActive(false); WarehouseCareer.Remove(label.gameObject); }
@@ -261,6 +276,9 @@ namespace OneShift.RackLab
                 units.Add(unit);
             }
             if (f.id == "asn") CreateContainer(f);
+            walking.SetSpawnPose(new Vector3(dock.Center.x,.025f,dock.Center.z-2.65f),Quaternion.identity,30f);
+            previousPlayerPosition = walking.transform.position; walkedDistance = 0; inspected = false;
+            Scanner.SetInspecting(false); Scanner.SetEquipped(true);
             ResetCamera();
             Physics.SyncTransforms();
         }
@@ -295,31 +313,51 @@ namespace OneShift.RackLab
         {
             if (!initialized || state == null || BrowserLifecycle.GraphicsPreparing || lifecycle == null || !lifecycle.PresentationActive || Time.timeScale <= 0) return;
             if (Screen.width != lastWidth || Screen.height != lastHeight) { ResetCamera(); PublishScene(); }
-            if (!Input.GetMouseButtonDown(0)) return;
+            Vector3 position=walking.transform.position, delta=position-previousPlayerPosition;
+            delta.y=0;
+            // Ignore resets and teleports; only actual frame-sized floor motion counts.
+            if (delta.magnitude<1f) walkedDistance+=delta.magnitude;
+            previousPlayerPosition=position;
+        }
+
+        void Scanned(WarehouseWmsScanResult result)
+        {
+            if (!result.success || state == null || BrowserLifecycle.GraphicsPreparing || lifecycle == null || !lifecycle.PresentationActive || Time.timeScale<=0) return;
+            bool fixtureLabel=units.Any(unit=>unit.code==result.code) || result.code==state.scenario.po || result.code=="BIN:REC-02";
+            if (!fixtureLabel) { Scanner.Feedback(false,"This label is not part of the current delivery."); return; }
+            inspected=true;
 #if UNITY_WEBGL && !UNITY_EDITOR
-            if (WarehouseInboundPointerOverCanvas() == 0) return;
-#endif
-            if (!view.pixelRect.Contains(Input.mousePosition)) return;
-            string code = "";
-            if (Physics.Raycast(view.ScreenPointToRay(Input.mousePosition),out var hit,100f,~0,QueryTriggerInteraction.Ignore))
-            {
-                var unit = units.FirstOrDefault(candidate => candidate.body == hit.rigidbody);
-                if (unit != null) code = unit.code;
-                else if (containerView != null && hit.transform.IsChildOf(containerView.transform)) code = state.scenario.container;
-            }
-#if UNITY_WEBGL && !UNITY_EDITOR
-            WarehouseInboundScan(code);
+            WarehouseInboundScan(result.code);
 #endif
         }
 
+        public string Title => string.IsNullOrEmpty(state?.guideTitle) ? "Receive the delivery" : state.guideTitle;
+        public string Instruction => string.IsNullOrEmpty(state?.guideInstruction) ? "Walk to the delivery. Aim at a barcode and hold left mouse to scan." : state.guideInstruction;
+        bool AtReceiving(Unit unit,out string reason) => world.ContainsSupported(dock,unit.body,out reason);
+        static float[] V(Vector3 value) => new[]{value.x,value.y,value.z};
+
         public SceneState Capture(string error = "")
         {
+            var grabber=walking != null ? walking.GetComponent<WarehouseGrabber>() : null;
+            var physical=units.Select(unit=> {
+                bool settled=AtReceiving(unit,out _);
+                var point=view.WorldToViewportPoint(unit.body.position);
+                return new UnitState{code=unit.code,sku=unit.sku,core=unit.core,status=unit.status,viewport=V(point),position=V(unit.body.position),
+                    physicalBin=settled?"REC-02":"",settled=settled,held=grabber!=null&&grabber.HeldBody==unit.body};
+            }).ToArray();
             return new SceneState {
                 sceneReady=initialized && state != null && string.IsNullOrEmpty(error), graphicsReady=!BrowserLifecycle.GraphicsPreparing,
                 lesson=state?.scenario.id ?? "",syncVersion=state?.syncVersion ?? 0,delivered=state?.scenario.delivery ?? 0,
                 good=units.Count(unit=>unit.status=="Received"),damaged=units.Count(unit=>unit.status=="Damaged"),waiting=units.Count(unit=>unit.status=="Waiting"),
                 physicalUnits=units.Count,error=error,wmsRuntimePresent=UnityEngine.Object.FindFirstObjectByType<WarehouseWmsRuntime>() != null,
-                units=units.Select(unit=> { var point=view.WorldToViewportPoint(unit.body.position);return new UnitState{code=unit.code,sku=unit.sku,core=unit.core,status=unit.status,viewport=new[]{point.x,point.y,point.z}}; }).ToArray()
+                units=physical,allDeliveredAtReceiving=physical.Length>0&&physical.All(unit=>unit.settled),
+                inspected=inspected,walkedDistance=walkedDistance,hasWalked=walkedDistance>=.65f,holding=grabber!=null&&grabber.IsHolding,
+                playerPosition=walking!=null?V(walking.transform.position):Array.Empty<float>(),cameraPosition=view!=null?V(view.transform.position):Array.Empty<float>(),
+                cameraRotation=view!=null?V(view.transform.eulerAngles):Array.Empty<float>(),canControl=walking!=null&&walking.CanControl,
+                scannerEquipped=Scanner!=null&&Scanner.Equipped,scannerInspecting=Scanner!=null&&Scanner.Inspecting,scannerTrigger=Scanner!=null&&Scanner.TriggerHeld,
+                scannerAimVisible=Scanner!=null&&Scanner.AimVisible,scannerAimSurface=Scanner!=null&&Scanner.AimHasSurface,
+                scannerFeedback=Scanner!=null?Scanner.FeedbackStatus:"",scannerMessage=Scanner!=null?Scanner.FeedbackMessage:"",lastScan=Scanner!=null?Scanner.LastResult.code:"",
+                scannerAimPoint=Scanner!=null?V(Scanner.AimPoint):Array.Empty<float>(),guideTitle=Title,guideInstruction=Instruction
             };
         }
         public void PublishScene(string error = "")
@@ -334,6 +372,6 @@ namespace OneShift.RackLab
         IEnumerable<T> FindAll<T>() where T : Component => gameObject.scene.GetRootGameObjects().SelectMany(root=>root.GetComponentsInChildren<T>(true));
         T FindLocal<T>() where T : Component => FindAll<T>().FirstOrDefault(component=>component.gameObject.activeInHierarchy);
         GameObject FindNamed(string name) => FindAll<Transform>().FirstOrDefault(item=>item.name==name)?.gameObject;
-        void OnDestroy() { foreach (var material in materials) if (material != null) WarehouseCareer.Remove(material); }
+        void OnDestroy() { if(Scanner!=null)Scanner.Scanned-=Scanned;foreach (var material in materials) if (material != null) WarehouseCareer.Remove(material); }
     }
 }

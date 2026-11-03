@@ -21,13 +21,13 @@
   }
   var inboundLoading;
   window.loadInboundWarehouse = function () {
-    if (!inboundLoading) inboundLoading = script('js/demo-activity.js?v=1').then(function () { return script('js/one-shift-inbound-warehouse.js?v=14'); });
+    if (!inboundLoading) inboundLoading = script('js/demo-activity.js?v=1').then(function () { return script('js/one-shift-inbound-warehouse.js?v=15'); });
     return inboundLoading;
   };
   async function boot() {
     if (!warehouse) {
-      await script('js/one-shift-inbound-model.js?v=14');
-      await script('js/one-shift-inbound.js?v=14');
+      await script('js/one-shift-inbound-model.js?v=15');
+      await script('js/one-shift-inbound.js?v=15');
       return;
     }
     document.getElementById('in-main').textContent = 'Opening the warehouse menu...';
@@ -39,7 +39,7 @@
     document.body.className = 'warehouse-page';
     document.getElementById('warehouse-stage').hidden = false;
     document.title = 'The Warehouse Simulator';
-    await script('js/one-shift-unity.js?v=14');
+    await script('js/one-shift-unity.js?v=15');
   }
   boot().catch(function () {
     document.body.className = 'inbound-page';

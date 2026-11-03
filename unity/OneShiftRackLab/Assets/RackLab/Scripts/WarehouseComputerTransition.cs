@@ -37,6 +37,16 @@ namespace OneShift.RackLab
             Begin(true, onComplete);
         }
 
+        public void CancelAndRestore()
+        {
+            Active=false;Returning=false;Progress=0;completed=null;
+            if(view!=null&&walking!=null&&walking.CameraTransitionActive)
+            {
+                view.transform.localPosition=savedLocalPosition;view.transform.localRotation=savedLocalRotation;view.fieldOfView=savedFov;
+                walking.CameraTransitionActive=false;
+            }
+        }
+
         void Begin(bool returning, Action onComplete)
         {
             Returning = returning; Progress = 0; Active = true; completed = onComplete;

@@ -25,6 +25,7 @@ namespace OneShift.RackLab
         public const float MinimumDistance = .12f;
         public const float MinimumFacingDot = .38f;
         public bool Equipped { get; private set; }
+        public bool Inspecting => inspecting;
         public bool TriggerHeld { get; private set; }
         public bool AimVisible => aimRenderer != null && aimRenderer.enabled;
         public bool AimHasSurface { get; private set; }
@@ -59,6 +60,7 @@ namespace OneShift.RackLab
         float flashUntil, nextScanAt, visibleAmount, nextScreenAt, scanAmount, singleShotUntil, candidateSince, nextAimAt, triggerSince;
         string candidateCode = "", decodedCode = "";
         string feedbackMessage = "", screenFeedback = "";
+        string practiceTitle = "Receiving", practiceInstruction = "Aim at a delivery barcode and hold left mouse.", practiceNotice = "";
         WarehouseWmsLabel aimedLabel;
         RaycastHit aimHit;
         bool applicationFocused = true, inspecting, feedbackSuccess, noReadReported;
@@ -82,6 +84,14 @@ namespace OneShift.RackLab
             SetTriggerHeld(false);singleShotUntil=0;
             if(device!=null)device.gameObject.SetActive(false);
             HideAim();
+        }
+
+        // The guided receiving mode reuses the physical imager and device, with
+        // its browser-owned workflow. It never needs a second stock ledger.
+        public void SetPracticeScreen(string title,string instruction,string notice)
+        {
+            practiceTitle=title??"Receiving";practiceInstruction=instruction??"";practiceNotice=notice??"";
+            if(device!=null)RefreshScreen();
         }
 
         public void SetEquipped(bool value)
@@ -354,7 +364,7 @@ namespace OneShift.RackLab
         {if(text.text==value)return;text.text=value;WarehouseWmsLabel.FitText(text,area,position);}
         void RefreshScreen()
         {
-            if(runtime==null)return;
+            if(runtime==null){RefreshPracticeScreen();return;}
             var work=runtime.Workflow;bool home=work.tile=="home"||work.tile=="none";
             bool ready=runtime.ReadyToConfirm(out var confirmationReason);
             screenFeedback=FeedbackStatus;
@@ -402,6 +412,22 @@ namespace OneShift.RackLab
             screenNotice.color=runtime.Severity=="error"?new Color(.58f,.16f,.10f):new Color(.24f,.36f,.22f);
             WriteScreen(screenNotice,Wrap(notice,27,2),new Vector2(.058f,.013f),new Vector3(0,-.048f,-.0101f));
             WriteScreen(screenFooter,ready?"ENTER Confirm / RIGHT Inspect":"HOLD LEFT Scan / RIGHT Inspect",new Vector2(.057f,.005f),new Vector3(0,-.060f,-.0101f));
+        }
+        void RefreshPracticeScreen()
+        {
+            screenFeedback=FeedbackStatus;
+            bool result=screenFeedback=="success"||screenFeedback=="error";
+            bool error=screenFeedback=="error";
+            screenMaterial.color=error?new Color(.67f,.14f,.07f):screenFeedback=="success"?new Color(.19f,.48f,.20f):new Color(.10f,.20f,.17f);
+            glowMaterial.color=error?new Color(1f,.22f,.08f):screenFeedback=="success"?new Color(.40f,.86f,.26f):new Color(1f,.59f,.10f);
+            paperMaterial.color=error?new Color(.96f,.73f,.60f):screenFeedback=="success"?new Color(.76f,.88f,.65f):new Color(.89f,.85f,.73f);
+            homeScreen.gameObject.SetActive(false);screenBody.gameObject.SetActive(true);
+            WriteScreen(screenHeader,error?"SCAN REJECTED":screenFeedback=="success"?"SCAN ACCEPTED":screenFeedback=="scanning"?"SCANNING...":"RECEIVING PRACTICE",new Vector2(.055f,.0055f),new Vector3(0,.061f,-.0101f));
+            WriteScreen(screenTitle,Wrap(result?(error?"CHECK SCAN":"READ OK"):practiceTitle,23,2),new Vector2(.058f,.014f),new Vector3(0,.043f,-.0101f));
+            WriteScreen(screenBody,Wrap(result?feedbackMessage:practiceInstruction,24,6),new Vector2(.058f,.071f),new Vector3(0,-.003f,-.0101f));
+            screenNotice.color=error?new Color(.58f,.16f,.10f):new Color(.24f,.36f,.22f);
+            WriteScreen(screenNotice,Wrap(result?LastResult.code:practiceNotice,27,2),new Vector2(.058f,.013f),new Vector3(0,-.048f,-.0101f));
+            WriteScreen(screenFooter,"HOLD LEFT Scan / RIGHT Inspect",new Vector2(.057f,.005f),new Vector3(0,-.060f,-.0101f));
         }
         string AppendLookup(StringBuilder body)
         {

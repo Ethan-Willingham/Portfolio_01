@@ -19,7 +19,7 @@ namespace OneShift.RackLab
         [Serializable] public sealed class Report
         {
             public string generatedUtc;
-            public string scope = "All eight receiving fixtures exercise the production native scene adapter in a disposable preview of RackFloor. Checks cover exact unit labels and counts, receipt synchronization, unchanged physical identities and positions, camera sightlines, rejection and Undo. Receipt snapshots are explicit fixtures, not company transactions. JavaScript model rules and native browser input remain separate checks.";
+            public string scope = "All eight receiving fixtures exercise the production native adapter in a disposable RackFloor preview with isolated physics. Checks cover exact dynamic unit labels/counts, physical Code128 scanning, receiving support, force-based carry, stock-preserving synchronization, rejection, Undo and camera transition cancellation. Receipt snapshots are fixtures, not company transactions. Browser pointer and keyboard input remain separate checks.";
             public bool passed;
             public List<string> checks = new List<string>();
             public string failure = "";
@@ -59,6 +59,7 @@ namespace OneShift.RackLab
                     {
                         var opening = State(id,++version);
                         Need(fixture.Adapter.Apply(JsonUtility.ToJson(opening),true),"Could not seed " + id);
+                        fixture.Settle();
                         var captured = fixture.Adapter.Capture();
                         var bodies = fixture.Bodies();
                         Check(report,captured.sceneReady && captured.lesson==id && captured.physicalUnits==opening.scenario.delivery && bodies.Length==opening.scenario.delivery && captured.delivered==opening.scenario.delivery && !captured.wmsRuntimePresent,
@@ -67,7 +68,9 @@ namespace OneShift.RackLab
                             id + ": initial recorded and waiting quantities match the fixture");
                         Check(report,bodies.All(body=>body.UnitsPerCarton==1 && body.Unit=="EA" && body.DocumentId==opening.scenario.po && body.Labels.All(label=>WarehouseCode128.TryEncode(label.Code,out var codes)&&WarehouseCode128.TryDecode(codes,out string decoded)&&decoded==label.Code)),
                             id + ": each physical unit has one EA and a real matching Code128 label");
-                        Check(report,fixture.VisibleUnits(),id + ": all unit centers fit the fixed view and have an unobstructed native raycast");
+                        Check(report,fixture.ScannableUnits(),id + ": every unit has a physical barcode readable by the production TC22 ray query");
+                        Check(report,bodies.All(body=>!body.Body.isKinematic&&body.Body.useGravity&&body.GetComponent<WarehouseGrabbable>()!=null)&&captured.allDeliveredAtReceiving,
+                            id + ": whole units are dynamic, grabbable and settled in physical REC-02");
                         var identities = fixture.Placements();
                         var received = Received(opening,++version);
                         Need(fixture.Adapter.Apply(JsonUtility.ToJson(received),false),"Could not synchronize " + id);
@@ -99,6 +102,24 @@ namespace OneShift.RackLab
                     RejectedUnchanged(report,fixture,serial,"Repeated serial snapshot cannot record the same native unit twice");
                     var basic = State("basic",++version);
                     Need(fixture.Adapter.Apply(JsonUtility.ToJson(basic),true),"Location rejection setup failed.");
+                    fixture.Settle();
+                    var moved=fixture.Bodies()[0].Body;var originalPosition=moved.position;
+                    fixture.Place(moved,originalPosition+Vector3.right*4);
+                    Check(report,!fixture.Adapter.Capture().allDeliveredAtReceiving,"Moving a real unit outside REC-02 clears the native receiving preflight");
+                    RejectedUnchanged(report,fixture,Received(basic,++version),"A receipt cannot record stock that the player moved out of receiving");
+                    fixture.Place(moved,originalPosition);
+                    fixture.AimAt(moved);
+                    Need(fixture.Walking.Grabber.TryPickup(moved),"Real inbound carton must be reachable for physical pickup.");
+                    Check(report,fixture.Adapter.Capture().holding&&!fixture.Adapter.Capture().allDeliveredAtReceiving&&!moved.isKinematic,"Holding a delivery uses the real dynamic body and prevents receipt");
+                    RejectedUnchanged(report,fixture,Received(basic,++version),"Receipt while holding delivered freight is rejected without stock changes");
+                    Vector3 beforeCarry=moved.position;
+                    fixture.Walking.eyes.transform.rotation=Quaternion.LookRotation(moved.position+Vector3.up*.55f-fixture.Walking.eyes.transform.position);
+                    fixture.CarryStep(.35f);
+                    Check(report,fixture.Walking.Grabber.IsHolding&&!moved.isKinematic&&Vector3.Distance(moved.position,beforeCarry)>.05f&&fixture.Walking.Grabber.AppliedForceNewtons<=WarehouseGrabber.MaximumHoldForce+.01f,
+                        "Real bounded grab forces move the delivery body without parenting or kinematic teleportation");
+                    fixture.Walking.Grabber.Release();fixture.Place(moved,originalPosition);
+                    Check(report,fixture.Adapter.Capture().allDeliveredAtReceiving&&!fixture.Adapter.Capture().holding,"Putting the physical unit back in REC-02 restores receiving readiness");
+                    fixture.CheckCameraCancellation(report);
                     var wrongBin = Received(basic,++version);
                     wrongBin.receipts[0].lines[0].location="REC-01";
                     RejectedUnchanged(report,fixture,wrongBin,"Receipt in REC-01 is rejected while the physical delivery remains in REC-02");
@@ -180,6 +201,7 @@ namespace OneShift.RackLab
             readonly bool originalCursor;
             readonly WarehouseReceiving originalReceiving;
             public P Adapter { get; private set; }
+            public RackWalkController Walking { get; private set; }
             public Fixture()
             {
                 previousScene=SceneManager.GetActiveScene();originalFrameRate=Application.targetFrameRate;originalTimeScale=Time.timeScale;
@@ -188,12 +210,16 @@ namespace OneShift.RackLab
                 {
                     scene=EditorSceneManager.OpenPreviewScene(ScenePath);
                     Need(scene.IsValid()&&scene.isLoaded&&EditorSceneManager.IsPreviewScene(scene),"Could not open the isolated RackFloor preview.");
+                    Need(scene.GetPhysicsScene().IsValid()&&scene.GetPhysicsScene()!=Physics.defaultPhysicsScene,"Inbound checks require isolated physics.");
+                    Time.timeScale=1;
+                    Walking=scene.GetRootGameObjects().SelectMany(node=>node.GetComponentsInChildren<RackWalkController>(true)).Single();
+                    typeof(RackWalkController).GetMethod("Awake",BindingFlags.Instance|BindingFlags.NonPublic).Invoke(Walking,null);
                     var root=EditorUtility.CreateGameObjectWithHideFlags("Disposable inbound practice",HideFlags.HideAndDontSave);
                     SceneManager.MoveGameObjectToScene(root,scene);Adapter=root.AddComponent<P>();
                     // Ensure() creates into the active browser scene. Call its
                     // same initializer on this explicitly disposable scene instead.
                     typeof(P).GetMethod("InitializeWorld",BindingFlags.Instance|BindingFlags.NonPublic).Invoke(Adapter,null);
-                    var camera=scene.GetRootGameObjects().SelectMany(node=>node.GetComponentsInChildren<RackWalkController>(true)).Single().eyes;
+                    var camera=Walking.eyes;
                     camera.aspect=16f/9f;camera.enabled=false;Adapter.ResetCamera();Physics.SyncTransforms();
                     Need(Adapter.gameObject.scene==scene,"Adapter escaped the disposable preview.");
                 }
@@ -205,17 +231,40 @@ namespace OneShift.RackLab
             {
                 var after=Placements();return before.Length==after.Length&&before.Zip(after,(a,b)=>a.instance==b.instance&&a.position==b.position&&a.rotation==b.rotation).All(equal=>equal);
             }
-            public bool VisibleUnits()
+            public bool ScannableUnits()
             {
-                Adapter.ResetCamera();Physics.SyncTransforms();
-                var camera=scene.GetRootGameObjects().SelectMany(node=>node.GetComponentsInChildren<RackWalkController>(true)).Single().eyes;
+                Physics.SyncTransforms();
                 var physics=scene.GetPhysicsScene();
-                return Bodies().All(body=>
+                return Bodies().All(body=>body.Labels.Any(label=>
                 {
-                    var point=camera.WorldToViewportPoint(body.Body.position);
-                    return point.x>.03f&&point.x<.97f&&point.y>.03f&&point.y<.97f&&point.z>0&&
-                        physics.Raycast(camera.transform.position,(body.Body.position-camera.transform.position).normalized,out var hit,100f,~0,QueryTriggerInteraction.Ignore)&&hit.rigidbody==body.Body;
-                });
+                    var result=WarehouseWmsScanner.Trace(physics,label.ScanPoint+label.Normal*.65f,-label.Normal,Walking.transform,new RaycastHit[128]);
+                    return result.success&&result.code==label.Code;
+                }));
+            }
+            public void Settle(){for(int i=0;i<100;i++){Physics.SyncTransforms();scene.GetPhysicsScene().Simulate(.01f);}}
+            public void Place(Rigidbody body,Vector3 position)
+            {
+                body.position=position;body.rotation=Quaternion.Euler(0,180,0);body.transform.SetPositionAndRotation(position,body.rotation);
+                body.linearVelocity=Vector3.zero;body.angularVelocity=Vector3.zero;body.WakeUp();Settle();
+            }
+            public void AimAt(Rigidbody body)
+            {
+                Walking.SetSpawnPose(new Vector3(body.position.x,.025f,body.position.z-1.5f),Quaternion.identity);
+                Walking.eyes.transform.rotation=Quaternion.LookRotation(body.position-Walking.eyes.transform.position);
+                typeof(RackWalkController).GetField("captured",BindingFlags.Instance|BindingFlags.NonPublic).SetValue(Walking,true);
+                typeof(RackWalkController).GetField("awaitNeutral",BindingFlags.Instance|BindingFlags.NonPublic).SetValue(Walking,false);
+                Physics.SyncTransforms();
+            }
+            public void CarryStep(float seconds)
+            {for(int i=0;i<Mathf.CeilToInt(seconds/.01f);i++){Walking.Grabber.TickPhysics(.01f);Physics.SyncTransforms();scene.GetPhysicsScene().Simulate(.01f);}}
+            public void CheckCameraCancellation(Report report)
+            {
+                var transition=Adapter.gameObject.AddComponent<WarehouseComputerTransition>();
+                var position=Walking.eyes.transform.localPosition;var rotation=Walking.eyes.transform.localRotation;bool callback=false;
+                transition.Enter(Walking,null,()=>callback=true);transition.Tick(.05f,true);transition.Tick(.05f,true);transition.CancelAndRestore();transition.Tick(1,true);
+                Check(report,!transition.Active&&!Walking.CameraTransitionActive&&!callback&&Walking.eyes.transform.localPosition==position&&Quaternion.Angle(Walking.eyes.transform.localRotation,rotation)<.001f,
+                    "Leaving a lesson cancels the office camera transition and its pending callback");
+                Object.DestroyImmediate(transition);
             }
             public void Dispose()
             {

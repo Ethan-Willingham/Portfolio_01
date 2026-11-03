@@ -10,7 +10,7 @@ namespace OneShift.RackLab
     [Preserve]
     public sealed partial class BrowserLifecycle : MonoBehaviour
     {
-        public const int BuildVersion = 14;
+        public const int BuildVersion = 15;
         public static bool PointerIsLocked
         {
             get
@@ -155,8 +155,8 @@ namespace OneShift.RackLab
             var inbound = Object.FindFirstObjectByType<WarehouseInboundPractice>();
             if (inbound != null)
             {
-                // Receiving has one fixed view and no vehicle. Warm exactly that
-                // presentation instead of all seven exploratory game stages.
+                // Warm the player's real receiving view and the office desk.
+                // Keep the full seven-stage preparation for the older modes.
                 ReportFinePreparation(.2f,"Preparing your delivery","Receiving bay and carton labels",0);
                 inbound.ResetCamera();
                 dayNight.SetHour(WarehouseDayNight.MorningHour);
@@ -164,6 +164,12 @@ namespace OneShift.RackLab
                 yield return WaitForRenderedFrames(3);
                 yield return WaitForReflection(dayNight);
                 if (preparationFailed) { ReportPreparation(0,1,-1); yield break; }
+                var floorPosition=camera.transform.position;var floorRotation=camera.transform.rotation;
+                ReportFinePreparation(.7f,"Preparing your warehouse","Office receiving screen",0);
+                camera.transform.SetPositionAndRotation(new Vector3(9.8f,1.22f,-8.26f),Quaternion.LookRotation(Vector3.back));
+                yield return WaitForRenderedFrames(2);
+                camera.transform.SetPositionAndRotation(floorPosition,floorRotation);
+                yield return WaitForRenderedFrames(2);
                 preparing = false; GraphicsPreparing = false;
                 ApplyState(); ResetFrameSample();
                 inbound.PublishScene();
