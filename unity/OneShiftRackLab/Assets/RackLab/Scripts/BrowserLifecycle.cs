@@ -10,7 +10,7 @@ namespace OneShift.RackLab
     [Preserve]
     public sealed partial class BrowserLifecycle : MonoBehaviour
     {
-        public const int BuildVersion = 15;
+        public const int BuildVersion = 13;
         public static bool PointerIsLocked
         {
             get
@@ -115,8 +115,7 @@ namespace OneShift.RackLab
             var lifecycle = bridge.AddComponent<BrowserLifecycle>();
 #if UNITY_WEBGL && !UNITY_EDITOR
             int initialMode = WarehouseInitialMode();
-            if (initialMode == 5) WarehouseInboundPractice.Ensure();
-            else WarehouseWmsRuntime.Ensure(initialMode != 1, initialMode == 2 ? "receive" : initialMode == 3 ? "transfer" : initialMode == 4 ? "pick-ship" : "");
+            WarehouseWmsRuntime.Ensure(initialMode != 1, initialMode == 2 ? "receive" : initialMode == 3 ? "transfer" : initialMode == 4 ? "pick-ship" : "");
             Application.targetFrameRate = 60;
             WebGLInput.captureAllKeyboardInput = false;
             WebGLInput.stickyCursorLock = false;
@@ -150,30 +149,6 @@ namespace OneShift.RackLab
             if (camera == null || dayNight == null)
             {
                 ReportPreparation(0, stages, -1);
-                yield break;
-            }
-            var inbound = Object.FindFirstObjectByType<WarehouseInboundPractice>();
-            if (inbound != null)
-            {
-                // Warm the player's real receiving view and the office desk.
-                // Keep the full seven-stage preparation for the older modes.
-                ReportFinePreparation(.2f,"Preparing your delivery","Receiving bay and carton labels",0);
-                inbound.ResetCamera();
-                dayNight.SetHour(WarehouseDayNight.MorningHour);
-                dayNight.RequestReflection();
-                yield return WaitForRenderedFrames(3);
-                yield return WaitForReflection(dayNight);
-                if (preparationFailed) { ReportPreparation(0,1,-1); yield break; }
-                var floorPosition=camera.transform.position;var floorRotation=camera.transform.rotation;
-                ReportFinePreparation(.7f,"Preparing your warehouse","Office receiving screen",0);
-                camera.transform.SetPositionAndRotation(new Vector3(9.8f,1.22f,-8.26f),Quaternion.LookRotation(Vector3.back));
-                yield return WaitForRenderedFrames(2);
-                camera.transform.SetPositionAndRotation(floorPosition,floorRotation);
-                yield return WaitForRenderedFrames(2);
-                preparing = false; GraphicsPreparing = false;
-                ApplyState(); ResetFrameSample();
-                inbound.PublishScene();
-                ReportPreparation(1,1,1);
                 yield break;
             }
             var originalPosition = camera.transform.position;

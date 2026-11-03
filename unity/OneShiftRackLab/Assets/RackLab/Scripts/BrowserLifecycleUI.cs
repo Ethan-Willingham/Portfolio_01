@@ -22,7 +22,6 @@ namespace OneShift.RackLab
         WarehouseReceiving uiReceiving;
         WarehouseBusiness uiBusiness;
         WarehouseCareer uiCareer;
-        WarehouseInboundPractice uiInbound;
         WarehouseComputerTransition computerTransition;
         public bool ComputerOpen => computerOpen;
         public bool ComputerTransitioning => computerTransition != null && computerTransition.Active;
@@ -36,10 +35,8 @@ namespace OneShift.RackLab
             uiClock = UnityEngine.Object.FindFirstObjectByType<WarehouseDayNight>();
             uiReceiving = UnityEngine.Object.FindFirstObjectByType<WarehouseReceiving>();
             uiWms = UnityEngine.Object.FindFirstObjectByType<WarehouseWmsRuntime>();
-            uiInbound = UnityEngine.Object.FindFirstObjectByType<WarehouseInboundPractice>();
             uiCareer = UnityEngine.Object.FindFirstObjectByType<WarehouseCareer>();
-            if (uiInbound != null) { uiCareer = null; uiBusiness = null; }
-            else if (uiWms != null) uiWms.Changed += WmsChanged;
+            if (uiWms != null) uiWms.Changed += WmsChanged;
             else if (uiCareer != null) uiCareer.Changed += CareerChanged;
             else { uiBusiness = WarehouseBusiness.Ensure(); uiBusiness.Changed += BusinessChanged; }
             computerTransition = gameObject.AddComponent<WarehouseComputerTransition>();
@@ -78,7 +75,6 @@ namespace OneShift.RackLab
             if (preparing || computerOpen || ComputerTransitioning || uiWalking == null || !uiWalking.CanControl || uiWalking.VehicleMode) return;
             if (uiWalking.CarryingObject)
             { currentNotice = "Put the carton down before using the computer."; noticeUntil = Time.unscaledTime + 4; PublishHUD(); return; }
-            if(uiInbound!=null){deviceInteractive=false;uiInbound.Scanner.SetInspecting(false);uiInbound.Scanner.SetTriggerHeld(false);}
             uiWalking.SetExternalControl(false);
             computerTransition.Enter(uiWalking, this, () => { computerOpen = true; ApplyState(); PublishHUD(); });
             ApplyState();
@@ -93,7 +89,6 @@ namespace OneShift.RackLab
 
         [Serializable, Preserve]
         sealed class UIRequest { public string action, id, value; }
-        [Serializable] sealed class InboundFeedback { public bool success;public string message; }
 
         [Preserve]
         public void UICommand(string json)
@@ -103,38 +98,14 @@ namespace OneShift.RackLab
             catch (ArgumentException) { return; }
             if (request == null) return;
             uiRevision++;
-            if (uiInbound != null)
-            {
-                switch(request.action)
-                {
-                    case "inbound-setup":ResetInboundInterfaces();uiInbound.Apply(request.value,true);break;
-                    case "inbound-sync":uiInbound.Apply(request.value,false);break;
-                    case "inbound-leave":ResetInboundInterfaces();break;
-                    case "inbound-report":uiInbound.PublishScene();break;
-                    case "device-trigger":uiInbound.Scanner.SetTriggerHeld(request.value=="1");break;
-                    case "device-scan":uiInbound.Scanner.TryScan();break;
-                    case "device-equip":uiInbound.Scanner.SetEquipped(request.value=="1");break;
-                    case "device-focus":
-                        if(computerOpen||ComputerTransitioning)break;
-                        deviceInteractive=request.value=="1";
-                        uiInbound.Scanner.SetInspecting(deviceInteractive);ApplyState();
-                        if(!deviceInteractive&&!suspended)uiWalking?.ResumeControlsFromUI();break;
-                    case "inbound-feedback":
-                        try {var feedback=JsonUtility.FromJson<InboundFeedback>(request.value);if(feedback!=null)uiInbound.Scanner.Feedback(feedback.success,feedback.message);}catch(ArgumentException){}
-                        break;
-                    case "computer-close":CloseComputerFromUI();break;
-                    case "resume":
-                        if(!suspended&&!preparing&&!computerOpen&&!ComputerTransitioning&&!deviceInteractive)uiWalking?.ResumeControlsFromUI();break;
-                }
-                // No legacy warehouse command can create a second stock record.
-                PublishHUD();
-                return;
-            }
             if (WmsCommand(request)) return;
             switch (request.action)
             {
                 case "computer-close":
-                    CloseComputerFromUI();
+                    if (!computerOpen || ComputerTransitioning) break;
+                    computerOpen = false;
+                    computerTransition.Exit(() => { ApplyState(); uiWalking?.ResumeAfterComputerTransition(); PublishHUD(); });
+                    ApplyState();
                     break;
                 case "order":
                     if (computerOpen) { if (uiWms != null) uiWms.Book(request.id); else if (uiCareer != null) uiCareer.Purchase(request.id); else uiBusiness?.Purchase(request.id); }
@@ -161,26 +132,10 @@ namespace OneShift.RackLab
             PublishHUD();
         }
 
-        void CloseComputerFromUI()
-        {
-            if(!computerOpen||ComputerTransitioning)return;
-            computerOpen=false;
-            computerTransition.Exit(()=>{ApplyState();uiWalking?.ResumeAfterComputerTransition();PublishHUD();});
-            ApplyState();
-        }
-
-        void ResetInboundInterfaces()
-        {
-            computerTransition?.CancelAndRestore();computerOpen=false;deviceInteractive=false;
-            uiInbound.Scanner.SetTriggerHeld(false);uiInbound.Scanner.SetInspecting(false);
-            uiWalking?.GetComponent<WarehouseGrabber>()?.Suspend();uiWalking?.SetExternalControl(true);
-            ApplyState();
-        }
-
         public string HUDSnapshot()
         {
             var state = new HUDState();
-            state.mode = uiInbound != null ? "inbound" : uiWms != null ? uiWms.DemonstrationActive ? "demo" : uiWms.Sandbox ? "sandbox" : "career" : uiCareer != null ? "career" : "sandbox";
+            state.mode = uiWms != null ? uiWms.DemonstrationActive ? "demo" : uiWms.Sandbox ? "sandbox" : "career" : uiCareer != null ? "career" : "sandbox";
             var grabber = uiWalking != null ? uiWalking.GetComponent<WarehouseGrabber>() : null;
             state.holding = grabber != null && grabber.IsHolding;
             state.carryDistance = grabber != null ? grabber.HoldDistance : 0;
@@ -212,16 +167,7 @@ namespace OneShift.RackLab
                 if (p.y < -.3f) state.location = "Business park";
                 else if (p.x > 3.8f && p.z < -4 && p.z > -10) state.location = "Office";
             }
-            if (uiInbound != null)
-            {
-                if(state.location=="Warehouse"&&uiWalking!=null&&uiWalking.transform.position.z>6)state.location="Receiving / REC-02";
-                state.objective=uiInbound.Title;state.detail=uiInbound.Instruction;
-                state.inbound=uiInbound.Capture();
-                state.computer=new ComputerState{open=computerOpen,revision=uiRevision,mode="inbound",title="Receiving",company="Receiving practice",
-                    transitioning=ComputerTransitioning,transitionProgress=computerTransition!=null?computerTransition.Progress:0,
-                    transitionDirection=computerTransition!=null&&computerTransition.Returning?"out":"in"};
-            }
-            else if (uiWms != null)
+            if (uiWms != null)
             {
                 state.objective = uiWms.Objective; state.detail = uiWms.ObjectiveDetail;
                 state.computer = WmsComputerSnapshot(); state.wms = uiWms.Capture();
@@ -321,7 +267,6 @@ namespace OneShift.RackLab
             public float forkHeight, forkSpeed, hydraulicInput, carryDistance;
             public ComputerState computer;
             public WarehouseWmsRuntime.Snapshot wms;
-            public WarehouseInboundPractice.SceneState inbound;
         }
         [Serializable, Preserve] sealed class ComputerState
         {

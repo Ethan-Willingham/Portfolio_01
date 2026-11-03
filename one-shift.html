@@ -4,34 +4,28 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#252620">
-  <title>Receiving practice</title>
-  <meta name="description" content="Practice receiving in Endpoint Cloud, one step at a time. Learn purchase order, ASN and web receiving with example deliveries.">
+  <title>The Warehouse Simulator</title>
+  <meta name="description" content="An empty warehouse and $600. Start Latchford Distribution, handle every carton, and build a small trade-supply business.">
   <link rel="canonical" href="https://ethanwillingham.com/one-shift.html">
-  <meta property="og:title" content="Receiving practice">
-  <meta property="og:description" content="Practice receiving in Endpoint Cloud, one step at a time. Learn purchase order, ASN and web receiving with example deliveries.">
+  <meta property="og:title" content="The Warehouse Simulator">
+  <meta property="og:description" content="An empty warehouse and $600. Start Latchford Distribution, handle every carton, and build a small trade-supply business.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://ethanwillingham.com/one-shift.html">
   <meta property="og:image" content="https://ethanwillingham.com/assets/one-shift-unity/preview.png?v=13">
   <meta property="og:image:alt" content="A worker and yellow forklift in the sunlit warehouse, beside the dispatch office.">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="one-shift-inbound.css?v=15">
-  <script src="js/one-shift-entry.js?v=15" defer></script>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="one-shift-unity.css?v=13">
+  <link rel="stylesheet" href="one-shift-wms.css?v=13">
+  <link rel="stylesheet" href="one-shift-demos.css?v=13">
+  <script src="js/demo-activity.js?v=1" defer></script>
+  <script src="js/one-shift-wms.js?v=13" defer></script>
+  <script src="js/one-shift-demos.js?v=13" defer></script>
+  <script src="js/one-shift-unity.js?v=13" defer></script>
 </head>
-<body class="inbound-page">
-<div id="inbound-app" class="in-shell">
-  <header class="in-header"><a class="in-brand" href="#">Receiving practice</a><span class="in-badge">Practice only</span><button id="in-help" type="button">Help</button></header>
-  <main id="in-main" tabindex="-1">
-    <section class="in-home">
-      <div class="in-intro"><p class="in-eyebrow">Learn by doing</p><h1>What would you like to do?</h1><p>Choose a task. We will walk through it together.</p></div>
-      <a href="#inbound" class="in-start"><span class="in-start-copy"><strong>Inbound</strong><span>Receive a delivery into the warehouse.</span><span class="in-method-action">Choose how to receive</span></span><span class="in-start-art" aria-hidden="true"></span><span class="in-arrow" aria-hidden="true">&gt;</span></a>
-      <p class="in-note">Take your time. You can repeat any step.</p>
-    </section>
-  </main>
-  <footer class="in-footer"><span>Example deliveries. Your company's inventory stays unchanged.</span><a href="https://endpoint.my.site.com/supportportal/s/article/Inbound-Overview" target="_blank" rel="noopener">Endpoint Cloud receiving guide (new tab)</a></footer>
-  <dialog id="in-help-dialog" class="in-dialog" aria-labelledby="in-help-title"><h2 id="in-help-title">Take it one step at a time</h2><p>Choose Inbound, then choose a receiving lesson. The warehouse opens when you are ready to play.</p><p>Use a keyboard and mouse. Walk with WASD or the arrow keys. Hold E to carry a carton and release E to set it down. Aim at a label and hold left mouse to scan it.</p><p>Right click to use your handheld screen. The guide shows your next step. Press Escape for the menu.</p><p>These simplified training screens use example data and follow the linked Endpoint Cloud guides. There is no timer. Your lesson progress lasts while this page is open.</p><button id="in-close-help" class="in-primary" type="button">Back to practice</button></dialog>
-</div>
-<main id="warehouse-stage" aria-label="The Warehouse Simulator" hidden>
+<body class="warehouse-page">
+<main id="warehouse-stage" aria-label="The Warehouse Simulator">
   <canvas id="warehouse-canvas" width="1280" height="720" tabindex="0" aria-label="Warehouse game. WASD to move, mouse to look, E to interact. Escape opens the menu." hidden></canvas>
   <section id="warehouse-launcher" class="warehouse-launcher" aria-labelledby="warehouse-title">
     <div class="warehouse-cover" aria-hidden="true"></div>
@@ -64,8 +58,8 @@
       <div id="warehouse-error" class="warehouse-error" role="alert" hidden></div>
     </div>
     <footer class="warehouse-title-footer">
-      <span>v15 <span aria-hidden="true">/</span> Web edition</span>
-      <nav aria-label="Game information"><button type="button" data-fullscreen>Full screen</button><button type="button" data-screen="about">About</button><a href="one-shift.html#inbound">Receiving practice</a><a href="archive.html">More games</a></nav>
+      <span>v13 <span aria-hidden="true">/</span> Web edition</span>
+      <nav aria-label="Game information"><button type="button" data-fullscreen>Full screen</button><button type="button" data-screen="about">About</button><a href="archive.html">More games</a></nav>
     </footer>
   </section>
   <section id="warehouse-hud" class="warehouse-hud" aria-label="Shift status" hidden>
@@ -86,7 +80,7 @@
     </aside>
   </section>
   <nav id="warehouse-tools" class="warehouse-tools" aria-label="Game controls" hidden><button id="warehouse-handheld-toggle" type="button">TC22 <kbd>Q</kbd></button><button id="warehouse-pause" type="button" aria-pressed="false">Menu <kbd>Esc</kbd></button></nav>
-  <output id="warehouse-stats" class="warehouse-stats" aria-label="Game version and frame rate" aria-live="off" hidden>v15</output>
+  <output id="warehouse-stats" class="warehouse-stats" aria-label="Game version and frame rate" aria-live="off" hidden>v13</output>
   <dialog id="warehouse-menu" class="warehouse-dialog" aria-labelledby="warehouse-menu-title">
     <div class="warehouse-menu-shell">
       <header class="warehouse-dialog-header"><div><p class="warehouse-kicker">The Warehouse Simulator</p><h2 id="warehouse-menu-title">Paused</h2></div><button id="warehouse-close-menu" class="warehouse-close" type="button" aria-label="Close menu">Close</button></header>
@@ -118,7 +112,7 @@
         <button id="warehouse-close-help" class="warehouse-subtle" type="button">Back</button>
       </section>
       <section id="warehouse-about" hidden><p class="warehouse-about-copy">A warehouse game by Ethan Willingham.</p><p>Build Latchford Distribution from its first cartons, or open an equipped warehouse in Sandbox. Progress lasts for the current page session.</p><p class="warehouse-classic">The earlier illustrated game and its saved warehouses are <a href="one-shift-classic.html">still here</a>.</p><a href="archive.html">More games</a></section>
-      <footer class="warehouse-menu-footer"><button id="warehouse-menu-back" class="warehouse-subtle" type="button" hidden>Back to menu</button><span>v15 / Web edition</span></footer>
+      <footer class="warehouse-menu-footer"><button id="warehouse-menu-back" class="warehouse-subtle" type="button" hidden>Back to menu</button><span>v13 / Web edition</span></footer>
     </div>
   </dialog>
   <dialog id="warehouse-computer" class="warehouse-computer" aria-labelledby="warehouse-computer-title">
@@ -149,6 +143,5 @@
   <div id="warehouse-rotate" class="warehouse-gate warehouse-rotate" hidden><div><p class="warehouse-kicker">The Warehouse Simulator</p><div class="warehouse-rotate-drawing" aria-hidden="true"></div><h2>Turn your screen sideways.</h2><p>The warehouse uses a keyboard and mouse.</p><a href="one-shift-classic.html">Play the illustrated game with touch</a></div></div>
   <noscript><div class="warehouse-gate"><div><h2>JavaScript is needed to play.</h2><p>Enable JavaScript, then reload this page.</p><a href="archive.html">Back to In Progress</a></div></div></noscript>
 </main>
-<noscript><p>Turn on JavaScript to use the practice screens. You can also read the <a href="https://endpoint.my.site.com/supportportal/s/article/Inbound-Overview">receiving guide</a>.</p></noscript>
 </body>
 </html>

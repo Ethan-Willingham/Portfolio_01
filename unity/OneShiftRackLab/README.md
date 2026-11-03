@@ -1,66 +1,9 @@
 # The Warehouse Simulator
 
-A Unity 6.3 URP warehouse. The default at `one-shift.html` is receiving practice;
-the original distribution-business career, equipped Sandbox and customer demos
-remain at `one-shift.html?view=warehouse`. Neither runtime reads or writes the
-illustrated game's saves. Progress is session state, with no checkpoint
-persistence. Internal OneShift paths, namespace and Editor menus remain stable.
-
-## v15 receiving game
-
-The opening menus load immediately without the Unity player or old cover image.
-Home > Inbound > a method opens a first-person receiving lesson and lazily loads
-one shared player, reused across lessons. A small current-task guide stays on
-the warehouse floor. Receiving software opens through the handheld or the
-physical office computer; it is not a permanent panel beside a fixed camera.
-See the v15 section in `docs/ONE_SHIFT.md` for the eight examples and Endpoint
-Cloud article links.
-
-WASD or arrow keys walk; mouse movement looks around after Start playing captures
-the pointer. Hold E to carry a carton and release to set it down. Holding left
-mouse also carries when the scanner is stowed; right mouse rotates a held carton.
-Q equips or stows the TC22. Hold left mouse to aim and scan a real visible
-barcode, or press F for a single scan. Right click or Tab opens the handheld
-software. For web receiving, walk to the office monitor, aim at it and press E.
-H opens the guide; Escape opens the menu. The browser owns pointer capture,
-including returns from devices, and the capture click must not also scan.
-Gameplay requires a keyboard and mouse. Coarse-pointer portrait views freeze
-interaction, independently of manual pause and browser inactivity.
-
-`BrowserLoop.jslib` selects mode 5 from the dedicated browser host.
-`WarehouseInboundPractice` uses `RackWalkController`, `WarehouseGrabber`, the
-office camera transition and `WarehouseWmsScanner` in practice mode. It creates
-the selected delivery in REC-02, with real Code128 labels and one physical unit
-per `EA`. It suppresses the original stock, business, courier and forklift
-simulations. No `WarehouseWmsRuntime` or second ledger is created. The TC22 still
-checks barcode range, orientation and solid occlusion.
-
-`js/one-shift-inbound-model.js` owns the practice receipts, journal and inventory.
-The dedicated host is `js/one-shift-inbound-warehouse.js`; the lesson interface is
-`js/one-shift-inbound.js`. Before a receipt, the browser asks for current native
-placement and requires every delivered unit to be settled inside REC-02 with
-nothing held. The native adapter independently rejects newly recorded units
-that are held, displaced or unsupported. Receipt, Undo and completion only
-change recorded status and labels; they never transport cartons. Only explicit
-lesson setup/reset creates the fixture. Physical handling remains the player's
-work. No lesson writes to company inventory, connects to a company API or exports
-transactions.
-
-Run `node tools/test-one-shift-inbound-model.cjs` and
-`node tools/test-one-shift-inbound-host.cjs` from the repository root. Host checks
-use DOM and Unity stubs. `node tools/test-one-shift-inbound-browser.cjs` exercises
-the exported player using real Chrome mouse and keyboard input. Also run
-`WarehouseInboundPracticeValidation.ValidateAndSave()`, inspect its report, and
-verify the actual exported browser player. Check walking, carrying, physical
-barcode scans, handheld/office transitions, all receiving paths, physical
-receipt rejection and recovery, current snapshot acknowledgement, pointer
-capture, lesson reuse and independent activity/pause/orientation gates. Native
-adapter or bridge changes require a fresh versioned Unity export. For batch
-work, validate and verify the report, exit that Editor process, then export in
-a fresh process. Preserve the original modes and their separate checks below;
-historical results do not validate the new receiving mode.
-
-## Retained v13 game modes
+A Unity 6.3 URP warehouse with an empty distribution-business career and a separate
+equipped Sandbox. It does not read or write the illustrated game's saves.
+Deliveries, stock, cash and equipment are session state, with no checkpoint persistence yet.
+Internal OneShift paths, namespace and Editor menus remain stable.
 
 The v13 browser offers a $600 distribution business with empty small shelves and
 a stocked Sandbox with $10,000, 100 owned cartons, two unreceived PO cartons,
@@ -103,7 +46,7 @@ with floor lettering, borders and wall signs, leaving the central dock route
 clear. REC-01 remains the front-door parcel receiving bin. Labels retain normal
 depth occlusion without distance-based visibility toggles.
 
-For these retained game modes, WarehouseWmsLedger is the one stock authority. WarehouseWmsRuntime,
+WarehouseWmsLedger is the one stock authority. WarehouseWmsRuntime,
 WarehouseWmsWorkflow and WarehouseWmsSnapshot connect it to physical bins,
 WarehouseWmsScanner, courier visits and both browser interfaces. Receive posts
 stock into receiving; Transfer makes it available in pickable storage; SO release
@@ -118,7 +61,7 @@ handling IDs, not item serial numbers. Physics, pickup and supported placement
 remain real. A physically moved box does not silently change the WMS record.
 Racks, forklift, singing fish and flame decals remain career purchases.
 
-Outside receiving practice mode 5, BrowserLifecycle installs the WMS at runtime before the authored receiving
+BrowserLifecycle installs the WMS at runtime before the authored receiving
 service starts. Editor Play without that browser bootstrap retains the authored
 legacy rack/pallet trial. Do not use that Editor start as a current browser validation.
 Install WarehouseCareerBuilder.Install() before exporting to retain runtime

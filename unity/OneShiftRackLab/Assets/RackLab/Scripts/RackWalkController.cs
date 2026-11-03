@@ -22,7 +22,6 @@ namespace OneShift.RackLab
         float pitch, verticalSpeed;
         Vector3 horizontalVelocity, groundNormal = Vector3.up;
         Quaternion spawnRotation;
-        float spawnPitch;
         bool captured, awaitNeutral;
         bool hadFocus = true;
         bool browserActive = true;
@@ -404,11 +403,10 @@ namespace OneShift.RackLab
             if (hit.normal.y > .55f) groundNormal = hit.normal;
         }
 
-        public void SetSpawnPose(Vector3 position, Quaternion rotation, float initialPitch = 0)
+        public void SetSpawnPose(Vector3 position, Quaternion rotation)
         {
             spawnPosition = position;
             spawnRotation = rotation;
-            spawnPitch = Mathf.Clamp(initialPitch,-85,85);
             ResetPosition();
         }
 
@@ -419,9 +417,9 @@ namespace OneShift.RackLab
             motor.enabled = false;
             transform.SetPositionAndRotation(spawnPosition, spawnRotation);
             motor.enabled = true;
-            pitch = spawnPitch;
+            pitch = 0;
             ClearMovement();
-            eyes.transform.localRotation = Quaternion.Euler(pitch,0,0);
+            eyes.transform.localRotation = Quaternion.identity;
         }
     }
 }

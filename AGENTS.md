@@ -106,8 +106,7 @@ are ordinary scripts, with no bundle step and no Sluice dependencies. Read
 `archive.html` (In Progress). Bump the `?v=` values on its CSS and game scripts
 when changing them so deployed edits bypass stale caches.
 
-**The Warehouse Simulator** (formerly One Shift) retains the Unity warehouse at
-`one-shift.html?view=warehouse`, with its browser
+**The Warehouse Simulator** (formerly One Shift) opens the Unity warehouse from `one-shift.html`, with its browser
 launcher in `one-shift-unity.css` and `js/one-shift-unity.js`. Editable Unity source
 lives in `unity/OneShiftRackLab`; read its `README.md` and `WAREHOUSE_LIGHTING.md`
 before changing the scene. **One Shift > Build browser player** exports to
@@ -115,45 +114,6 @@ before changing the scene. **One Shift > Build browser player** exports to
 keyboard and mouse controls, landscape gate, and independent browser inactivity
 and manual pause. Verify an actual browser build before publishing. Keep the
 post on `archive.html` (In Progress), with its stable `one-shift.html` URL.
-The owner's 2026-11-03 direction makes playable receiving the default at
-`one-shift.html`: an immediate "What would you like to do?" screen, Inbound,
-then a receiving lesson inside the first-person warehouse. Read the v15 section
-in `docs/ONE_SHIFT.md`. `js/one-shift-entry.js`
-keeps the opening menus independent of Unity and the old cover image. Sources
-are `js/one-shift-inbound-model.js`, `js/one-shift-inbound.js`,
-`js/one-shift-inbound-warehouse.js` and `one-shift-inbound.css`. The dedicated host
-loads Unity on lesson selection and reuses it across lessons. Native mode 5 uses
-`WarehouseInboundPractice` to prepare exact delivered units and labels in REC-02.
-WASD or arrow keys walk; the mouse looks around. Hold E to carry a carton, or
-hold left mouse with the scanner stowed; release to put it down. Q equips or
-stows the TC22, holding left mouse aims and scans a real visible barcode, and F
-takes a single scan. Right click or Tab opens the handheld receiving software;
-right mouse instead rotates a held carton. Web receiving uses the physical
-office monitor: walk to it, aim and press E. Keep the floor view primary and
-show software only when the player opens a device. The browser owns pointer
-capture, including returns from devices. Every delivered carton must be settled
-inside REC-02, with nothing held, before a receipt can post. The browser model
-owns receipt state; native sync changes recorded labels and colors without
-moving units or creating a second WMS ledger. Never simulate handling by moving
-cartons automatically after a software action.
-The eight examples follow the owner's Endpoint Cloud KB links, with fictional
-session-only data and no company API or inventory writes. They include lot,
-serial, date, ASN and completion-status training; the carton-only rule below
-still governs the separate original game modes. Preserve large controls, plain
-instructions, visible quantities, keyboard access and independent
-pause/activity/orientation gates. Gameplay requires a keyboard and mouse;
-coarse-pointer portrait views show the rotation gate. Its palette and local type follow
-the One Shift exception, without global site restyling. The original receiving
-and putaway briefing remains at `one-shift.html?mode=demo&demo=receive`, with
-Career, Sandbox and all three old demos available in their existing launcher.
-Run `node tools/test-one-shift-inbound-model.cjs`,
-`node tools/test-one-shift-inbound-host.cjs`,
-`WarehouseInboundPracticeValidation.ValidateAndSave()` and affected native browser
-paths. Native adapter or bridge changes require a new versioned Unity export.
-For batch work, prefer validation and report verification followed by export in
-a fresh Editor process.
-Bump changed asset query versions, including both hosts' build URLs when the
-shared player changes.
 The owner's 2026-10-27 direction uses a finished title screen, a minimal contextual
 HUD, and a three-step practical forklift introduction. Left Shift holds the
 variable hydraulic lever; X is no longer the control. The office computer manages
