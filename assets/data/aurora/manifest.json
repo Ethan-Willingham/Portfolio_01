@@ -1,80 +1,8 @@
 {
   "version": 1,
   "source": "https://services.swpc.noaa.gov/json/ovation_aurora_latest.json",
-  "updatedAt": "2026-11-07T09:32:26.006Z",
+  "updatedAt": "2026-11-07T15:12:56.137Z",
   "frames": [
-    {
-      "file": "20261008T101200Z-20261008T112900Z-f8a02d975efaf097.json.gz",
-      "observation": "2026-10-08T10:12:00.000Z",
-      "forecast": "2026-10-08T11:29:00.000Z",
-      "sha256": "f8a02d975efaf0973d3a5ad6a0f395f2b0c6b8ae7f73c0a6081b8f0582a4a365"
-    },
-    {
-      "file": "20261008T101800Z-20261008T113400Z-7a86fc58a86ea6d3.json.gz",
-      "observation": "2026-10-08T10:18:00.000Z",
-      "forecast": "2026-10-08T11:34:00.000Z",
-      "sha256": "7a86fc58a86ea6d38bf5c03f9729e57a0d816e8f1b43677194cc964dc89453cf"
-    },
-    {
-      "file": "20261008T102300Z-20261008T113900Z-2f869c8ef0a0aa71.json.gz",
-      "observation": "2026-10-08T10:23:00.000Z",
-      "forecast": "2026-10-08T11:39:00.000Z",
-      "sha256": "2f869c8ef0a0aa719e75e69d9d13e8d0824cb9cbd10dbb477957ecf0deb7dc84"
-    },
-    {
-      "file": "20261008T102900Z-20261008T114500Z-00535aa885776eb1.json.gz",
-      "observation": "2026-10-08T10:29:00.000Z",
-      "forecast": "2026-10-08T11:45:00.000Z",
-      "sha256": "00535aa885776eb15c60f924ff183d80b207d90e8cc19d170df88083c2414879"
-    },
-    {
-      "file": "20261008T103500Z-20261008T115000Z-77de1a584e4902e8.json.gz",
-      "observation": "2026-10-08T10:35:00.000Z",
-      "forecast": "2026-10-08T11:50:00.000Z",
-      "sha256": "77de1a584e4902e83b7024043fc80c71acd95b4a4907d5c7551d2ebaf95ad929"
-    },
-    {
-      "file": "20261008T104000Z-20261008T115500Z-aa79ea43116e537b.json.gz",
-      "observation": "2026-10-08T10:40:00.000Z",
-      "forecast": "2026-10-08T11:55:00.000Z",
-      "sha256": "aa79ea43116e537b81dec4ef22032eb3b47c43495d80b26509642d66d956b054"
-    },
-    {
-      "file": "20261008T104200Z-20261008T120000Z-d4e8b88ccae90fe9.json.gz",
-      "observation": "2026-10-08T10:42:00.000Z",
-      "forecast": "2026-10-08T12:00:00.000Z",
-      "sha256": "d4e8b88ccae90fe9c0456ece6ffc07287772a9e5a777ba2bedf64a061734d3f8"
-    },
-    {
-      "file": "20261008T104800Z-20261008T120500Z-1285aef99a6c2606.json.gz",
-      "observation": "2026-10-08T10:48:00.000Z",
-      "forecast": "2026-10-08T12:05:00.000Z",
-      "sha256": "1285aef99a6c26067ddaff9a0fb4df623c8cfb3d29461c610e79d3c7774cd2e3"
-    },
-    {
-      "file": "20261008T105400Z-20261008T121000Z-85980742fc57bb8a.json.gz",
-      "observation": "2026-10-08T10:54:00.000Z",
-      "forecast": "2026-10-08T12:10:00.000Z",
-      "sha256": "85980742fc57bb8a6dc87ebfc1f790e8e40c7fb455f85844240671497f4a9eea"
-    },
-    {
-      "file": "20261008T105900Z-20261008T121400Z-56f93ecd57b6b06f.json.gz",
-      "observation": "2026-10-08T10:59:00.000Z",
-      "forecast": "2026-10-08T12:14:00.000Z",
-      "sha256": "56f93ecd57b6b06f4603f7eff269165f4dd2920d1150bf9f0e360c53e39dd2e5"
-    },
-    {
-      "file": "20261008T110500Z-20261008T121900Z-9ab6fbb615d1e021.json.gz",
-      "observation": "2026-10-08T11:05:00.000Z",
-      "forecast": "2026-10-08T12:19:00.000Z",
-      "sha256": "9ab6fbb615d1e021bbb09109ccf179ad25d31f44e89a3faf2128ebb7cb5e3947"
-    },
-    {
-      "file": "20261008T110800Z-20261008T122400Z-9af9cf2c8cd8cf3c.json.gz",
-      "observation": "2026-10-08T11:08:00.000Z",
-      "forecast": "2026-10-08T12:24:00.000Z",
-      "sha256": "9af9cf2c8cd8cf3cb0f63269deaf9f089174b73adae67b830ce3339728c9485f"
-    },
     {
       "file": "20261008T172400Z-20261008T184000Z-756d45fe069a45dc.json.gz",
       "observation": "2026-10-08T17:24:00.000Z",
@@ -10808,6 +10736,12 @@
       "observation": "2026-11-07T09:28:00.000Z",
       "forecast": "2026-11-07T10:23:00.000Z",
       "sha256": "c45578b649c5027020e5785e835aa097c9dc29e01eeb09c9bf213f2968ecd05f"
+    },
+    {
+      "file": "20261107T150700Z-20261107T155400Z-7b61a29fd7846024.json.gz",
+      "observation": "2026-11-07T15:07:00.000Z",
+      "forecast": "2026-11-07T15:54:00.000Z",
+      "sha256": "7b61a29fd78460242e1ec96fcd1c6f23668a065470d9be244be4ff1f81a0cab0"
     }
   ]
 }
