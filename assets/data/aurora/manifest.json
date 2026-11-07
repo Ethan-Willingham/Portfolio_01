@@ -1,68 +1,8 @@
 {
   "version": 1,
   "source": "https://services.swpc.noaa.gov/json/ovation_aurora_latest.json",
-  "updatedAt": "2026-11-07T16:10:54.997Z",
+  "updatedAt": "2026-11-07T19:28:39.859Z",
   "frames": [
-    {
-      "file": "20261008T172400Z-20261008T184000Z-756d45fe069a45dc.json.gz",
-      "observation": "2026-10-08T17:24:00.000Z",
-      "forecast": "2026-10-08T18:40:00.000Z",
-      "sha256": "756d45fe069a45dc7fee40d4cc4df313bd45d09bea21112909c66fbc57d877f7"
-    },
-    {
-      "file": "20261008T173000Z-20261008T184500Z-cdfae330c5411ca9.json.gz",
-      "observation": "2026-10-08T17:30:00.000Z",
-      "forecast": "2026-10-08T18:45:00.000Z",
-      "sha256": "cdfae330c5411ca972bfb6be77007c47b5e818d76784b949c1d54df2aeb12fb9"
-    },
-    {
-      "file": "20261008T173300Z-20261008T185000Z-d3604e95409a3982.json.gz",
-      "observation": "2026-10-08T17:33:00.000Z",
-      "forecast": "2026-10-08T18:50:00.000Z",
-      "sha256": "d3604e95409a3982cce80a6559072fe99d992fd5c4ea942abd13fc422d030ceb"
-    },
-    {
-      "file": "20261008T173900Z-20261008T185500Z-21941ea40bd9b531.json.gz",
-      "observation": "2026-10-08T17:39:00.000Z",
-      "forecast": "2026-10-08T18:55:00.000Z",
-      "sha256": "21941ea40bd9b53148294979856dbf40636092aa1dea703cddc2ac54082b8f74"
-    },
-    {
-      "file": "20261008T174400Z-20261008T190000Z-b8e76d72f486a22a.json.gz",
-      "observation": "2026-10-08T17:44:00.000Z",
-      "forecast": "2026-10-08T19:00:00.000Z",
-      "sha256": "b8e76d72f486a22a2d824eccbf79943dc205f5c3a51db8b50cd7439c54742b99"
-    },
-    {
-      "file": "20261008T175000Z-20261008T190500Z-91af6fffbebc0b4d.json.gz",
-      "observation": "2026-10-08T17:50:00.000Z",
-      "forecast": "2026-10-08T19:05:00.000Z",
-      "sha256": "91af6fffbebc0b4d4bd9293d109bcd03eaa3e083fe9d4431a7d67e7d6a9f6241"
-    },
-    {
-      "file": "20261008T175300Z-20261008T191000Z-fba86ae6ca438735.json.gz",
-      "observation": "2026-10-08T17:53:00.000Z",
-      "forecast": "2026-10-08T19:10:00.000Z",
-      "sha256": "fba86ae6ca43873506fff8624acee7089a653258a8b5d9eefbc226f787a94e55"
-    },
-    {
-      "file": "20261008T175800Z-20261008T191500Z-cb7d5ad5b42451f2.json.gz",
-      "observation": "2026-10-08T17:58:00.000Z",
-      "forecast": "2026-10-08T19:15:00.000Z",
-      "sha256": "cb7d5ad5b42451f26005146ab970ed537a38a29e1833ab791ca1ae648618408e"
-    },
-    {
-      "file": "20261008T180400Z-20261008T192000Z-4f272c831489b636.json.gz",
-      "observation": "2026-10-08T18:04:00.000Z",
-      "forecast": "2026-10-08T19:20:00.000Z",
-      "sha256": "4f272c831489b636e2a76648e8a1268c3aa0281623df0cfb514201c7321991e2"
-    },
-    {
-      "file": "20261008T181000Z-20261008T192500Z-21f334386d2861e9.json.gz",
-      "observation": "2026-10-08T18:10:00.000Z",
-      "forecast": "2026-10-08T19:25:00.000Z",
-      "sha256": "21f334386d2861e942c6b9a293772a715bdacee42fc36df9565672bef9066ce6"
-    },
     {
       "file": "20261008T181200Z-20261008T193000Z-b4908586bdb7d55e.json.gz",
       "observation": "2026-10-08T18:12:00.000Z",
@@ -10808,6 +10748,12 @@
       "observation": "2026-11-07T16:02:00.000Z",
       "forecast": "2026-11-07T16:49:00.000Z",
       "sha256": "30f4173ccdb65baf58c2c57431f5c01bed53b9ee81985ed67d558cde4f3e9414"
+    },
+    {
+      "file": "20261107T192300Z-20261107T200300Z-e36809a23bece0dc.json.gz",
+      "observation": "2026-11-07T19:23:00.000Z",
+      "forecast": "2026-11-07T20:03:00.000Z",
+      "sha256": "e36809a23bece0dc8e11b3fe964c1bc65a3701e16bf725dab59f0c0059ae2ef2"
     }
   ]
 }
