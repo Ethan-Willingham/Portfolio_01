@@ -5,7 +5,7 @@
     "collector": "native Claude messages and Codex response records, with legacy cumulative counters",
     "collectorVersion": "2",
     "pricingRegistry": "tools/about-models.json",
-    "pricingVerified": "2026-09-23",
+    "pricingVerified": "2026-11-12",
     "priceMeaning": "Standard API-equivalent estimate at dated list prices, not an invoice; excludes service-tier premiums and tool charges",
     "cacheWriteAssumption": "Native Claude cache duration is used when recorded; otherwise five-minute writes",
     "gptLongContext": "Deduplicated Codex response counters with the registered long-context threshold",
@@ -2309,6 +2309,115 @@
           }
         }
       }
+    },
+    "2026-11-07": {
+      "totalTokens": 67945433,
+      "cost": 16.543317,
+      "models": {
+        "gpt-6.1-sol": {
+          "input": 963615,
+          "cacheWrite": 0,
+          "cacheWrite1h": 0,
+          "cacheRead": 66573184,
+          "output": 408634,
+          "totalTokens": 67945433,
+          "cost": 16.543317,
+          "pricing": "deduplicated native responses, standard API rates",
+          "requests": 368,
+          "longContext": {
+            "input": 189779,
+            "cacheWrite": 0,
+            "cacheRead": 28390656,
+            "output": 130761
+          }
+        }
+      }
+    },
+    "2026-11-08": {
+      "totalTokens": 18920860,
+      "cost": 4.6529890000000025,
+      "models": {
+        "gpt-6.1-sol": {
+          "input": 853672,
+          "cacheWrite": 0,
+          "cacheWrite1h": 0,
+          "cacheRead": 17984640,
+          "output": 82548,
+          "totalTokens": 18920860,
+          "cost": 4.6529890000000025,
+          "pricing": "deduplicated native responses, standard API rates",
+          "requests": 121,
+          "longContext": {
+            "input": 25782,
+            "cacheWrite": 0,
+            "cacheRead": 2565120,
+            "output": 2725
+          }
+        }
+      }
+    },
+    "2026-11-09": {
+      "totalTokens": 33593111,
+      "cost": 18.847719800000004,
+      "models": {
+        "gpt-6-astra": {
+          "input": 397852,
+          "cacheWrite": 0,
+          "cacheWrite1h": 0,
+          "cacheRead": 6186368,
+          "output": 33946,
+          "totalTokens": 6618166,
+          "cost": 11.862188000000002,
+          "pricing": "deduplicated native responses, standard API rates",
+          "requests": 55,
+          "longContext": {
+            "input": 0,
+            "cacheWrite": 0,
+            "cacheRead": 0,
+            "output": 0
+          }
+        },
+        "gpt-6.1-sol": {
+          "input": 523770,
+          "cacheWrite": 0,
+          "cacheWrite1h": 0,
+          "cacheRead": 26330240,
+          "output": 120935,
+          "totalTokens": 26974945,
+          "cost": 6.985531799999999,
+          "pricing": "deduplicated native responses, standard API rates",
+          "requests": 138,
+          "longContext": {
+            "input": 167411,
+            "cacheWrite": 0,
+            "cacheRead": 15217408,
+            "output": 47811
+          }
+        }
+      }
+    },
+    "2026-11-12": {
+      "totalTokens": 6411076,
+      "cost": 10.069368,
+      "models": {
+        "gpt-6-astra": {
+          "input": 190866,
+          "cacheWrite": 0,
+          "cacheWrite1h": 0,
+          "cacheRead": 6180608,
+          "output": 39602,
+          "totalTokens": 6411076,
+          "cost": 10.069368,
+          "pricing": "deduplicated native responses, standard API rates",
+          "requests": 63,
+          "longContext": {
+            "input": 0,
+            "cacheWrite": 0,
+            "cacheRead": 0,
+            "output": 0
+          }
+        }
+      }
     }
   },
   "daily": {
@@ -2364,7 +2473,7 @@
       18225562
     ]
   },
-  "updated": "2026-10-29",
+  "updated": "2026-11-12",
   "retainedDays": {
     "2026-07-23": {
       "totalTokens": 131738515,
@@ -4424,11 +4533,11 @@
   "supplement": {
     "version": 1,
     "ledgerId": "09cca3cb5d86176af102c016fe99c4473f9b75ead6be69016ae481a9650186b5",
-    "reportHash": "08db8df34a816be8dfacfb18bf13f1a30ac26cd528e84a1149282e70cee067b2",
+    "reportHash": "40460de8f34d07517dff476d35cca573849f13078af63a8432c0e57aa743fa73",
     "after": "2026-10-20T14:16:22.733Z",
-    "cutoff": "2026-10-29T16:38:00.000Z",
-    "totalTokens": 1296102710,
-    "cost": 1432.4570216000004,
+    "cutoff": "2026-11-12T16:21:49.171Z",
+    "totalTokens": 1422973190,
+    "cost": 1482.5704154000002,
     "days": {
       "2026-10-21": {
         "totalTokens": 26881448,
@@ -4675,16 +4784,125 @@
             }
           }
         }
+      },
+      "2026-11-07": {
+        "totalTokens": 67945433,
+        "cost": 16.543317,
+        "models": {
+          "gpt-6.1-sol": {
+            "input": 963615,
+            "cacheWrite": 0,
+            "cacheWrite1h": 0,
+            "cacheRead": 66573184,
+            "output": 408634,
+            "totalTokens": 67945433,
+            "cost": 16.543317,
+            "pricing": "deduplicated native responses, standard API rates",
+            "requests": 368,
+            "longContext": {
+              "input": 189779,
+              "cacheWrite": 0,
+              "cacheRead": 28390656,
+              "output": 130761
+            }
+          }
+        }
+      },
+      "2026-11-08": {
+        "totalTokens": 18920860,
+        "cost": 4.6529890000000025,
+        "models": {
+          "gpt-6.1-sol": {
+            "input": 853672,
+            "cacheWrite": 0,
+            "cacheWrite1h": 0,
+            "cacheRead": 17984640,
+            "output": 82548,
+            "totalTokens": 18920860,
+            "cost": 4.6529890000000025,
+            "pricing": "deduplicated native responses, standard API rates",
+            "requests": 121,
+            "longContext": {
+              "input": 25782,
+              "cacheWrite": 0,
+              "cacheRead": 2565120,
+              "output": 2725
+            }
+          }
+        }
+      },
+      "2026-11-09": {
+        "totalTokens": 33593111,
+        "cost": 18.847719800000004,
+        "models": {
+          "gpt-6-astra": {
+            "input": 397852,
+            "cacheWrite": 0,
+            "cacheWrite1h": 0,
+            "cacheRead": 6186368,
+            "output": 33946,
+            "totalTokens": 6618166,
+            "cost": 11.862188000000002,
+            "pricing": "deduplicated native responses, standard API rates",
+            "requests": 55,
+            "longContext": {
+              "input": 0,
+              "cacheWrite": 0,
+              "cacheRead": 0,
+              "output": 0
+            }
+          },
+          "gpt-6.1-sol": {
+            "input": 523770,
+            "cacheWrite": 0,
+            "cacheWrite1h": 0,
+            "cacheRead": 26330240,
+            "output": 120935,
+            "totalTokens": 26974945,
+            "cost": 6.985531799999999,
+            "pricing": "deduplicated native responses, standard API rates",
+            "requests": 138,
+            "longContext": {
+              "input": 167411,
+              "cacheWrite": 0,
+              "cacheRead": 15217408,
+              "output": 47811
+            }
+          }
+        }
+      },
+      "2026-11-12": {
+        "totalTokens": 6411076,
+        "cost": 10.069368,
+        "models": {
+          "gpt-6-astra": {
+            "input": 190866,
+            "cacheWrite": 0,
+            "cacheWrite1h": 0,
+            "cacheRead": 6180608,
+            "output": 39602,
+            "totalTokens": 6411076,
+            "cost": 10.069368,
+            "pricing": "deduplicated native responses, standard API rates",
+            "requests": 63,
+            "longContext": {
+              "input": 0,
+              "cacheWrite": 0,
+              "cacheRead": 0,
+              "output": 0
+            }
+          }
+        }
       }
     },
     "collection": {
       "ledgerId": "09cca3cb5d86176af102c016fe99c4473f9b75ead6be69016ae481a9650186b5",
-      "cutoff": "2026-10-29T16:38:00.000Z",
+      "cutoff": "2026-11-12T16:21:49.171Z",
       "timezone": "America/Chicago",
-      "files": 144,
+      "files": 86,
       "claudeMessages": 2713,
-      "codexSessions": 114,
-      "nativeResponses": 9003,
+      "codexSessions": 125,
+      "nativeResponses": 9748,
       "cacheDurationInconsistencies": 0,
       "imports": {
         "6615a4ec9bc93d9a57ea9da62b264e309c9fd302e1845031993c4244a3b8c067": {

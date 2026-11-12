@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "verified": "2026-09-23",
+  "verified": "2026-11-12",
   "maxVerificationAgeDays": 45,
   "note": "The model registry and API-equivalent list prices used by the About page. Prices are USD per million tokens. Recheck the official sources before verified becomes older than maxVerificationAgeDays.",
   "sources": {

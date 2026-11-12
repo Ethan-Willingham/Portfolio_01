@@ -10,6 +10,17 @@ The wrapper starts from live `main` in a clean temporary worktree. It collects u
 refreshes the commit timeline, page attribution and search index, checks the
 result, then commits and pushes. A failed collector or validator stops publication.
 
+## November 12, 2026 PC refresh
+
+The total is **39,883,545,784 tokens**, displayed as **39.9B**. Retained PC
+Codex logs added **126,870,480 tokens** across November 7 to 9 and November 12,
+worth about **$50.11** at standard API list prices. The snapshot ends November 12
+at 10:21 AM America/Chicago. The Mac baseline covers logs through October 20.
+
+For the next Mac import, use the private `local-usage-export-<reportHash>.json`
+in `~/.local/share/about-usage/`. The current hash is `supplement.reportHash`
+in `tools/about-stats.json`.
+
 ## October 29, 2026 PC refresh and laptop handoff
 
 The total is **39,756,675,304 tokens**, displayed as **39.8B**. This preserves the
