@@ -1,182 +1,76 @@
-<div align="center">
+# Ethan Willingham
 
-```
-███████╗████████╗██╗  ██╗ █████╗ ███╗   ██╗
-██╔════╝╚══██╔══╝██║  ██║██╔══██╗████╗  ██║
-█████╗     ██║   ███████║███████║██╔██╗ ██║
-██╔══╝     ██║   ██╔══██║██╔══██║██║╚██╗██║
-███████╗   ██║   ██║  ██║██║  ██║██║ ╚████║
-╚══════╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝
-    W I L L I N G H A M
-```
+I build games and interactive demos for fun, and write the articles I want to read.
 
-**Personal website & browser experiments**
+**[Visit the site](https://ethanwillingham.com/)** · [About and build history](https://ethanwillingham.com/about.html) · [In progress](https://ethanwillingham.com/archive.html)
 
-[![Hosted on GitHub Pages](https://img.shields.io/badge/GitHub_Pages-hosted-222222?style=flat-square&logo=github&logoColor=white)](https://ethanwillingham.com/)
-[![HTML5](https://img.shields.io/badge/HTML5-pure-E34F26?style=flat-square&logo=html5&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/HTML)
-[![JavaScript](https://img.shields.io/badge/JavaScript-vanilla-F7DF1E?style=flat-square&logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
-[![WebGL](https://img.shields.io/badge/WebGL-fluid_sim-990000?style=flat-square&logo=webgl&logoColor=white)](https://www.khronos.org/webgl/)
-[![WebGPU](https://img.shields.io/badge/WebGPU-particles-6A0DAD?style=flat-square)](https://gpuweb.github.io/gpuweb/)
-[![No build step](https://img.shields.io/badge/build_step-none-brightgreen?style=flat-square)](.)
+<a href="https://ethanwillingham.com/daylight-globe.html">
+  <img src="assets/thumbs/daylight-globe-og-v4.jpg" alt="Earth Now, showing city lights across Asia, the Moon and the Sun against a field of stars." width="1200">
+</a>
 
-</div>
+**[Earth Now](https://ethanwillingham.com/daylight-globe.html)**
 
----
+Spin a globe with satellite clouds, sunlight and NOAA aurora forecasts, then scrub through the last twelve hours.
 
-## What's here
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <a href="https://ethanwillingham.com/random-galaxy.html">
+        <img src="assets/thumbs/random-galaxy.jpg" alt="Gold and green points tracing a Lorenz attractor." width="600">
+      </a>
+      <h3><a href="https://ethanwillingham.com/random-galaxy.html">A Million Points of Light</a></h3>
+      <p>Fly through a million points arranged into strange attractors, fractals and other mathematical structures.</p>
+    </td>
+    <td width="50%" valign="top">
+      <a href="https://ethanwillingham.com/enough.html">
+        <img src="assets/thumbs/enough.jpg" alt="Workers resting beneath a tree in Pieter Bruegel's The Harvesters." width="600">
+      </a>
+      <h3><a href="https://ethanwillingham.com/enough.html">How Much Is Enough?</a></h3>
+      <p>Move the markers on charts of walking, sleep, protein and more. Each chart includes its research sources and calculation details.</p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <a href="https://ethanwillingham.com/gallery.html">
+        <img src="assets/thumbs/gallery.jpg" alt="Cottages beside a stream in Charles-François Daubigny's The Hamlet of Optevoz." width="600">
+      </a>
+      <h3><a href="https://ethanwillingham.com/gallery.html">The Old Masters</a></h3>
+      <p>A gallery of paintings, with short notes on the artists. Open an image and zoom in for a closer look.</p>
+    </td>
+    <td width="50%" valign="top">
+      <a href="https://ethanwillingham.com/optional-body.html">
+        <img src="assets/thumbs/optional-body.jpg" alt="An anatomical engraving of the teeth and jaw from Gray's Anatomy." width="600">
+      </a>
+      <h3><a href="https://ethanwillingham.com/optional-body.html">The Optional Body</a></h3>
+      <p>An illustrated walk through the parts of the body people can live without, from a spare foot bone to a heart on a machine.</p>
+    </td>
+  </tr>
+</table>
 
-A static site with no framework, no bundler, no build step. Just files. Each page is a self-contained experiment (a game, a simulation, a gallery, a demo), written entirely by hand and with LLMs across many sessions.
+## How it's built
 
-<br>
+GitHub Pages serves the site from `main`. The pages use HTML, CSS and JavaScript, with Canvas, WebGL, WebGPU and Three.js for the interactive pieces.
 
-## Pages
-
-| Page | What it is |
-|------|-----------|
-| [`index.html`](index.html) | The homepage and article list. |
-| [`git-history.html`](git-history.html) | **Every Change This Website Ever Made.** Every commit as a point of light on a three-year timeline. |
-| [`weather.html`](weather.html) | **Why We Can Never Predict the Weather.** The math of chaos and the two-week forecast wall. |
-| [`random-galaxy.html`](random-galaxy.html) | **Obi Juan Algorithm.** A million points you fly through in 3D: strange attractors, fractals, primes, a 4D shadow. |
-| [`optional-body.html`](optional-body.html) | **How Much of You Do You Need?** An interactive descent through the parts you can live without. |
-| [`gallery.html`](gallery.html) | **The Old Masters.** A small private gallery of paintings, click to zoom. |
-| [`particle-life.html`](particle-life.html) | **The Ghost in the Swarm.** 100,000 particles obeying three lines of math on the GPU. |
-| [`sluice.html`](sluice.html) | **Sluice.** A browser mining game, built from scratch (see below). |
-| [`daylight-globe.html`](daylight-globe.html) | **Every Hour of Daylight, Visualized.** A spinnable 3D Earth with NASA's night lights. |
-| [`particles.html`](particles.html) | **Rendering Particles Without a Canvas.** The whole renderer is one CSS property on a 1px div. |
-
-<br>
-
----
-
-<div align="center">
-
-## ⛏ Sluice
-
-*The main attraction.*
-
-</div>
-
-A from-scratch browser mining game, built inside a single IIFE with no dependencies. Drill through Earth's crust, collect ore, upgrade your rig, and blast through the barrier band into the deep earth.
-
-**What's under the hood:**
-
-- **Procedural world generation:** Earth layers, barrier band, ore veins, all seeded fresh each run
-- **Two-tier smoke system:** WebGL fluid simulation (Pavel Dobryakov's Stable Fluids, inlined) with a silent SPH-lite fallback for devices without WebGL
-- **Terrain chunk cache:** off-screen canvas tiles for near-zero per-frame redraw cost
-- **Dev mode.** Press <kbd>`</kbd> in-game: infinite money, free shop, instant access to late-game content
+I use Claude and Codex to work on the site. The build history, recorded model contributions and usage calculations are documented on the [About page](https://ethanwillingham.com/about.html).
 
 <details>
-<summary><strong>In-game controls</strong></summary>
+<summary>Run locally and find your way around</summary>
 
-<br>
+With Python 3 installed, run this from the repository root.
 
-| Key | Action |
-|-----|--------|
-| <kbd>W A S D</kbd> / Arrows | Move |
-| <kbd>Space</kbd> | Jetpack |
-| <kbd>E</kbd> or <kbd>P</kbd> | Open / close shop |
-| <kbd>1</kbd> / <kbd>2</kbd> | Drop small / large bomb |
-| <kbd>T</kbd> | Teleport to surface |
-| <kbd>Z</kbd> | Toggle zoom |
-| <kbd>R</kbd> | Restart |
-| <kbd>`</kbd> | **Dev mode toggle** |
-
-Touch and D-pad are fully supported on mobile.
-
-</details>
-
-<br>
-
----
-
-## Stack
-
-| Layer | Choice | Why |
-|-------|--------|-----|
-| Hosting | GitHub Pages | Push to `main` → auto-deploy |
-| Rendering | Canvas 2D + WebGL + WebGPU | Right tool per page, no abstraction over all three |
-| Fonts | Century Supra (Matthew Butterick) | Commercial serif; woff2 served locally |
-| Styling | Single `style.css` | Mobile-first, CSS custom properties, no preprocessor |
-| Scripts | Vanilla JS | No framework, no transpiler, no node_modules |
-
-The live site is [ethanwillingham.com](https://ethanwillingham.com/). GitHub Pages publishes the repository root (`/`) from `main`; `CNAME` configures the custom domain.
-
-<br>
-
----
-
-<details>
-<summary><strong>File structure</strong></summary>
-
-<br>
-
-```
-/
-├── index.html                  ← homepage / article list
-├── git-history.html            ← commit-history visualization
-├── weather.html                ← chaos & forecasting essay
-├── random-galaxy.html          ← 3D strange-attractor flythrough
-├── optional-body.html          ← interactive anatomy descent
-├── gallery.html                ← Old Masters gallery
-├── particle-life.html          ← 100k-particle WebGPU sim
-├── sluice.html       ← the mining game
-├── daylight-globe.html         ← 3D daylight Earth
-├── particles.html              ← CSS-only particle demos
-├── style.css                   ← site-wide panel system + fonts
-├── AGENTS.md                   ← onboarding doc for AI coding assistants
-├── ...                         ← design docs (BUILDING_STYLE, MINERALS_BIBLE, TUNING, ...)
-│
-├── js/
-│   ├── sluice.js     ← entire game, ~39k lines, single IIFE
-│   ├── liquid-wgpu.js          ← WebGPU MLS-MPM water/oil solver
-│   ├── particle-life.js        ← WebGPU particle sim
-│   ├── random-galaxy.js        ← strange attractors, fractals, primes
-│   ├── globe.js                ← 3D Earth renderer (Three.js)
-│   ├── git-history.js          ← commit-timeline renderer
-│   ├── particles.js            ← CSS-only particle renderer
-│   └── main.js                 ← reading progress bar (shared)
-│
-└── assets/
-    ├── fonts/                  ← Century Supra woff2 files
-    ├── images/                 ← hero, earth, moon, gallery paintings
-    ├── atlas/                  ← anatomical plates (optional-body)
-    ├── shop/                   ← Sluice shop art
-    ├── weather/                ← weather-essay figures
-    └── thumbs/                 ← homepage article thumbnails
+```sh
+python -m http.server 8080 --bind 127.0.0.1
 ```
 
-</details>
+Open [localhost:8080](http://localhost:8080/). Some demos need WebGL or WebGPU support in the browser. Individual projects have their own build and data requirements, documented alongside their source.
 
-<details>
-<summary><strong>Running locally</strong></summary>
-
-<br>
-
-No build step. Serve the root directory over HTTP (browsers block some APIs on `file://`):
-
-```bash
-# Python
-python -m http.server 8080
-
-# Node
-npx serve .
-
-# VS Code
-# Install "Live Server" extension → right-click index.html → Open with Live Server
-```
-
-Then open `http://localhost:8080`.
-
-For the game specifically, open `sluice.html`. Press <kbd>`</kbd> to enable dev mode.
+| Path | Contents |
+| --- | --- |
+| Root HTML files | Page entry points |
+| [`style.css`](style.css) | Shared palette, typography and layout |
+| [`js/`](js/) | Page scripts and simulations |
+| [`assets/`](assets/) | Images, fonts, audio and built assets |
+| [`tools/`](tools/) | Data generators, publishing helpers and checks |
+| [`docs/`](docs/) | Project notes and development instructions |
 
 </details>
-
-<br>
-
----
-
-<div align="center">
-
-*No framework was harmed in the making of this website.*
-
-</div>
