@@ -18,14 +18,19 @@ catch (error) {
 }
 
 const root = path.resolve(__dirname, '..');
-const output = path.resolve(process.argv[2] || '/Users/ethan/Portfolio_01/research/let-me-llm/evidence/browser');
+const output = path.resolve(process.argv[2] || path.join(root, 'research/let-me-llm/evidence/browser'));
 const pageFile = path.join(root, 'let-me-llm-that-for-you.html');
 const QUESTION = 'Why does the Moon cause tides?';
 const LONG_QUESTION = 'A question that needs several lines can still be read before ChatGPT opens. '.repeat(6).trim();
-const report = { date: '2026-10-09', caseFilter: process.env.LMLTFY_CASE || null, browserFilter: process.env.LMLTFY_BROWSER || null, environments: [], checks: [], failures: [], unverified: [], timing: [], recordings: [], screenshots: [], captureWarnings: [] };
+const report = { date: new Date().toISOString().slice(0, 10), caseFilter: process.env.LMLTFY_CASE || null, browserFilter: process.env.LMLTFY_BROWSER || null, environments: [], checks: [], failures: [], unverified: [], timing: [], recordings: [], screenshots: [], captureWarnings: [] };
 let browser, base, html, pasteHTML, api;
 const server = http.createServer((request, response) => {
   const pathname = new URL(request.url, 'http://localhost').pathname;
+  if (pathname === '/js/demo-activity.js') {
+    response.writeHead(200, { 'Content-Type': 'text/javascript; charset=utf-8', 'Cache-Control': 'no-store' });
+    response.end(fs.readFileSync(path.join(root, 'js/demo-activity.js')));
+    return;
+  }
   let source;
   if (pathname === '/let-me-llm-that-for-you.html' || pathname === '/let-me-llm-that-for-you') source = html;
   else if (pathname === '/paste.html') source = pasteHTML;
@@ -180,7 +185,11 @@ async function clean(state, single = false) {
   assert.deepEqual(await state.context.cookies(), [], 'The page wrote cookies');
   const unexpected = state.requests.filter(item => !item.url.startsWith(base + '/') && !item.url.startsWith('https://chatgpt.com/'));
   assert.deepEqual(unexpected, [], 'Unexpected third-party requests');
-  if (single) assert.equal(state.requests.filter(item => item.url.startsWith(base + '/')).length, 1, 'Each page opening must request only its HTML');
+  if (single) {
+    const local = state.requests.filter(item => item.url.startsWith(base + '/'));
+    assert.equal(local.length, 2, 'Each page opening must request only its HTML and shared activity helper');
+    assert.equal(local.filter(item => new URL(item.url).pathname === '/js/demo-activity.js').length, 1);
+  }
 }
 
 async function screenshot(state, name) {
@@ -260,6 +269,12 @@ async function makerChecks(state, engine) {
   await page.locator('#edit').click();
   assert.equal(await page.locator('#question').inputValue(), question);
   assert.equal(await page.locator('#question').evaluate(element => element === document.activeElement), true);
+  const clickedQuestion = 'Does the send button make a link too?';
+  await page.locator('#question').fill(clickedQuestion);
+  await page.locator('#make').click();
+  await page.locator('#link-card').waitFor({ state: 'visible' });
+  assert.equal(await page.locator('#link').inputValue(), 'https://ethanwillingham.com/let-me-llm-that-for-you#' + api.encode(clickedQuestion));
+  await page.locator('#edit').click();
   await page.locator('#question').fill('');
   assert.equal(await page.locator('#make').getAttribute('aria-disabled'), 'true');
   assert.equal(state.handoffs.length, 0);
@@ -405,7 +420,7 @@ async function hashEntry(state) {
   });
   const sameDocument = async () => {
     assert.deepEqual(await page.evaluate(() => ({ marker: window.__hashEntryMarker, origin: performance.timeOrigin })), { marker: 'same-document', origin });
-    assert.equal(state.requests.filter(request => request.url.startsWith(base + '/')).length, 1, 'Changing the fragment reloaded the HTML');
+    assert.equal(state.requests.filter(request => request.url.startsWith(base + '/')).length, 2, 'Changing the fragment reloaded the page assets');
   };
   await page.evaluate(payload => { location.hash = payload; }, api.encode(QUESTION));
   await page.locator('#recipient').waitFor({ state: 'visible' });
@@ -559,10 +574,11 @@ async function backgroundCheck(state, engine) {
 }
 
 async function suite(engine) {
-  const launch = engine === 'chromium' ? { executablePath: '/Users/ethan/.local/bin/agent-chrome-for-testing', args: ['--disable-gpu-vsync', '--disable-frame-rate-limit'], ignoreDefaultArgs: ['--disable-back-forward-cache'] } : {};
+  const testingChrome = process.env.LMLTFY_CHROME_PATH || (process.platform === 'darwin' ? path.join(os.homedir(), '.local/bin/agent-chrome-for-testing') : undefined);
+  const launch = engine === 'chromium' ? { executablePath: testingChrome, args: ['--disable-gpu-vsync', '--disable-frame-rate-limit'], ignoreDefaultArgs: ['--disable-back-forward-cache'] } : {};
   try { browser = await playwright[engine].launch({ headless: true, ...launch }); }
   catch (error) { unverified(engine, 'browser suite', error.message); return; }
-  report.environments.push({ engine, version: browser.version(), executablePath: launch.executablePath || playwright[engine].executablePath() });
+  report.environments.push({ engine, version: browser.version(), executablePath: launch.executablePath || 'Playwright bundled headless browser' });
   try {
     await caseRun(engine, 'maker IME clipboard preview edit', state => makerChecks(state, engine));
     await caseRun(engine, 'blocked clipboard fallback', clipboardBlocked);

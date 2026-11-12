@@ -200,10 +200,11 @@ runtime, Sluice dependencies, or bundle step. Bump its CSS and script `?v=`
 values when changing them.
 
 **Let me LLM that for you** lives in `let-me-llm-that-for-you.html` as one
-self-contained HTML file with inline CSS and JavaScript. Read `docs/LET_ME_LLM.md`
+HTML file with inline CSS and application JavaScript, plus the shared
+`js/demo-activity.js` scheduling helper. Read `docs/LET_ME_LLM.md`
 before changing it. By owner instruction, it uses its own neutral light/dark
 palette and the system font stack, an exception to the site's three-font rule.
-It has no site chrome, external assets, analytics, cookies or storage. A question
+It has no site chrome, third-party assets, analytics, cookies or storage. A question
 link plays two steps, then hands off to ChatGPT only by owner choice. Claude's
 general web prompt link was reported broken, and Gemini has no verified equivalent.
 Grok remains excluded by owner choice. Do not add a picker or another destination.

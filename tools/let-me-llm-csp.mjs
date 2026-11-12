@@ -13,14 +13,15 @@ export function inlineBlocks(html) {
 }
 
 export function contentHash(text) {
-  return "'sha256-" + createHash('sha256').update(text, 'utf8').digest('base64') + "'";
+  // HTML parsing normalizes newlines before the browser hashes inline code.
+  return "'sha256-" + createHash('sha256').update(text.replace(/\r\n?/g, '\n'), 'utf8').digest('base64') + "'";
 }
 
 export function policyFor(html) {
   const blocks = inlineBlocks(html);
   const hashes = type => [...new Set(blocks.filter(block => block.type === type)
     .map(block => contentHash(block.text)))].join(' ');
-  return "default-src 'none'; script-src " + hashes('script') +
+  return "default-src 'none'; script-src 'self' " + hashes('script') +
     '; style-src ' + hashes('style') + "; img-src data:; base-uri 'none'; form-action 'none'";
 }
 

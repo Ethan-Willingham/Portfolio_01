@@ -265,18 +265,24 @@ check('Deterministic sanitizer and decoder fuzzing cannot smuggle invisible text
 
 check('CSP exactly hashes all inline blocks and appears immediately after charset', () => {
   assert.equal(readPolicy(html).policy, policyFor(html));
+  const lf = html.replace(/\r\n?/g, '\n');
+  assert.equal(policyFor(lf), policyFor(lf.replace(/\n/g, '\r\n')), 'Windows line endings must produce browser-compatible hashes');
+  assert.equal(policyFor(lf), policyFor(lf.replace(/\n/g, '\r')), 'HTML normalizes lone carriage returns too');
   assert.match(html, /<meta\s+charset="utf-8"\s*\/?>\s*<meta\s+http-equiv="Content-Security-Policy"/i);
+  assert.ok(html.indexOf(readPolicy(html).tag) < html.indexOf('<script'), 'The policy must cover every script');
   assert.ok(inlineBlocks(html).some(block => block.type === 'script'));
   assert.ok(inlineBlocks(html).some(block => block.type === 'style'));
   assert.doesNotMatch(html, /\sstyle\s*=/i);
   assert.doesNotMatch(html, /\b(?:frame-ancestors|report-uri|sandbox)\b/i);
 });
 
-check('The page stays self-contained, readable and inside both size budgets', () => {
+check('The page uses only its shared activity helper and stays inside both size budgets', () => {
   assert.ok(Buffer.byteLength(html) <= 40000, 'Raw page exceeds 40,000 bytes');
   assert.ok(gzipSync(html, { level: 9 }).length <= 14000, 'Gzip page exceeds 14,000 bytes');
   assert.doesNotMatch(html, /[\u{2013}\u{2014}\p{Extended_Pictographic}\u{1F1E6}-\u{1F1FF}\u{FE0F}\u{20E3}]/u);
-  assert.doesNotMatch(html, /<script\b[^>]*\bsrc\s*=|<link\b[^>]*\brel=["'](?:stylesheet|preload)["']/i);
+  const scripts = [...html.matchAll(/<script\b[^>]*\bsrc="([^"]+)"[^>]*>/gi)];
+  assert.deepEqual(scripts.map(match => match[1]), ['js/demo-activity.js?v=1']);
+  assert.doesNotMatch(html, /<link\b[^>]*\brel=["'](?:stylesheet|preload)["']/i);
   assert.doesNotMatch(html, /\b(?:localStorage|sessionStorage|indexedDB)\b|document\.cookie|\b(?:fetch|XMLHttpRequest)\s*\(/);
   assert.doesNotMatch(source, /\b(?:document|window|location|navigator|performance)\b/);
   console.log(`Sizes: ${Buffer.byteLength(html)} bytes raw, ${gzipSync(html, { level: 9 }).length} bytes gzip -9`);

@@ -4,6 +4,14 @@
 #   git config core.hooksPath tools/githooks
 ROOT="$(git rev-parse --show-toplevel)"
 
+# Inline edits must keep the link maker's browser-enforced hashes in sync.
+if git diff --cached --name-only | grep -qE '^(let-me-llm-that-for-you\.html|tools/let-me-llm-csp\.mjs)$'; then
+  if ! node "$ROOT/tools/let-me-llm-csp.mjs" --check; then
+    echo "pre-commit: run node tools/let-me-llm-csp.mjs and stage the updated page." >&2
+    exit 1
+  fi
+fi
+
 # Engine-sync guard: the physics toy embeds verbatim copies of the game's
 # smoke + jello engines (and shares liquid-wgpu.js). If a commit touches
 # either side, refuse drift so every engine change ports both ways.

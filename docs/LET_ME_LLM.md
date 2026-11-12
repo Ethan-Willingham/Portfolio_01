@@ -2,9 +2,10 @@
 
 `let-me-llm-that-for-you.html` makes a link that types someone's question into a
 plain chat replica, presses send, and opens ChatGPT with that question. The page
-is one unminified HTML file with inline CSS and JavaScript. It loads no external
-assets and writes no cookies or browser storage. Its neutral palette and system
-fonts are explicit owner exceptions to the portfolio style guide.
+is one unminified HTML file with inline CSS and application JavaScript. Its only
+asset request is the site's shared `js/demo-activity.js` scheduling helper. It
+loads no third-party assets and writes no cookies or browser storage. Its neutral
+palette and system fonts are explicit owner exceptions to the portfolio style guide.
 
 The maker, recipient, preview and broken-link states share the same page. Preview
 stops at the handoff. A broken fragment returns to the maker with an explanation.
@@ -131,17 +132,22 @@ wc -c let-me-llm-that-for-you.html
 ```
 
 After editing inline CSS or JavaScript, run `node tools/let-me-llm-csp.mjs`
-before checking its hashes. The meta policy immediately follows charset and
-uses script/style hashes, `default-src 'none'`, data images only, no base URL
-and no form action. Do not add `frame-ancestors`, `report-uri` or `sandbox` to a
-meta policy. Do not add markup style attributes. Keep the page at most 40 KB raw
-and 14,000 bytes after `gzip -9`; log both sizes at every commit.
+before checking its hashes. The pre-commit hook rejects stale hashes when the
+page or hash helper changes. The meta policy immediately follows charset and
+uses script/style hashes, same-origin scripts for the activity helper,
+`default-src 'none'`, data images only, no base URL and no form action. Load the
+helper after the policy. The hash generator normalizes CRLF and CR to LF, as
+the browser's HTML parser does. Do not add `frame-ancestors`, `report-uri` or
+`sandbox` to a meta policy. Do not add markup style attributes. Keep the page at
+most 40 KB raw and 14,000 bytes after `gzip -9`; log both sizes at every commit.
 
 The browser suite owns its local HTTP server and closes its browser in
-`finally`. Chromium must use
-`/Users/ethan/.local/bin/agent-chrome-for-testing`, never the personal Chrome
-application. Run WebKit too, and Firefox if installed. It checks the maker,
-preview, recipient, fallback, paste branch, Back, Escape, IME, touch, reduced
+`finally`. Chromium must use the `~/.local/bin/agent-chrome-for-testing` wrapper
+on macOS and Playwright's bundled headless browser elsewhere, never the personal
+Chrome application.
+`LMLTFY_CHROME_PATH` can select another testing binary. Run WebKit too, and
+Firefox if installed. It checks the maker, preview, recipient, fallback,
+paste branch, Back, Escape, IME, touch, reduced
 motion, hidden-tab clock, network and console. Save screenshots, recordings and
 reports in `research/let-me-llm/evidence/` in the main checkout. Test results are
 recorded in `PROGRESS.md`; commands here do not imply that a run passed.
