@@ -7,10 +7,12 @@ asset request is the site's shared `js/demo-activity.js` scheduling helper. It
 loads no third-party assets and writes no cookies or browser storage. Its neutral
 palette and system fonts are explicit owner exceptions to the portfolio style guide.
 
-The maker, recipient, preview and broken-link states share the same page. Preview
-stops at the handoff. A broken fragment returns to the maker with an explanation.
-The page has no site shell; its only portfolio link is `@ethanwillingham` at the
-bottom. Keep the lab `noindex` and unlinked.
+The maker copies the generated URL and shows `Copied` below it after the clipboard
+write succeeds. Tap the URL or press Enter in the URL field to copy it again.
+Editing the question clears the result. A broken fragment returns to the maker
+with an explanation. The preview runs in the lab and stops at the handoff. The page
+has no site shell. Its only portfolio link is `@ethanwillingham` at the bottom.
+Keep the lab `noindex` and unlinked.
 
 Gate 1 approved natural pace, captions above the composer, the standard pointer
 and bars on 2026-10-09. The owner cut the Watch an example link. The lab shows
@@ -91,30 +93,32 @@ switch change. Keep `false` for the direct handoff while it works.
 ## Timeline
 
 `LMLTFY.plan()` builds deterministic beats and absolute times from the question,
-pointer mode, reduced-motion preference, viewport and payload-derived seed.
+pointer mode, viewport and payload-derived seed.
 Typing takes `clamp(700 + 55 * graphemes, 1200, 4200)` milliseconds. Above 110
 graphemes the ghost pastes rather than typing each character. Seeded typing
 weights range from 0.6 to 1.5, with a 1.6 multiplier after spaces and 2.2 after
 punctuation; the waits add up to the chosen typing duration.
 
-| Beat | Base duration |
-| --- | --- |
-| Settle | 600 ms |
-| Reach the text row | Fitts timing, 350 to 1,000 ms |
-| Click in | 290 ms |
-| Type or paste | 1,200 to 4,200 ms |
-| Pause after typing | 350 ms |
-| Reach and press send | Fitts timing, 350 to 1,000 ms |
-| Move to sent state | 350 ms |
-| Think before handoff | 700 ms |
+| Beat | Mouse | Touch |
+| --- | --- | --- |
+| Settle | 600 ms | 260 ms |
+| Reach the text row | Fitts timing, 350 to 1,000 ms | 0 ms |
+| Click in | 290 ms | 140 ms |
+| Type or paste | 1,200 to 4,200 ms | 1,200 to 4,200 ms |
+| Pause after typing | 350 ms | 350 ms |
+| Reach and press send | Fitts timing, 350 to 1,000 ms | 220 ms |
+| Move to sent state | 350 ms | 350 ms |
+| Think before handoff | 700 ms | 700 ms |
 
 Fitts timing is `250 + 150 * log2(distance / target width + 1)`, clamped to
 350 through 1,000 ms. Minimum-jerk easing drives travel with a seeded gentle
-arc. The planner scales non-typing beats to keep a 30-grapheme question within
-5 to 8 seconds and every supported question below 10 seconds. The clock starts
-on the first visible frame, pauses while hidden and advances by at most 50 ms
-per frame. Resolve element anchors on each frame so resize does not restart it.
-Touch and reduced motion retain typing and handoff with target-local taps.
+arc. The planner scales non-typing beats to keep a 30-grapheme mouse sequence
+within 5 to 8 seconds and every supported question below 10 seconds. Touch
+starts typing after a brief focus cue, then animates the send button directly.
+Reduced motion suppresses the scaling effects and keeps the mouse pointer at
+the active control. The clock starts on the first visible frame even when the
+document lacks focus. It pauses while hidden and advances by at most 50 ms per
+frame. Resize updates the element anchors during playback.
 
 ## Checks and evidence
 
@@ -146,9 +150,9 @@ The browser suite owns its local HTTP server and closes its browser in
 on macOS and Playwright's bundled headless browser elsewhere, never the personal
 Chrome application.
 `LMLTFY_CHROME_PATH` can select another testing binary. Run WebKit too, and
-Firefox if installed. It checks the maker, preview, recipient, fallback,
-paste branch, Back, Escape, IME, touch, reduced
-motion, hidden-tab clock, network and console. Save screenshots, recordings and
+Firefox if installed. It checks the maker, recipient, fallback, paste branch,
+Back, Escape, IME, touch without browser focus, reduced motion, hidden-tab clock,
+network and console. Save screenshots, recordings and
 reports in `research/let-me-llm/evidence/` in the main checkout. Test results are
 recorded in `PROGRESS.md`; commands here do not imply that a run passed.
 

@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'sha256-e8CELAfCb8OqXrRg8ghl7o0Apq6nRqTFedPq+uFmvSE=' 'sha256-zbHir/h6nYFg6sXfzPjIMThr5LJGIlkNg2JkqnQP14A='; style-src 'sha256-hsJeGiRNak+F6w6auZxFSHewKalMpGdPptxkEpDabIY='; img-src data:; base-uri 'none'; form-action 'none'">
-  <script src="js/demo-activity.js?v=1"></script>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'sha256-snqFJh1Mr/SY7GmPhLm7v4hDQLejhbTF7ZDWRkO3HFY=' 'sha256-v3RR2unc0dWeFFOAxJUQrortFU1EJSBaHBccvYlmYqE='; style-src 'sha256-cH/CUENENY84Xn1EDgvzHOYSh5NAl2tVt1CTNdql98w='; img-src data:; base-uri 'none'; form-action 'none'">
+  <script src="js/demo-activity.js?v=2"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
@@ -31,7 +31,7 @@
       --bg: #ffffff; --ink: #1c1c1c; --secondary: #5f5f5f;
       --placeholder: #737373; --hairline: #e3e3e3; --border: #d0d0d0;
       --fill: #f4f4f4; --button: #1c1c1c; --button-ink: #ffffff;
-      --inactive: #d7d7d7; --tip: rgb(0 0 0 / 16%);
+      --inactive: #d7d7d7;
       --shadow: 0 1px 2px rgb(0 0 0 / 3%), 0 6px 20px rgb(0 0 0 / 4%);
     }
     @media (prefers-color-scheme: dark) {
@@ -39,7 +39,7 @@
         --bg: #171717; --ink: #ececec; --secondary: #a3a3a3;
         --placeholder: #858585; --hairline: #2c2c2c; --border: #3a3a3a;
         --fill: #262626; --button: #ececec; --button-ink: #171717;
-        --inactive: #3a3a3a; --tip: rgb(255 255 255 / 22%);
+        --inactive: #3a3a3a;
         --shadow: 0 1px 2px rgb(0 0 0 / 10%), 0 6px 20px rgb(0 0 0 / 12%);
       }
     }
@@ -48,7 +48,7 @@
       --bg: #171717; --ink: #ececec; --secondary: #a3a3a3;
       --placeholder: #858585; --hairline: #2c2c2c; --border: #3a3a3a;
       --fill: #262626; --button: #ececec; --button-ink: #171717;
-      --inactive: #3a3a3a; --tip: rgb(255 255 255 / 22%);
+      --inactive: #3a3a3a;
       --shadow: 0 1px 2px rgb(0 0 0 / 10%), 0 6px 20px rgb(0 0 0 / 12%);
     }
     :root[data-theme="light"] { color-scheme: light; }
@@ -87,7 +87,7 @@
       border: 0; background: transparent; resize: none; line-height: 24px;
     }
     textarea:focus-visible { outline: none; }
-    .composer:focus-within { border-color: var(--secondary); }
+    .composer:focus-within, .composer.ghost-focus { border-color: var(--secondary); }
     textarea::placeholder, .placeholder { color: var(--placeholder); opacity: 1; }
     .send { position: relative; width: 36px; height: 36px; flex: none; }
     .send-icon {
@@ -99,6 +99,7 @@
     .send[aria-disabled="true"] .send-icon, .send:not(.ready) .send-icon { background: var(--inactive); }
     .send svg { width: 18px; height: 18px; }
     .hint { min-height: 22px; margin: 10px 0 0; font-size: 13px; text-align: center; color: var(--secondary); }
+    .hint:empty { display: none; }
     .quiet { min-height: 44px; padding: 10px 12px; border: 0; background: transparent; color: var(--secondary); font-size: 14px; }
     .quiet:hover, footer a:hover { color: var(--ink); }
     .skip { position: fixed; z-index: 20; left: 12px; top: 12px; padding: 12px; background: var(--bg); transform: translateY(-200%); }
@@ -108,20 +109,18 @@
     footer a { color: var(--secondary); text-decoration: none; display: inline-block; padding: 4px 8px; }
     noscript { display: block; text-align: center; color: var(--secondary); padding: 16px; }
 
-    /* Maker: the link card replaces the composer. */
-    .link-card { border: 1px solid var(--border); border-radius: 26px; padding: 18px; }
+    /* The URL itself is the copy control. */
+    .link-card { margin-top: 16px; animation: arrive 200ms ease-out; }
     .link-field { display: block; width: 100%; padding: 10px 12px; border: 1px solid var(--hairline); border-radius: 10px; background: var(--fill); font-size: 14px; }
-    .link-note { margin: 12px 0 4px; color: var(--secondary); font-size: 14px; }
-    .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; }
+    #link { min-height: 44px; font-size: 16px; cursor: copy; }
     .primary { min-height: 44px; border: 0; border-radius: 10px; padding: 10px 16px; background: var(--button); color: var(--button-ink); font-size: 14px; }
-    .link-card { animation: arrive 200ms ease-out; }
     @keyframes arrive { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
     @media (prefers-reduced-motion: reduce) { .link-card { animation: none; } }
 
     /* Recipient: the replica remains inert, including after Escape. */
     .row { flex: 1; min-width: 0; min-height: 36px; max-height: 156px; overflow: auto; padding: 6px 0; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 24px; }
     .caret { display: inline-block; width: 1.5px; height: 18px; margin-inline-start: 1px; vertical-align: -3px; background: var(--ink); }
-    .ghost-hover .send-icon { filter: brightness(.88); }
+    .ghost-active .send-icon { filter: brightness(.88); }
     .thread { position: absolute; top: max(32px, 14svh); width: min(680px, calc(100% - 32px)); }
     .bubble {
       margin-inline-start: auto; width: fit-content; max-width: 75%; padding: 10px 16px;
@@ -143,7 +142,6 @@
     .pointer { position: fixed; left: 0; top: 0; z-index: 10; pointer-events: none; }
     .pointer svg { display: block; filter: drop-shadow(0 1px 1px rgb(0 0 0 / 20%)); }
     .pointer .ibeam { margin: -11px 0 0 -5px; }
-    .pointer .tip { width: 28px; height: 28px; margin: -14px 0 0 -14px; border-radius: 50%; background: var(--tip); }
     @media (max-height: 450px) {
       main { padding-top: 24px; padding-bottom: 36px; } .thread { top: 24px; }
       .bubble-text { -webkit-line-clamp: 2; } .handoff { margin-top: 8px; }
@@ -157,26 +155,17 @@
     <!-- Maker and broken link. -->
     <section id="maker" class="stage" aria-labelledby="maker-title">
       <h1 id="maker-title">Let me LLM that for you</h1>
-      <p class="caption">Make a link that types their question and opens ChatGPT.</p>
-      <div id="input-card">
-        <div class="composer">
-          <textarea id="question" rows="1" aria-label="Their question" placeholder="Paste their question here" enterkeyhint="send" dir="auto" spellcheck="false" aria-describedby="hint"></textarea>
-          <button id="make" class="send" type="button" aria-label="Make link" aria-disabled="true">
-            <span class="send-icon"><svg viewBox="0 0 18 18" aria-hidden="true"><path d="M3 9h12m-5-5 5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-          </button>
-        </div>
-        <p id="hint" class="hint"></p>
+      <p id="maker-caption" class="caption">Make a link that types their question and opens ChatGPT.</p>
+      <div class="composer">
+        <textarea id="question" rows="1" aria-label="Their question" placeholder="Paste their question here" enterkeyhint="send" dir="auto" spellcheck="false" aria-describedby="hint"></textarea>
+        <button id="make" class="send" type="button" aria-label="Make link" aria-disabled="true">
+          <span class="send-icon"><svg viewBox="0 0 18 18" aria-hidden="true"><path d="M3 9h12m-5-5 5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        </button>
       </div>
+      <p id="hint" class="hint"></p>
       <div id="link-card" class="link-card" hidden>
-        <input id="link" class="link-field" aria-label="Your link" readonly spellcheck="false">
-        <p class="link-note">The link types their question, then opens ChatGPT.</p>
-        <div class="actions">
-          <button id="copy" class="primary" type="button">Copy link</button>
-          <button id="preview" class="quiet" type="button">Preview</button>
-          <button id="share" class="quiet" type="button" hidden>Share link</button>
-          <button id="edit" class="quiet" type="button">Edit</button>
-        </div>
-        <p id="copy-status" class="hint"></p>
+        <input id="link" class="link-field" aria-label="Your link. Press Enter to copy." readonly spellcheck="false">
+        <p id="copy-status" class="hint" role="status"></p>
       </div>
     </section>
 
@@ -208,7 +197,6 @@
   <div id="pointer" class="pointer" aria-hidden="true" hidden>
     <svg id="arrow" width="17" height="24" viewBox="0 0 17 24"><path d="M1 1v18.5l4.6-4.4 3.1 7 3-1.3-3-6.9h6.4z" fill="#1c1c1c" stroke="#ffffff" stroke-width="1.4" stroke-linejoin="round"/></svg>
     <svg id="ibeam" class="ibeam" width="11" height="22" viewBox="0 0 11 22" hidden><path d="M2 1.5h7M5.5 1.5v19M2 20.5h7" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round"/><path d="M2 1.5h7M5.5 1.5v19M2 20.5h7" fill="none" stroke="#1c1c1c" stroke-width="1.3" stroke-linecap="round"/></svg>
-    <div id="tip" class="tip" hidden></div>
   </div>
   <p id="live" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
   <noscript>This page needs JavaScript to show the question.</noscript>
@@ -373,22 +361,21 @@
     const dy = startOffset.y + (options.reachOffset?.y ?? 0);
     const distance = Math.hypot(dx, dy);
     const fitts = (distance, target) => clamp(250 + 150 * Math.log2(distance / target + 1), 350, 1000);
-    const jump = options.pointer === 'coarse' || Boolean(options.reduced);
     return {
       startOffset,
       arc: (0.06 + random() * 0.06) * (random() < 0.5 ? -1 : 1),
       reach: fitts(distance, 16),
-      send: fitts(options.sendDistance ?? width - 74, 36),
-      jump
+      send: fitts(options.sendDistance ?? width - 74, 36)
     };
   }
 
-  function schedule(typing, motion, count) {
-    const beats = { settle: 600, reach: motion.reach, click: 290, type: typing,
-      beat: 350, send: motion.send, sent: 350, think: 700 };
+  function schedule(typing, motion, count, coarse) {
+    const beats = { settle: coarse ? 260 : 600, reach: coarse ? 0 : motion.reach,
+      click: coarse ? 140 : 290, type: typing, beat: 350,
+      send: coarse ? 220 : motion.send, sent: 350, think: 700 };
     const pauses = Object.values(beats).reduce((sum, duration) => sum + duration, 0) - typing;
     const proposed = typing + pauses;
-    const total = count === 30 ? clamp(proposed, 5200, 7700) : Math.min(proposed, 9500);
+    const total = count === 30 && !coarse ? clamp(proposed, 5200, 7700) : Math.min(proposed, 9500);
     const scale = (total - typing) / pauses;
     const times = {};
     let elapsed = 0;
@@ -408,7 +395,7 @@
     const typing = clamp(700 + 55 * parts.length, 1200, 4200);
     const motion = movementBeats(random, options);
     const waits = typingWaits(parts, random, typing);
-    const timeline = schedule(typing, motion, parts.length);
+    const timeline = schedule(typing, motion, parts.length, options.pointer === 'coarse');
     return { graphemes: parts, waits, typing, paste: parts.length > 110,
       ...timeline, arc: motion.arc, startOffset: motion.startOffset };
   }
@@ -431,7 +418,8 @@
     if (tune?.theme) document.documentElement.dataset.theme = tune.theme;
     const reduced = tune?.reduced ?? matchMedia('(prefers-reduced-motion: reduce)').matches;
     const coarse = tune?.pointer ? tune.pointer === 'coarse' : touch;
-    let question = '', previewing = false, sequence = null, frame = 0, fallback = 0;
+    const previewing = Boolean(tune);
+    let question = '', sequence = null, frame = 0, fallback = 0, copyAttempt = 0;
     const say = text => { $('live').textContent = text; };
 
     function sizeInput() {
@@ -450,41 +438,40 @@
       catch (error) { return Promise.reject(error); }
     }
 
-    function copyResult(promise) {
-      const link = $('link').value;
-      const visible = () => !$('maker').hidden && !$('link-card').hidden;
-      promise.then(() => {
-        if ($('link').value !== link) return;
-        $('copy').textContent = 'Copied';
-        $('copy-status').textContent = '';
-        if (visible()) say('Link ready. Copied.');
-      }).catch(() => {
-        if ($('link').value !== link) return;
-        $('copy').textContent = 'Copy link';
-        $('copy-status').textContent = touch ? 'Touch and hold the selected link to copy it.' : 'Press Ctrl+C or Command+C to copy the selected link.';
-        if (visible()) {
-          $('link').focus(); $('link').select();
-          say('Link ready. Select the link and copy it.');
-        }
-      });
+    function showLink(show) {
+      $('maker-caption').hidden = show;
+      $('link-card').hidden = !show;
+    }
+
+    async function copyLink() {
+      const attempt = ++copyAttempt;
+      const link = $('link');
+      const status = $('copy-status');
+      status.textContent = '';
+      const copied = await clipboard(link.value).then(() => true, () => false);
+      if (attempt !== copyAttempt || $('link-card').hidden) return;
+      status.textContent = copied ? 'Copied' : touch ? 'Press and hold the link to copy.' : 'Press Ctrl+C or Command+C to copy the selected link.';
+      if (!copied) {
+        link.focus();
+        link.select();
+      }
     }
 
     function makeLink() {
-      question = sanitize($('question').value);
-      if (!question) { $('hint').textContent = 'Add their question first.'; say('Add their question first.'); return; }
+      const text = sanitize($('question').value);
+      if (!text) { $('hint').textContent = 'Add their question first.'; say('Add their question first.'); return; }
       let payload;
-      try { payload = encode(question); } catch { sizeInput(); say($('hint').textContent); return; }
-      const url = 'https://ethanwillingham.com/let-me-llm-that-for-you#' + payload;
-      const copied = clipboard(url);
-      $('question').value = question;
-      $('question').blur();
-      $('input-card').hidden = true;
-      $('link-card').hidden = false;
-      $('link').value = url;
-      $('share').hidden = !(touch && navigator.share);
-      $('copy').textContent = 'Copy link';
-      if (!touch) { $('link').focus(); $('link').select(); }
-      copyResult(copied);
+      try { payload = encode(text); } catch { sizeInput(); say($('hint').textContent); return; }
+      $('question').value = text;
+      sizeInput();
+      $('hint').textContent = '';
+      $('link').value = 'https://ethanwillingham.com/let-me-llm-that-for-you#' + payload;
+      showLink(true);
+      copyLink();
+      if (touch) {
+        $('question').blur();
+        $('link-card').scrollIntoView({ block: 'nearest' });
+      }
     }
 
     function maker(focus = true) {
@@ -494,32 +481,20 @@
       $('thread').hidden = true;
       $('pointer').hidden = true;
       $('skip').hidden = true;
-      previewing = false;
-      $('return').textContent = 'Back to your link';
-      if (focus) {
-        if (!$('input-card').hidden) $('question').focus();
-        else $('preview').focus();
-      }
+      if (focus) $('question').focus();
     }
 
-    $('question').addEventListener('input', sizeInput);
+    $('question').addEventListener('input', () => { showLink(false); sizeInput(); });
     $('question').addEventListener('keydown', event => {
       if (event.key === 'Enter' && !event.shiftKey && !event.isComposing && event.keyCode !== 229) {
         event.preventDefault(); makeLink();
       }
     });
     $('make').addEventListener('click', makeLink);
-    $('copy').addEventListener('click', () => copyResult(clipboard($('link').value)));
-    $('edit').addEventListener('click', () => {
-      $('link-card').hidden = true; $('input-card').hidden = false;
-      $('question').value = question; sizeInput(); $('question').focus();
+    $('link').addEventListener('click', copyLink);
+    $('link').addEventListener('keydown', event => {
+      if (event.key === 'Enter') { event.preventDefault(); copyLink(); }
     });
-    $('share').addEventListener('click', () => {
-      navigator.share({ url: $('link').value }).catch(error => {
-        if (error.name !== 'AbortError') say('Sharing is unavailable. Copy the link instead.');
-      });
-    });
-    $('preview').addEventListener('click', () => start(question, true));
     $('return').addEventListener('click', maker);
 
     // Recipient: a clock with visibility pauses and a reproducible seek.
@@ -529,14 +504,14 @@
       if (sequence) sequence.running = false;
     }
 
-    function start(text, preview = false) {
+    function start(text) {
       stopClock(); $('thinking').hidden = false; $('bubble').hidden = false;
-      question = sanitize(text); previewing = preview || Boolean(tune);
+      question = sanitize(text);
       $('maker').hidden = true; $('recipient').hidden = false;
       $('typed').textContent = ''; $('replica').style.transform = '';
       const textTarget = anchor($('row'), .05, .5), center = anchor($('replica'), .5, .5);
       const sendTarget = anchor($('ghost-send'), .5, .5);
-      const timeline = plan(question, { pointer: coarse ? 'coarse' : 'fine', reduced,
+      const timeline = plan(question, { pointer: coarse ? 'coarse' : 'fine',
         width: innerWidth, height: innerHeight,
         reachOffset: { x: center.x - textTarget.x, y: center.y - textTarget.y },
         sendDistance: Math.hypot(sendTarget.x - textTarget.x, sendTarget.y - textTarget.y) });
@@ -547,13 +522,12 @@
       $('skip').href = destination(question); $('open').href = destination(question);
       $('skip').hidden = previewing || USE_PASTE_STEP;
       $('bubble-text').textContent = question; $('typed').textContent = '';
-      $('return').textContent = 'Back to your link';
       document.activeElement?.blur();
       say('Step 1: Type your question: ' + question);
       render(0); frame = demoActivity.requestFrame(tick);
     }
 
-    const demoActivity = DemoActivity.create(document.getElementById('recipient'));
+    const demoActivity = DemoActivity.create($('recipient'), { requireFocus: false });
     function tick(now) {
       if (!sequence?.running) return;
       if (!document.hidden) {
@@ -589,7 +563,7 @@
       return { x: from.x + dx * amount - dy * arc, y: from.y + dy * amount + dx * arc };
     }
 
-    function paintPointer(t, sent) {
+    function paintControls(t, sent) {
       const { times, beats } = sequence;
       const entering = t >= times.reach && t < times.type;
       const sending = t >= times.send && !sent;
@@ -597,8 +571,13 @@
       const press = t >= times.sent - 90 && !sent;
       $('replica').style.transform = click && !reduced ? 'scale(.995)' : '';
       $('ghost-send').style.transform = press && !reduced ? 'scale(.94)' : '';
+      if (coarse) {
+        $('replica').classList.toggle('ghost-focus', t >= times.click && !sent);
+        $('ghost-send').classList.toggle('ghost-active', press);
+        return;
+      }
       let point = pointAt(t), opacity = entering || sending ? 1 : 0;
-      if (coarse || reduced) {
+      if (reduced) {
         point = entering ? anchor($('row'), .05, .5) : anchor($('ghost-send'), .5, .5);
         const phase = entering ? (t - times.reach) / (beats.reach + beats.click) : (t - times.send) / beats.send;
         opacity *= Math.max(0, Math.min(1, phase * 6, (1 - phase) * 6));
@@ -607,11 +586,10 @@
       $('pointer').style.opacity = opacity;
       $('pointer').style.transform = `translate(${point.x}px, ${point.y}px) scale(${click || press ? .88 : 1})`;
       const textTarget = !sending && t >= times.click - 80;
-      $('arrow').toggleAttribute('hidden', coarse || textTarget);
-      $('ibeam').toggleAttribute('hidden', coarse || !textTarget);
-      $('tip').hidden = !coarse;
+      $('arrow').toggleAttribute('hidden', textTarget);
+      $('ibeam').toggleAttribute('hidden', !textTarget);
       const bounds = $('ghost-send').getBoundingClientRect();
-      $('ghost-send').classList.toggle('ghost-hover', sending && point.x >= bounds.left && point.x <= bounds.right && point.y >= bounds.top && point.y <= bounds.bottom);
+      $('ghost-send').classList.toggle('ghost-active', sending && point.x >= bounds.left && point.x <= bounds.right && point.y >= bounds.top && point.y <= bounds.bottom);
     }
 
     function paintTyping(t, sent) {
@@ -665,7 +643,7 @@
       const nearStep = t - times.send;
       $('caption').style.opacity = nearStep < 0 ? Math.min(1, -nearStep / 120) : Math.min(1, nearStep / 120);
       $('replica').style.transform = ''; $('ghost-send').style.transform = '';
-      paintTyping(t, sent); paintSent(t, sent); paintPointer(t, sent);
+      paintTyping(t, sent); paintSent(t, sent); paintControls(t, sent);
     }
 
     // Finished states: preview, manual send, paste switch and blocked navigation.
@@ -722,7 +700,7 @@
 
     // Lab access is same-origin and exists only on framed pages.
     if (tune) window.LMLTFY_LAB = {
-      replay: () => { if (tune.mode !== 'maker') start(tune.question || SAMPLE, true); },
+      replay: () => { if (tune.mode !== 'maker') start(tune.question || SAMPLE); },
       seek: time => { stopClock(); sequence.time = Math.max(0, Math.min(time, sequence.times.end)); render(sequence.time); },
       speed: value => { tune.speed = value; },
       timeline: () => sequence
@@ -730,7 +708,7 @@
 
     // Entry: only the fragment is a question; readable query forms never enter.
     function enter(back = false) {
-      maker(false); $('link-card').hidden = true; $('input-card').hidden = false; sizeInput();
+      maker(false); showLink(false); sizeInput();
       if (!location.hash) {
         if (matchMedia('(pointer: fine)').matches) $('question').focus();
         return;
@@ -742,7 +720,7 @@
         if (back) finished();
       } catch { $('hint').textContent = "The link isn't valid. Make a new one here."; }
     }
-    if (tune && tune.mode !== 'maker') start(tune.question || SAMPLE, true);
+    if (tune && tune.mode !== 'maker') start(tune.question || SAMPLE);
     else if (tune?.mode === 'maker') sizeInput();
     else {
       enter(performance.getEntriesByType('navigation')[0]?.type === 'back_forward');

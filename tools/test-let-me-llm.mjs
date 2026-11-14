@@ -214,11 +214,11 @@ check('Every capped length meets timing bars at small and large viewports', () =
       }
     }
   }
-  for (const options of [{ pointer: 'coarse' }, { reduced: true }]) {
-    const plan = api.plan('x'.repeat(30), options);
-    assert.equal(plan.typing, 2350);
-    assert.ok(plan.times.end >= 5000 && plan.times.end <= 8000);
-  }
+  const touch = api.plan('x'.repeat(30), { pointer: 'coarse' });
+  assert.equal(touch.typing, 2350);
+  assert.equal(touch.beats.reach, 0);
+  assert.equal(touch.times.type, 400);
+  assert.ok(touch.times.end >= 3500 && touch.times.end <= 6000);
 });
 
 check('Seeded random and minimum-jerk motion have safe endpoints', () => {
@@ -281,7 +281,7 @@ check('The page uses only its shared activity helper and stays inside both size 
   assert.ok(gzipSync(html, { level: 9 }).length <= 14000, 'Gzip page exceeds 14,000 bytes');
   assert.doesNotMatch(html, /[\u{2013}\u{2014}\p{Extended_Pictographic}\u{1F1E6}-\u{1F1FF}\u{FE0F}\u{20E3}]/u);
   const scripts = [...html.matchAll(/<script\b[^>]*\bsrc="([^"]+)"[^>]*>/gi)];
-  assert.deepEqual(scripts.map(match => match[1]), ['js/demo-activity.js?v=1']);
+  assert.deepEqual(scripts.map(match => match[1]), ['js/demo-activity.js?v=2']);
   assert.doesNotMatch(html, /<link\b[^>]*\brel=["'](?:stylesheet|preload)["']/i);
   assert.doesNotMatch(html, /\b(?:localStorage|sessionStorage|indexedDB)\b|document\.cookie|\b(?:fetch|XMLHttpRequest)\s*\(/);
   assert.doesNotMatch(source, /\b(?:document|window|location|navigator|performance)\b/);

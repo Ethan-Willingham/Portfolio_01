@@ -23,7 +23,7 @@ const pageFile = path.join(root, 'let-me-llm-that-for-you.html');
 const QUESTION = 'Why does the Moon cause tides?';
 const LONG_QUESTION = 'A question that needs several lines can still be read before ChatGPT opens. '.repeat(6).trim();
 const report = { date: new Date().toISOString().slice(0, 10), caseFilter: process.env.LMLTFY_CASE || null, browserFilter: process.env.LMLTFY_BROWSER || null, environments: [], checks: [], failures: [], unverified: [], timing: [], recordings: [], screenshots: [], captureWarnings: [] };
-let browser, base, html, pasteHTML, api;
+let browser, base, html, labHTML, pasteHTML, api;
 const server = http.createServer((request, response) => {
   const pathname = new URL(request.url, 'http://localhost').pathname;
   if (pathname === '/js/demo-activity.js') {
@@ -33,6 +33,7 @@ const server = http.createServer((request, response) => {
   }
   let source;
   if (pathname === '/let-me-llm-that-for-you.html' || pathname === '/let-me-llm-that-for-you') source = html;
+  else if (pathname === '/let-me-llm-that-for-you-lab.html') source = labHTML;
   else if (pathname === '/paste.html') source = pasteHTML;
   else if (pathname.startsWith('/history-')) source = `<!doctype html><html lang="en"><head><meta charset="utf-8"><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E"><title>History sentinel</title></head><body><a id="continue" href="/let-me-llm-that-for-you.html#${api.encode(QUESTION)}">Continue</a></body></html>`;
   else { response.writeHead(404).end(); return; }
@@ -121,7 +122,7 @@ function auditBeforeScripts() {
             x: matrix.e, y: matrix.f, rowX: row.left + row.width * .05, rowY: row.top + row.height * .5,
             sendX: send.left + send.width * .5, sendY: send.top + send.height * .5,
             caption: document.getElementById('caption').textContent,
-            tip: !document.getElementById('tip').hidden,
+            pressed: document.getElementById('ghost-send').classList.contains('ghost-active'),
             caret: !document.getElementById('caret').hidden,
             arrow: getComputedStyle(document.getElementById('arrow')).display !== 'none',
             ibeam: getComputedStyle(document.getElementById('ibeam')).display !== 'none',
@@ -226,7 +227,7 @@ async function caseRun(engine, name, run, options = {}) {
   }
 }
 
-async function makerChecks(state, engine) {
+async function makerChecks(state, engine, touch = false) {
   const { page } = state;
   await goto(state);
   assert.equal(await page.locator('#example').count(), 0, 'Gate 1 removed Watch an example');
@@ -247,34 +248,40 @@ async function makerChecks(state, engine) {
   await page.locator('#question').fill(question);
   await page.locator('#question').press('Enter');
   await page.locator('#link-card').waitFor({ state: 'visible' });
-  await page.waitForFunction(() => document.getElementById('copy').textContent === 'Copied' || document.getElementById('copy-status').textContent.length > 0);
+  await page.waitForFunction(() => document.getElementById('copy-status').textContent.length > 0);
   const link = await page.locator('#link').inputValue();
   assert.equal(link, 'https://ethanwillingham.com/let-me-llm-that-for-you#' + api.encode(question));
   assert.equal(page.url(), base + '/let-me-llm-that-for-you.html');
+  assert.equal(await page.locator('#maker-caption').isVisible(), false);
+  assert.equal(await page.locator('#link-card button, #link-card a').count(), 0);
   const writes = state.clipboard;
   assert.equal(writes.at(-1).text, link);
   assert.equal(writes.at(-1).active, true, 'Copy did not begin inside user activation');
   if (engine === 'chromium') {
-    assert.equal(await page.locator('#copy').textContent(), 'Copied');
+    assert.equal(await page.locator('#copy-status').textContent(), 'Copied');
     assert.equal(await page.evaluate(() => navigator.clipboard.readText()), link);
-  } else if (await page.locator('#copy').textContent() !== 'Copied') {
+  } else if (await page.locator('#copy-status').textContent() !== 'Copied') {
     unverified(engine, 'native clipboard permission', 'The browser blocked native clipboard; the selected-field fallback is visible. Chromium tests real clipboard permission and content.');
   }
-  await page.locator('#preview').click();
-  await page.locator('#return').waitFor({ state: 'visible' });
-  assert.equal(state.handoffs.length, 0, 'Preview navigated');
-  assert.equal(await page.locator('#bubble').textContent(), question);
-  await page.locator('#return').click();
-  assert.equal(await page.locator('#link').inputValue(), link);
-  await page.locator('#edit').click();
-  assert.equal(await page.locator('#question').inputValue(), question);
-  assert.equal(await page.locator('#question').evaluate(element => element === document.activeElement), true);
+  const beforeRetry = writes.length;
+  if (touch) await page.locator('#link').tap();
+  else await page.locator('#link').click();
+  await page.waitForFunction(() => document.getElementById('copy-status').textContent.length > 0);
+  assert.equal(writes.length, beforeRetry + 1, 'Using the URL field did not try to copy again');
+  assert.equal(writes.at(-1).text, link);
+  if (!touch) {
+    await page.locator('#link').press('Enter');
+    await page.waitForFunction(() => document.getElementById('copy-status').textContent.length > 0);
+    assert.equal(writes.length, beforeRetry + 2, 'Keyboard activation did not copy again');
+  }
+  await screenshot(state, engine + (touch ? '-touch-copied' : '-maker-copied'));
   const clickedQuestion = 'Does the send button make a link too?';
   await page.locator('#question').fill(clickedQuestion);
-  await page.locator('#make').click();
+  assert.equal(await page.locator('#link-card').isVisible(), false, 'Editing left an outdated link visible');
+  if (touch) await page.locator('#make').tap();
+  else await page.locator('#make').click();
   await page.locator('#link-card').waitFor({ state: 'visible' });
   assert.equal(await page.locator('#link').inputValue(), 'https://ethanwillingham.com/let-me-llm-that-for-you#' + api.encode(clickedQuestion));
-  await page.locator('#edit').click();
   await page.locator('#question').fill('');
   assert.equal(await page.locator('#make').getAttribute('aria-disabled'), 'true');
   assert.equal(state.handoffs.length, 0);
@@ -283,6 +290,7 @@ async function makerChecks(state, engine) {
 
 async function recipient(state, engine, label, options = {}) {
   await goto(state, '#' + api.encode(QUESTION));
+  assert.equal(await state.page.locator('#recipient h1').textContent(), 'Let me LLM that for you');
   assert.equal(await state.page.locator('#replica').getAttribute('inert'), '');
   await state.page.waitForFunction(() => document.getElementById('typed').textContent.length > 0);
   const first = await state.page.evaluate(() => ({ origin: performance.timeOrigin, paint: performance.getEntriesByName('first-contentful-paint')[0]?.startTime, firstFrame: window.__firstVisibleFrame }));
@@ -300,7 +308,8 @@ async function recipient(state, engine, label, options = {}) {
   const start = first.paint ?? first.firstFrame;
   const elapsed = handoff.at - first.origin - start;
   report.timing.push({ engine, label, elapsed, origin: first.paint === undefined ? 'first visible requestAnimationFrame' : 'first contentful paint', url: handoff.url });
-  assert.ok(elapsed >= 5000 && elapsed <= 8000, `30-character handoff took ${elapsed}ms`);
+  const [min, max] = options.touch ? [3500, 6000] : [5000, 8000];
+  assert.ok(elapsed >= min && elapsed <= max, `30-character handoff took ${elapsed}ms`);
   const samples = state.samples;
   fs.writeFileSync(path.join(output, `${engine}-${label}-trace.json`), JSON.stringify({ first, handoff, elapsed, samples }, null, 2) + '\n');
   assert.ok(samples.some(sample => sample.text.length > 0 && sample.text.length < QUESTION.length), 'No visible typing');
@@ -314,8 +323,10 @@ async function recipient(state, engine, label, options = {}) {
     assert.ok(samples.every(sample => sample.focused === 'BODY'), 'Recipient focused a control');
   }
   if (options.touch) {
-    assert.ok(samples.some(sample => sample.tip), 'Touch never showed the fingertip');
-    assert.ok(samples.filter(sample => sample.pointer).every(sample => sample.tip && !sample.arrow && !sample.ibeam), 'Touch displayed a mouse sprite beside the fingertip');
+    const firstCharacter = samples.find(sample => sample.text.length > 0);
+    assert.ok(firstCharacter.at - start < 1000, 'Touch playback did not start typing promptly');
+    assert.ok(samples.every(sample => !sample.pointer && sample.focused === 'BODY'), 'Touch displayed a pointer or focused a control');
+    assert.ok(samples.some(sample => sample.pressed), 'Touch never animated the send button');
   } else {
     const clickFrames = samples.filter(sample => sample.pointer && sample.caret && sample.caption === 'Step 1: Type your question' && sample.text === '');
     assert.ok(clickFrames.length > 0, 'No click-in frame was sampled');
@@ -328,6 +339,17 @@ async function recipient(state, engine, label, options = {}) {
   await screenshot(state, `${engine}-${label}-recipient`);
   await clean(state, true);
   return handoff;
+}
+
+async function labPreview(state) {
+  await state.page.goto(base + '/let-me-llm-that-for-you-lab.html');
+  const preview = state.page.frameLocator('iframe').first();
+  await preview.locator('#preview-note').waitFor({ state: 'visible' });
+  assert.equal(await preview.locator('#bubble-text').textContent(), 'How many ounces are in a cup?');
+  assert.equal(state.handoffs.length, 0);
+  await preview.locator('#return').click();
+  assert.equal(await preview.locator('#maker').isVisible(), true);
+  await clean(state);
 }
 
 async function fallbackChecks(state, engine) {
@@ -580,8 +602,11 @@ async function suite(engine) {
   catch (error) { unverified(engine, 'browser suite', error.message); return; }
   report.environments.push({ engine, version: browser.version(), executablePath: launch.executablePath || 'Playwright bundled headless browser' });
   try {
-    await caseRun(engine, 'maker IME clipboard preview edit', state => makerChecks(state, engine));
+    const phone = { viewport: { width: 375, height: 812 }, hasTouch: true, ...(engine !== 'firefox' ? { isMobile: true } : {}) };
+    await caseRun(engine, 'maker IME clipboard and editing', state => makerChecks(state, engine));
+    await caseRun(engine, 'maker mobile tap to copy again', state => makerChecks(state, engine, true), phone);
     await caseRun(engine, 'blocked clipboard fallback', clipboardBlocked);
+    await caseRun(engine, 'lab preview stops at handoff', labPreview);
     for (const [label, width, height, theme] of [['small-light', 320, 568, 'light'], ['small-dark', 320, 568, 'dark'], ['landscape-light', 844, 390, 'light'], ['landscape-dark', 844, 390, 'dark'], ['desktop', 1440, 900, 'light'], ['wide', 2560, 1440, 'light']]) {
       await caseRun(engine, label, async state => {
         await goto(state); await layout(state); await screenshot(state, `${engine}-${label}-maker`);
@@ -589,7 +614,12 @@ async function suite(engine) {
       }, { viewport: { width, height }, colorScheme: theme,
         ...(engine === 'chromium' && label === 'desktop' ? { recordVideo: { dir: output, size: { width: 1440, height: 900 } } } : {}) });
     }
-    await caseRun(engine, 'touch', state => recipient(state, engine, 'touch', { jump: true, touch: true }), { viewport: { width: 375, height: 812 }, hasTouch: true, ...(engine !== 'firefox' ? { isMobile: true } : {}), ...(engine === 'chromium' ? { recordVideo: { dir: output, size: { width: 375, height: 812 } } } : {}) });
+    await caseRun(engine, 'touch without browser focus', async state => {
+      await state.context.addInitScript(() => {
+        document.hasFocus = () => false;
+      });
+      await recipient(state, engine, 'touch', { touch: true });
+    }, { ...phone, ...(engine === 'chromium' ? { recordVideo: { dir: output, size: phone.viewport } } : {}) });
     await caseRun(engine, 'reduced motion', state => recipient(state, engine, 'reduced', { jump: true }), { reducedMotion: 'reduce' });
     await caseRun(engine, 'mid-sequence resize', state => recipient(state, engine, 'resize', { resize: true }));
     await caseRun(engine, 'fallback after blocked navigation', state => fallbackChecks(state, engine));
@@ -613,6 +643,7 @@ async function suite(engine) {
   fs.mkdirSync(output, { recursive: true });
   try {
     html = fs.readFileSync(pageFile, 'utf8');
+    labHTML = fs.readFileSync(path.join(root, 'let-me-llm-that-for-you-lab.html'), 'utf8');
     report.pageSHA256 = crypto.createHash('sha256').update(html).digest('hex');
     if (process.env.LMLTFY_EXPECT_SHA256) assert.equal(report.pageSHA256, process.env.LMLTFY_EXPECT_SHA256, 'The source changed before this frozen run');
     fs.writeFileSync(path.join(output, 'tested-page.html'), html);

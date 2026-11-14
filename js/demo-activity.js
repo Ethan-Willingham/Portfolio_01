@@ -33,7 +33,7 @@
       }, Math.max(0, entry.due - now()));
     }
     function sync() {
-      var active = !disposed && shown && focused && !document.hidden && visible;
+      var active = !disposed && shown && !document.hidden && visible && (focused || options.requireFocus === false);
       if (active === enabled) return;
       enabled = active;
       if (active) {
