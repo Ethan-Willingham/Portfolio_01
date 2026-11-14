@@ -1,38 +1,8 @@
 {
   "version": 1,
   "source": "https://services.swpc.noaa.gov/json/ovation_aurora_latest.json",
-  "updatedAt": "2026-11-14T20:49:10.554Z",
+  "updatedAt": "2026-11-14T23:26:59.000Z",
   "frames": [
-    {
-      "file": "20261015T195400Z-20261015T205400Z-9f3d612722f2be7e.json.gz",
-      "observation": "2026-10-15T19:54:00.000Z",
-      "forecast": "2026-10-15T20:54:00.000Z",
-      "sha256": "9f3d612722f2be7e307ce999fc08f04c0e73caf2040a1b5b50ec9aa5c1b7e2e5"
-    },
-    {
-      "file": "20261015T195800Z-20261015T205900Z-05d26bf9415dd9bc.json.gz",
-      "observation": "2026-10-15T19:58:00.000Z",
-      "forecast": "2026-10-15T20:59:00.000Z",
-      "sha256": "05d26bf9415dd9bc1526893258823b914b5b4259e7d3adc07359bd78d9489dae"
-    },
-    {
-      "file": "20261015T200400Z-20261015T210400Z-de8c65df68160d6d.json.gz",
-      "observation": "2026-10-15T20:04:00.000Z",
-      "forecast": "2026-10-15T21:04:00.000Z",
-      "sha256": "de8c65df68160d6d6871e6a3c370ca6caf7efd1d5e001924b45c43de49461982"
-    },
-    {
-      "file": "20261015T200400Z-20261015T210900Z-5218ff226e2d4db9.json.gz",
-      "observation": "2026-10-15T20:04:00.000Z",
-      "forecast": "2026-10-15T21:09:00.000Z",
-      "sha256": "5218ff226e2d4db91284ec1c02958d225deb285002c1f77ef3da45d606ab7be0"
-    },
-    {
-      "file": "20261015T201300Z-20261015T211400Z-fce366b07df4b6ed.json.gz",
-      "observation": "2026-10-15T20:13:00.000Z",
-      "forecast": "2026-10-15T21:14:00.000Z",
-      "sha256": "fce366b07df4b6ed279986f5c25426b7c67cfaade360696a468100e3b8d02f61"
-    },
     {
       "file": "20261015T222800Z-20261015T232900Z-b18d218729d3036c.json.gz",
       "observation": "2026-10-15T22:28:00.000Z",
@@ -10244,6 +10214,12 @@
       "observation": "2026-11-14T20:43:00.000Z",
       "forecast": "2026-11-14T21:45:00.000Z",
       "sha256": "64c13f5e9d75e2d38416644aae6d925f36ed3e1d511fc2c85191ec15129d2a5e"
+    },
+    {
+      "file": "20261114T231800Z-20261115T002100Z-e4e2140367cc5fff.json.gz",
+      "observation": "2026-11-14T23:18:00.000Z",
+      "forecast": "2026-11-15T00:21:00.000Z",
+      "sha256": "e4e2140367cc5fff923a19a2db51e5b229ebe4c98f60a7fb63ada63f45896c6f"
     }
   ]
 }
