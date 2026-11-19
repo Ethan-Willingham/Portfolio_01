@@ -1,80 +1,8 @@
 {
   "version": 1,
   "source": "https://services.swpc.noaa.gov/json/ovation_aurora_latest.json",
-  "updatedAt": "2026-11-18T19:44:43.337Z",
+  "updatedAt": "2026-11-19T00:45:33.046Z",
   "frames": [
-    {
-      "file": "20261019T195800Z-20261019T211200Z-d78b8dadbcb1fc4d.json.gz",
-      "observation": "2026-10-19T19:58:00.000Z",
-      "forecast": "2026-10-19T21:12:00.000Z",
-      "sha256": "d78b8dadbcb1fc4dd1cc73e53b7c940174295f198afdec20f467609a5006483b"
-    },
-    {
-      "file": "20261019T200500Z-20261019T211700Z-ea1a8df500ef2099.json.gz",
-      "observation": "2026-10-19T20:05:00.000Z",
-      "forecast": "2026-10-19T21:17:00.000Z",
-      "sha256": "ea1a8df500ef209988e3eed1d6959b58c88e4fba7042260d061e4dd530983eb9"
-    },
-    {
-      "file": "20261019T200800Z-20261019T212200Z-3528feb6a774ee30.json.gz",
-      "observation": "2026-10-19T20:08:00.000Z",
-      "forecast": "2026-10-19T21:22:00.000Z",
-      "sha256": "3528feb6a774ee30ae960951c586d496bd6d1fd8bbbc62022e0896c312989a07"
-    },
-    {
-      "file": "20261019T201500Z-20261019T212700Z-b048c0ecd0c699cf.json.gz",
-      "observation": "2026-10-19T20:15:00.000Z",
-      "forecast": "2026-10-19T21:27:00.000Z",
-      "sha256": "b048c0ecd0c699cfb6706d925294be56332b84dca5c394e1bc2c9de4c12409a2"
-    },
-    {
-      "file": "20261019T201800Z-20261019T213200Z-3501e9eef554d65e.json.gz",
-      "observation": "2026-10-19T20:18:00.000Z",
-      "forecast": "2026-10-19T21:32:00.000Z",
-      "sha256": "3501e9eef554d65e7e373b046329a620b52dbdb58d3f7953654b7468c2e682bb"
-    },
-    {
-      "file": "20261019T202500Z-20261019T213700Z-b3932edd408772d3.json.gz",
-      "observation": "2026-10-19T20:25:00.000Z",
-      "forecast": "2026-10-19T21:37:00.000Z",
-      "sha256": "b3932edd408772d377870aa848f55e1f7c603edfcbf7179914cb1500b0aaae3f"
-    },
-    {
-      "file": "20261019T202800Z-20261019T214200Z-e18956d9659b9998.json.gz",
-      "observation": "2026-10-19T20:28:00.000Z",
-      "forecast": "2026-10-19T21:42:00.000Z",
-      "sha256": "e18956d9659b9998ee6c52268ba57631bf171b83025c3f9a26f91c4f21720cbd"
-    },
-    {
-      "file": "20261019T203200Z-20261019T214800Z-cf0d354907fba669.json.gz",
-      "observation": "2026-10-19T20:32:00.000Z",
-      "forecast": "2026-10-19T21:48:00.000Z",
-      "sha256": "cf0d354907fba66945956a1b617423b1ffed41c90acafc99f66776111fe9e161"
-    },
-    {
-      "file": "20261019T203900Z-20261019T215300Z-bd2f7580772197a3.json.gz",
-      "observation": "2026-10-19T20:39:00.000Z",
-      "forecast": "2026-10-19T21:53:00.000Z",
-      "sha256": "bd2f7580772197a344ca10f917d941212f372eae6dc2bd23a8faa152eb558b9a"
-    },
-    {
-      "file": "20261019T204200Z-20261019T215800Z-523988c2551fd66e.json.gz",
-      "observation": "2026-10-19T20:42:00.000Z",
-      "forecast": "2026-10-19T21:58:00.000Z",
-      "sha256": "523988c2551fd66e9977fe80ba52343dafffbb35dd19c642f59f481a8ad9a4f5"
-    },
-    {
-      "file": "20261019T204900Z-20261019T220200Z-f4b2ee801076d9b5.json.gz",
-      "observation": "2026-10-19T20:49:00.000Z",
-      "forecast": "2026-10-19T22:02:00.000Z",
-      "sha256": "f4b2ee801076d9b541f57e869e7cc6af8c4b56734a07ea9010a10682414bde87"
-    },
-    {
-      "file": "20261019T205200Z-20261019T220700Z-b2d72924c754f01d.json.gz",
-      "observation": "2026-10-19T20:52:00.000Z",
-      "forecast": "2026-10-19T22:07:00.000Z",
-      "sha256": "b2d72924c754f01d01f9b19bae6fd88c08ed8d9dfbc34110a32a6a971bb8665b"
-    },
     {
       "file": "20261019T233100Z-20261020T005000Z-3e5783be006b60af.json.gz",
       "observation": "2026-10-19T23:31:00.000Z",
@@ -9338,6 +9266,12 @@
       "observation": "2026-11-18T19:37:00.000Z",
       "forecast": "2026-11-18T20:45:00.000Z",
       "sha256": "09913e40f18a8e3b0f8ac3f43c7802508a3ab90c2c99dee9b386598986cd6581"
+    },
+    {
+      "file": "20261119T003700Z-20261119T014000Z-7a5446be1500e3ae.json.gz",
+      "observation": "2026-11-19T00:37:00.000Z",
+      "forecast": "2026-11-19T01:40:00.000Z",
+      "sha256": "7a5446be1500e3ae31ebe26e781d91171239658aad97c03bc62a190ed35ac32f"
     }
   ]
 }
