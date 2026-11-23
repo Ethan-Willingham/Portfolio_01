@@ -106,75 +106,17 @@ are ordinary scripts, with no bundle step and no Sluice dependencies. Read
 `archive.html` (In Progress). Bump the `?v=` values on its CSS and game scripts
 when changing them so deployed edits bypass stale caches.
 
-**The Warehouse Simulator** (formerly One Shift) opens the Unity warehouse from `one-shift.html`, with its browser
-launcher in `one-shift-unity.css` and `js/one-shift-unity.js`. Editable Unity source
-lives in `unity/OneShiftRackLab`; read its `README.md` and `WAREHOUSE_LIGHTING.md`
-before changing the scene. **One Shift > Build browser player** exports to
-`assets/one-shift-unity/Build/OneShiftWeb.*`. Keep the click-to-load entry,
-keyboard and mouse controls, landscape gate, and independent browser inactivity
-and manual pause. Verify an actual browser build before publishing. Keep the
-post on `archive.html` (In Progress), with its stable `one-shift.html` URL.
-The owner's 2026-10-27 direction uses a finished title screen, a minimal contextual
-HUD, and a three-step practical forklift introduction. Left Shift holds the
-variable hydraulic lever; X is no longer the control. The office computer manages
-supplier purchases and fictional trade-customer orders backed by physical stock.
-Keep direct player handling, stock conservation, and separate pause/activity gates.
-The v13 WMS owns Career, Sandbox and Customer demos through `WarehouseWmsRuntime` and
-`WarehouseWmsLedger`. Career starts with empty small shelves and $600; Sandbox starts with 100 owned
-cartons, two pending receipts, 90 main-rack bins across rows A to E, twelve small-shelf
-bins and four receiving/staging/dispatch bins. The floor-storage zones are removed;
-main racks face inward around a wide central loading space. The
-owner's 2026-10-28 direction is cartons only, eight varieties, with no item serials
-or integrations. The TC22 starts equipped with a live screen and no hand mesh.
-Hold left click to angle its top imager and project a flat red stripe onto surfaces.
-Written screen feedback and indicator colors identify accepted and rejected scans.
-Stable visible Code128 labels decode once per target acquisition. Right click toggles the enlarged
-screen, Q equips or stows it, and Enter confirms supported physical receipt,
-transfer, pick or load tasks. F remains an alternate scan key.
-Receiving, staging and the moving dispatch van are bins too. The office WMS
-shares exact stock and PO/SO line quantities, allocations, work and history.
-Only offsite shipment pays. Old `WarehouseCareer`/`WarehouseBusiness` source
-and pallet fixtures remain but are inactive in both browser starts. Racks,
-forklift, fish and flame decals remain upgrades. Progress is session-only.
-The computer retains its camera transition and HTML desktop. The browser owns
-pointer capture; Unity must not request a second lock after an interface closes.
-Hold left mouse with the scanner stowed, or hold E in either mode, to carry a box.
-Releasing that input drops it. Pickup preserves orientation; right mouse rotates.
-Loose cartons use bounded rigidbody grab forces, not parenting. Receiving and
-staging flank the north garage; slim shelf labels fit their beam faces and have no distance pop-in.
-Customer demos prepare three isolated scenarios: receiving with putaway, transfer,
-and picking/shipping. The guide follows real transactions and physical stock;
-only actual offsite shipment completes shipping. H opens its guide. Keep all three
-on the title-screen gallery with their own briefings and completion results.
-The room reflection uses a saved cubemap to avoid browser lighting instability.
-Keep the moving sun and real shadows, and do not restore periodic room captures
-without checking the office-entry browser sequence.
-All modes start at 9 a.m. and smoothly travel to 4 p.m. and back, thirty real minutes
-each way, with no night. Sandbox skips the forklift introduction; Career retains it.
-This is also an introductory electronic-inventory demo: prefer clear product names,
-explained location addresses and plain task instructions over unexplained WMS jargon.
-Read the v13 section in
-`docs/ONE_SHIFT.md` and use the WMS native browser checks before publishing.
+**The Warehouse Simulator is permanently frozen in this portfolio by owner
+instruction (2026-11-23).** All Warehouse Simulator development takes place in
+the separate standalone Warehouse Simulator project. A request about the
+simulator, even when made from this checkout, belongs in that project. Use its
+own contributor guide, build and local preview.
 
-The earlier illustrated game remains at `one-shift-classic.html`, using
-`one-shift.css` and the original `js/one-shift-*.js` simulation modules. Its saves
-and assets remain intact; the Unity warehouse does not read or change them.
-Read `docs/ONE_SHIFT.md` for both versions, controls, checks and current limits.
-The illustrated simulation modules have no DOM access. Use four-foot tiles only
-in that hidden simulation, invented client names, and landscape mobile play.
-Its playable scenes use eye-level charcoal, rust and cream print art with separate selectable
-pallet layers. The owner explicitly removed the top-down view on 2026-10-22;
-do not restore it. Handling is performed directly by the player, by owner
-instruction on 2026-10-22. Do not schedule an invisible worker to unload, put away,
-pick, wrap or load stock. Read `docs/ONE_SHIFT_PLACES.md` for the time-card
-entrance, central floor and seated office desk. Clocking out saves a checkpoint;
-desk paperwork uses actual purchases, customer orders and ledger entries.
-Read `docs/ONE_SHIFT_RECEIVING_ART.md` before changing
-that art or generating new shipment variants. Read `docs/ONE_SHIFT_PROCESS.md`
-for the physical receiving and shipping flow. Bump every changed CSS/script
-query version, including the Unity build URLs when exporting a new player.
-Preserve case conservation, lot dates and the ledger; forklift
-training precedes operation, and owning the forklift precedes hiring.
+Preserve the public snapshot at `one-shift.html`, its In Progress card, and the
+earlier illustrated edition at `one-shift-classic.html`. The Unity sources,
+browser exports, launchers and historical build notes here are archival.
+Do not edit, test, rebuild or publish either public game as part of simulator
+development, or copy standalone changes into the portfolio.
 
 **Hunting Game**, the JavaScript port of the owner's Unity hunting prototype,
 lives in `hunting-game.html`, `hunting-game.css`, and `js/hunting-*.js`.
